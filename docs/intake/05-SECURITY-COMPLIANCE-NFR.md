@@ -1,36 +1,36 @@
 # 05 — Security, Compliance and Quality Targets
 
-> **Status: CONFIRMED** (AI-prepared 2026-10-31). Confirmed by: Zain Naeem (product owner) on 2026-10-31.
-> Targets are starting proposals for the client and the human Architect to accept or change.
+> **Status: CONFIRMED.** AI-prepared 2026-10-31. All sections Agreed by Zain Naeem (product owner) on 2026-10-31, and updated with his decisions of 2026-11-02 03:26 PKT (UTC+05:00) recorded in [07-OPEN-QUESTIONS.md](07-OPEN-QUESTIONS.md).
+> The reliability, performance and accessibility targets below were **agreed** by the product owner on 2026-11-02 (07, D6).
 
-## 1. Compliance (depends on jurisdiction — see [07-OPEN-QUESTIONS.md](07-OPEN-QUESTIONS.md))
+## 1. Compliance (agreed: United States)
 
-| If operating in | Likely obligations |
-| --- | --- |
-| United States | HIPAA Privacy and Security Rules; Business Associate Agreements with vendors; patient access and information-blocking rules (21st Century Cures Act); DEA rules for electronic controlled-substance prescribing; state pharmacy and telehealth rules; 42 CFR Part 2 if substance-use treatment records are held |
-| EU / UK | GDPR / UK GDPR (health data is special-category data); Data Protection Impact Assessment; data-processing agreements; national e-prescription and pharmacy rules; medical-device rules if any feature makes clinical decisions |
-| Other countries | National health-data, pharmacy, telemedicine and data-residency laws, to be listed by the client's legal advisor |
+- HIPAA Privacy and Security Rules; Business Associate Agreements with every vendor that touches health data.
+- Patient access and information-blocking rules (21st Century Cures Act), including timely release of results.
+- DEA rules for electronic prescribing of controlled substances (EPCS): certified solution, prescriber identity proofing, two-factor signing, audit.
+- State pharmacy and telehealth licensing rules for each operating state (states to be named before G1).
+- 42 CFR Part 2 if substance-use treatment records are held.
 
-The platform should also be ready for a **SOC 2 Type II** or **ISO 27001** audit, since enterprise healthcare customers usually ask for one.
+The platform should also be ready for a **SOC 2 Type II** audit, since enterprise healthcare customers usually ask for one.
 
-## 2. Security requirements (proposed)
+## 2. Security requirements (agreed)
 
 **Identity and access**
 - MFA required for all staff; offered to patients and required for sensitive actions.
-- Staff sign in through the organisation's SSO.
+- Staff sign in through Google Workspace SSO; partner pharmacy staff use their own accounts with MFA.
 - Role-based access plus location and assignment rules: least privilege by default.
-- Session timeout after ____ minutes idle on staff portals; re-authentication to sign prescriptions.
+- Idle session timeout on staff portals (exact minutes set in Plan & Design); re-authentication to sign prescriptions, two-factor signing for EPCS.
 - Break-the-glass emergency access needs a reason, alerts compliance and is reviewed.
 
 **Data protection**
 - Encryption in transit (TLS 1.2+) and at rest, with keys in a managed key service and rotated.
 - Health data kept out of logs, URLs, analytics, SMS and email bodies.
 - Separate production data; tests use synthetic data, never real patients.
-- Data residency in the region the client's law requires.
+- Data stored and processed in HIPAA-eligible US cloud regions under a signed BAA.
 
 **Audit**
 - An append-only audit trail of every view, create, change, export and print of patient data, with user, time, IP/device and reason where needed.
-- Audit logs retained ____ years and protected from deletion by admins.
+- Audit logs protected from deletion by admins and retained for the period set in Plan & Design (at least what HIPAA and DEA EPCS rules require).
 
 **Application security**
 - OWASP ASVS Level 2 as the baseline; Level 3 for authentication, prescribing and payment paths.
@@ -38,31 +38,31 @@ The platform should also be ready for a **SOC 2 Type II** or **ISO 27001** audit
 - An independent penetration test before each production release with new external surface.
 - Rate limiting, bot protection on public forms, and file-upload scanning.
 
-## 3. Reliability and recovery (proposed targets)
+## 3. Reliability and recovery (agreed targets)
 
-| Target | Proposed value |
+| Target | Agreed value |
 | --- | --- |
 | Availability (patient and doctor portals) | 99.9 % monthly |
 | Recovery point objective (max data loss) | 15 minutes |
 | Recovery time objective (max downtime after a disaster) | 4 hours |
-| Backups | Automated, encrypted, cross-region copy, restore tested every ____ months |
+| Backups | Automated, encrypted, cross-region copy; restore test schedule set in Plan & Design |
 | Deployments | Zero-downtime; rollback plan and database migration plan per release |
 | Monitoring | Uptime, errors, latency, queue backlogs, integration failures, with on-call alerts |
 
-## 4. Performance and scale (client to supply numbers)
+## 4. Performance and scale (agreed 2026-11-02: design for large scale at launch)
 
-| Item | Client value | Proposed design target |
-| --- | --- | --- |
-| Registered patients (year 1 / year 3) | ____ / ____ | — |
-| Staff users | ____ | — |
-| Clinics / pharmacies | ____ / ____ | — |
-| Appointments per day (peak) | ____ | — |
-| Prescriptions per day (peak) | ____ | — |
-| Deliveries per day (peak) | ____ | — |
-| Concurrent video visits (peak) | ____ | — |
-| API response time | — | p95 under 500 ms for normal reads/writes |
-| Page load | — | Largest Contentful Paint under 2.5 s on 4G |
-| Slot search | — | p95 under 1 s across all locations |
+| Item | Agreed value |
+| --- | --- |
+| Registered patients (year 1) | ~250,000 (3-year growth: open) |
+| Staff users | ~1,000 |
+| Clinics | 30+ (number of partner pharmacies: open) |
+| Appointments per day (peak) | ~8,000 |
+| Prescriptions per day (peak) | ~4,000 |
+| Pharmacy deliveries per day (peak, pharmacy-reported status) | ~1,500 |
+| Concurrent video visits (peak) | ~250 |
+| API response time | p95 under 500 ms for normal reads/writes |
+| Page load | Largest Contentful Paint under 2.5 s on 4G |
+| Slot search | p95 under 1 s across all locations |
 
 ## 5. Accessibility and usability
 

@@ -6,7 +6,7 @@
 | Repository | `zainnaeem28/enterprise-app` (private) |
 | Prepared | 2026-10-31 |
 | Prepared by | AI assistant (Claude), from a short request by Zain Naeem |
-| **Status** | **Confirmed by Zain Naeem (product owner) on 2026-10-31.** Open questions in 07 are still pending. |
+| **Status** | **Confirmed by Zain Naeem (product owner).** Revision 2, 2026-11-02 03:26 PKT (UTC+05:00): critical questions answered (see Revision history). |
 
 ## How to use this pack
 
@@ -14,7 +14,7 @@
 2. Record who agreed and when, at the top of each file. A file date alone is not approval.
 3. Give the confirmed pack to Paperclip task **INV-1**. The Intake Agent then scores readiness and writes `Intake-Readiness.md`.
 
-Until a human confirms them, every item here is a **proposal**. Under the SDLC rules, proposals earn no readiness credit, and the Intake Agent must not treat them as client decisions.
+Any item still marked proposed, *Open* or blank is a **proposal or gap**, not a decision. Under the SDLC rules, proposals earn no readiness credit, and the Intake Agent must not treat them as client decisions.
 
 ## Contents
 
@@ -28,12 +28,13 @@ Until a human confirms them, every item here is a **proposal**. Under the SDLC r
 | [06-BRAND-AND-UX.md](06-BRAND-AND-UX.md) | Brand site, design system, accessibility | UX |
 | [07-OPEN-QUESTIONS.md](07-OPEN-QUESTIONS.md) | Decisions only the client can make: budget, timeline, owners, jurisdiction | Budget/timeline/owners |
 
-## Expected intake result
+## Revision history
 
-Even after confirmation, these areas will remain gaps until the client answers [07-OPEN-QUESTIONS.md](07-OPEN-QUESTIONS.md):
+| Revision | Date | Change |
+| --- | --- | --- |
+| 1 | 2026-10-31 | AI-prepared draft; confirmed by Zain Naeem (product owner). Scored 43.75% at intake (rev 1 of `Intake-Readiness.md`). |
+| 2 | 2026-11-02 03:26 PKT (UTC+05:00) | Product owner answered the critical questions: United States; multi-clinic network; many external pharmacies with their own delivery; controlled substances (EPCS) in scope; large scale; budget US$150k–300k build and US$5k–15k/month; R1 by end of May 2027; Google Workspace; no migration; brand exists; R1–R4, pre-consultation meaning, lab release policy and reliability targets agreed. Files 01–06 updated to match. |
 
-- jurisdiction and regulations (this changes compliance, e-prescribing and lab-result rules)
-- traffic numbers, budget, deadline and named human owners
-- the operating model of the pharmacy and delivery service
+## Still open (non-critical)
 
-Expect the Intake Agent to report readiness below 80% until those are answered. At the INTAKE gate you can then either update the inputs or authorise provisional scope with stated assumptions.
+Operating states, partner pharmacy count, 3-year growth, cloud provider, AI features, extra languages, brand files (to be added to `docs/intake/brand/`), and a licensed clinical safety reviewer. See [07-OPEN-QUESTIONS.md](07-OPEN-QUESTIONS.md).
