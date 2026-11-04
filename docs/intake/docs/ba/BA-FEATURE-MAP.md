@@ -244,7 +244,7 @@ Steps for J-01 to J-18 follow the numbered flows in `03-WORKFLOWS-AND-RULES.md` 
 | --- | --- | --- | --- |
 | X-01 | Checkout hold expires before confirmation | Slot released; patient told and offered the next slots | derived from [03 §1.3] |
 | X-02 | Two patients take the same slot | Second confirmation fails with a clear message and alternatives; no double booking | [03 §1 rules] |
-| X-03 | Google Calendar API down | Slot search uses last-known busy times, flagged stale beyond a configured age (G-13); failure shown on the operations dashboard | [04 §4] |
+| X-03 | Google Calendar API down | Slot search uses last-known busy times, flagged stale beyond a configured age (G-12); failure shown on the operations dashboard | [04 §4] |
 | X-04 | SMS/email delivery fails | Retried; in-app notification still shown; failure visible to ops | [04 §4], [02 §7] |
 | X-05 | Payment fails or is abandoned | Booking not confirmed (if deposit required); hold released; no card data stored | [03 §8] |
 | X-06 | Red-flag answer in triage | Immediate on-duty doctor alert plus emergency advice to patient; escalation recorded | [03 §2] |
