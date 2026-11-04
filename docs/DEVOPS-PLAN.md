@@ -5,26 +5,47 @@
 | Task | HEAAA-16 `[SDLC:devops-plan]` |
 | Author | DevOps Engineer agent (`021d733c-9400-40ba-9b0e-540b71450434`) |
 | Independent reviewer | Solution Architect Reviewer (`338c0bb5-1aeb-4d88-b754-4885297ae447`) |
-| Version | **Draft 1** |
-| Status | **Draft. Not reviewed. Not human-approved. This is not G2 and authorises no installation, provisioning, workflow file, or deployment.** |
+| Version | **Draft 2** (responds to review round 1 of 3, findings DPR-01..DPR-15; see 0.1) |
+| Status | **Draft 2. Awaiting independent re-review (round 2 of 3). Not human-approved. This is not G2 and authorises no installation, provisioning, workflow file, or deployment.** |
 | Baseline | ARCHITECTURE draft 4 (HEAAA-11 `architecture` rev `f2d240e4`), PRD revision 3 (`prd` rev `bba336f3`), SHARED-BOUNDARIES draft 3 (HEAAA-12 `shared-boundaries` rev `0fffc85d`), intake pack revision 2 (`6ea01b5`). G1 accepted by a human 2026-11-04 (HEAAA-11 confirmations `009ac8a9`, `cadd7751`) |
 
 ## 0. How to read this
 
 Labels: **Constraint** (fixed by an approved source), **Recommendation** (my proposal; a human decides at G2), **Verified** (I checked it, with how and when), **Unverified** (stated from documentation or memory, or not checkable from here), **Open** (needs a person). Cost figures are planning estimates, not quotes. No cloud account exists, no vendor was contacted, nothing was installed or run except the read-only GitHub API checks in section 4.1 and two documentation lookups in section 13.
 
+### 0.1 Disposition of review round 1 (document `devops-plan-review` rev `9215b96a`)
+
+| ID | Disposition | Where |
+| --- | --- | --- |
+| DPR-01 | Accepted. Recommendation split by control. GitHub environment required reviewers are **not** available on Team for private repositories. Approval control for `production`, `bootstrap`, `audit-archive`, `restore-test` becomes **approval-by-apply** (a human-applied AWS-side change), which works on any plan. Enterprise reviewers are an optional extra, cost unverified | 4.1, 4.2, 7.3, 13.1, 16, 16.2 |
+| DPR-02 | Accepted. Exact trust conditions stated; plainly: under the current plan any write-token holder can satisfy them; the only effective control is the human-applied enable/disable | 4.1 (Fallback B), 7.1, 15.2 |
+| DPR-03 | Accepted. **Approved-release record** defined; role table completed; revert and recovery-credential rules defined | 7.2, 7.4, 9.3, 15.3 |
+| DPR-04 | Accepted. Shallow liveness for ALB/ECS; deep readiness with "schema ≥ minimum compatible" for deploy gating only | 9.1 |
+| DPR-05 | Accepted. Deploy-surge arithmetic added. **Needs a Solution Architect decision** on `max_connections` and the deploy-peak budget (routed via Orchestrator) | 9.1, 12, 16 item 13 |
+| DPR-06 | Accepted. `us-east-1` exemptions listed; added to the build-start verification list | 3.1, 3.3 |
+| DPR-07 | Accepted. `loadtest` specified as production-equivalent; cost re-estimated | 3.4, 5.3, 13.1 |
+| DPR-08 | Accepted. Rollback order fixed; two-way one-release compatibility; pointer-based portal switch with a stated mixed-version window | 6.2, 9.1, 9.3 |
+| DPR-09 | Accepted. Canaries listed with frequency and cost; frequency reduced | 11.4, 13.1 |
+| DPR-10 | Accepted. Token retrieval path defined; fallback approval defined | 16.2 |
+| DPR-11 | Accepted. Credential reset, isolation, in-VPC execution, baseline capture, role and authorising decision specified | 10.3 |
+| DPR-12 | Accepted. Marketing is its own workflow, environments, roles and release authorisation | 4.2, 9.1 |
+| DPR-13 | Accepted. Checks added | 5.2 |
+| DPR-14 | Accepted. Actions allow-list and SHA-pin setting as G2 configuration items, plus a CI check that works on any plan | 4.1, 5.1, 14 |
+| DPR-15 | Accepted. Lag metric mechanism and snapshot timeout/abort rule defined | 8.2, 11.3 |
+
 ## 1. Summary for the decision-maker
 
 1. **CI/CD provider: GitHub Actions** (Constraint, intake `[01 §7]`, `[05 §2]`), repository `zainnaeem28/enterprise-app`, deploying to AWS through OIDC federation. No long-lived cloud keys in GitHub.
 2. **Verified blocker for the release lock.** On 2026-11-04 the GitHub API answered **HTTP 403 "Upgrade to GitHub Pro or make this repository public"** for branch protection and for rulesets on this private, personally owned repository. Required checks, required reviews and protected environments are the controls that the workflow and G3 rely on. They **cannot be configured on the current plan**. The repository must move to a paid plan (see 4.1 and the cost in section 13), or the plan must say plainly that these controls are unenforced.
 3. **Verified second limit: the approver and the agents share one GitHub identity.** The agents act through a token for `zainnaeem28`, who is also the product owner, operations owner and the only human at every gate (PRD RK-5). A GitHub environment approval by that account cannot be told apart from an agent acting with the same token. Section 4.1 recommends a GitHub organisation with a separate agent identity and at least two human accounts. Dual control (C4, audit archiving, first-admin bootstrap) is **not achievable with one human**.
+   **Correction after review (DPR-01):** GitHub environment *required reviewers* are not available for private repositories on the Team plan (GitHub Docs, verified by the reviewer 2026-11-04). The release lock therefore rests on **approval-by-apply**: the production roles are denied in AWS until a human applies a reviewed change that writes an *approved-release record* (7.4). Team still gives rulesets, required checks and CODEOWNERS.
 4. **Topology** is the G1 design: one AWS organisation, separate accounts for production, staging, tooling, log-archive and marketing, a US primary region and a US recovery region (section 3). No Kubernetes, no cluster, no extra deployables.
 5. **One immutable artifact per commit**, promoted by digest from staging to production, never rebuilt (section 6).
 6. **Release safety:** expand/contract migrations, the previous app version tested against the new schema in CI, a manual database snapshot before every production migration, rolling ECS deploy with automatic rollback, and an explicit statement that an application rollback is not a database restore (sections 8, 9).
 7. **Recovery** follows ARCHITECTURE 9.4. A monthly automated restore test, and a timed region-loss rehearsal before R1 go-live and before each later release (section 10). Estimates only until rehearsed.
 8. **Cost of this plan's own choices is small** (about US$50–400/month, section 13). The large risk stays where G1 put it: usage-based SMS and video. **SAR-16 is largely answered**: the Cognito replication add-on is priced per monthly active user, so a small admin pool adds almost nothing (13.3).
 9. **Optional tools (section 14):** Semgrep Community Edition, gitleaks, OSV-Scanner and Trivy are selected for CI. **SonarQube, CodeRabbit and Strix are not selected** for R1, each with the condition that would change that.
-10. **Decisions this plan needs from a human are in section 16.** The three that block executable work are the GitHub plan and organisation (item 2–3), a named on-call rota (D-29), and a second human for dual control.
+10. **Decisions this plan needs from a human are in section 16.** The ones that block executable work are the GitHub organisation, the approval-by-apply control and the connection budget (items 1 and 13 of section 16), a named on-call rota (D-29), and a second human for dual control.
 
 ## 2. Baseline in effect
 
@@ -51,7 +72,7 @@ Labels: **Constraint** (fixed by an approved source), **Recommendation** (my pro
 | --- | --- | --- | --- | --- |
 | `ci` | none (GitHub runner, service containers) | Synthetic, generated | PR checks: unit, integration against a containerised PostgreSQL 17, migration and catalog checks | Per run |
 | `staging` | `staging` | Synthetic only | Integration, e2e, accessibility, ZAP baseline, release rehearsal, restore-procedure rehearsal | Persistent, about 30–40 % of production size (A-8) |
-| `loadtest` | `staging` (scaled up by IaC) | Synthetic at year-1 volume | NFR-6/8/9 proof at 2 × and 3 × (DEP-14) | Created for a test window, then scaled down |
+| `loadtest` | `staging` account, separate VPC, built by IaC to the production specification (3.4) | Synthetic at year-1 volume (3.4) | NFR-6/8/9 proof at 2 × and 3 × (DEP-14) | Created for a test window, torn down after |
 | `production` | `production`, region primary; DR in recovery region of the same account | Real | Live | Persistent |
 | `restore-test` | `production`-equivalent isolated VPC, same account boundary and controls as production | Restored production backups (PHI) | Monthly restore test, DR rehearsal | Created per test, destroyed after |
 | `marketing-staging`, `marketing-production` | `marketing` | None (no PHI) | `www.`, `cms.` | Persistent |
@@ -60,7 +81,8 @@ Labels: **Constraint** (fixed by an approved source), **Recommendation** (my pro
 - **No persistent `dev` cloud environment in R1.** PR checks use `ci`; developers use local containers with synthetic seed data. A shared `dev` account would add cost and a place for real-looking data. Add it only if the build team shows a need.
 - **Restore tests of production backups cannot run in `staging`.** Staging is outside the PHI boundary. The restore target is built in the production account boundary with production-equivalent access, BAA coverage, logging and teardown. Staging rehearses the procedure with synthetic data.
 - The marketing account holds two environments (`site`/`cms` staging and production) separated by IaC workspace and GitHub environment. No PHI, no network path or credentials to production data (TB8, ARCHITECTURE 3.1).
-- AWS Organizations with service control policies denying: disabling CloudTrail/GuardDuty/Config, deleting the log-archive vault, leaving the organisation, use of regions other than the two US regions. (Recommendation.)
+- AWS Organizations with service control policies denying: disabling CloudTrail/GuardDuty/Config, deleting the log-archive vault, leaving the organisation, use of regions other than the two US regions **except the named `us-east-1` exemptions below**. (Recommendation.)
+- **`us-east-1` exemptions (DPR-06), by service and account:** `acm` (certificates for CloudFront viewers and any Cognito custom domain) in the accounts that terminate them; `wafv2` with CLOUDFRONT scope (managed only in `us-east-1`); `cloudfront`, `route53`, `iam`, `organizations`, `sts`, `support`, `budgets` and `ce` (global services reached through `us-east-1` endpoints); `kms` and `s3` stay in the two US regions. **Unverified:** whether the Chime SDK control plane and Cognito custom-domain behaviour need further `us-east-1` actions; the foundation task verifies the full list on the build date (3.3) before the SCP is applied. The SCP is written as a deny with `NotAction` for the global services and a `us-east-1` allow only for the named actions.
 
 ### 3.2 Runtime per environment
 
@@ -78,7 +100,20 @@ Differences from production that tests must not hide: staging is single-AZ for t
 
 ### 3.3 Region pair
 
-Primary: `us-east-2`; recovery: `us-west-2` (Recommendation, ARCHITECTURE 7). **Unverified:** every service named in ARCHITECTURE 9.4 (RDS PostgreSQL 17 cross-Region automated backup replication, S3 RTC, Cognito replication, ECR replication, GuardDuty malware protection, Chime SDK) is available in both regions and BAA-eligible on the day of build. Verified at build start by the foundation task, with the AWS BAA-eligible services list read on that date.
+Primary: `us-east-2`; recovery: `us-west-2` (Recommendation, ARCHITECTURE 7). **Unverified:** every service named in ARCHITECTURE 9.4 (RDS PostgreSQL 17 cross-Region automated backup replication, S3 RTC, Cognito replication, ECR replication, GuardDuty malware protection, Chime SDK) is available in both regions and BAA-eligible on the day of build. Verified at build start by the foundation task, with the AWS BAA-eligible services list read on that date. The same task verifies the `us-east-1` exemption list in 3.1 (ACM, CloudFront-scope WAF, global-service endpoints, Chime SDK and Cognito custom-domain requirements) before the region-deny SCP is applied.
+
+### 3.4 `loadtest` specification (DPR-07)
+
+The load test only proves NFR-6/8/9 if it matches production where latency is decided:
+
+| Item | Specification |
+| --- | --- |
+| Database | Same engine version, instance class, storage type and size as production, **Multi-AZ on** (synchronous standby affects commit latency), same parameter group, RLS and audit triggers on |
+| Compute | Production task sizes, production auto-scaling limits (api 2–8, worker 2–4), same ALB/WAF rule groups (WAF rate limits adjusted for the load generators by an allow-listed source, recorded) |
+| Data | Synthetic only (BR-35). Volume: 100k patients' worth of rows at the high A-9 case, and **audit partitions at the year-1 volume of about 400 GB** (ARCHITECTURE 9.2 hot window). Generated by an in-VPC job with a fixed seed using bulk `COPY`; generation time is unknown and is measured on the first run. A snapshot of the generated data is kept (about 400+ GB of snapshot storage, roughly US$40/month at an **unverified** list price) so later tests restore it instead of regenerating |
+| Load generators | Fargate tasks in the same Region, outside the app subnets; scenario scripts versioned in the repository; results uploaded as artifacts (no PHI exists) |
+| Teardown | IaC destroy after the test; snapshot kept; cost checked against the budget alarm |
+| Cost | Section 13.1 (re-estimated: a production-sized environment for several days, not a scaled-up staging) |
 
 ## 4. CI/CD provider and pipeline layout
 
@@ -102,8 +137,22 @@ Read-only checks run 2026-11-04 against `zainnaeem28/enterprise-app` with the ma
 Consequences, stated plainly:
 
 - With the current plan, **nothing technically prevents a direct push to `main`, a merge without checks, or a self-approved deployment.** The framework already warns that agent instructions are not a sandbox (WORKFLOW "Tools, credentials, and actual enforcement limits").
-- **Recommendation A (needs owner approval and a cost decision):** move the repository to a **GitHub organisation** on a paid plan (Team or higher). Create: (1) at least two human accounts, one of which is an approver who does not write code; (2) a separate **agent identity** (machine account or GitHub App) with write to feature branches only and **no right to approve environments or edit protection rules**; (3) rulesets on `main` requiring a pull request, the status checks in 5.1, a CODEOWNERS review for `.github/`, `infra/`, `db/migrations/` and `docs/`, no force push, no deletion, and signed commits if the agent identity can sign; (4) environments `staging`, `production`, `bootstrap-staging`, `bootstrap-production`, `audit-archive`, each with required reviewers and **prevent self-review** on. List price recalled as about US$4 per user per month for Team (**Unverified**, confirm on the pricing page).
-- **Fallback B (if the owner declines):** make no claim that the pipeline enforces review or release locks. The controls become procedural: a human checks the pipeline run before G3, and AWS-side controls carry the weight (the production deploy role's trust policy, section 7). The Release Reviewer must record "GitHub-side enforcement absent" in every RELEASE-REVIEW.md. This is weaker, and I recommend A.
+- **Recommendation A, split by control (DPR-01).** What each GitHub plan gives for a **private** repository, per GitHub Docs (checked by the reviewer 2026-11-04):
+
+  | Control | Free | Team | Higher plan (likely Enterprise; **Unverified**, name and price to confirm) |
+  | --- | --- | --- | --- |
+  | Rulesets and branch protection on `main`, required status checks, required PR review, CODEOWNERS | No (the 403 above) | Yes | Yes |
+  | Deployment branch/tag policies for environments | No | Yes | Yes |
+  | Environment **required reviewers**, **prevent self-review**, wait timers | No | **No** | Yes (unverified) |
+  | Organisation Actions allow-list and SHA-pinning policy | Verify | Verify | Verify |
+
+  **Recommendation A1 (needed regardless):** move the repository to a GitHub **organisation** on **Team**. Create: (1) at least two human accounts, one an approver who does not write code; (2) a separate **agent identity** (machine account or GitHub App) with write to feature branches only and **no right to approve or edit protection rules**; (3) rulesets on `main` requiring a pull request, the 5.1 status checks, a CODEOWNERS review by a human for `.github/`, `infra/`, `db/migrations/`, `docs/` and `infra/approvals/`, no force push, no deletion; (4) environments `staging`, `production`, `audit-archive`, `bootstrap-<env>`, `restore-test` with a **deployment branch policy limiting them to `main`**. Cost: about US$4 per user per month (**Unverified**, recalled list price).
+
+  **Recommendation A2 (approval control that does not depend on GitHub reviewers):** **approval-by-apply**. The AWS roles behind `production`, `audit-archive`, `bootstrap-<env>` and `restore-test` are **denied by default**. They are enabled only by an IaC change under `infra/approvals/` that (a) is a pull request needing the CODEOWNERS approval of a human who is not the author (enforceable on Team through rulesets) and (b) is **applied by a human with platform-admin rights, not by the agent identity**. The change writes the *approved-release record* (7.4) with an expiry. For dual-control actions (audit archiving, bootstrap) the pull request needs **two** distinct human approvals and the applier is a third role or one of the two, recorded. Under RK-5 with one human this is not dual control; section 16 item 2 stays open.
+
+  **Option A3 (not recommended for R1 unless the owner wants a GitHub-side second gate):** a higher GitHub plan that provides environment required reviewers and prevent-self-review. Cost: **Unverified**; I will not assume a price. It adds a reviewer click in front of the same deny-by-default roles; it does not replace A2.
+- **Fallback B (owner stays on a personal repository or declines A1).** Plainly: with no rulesets and no environment protection, **any holder of a write token can push to any branch, including `main`, and run any workflow**, and the agents hold such a token through the same login as the approver. A workflow can declare `environment: production` and obtain the matching OIDC claim. The conditions the AWS trust policy can check are, with the OIDC `sub` claim customised to carry them: repository, `environment`, `ref` (`refs/heads/main`) and `job_workflow_ref` (the single file `.github/workflows/deploy-production.yml@refs/heads/main`). **Under the current plan these conditions can be satisfied by any holder of a write token**, so they prove which workflow ran, not that a human approved it. **The only effective control under Fallback B is the human-applied enable/disable of the role (A2)**, because no token holder can change the AWS-side deny. Everything else (review, checks, release lock) is procedural. The Release Reviewer records "GitHub-side enforcement absent" and the exact settings found in the 15.2 field.
+- **Actions policy (DPR-14, G2-time configuration item; owner: repository owner, executed with the DevOps Reviewer present):** set the organisation/repository allowed-actions policy to an explicit allow-list (GitHub-owned actions plus the named third-party actions in `.github/ACTIONS-ALLOWLIST.md`); enable the setting that requires actions to be **pinned to a full-length commit SHA** if the chosen plan offers it (**verify at G2**); set the default `GITHUB_TOKEN` to read-only. A CI check enforces SHA pins on any plan (5.1).
 - Because the human approver and the token holder are one GitHub login today, even with Recommendation A **the approver account must not be the one the agents use.** If one person holds both roles, state that in the G3 package.
 - **Open:** the PRD risk RK-5 (one person holds every gate) means C4 second approver, audit-partition dual control and bootstrap cannot be satisfied in practice until a second human exists. See section 16.
 
@@ -116,12 +165,13 @@ All workflows live in `.github/workflows/`. Every third-party action is **pinned
 | `ci.yml` | `pull_request` to `main`; `push` to `main` | `lint-types`, `unit`, `integration-db` (PostgreSQL 17 service container, runs migrations, RLS tests of SHARED-BOUNDARIES 6.8), `migration-check` (5.2), `build` (reproducible, locked), `sast`, `secrets`, `deps`, `container-scan`, `sbom`, `a11y-smoke`, `bundle-budget` | `contents: read`, `pull-requests: write` only for comments. **No AWS credentials on pull requests**, including from forks | Required status checks |
 | `build-release.yml` | `push` to `main` | Build once; push images to ECR in `tooling` by digest; sign; attach SBOM and provenance; build portal bundles; write the **release manifest** (6.1) | `id-token: write`, `contents: read`, `packages: none`. Assumes `gh-build` role in `tooling` | Release manifest, images, bundles |
 | `deploy-staging.yml` | `workflow_run` of `build-release` success, or manual | Verify manifest and signatures; terraform plan/apply for `staging` if infra changed; migrate; roll out; smoke; e2e; ZAP baseline | Environment `staging`. Assumes `gh-deploy-staging` | Staging evidence |
-| `deploy-production.yml` | **Manual `workflow_dispatch` only**, input = release manifest digest | Verify the digest equals the G3-approved digest; snapshot; migrate; roll out; smoke; observe; (recovery job only on failure and only as approved) | Environment `production`, required reviewers, concurrency group `production-release`, `cancel-in-progress: false`. Assumes `gh-deploy-production`, **which does not exist or cannot be assumed until G3** (7.2) | `DEPLOYMENT-RESULT.md` evidence |
+| `deploy-production.yml` | **Manual `workflow_dispatch` only**, input = release manifest digest | Verify the digest equals the manifest hash in the **approved-release record read from the production account** (7.4), not merely the dispatch input; snapshot; migrate; roll out; smoke; observe; (recovery job only on failure and only as approved) | Environment `production` (deployment branch policy `main`; reviewers only on a higher plan), concurrency group `production-release`, `cancel-in-progress: false`. Assumes `gh-deploy-production`, **denied until the approved-release record is applied** (7.2, 7.4) | `DEPLOYMENT-RESULT.md` evidence |
 | `infra.yml` | PR touching `infra/`; manual apply | `fmt`, `validate`, `tflint`, policy scan (Checkov or Trivy config), `plan` posted as an artifact; `apply` per environment with a protected environment | PR: read-only plan role. Apply: per-environment role | Plan artifact (hash recorded in manifest) |
 | `nightly.yml` | schedule | Full e2e, dependency re-scan, base-image re-scan, staging backup-restore procedure check | Read-only; staging role | Reports |
-| `restore-test.yml` | monthly schedule; manual for rehearsal | Section 10.3 | Environment `restore-test`; role limited to restore target | Restore evidence |
-| `audit-archive.yml` | manual | Detach/drop a verified audit partition as `audit_archiver` (SHARED-BOUNDARIES 6.2) | Environment `audit-archive`, **second human approver required** | Manifest entry |
-| `bootstrap.yml` | manual, per environment | First-admin runbook (16.2) | Environment `bootstrap-<env>`, **two reviewers** | Audit evidence |
+| `restore-test.yml` | monthly schedule; manual for rehearsal | Section 10.3 | Environment `restore-test`; role `gh-restore-test` limited to the restore target (10.3, 7.2) | Restore evidence |
+| `audit-archive.yml` | manual | Detach/drop a verified audit partition as `audit_archiver` (SHARED-BOUNDARIES 6.2) | Environment `audit-archive`; role `gh-audit-archive` enabled by approval-by-apply with **two distinct human approvals** (4.1 A2) | Manifest entry |
+| `bootstrap.yml` | manual, per environment | First-admin runbook (16.2) | Environment `bootstrap-<env>`; role `gh-bootstrap-<env>` enabled by approval-by-apply with two custodian approvals (16.2) | Audit evidence |
+| `deploy-marketing.yml` | Manual `workflow_dispatch` (staging may be automatic) | Build and publish `www.`/`cms.` for `marketing-staging` or `marketing-production`. **Separate from the production release sequence (DPR-12)**: own workflow, own environments, own roles `gh-deploy-marketing-<env>` in the `marketing` account, own release authorisation (9.1) | Environment `marketing-<env>`, concurrency group `marketing-release` | Marketing evidence |
 | `dependabot.yml` | config | Weekly updates for npm, Docker, GitHub Actions (SHA pins), Terraform providers | n/a | PRs |
 
 Common rules: every job fails the workflow on a non-zero exit (no `continue-on-error` on a required check, no `|| true`); results are uploaded as artifacts and read by the reviewer, not only the badge; `concurrency` groups serialise deploys per environment; a job timeout is set on every job.
@@ -148,6 +198,7 @@ Common rules: every job fails the workflow on a non-zero exit (no `continue-on-e
 | Accessibility smoke | axe on built portals (full audit is manual, DEP-17) | New serious/critical violations |
 | Bundle and LCP budget | Lighthouse CI against the NFR-7 budget | Budget exceeded |
 | SBOM | Syft, CycloneDX | SBOM missing |
+| Workflow hygiene (DPR-14) | actionlint plus a script that fails if any `uses:` is not a full 40-character commit SHA or is not in the Actions allow-list; `permissions` must be declared | Any violation. Works on any GitHub plan |
 
 Suppressions need a reviewer comment, an owner and an expiry date, and are listed in the release package.
 
@@ -159,7 +210,8 @@ On a fresh PostgreSQL 17 container, CI applies all migrations from empty and fro
 - an audit-writing login role lacks role-level `transaction_timeout` (SAR-10), or `app_owner` has INSERT on an audit table;
 - a migration breaks the **expand/contract rule** (8.1): a drop, rename, type change, `NOT NULL` without a default-and-backfill plan, or non-concurrent index on a populated table in the same release as the code that stops using it;
 - the **previous release's test suite does not pass against the new schema** (N-1 compatibility);
-- a statement lacks a `lock_timeout` guard where it needs a strong lock.
+- a statement lacks a `lock_timeout` guard where it needs a strong lock;
+- (DPR-13) a function-owner role (owner of a `SECURITY DEFINER` function) can log in (must be `NOLOGIN`); `reporting_ro` holds a grant on any object not on the C0/C1 list (M-4); any application role has `BYPASSRLS` or owns a table; the RDS master user owns objects or appears in any application connection string or role mapping (M-1; checked by listing role memberships and by a secret-reference lint over task definitions).
 
 **Unverified:** that RDS for PostgreSQL 17 exposes `transaction_timeout` as a role-level setting readable from the audit insert trigger (SHARED-BOUNDARIES 12). The build-foundation task proves it on a real RDS instance in staging before the audit design is relied on. If it does not, the architect decides the fallback; DevOps does not weaken the check.
 
@@ -167,7 +219,7 @@ On a fresh PostgreSQL 17 container, CI applies all migrations from empty and fro
 
 - OWASP **ZAP baseline** (passive) against staging portals after each staging deploy, with synthetic accounts. Active scanning is a separate, authorised activity (14.4).
 - Synthetic smoke and journey tests (booking race, login per realm, document upload and scan, alert stream).
-- **Load tests** on the `loadtest` environment before R1 and when the schema or hot paths change materially: 2 × peak for 30 min, 3 × burst for 5 min, **with RLS and audit inserts on** (ARCHITECTURE 9.2, SHARED-BOUNDARIES 6.8).
+- **Load tests** on the `loadtest` environment (production-equivalent, 3.4) before R1 and when the schema or hot paths change materially: 2 × peak for 30 min, 3 × burst for 5 min, **with RLS and audit inserts on** (ARCHITECTURE 9.2, SHARED-BOUNDARIES 6.8).
 
 ## 6. Artifact identity
 
@@ -191,7 +243,9 @@ Tags are conveniences. **Deployments reference digests.** ECR tag immutability i
 
 ### 6.2 Promotion
 
-Build once, deploy the same digests to staging then production. No rebuild per environment. Environment configuration is separate (Parameter Store values and Secrets Manager references per environment), recorded by name and version in the deployment evidence, never by value. Portal bundles are uploaded to `releases/<git_sha>/`; CloudFront origin path (or a pointer object) switches atomically at the end of the rollout. Only the entry document and manifest are invalidated. Old prefixes stay for rollback for 90 days.
+Build once, deploy the same digests to staging then production. No rebuild per environment. Environment configuration is separate (Parameter Store values and Secrets Manager references per environment), recorded by name and version in the deployment evidence, never by value.
+
+**Portal switch (DPR-08).** A CloudFront origin-path change is not atomic: distribution updates propagate to edge locations over minutes (**Unverified**, AWS documents propagation without a fixed time), so edges can briefly serve different versions. The plan therefore does not rely on it. Portal assets are content-hashed and uploaded to a shared immutable `assets/` prefix (kept 90 days); each release also uploads `releases/<git_sha>/` (entry document and release manifest). The release step copies that release's entry document to the live path and invalidates only the entry document and `release.json`. The entry document has a short cache TTL (60 s). **Stated mixed-version window: up to about 5 minutes** in which a user can load the old or new entry document; assets of both stay available, so neither breaks. This is safe only because of the **two-way compatibility rule**: portal N must work against API N-1, and API N must work against portal N-1 (one release each way). CI enforces it: a contract test runs the new portal bundle against the previous release's API image, and the new API image against the previous portal bundle (5.1, as part of the integration job).
 
 Reproducibility: a frozen-lockfile install and pinned base images by digest. The build lane proves it by building twice and comparing the bundle listing hash and image layer digests, or by recording the differences. **Unverified until tried**; some image tooling embeds timestamps.
 
@@ -199,19 +253,26 @@ Reproducibility: a frozen-lockfile install and pinned base images by digest. The
 
 ### 7.1 Principle
 
-No deployment credential exists in GitHub secrets. AWS access uses OIDC roles whose trust policy pins the repository, the environment claim and the workflow. **Deployment credentials for an environment are withheld until that environment's G3** (framework rule).
+No deployment credential exists in GitHub secrets. AWS access uses OIDC roles. The OIDC `sub` claim is customised (repository-level setting) so the token carries repository, `environment`, `ref` and `job_workflow_ref`, and each trust policy requires: the exact repository, the environment value, `refs/heads/main`, and the single workflow file for that role (**Unverified:** whether AWS evaluates `job_workflow_ref` directly as a condition key or only through the customised `sub`; the foundation task proves the chosen form in staging). **These conditions identify which workflow ran, not who approved it. On the current plan any write-token holder can satisfy them (4.1 Fallback B).** The control that does hold is that every production-affecting role is **denied until a human applies the approved-release record (7.4)** and **reverts to deny at its expiry**. **Deployment credentials for an environment are withheld until that environment's G3** (framework rule): until then the roles exist only as denied trust policies or do not exist.
 
 ### 7.2 Roles and owners
 
 | Role / secret | Where | Who may use | Created when | Owner (human) |
 | --- | --- | --- | --- | --- |
 | `gh-ci-plan` | tooling/staging, read-only | PR workflows for `infra` plan | After G2 | DevOps, approved by DevOps Reviewer |
-| `gh-build` | tooling | `build-release` on `main` only (`ref` condition) | After G2 | DevOps |
-| `gh-deploy-staging` | staging | Environment `staging` | After G2 | DevOps; staging release authorisation is separate from production |
-| `gh-deploy-production` | production | Environment `production`, one workflow file, manual dispatch | **Trust policy ships as a deny until G3 for that exact release.** The change enabling it is a reviewed IaC change, applied by a human with platform-admin rights, referenced in the G3 decision | Release owner approves; platform admin applies |
-| `gh-tf-production` | production | `infra.yml` apply | Same rule as above | Platform admin |
+| `gh-build` | tooling | `build-release` on `main` only (`ref` + workflow conditions) | After G2 | DevOps |
+| `gh-deploy-staging` | staging | Environment `staging`; also `nightly.yml` uses `gh-nightly-staging` (read-only plus restore-procedure check) | After G2 | DevOps; staging authorisation separate from production |
+| `gh-deploy-production` | production | `deploy-production.yml` only | Trust policy ships as **deny**. Enabled by the approved-release record (7.4) for one manifest hash, one environment, listed actions, with an `aws:CurrentTime` expiry in the trust condition. Reverts to deny at expiry or on human revoke | Release owner approves; platform admin applies |
+| `gh-recover-production` | production | `deploy-production.yml` recovery job and the approved rollback redeploy (previous digests, portal pointer revert) | Same record. Permitted only for the actions the record lists and for the previous manifest hash named in it. Valid for the observation window plus a stated margin (the G3 package states hours) | Same |
+| `gh-tf-production` | production | `infra.yml` apply | Same record rule; infrastructure changes are part of a release or their own named-environment G3 | Platform admin |
+| `gh-tf-recovery-region` | production (recovery Region) | Region-loss IaC apply | **Not used by GitHub in the first minutes of a region loss**, because that depends on GitHub and the incident. Region-loss execution uses the human break-glass roles below; the role may be enabled by the incident commander through the break-glass procedure | Platform admin; incident commander |
+| `gh-restore-test` | production boundary, `restore-test` VPC only | `restore-test.yml` | Standing authority: the OPERATIONS_RECEIPT records operations scope for a monthly restore test; the record is renewed yearly. Permissions: read the backup vault, create/modify/delete **only** resources tagged `restore-test` in its VPC; no write to production data stores; no route to the production application (10.3) | Operations owner authorises; platform admin applies |
+| `gh-audit-archive` | production | `audit-archive.yml` as `audit_archiver` | Per run: approval-by-apply with **two distinct human approvals** (4.1 A2) and a short expiry | Two humans |
+| `gh-bootstrap-<env>` | per environment | `bootstrap.yml` | Per run: two custodian approvals; disabled after step 5 of 16.2 | Two custodians |
+| `gh-deploy-marketing-<env>` | `marketing` account | `deploy-marketing.yml` | `marketing-staging` after G2; `marketing-production` per its own release authorisation (9.1) | DevOps; owner |
+| **Break-glass recovery roles** (`bg-platform-recovery`, `bg-database-recovery`) | production, both Regions | Named humans via IAM Identity Center with MFA; **not** GitHub | Created at foundation as denied; session-limited (1–4 h); every assumption alerts the security contact and opens a review ticket; used for region loss (10.5), restore decisions (9.3) and when GitHub is unavailable | Platform admin and a second approver |
 | `app_owner` DB credential | Secrets Manager (production, staging) | Only the **migration task role** | After G2 / G3 | DevOps; rotated each release or 90 days |
-| RDS master user | Secrets Manager, sealed | **Break-glass only**, time-boxed, alerts on use. Never used by an application component (BD M-1) | At DB creation | Platform admin and a second approver |
+| RDS master user | Secrets Manager, sealed | **Break-glass only**, time-boxed, alerts on use. Never used by an application component (BD M-1); CI checks this (5.2) | At DB creation | Platform admin and a second approver |
 | `app_api`, `app_worker`, `audit_archiver`, `reporting_ro` DB credentials | Secrets Manager; IAM database authentication preferred (**Unverified** for the pooling setup) | Their task roles only | After G2 | DevOps |
 | `outbound` secrets (`<env>/integration/outbound/*`) | Secrets Manager | Written by `api` task role; read by `api`, `worker` | At integration set-up | Admin-realm principal with an elevation grant |
 | `inbound_verification` secrets (`<env>/integration/inbound/*`) | Secrets Manager | **Written by `worker` role only**; `api` read-only (BD-11) | At integration set-up | Dual-controlled request |
@@ -224,6 +285,16 @@ No deployment credential exists in GitHub secrets. AWS access uses OIDC roles wh
 ### 7.3 Human access
 
 Engineers and DevOps reach AWS through IAM Identity Center with SSO and MFA, roles with no standing access to production data. Production database access is break-glass only: time-boxed, approved, alerting, logged. **Unverified:** whether the AWS organisation will use Identity Center federated to Google Workspace for engineers, or separate users. That is a separate identity from the staff sign-in; decided in the foundation task with Cybersecurity.
+
+### 7.4 The approved-release record (DPR-03)
+
+One authoritative record per production release, so the workflow compares against something other than its own input:
+
+- **Where:** an SSM parameter `/release/approved` (type SecureString, KMS key policy limiting writes) in the `production` account, created and changed **only by the human-applied IaC change** described in 4.1 A2. The agent identity and every `gh-*` role have **no write** to it and no right to change role trust policies.
+- **Contents:** `environment`, `manifest_hash`, `previous_manifest_hash` (the rollback target), `permitted_actions` (for example `migrate`, `rollout`, `smoke`, `rollback-redeploy`; recovery beyond these needs a new record or the break-glass roles), `g3_reference` (decision ID and revision), `not_before`, `expires`.
+- **Enforcement:** (1) the trust policies of `gh-deploy-production` and `gh-recover-production` carry an `aws:CurrentTime` less-than-expiry condition and are enabled only by the same change, so expiry reverts them to deny without anyone acting; (2) the workflow's first job reads the record and refuses on any mismatch of manifest hash, environment, action or time (15.3). The role itself cannot check the hash, so the second check is in the workflow; a tampered workflow could skip it, which is why reviewing `.github/` changes by CODEOWNERS and the role-level expiry both matter. I state this limit instead of claiming the role verifies the hash.
+- **Revert:** at `expires`, or sooner by a human revoke (apply with the record emptied). After a failed release the records stay for the evidence; the roles are denied.
+- **Recovery after the window:** rollback redeploy (previous digests) is in `permitted_actions` and its role is valid for the observation window plus margin. Data recovery (point-in-time restore into a new instance, 9.3) and region loss are human decisions executed through the break-glass roles, not through GitHub.
 
 ## 8. Database migration plan
 
@@ -239,9 +310,9 @@ Engineers and DevOps reach AWS through IAM Identity Center with SSO and MFA, rol
 
 ### 8.2 Production sequence
 
-1. Verify manifest digest, signatures, G3 reference.
+1. Read the approved-release record (7.4) and verify manifest digest, signatures, environment, permitted action and expiry against it.
 2. Check backup freshness: latest automated backup and replicated backup within threshold, else stop.
-3. **Take a manual RDS snapshot** named with the release SHA. (Estimate: minutes on a database of this size; it does not block traffic. **Unverified until measured.**)
+3. Record the current **latest restorable time** from RDS (this PITR timestamp is the named pre-migration restore point; it costs nothing and is immediate). **If the release contains a migration:** also start a **manual RDS snapshot** named with the release SHA and wait for `available` with a **timeout** (proposed 45 minutes for an incremental snapshot, set from measurement). The first snapshot of the database is a **full copy** and can take far longer than minutes (**Unverified**, 1 TB start size): it is taken and timed at the pre-R1 rehearsal, not for the first time during a release. Snapshot not `available` by the timeout → **abort before migration**, no migration runs without it, report the timing. Releases without a migration skip the snapshot (PITR covers them).
 4. Run the migration task. Abort on non-zero exit.
 5. Run the catalogue checks (5.2) against production schema (read-only).
 6. Roll out (section 9).
@@ -252,8 +323,19 @@ Engineers and DevOps reach AWS through IAM Identity Center with SSO and MFA, rol
 
 ### 9.1 Rollout (Recommendation: ECS rolling with circuit breaker)
 
-- ECS service deployment: minimum healthy 100 %, maximum 200 %, deployment circuit breaker **with rollback on**, ALB health check on a deep readiness endpoint (database reachable, migrations at expected version; no PHI in the response). Deregistration delay long enough to drain SSE connections; clients reconnect with `Last-Event-ID` (ARCHITECTURE 5.4).
-- Order: migrate → worker → api → portals (origin switch) → marketing site (separate pipeline step, no PHI) → smoke → observation.
+- ECS service deployment: minimum healthy 100 %, maximum **150 %** (see the connection arithmetic below), deployment circuit breaker **with rollback on**. Deregistration delay long enough to drain SSE connections; clients reconnect with `Last-Event-ID` (ARCHITECTURE 5.4).
+- **Two health endpoints (DPR-04).** (1) **Liveness**, `/healthz`: shallow, no database or external call; this is the only check used by the ALB target group and ECS task health. (2) **Readiness**, `/readyz`: deep (database reachable, schema version **≥ the minimum compatible version** that this build declares, no PHI in the response); used only for deploy gating, smoke tests, canaries and alarms, never for task replacement. Each build declares `schema_min` (the oldest schema it supports) and tolerates any later schema produced under the expand-only rule. Because the migration runs first and N-1 tasks keep `schema ≥ schema_min(N-1)`, they stay healthy, and a circuit-breaker rollback to N-1 works against schema N. A Multi-AZ failover (about 1–2 minutes, ARCHITECTURE 9.2) is ridden out without task replacement: liveness is unaffected, requests that need the database fail or retry while the pool reconnects, and the minutes lost are counted against the error budget. The failover rehearsal (10.4) measures this; it passes only if no tasks were replaced because of it.
+- **Connection arithmetic during a deploy (DPR-05).** Per-task budget: `api` 20 + 1 `LISTEN` = 21, `worker` 10. Steady maximum: 8 × 21 + 4 × 10 = **208**, plus migration/admin tasks ≈ 230 (ARCHITECTURE 9.2).
+
+  | Case | api tasks | worker tasks | Connections |
+  | --- | --- | --- | --- |
+  | Steady, max scale | 8 | 4 | 208 (+ ≈ 22 other = ≈ 230) |
+  | Rolling at 200 % from max (draft 1) | 16 | 8 | 336 + 80 = **416** + other |
+  | Rolling at 150 % from max (this plan) | 12 | 6 | 252 + 60 = **312** + other ≈ **335** |
+  | Release started with ≤ 6 api and ≤ 3 worker tasks, 150 % | 9 | 5 | 189 + 50 = 239 + other ≈ **260** |
+
+  **Rule:** the pipeline refuses to start a rollout while `api` desired count is above 6 or `worker` above 3 (a release at peak load is deferred), and auto-scaling is held at its current count during the rollout. **Unverified and needs the Solution Architect:** the parameter-group `max_connections` is not stated in ARCHITECTURE. "230 below 60 %" implies roughly 380–400. I propose setting it **explicitly to 500** (memory per idle connection is small; confirm in the load test), which makes the 150 % peak of ≈ 335 about 67 %. The connection alarm becomes: warn at 70 % of the **steady** budget (160), page at 70 % of `max_connections` (350), deploy-window alarm threshold suppressed only up to the computed deploy peak. This changes ARCHITECTURE 9.2 numbers, so I route it to the Solution Architect through the Orchestrator (16 item 13). Draft 2 does not assume approval.
+- Order for a release: **migrate → worker → api → portals (pointer switch, 6.2) → smoke → observation**. The marketing site is **not** part of this sequence (DPR-12): `deploy-marketing.yml` is its own workflow, environment and role. Marketing production is an environment mutation in its own account, so it needs its **own named release authorisation (G3 for `marketing-production`)**; a lighter package is acceptable because there is no PHI (no migration, no PHI boundary), but this plan does not waive it. Marketing staging follows G2.
 - Why not blue/green with CodeDeploy for R1: more moving parts and no load or risk that justifies it yet. Revisit if the observation window shows slow detection. (Recommendation.)
 - **Estimated duration** (not measured): rolling deploy of api and worker 8–15 minutes; with migration and smoke checks, 20–30 minutes total. Replaced by measured values after the first staging deploys.
 
@@ -266,7 +348,7 @@ Engineers and DevOps reach AWS through IAM Identity Center with SSO and MFA, rol
 | Situation | Action | Notes |
 | --- | --- | --- |
 | Rollout fails health checks | ECS circuit breaker returns to the previous task definition | Automatic, inside the approved plan |
-| Defect found during observation, no schema change | Redeploy previous digests from the previous manifest; switch portal prefix back | A pipeline job, only inside the approved recovery section of the G3 plan |
+| Defect found during observation, no schema change | **Order (DPR-08): portals first** (rewrite the entry document from the previous release, invalidate it), **then** `api` and `worker` redeploy of the previous digests | A pipeline job under `gh-recover-production`, only for the actions and previous manifest hash in the approved-release record (7.4). Portal N-1 against API N is covered by the two-way compatibility rule (6.2); the mixed-version window of about 5 minutes applies on rollback too |
 | Defect after an expand migration | Roll the app back; **leave the schema in place** (N-1 compatibility) | Normal case |
 | Data corruption or a migration that cannot be forward-fixed | **Forward repair first.** Only if the named human decision-makers choose it: point-in-time restore into a **new** instance, validate, then cut over. **Never restore over live data.** | Data written after the restore point is lost unless reconciled; the decision records that loss (RPO ≤ 15 min target) |
 | Whole-region loss | Region-loss runbook (10.5) | Needs the incident declaration |
@@ -296,16 +378,18 @@ RPO 15 min and RTO 4 h (NFR-2/3) are targets. **No backup, replication lag or re
 
 ### 10.3 Monthly restore test (automated, from first production backup)
 
-1. Restore the latest automated backup, and a PITR time chosen at random within the last 7 days, into a fresh instance in `restore-test`.
-2. Run: schema version, catalogue/RLS checks (5.2), row-count and checksum comparison on sampled tables against the source's reported counts, **audit anchor chain verification** to the restore point (ARCHITECTURE 6), application read-only smoke through the real image pointed at the restored instance.
-3. Record restore duration, data age at restore (measured RPO), and failures. Destroy the target and its snapshots. Access to the target equals production access.
-4. Failures open a tracked finding; two consecutive failures stop releases until fixed.
+1. **Authorisation basis:** the monthly job touches production PHI, so it runs under the standing operations authority recorded in OPERATIONS_RECEIPT (7.2, `gh-restore-test`), renewed yearly, and the restore-test environment has production-level access controls and BAA coverage. Restore the latest automated backup, and a PITR time chosen at random within the last 7 days, into a fresh instance in `restore-test`.
+2. **Isolation and credentials (DPR-11):** the restore VPC has no peering, transit route or security-group path to the production application or database; egress only to the AWS endpoints it needs and the `log-archive` account. Immediately after restore, before any check, a restore-task role **resets the master and every application-role password** (the restored instance carries the production credentials, which must not be usable) and disables IAM database authentication mappings for production roles. Secrets for the restore target are new and live only in `restore-test`.
+3. **In-VPC execution and PHI-free output:** the checks run in a one-off ECS task inside the `restore-test` VPC, not on a GitHub runner. The task emits only counts, hashes, pass/fail and timings; the workflow log and artifacts contain no row data. Checks: schema version, catalogue/RLS checks (5.2), row-count and checksum comparison on sampled tables, **audit anchor chain verification** to the restore point (ARCHITECTURE 6), application read-only smoke through the real image pointed at the restored instance.
+4. **Comparison baseline:** for exact comparison the source's counts and checksums are captured **as of the restore point**. For a PITR time T, the source side is computed by a read-only query on a read-only transaction at the source for the immutable tables (append-only audit, documents metadata) and by comparing against a restore of the same snapshot for mutable tables; for mutable tables the check is a bounded-drift check, not equality, and the plan says so. **Unverified until rehearsed**; the Architect agrees the table list.
+5. Record restore duration, data age at restore (measured RPO), and failures. Destroy the target and its snapshots. Access to the target equals production access.
+6. Failures open a tracked finding; two consecutive failures stop releases until fixed.
 
 ### 10.4 Rehearsals before go-live (DEP-16)
 
 | Rehearsal | When | Environment | Pass condition |
 | --- | --- | --- | --- |
-| Multi-AZ database failover | Before R1 | Production-equivalent configuration | Failover time recorded; API recovers without manual action; no lost committed transactions |
+| Multi-AZ database failover | Before R1 | Production-equivalent configuration | Failover time recorded; API recovers without manual action; no lost committed transactions; **no task replaced because of the failover** (9.1) |
 | Procedure rehearsal with synthetic data | After staging exists | Staging | Runbook steps work and are timed |
 | **Timed region-loss rehearsal** | Before R1 go-live and before each later release (NFR-3) | Recovery region | Total ≤ 4 h; measured RPO for each † component; identity-replica sign-in with passkey checked (P-7) and TOTP-only users handled (ARCHITECTURE 9.4); audit anchors verified; DNS switch and smoke tests pass; **failures stay recorded as failures** |
 | Rollback rehearsal | Every release in staging | Staging | Previous digests redeployed against the new schema; smoke passes |
@@ -352,24 +436,40 @@ OpenTelemetry (ADOT collector as a sidecar) → CloudWatch Logs, Metrics and tra
 | Integration failures | Circuit open, failure rate above threshold (BR-33) | Ticket / page by vendor criticality | Vendor status, retry state |
 | Audit pipeline | Anchor job late; **anchor verification mismatch**; audit insert errors; late-committed rows flagged (ARCHITECTURE 6) | Page (security) | Security runbook; do not alter data |
 | Staff-scope drift | `patient.verify_staff_scope` reports drift (SHARED-BOUNDARIES 6.6) | Page (security + clinical safety) | Recompute through the function; file finding |
-| Backup health | No successful backup in 26 h; cross-Region replication lag above 10 min (expect 15 min target); S3 RTC replication failures; restore test failed | Page / ticket | Backup runbook |
+| Backup health | No successful backup in 26 h; cross-Region replication lag above 10 min (expect 15 min target) from the custom metric `BackupReplicaLagSeconds` (below); S3 RTC replication failures; restore test failed | Page / ticket | Backup runbook |
 | Certificate / domain | Expiry < 21 days | Ticket | |
 | Security | GuardDuty high findings; WAF block spikes; CloudTrail changes to logging or policies; root login; break-glass role use; Workspace super-admin / OU changes (C3) | Page security contact | Security runbook |
 | Cost | Forecast above budget threshold; SMS and video spend vs plan | Ticket to owner | Section 13 |
 | Deployment | Release workflow failure, migration failure | Page the releasing engineer | 9.3 |
 
+**Backup-lag metric mechanism (DPR-15).** RDS publishes no native CloudWatch metric for the lag of replicated automated backups. A scheduled Lambda (EventBridge, every 5 minutes, role limited to `rds:DescribeDBInstanceAutomatedBackups` and `cloudwatch:PutMetricData`) reads the **latest restorable time** of the replicated backup in the recovery Region and publishes `BackupReplicaLagSeconds = now - latestRestorableTime`, with a second metric for "lookup failed". The alarm fires on lag > 600 s or on missing data. **Unverified:** that the API returns a latest restorable time for replicated automated backups; the staging rehearsal proves it, and if not, a documented alternative (a scheduled test restore point or snapshot copy timing) replaces it before the alert is relied on. The **first** cross-Region snapshot/backup copy of a large database is slow: the alarm is inactive until the first replica reports, and the pre-R1 rehearsal records the time of that first copy with a defined timeout.
+
 **Paging channel (Open, owner decision D-29):** alarms go to SNS. Until a rota and paging service are chosen, delivery is SNS email to the named on-call people, and **delivery is tested** before go-live (a test alert that a named person acknowledges). A dedicated on-call service is recommended for rotation and escalation; its price is unverified and falls under the tooling line in ARCHITECTURE 10.1 (US$100–600/month). I will not select a paid service without that decision.
 
 ### 11.4 Synthetic checks
 
-CloudWatch Synthetics canaries every minute against a shallow health endpoint and a PHI-free journey (load sign-in page, `GET /public/v1` slot lookup) for each host; certificates and DNS checked. **No canary writes data in production** (no synthetic bookings or patients) unless the owner approves a labelled synthetic tenant; write journeys run in staging.
+CloudWatch Synthetics canaries, priced at **US$0.0012 per canary run** (verified by the reviewer 2026-11-04, US East basis; Lambda and S3 artifact costs extra and unverified). A 1-minute canary is 43,200 runs ≈ **US$51.84/month**; a 5-minute canary ≈ US$10.37; a 15-minute canary ≈ US$3.46. Real-traffic SLIs (ALB 5xx and latency, 11.2) carry the SLO; canaries confirm external reachability, certificates and DNS. List (production unless noted):
+
+| Canary | Frequency | What | US$/month |
+| --- | --- | --- | --- |
+| `my.` shallow | 1 min | `/healthz` through CloudFront and ALB path, TLS expiry | 51.84 |
+| `staff.` shallow | 1 min | same | 51.84 |
+| `my.` journey | 5 min | Sign-in page loads, `GET /public/v1` slot lookup (PHI-free) | 10.37 |
+| `staff.` journey | 5 min | Sign-in page loads | 10.37 |
+| `integrations.` | 5 min | `/public/v1` health | 10.37 |
+| `pharmacy.` | 5 min | Sign-in page loads | 10.37 |
+| `www.` / `cms.` | 5 min each | Page loads (best effort per SAR-11) | 20.74 |
+| Staging (`my.`, `staff.`, `integrations.`) | 15 min | Shallow | 10.38 |
+| **Total** | | | **≈ 176** plus Lambda/S3 (unverified, small) |
+
+Draft 1's two canaries per host at 1-minute intervals would have cost about US$415–620 a month. **No canary writes data in production** (no synthetic bookings or patients) unless the owner approves a labelled synthetic tenant; write journeys run in staging.
 
 ## 12. Limits and capacity guards
 
 | Item | Limit | Why |
 | --- | --- | --- |
-| `api` max tasks / pool | 8 / 20 connections each + 1 `LISTEN` | Keeps total ≈ 230 connections, below 60 % of `max_connections` (ARCHITECTURE 9.2); alarm at 70 % |
-| `worker` max tasks / pool | 4 / 10 | Same |
+| `api` max tasks / pool | 8 / 20 connections each + 1 `LISTEN`; deploy `maximumPercent` 150 % | Steady ≈ 230. Deploy peak ≈ 335 (9.1). `max_connections` explicit, proposed 500, **awaiting Solution Architect decision** (ARCHITECTURE 9.2 does not state it) |
+| `worker` max tasks / pool | 4 / 10; rollout refused above 3 running | Same |
 | DB role limits | `transaction_timeout` 60 s on audit-writing roles; `statement_timeout` and `idle_in_transaction_session_timeout` set per role | SAR-10, audit watermark |
 | WAF | Rate limits per IP and per path group (`/api/v1/auth*`, public forms, `/public/v1/*`); bot control on public forms (NFR-17) | CN-11 |
 | ALB / CloudFront | SSE heartbeat 15 s against 30 s / 60 s timeouts | ARCHITECTURE 5.4 |
@@ -387,13 +487,13 @@ All figures are US$/month at list prices, planning estimates, not quotes.
 
 | Item | Low | Expected | High | Basis |
 | --- | --- | --- | --- | --- |
-| GitHub plan (organisation, Team) | 12 | 20 | 40 | 3–10 seats × about US$4 (**Unverified**, recalled list price) |
+| GitHub plan (organisation, Team: rulesets, checks, CODEOWNERS, branch policies) | 12 | 20 | 40 | 3–10 seats × about US$4 (**Unverified**, recalled list price). **Does not include environment required reviewers**, which are not on Team for private repositories; the plan uses approval-by-apply instead (4.1 A2). Option A3 (higher plan with reviewers): price **Unverified**, not budgeted; shown as a decision, not added |
 | GitHub Actions minutes beyond the plan's included minutes | 0 | 40 | 150 | About 8,000–20,000 Linux minutes/month (150 PR runs × 25 min, 100 main builds × 30 min, nightly e2e) less included minutes; per-minute price **Unverified** |
 | Paging / on-call service | 0 | 40 | 150 | Per-user price of a paging product × 2–6 on-call people (**Unverified**); 0 if SNS email only (weak) |
 | SAST, secrets, dependency, container scanning | 0 | 0 | 0 | Open-source tools run in CI. SonarQube is not selected (14) |
-| Extra observability (log volume, canaries, traces) | 100 | 250 | 500 | Inside ARCHITECTURE "cloud infrastructure" and "tooling" lines; shown for visibility, **not additive** to the G1 total |
-| **Additive to G1 total** | **12** | **~100** | **~340** | Within the G1 "Tooling" line of 100 / 300 / 600 |
-| Load test day (scaled `loadtest` environment) | 100 | 150 | 250 | Derived from the G1 infrastructure figure (staging ≈ 30–40 % of production; a 1.5 × production-sized day) per test day; **Estimate** |
+| Extra observability (log volume, traces, **canaries ≈ 176**, 11.4) | 200 | 300 | 550 | Canaries alone are about US$176 (listed, 11.4); the low value rises accordingly. Inside ARCHITECTURE "cloud infrastructure" and "tooling" lines; shown for visibility, **not additive** to the G1 total |
+| **Additive to G1 total** (GitHub, minutes, paging; the observability row is inside G1 lines) | **12** | **~100** | **~340** | Within the G1 "Tooling" line of 100 / 300 / 600 |
+| Load test window (production-equivalent `loadtest`, 3.4: generate data, run, tear down) | 250 | 450 | 900 | Re-estimated (DPR-07): a production-sized, Multi-AZ environment for about 3 days (about 1 day of data generation, 1 of tests, 1 buffer/teardown) at the production infrastructure run-rate share per day (**Estimate**, ARCHITECTURE 10.1 infrastructure line ÷ 30 × days, not recalculated here because the line is the Architect's), plus about US$40/month snapshot storage for the generated data. Replaces draft 1's US$100–250 per day |
 | Region-loss rehearsal day | 100 | 200 | 300 | Section 10.4; **Estimate** |
 
 One-time assurance costs (penetration test, accessibility audit, clinician review) stay outside the run budget (ARCHITECTURE 10.3; D-28). The load-test and rehearsal days are build-budget items.
@@ -437,6 +537,7 @@ What I found on 2026-11-04 by web search (no tenant access, so **no tenant fact 
 | **OSV-Scanner** + Dependabot | **Selected** | Lockfiles, GitHub Actions pins, Terraform providers | Reads public advisories; Dependabot alerts must be enabled by the repo owner (currently **disabled**, 4.1) | US$0 | |
 | **Trivy** (images, Dockerfile, Terraform) | **Selected** | Each image digest; IaC config scan | Runner only | US$0 | |
 | **Syft/cosign** (SBOM, signatures) | **Selected** | Images and bundles | cosign keyless via GitHub OIDC | US$0 | |
+| **actionlint** (workflow lint) and the SHA-pin script | **Selected** | Workflow files on every PR | Runner only | US$0 | |
 | **OWASP ZAP baseline** | **Selected** | Staging only, passive, synthetic accounts | Target is our staging; no third party | US$0 | |
 | **CodeQL** | Not selected | n/a | Private-repository code scanning needs GitHub's paid code-security offering (**price unverified**) | Not budgeted | If the owner wants GitHub-native alerts and approves the licence |
 | **SonarQube** | **Not selected for R1** | n/a | A server in the tooling account (Community Build) or the hosted service would add a service to run or buy, plus a token with read access to the code. Current edition capabilities (branch and PR analysis) and pricing are **unverified** | Not budgeted (the G1 tooling line of up to US$600 would cover a hosted or small self-run option) | If Semgrep results are judged inadequate, or the owner wants quality-gate dashboards. Decision needs: edition, hosting, token owner, retention, cost |
@@ -459,17 +560,17 @@ What I found on 2026-11-04 by web search (no tenant access, so **no tenant fact 
 
 ### 15.2 The release package for G3 (contents defined now)
 
-`RELEASE-REVIEW.md` (independent Release Reviewer), `DEPLOYMENT-PLAN.md`, `ROLLBACK-RUNBOOK.md`, `OPERATIONS-HANDOFF.md`, containing: manifest hash; migration list and a statement of N-1 compatibility test result; backup freshness and the latest restore test result; load-test and pen-test status for this release (NFR-16, DEP-13); BAA register complete for every vendor that receives PHI (NFR-19); on-call rota and tested alert delivery (DEP-15); abort thresholds and observation window (9.2); named people for every action and their access; timing, expected user impact, and communication scope; unresolved findings and suppressions; GitHub-side enforcement status (4.1).
+`RELEASE-REVIEW.md` (independent Release Reviewer), `DEPLOYMENT-PLAN.md`, `ROLLBACK-RUNBOOK.md`, `OPERATIONS-HANDOFF.md`, containing: manifest hash; migration list and a statement of N-1 compatibility test result; backup freshness and the latest restore test result; load-test and pen-test status for this release (NFR-16, DEP-13); BAA register complete for every vendor that receives PHI (NFR-19); on-call rota and tested alert delivery (DEP-15); abort thresholds and observation window (9.2); named people for every action and their access; timing, expected user impact, and communication scope; unresolved findings and suppressions; **GitHub-side enforcement status**: the exact settings found (plan, rulesets, required checks, environment protection, Actions policy), and whether the approved-release record (7.4) is the only effective control (DPR-02); the approved-release record contents and expiry.
 
 ### 15.3 What the pipeline must refuse (production)
 
-Refuse if: the manifest digest differs from the approved one; an image signature or SBOM is missing; a required check on the commit failed or is stale; the environment lock is held; the G3 reference is absent; a snapshot or backup freshness check fails; or the previous release's manifest is not available for rollback.
+Refuse if: the manifest digest differs from the `manifest_hash` in the approved-release record read from the production account (7.4), or the record is missing, expired or for another environment or action; an image signature or SBOM is missing; a required check on the commit failed or is stale; the environment lock is held; the record's `g3_reference` is absent; a snapshot or backup freshness check fails; or the previous release's manifest is not available for rollback.
 
 ## 16. Decisions and actions this plan needs from people
 
 | # | Item | Owner | Blocks |
 | --- | --- | --- | --- |
-| 1 | GitHub plan and organisation move (4.1); a separate human approver and agent identity | Owner | Any claim that checks, reviews or release locks are enforced |
+| 1 | GitHub organisation on Team (rulesets, checks, CODEOWNERS, branch policies); a separate human approver and agent identity; **choose approval-by-apply (A2)** as the production approval control, or additionally a higher plan with environment reviewers (A3, price unverified) | Owner | Any claim that checks, reviews or release locks are enforced |
 | 2 | A **second human** for dual control (C4 approver, audit archiving, bootstrap, break-glass approval) | Owner (RK-5) | Bootstrap, audit archiving, privileged role changes in operation |
 | 3 | Named on-call rota with response times (D-29); paging service choice and cost | Owner | The 99.9 % claim; go-live |
 | 4 | Workspace edition and 2SV evidence (13.4) | Workspace administrator | RA-R1-01 evidence; SEC-D-04 |
@@ -481,6 +582,10 @@ Refuse if: the manifest digest differs from the approved one; an image signature
 | 10 | Confirm `www.`/`cms.` outside NFR-1..3 (SAR-11) | PM | SLO table |
 | 11 | CMS runtime vs static export + SaaS CMS | Owner, on cost | Marketing pipeline |
 | 12 | Whether canaries may write a labelled synthetic tenant in production (11.4) | Owner, compliance | Synthetic coverage |
+| 13 | **Connection budget:** explicit `max_connections` (proposed 500), deploy `maximumPercent` 150 %, the deploy-peak budget and alarm thresholds (9.1). Route: Orchestrator to Solution Architect | Solution Architect | Production sizing; DPR-05 closure |
+| 14 | Who applies approved-release changes (platform admin) and the roles' owners, session limits and expiry margin (7.2, 7.4) | Owner, human Architect | Any production deployment |
+| 15 | Confirm the A3 option, the `us-east-1` exemption list (3.1) and the GitHub Actions policy settings available on the chosen plan (4.1) | Owner, DevOps at G2 | Foundation tasks |
+| 16 | Release authorisation required for `marketing-production` (9.1) | Owner | Marketing publication |
 
 ### 16.1 Items from the Orchestrator routing and G1 carry-forward
 
@@ -498,13 +603,13 @@ Refuse if: the manifest digest differs from the approved one; an image signature
 
 Purpose: create the first two admin principals in each environment without any existing admin (C4 bootstrap; SHARED-BOUNDARIES 7.2.7, 7.5 P-4). Runs once per environment.
 
-Preconditions: infrastructure and the admin pool exist from IaC; identity tables migrated; **two named human custodians** (not the person being enrolled twice and not the same person; if only one human exists this runbook cannot run, see 16 item 2); two security keys per future admin purchased and stored; the GitHub environment `bootstrap-<env>` has the two custodians as required reviewers with self-review prevented.
+Preconditions: infrastructure and the admin pool exist from IaC; identity tables migrated; **two named human custodians** (not the person being enrolled twice and not the same person; if only one human exists this runbook cannot run, see 16 item 2); two security keys per future admin purchased and stored; the role `gh-bootstrap-<env>` is enabled by approval-by-apply (4.1 A2): a reviewed change under `infra/approvals/` approved by **both** custodians (two distinct human approvals; neither is the author) and applied by a platform admin. If the owner also buys the higher GitHub plan (A3), the `bootstrap-<env>` environment additionally has the two custodians as required reviewers with self-review prevented; the runbook does not depend on it.
 
-1. Custodian A starts `bootstrap.yml` (manual, input: environment, two named persons, ticket reference). Custodian B approves in GitHub. The job's role may only call the bootstrap function, nothing else.
+1. Custodian A starts `bootstrap.yml` (manual, input: environment, two named persons, ticket reference) after the enabling change is applied (custodian B has approved it). The job's role may only call the bootstrap function, nothing else.
 2. The bootstrap task (one-off ECS task, the release image digest, a dedicated role) creates two admin principals and two person records, and issues **two single-use enrolment tokens** valid for at most 30 minutes, each bound to one person. It writes the audit events through the worker path, not through a migration. Tokens are never printed to the workflow log.
-3. Tokens reach the two persons **out of band** (in person or an approved secure channel chosen by the custodians; not email, chat, or task comments).
+3. **Token retrieval path (DPR-10).** The bootstrap task writes each token to its own Secrets Manager secret `bootstrap/<env>/token/<person>` with a resource policy that allows `GetSecretValue` only to the **named custodian's IAM Identity Center role** (custodian A for one enrollee, custodian B for the other, so neither custodian can read both), MFA required, plus a session limit. Every read raises a CloudTrail alert to the security contact. The token expires after 30 minutes server-side and the secret is deleted on use or at expiry; deletion and the read events are evidence. The custodian hands the token to the enrollee **in person or by an approved secure channel they choose** (not email, chat, or task comments); custodians never paste it into GitHub. No production data access is needed to retrieve it. If a custodian's Identity Center role is not available, the runbook stops (it does not fall back to a shared account).
 4. Each person enrols a roaming security key with user verification on the admin sign-in path. Each also enrols a second key held separately.
-5. Verify: both can sign in and obtain an elevation grant; the audit trail shows creation, token issue, token use, enrolment; tokens are consumed and cannot be reused; the bootstrap role cannot be assumed any more (trust policy reverts to deny, by IaC).
+5. Verify: both can sign in and obtain an elevation grant; the audit trail shows creation, token issue, token read, token use, enrolment; tokens are consumed and cannot be reused; the token secrets are deleted; the bootstrap role cannot be assumed any more (trust policy reverts to deny by its expiry or a revoke change, by IaC).
 6. From here the in-app rule applies: every further admin change needs a request and a different approver with an active elevation (C4). Record the evidence (job run ID, audit event IDs, key serials by label not secret) in the operations handoff.
 7. Failure handling: expired token → repeat from step 1 with a new ticket; lost key → the dual-controlled enrolment runbook (P-4), never self-service. A partial run is inspected in the database before retry.
 
@@ -521,21 +626,23 @@ Evidence captured at go-live and each quarter by a Workspace administrator and r
 - Timings (deploy duration, snapshot duration, restore duration, RPO lag) are estimates until measured by rehearsal.
 - AWS service availability, BAA eligibility, RDS 17 behaviour and Cognito replica behaviour are documentation-based and unproven.
 - The Workspace edition and policy export are unconfirmed and cannot be checked from here.
-- GitHub controls cannot be configured or tested on the current plan; environment protection on a private repository is unverified.
+- GitHub controls cannot be configured or tested on the current plan. Environment required reviewers are not on Team for private repositories (reviewer-verified from GitHub Docs); the plan that provides them, and its price, are unverified. The approved-release record is a design: no part of it has been built or tested, and its workflow-side hash check is a control a tampered workflow could skip.
+- Connection numbers in 9.1 are arithmetic from ARCHITECTURE 9.2; `max_connections` is a proposal awaiting the Solution Architect.
 - Not legal advice. Retention, breach clocks and BAA coverage need counsel.
-- This plan is not reviewed by the Solution Architect Reviewer and not approved at G2.
+- This draft 2 is not re-reviewed by the Solution Architect Reviewer (round 2 pending) and not approved at G2.
 
 ## 18. Revision manifest
 
 | Item | Identifier |
 | --- | --- |
-| This document | HEAAA-16 document key `devops-plan`, draft 1; repo `docs/DEVOPS-PLAN.md` on branch `HEAAA-16-sdlc-devops-plan-plan-environments-ci-cd-backup-observability-and-recovery` |
+| This document | HEAAA-16 document key `devops-plan`, draft 2; repo `docs/DEVOPS-PLAN.md` on branch `HEAAA-16-sdlc-devops-plan-plan-environments-ci-cd-backup-observability-and-recovery` |
 | ARCHITECTURE | HEAAA-11 `architecture` rev `f2d240e4-2f63-45a1-aaa1-16a1f8854c32` |
 | PRD | HEAAA-11 `prd` rev `bba336f3-e934-4dbb-9158-0909fda132d7` |
 | SHARED-BOUNDARIES | HEAAA-12 `shared-boundaries` rev `0fffc85d-c3cd-4bad-a7f3-4f774fbbbf5a` |
 | Intake pack | Revision 2, commit `6ea01b5` |
-| Evidence date | 2026-11-04 |
+| Review round 1 | `devops-plan-review` rev `9215b96a-5a70-42e5-98d1-e19e311b1fc8` (reviewed draft 1 rev `f7536818`) |
+| Evidence date | 2026-11-04 (new checks in draft 2: none; reviewer-supplied GitHub Docs and CloudWatch pricing findings used, not re-verified by me) |
 
 ## 19. Next permitted action
 
-The Solution Architect Reviewer (`338c0bb5`) reviews this exact revision (review round 1 of 3). Afterwards DevOps cannot implement any pipeline: HEAAA-17 aligns the design revisions and the Delivery Planner includes this plan in the G2 package. Implementation, installs, workflow files, IaC and credentials all wait for a valid G2.
+The Solution Architect Reviewer (`338c0bb5`) re-reviews this exact revision (cumulative review round 2 of 3). DPR-05 (connection budget) needs a Solution Architect decision, routed through the Orchestrator. Afterwards DevOps cannot implement any pipeline: HEAAA-17 aligns the design revisions and the Delivery Planner includes this plan in the G2 package. Implementation, installs, workflow files, IaC and credentials all wait for a valid G2.
