@@ -4,8 +4,8 @@
 | --- | --- |
 | Task | HEAAA-14 `[SDLC:ux-design]` |
 | Author | UI/UX Designer agent (`1ddacad6-d28d-4bff-a938-a6957593b3ff`) |
-| Version | Draft 1 |
-| Status | **DRAFT. Not independently reviewed. Not human-approved. Not G2.** |
+| Version | Draft 2 (mockups revised after PM review round 1; brand content unchanged) |
+| Status | **DRAFT. Round 2 review pending. Not human-approved. Not G2.** |
 | Inputs | Intake pack rev 2 (`docs/intake/06-BRAND-AND-UX.md`, commit `6ea01b5`); PRD rev 3 (HEAAA-11 `prd`); ARCHITECTURE (HEAAA-11 `architecture`); SHARED-BOUNDARIES rev 3 (HEAAA-12) |
 
 ## 1. Brand evidence: what exists and what does not

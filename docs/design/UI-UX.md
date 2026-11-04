@@ -4,8 +4,8 @@
 | --- | --- |
 | Task | HEAAA-14 `[SDLC:ux-design]` |
 | Author | UI/UX Designer agent (`1ddacad6-d28d-4bff-a938-a6957593b3ff`) |
-| Version | Draft 1 |
-| Status | **DRAFT. Not independently reviewed. Not human-approved. Not G2.** Reviewers: Product Manager (journey coverage), Solution Architect (contract feasibility), per the task policy. |
+| Version | Draft 2 (revises draft 1, commit `8b2d3f4`, against PM review PMR-01..05, round 1 of 3) |
+| Status | **DRAFT. Round 2 review pending. Not human-approved. Not G2.** Reviewers: Product Manager (journey coverage), Solution Architect (contract feasibility), per the task policy. |
 | Inputs | Intake pack rev 2 (commit `6ea01b5`); PRD rev 3 and BA feature map (HEAAA-11 `prd`); ARCHITECTURE (HEAAA-11); SHARED-BOUNDARIES rev 3 (HEAAA-12, section 11 row "HEAAA-14 UX") |
 | Companions | `BRAND-BRIEF.md`, `UI-Mockups-Desktop.png`, `UI-Mockups-Mobile.png`, `MOCKUP-MANIFEST.md` (all in `docs/design/`) |
 | Not covered | HEAAA-13 API contracts are not final. Anything needing an endpoint or field not yet written is in section 13 and goes to the Architect. |
@@ -22,7 +22,7 @@ Release tags follow the intake: R1 (by end May 2027) is designed in full detail.
 
 | ID | Rule | Source |
 | --- | --- | --- |
-| UX-R1 | **Patient banner** on every screen that shows or edits a patient's clinical data: photo or initials, full name, date of birth and age, MRN, allergies. Sticky on scroll. On phones it collapses to name + DOB + allergy flag and expands on tap, but name and DOB stay visible. | BR-34 `[06 §2]` |
+| UX-R1 | **Patient banner** on every screen that shows or edits a patient's clinical data: photo or initials, full name, date of birth and age, MRN, allergies. Sticky on scroll. On phones it collapses to avatar (photo or initials) + name + DOB + allergy flag and expands on tap; photo/initials, name and DOB always stay visible (PMR-03). | BR-34 `[06 §2]` |
 | UX-R2 | **One portal, one accent, one written name** in the app bar. Colour is never the only cue. | `[06 §2]` |
 | UX-R3 | **Risky actions state their consequence** in the button label and a confirm dialog: "Sign and lock note", "Reject with reason", "Cancel appointment (a fee applies)". No "OK/Yes/No". | `[06 §2]` |
 | UX-R4 | **No PHI in URLs, page titles, tab titles, notifications or analytics.** Routes carry random IDs only. Browser tab title is the portal name and screen type ("Chart"), never a patient name. | CN-05, BR-23, BR-36 |
@@ -77,7 +77,7 @@ Every PRD journey maps to screens. IDs: `BS` brand site, `PP` patient, `PC` pre-
 | J-03 Guardian/proxy link | R1 | PP-06 Family & proxy list, PP-07 Add dependant/proxy (request), PP-08 Verification status, PP-09 Switch person (header chip "Booking for: …"). Default proxy visibility is appointments only (D-7 default) |
 | J-04 Book, confirm, reminders | R1 | PP-10 Service, PP-11 Doctor & place, **PP-12 Date & time (M, desktop 2; phone 2 shows the slot-taken error)**, PP-13 Confirm (and payment from R2 if D-3 retains fees), PP-14 Booked + add to calendar |
 | J-05 Reschedule, cancel, waitlist | R1 | PP-15 Appointment detail, PP-16 Change time, PP-17 Cancel with policy text, PP-18 Waitlist join, PP-19 Waitlist offer (accept within the countdown) |
-| J-06 Arrival to queue | R1 | **PC-01 Arrivals board (M, desktop 3)**, PC-02 Check-in (find patient by `POST` search; QR scan), PC-03 Forms/consents/insurance review, **PC-04 Triage panel with vitals (M, desktop 3)**, PC-05 Assign doctor/room, PP-20 Self check-in (QR landing), PP-21 Virtual waiting room |
+| J-06 Arrival to queue | R1 | **PC-01 Arrivals board (M, desktop 3)**, PC-02 Check-in (find patient by `POST` search; QR scan), PC-03 Forms/consents/insurance review (staff side), **PP-25 Pre-visit questionnaire, PP-26 Consents to read and e-sign (a required consent not signed keeps the consultation gate closed, BR-09), PP-27 Insurance card upload (front/back, scan state, SH-01 pattern) with status of all three items (to do / done / needs fixing)**, **PC-04 Triage panel with vitals (M, desktop 3)**, PC-05 Assign doctor/room, PP-20 Self check-in (QR landing), PP-21 Virtual waiting room |
 | J-07 Red flag | R1 | **PC-06 Red-flag alert bar (M, desktop 3)**, DR-10 Alert tray and acknowledge **(M, phone 6)**, PP-22 Emergency advice screen shown to the patient |
 | J-08 Telehealth | R1 | **PP-23 Device check and join (M, phone 3)**, PP-21 Waiting room, DR-04 Video + notes side by side |
 | J-09 Consultation and documentation | R1 | DR-01 Schedule, DR-02 Patient list, **DR-03 Chart summary and note editor (M, desktop 4)**, DR-05 Sign dialog (re-authentication), DR-06 Addendum, DR-07 Co-sign queue, DR-08 Tasks & messages |
@@ -86,21 +86,24 @@ Every PRD journey maps to screens. IDs: `BS` brand site, `PP` patient, `PC` pre-
 | J-21 Privacy request | R1 | PP-24 My privacy (download my data, deletion request), AD-05 Request queue and decision |
 | J-22 Staff sign-in | R1 | SH-03 Staff sign-in, SH-04 Administrator sign-in, SH-05 Session warning dialog, SH-06 Signed out |
 | Admin configuration (F-AD-01..09, 11) | R1 | AD-01 **Audit log (M, desktop 6)**, AD-03 Users & roles, AD-04 Clinics/locations/rooms/hours, AD-06 Services catalogue (with neutral display name), AD-07 Booking policies, AD-08 Message templates, AD-09 Integrations, AD-10 Feature flags/banners |
+| Profile and settings (F-PP-02, F-PP-16, F-PP-09) | R1/S | PP-35 Profile and contact details, PP-36 Notification preferences (channel per message type; safety-critical notices cannot be switched off), PP-37 Messages thread list and thread **(optional until D-5 is decided)**. Pattern: form field set + list-detail (sections 6, 12). Not in a mockup |
+| Doctor availability (F-DR-01, F-DR-02) | R1 | DR-11 Weekly schedule templates, DR-12 Leave and blocked time (shows affected appointments before saving), DR-13 Connect Google Calendar (consent text, connected/disconnected/error states, busy-only sync note). Pattern: schedule week + dialog. Not in a mockup |
+| Follow-ups, referrals, no-shows (F-PC-07, F-PC-09) | R1/S | PC-07 Follow-up and referral task list (due, owner, status), PC-08 No-show follow-up queue with outcome (contacted / rebooked / closed). Pattern: data table + status chip. Not in a mockup |
 | Brand-site CMS (F-BS-04) | R1 | `cms.` is a separate deployable with its own editor (off-the-shelf headless CMS UI). **Out of this design except branding of the login and the preview link.** Called out in section 14 |
 | J-10, J-11 Prescribing, EPCS | R2 | DR-20 New prescription, DR-21 Interaction/allergy check panel, DR-22 Override reason dialog, DR-23 Pharmacy picker, DR-24 Sign (standard), DR-25 EPCS two-factor signing |
 | J-12, J-13, J-15, J-20 Pharmacy fulfilment, no acknowledgement, refill, onboarding | R2 | **PH-01 Queue and detail (M, desktop 5; phone 5)**, PH-02 Reject with reason, PH-03 Query prescriber thread, PH-04 Controlled hand-over ID record, PH-05 Refill request, PH-06 Onboarding wizard, PP-30 Prescription status, PP-31 Choose another pharmacy (after rejection or 2 h no acknowledgement) |
 | J-14 Delivery with failed attempt | R3 | **PP-32 Medicine tracking (M, phone 4)**, PP-33 Failed attempt with next step, PH-07 Status/tracking update form |
 | J-16, J-17 Labs, critical results | R3 | DR-30 Order panel, DR-31 Results inbox, DR-32 Critical alert and acknowledge, DR-33 Release to patient, PC-10 Lab desk, PP-34 Results with plain-language explanation |
 
-Mockup coverage: 6 desktop screens (one per surface) and 6 phone screens. They are representative, not exhaustive. All other screens above are specified by the patterns in sections 6 to 8 and need design confirmation at build review before they ship.
+All navigation items in section 3.2 now map to a screen ID in this table, as a mockup or a pattern-level specification; items marked optional wait for the owner decision named in the row. Mockup coverage: 6 desktop screens (one per surface) and 6 phone screens. They are representative, not exhaustive. All other screens above are specified by the patterns in sections 6 to 8 and need design confirmation at build review before they ship.
 
 ## 5. Screen notes for the mockups (what each shows and why)
 
 | Mockup | What it demonstrates | Rules and journeys |
 | --- | --- | --- |
 | Desktop 1 Brand site, Find a doctor | Filter set from the intake (specialty, language, location, gender, availability); "next available" with a note that it is about a minute old; cookie banner with "Essential only" equal in weight to "Accept all" | J-01, F-BS-02, BR-36, SBR (60 s staleness) |
-| Desktop 2 Patient, Choose a time | Stepper; in-person/video toggle; time zone label; slot grid showing available times only; selection summary; **hold countdown**; cancellation policy sentence | J-04, BR-01, BR-05, X-01, CN-06 (hold has its own idempotency key) |
-| Desktop 3 Pre-consultation arrivals | Board with status chips, missing items, waits; red-flag bar; triage panel with out-of-range vitals in red with text "Out of range"; keyboard hints | J-06, J-07, BR-09, BR-10, X-06 |
+| Desktop 2 Patient, Choose a time | Stepper; in-person/video toggle; time zone label; slot grid showing available times only; selection summary; **hold countdown**; cancellation policy sentence (**placeholder text in the mockup; real wording and cut-off are an admin setting, G2 decision**) | J-04, BR-01, BR-05, X-01, CN-06 (hold has its own idempotency key) |
+| Desktop 3 Pre-consultation arrivals | Board with status chips, missing items, waits; red-flag bar with "Alert doctor" and "Reassign" only (no dismiss); triage panel with out-of-range vitals in red with text "Out of range"; keyboard hints | J-06, J-07, BR-09, BR-10, X-06 |
 | Desktop 4 Doctor chart and note | Patient banner with allergies; uncoded medication warning; vitals trend; SOAP editor; sign-and-lock wording; draft status | J-09, BR-11, BR-34, SA-F-08 |
 | Desktop 5 Pharmacy portal (R2) | Only own pharmacy's queue; "Ack due in 24 min" for the 2 h target; controlled substance marker and hand-over ID check notice; reject needs reason | J-12, BR-20, BR-21, BR-22 |
 | Desktop 6 Admin audit and BTG | Admin banner; audit table with denied/allowed; BTG review with justified / not justified and a required note; re-enter security key | J-18, BR-14, AC-36, 7.2.5 |
@@ -182,7 +185,7 @@ Each needs a negative-path test and clinical safety review (PRD 7). The patterns
 | **Drug alerts (R2, BR-15/16)** | Panel splits "Serious" (blocks signing until changed or an override reason is chosen/typed) from "Other" (acknowledge). Override is logged and the reason shown next to the medicine afterwards. No auto-dismiss, no dark patterns. Alert text is read in full by screen readers |
 | **Signing** (BR-11, BR-17) | Dialog: patient name + DOB, what will be locked, re-authentication, button "Sign and lock note". After sign, note is read-only with "Add addendum". EPCS signing (R2) is a separate dialog that shows the two-factor step and the prescriber identity status; if the user is not identity-proofed the dialog states the reason and offers no override |
 | **Consent gate** (BR-09) | "Start consultation" is disabled with the reason "Telehealth consent not signed." and a link to send/sign it. Emergency exception is a separate secondary action requiring a reason, recorded (X-07) |
-| **Red flag** (BR-10, X-06) | Full-width danger bar, not dismissible without acknowledge or reassign; for the patient, a screen with the fixed emergency text and a call button on phones. No clinical advice beyond the reviewed text |
+| **Red flag** (BR-10, X-06) | Full-width danger bar, has no Dismiss or close control. The only actions are "Alert doctor" (acknowledges and notifies) and "Reassign"; it leaves the screen only once one of them is recorded; for the patient, a screen with the fixed emergency text and a call button on phones. No clinical advice beyond the reviewed text |
 | **Out-of-range vitals** | Red border + "Out of range" text + value; threshold source is configurable (UX-A-10). Does not block saving |
 | **Break-the-glass** (BR-14) | Dialog "This patient is not assigned to you." Reason required (selection + free text), consequence stated: "Your access is logged and reviewed by compliance." Banner on the chart shows "Emergency access" until closed |
 | **Critical result (R3, BR-25)** | Persistent alert, acknowledge required, escalation countdown visible; window from the clinical safety reviewer (D-11) |
@@ -318,4 +321,16 @@ When screens exist, UI/UX compares the running candidate to this design for each
 
 ## 17. Next permitted action
 
-Independent review of this exact revision by the Product Manager (journey coverage) and Solution Architect (contract feasibility). After revision against findings the package goes to the Delivery Planner for the G2 package. The human UI/UX decision at G2 is the owner's.
+Round 2 independent review of this exact revision, limited to the changed rows and images listed in section 18 by the Product Manager (journey coverage) and Solution Architect (contract feasibility). After revision against findings the package goes to the Delivery Planner for the G2 package. The human UI/UX decision at G2 is the owner's.
+
+## 18. Revision log (cumulative)
+
+| Round | Finding | Status in draft 2 | Change |
+| --- | --- | --- | --- |
+| 1 | PMR-01 No patient screens for F-PP-07 | Addressed, review pending | PP-25, PP-26, PP-27 added to the J-06 row in section 4 |
+| 1 | PMR-02 Nav items without screens | Addressed, review pending | Three rows added to section 4 (PP-35..37, DR-11..13, PC-07/08); messaging marked optional until D-5 |
+| 1 | PMR-03 Phone banner dropped photo | Addressed, review pending | UX-R1 keeps the avatar in the collapsed banner |
+| 1 | PMR-04 Red-flag "Dismiss" contradicts section 8 | Addressed, review pending | Desktop mockup 3 button changed to "Reassign"; sections 5 and 8 aligned |
+| 1 | PMR-05 Unsupported claims in mockups | Addressed, review pending | "30+ clinics", "Free cancellation until 24 h before" and "Nothing was charged" removed or replaced by marked placeholders in both images |
+
+Images were re-rendered from the edited SVG sources; hashes are in `MOCKUP-MANIFEST.md`. Owner decisions UX-P-01..03, UX-O-06/07 and brand files UX-O-01 remain open for the G2 package.
