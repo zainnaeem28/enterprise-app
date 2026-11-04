@@ -2,13 +2,13 @@
 
 | Field | Value |
 | --- | --- |
-| Task | HEAAA-8 `[SDLC:architecture-overview]` |
+| Task | HEAAA-8 `[SDLC:architecture-overview]` (drafts 1–2); HEAAA-41 `[SDLC:prd-recheck-technical]` (draft 3, alignment only) |
 | Author | Solution Architect agent (`7efe9f61-495f-4237-82f9-fa178629da09`) |
-| Version | **Architecture overview draft 2** (supersedes draft 1, rev `7842e3a0-297f-46dd-9e66-d0780fbd7ef5`) |
-| Reviewed input | PRD draft 1: HEAAA-6 `prd` rev `3b976598-cd2f-4b4f-9903-7b83b5417f2b`; intake pack rev 2 (commit `6ea01b5`) |
-| Status | **DRAFT 2. Not yet re-reviewed. Not human-endorsed. This is not G1.** Draft 1 got PM product alignment APPROVE and Solution Architect Reviewer CHANGES REQUIRED (`architecture-review` rev `eeac0c21-abe8-4ccf-8157-60e840b683ef`). Section 18 maps every finding to its change. |
+| Version | **Architecture overview draft 3** (supersedes draft 2, HEAAA-8 `architecture` rev `8f523903-7d3d-476e-93f6-1d1565f6defe`, which passed Solution Architect Reviewer round 2). Draft 3 only aligns references and status with PRD revision 2; it changes no topology, technology, data ownership, trust boundary, control or cost figure (section 18.1). |
+| Reviewed input | PRD revision 2: HEAAA-39 `prd` rev `7d196a7d-8489-4dc1-86b7-d9dcd22711ad` (`docs/PRD.md` @ `12b9578`); earlier PRD draft 1 rev `3b976598`; intake pack rev 2 (commit `6ea01b5`) |
+| Status | **DRAFT 3. Not yet re-reviewed. Not human-endorsed. This is not G1.** Draft 2 got Solution Architect Reviewer PASS (`architecture-review` rev `46cabf10`). Draft 3 needs a recheck of the changed lines only (section 18.1). |
 | Security input | HEAAA-9 `security-assessment` rev `22d5dcc6-32c3-4cc9-8bc0-7fc47a103a1c` (repo commit `cabe41f`), independently reviewed PASS by the Security Reviewer (not human approval). Incorporated in section 8 and wherever a SEC-D control is cited. |
-| Review round | Resubmitted for cumulative round 2 of 3 |
+| Review round | Draft 2 closed cumulative round 2 of 3 with PASS. Draft 3 is a PRD-alignment delta; its recheck is round 3 of 3 for this artifact, limited to the changed lines |
 
 ## 0. How to read this
 
@@ -29,11 +29,11 @@ Prices are list-price planning figures, not quotes. Two of them were checked on 
 
 1. **The technical targets can be met with a simple design.** About 8,000 appointments a day and 1,000 staff is a moderate load. One well-structured application, one PostgreSQL database with a standby, and two to four app servers can meet p95 < 500 ms, slot search < 1 s and 99.9 % availability (section 9). This needs **no microservices, Kubernetes, Kafka or Redis**. Fewer moving parts means lower run cost and fewer failure modes.
 2. **Buy the regulated and commodity parts. Build the workflow.** The build budget cannot cover DEA EPCS certification, a drug database, video, or identity. The recommendation is to integrate certified or BAA-covered services for those, and to build scheduling, triage, charting, the partner-pharmacy coordination layer, audit, and the portals.
-3. **One design-changing finding (SA-F-01).** Under DEA rules, a pharmacy must receive controlled-substance e-prescriptions in its own DEA-certified pharmacy software. Our partner portal can therefore **not** be the legal channel that delivers prescriptions. Every prescription, partner or not, goes through the certified e-prescribing network. The partner portal mirrors the prescription and collects status (accepted, ready, out for delivery, delivered). The PRD and ST-03 need to say this.
+3. **One design-changing finding (SA-F-01).** Under DEA rules, a pharmacy must receive controlled-substance e-prescriptions in its own DEA-certified pharmacy software. Our partner portal can therefore **not** be the legal channel that delivers prescriptions. Every prescription, partner or not, goes through the certified e-prescribing network. The partner portal mirrors the prescription and collects status (accepted, ready, out for delivery, delivered). PRD revision 2 now says this (PRD section 1, RA-R2-03, RA-R2-05); the owner acknowledges it as PRD decision D-24.
 4. **The run budget (US$5–15k/month) is at risk.** Usage-based services, not hosting, are the main risk: SMS reminders, video minutes, and (from R2) per-prescriber e-prescribing fees. In the expected R1 scenario the cost is about **US$13,750/month**, close to the top of the range. The high scenario (about US$22,150) goes past US$15k. Draft 2 adds region-loss readiness, the brand-site/CMS runtime, the identity replication add-on and SMS registration fees, which draft 1 left out. Three inputs are missing: the share of visits by video, the default reminder channel, and the number of prescribers (section 10).
 5. **The build budget and the date are the binding constraint, not the technology.** This overview does not change scope. It lists the technical scope levers (section 11) for the G1 trim decision (PRD D-1, D-22).
-6. **Hosting provider is Open (intake C6).** I recommend **AWS** in a US region with a signed BAA, with Google Cloud as a close alternative (ADR-004). The owner decides.
-7. **Recovery from losing a whole region is designed per component (section 9.4), not just for the database.** It is backup-based (pilot light). Whether NFR-2/NFR-3 must cover region loss at all is still a PRD question (SA-F-05). If the owner says no, the region-loss lines in section 10 can be dropped.
+6. **Hosting provider is Open (intake C6).** I recommend **AWS** in a US region with a signed BAA, with Google Cloud as a close alternative (ADR-004). The owner decides (PRD D-30).
+7. **Recovery from losing a whole region is designed per component (section 9.4), not just for the database.** It is backup-based (pilot light). PRD revision 2 includes region loss in NFR-2/NFR-3 by default (decision D-26). If the owner says no, the region-loss lines in section 10 can be dropped.
 8. **Security specialist input is incorporated (section 8).** It changes two draft 1 positions: row-level security in the database is now part of the R1 design, not an option (SEC-D-01), and patients, partner pharmacies and staff use three separate identity realms (SEC-D-04, R-2).
 
 ## 2. Context
@@ -94,11 +94,11 @@ flowchart LR
 | Many external pharmacies; each delivers on its own | `[07 A3, B5]` | Network for all prescriptions. Partner portal is a coordination and status layer (ADR-007). |
 | Staff identity and calendars are Google Workspace | `[07 C4, C5]` | Staff sign in through Google OIDC. Busy-only calendar sync. |
 | GitHub Actions CI; repo `zainnaeem28/enterprise-app` | `[01 §7]` | CI/CD and security gates run in GitHub Actions. Cloud access uses OIDC federation, not stored keys. |
-| 99.9 %, RPO 15 min, RTO 4 h, zero-downtime deploys | NFR-1..5 | Multi-AZ database, ≥ 2 app instances, expand/contract migrations. Region-loss recovery planned per component (section 9.4); whether it is required depends on SA-F-05. |
+| 99.9 %, RPO 15 min, RTO 4 h, zero-downtime deploys | NFR-1..5 | Multi-AZ database, ≥ 2 app instances, expand/contract migrations. Region-loss recovery planned per component (section 9.4); required by default per PRD D-26. |
 | No migration R1–R3 | `[04 §5]` | Clean data model. No import tooling in R1–R3. |
 | Build US$150–300k R1–R3; run US$5–15k/month; R1 by end May 2027 | `[07 D3–D5]` | Fewest deployables, managed services, no self-run clusters. |
 | Synthetic data outside production | BR-35, SEC-D-20 | Separate cloud accounts per environment. Seed generators, not copies. |
-| Possible 42 CFR Part 2 (substance-use) records | Open intake item; HEAAA-9 R-5 | **Open.** If yes: data segmentation, consent for redisclosure, and possibly a separate KMS key per data class. Needs an owner decision before G1 (SEC-D-16). |
+| Possible 42 CFR Part 2 (substance-use) records | Open intake item; HEAAA-9 R-5 | **Open.** If yes: data segmentation, consent for redisclosure, and possibly a separate KMS key per data class. Needs an owner decision before G1 (SEC-D-16; PRD D-15, default "no Part 2 data"). |
 
 ## 3. Architecture style and topology (Recommendation, ADR-001)
 
@@ -178,12 +178,12 @@ Each module owns its tables. Other modules call its public interface and never w
 
 | Module | Owns (data) | Main responsibilities | First release |
 | --- | --- | --- | --- |
-| `identity` | Users, staff/patient/partner identities, sessions (bound to one audience), role assignments, location assignments, proxy grants | Sign-in through three realms (Google OIDC for staff; separate patient and partner user pools), step-up re-auth, idle timeout, deny-by-default authorization policy, and the per-request scope that row-level security uses (SEC-D-01) | R1 |
-| `organisation` | Organisation, clinics/locations, rooms, hours, holidays, services, policies, feature flags, templates | Admin configuration, time zone per location | R1 |
+| `identity` | Users, staff/patient/partner identities, staff profiles (including clinician licensed states, PRD TL-1), sessions (bound to one audience), role assignments, location assignments, proxy grants | Sign-in through three realms (Google OIDC for staff; separate patient and partner user pools), step-up re-auth, idle timeout, deny-by-default authorization policy, and the per-request scope that row-level security uses (SEC-D-01) | R1 |
+| `organisation` | Organisation, clinics/locations, rooms, hours, holidays, services, policies, feature flags, templates | Admin configuration, time zone per location; a neutral patient-visible display name per service for condition-revealing services (PRD 7.3, BR-23 extension) | R1 |
 | `patient` | Patient demographics, contacts, proxies, consents, preferences, care relationships (patient↔location), preferred pharmacy | Registration, proxy links, consent capture, duplicate detection and merge (SA-F-13) | R1 |
-| `scheduling` | Availability templates, external busy blocks, slot reservations (holds and appointments in one table, section 5.1), waitlist, check-ins, queue | Slot search, holds, booking invariant, reschedule/cancel, waitlist offers, arrivals and queue | R1 |
+| `scheduling` | Availability templates, external busy blocks, slot reservations (holds and appointments in one table, section 5.1), waitlist, check-ins, queue | Slot search, holds, booking invariant, reschedule/cancel, waitlist offers, arrivals and queue; licensing check at booking for video visits (PRD TL-1, RA-R1-28) | R1 |
 | `calendar-sync` | Calendar links, sync tokens, watch channels | Google Calendar busy-only two-way sync | R1 |
-| `telehealth` | Video sessions, device-check results, waiting room state | Create vendor rooms, issue short-lived join tokens, state-licensing check hook (D-2) | R1 |
+| `telehealth` | Video sessions, device-check results, waiting room state | Create vendor rooms, issue short-lived join tokens, licensing check at join with patient-confirmed location (PRD TL-1; states from D-2) | R1 |
 | `clinical` | Encounters, notes, addenda, co-signatures, problems, allergies, medication list, vitals, triage, immunisations | Charting, sign-and-lock, triage and red-flag rules | R1 (coded, ADR-010) |
 | `documents` | Document metadata, versions, classifications, legal holds, retention | Upload via pre-signed URL, scan, OCR, classify, confirm, retain | R1 |
 | `messaging` | Threads, messages, tasks | Staff tasks and messages; patient messaging per D-5 | R1 |
@@ -231,7 +231,7 @@ sequenceDiagram
 - Expiry does not depend on the worker. The transaction that inserts a new hold first marks any **overlapping hold for that doctor with `expires_at < now()`** as `expired`, then inserts. Two racing requests serialise on that row lock and on the constraint, so exactly one wins. Confirmation is an `UPDATE` of the same row from `held` to `confirmed` that succeeds only while `expires_at > now()`. The worker sweep only tidies up and triggers waitlist offers. It is not needed for correctness, so a stale hold can never cause a false "taken" answer.
 - Overbookable sessions (BR-02) are rows flagged as overbook capacity. They are excluded from the constraint and counted under a per-session row lock against the configured extra capacity.
 
-RA-R1-03 ("100 parallel confirmations, exactly one succeeds") then holds by construction for normal slots. SA-F-10 asks the PM to restate RA-R1-03 for non-overbookable slots. Whether the same patient may hold two overlapping appointments is a product rule for HEAAA-13.
+RA-R1-03 ("100 parallel confirmations, exactly one succeeds") then holds by construction for normal slots. PRD revision 2 restates RA-R1-03 for non-overbookable slots (SA-F-10). Whether the same patient may hold two overlapping appointments is a product rule for HEAAA-13.
 
 **Transactional outbox.** Side effects (messages, calendar writes) are recorded in the same transaction as the business change and sent by the worker. So a crash never produces "booked but not notified" or "notified but not booked".
 
@@ -317,7 +317,7 @@ The browser uploads to a **quarantine** bucket through a short-lived pre-signed 
 | Compute | **Containers on ECS Fargate** behind an ALB (API, worker, and `site`/`cms` in the marketing account); portal bundles on S3 + CloudFront | EKS (Kubernetes), EC2, Lambda | No cluster to operate. Rolling or blue/green deploys meet zero downtime. Kubernetes is not justified by this load. |
 | Database | **RDS for PostgreSQL, Multi-AZ**, PITR, cross-Region automated backup replication | Aurora PostgreSQL; self-managed Postgres | Managed failover and PITR meet NFR-1/2 within budget. **Constraint on the G2 choice (SAR-01):** use RDS for PostgreSQL unless Aurora is shown to meet the same cross-Region RPO at an acceptable cost. Cross-Region automated backups with PITR are documented for RDS for PostgreSQL. I have not confirmed the same feature for Aurora, where the usual options are Global Database (extra cost) or snapshot copies (RPO of hours). |
 | Patient & partner identity | **Managed identity service under BAA**: Cognito (if AWS), **Essentials plan**, with **two separate user pools**, one for patients and one for partner pharmacy users (separate realms, HEAAA-9 R-2). Patients: passkeys and email OTP preferred, SMS OTP as a fallback, TOTP optional. Partner users: MFA mandatory. **Regional recovery:** Cognito multi-Region replication (add-on; needs Essentials or Plus and a multi-Region KMS key; one replica; eventually consistent). In the replica, **TOTP MFA does not work**, and sign-up, password reset and profile changes are disabled. So every user must enrol a second factor that works in the replica (passkey or email OTP), and those operations are switched off in the UI during failover. MFA is never silently disabled (SEC-D-03). | Auth0 (BAA only on higher plans), Keycloak self-hosted | Avoids building credential storage. Keycloak saves fees but adds a security-critical server to operate. The replication add-on price is not verified (A-12). |
-| Staff identity | **Google Workspace OIDC** directly; platform session after sign-in. Application roles live in the app, not only in Google groups. Admin and compliance roles need step-up re-auth, security-key 2SV in a dedicated Workspace organisational unit, and a second approver for privileged role changes (SEC-D-04, SEC-D-19). | Federate Google into the patient identity service; separate admin IdP | Fewest hops. Staff and patient identity stay separate. MFA proof: see SA-F-06. HEAAA-9 asks for a "separate admin identity realm" (SEC-D-19). I propose the controls above instead of a fourth IdP. **This deviation needs Cybersecurity confirmation.** The Workspace super-admin is a privileged principal with its own access review. |
+| Staff identity | **Google Workspace OIDC** directly; platform session after sign-in. Application roles live in the app, not only in Google groups. Admin and compliance roles need step-up re-auth, security-key 2SV in a dedicated Workspace organisational unit, and a second approver for privileged role changes (SEC-D-04, SEC-D-19). | Federate Google into the patient identity service; separate admin IdP | Fewest hops. Staff and patient identity stay separate. MFA proof: see SA-F-06. HEAAA-9 asks for a "separate admin identity realm" (SEC-D-19). I propose the controls above instead of a fourth IdP. **This deviation needs Cybersecurity confirmation** (requested in HEAAA-41; current state in section 8.3). The Workspace super-admin is a privileged principal with its own access review. |
 | Video | **BAA-eligible video SDK** (Chime SDK as the low-cost reference; Zoom Video SDK, Daily, Vonage as alternatives). Selection criteria: encryption in transit, and end-to-end encryption where offered; per-visit single-use join tokens; waiting room with clinician admit; recording off by default (SEC-D-14) | Self-hosted WebRTC (SFU) | Media never touches our servers. Self-hosting at 250 concurrent visits is costly to run and secure. |
 | E-Rx / EPCS / drug checks | **One certified e-prescribing vendor** with EPCS, identity proofing, two-factor and an embedded drug database (e.g. DoseSpot, DrFirst) | Direct Surescripts certification + separate drug DB licence | Certification is out of budget and time. Bundled drug checks may remove DEP-7 as a separate licence. Vendor must expose check outcomes by API (SA-F-02). |
 | Payments (R2) | Hosted fields/tokens (Stripe or Adyen) | — | Card data never reaches our servers (BR-30). No PHI in payment metadata. |
@@ -437,13 +437,13 @@ ASVS L2 applies across the platform. L3 applies to authentication, authorization
 
 | Item | Owner | Note |
 | --- | --- | --- |
-| Part 2 applicability (R-5) | Owner, before G1 | Adds segmentation, consent-redisclosure rules and possibly a separate key |
+| Part 2 applicability (R-5) | Owner, before G1 (PRD D-15) | Adds segmentation, consent-redisclosure rules and possibly a separate key. PRD default if undecided: no Part 2 data |
 | Operating states (R-8, D-2) | Owner | State privacy rules (minors, mental health, reproductive health) |
 | Audit retention period; breach-notification clock | Counsel / compliance | Longest of HIPAA, DEA EPCS and state rules; confirm the 60-day HIPAA clock and stricter state rules |
-| Admin realm deviation (SEC-D-19) | Cybersecurity | Accept the controls in section 7, or require a separate admin IdP |
+| Admin realm deviation (SEC-D-19) | Cybersecurity | Accept the controls in section 7, or require a separate admin IdP. **Pending:** requested through a tracked Cybersecurity task under HEAAA-41. If rejected, sections 7, 8 and ADR-011 change and this document is revised again. |
 | Penetration tests before R1, R2 and R3 production | Owner (budget) | Release-gate items; no budget line yet (section 10.3, SA-F-14) |
 | Not trimming SEC-D-01, -06, -07, -10 or the pen-test cadence | Owner | Trimming any of them is a human risk decision (HEAAA-9 §7) |
-| PM items from HEAAA-9 §8 (authorization negative tests and PHI-free log checks as acceptance criteria; BAA and pen-test completion as release gates) | PM via Orchestrator | Passed on in the resubmission comment |
+| PM items from HEAAA-9 §8 (authorization negative tests and PHI-free log checks as acceptance criteria; BAA and pen-test completion as release gates) | PM via Orchestrator | Reflected in PRD revision 2: RA-R1-17 (negative authorization), NFR-18 (PHI-free logs), NFR-19 (BAA before go-live), RA-R1-18 and DEP-13 (penetration test as R1 release gate) |
 
 ## 9. Capacity model and feasibility of NFR-6, NFR-8 and NFR-9
 
@@ -471,8 +471,8 @@ ASVS L2 applies across the platform. L3 applies to authentication, authorization
 | NFR-8 slot search p95 < 1 s | **Feasible** | Availability computed from templates and indexed appointment/busy-block ranges; Google busy data pre-synced; per-location/date queries; optional short-lived cache only if tests show need. |
 | NFR-9 volumes | **Feasible** | Throughput is low. Correctness under contention (bookings) is the hard part, and section 5.1 handles it. |
 | RA-R1-10: 250 concurrent video visits | **Feasible via vendor** | A vendor capacity question, not ours. Confirm limits in the vendor contract. |
-| NFR-1 99.9 % | **Feasible with discipline** | Multi-AZ DB failover (typically 1–2 min); ≥ 2 instances per service across AZs; zero-downtime deploys; error budget 43 min/month. Scope of the measure needs a PRD rule (SA-F-05). |
-| NFR-2 RPO 15 min | **Feasible in-region; region loss per component (section 9.4)** | In-region: Multi-AZ synchronous standby and PITR (transaction logs every ~5 min). Region loss: section 9.4 states how each component is recovered and its expected RPO. Whether NFR-2 must cover region loss is open (SA-F-05). |
+| NFR-1 99.9 % | **Feasible with discipline** | Multi-AZ DB failover (typically 1–2 min); ≥ 2 instances per service across AZs; zero-downtime deploys; error budget 43 min/month. Measurement scope per PRD revision 2 NFR-1: third-party outages excluded, BR-33 behaviour still required, no planned-maintenance exclusion. Needs the on-call rota (DEP-15, D-29). |
+| NFR-2 RPO 15 min | **Feasible in-region; region loss per component (section 9.4)** | In-region: Multi-AZ synchronous standby and PITR (transaction logs every ~5 min). Region loss: section 9.4 states how each component is recovered and its expected RPO. PRD revision 2 includes region loss by default (D-26). |
 | NFR-3 RTO 4 h | **Feasible with a rehearsed runbook** | In-region failures recover in minutes. Region loss: IaC redeploys into the recovery Region from replicated state and images, the database restores from replicated backups, the identity replica is activated, and DNS switches (section 9.4). A timed rehearsal is required before R1 (NFR-3). |
 | NFR-5 zero downtime | **Feasible** | Rolling/blue-green deploys; expand → migrate → contract database changes; backward-compatible API for one release. |
 | NFR-7 LCP < 2.5 s on 4G | **Feasible** | CDN, static rendering for `site`, code splitting, image optimisation; budget enforced in CI (Lighthouse). |
@@ -499,7 +499,7 @@ Rule: (pool × instances) summed over deployables, plus `LISTEN` connections, st
 
 ### 9.4 Recovery from losing the primary region (SAR-01, SEC-D-17)
 
-**Scope.** This is a backup-based ("pilot light") recovery into the US recovery Region (e.g. us-west-2). It is not a hot second region (A-8). Whether NFR-2/NFR-3 must cover loss of a whole region is a PRD question (SA-F-05). Until the owner answers, this design and its cost (section 10.1) assume that it must. If the owner says no, the rows marked † can be dropped, and NFR-2/NFR-3 then apply to in-region failures only.
+**Scope.** This is a backup-based ("pilot light") recovery into the US recovery Region (e.g. us-west-2). It is not a hot second region (A-8). PRD revision 2 includes loss of a whole region in NFR-2/NFR-3 by default (decision D-26, from SA-F-05). This design and its cost (section 10.1) follow that default. If the owner says no, the rows marked † can be dropped, and NFR-2/NFR-3 then apply to in-region failures only.
 
 | Component | How it is protected | Expected RPO on region loss | How it is recovered |
 | --- | --- | --- | --- |
@@ -538,7 +538,7 @@ All figures are US$/month at list prices. They are **not quotes**. The scenarios
 | OCR, malware scan, maps, misc. | 200 | 400 | 800 | Upload volume unknown (A-7) |
 | Tooling (paging, SAST if paid) | 100 | 300 | 600 | Selected at G2 |
 | **R1 total** | **8,150** | **13,750** | **22,150** | Budget US$5,000–15,000 |
-| of which region-loss lines † | 400 | 800 | 1,800 | Dropped if the owner decides region loss is out of scope (SA-F-05) |
+| of which region-loss lines † | 400 | 800 | 1,800 | Dropped if the owner decides region loss is out of scope (PRD D-26) |
 
 **One expected figure:** the expected R1 run cost is **US$13,750/month**. It replaces draft 1's US$12,650, which was also quoted as "≈ US$12.5k" (PM-F-A1, SAR-08). The increase is the four lines draft 1 left out: region-loss readiness, the site/CMS runtime, SMS registration and the identity replication add-on.
 
@@ -554,11 +554,11 @@ All figures are US$/month at list prices. They are **not quotes**. The scenarios
 
 ### 10.3 Costs outside the run budget that the PRD requires
 
-Independent penetration tests before R1, R2 (EPCS) and R3 (webhook API) production, as release gates (NFR-16, HEAAA-9 §5 item 9). Timed disaster-recovery exercise (NFR-3). Manual accessibility audit (NFR-10). A licensed clinician's safety review (D-12). SOC 2 readiness (Recommendation). **None of these has a budget line.** They come out of the US$150–300k build budget unless the owner says otherwise (SA-F-15).
+Independent penetration tests before R1, R2 (EPCS) and R3 (webhook API) production, as release gates (NFR-16, HEAAA-9 §5 item 9; PRD DEP-13). Load-test environment sized for 2 × sustained and 3 × burst (PRD DEP-14). Timed disaster-recovery exercise (NFR-3; PRD DEP-16). Manual accessibility audit (NFR-10; PRD DEP-17). A licensed clinician's safety review, or the owner's recorded interim self-review for R1 (PRD DEP-11, D-12a). SOC 2 readiness (Recommendation). **None of these has a budget line.** PRD revision 2 defaults them to the US$150–300k build budget unless the owner says otherwise (SA-F-14; PRD D-28).
 
 ### 10.4 Levers if the cost is too high
 
-1. **Email first, SMS by patient choice.** This is the largest single lever. **It is an owner choice, not a default (PM-F-A3).** The confirmed rule BR-08 (two reminders) stays as it is. The owner could decide that one of the two reminders goes by email or push instead of SMS, or that SMS is opt-in. The design supports any of these.
+1. **Email first, SMS by patient choice.** This is the largest single lever. **It is an owner choice, not a default (PM-F-A3; PRD D-25 (c)).** The confirmed rule BR-08 (two reminders) stays as it is. The owner could decide that one of the two reminders goes by email or push instead of SMS, or that SMS is opt-in. The design supports any of these.
 2. Chime-class video pricing. Negotiate committed-use rates at the expected volume.
 3. Web Push for portal users at no per-message cost.
 4. Savings plans or reserved database capacity after the R1 load test (typically 20–40 % on those lines).
@@ -585,15 +585,15 @@ These are options for the owner's trim decision (PRD D-1, D-22). The Architect d
 | --- | --- | --- |
 | A-1 | 20 slot searches per booking | Analytics after launch; load-test result |
 | A-2 | Monthly appointments = 8,000 × 70 % × 26 days ≈ 145,600 | Owner's real average-day volume |
-| A-3 | 30 / 60 / 100 % of patients get SMS | Decision on default reminder channel (SA-F-03) |
+| A-3 | 30 / 60 / 100 % of patients get SMS | Decision on default reminder channel (SA-F-03; PRD D-25 (c)) |
 | A-4 | ~100,000 OTP SMS per month | Identity design (passkeys reduce OTPs) |
-| A-5 | Video share 15 / 30 / 50 %; 22 min per attendee, 2 attendees | Owner's telehealth share (SA-F-04) |
+| A-5 | Video share 15 / 30 / 50 %; 22 min per attendee, 2 attendees | Owner's telehealth share (SA-F-04; PRD D-25 (b)) |
 | A-6 | ~2 million audit events per day at peak | Measured after the R1 load test |
 | A-7 | Upload volume moderate (tens of thousands of pages a month) | Clinic workflow data |
-| A-8 | Staging ≈ 30–40 % of production. Region-loss recovery is backup-based (pilot light, section 9.4), not a hot second region. | DevOps plan at G2; SA-F-05 decision |
+| A-8 | Staging ≈ 30–40 % of production. Region-loss recovery is backup-based (pilot light, section 9.4), not a hot second region. | DevOps plan at G2; PRD D-26 |
 | A-9 | 30k–100k monthly active patients | Launch analytics |
-| A-10 | Prescriber count ~150–400 (unknown) | Owner input (SA-F-03) |
-| A-11 | Custom build per intake (D-1 not yet decided). **If D-1 picks buy or hybrid, this overview reopens.** | D-1 |
+| A-10 | Prescriber count ~150–400 (unknown) | Owner input (SA-F-03; PRD D-25 (a)) |
+| A-11 | Custom build per intake (D-1 not yet decided). **If D-1 picks buy or hybrid, this overview reopens.** | PRD D-1 (default if undecided: custom build) |
 | A-12 | Cognito multi-Region replication add-on costs US$200 / 400 / 1,000 per month (allowance; price not verified) | AWS pricing page or quote before G2 |
 | A-13 | RDS cross-Region backup replication lag is under 15 min | Measured in the DR rehearsal |
 
@@ -604,17 +604,17 @@ These are options for the owner's trim decision (PRD D-1, D-22). The Architect d
 | ADR-001 | Modular monolith: one API, one worker, one database | Proposed | Medium: modules can be extracted later |
 | ADR-002 | PostgreSQL as the only system of record, also job queue and alert fan-out | Proposed | Medium |
 | ADR-003 | Transactional outbox and durable jobs for every external side effect | Proposed | Low |
-| ADR-004 | AWS, US region pair, under BAA (owner decides; GCP is the alternative) | Proposed, **needs owner decision (C6)** | High once built |
+| ADR-004 | AWS, US region pair, under BAA (owner decides; GCP is the alternative) | Proposed, **needs owner decision (C6; PRD D-30)** | High once built |
 | ADR-005 | Separate web origins (site, patient, staff, pharmacy), each calling the API at its own same-origin `/api/*` with host-only, audience-bound `__Host-` cookies; no CDN caching of API paths; machine traffic on a cookie-less `integrations.` host | Proposed | Low–medium |
 | ADR-006 | E-prescribing, EPCS signing/proofing and drug checks through one certified vendor | Proposed | High after R2 build |
-| ADR-007 | Network is the legal prescription channel for every pharmacy; partner portal is coordination and status | Proposed, **needs PRD change (SA-F-01)** | High if reversed (needs DEA-certified pharmacy software) |
+| ADR-007 | Network is the legal prescription channel for every pharmacy; partner portal is coordination and status | Proposed; **adopted in PRD revision 2, needs owner acknowledgement (PRD D-24)** | High if reversed (needs DEA-certified pharmacy software) |
 | ADR-008 | Append-only partitioned audit, insert-only grants, batch Merkle anchoring (no per-row chain), Object Lock archive in a separate account, dual-control archival | Proposed | Medium |
 | ADR-009 | Realtime staff alerts: durable alert rows, `NOTIFY` → API → SSE with heartbeats; one `LISTEN` connection per API instance outside the pool; no broker | Proposed | Low |
-| ADR-010 | Coded relational clinical model from R1; FHIR R4 façade later; no ONC certification R1–R3 | Proposed, **needs owner decision (SA-F-07)** | Medium |
+| ADR-010 | Coded relational clinical model from R1; FHIR R4 façade later; no ONC certification R1–R3 | Proposed, **needs owner decision (SA-F-07; PRD D-27)** | Medium |
 | ADR-011 | Three identity realms: Google OIDC for staff; separate managed user pools for patients and for partners, with multi-Region replication (no TOTP in the replica, so a second working factor is required) | Proposed | Medium |
 | ADR-012 | Terraform/OpenTofu IaC with replicated state, GitHub Actions with OIDC, one cloud account per environment plus tooling, log-archive and marketing accounts | Proposed | Low |
 | ADR-013 | Deny-by-default API policy layer **plus** PostgreSQL row-level security on PHI and pharmacy-tenant tables from R1 (SEC-D-01) | Proposed | High to add later; that is why it is in R1 |
-| ADR-014 | Region-loss recovery per component, backup-based (section 9.4); RDS for PostgreSQL unless Aurora meets the same cross-Region RPO | Proposed, **depends on SA-F-05** | Medium |
+| ADR-014 | Region-loss recovery per component, backup-based (section 9.4); RDS for PostgreSQL unless Aurora meets the same cross-Region RPO | Proposed; **follows PRD D-26** (default: region loss in scope) | Medium |
 | ADR-015 | Booking invariant: one reservation table with partial exclusion constraints; expired holds released in the inserting transaction | Proposed | Low before build |
 
 ## 14. Answers to the PM's hand-off questions (PRD §15)
@@ -625,16 +625,16 @@ These are options for the owner's trim decision (PRD D-1, D-22). The Architect d
 4. **Coding and FHIR/SMART scope.** Coded from R1 (RxNorm, SNOMED CT/ICD-10-CM, LOINC). CPT is deferred (paid licence). FHIR façade when there is a consumer. No ONC certification unless required (ADR-010, SA-F-07).
 5. **Audit and BTG.** Section 6 (audit store) and 5.4 (BTG alert as a durable alert with compliance review queue). Retention value is set at G2 with legal input.
 6. **R1 without drug database and payments.** Yes. To avoid R2 rework, the R1 build should include the items below. **These are Architect recommendations, not confirmed scope (PM-F-A2).** Each one is either a PM-confirmed addition or a trim candidate for the owner's D-1/D-22 decision:
-   - coded medications and allergies (also SA-F-08) — **recommended addition**;
+   - coded medications and allergies (also SA-F-08) — **now in PRD revision 2** (RA-R1-09, [Rec]);
    - the patient's preferred pharmacy stored with its NCPDP ID from the vendor directory, or a free-text placeholder resolved in R2 — **recommended addition; trim candidate** (cost of trimming: data clean-up in R2);
-   - prescriber attributes on staff profiles (NPI, DEA number, licensed states) — **recommended addition; trim candidate** (cost of trimming: a staff-profile change and data entry before R2);
+   - prescriber attributes on staff profiles: **licensed states are now required in R1** by PRD revision 2 (TL-1, RA-R1-28, [Rec]); NPI and DEA number remain a **recommended addition; trim candidate** (cost of trimming: a staff-profile change and data entry before R2);
    - an invoice-ready service price on the catalogue — already in scope (F-AD-03);
    - the `integration-core` and outbox foundation — already in this architecture.
 7. **Security assumptions.** In section 8 of this document, not in the PRD. Section 8 now incorporates HEAAA-9.
 
 ## 15. PRD technical review findings (summary)
 
-Full findings with evidence and requested PRD wording are in the HEAAA-8 document `prd-technical-review` (draft 1). They were raised against PRD rev `3b976598`.
+Full findings with evidence and requested PRD wording are in the HEAAA-8 document `prd-technical-review` (draft 1). They were raised against PRD rev `3b976598`. Their recheck on PRD revision 2 (`7d196a7d`) is HEAAA-41 document `prd-technical-recheck`.
 
 | ID | Severity | Finding |
 | --- | --- | --- |
@@ -660,14 +660,16 @@ Full findings with evidence and requested PRD wording are in the HEAAA-8 documen
 - Prices: two were checked online, and the Cognito replication limits were read in AWS documentation (section 10.4). The 10DLC fees, the AWS SMS rate and the Cognito replication add-on price are **not** verified. Every other cost is an estimate with a wide range.
 - Region-loss RPOs in section 9.4 are expected values from service documentation. None has been measured. Passkey behaviour in the Cognito replica is inferred, not verified.
 - Not legal, regulatory or clinical advice. DEA, HIPAA, Part 2, Cures Act and state-law statements are an engineering reading and need qualified review (PRD D-12).
-- Draft 2 is not yet re-reviewed. Not human-endorsed.
+- Draft 3 is not yet re-reviewed. Not human-endorsed. SEC-D-19 is not yet confirmed by Cybersecurity.
 
 ## 17. Revision manifest
 
 | Item | Identifier |
 | --- | --- |
-| This document | HEAAA-8 document key `architecture`, **draft 2** (revision ID and repo commit in the resubmission comment); supersedes rev `7842e3a0-297f-46dd-9e66-d0780fbd7ef5` (commit `55a49ad`). Repo `docs/ARCHITECTURE.md` on branch `HEAAA-8-sdlc-architecture-overview-review-technical-feasibility-and-prepare-architecture-overview` |
-| PRD reviewed | HEAAA-6 `prd` rev `3b976598-cd2f-4b4f-9903-7b83b5417f2b` (still the latest on 2026-11-04) |
+| This document | HEAAA-41 document key `architecture`, **draft 3** (revision ID and repo commit in the HEAAA-41 comment); supersedes HEAAA-8 `architecture` rev `8f523903-7d3d-476e-93f6-1d1565f6defe` (draft 2, commit `53fc277`), which superseded rev `7842e3a0` (draft 1, commit `55a49ad`). Repo `docs/ARCHITECTURE.md` on branch `HEAAA-10-sdlc-discovery-align-consolidate-discovery-findings-and-freeze-g1-package` |
+| PRD aligned with | HEAAA-39 `prd` rev `7d196a7d-8489-4dc1-86b7-d9dcd22711ad` (PRD revision 2, `docs/PRD.md` @ `12b9578`). Earlier: HEAAA-6 `prd` rev `3b976598` (draft 1) |
+| PRD recheck | HEAAA-41 document `prd-technical-recheck` |
+| Technical review of draft 2 | HEAAA-8 document `architecture-review` rev `46cabf10-20ee-47aa-984b-7f5c236f15b5` (round 2 of 3, PASS; Low SAR-09..11 routed to HEAAA-13) |
 | Intake pack | Revision 2, commit `6ea01b5` |
 | Findings against the PRD | HEAAA-8 document `prd-technical-review` rev `0050e877-2ce7-4072-8e80-fa78129ab478` |
 | Technical review of draft 1 | HEAAA-8 document `architecture-review` rev `eeac0c21-abe8-4ccf-8157-60e840b683ef` (round 1 of 3, CHANGES REQUIRED) |
@@ -690,4 +692,22 @@ Full findings with evidence and requested PRD wording are in the HEAAA-8 documen
 | PM-F-A3 | SMS lever stated as an owner choice; BR-08 unchanged | §10.4 |
 | PM-F-A4 / HEAAA-9 input | HEAAA-9 incorporated (TB1–TB8, SEC-D-01..22, R-1..R-8). Draft 1 positions changed: RLS from R1 (ADR-013); separate patient and partner realms. One proposed deviation (SEC-D-19 admin realm) needs Cybersecurity confirmation. C6 and D-1 remain owner decisions. | §1.8, §6, §7, §8, ADR-011, ADR-013 |
 
-**Next permitted action:** the Solution Architect Reviewer re-reviews this exact revision (changed content plus SAR closure, cumulative round 2 of 3). Because section 8 now incorporates HEAAA-9, the PM's product-alignment check may also look at the changed sections, mainly §14 Q6 and §10. G1 cannot be requested until review passes and the owner has the open decisions in front of them: C6 hosting, D-1 build/buy, SA-F-05 region-loss scope, Part 2 applicability, and the cost position (SA-F-03). Detailed design (HEAAA-12, HEAAA-13) waits for G1.
+Draft 2 next action (historical): Solution Architect Reviewer round 2 returned PASS on rev `8f523903`.
+
+### 18.1 Changes in draft 3 (alignment with PRD revision 2, HEAAA-41)
+
+Draft 3 changes **references and status text only**. Topology, deployables, module boundaries, data ownership, technology choices, trust boundaries, security controls, capacity figures and cost figures are unchanged from draft 2. No SAR finding is reopened.
+
+| Change | Why | Where |
+| --- | --- | --- |
+| Header, revision manifest: input is PRD revision 2 (`7d196a7d`); draft 3 supersedes `8f523903` | Draft 2 cited PRD draft 1 | Header, §17 |
+| "The PRD needs to say this" replaced by the PRD revision 2 location and decision ID for the prescription channel (D-24), region loss (D-26), hosting (D-30), ONC/FHIR (D-27), Part 2 (D-15), cost inputs (D-25 (a)–(c)), build/buy (D-1) | Those PRD questions are now answered in the PRD, with a default if the owner does not decide | §1 items 3, 6, 7; §2.2; §5.1; §8.3; §9.2; §9.4; §10.1; §10.4; §12 A-3, A-5, A-8, A-10, A-11; §13 ADR-004, 007, 010, 014 |
+| Clinician licensed states held on the staff profile; licensing check at booking (`scheduling`) and at join (`telehealth`) | PRD TL-1 and RA-R1-28 make it an R1 requirement ([Rec]); §14 Q6 had it as a trim candidate | §4 `identity`, `scheduling`, `telehealth`; §14 Q6 |
+| Neutral patient-visible display name per service owned by `organisation` | PRD 7.3 BR-23 extension; the PHI-free template allowlist in §6 already prevents binding clinical names | §4 `organisation` |
+| Coded medications and allergies marked as now in the PRD | PRD RA-R1-09 [Rec] | §14 Q6 |
+| §10.3 assurance costs: load-test environment added (PRD DEP-14); wrong reference SA-F-15 corrected to SA-F-14; PRD DEP and D-28 references | Errata and alignment | §10.3 |
+| §8.3 PM items marked as reflected in PRD revision 2; SEC-D-19 marked pending with the tracked Cybersecurity request | Status | §7 staff identity, §8.3 |
+
+Items checked with no architecture change needed: duplicate detection and audited merge (BR-37) is already owned by `patient` (§4); its cross-module re-pointing of patient references is a HEAAA-13 transaction design item. Asynchronous audit export with a size limit (RA-R1-12) is already owned by `audit` (export jobs). Workspace-enforced staff 2SV (RA-R1-01) matches §7. NFR-1 scope, NFR-9 headroom, D-25 default assumptions (A-3, A-5, A-10) and cost figures (US$13,750 expected, 22,150 high, region-loss 800) match §9 and §10.1.
+
+**Next permitted action:** Cybersecurity confirms or rejects the SEC-D-19 deviation. Then the Solution Architect Reviewer rechecks the changed lines of this exact revision (section 18.1; cumulative round 3 of 3 for this artifact). If Cybersecurity rejects SEC-D-19, a further revision changes §7, §8 and ADR-011 before that recheck. G1 cannot be requested until both PRD rechecks and this recheck pass and the owner has the open decisions in front of them (PRD D-1, D-2, D-12a, D-24..D-31, D-15). Detailed design (HEAAA-12, HEAAA-13) waits for G1.
