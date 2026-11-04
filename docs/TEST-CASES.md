@@ -4,9 +4,9 @@
 | --- | --- |
 | Task | HEAAA-15 `[SDLC:qa-plan]` |
 | Author | QA Engineer agent (`a2336f9b-c077-4b13-b5d3-393af748139b`) |
-| Version | **Test cases draft 1** |
-| Status | **DRAFT 1. Not independently reviewed. Not human-approved. This is not G2.** Nothing in this document has been executed. Every case is `Planned`. |
-| Reviewer for this deliverable | Not the author. Per HEAAA-12 section 11 the QA lane is reviewed by the Product Owner Reviewer and the Solution Architect (Orchestrator assigns; none assigned yet) |
+| Version | **Test cases draft 2** (supersedes draft 1, HEAAA-15 `test-cases` rev `13a162da`; changes limited to review findings TC-RV-01..07, see section 18) |
+| Status | **DRAFT 2. Independent review round 1 returned CHANGES REQUIRED on draft 1; this draft has not been rechecked. Not human-approved. This is not G2.** Nothing in this document has been executed. Every case is `Planned`. |
+| Reviewer for this deliverable | Not the author. Product Owner Reviewer (AI) reviewed draft 1 (round 1 of 3, CHANGES REQUIRED). Per HEAAA-12 section 11 the Solution Architect also reviews this lane (Orchestrator assigns) |
 | Approved inputs (G1) | PRD revision 3: HEAAA-11 `prd` rev `bba336f3-e934-4dbb-9158-0909fda132d7` (`docs/PRD.md` @ `f8d3d6e`). ARCHITECTURE draft 4: HEAAA-11 `architecture` rev `f2d240e4-2f63-45a1-aaa1-16a1f8854c32` (`docs/ARCHITECTURE.md` @ `f8d3d6e`; HEAAA-41 rev `a29940b5`). Human acceptance of both on HEAAA-11, 2026-11-04 22:03Z |
 | Design input | HEAAA-12 `shared-boundaries` rev `0fffc85d-c3cd-4bad-a7f3-4f774fbbbf5a` (draft 3; independent review PASS, `shared-boundaries-review` rev `80b898be`; sha256 of body `84ba3681…f680`). Cybersecurity review of its sections 7, 9.1 and 10 is still outstanding |
 | Not yet available | HEAAA-13 technical design (ERDs, API contracts, failure design), HEAAA-14 UI/UX and mockups, HEAAA-16 DEVOPS-PLAN. All three are in progress. Steps that name screens, field names or endpoints use the PRD/boundary vocabulary and **must be re-bound to those revisions at alignment (HEAAA-17) before G2** (section 17) |
@@ -21,6 +21,8 @@
 **Blocked cases.** A case is `BLOCKED` when its decision is open (section 13). A blocked case is not skipped and not waived. It stays in the plan and blocks the criterion it covers.
 
 **Execution status values.** `Planned` (written, not run), `Ready` (candidate, environment and data exist), `Passed`, `Failed`, `Blocked`, `Pending-human` (needs the named person; stays pending until that person performs it). This draft uses only `Planned`, `Blocked` and `Pending-human`.
+
+**`PM-confirm`.** A case or expected value tagged `PM-confirm-n` rests on a rule the PRD does not state or marks as derived or recommended. The case is written so it can run, but the tagged assertion is **not asserted** until the PM (through the Orchestrator) answers; the list is in section 13. A test never decides scope.
 
 ### 0.1 Case fields
 
@@ -148,7 +150,7 @@ Generation scripts are test code. They are written only after valid G2 (WORKFLOW
 
 ## 5. SEC-D-19 admin and compliance controls (RA-R1-32, condition C7)
 
-**Source.** ARCHITECTURE draft 4 section 8.4 and ADR-011 (rev `f2d240e4`), conditions C1–C7 from Cybersecurity HEAAA-42 comment `e6414334`. "Admin and compliance roles" means every role that can assign roles, change configuration or policy, read audit data, export data, or approve break-the-glass. The exact role list is fixed in HEAAA-13; until then the cases use `ADM-*` and `CMP-*`.
+**Source.** ARCHITECTURE draft 4 section 8.4 and ADR-011 (rev `f2d240e4`), conditions C1–C7: the architecture answers are in ARCHITECTURE section 8.4 (rev `f2d240e4`); the Cybersecurity conditions are in HEAAA-42 comment `e6414334` (re-read for draft 2, see 5.5). "Admin and compliance roles" means every role that can assign roles, change configuration or policy, read audit data, export data, or approve break-the-glass. The exact role list is fixed in HEAAA-13; until then the cases use `ADM-*` and `CMP-*`.
 
 **Path.** D-35 defaults to **path B** (separate `admin_pool` realm, HEAAA-12 section 7). Path A (staff realm + C1–C3) is still possible until HEAAA-13 freezes the identity ERD. Cases are tagged `A`, `B` or `A+B`. A case tagged `A+B` runs on whichever path is built and must pass on it. If the owner switches path, the tags tell QA which cases to rerun. Known wording gaps SA-F-18 (RA-R1-32 names C1 on either path; C1's Google-OIDC part exists only on path A) are handled by testing the **server-side elevation grant** on both paths and the Google forced-re-auth/`auth_time` check on path A only.
 
@@ -161,8 +163,8 @@ Generation scripts are test code. They are written only after valid G2 (WORKFLOW
 | TC-SEC-01 | C1, RA-R1-32 | `ADM-1` | Signed in, no elevation. A privileged action list from HEAAA-13 (assign role, change policy, read audit, export, approve BTG) | 1. Call each privileged action directly (API and UI) with the session only | Each is refused: `403 auth.forbidden` (reason: elevation required). Nothing is changed. A `denied` audit event exists per attempt with outcome and reason | P0 | N, SEC | A+B | AUTO |
 | TC-SEC-02 | C1 | `ADM-1` | Elevation window configured (planning value 15 min; final value from HEAAA-13); test clock control or a short configured window in `ENV-INT` | 1. Obtain a grant with a real WebAuthn assertion<br>2. Perform a privileged action at window − 1 min<br>3. Perform it at window + 1 min | Step 2 succeeds. Step 3 is refused with the same elevation-required denial. The grant is not extendable by activity alone | P0 | B, SEC | A+B | AUTO |
 | TC-SEC-03 | C1 | `ADM-1` | App-enrolled WebAuthn credential (security key, user verification required) | 1. Start elevation<br>2. Answer the challenge with a key that **fails user verification**<br>3. Answer with a key that is not enrolled<br>4. Replay a previous assertion | All three refused; no grant issued. Challenge is single-use and expires | P0 | N, SEC | A+B | AUTO+H (a physical key is needed for the positive control) |
-| TC-SEC-04 | C1 | `ADM-1`, `ADM-2` | Two sessions for `ADM-1` (S1, S2); one for `ADM-2` | 1. Elevate S1<br>2. Use S1's grant identifier on S2<br>3. Use it from `ADM-2`'s session | Grant is bound to the session. S2 and `ADM-2` are refused | P0 | N, SEC | A+B | AUTO |
-| TC-SEC-05 | C1 | `ADM-3` (new admin) | Admin role, no credential yet | 1. Try to enrol a credential by self-service<br>2. Try via a stale Google/staff session only<br>3. Enrol with the required fresh sign-in **and** second approver | Steps 1–2 refused. Step 3 succeeds and is audited with both people. Path B: enrolment only by single-use token (see TC-SEC-18) | P0 | N, SEC | A+B | AUTO+H |
+| TC-SEC-04 | C1 (Arch 8.4 C1: grant "bound to the session"; C4: approver is a different person) | `ADM-1`, `ADM-2` | Two sessions for `ADM-1` (S1, S2); one for `ADM-2` | 1. Elevate S1<br>2. Use S1's grant identifier on S2<br>3. Use it from `ADM-2`'s session | Grant is bound to the session. S2 and `ADM-2` are refused | P0 | N, SEC | A+B | AUTO |
+| TC-SEC-05 | C1 (Arch 8.4 C1: "Enrolment itself needs a fresh Google sign-in plus the second approver (C4)") | `ADM-3` (new admin) | Admin role, no credential yet | 1. Try to enrol a credential by self-service<br>2. Try via a stale Google/staff session only<br>3. Enrol with the required fresh sign-in **and** second approver | Steps 1–2 refused. Step 3 succeeds and is audited with both people. Path B: enrolment only by single-use token (see TC-SEC-18) | P0 | N, SEC | A+B | AUTO+H |
 | TC-SEC-06 | C1 (Google part) | `ADM-1` | Path A. HEAAA-13 spike result on forced re-authentication | 1. Elevate and capture the OIDC request: `prompt=login` and/or `max_age` present<br>2. Return an ID token with old `auth_time`<br>3. Return one with wrong `hd`<br>4. Return one with `email_verified=false` | Old `auth_time`, wrong `hd`, unverified email: each refused, no grant. If the spike showed Google does not honour forced re-auth or return `auth_time`, this case is replaced by "WebAuthn alone issues the grant and the Google check is absent", and QA records which branch was tested | P0 | N, SEC | A | AUTO (real Google test tenant; mocks do not count) |
 
 ### 5.2 C4 — second approver enforced in code
@@ -190,23 +192,42 @@ Generation scripts are test code. They are written only after valid G2 (WORKFLOW
 | ID | Req | Role | Pre / data | Steps | Expected | Pri | Type | Path | Auto |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | TC-SEC-17 | C2 evidence | DevOps owner | Admin OU policy export | Read the export | Security-key-only 2SV for the admin OU; no SMS/TOTP fallback; no recovery bypass. Dated. Quarterly repeat is scheduled. Workspace edition that allows this is named (it was **Unverified** in ARCHITECTURE C2) | P0 | SEC | A (B: advisable) | OPS + HUMAN |
-| TC-SEC-18 | C2 app check | System | `STF-OUT-OU`, `STF-SUSP` | Covered by TC-SEC-C7-04. This ID is the evidence link for the hourly re-check: confirm the job ran, its result, and its alerts | Job ran at least hourly in the observed window; mismatches produced elevation removal, role suspension, and a staff alert | P0 | SEC | A | AUTO |
+| TC-SEC-18 | C2 app check | System | `STF-OUT-OU`, `STF-SUSP` | 1. In `ENV-INT` move `STF-OUT-OU`'s holder out of the admin OU (or suspend `STF-SUSP`)<br>2. Wait for the hourly job (or read the last two run records)<br>3. Read the job run log and the staff alerts | This ID **owns the hourly re-check** (Arch 8.4 C2); TC-SEC-C7-04 owns only the assignment-time refusal. Job ran at least hourly in the observed window; the mismatch produced elevation removal, role suspension and a staff alert | Job ran at least hourly in the observed window; mismatches produced elevation removal, role suspension, and a staff alert | P0 | SEC | A | AUTO |
 | TC-SEC-19 | C3 evidence | Security owner | Super-admin inventory | Read: exactly two named super-admins, no shared accounts, security keys only; a sealed break-glass account that alerts on use; alerts on super-admin and OU/policy changes; last quarterly access review done by a non-super-admin | All present with dates | P0 | SEC | A | OPS + HUMAN |
 | TC-SEC-20 | C5 | `ADM-1`, `CMP-1` | `SEED-CHART-1` | 1. As admin, open audit metadata<br>2. Try to read patient clinical data<br>3. Open a BTG with a reason<br>4. Run repeated exports to hit the limit | Admin sees audit metadata, no PHI by default. Clinical access only through BTG with reason; compliance alerted. Export rate limit enforced and alerted. Every config change audited | P0 | SEC | A+B | AUTO |
 | TC-SEC-21 | Path B property 1–3 | Admin | `admin_pool` | 1. Look for any password, OTP or SMS sign-in on the admin route<br>2. Try the admin route with a `google` session<br>3. Try a clinical route with an `admin_pool` session<br>4. Try self-service recovery or profile change | None of the first-factor alternatives exists. Admin routes need realm `admin_pool`; clinical routes refuse it; `google` principal cannot reach admin routes. No self-recovery | P0 | N, SEC | B | AUTO |
 | TC-SEC-22 | Path B rule 4, 7.2 | Admin | Same browser | Sign in as staff, then as admin | Changing realm needs sign-out and sign-in again. There are never two concurrent sessions in one browser on `staff.` | P1 | SEC | B | AUTO |
 | TC-SEC-23 | Path B P-4 | `ADM-1`, `ADM-2`, new admin | Enrolment token (planning: single-use, at most 30 minutes, bound to one person, out-of-band) | 1. Create a token under dual control<br>2. Use it once<br>3. Use it a second time<br>4. Use it after 30 minutes<br>5. Use it as a different person | Only step 2 succeeds. 3–5 refused. All steps audited | P0 | B, SEC | B | AUTO |
 | TC-SEC-24 | Path B 7.5 spike | Security reviewer | HEAAA-13 spike report P-1..P-7 | Read the spike report; check which fallback (F-1) is in the build; rerun TC-SEC-03, 21, 23 on that exact build | The build matches the recorded fallback decision, and Cybersecurity has reviewed the spike before the identity ERD freeze | P0 | SEC | B | HUMAN (Cybersecurity) + AUTO |
-| TC-SEC-25 | Path B 7.4, DEP-16 | DevOps | `ENV-DR` | During the DR drill (TC-REC-05), try admin sign-in and elevation in the recovery region | Result recorded: works, or admins cannot elevate during failover and DEVOPS-PLAN accepts that within the 4 h RTO. Not assumed | P1 | E | B | OPS |
+| TC-SEC-25 | Path B 7.4, DEP-16 | DevOps | `ENV-DR` | 1. Wait until the DR drill has failed over (TC-REC-03 is the owner of the drill)<br>2. Try admin sign-in in the recovery region<br>3. Try an elevation with the WebAuthn credential | Result recorded: works, or admins cannot elevate during failover and DEVOPS-PLAN accepts that within the 4 h RTO. Not assumed | P1 | E | B | OPS |
 
 ### 5.5 C7 — authorization tests (extend RA-R1-17, negative authorization)
 
-Each case uses the seven bullet points of C7 verbatim. The expected result is "refused, nothing changed, denial audited" unless stated.
+**Source check (draft 2, TC-RV-01).** Two texts exist and they are not identical. Both were read for this draft.
+
+1. **ARCHITECTURE section 8.4 table row C7, rev `f2d240e4` (quoted exactly):** "Authorization tests for: role elevation without an approver; self-approval; a stale `auth_time` or an expired elevation; an account outside the OU holding an admin role; a Workspace super-admin identity given an app admin role; a Workspace group change that does not grant a role; the kill switch ending an active elevated session. These extend RA-R1-17 (negative authorization)."
+2. **Cybersecurity HEAAA-42 comment `e6414334`, condition 7 (quoted exactly):** "Tests: QA authorization tests must cover role elevation without approver, stale `auth_time`, non-OU account with admin role, and Workspace group change not granting roles."
+
+The comment lists four tests. The Architecture list has seven. It adds three items: *self-approval* (comment condition 4: "cannot self-approve"), *super-admin given an app admin role* (condition 3) and *kill switch ending an elevated session* (condition 6). It also widens *stale `auth_time`* to *or an expired elevation* (condition 1: "short elevation window"). So the Architecture's items cover the comment's four, and every addition traces to conditions 1, 3, 4 or 6 of the same comment. **These cases use the seven Architecture items as the scope and name the comment condition behind each.** They are not "verbatim" the comment's condition 7.
+
+| C7 item (Architecture 8.4) | Comment `e6414334` basis | Case |
+| --- | --- | --- |
+| Role elevation without an approver | cond. 4, cond. 7 | TC-SEC-C7-01 |
+| Self-approval | cond. 4 | TC-SEC-C7-02 |
+| Stale `auth_time` or expired elevation | cond. 1, cond. 7 | TC-SEC-C7-03 |
+| Account outside the OU holding an admin role | cond. 2, cond. 7 | TC-SEC-C7-04 |
+| Workspace super-admin given an app admin role | cond. 3 | TC-SEC-C7-05 |
+| Workspace group change that does not grant a role | cond. 4, cond. 7 | TC-SEC-C7-06 |
+| Kill switch ending an active elevated session | cond. 6 | TC-SEC-C7-07 |
+
+**Wording of items 4–6 (checked).** Item 4 ("outside the OU") and item 5 ("super-admin") are written for path A, where admins are Google identities. On path B there is no Google admin identity, so TC-SEC-C7-04 and -05 test the path B equivalent in a separate branch and say so. That equivalent is **QA's reading, not a Cybersecurity statement**: it is recorded as `SEC-confirm-1` (section 13) and asked through the Orchestrator. Item 6 ("group change that does not grant a role") matches the comment's "groups must never grant app roles (only app-side assignment)" and Architecture C4 ("Group sync ... can only make an account eligible").
+
+The expected result is "refused, nothing changed, denial audited" unless stated.
 
 | ID | C7 item | Role | Pre / data | Steps | Expected | Pri | Type | Path | Auto |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | TC-SEC-C7-01 | Role elevation **without an approver** | `ADM-1`, subject `STF-FD-A` | `ADM-1` elevated | 1. Request the admin role for `STF-FD-A`<br>2. Try to activate it without approval (direct API call, UI, replay of request ID, direct SQL as `app_api` role)<br>3. Try with a forged approval row | Role never takes effect. Subject holds no admin permission after any attempt. The `app_api` role cannot write approval rows except through the identity function (HEAAA-12 observation O-2: the worker/function must check approval evidence the `api` alone cannot forge). Audit shows the attempts | P0 | N, SEC | A+B | AUTO |
-| TC-SEC-C7-02 | **Self-approval** | `ADM-1`, `ADM-2` | | Approve own request as (a) requester; (b) subject; (c) requester through a second principal of the same person (path B); (d) subject approves a request created by someone else for themselves | All refused. A request cannot be approved by requester, subject, or the same `person_id` | P0 | N, SEC | A+B | AUTO |
+| TC-SEC-C7-02 | **Self-approval** | `ADM-1`, `ADM-2` | `ADM-1`, `ADM-2` both elevated; a pending admin-role request R1 from `ADM-1` for `STF-FD-A`; a pending request R2 from `ADM-2` for `ADM-2` (self-request) | Approve own request as (a) requester; (b) subject; (c) requester through a second principal of the same person (path B); (d) subject approves a request created by someone else for themselves | All refused. A request cannot be approved by requester, subject, or the same `person_id` | P0 | N, SEC | A+B | AUTO |
 | TC-SEC-C7-03 | **Stale `auth_time`** or **expired elevation** | `ADM-1` | Clock control | 1. Path A: present an ID token whose `auth_time` is older than the allowed age<br>2. Path A+B: use a grant past its window (TC-SEC-02)<br>3. Path B: use an admin-pool token with an old authentication time (P-6) or no `auth_time` (fallback F-1 uses the server's own challenge time) | Every stale or expired case is refused and audited. No grant is created or extended | P0 | N, SEC | A+B | AUTO |
 | TC-SEC-C7-04 | **Account outside the OU holding an admin role** | `STF-OUT-OU`, `STF-SUSP`, `ADM-1` | Path A: directory read-only crossing live. Path B: `admin_pool` principal linked to a staff identity | **A:** (1) assign admin to `STF-OUT-OU` and to `STF-SUSP`: refused at assignment (fail closed). (2) Move an existing admin out of the OU; wait for or trigger the hourly re-check; (3) block the directory API and attempt a new admin assignment.<br>**B:** (1) create a `google` principal and give it a privileged role: refused (privileged roles exist only in `admin_pool`). (2) Suspend the linked staff identity of an `admin_pool` person; run the leaver-detection check (7.2.8, if Cybersecurity requires it) | **A:** step 1 refused; step 2 removes elevation, suspends the role, and raises a staff alert; step 3: no new admin assignment while the directory is unreachable. **B:** step 1 refused; step 2 disables the admin principal and revokes its sessions (or, if Cybersecurity decided no backstop, the expected result is "runbook only" and the case records that decision) | P0 | N, SEC | A+B (branches) | AUTO (needs real Workspace test tenant) |
 | TC-SEC-C7-05 | **Workspace super-admin given an app admin role** | `STF-SUPER`, `ADM-1`, `ADM-2` | Directory reports `STF-SUPER` as super-admin | 1. Request admin for `STF-SUPER`, even with a valid approver<br>2. Request a compliance role for `STF-SUPER` | **A:** refused by `identity` regardless of approval, and audited. **B:** the `google` principal cannot hold privileged roles at all (rule 1). Whether a super-admin may additionally hold an `admin_pool` identity on path B is a question for Cybersecurity (C3 no longer guards admin roles on path B); QA records the answer given and tests it | P0 | N, SEC | A+B | AUTO |
@@ -226,14 +247,15 @@ These cases run against the real PostgreSQL roles and policies. A test that only
 | TC-AZ-05 | HEAAA-12 6.2 | DB role `public`, `limited`, `reporting_ro` | Direct DB connection | `SELECT` every PHI table, view and read model as each role | `public` and `limited` get nothing from PHI/clinical tables. `reporting_ro` is refused on every PHI table, view and read model | P0 | SEC | AUTO |
 | TC-AZ-06 | HEAAA-12 6.8 (RLS mechanics, SBR-13) | DB | Each function-owner role (`NOLOGIN`) | `SET ROLE` to each function-owner role; `SELECT` every PHI table | Only what its role-targeted policies and column grants allow (for `patient_match_owner`, identity columns only; for `scheduling_booking_owner`, C1 rows only). The M-5 catalog checks (`FORCE ROW LEVEL SECURITY` on every table, role-targeted policies, `security_invoker` views) pass | P0 | SEC | AUTO (also a CI gate) |
 | TC-AZ-07 | HEAAA-12 6.8 | Every audience and realm | Each definer function in the 6.2 inventory | Call each definer function from each audience and realm that should not hold it | Refused. The patient-match function never returns out-of-scope demographics | P0 | N, SEC | AUTO |
-| TC-AZ-08 | HEAAA-12 6.7, SBR-14 | Compliance principal with only `privacy.request.manage` | | 1. Query audit events, consents, incidents by SQL under its settings<br>2. Same through the API<br>3. `patient.identity_label` without the `patient_label` key, without a referencing record, and in a loop | Sees none of them. `identity_label` refused without the key, refused without a visible referencing record, audited per call, rate-limited | P0 | N, SEC | AUTO |
+| TC-AZ-08 | HEAAA-12 6.7, SBR-14 | Compliance principal with only `privacy.request.manage` | Compliance principal `CMP-3` holding only `privacy.request.manage`; one audit event, one consent record, one incident exist; `PAT-01` has a privacy request | 1. Query audit events, consents, incidents by SQL under its settings<br>2. Same through the API<br>3. `patient.identity_label` without the `patient_label` key, without a referencing record, and in a loop | Sees none of them. `identity_label` refused without the key, refused without a visible referencing record, audited per call, rate-limited | P0 | N, SEC | AUTO |
 | TC-AZ-09 | HEAAA-12 6.6, SBR-11 | Staff at LOC-A1 and LOC-A2 | Patient cared for only at LOC-A2 | Check the staff-scope invariant: drift check job after deliberately removing and adding a scope row | Drift check finds and corrects both; alerts raised | P0 | E, SEC | AUTO |
 | TC-AZ-10 | AC-12, BR-14, X-19 | `STF-DR-A2` | `PAT-01` not assigned to `A2`; `CMP-1` | 1. `A2` opens the chart<br>2. Gives a reason and proceeds<br>3. Check compliance view | Blocked until a reason is entered. Access then granted. Compliance alert raised. Event appears in the review queue with reason | P0 | N, S | AUTO+H |
 | TC-AZ-11 | AC-12, BR-14 | `CMP-2` | A BTG event from TC-AZ-10 | Review it as "justified" and as "not justified" | Outcome recorded and audited. Reviewer cannot be the person who opened it (same-`person_id` rule). Reviewer needs the compliance BTG permission and sees the minimum required | P0 | N | AUTO |
 | TC-AZ-12 | HEAAA-12 6.1, RA-R1-16 | Public audience | `integrations./public/v1/*` | 1. GET each public route<br>2. Try POST, PUT, DELETE<br>3. Look for any patient, reservation or room identifier in responses<br>4. Exceed the rate limit | GET only; PHI-free; start times only; no other audience data. Mutating verbs refused; `429` with `Retry-After` over limit | P0 | N, SEC | AUTO |
 | TC-AZ-13 | Permission matrix (BA 1.1) | Each role in section 2 | Matrix as confirmed at G2 | Run the **role × capability** grid: for every cell with "—" attempt the action and expect refusal; for every allowed cell expect success | Result matches the G2 matrix cell by cell. The grid is generated from the matrix, and any cell with no result fails the run | P0 | N, P | AUTO |
 | TC-AZ-14 | Proxy (D-7 default), RA-R1-20a | `PRX-01` | `PAT-03` linked; `PAT-01` not linked | 1. Open `PAT-03` appointments<br>2. Open `PAT-03` chart, documents, notes<br>3. Open `PAT-01` | Proxy sees appointments only (default). All else `404`. Another patient's data never opens | P0 | N, SEC | AUTO |
-| TC-AZ-15 | Assistant (G-10 open) | `STF-ASST-A` | | Attempt sign, prescribe and EPCS actions | Assistant cannot sign (BR-17, AC-16). What the assistant may prepare follows the G2 decision. `BLOCKED` for prepare scope until G-10 is answered. The refusal part is testable now | P0 | N | AUTO |
+| TC-AZ-15 | Assistant (G-10 open) | `STF-ASST-A` | `STF-ASST-A` signed in at LOC-A1; a draft note and a draft prescription-shaped order on `SEED-CHART-1` | Attempt sign, prescribe and EPCS actions | Assistant cannot sign (BR-17, AC-16). What the assistant may prepare follows the G2 decision. `BLOCKED` for prepare scope until G-10 is answered. The refusal part is testable now | P0 | N | AUTO |
+| TC-AZ-16 | BR-14 (boundary) | `STF-DR-A2`, `CMP-1` | `PAT-01` not assigned to `A2`; reason rule from HEAAA-13: minimum length and maximum length | 1. Open the chart; submit an empty reason<br>2. Submit spaces only<br>3. Submit one character<br>4. Submit exactly the minimum length<br>5. Submit the maximum length plus one<br>6. Submit the maximum length | Empty, spaces-only, below minimum and over maximum are refused and no access is granted. Minimum and maximum are accepted; each accepted access appears in the compliance review queue with the exact reason text | P0 | B, N | AUTO |
 
 ## 7. Booking, calendar and notifications
 
@@ -249,10 +271,10 @@ These cases run against the real PostgreSQL roles and policies. A test that only
 | TC-BK-06 | RA-R1-02, J-05 | `PAT-01` | Confirmed appointment | Reschedule to another slot | Old slot released, new slot held and confirmed in one flow; reminders recomputed; Google block updated; audit rows | P1 | P | AUTO |
 | TC-BK-07 | BR-04 **[G2 setting]** | `PAT-01` | Max future appointments per service = 3 | Book 3, then a 4th | 4th refused with a clear message; counts per patient per service | P2 | B | AUTO |
 | TC-BK-08 | X-01, AC-03 | `PAT-01` | Hold = 10 min **[G2 setting]** | 1. Start checkout<br>2. Wait past expiry<br>3. Confirm | Hold expired; "slot no longer available" plus alternatives; no appointment | P1 | E, B | AUTO |
-| TC-BK-09 | CN-06 | `PAT-01` | | 1. Send the same hold request twice with the same `Idempotency-Key`<br>2. Same key, different body<br>3. Same key on another route | 1: one hold, same response. 2: `409 kernel.idempotency_conflict`. 3: treated as a different key (per route template). Each step of hold then confirm has its own key | P1 | E | AUTO |
+| TC-BK-09 | CN-06 | `PAT-01` | `PAT-01` signed in; an API client with the patient session; free slot `S1` and free slot `S2` | 1. Send the same hold request twice with the same `Idempotency-Key`<br>2. Same key, different body<br>3. Same key on another route | 1: one hold, same response. 2: `409 kernel.idempotency_conflict`. 3: treated as a different key (per route template). Each step of hold then confirm has its own key | P1 | E | AUTO |
 | TC-BK-10 | RA-R1-02, BR-05 | `PAT-01` | LOC-B1 (Pacific) and a patient browser in Eastern time | Book near a daylight-saving change date | Stored UTC, displayed in the location zone; no off-by-one-hour | P2 | B | AUTO |
-| TC-BK-11 | Front desk booking | `STF-FD-A` | | Book for `PAT-01` at LOC-A1 and at LOC-B1 | Allowed at assigned location only; at LOC-B1 refused | P1 | P, N | AUTO |
-| TC-BK-12 | NFR-7, usability | `PAT-01` on 360 px phone | | Complete TC-BK-01 on a phone | Journey is possible with no horizontal scroll; keyboard and touch work (see TC-A11Y-*) | P1 | P | AUTO+H |
+| TC-BK-11 | Front desk booking | `STF-FD-A` | `STF-FD-A` (assigned LOC-A1 only); free slots at LOC-A1 and LOC-B1; `PAT-01` | Book for `PAT-01` at LOC-A1 and at LOC-B1 | Allowed at assigned location only; at LOC-B1 refused | P1 | P, N | AUTO |
+| TC-BK-12 | NFR-7, usability | `PAT-01` on 360 px phone | `PAT-01`; free 09:00 slot; a 360 px wide phone (or device-mode browser) on `ENV-INT` | Complete TC-BK-01 on a phone | Journey is possible with no horizontal scroll; keyboard and touch work (see TC-A11Y-*) | P1 | P | AUTO+H |
 
 ### 7.2 No double booking (RA-R1-03, HEAAA-12 6.5)
 
@@ -260,14 +282,14 @@ These cases run against the real PostgreSQL roles and policies. A test that only
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | TC-BK-13 | RA-R1-03 | 100 `PAT-*` sessions, one **non-overbookable** slot | `VOL-3` | 100 parallel confirmations (same patient account on 100 sessions) | Exactly one succeeds. 99 receive alternatives; exactly one appointment exists in the database | P0 | X | AUTO |
 | TC-BK-14 | RA-R1-03, 6.5(c) | 100 **different** patients | `VOL-3` | Same as above with 100 distinct patients | Exactly one wins; the others see alternatives. No patient sees another's reservation | P0 | X | AUTO |
-| TC-BK-15 | RA-R1-03, SA-F-10 | 100 patients, overbookable session cap 2 | | 100 parallel confirmations | Exactly 2 succeed; no more. Ties are decided by the database constraint | P0 | X, B | AUTO |
+| TC-BK-15 | RA-R1-03, SA-F-10 | 100 patients, overbookable session cap 2 | Overbookable session cap 2 (`DOC-TPL-1`); `VOL-3` (100 distinct patient accounts) | 100 parallel confirmations | Exactly 2 succeed; no more. Ties are decided by the database constraint | P0 | X, B | AUTO |
 | TC-BK-16 | 6.5(a) | Patients A, B, C | A holds a slot; hold expires | B and C race for the same slot after A's hold expired | Exactly one wins. Neither gets a false "taken" | P0 | X | AUTO |
 | TC-BK-17 | 6.5(b), SAR-09 | A, B, C with a room | Same, but for a **room** | Same race on the room | Same result for the room | P0 | X | AUTO |
-| TC-BK-18 | 6.5(d) | Patient and public API | | Inspect slot-search and `/public/v1` responses for identifiers of other patients, reservations or rooms | None present | P0 | SEC | AUTO |
+| TC-BK-18 | 6.5(d) | Patient and public API | Booked slots, held slots and a booked room exist for `PAT-01` and `PAT-02`; `PAT-03` has a hold in progress | Inspect slot-search and `/public/v1` responses for identifiers of other patients, reservations or rooms | None present | P0 | SEC | AUTO |
 | TC-BK-19 | RA-R1-22, AC-05, BR-03 **[G2 setting]** | Waitlisted `PAT-01`, `PAT-02` | Slot frees; acceptance 30 min | 1. Free the slot<br>2. `PAT-01` ignores<br>3. After 30 min check | `PAT-01` is offered first. Offer lapses cleanly; `PAT-02` offered next | P1 | P, B | AUTO |
 | TC-BK-20 | RA-R1-22 | `PAT-01`, `PAT-02` | Two offers at once | Both accept at once | Only the first is booked; the other sees a clean "no longer available" | P1 | X | AUTO |
-| TC-BK-21 | RA-R1-22 | | Visit within 24 h | Acceptance time is 15 min **[G2 setting]** | Time-boxed accordingly | P2 | B | AUTO |
-| TC-BK-22 | RA-R1-22 | | Waitlist patient whose account is merged meanwhile | Offer job runs after merge | Job resolves to the survivor (`on_merged: resolve`), no duplicate offer | P1 | E | AUTO |
+| TC-BK-21 | RA-R1-22 | `PAT-01` (waitlisted), `PAT-02` (waitlisted) | Acceptance time = 15 min **[G2 setting]**; slot with start < 24 h away frees up; controllable clock; waitlist entries for `PAT-01` and `PAT-02` | 1. Cancel the booked appointment holding that slot so it frees<br>2. Observe the offer to `PAT-01` and note its stated expiry<br>3. Advance the clock by 14 min and let `PAT-01` accept (separate run: accept at 16 min)<br>4. In the 16-min run: observe the offer to `PAT-02` | Offer expiry is exactly 15 min after the offer (not 30 min). Accepting at 14 min books the slot; accepting at 16 min is refused ("offer expired") and the offer passes to `PAT-02`. Rerun with the final G2 value | P2 | B | AUTO |
+| TC-BK-22 | RA-R1-22 | `PAT-04` (waitlisted, to be merged), `STF-MRO-A` | `SEED-DUP`: `PAT-04` waitlisted for a slot; merge of `PAT-04` into `PAT-05` approved | 1. Approve the merge (PAT-04 → PAT-05)<br>2. Free the slot<br>3. Run the waitlist offer job | Job resolves to the survivor (`on_merged: resolve`), no duplicate offer | P1 | E | AUTO |
 
 ### 7.3 Calendar sync (RA-R1-04, X-03)
 
@@ -277,8 +299,8 @@ These cases run against the real PostgreSQL roles and policies. A test that only
 | TC-CAL-02 | BR-23 extension | `STF-DR-A1` | Book `SVC-SENS` | Check the calendar block title and the `.ics` | Neutral label only. The internal condition-revealing service name does not appear anywhere | P0 | SEC | AUTO |
 | TC-CAL-03 | RA-R1-04 | `STF-DR-A1` | A meeting created in Google | Run sync | Meeting is unavailable time for slot search within the sync delay | P1 | P | AUTO |
 | TC-CAL-04 | RA-R1-04, X-03 **[G2 setting]** | `PAT-01` | Block Google API; stale threshold 15 min | 1. Search before the threshold<br>2. Search after it | Before: last-known busy times used. After: slot search does not silently use the stale data (flagged or restricted per design). Failure on operations dashboard | P0 | E, B | AUTO |
-| TC-CAL-05 | RA-R1-04 | | Google push notification replay | Replay twice, and out of order | Idempotent; one effect | P1 | E | AUTO |
-| TC-CAL-06 | RA-R1-04 | | Revoke Google authorisation | Run sync | Visible failure and alert, not silent; retry/back-off (BR-33) | P1 | E | AUTO |
+| TC-CAL-05 | RA-R1-04 | System (API client posting signed Google push notifications) | `STF-DR-A1` calendar linked; one push notification N1 for a real change captured from Google | 1. Post N1 to the push endpoint<br>2. Post N1 again<br>3. Post an older notification N0 (earlier sequence) after N1<br>4. Count calendar busy-blocks and sync records for the changed event | Idempotent; one effect | P1 | E | AUTO |
+| TC-CAL-06 | RA-R1-04 | `ADM-1` and `STF-DR-A1` | `STF-DR-A1` calendar linked; `ENV-INT` Google test tenant | 1. In the Google test tenant, revoke the app authorisation for `STF-DR-A1`<br>2. Wait for the next sync run (or trigger it)<br>3. Open the operations dashboard and the doctor's calendar page | Visible failure and alert, not silent; retry/back-off (BR-33) | P1 | E | AUTO |
 
 ### 7.4 Notifications and PHI-free messages (RA-R1-05, BR-08, BR-23, AC-06)
 
@@ -291,7 +313,7 @@ These cases run against the real PostgreSQL roles and policies. A test that only
 | TC-NT-05 | BR-36, NFR-18 | System | Logs, URLs, analytics | Scan application logs and URLs for health data after the booking journeys | No health data in logs, URLs or analytics events | P0 | SEC | AUTO |
 | TC-NT-06 | BQ-2 | `SEED-ATTACK` | Put a condition/medicine/test name in free-text fields | Trigger messages from records containing them | The text never reaches a message template (no free text binding) | P0 | N, SEC | AUTO |
 | TC-NT-07 | HEAAA-12 8.3 | Staff | Alerts | Check that the alert stream sends a session only the alerts targeted to it | Staff only get alerts for their principal/role/location; `admin_pool` gets compliance types only | P0 | SEC | AUTO |
-| TC-NT-08 | Notification preferences (F-PP-16) | `PAT-01` | | Turn off SMS, keep email | Preferences respected; essential security messages still sent | P2 | P | AUTO |
+| TC-NT-08 | Notification preferences (F-PP-16) | `PAT-01` | `PAT-01` signed in; SMS and email sandboxes; one appointment | 1. Open notification preferences<br>2. Turn SMS off and leave email on<br>3. Trigger a reminder for the appointment<br>4. Read the SMS and email sandboxes<br>5. Trigger a security message (sign-in code request) | Preferences respected: no SMS, email still sent. Whether security messages (sign-in code) are exempt from the preference is **PM-confirm-3** (not in the PRD); until answered the case asserts only the preference part | P2 | P | AUTO |
 
 ## 8. Pre-consultation, safety rules and clinical record
 
@@ -303,28 +325,31 @@ These cases run against the real PostgreSQL roles and policies. A test that only
 | TC-PC-02 | RA-R1-06 | `PAT-01` | QR code from the confirmation | Check in by QR on a phone | Same result; QR works once and expires; a QR for another patient's visit fails | P1 | P, N | AUTO+H |
 | TC-PC-03 | RA-R1-06, F-PC-02 | `STF-FD-A` | Questionnaire and consent partly complete | Open the pre-visit checklist | Missing items flagged; front desk sees pre-visit items only (matrix), no clinical chart | P1 | P, N | AUTO |
 | TC-PC-04 | AC-09, F-PC-04 | `STF-TRI-A` | SpO2 limit configured | Save vitals with SpO2 below the limit, then in range, then exactly at the limit | Below: value highlighted and triage-category prompt appears. In range: no highlight. At limit: behaves per the configured inequality (documented) | P1 | P, B | AUTO |
-| TC-PC-05 | RA-R1-06 | `STF-TRI-A` | | Set a triage category | Queue orders by category then arrival; wait time shown | P1 | P | AUTO |
-| TC-PC-06 | RA-R1-06 | Two staff | | Two staff edit the same triage record | Second save gets `412` (stale `ETag`); no silent overwrite (CN-07) | P1 | X | AUTO |
-| TC-PC-07 | BR-34 | `STF-TRI-A` | | Open triage screen | Patient name, DOB and photo visible on every clinical screen | P0 | S | AUTO+H |
+| TC-PC-05 | RA-R1-06 | `STF-TRI-A` | Four checked-in patients: P1 (arrived 08:00), P2 (08:05), P3 (08:10), P4 (08:15); categories not yet set; **PM-confirm**: PRD RA-R1-06 says "triage category, and queue with wait time"; the ordering rule is not stated (PM-confirm-2) | 1. Set category "urgent" on P3 and "routine" on P1, P2, P4<br>2. Open the queue<br>3. Record the order and the wait time shown for each | Wait time shown for each patient and equals now − arrival. **Ordering by category is PM-confirm (PM-confirm-2)**: until PM answers, the case asserts only that the category and wait time are displayed and that no patient is dropped from the queue; it asserts the order only after PM-confirm-2 is answered | P1 | P | AUTO |
+| TC-PC-06 | RA-R1-06 | Two staff | `STF-TRI-A` and a second triage nurse `STF-TRI-A2` (LOC-A1) both open the same triage record R; each holds the current `ETag` | Two staff edit the same triage record | Second save gets `412` (stale `ETag`); no silent overwrite (CN-07) | P1 | X | AUTO |
+| TC-PC-07 | BR-34 | `STF-TRI-A` | `PAT-01` checked in with a photo; triage record exists; list of clinical screens from HEAAA-14 (triage, vitals, queue detail) | 1. Open each clinical screen for `PAT-01`<br>2. Check the header of each: name, date of birth and photo are present<br>3. Scroll to the bottom of a long screen and check again | Patient name, DOB and photo visible on every clinical screen | P0 | S | AUTO+H |
 | TC-PC-08 | X-07 | `STF-FD-A` | Consent missing | Check-in a patient with missing consent | Flag raised (missing consent); consultation start blocked later (TC-SAF-05) | P1 | N | AUTO |
-| TC-PC-09 | F-PC-09 (S) | | | Waitlist and no-show handling | Follows grace period **[G2 setting]**; no-show recorded | P2 | P | AUTO |
+| TC-PC-09 | F-PC-09 (S) | `STF-FD-A` | Grace period 15 min **[G2 setting]**; appointment for `PAT-01` at 09:00; controllable clock; (F-PC-09 is S priority in R1) | 1. Do not check in `PAT-01`<br>2. Advance the clock to 09:14 and open the day list<br>3. Advance to 09:16 and open the day list<br>4. Mark the visit "no-show" | At 09:14 the appointment is still "waiting". At 09:16 the system flags it as late/no-show candidate per the grace period. After step 4 the status is "no-show", audited, and the slot is not reopened unless the clinic rule allows it (rule from HEAAA-13). Waitlist offers follow TC-BK-19 rules | P2 | P | AUTO |
 | TC-PC-10 | RA-R1-29, F-PC-05 | `STF-FD-A` | Insurance card uploaded | Record verification status and date manually | Saved and audited; no electronic eligibility request leaves the system (verify no outbound call) | P2 | P | AUTO |
 | TC-PC-11 | RA-R1-30 | `STF-COORD-A` | Chart | Book a follow-up; create a referral | Follow-up appears in slot rules (RA-R1-02); referral has referrer, target, status; both audited. **No lab sample collection booking exists in R1** (D-4 default). Referral record owner is HEAAA-13 note | P1 | P | AUTO |
-| TC-PC-12 | RA-R1-30 | `STF-FD-A` | | Same actions without permission | Refused; logged | P1 | N | AUTO |
+| TC-PC-12 | RA-R1-30 | `STF-FD-A` | `STF-FD-A` without referral or follow-up permission; `SEED-CHART-1` | 1. Try to create a follow-up for `PAT-01`<br>2. Try to create a referral for `PAT-01`<br>3. Check the audit view | Refused; logged | P1 | N | AUTO |
+| TC-PC-13 | BR-34 (negative) | `STF-TRI-A`, `STF-DR-A1`, QA | List of every clinical route from HEAAA-14 (triage, vitals, chart summary, note editor, addendum, document viewer, telehealth notes pane, prescription draft R2 outline); `SEED-CHART-1` | 1. For every clinical route, open it directly by URL as an authorised user<br>2. Open the same route after switching patient in another tab (stale tab)<br>3. Open a route in an iframe-less print view and in the document viewer<br>4. Search the page for the banner element | A route with no banner showing name, date of birth and photo (or placeholder) fails. In the stale tab (step 2) the banner shows the patient the page data belongs to, or the page is refused with a reload prompt; never a different patient's banner with this patient's data. Print view keeps name and DOB | P0 | S, N | AUTO (route sweep) + HUMAN for TC-CL-09 |
+| TC-PC-14 | BR-34 (boundary) | `STF-DR-A1` | Patients: `PAT-08` with no photo; `PAT-09` with a 120-character name; `PAT-04` and `PAT-05` (same name and DOB, different photos); a 360 px screen | 1. Open the chart of each patient<br>2. Check the banner at 360 px width and at 200% zoom<br>3. Open `PAT-04` then `PAT-05` and compare banners | No photo: a visible placeholder and name + DOB shown. Long name: wraps or truncates with the full name available, DOB never hidden. Same-name patients are distinguishable by DOB and photo or an extra identifier shown in the banner | P0 | S, B | AUTO+H |
 
 ### 8.2 Patient-safety rules (PRD 8.3: BR-09, BR-10, BR-14, BR-34, BR-37)
 
-**`BLOCKED` until D-12a is decided:** TC-SAF-01..07 for RA-R1-07 and RA-R1-08. The PRD says RA-R1-07 and RA-R1-08 stay blocked, and R1 cannot go live, unless (i) a named licensed clinician reviews the R1 safety rules and their test results, or (ii) the owner records, dated, a knowing acceptance of **interim self-review**. Self-review is never independent review and is reported as such. The cases below are still written and automated now; **what is blocked is the acceptance of the criterion**, not the writing or the technical execution (execution before D-12a is allowed as development evidence, not as acceptance).
+**`BLOCKED` until D-12a is decided:** TC-SAF-01..07 for RA-R1-07 and RA-R1-08. The PRD says RA-R1-07 and RA-R1-08 stay blocked, and R1 cannot go live, unless (i) a named licensed clinician reviews the R1 safety rules and their test results, or (ii) the owner records, dated, a knowing acceptance of **interim self-review**. Self-review is never independent review and is reported as such. PRD 8.3 (quoted): "If neither is recorded, RA-R1-07 and RA-R1-08 stay blocked and R1 cannot go live." The PRD blocks the *acceptance rows*. It does not say anything about writing or running tests, so this plan uses one definition: **what is blocked is acceptance of RA-R1-07/08 (and R1 go-live). Writing and running TC-SAF-01..06 before D-12a is permitted by QA as ordinary test evidence and never counts as the clinician review or the owner's recorded acceptance.** That reading is QA's; the PRD does not contradict it.
 
 | ID | Req | Role | Pre / data | Steps | Expected | Pri | Type | Auto |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | TC-SAF-01 | RA-R1-07, AC-08, BR-10 | `STF-TRI-A`, on-duty `STF-DR-A1` | Triage with red-flag question "chest pain" | 1. Answer "chest pain"<br>2. Save triage<br>3. Check doctor's alert and patient screen | On-duty doctor alerted at once (SSE and durable alert row). Patient sees emergency advice. Alert time recorded and audited | P0 | S | AUTO |
-| TC-SAF-02 | RA-R1-07 | Same | Doctor does not acknowledge | Wait for the escalation timer (derived rule: on-call doctor) | Alert goes to the on-call doctor `STF-ONCALL`; each step audited. Escalation timing is a **[G2 setting]**; clinical window needs the clinical reviewer | P0 | S, E | AUTO + HUMAN review of the timing |
-| TC-SAF-03 | RA-R1-07, BR-10 | | Boundary on every red-flag answer | Enter each configured red-flag answer; enter near-miss answers; leave the field blank | Every configured red flag alerts; non-red-flag answers do not; blank/invalid input is rejected, not treated as "no red flag" | P0 | S, B, N | AUTO |
-| TC-SAF-04 | RA-R1-07 | | Alert channel down | Stop the alert stream; save red-flag triage | Alert row still exists and is delivered when the stream returns; failure visible; **the patient still sees the emergency advice** | P0 | S, E | AUTO |
+| TC-SAF-02 | RA-R1-07 | Same | Doctor does not acknowledge | Wait for the escalation timer (PRD J-07 labels the on-call step "derived": **PM-confirm-1**) | **PM-confirm-1** (escalation to on-call is Derived in PRD J-07/A-17, no timer value in the PRD): until answered, the case asserts only that an unacknowledged alert stays visible and is not lost. After PM confirms: alert goes to `STF-ONCALL` at the confirmed time and each step is audited. The clinical window needs the clinical reviewer | P0 | S, E | AUTO (+ HUMAN review of the timing once PM-confirm-1 is answered) |
+| TC-SAF-03 | RA-R1-07, BR-10 | `STF-TRI-A` | Red-flag question list configured (HEAAA-13): at least "chest pain", "severe bleeding"; `PAT-01` in triage | 1. Answer each configured red flag "yes", saving after each<br>2. Answer a near-miss ("chest discomfort that is mild" if not configured) and a non-flag answer<br>3. Leave a required red-flag question blank and try to save | Every configured red flag alerts; non-red-flag answers do not; blank/invalid input is rejected, not treated as "no red flag" | P0 | S, B, N | AUTO |
+| TC-SAF-04 | RA-R1-07 | `STF-TRI-A`, `STF-DR-A1`, operator for the alert stream | `PAT-01` in triage; alert stream (SSE) service stopped on `ENV-INT` | 1. Stop the alert stream service<br>2. Save triage with "chest pain" = yes<br>3. Read the patient's screen<br>4. Read the durable alert table / alert list for `STF-DR-A1`<br>5. Restart the stream and reload the doctor's page | Alert row still exists and is delivered when the stream returns; failure visible; **the patient still sees the emergency advice** | P0 | S, E | AUTO |
 | TC-SAF-05 | RA-R1-08, AC-07, BR-09 | `STF-DR-A1` | Service needs a signed consent; unsigned | Open the consultation | Cannot start. Message names the missing consent (no PHI) | P0 | S, N | AUTO |
 | TC-SAF-06 | RA-R1-08, X-07 | `STF-DR-A1` | Same | Start with "emergency exception" and a reason; also try without a reason | With reason: starts; exception recorded and audited; compliance can see it. Without reason: refused | P0 | S, N | AUTO |
 | TC-SAF-07 | RA-R1-08, PRD 8.3 (b) | Named licensed clinician **or** owner (interim self-review) | The above cases' rule text and results | The reviewer reads the rule text and results for BR-09, BR-10, BR-14, BR-34 and BR-37 and records a dated decision on the task | Either a named clinician's review, or the owner's dated knowing acceptance of interim self-review, recorded on the task **and** in the acceptance record, reported as **self-review (not independent)** where applicable. If neither exists, RA-R1-07/08 stay blocked and R1 cannot go live | P0 | S | HUMAN (never recorded by QA) |
+| TC-SAF-08 | RA-R1-08, BR-09 (negative and boundary) | `STF-DR-A1` | Service `SVC-IN` requires two consents: C-A and C-B (current versions v2). `PAT-01`: C-A v2 signed, C-B not signed; `PAT-02`: C-A v1 (superseded) and C-B v2 signed; `PAT-03`: both v2 signed; controllable clock | 1. Open the consultation for `PAT-01`<br>2. Open it for `PAT-02`<br>3. Open it for `PAT-03`<br>4. Sign C-B for `PAT-01` and reopen at once (same second)<br>5. Withdraw C-A for `PAT-03` and reopen | 1: blocked, names C-B only. 2: blocked, names C-A (superseded version is not valid). 3: starts. 4: starts (no delay or race). 5: blocked again. Messages carry no PHI. This is the boundary set for BR-09: one of two present, old version, just signed, withdrawn | P0 | S, N, B | AUTO |
 
 ### 8.3 Clinical documentation (RA-R1-09, 11, 24; J-09)
 
@@ -333,15 +358,15 @@ These cases run against the real PostgreSQL roles and policies. A test that only
 | TC-CL-01 | RA-R1-09, BR-11 | `STF-DR-A1` | Visit; note template | Write a note from a template, sign (re-auth), then edit | Note locks on signing. Edit attempt fails with "locked"; changes only via addendum | P0 | P, N | AUTO |
 | TC-CL-02 | AC-10, BR-11 | `STF-DR-A1` | Signed note | Correct a dose through an addendum | Addendum has author and time; original unchanged; patient ID on the addendum is the survivor's if merged | P0 | P | AUTO |
 | TC-CL-03 | AC-11, BR-12 | `STF-TRN-A`, `STF-DR-A1` | Trainee note | 1. Release without co-signature<br>2. Supervisor co-signs<br>3. Release | 1 refused. 3 allowed. Co-sign audited. A co-sign by a non-supervisor is refused | P0 | N | AUTO |
-| TC-CL-04 | SA-F-08 | `STF-DR-A1` | | Enter an allergy and a medication as RxNorm-coded items; then as free text | Coded items saved with codes. Free text saved and flagged `uncoded` with a warning that requires acknowledgement in R2 checks | P1 | P, B | AUTO |
+| TC-CL-04 | SA-F-08 | `STF-DR-A1` | `STF-DR-A1` with `SEED-CHART-1` open; the RxNorm test terminology available. Warning-requires-acknowledgement is in PRD 4.x ("shown with a warning that requires acknowledgement in R2 checks", **[Rec]** SA-F-08); the acknowledgement itself is an R2 check (outline TC-RX) | 1. Add allergy "Penicillin" by choosing the RxNorm code<br>2. Add a medication by choosing a code<br>3. Add an allergy as free text "synthetic reaction x"<br>4. Add a medication as free text<br>5. Read the saved chart | Coded items are saved with their codes. Free-text items are saved flagged `uncoded` and shown with a warning. **In R1 the test stops at the saved flag and the warning**; the acknowledgement step is R2 (TC-RX-*) | P1 | P, B | AUTO |
 | TC-CL-05 | RA-R1-09 | `STF-DR-A1` | Two doctors | Two sessions edit the same draft | Second save `412`; draft recoverable | P1 | X | AUTO |
 | TC-CL-06 | CL deadline **[G2 setting]** | `STF-DR-A1` | Signed-note deadline 24 h | Leave a visit unsigned 24 h | Reminder sent to the doctor; no PHI in the reminder | P2 | B | AUTO |
-| TC-CL-07 | CN-07 | | Signed record | Try to change any signed record through the API | Rejected; immutable | P0 | N, SEC | AUTO |
+| TC-CL-07 | CN-07 | `STF-DR-A1` API client | A signed note and a signed addendum on `SEED-CHART-1` | 1. PUT/PATCH the signed note with a valid `If-Match`<br>2. DELETE the signed note<br>3. Edit a signed field through the addendum endpoint with the parent's ID<br>4. SQL as `app_api` role: UPDATE and DELETE on the note table | Steps 1–4 fail (refused; DB refuses UPDATE/DELETE). The note is unchanged (hash equal before/after). Only a new addendum can be created | P0 | N, SEC | AUTO |
 | TC-CL-08 | RA-R1-24, BR-34 | `STF-DR-A1` | `SEED-CHART-1` | Open the chart summary | Problems, allergies, medications, vitals, history, documents visible with name, DOB, photo. `uncoded` items are marked | P1 | P | AUTO+H |
-| TC-CL-09 | RA-R1-24, BR-34 | | Two patients with the same name in two browser tabs | Switch between charts | Each screen shows the right patient banner; no stale banner after switching; wrong-patient risk is a human usability check | P0 | S | HUMAN (clinician/usability) |
-| TC-DR-01 | RA-R1-23, F-DR-01 | `STF-DR-A1` | | Define availability, leave, blocked time | Slot search reflects it within one booking cycle | P1 | P | AUTO |
+| TC-CL-09 | RA-R1-24, BR-34 | Clinician (human tester; D-12 clinician or owner) | `PAT-04` and `PAT-05` with the same name; both charts open in two browser tabs; clinician at LOC-A1 | 1. Open `PAT-04` in tab 1 and `PAT-05` in tab 2<br>2. Switch tabs three times; at each switch read the banner out loud and compare with the patient the chart belongs to<br>3. In tab 1, press Back and Forward through two patients<br>4. Judge: could a busy clinician mistake one patient for the other? | Each screen shows the right patient banner; no stale banner after switching; wrong-patient risk is a human usability check | P0 | S | HUMAN (clinician/usability) |
+| TC-DR-01 | RA-R1-23, F-DR-01 | `STF-DR-A1` | `STF-DR-A1`; `DOC-TPL-1` template active | 1. Add leave on Friday 09:00–12:00<br>2. Add blocked time Wednesday 10:00–10:40<br>3. Search slots for those times as `PAT-01`<br>4. Remove the leave and search again | Slot search reflects it within one booking cycle | P1 | P | AUTO |
 | TC-DR-02 | RA-R1-23 | `STF-DR-A1` | Existing bookings | Add leave over booked slots | Warns about conflicts; no silent cancellation | P1 | E | AUTO |
-| TC-DR-03 | RA-R1-23 | `STF-DR-A2` | | Edit `A1`'s availability | Refused | P1 | N | AUTO |
+| TC-DR-03 | RA-R1-23 | `STF-DR-A2` | `STF-DR-A2` (doctor, same location); `STF-DR-A1`'s availability exists | 1. Open `A1`'s availability by URL/ID as `A2`<br>2. Try to change it through the API<br>3. Check the audit view | Refused | P1 | N | AUTO |
 
 ## 9. Telehealth, audit, documents and privacy
 
@@ -350,28 +375,28 @@ These cases run against the real PostgreSQL roles and policies. A test that only
 | ID | Req | Role | Pre / data | Steps | Expected | Pri | Type | Auto |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | TC-TH-01 | RA-R1-10 | `PAT-01`, `STF-DR-A1` | Video vendor sandbox | Device check, waiting room, join, notes side by side | Visit runs; both can see/hear; notes pane available to the doctor only | P1 | P | AUTO+H (real devices, audio and video) |
-| TC-TH-02 | BR-05 | | Patient and clinic in different zones | Open the join page | Both time zones shown | P2 | P | AUTO |
+| TC-TH-02 | BR-05 | `PAT-01` (browser in Eastern time), `STF-DR-B1` (LOC-B1, Pacific) | A video appointment between them at 09:00 Pacific | 1. Open the join page as `PAT-01`<br>2. Open the join page as `STF-DR-B1` | Each page shows the appointment time in the viewer's zone and the clinic's zone, labelled (12:00 Eastern / 09:00 Pacific) | P2 | P | AUTO |
 | TC-TH-03 | X | `PAT-02` | Other patient's visit link | Join someone else's session | Refused; logged | P0 | N, SEC | AUTO |
-| TC-TH-04 | BR-33 | | Video vendor outage | Start a visit | Visible failure, retry/fallback message, no data loss; operations dashboard | P1 | E | AUTO |
-| TC-TH-05 | NFR | | Join link reuse | Reuse after the visit / before the window | Refused | P1 | N | AUTO |
+| TC-TH-04 | BR-33 | `PAT-01`, `STF-DR-A1` | Video vendor sandbox switched to "unavailable" (vendor outage simulation); a video appointment starting now | 1. Both users click "Join"<br>2. Read the messages shown<br>3. Open the operations dashboard<br>4. Restore the vendor and rejoin | Visible failure, retry/fallback message, no data loss; operations dashboard | P1 | E | AUTO |
+| TC-TH-05 | NFR | `PAT-01` | Join link L for a video appointment at 10:00 (window opens 10 min before; closes at the end); controllable clock | 1. Open L at 09:40<br>2. Open L at 09:55 and join<br>3. End the visit; open L again at 10:45 | 09:40: refused "too early" with the start time. 09:55: joins. 10:45: refused; no new session; event logged | P1 | N | AUTO |
 | TC-TH-06 | RA-R1-28, TL-1 | `PAT-01` | Clinician's licensed states; D-2 not decided (states from D-2) | Book a video visit with a stated location outside the licensed states | Refused or flagged at booking. In-state: allowed. Cases use placeholder states; **real state values wait for D-2** (`BLOCKED` for production values) | P0 | N | AUTO |
-| TC-TH-07 | RA-R1-28 | `PAT-01` | | At join, answer "I am in …" with a different state | Patient must confirm current location; outside licensed states refuses/flags | P0 | N | AUTO |
-| TC-TH-08 | RA-R1-28 | | | Change clinician licensed states after booking | Next join re-checks | P2 | E | AUTO |
+| TC-TH-07 | RA-R1-28 | `PAT-01` | `PAT-01` with a booked video visit with `STF-DR-A1` (licensed in states X,Y); placeholder state list; join page open | 1. At join, answer "I am in Z" (outside X,Y)<br>2. Answer "I am in X" and join | Patient must confirm current location; outside licensed states refuses/flags | P0 | N | AUTO |
+| TC-TH-08 | RA-R1-28 | `ADM-1` (elevated), `PAT-01` | `PAT-01` booked in state X with `STF-DR-A1` (licensed in X) | 1. Remove X from `STF-DR-A1`'s licensed states<br>2. `PAT-01` opens the join page<br>3. Re-add X and open again | Step 2: refused/flagged with a safe message (no PHI). Step 3: allowed. Both changes audited | P2 | E | AUTO |
 
 ### 9.2 Audit (RA-R1-11, 12; AC-36; NFR-13)
 
 | ID | Req | Role | Pre / data | Steps | Expected | Pri | Type | Auto |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | TC-AU-01 | RA-R1-11, BR-13 | `STF-DR-A1` | `SEED-CHART-1` | View, search, export, print the chart | Each creates an audit event with user, time, IP/device, reason where needed, and no clinical values | P0 | P | AUTO |
-| TC-AU-02 | HEAAA-12 8.1 rule 1 | | Force the audit insert to fail (fault injection) | Read a PHI record | The read fails and the business change rolls back. PHI is never accessed without an audit row | P0 | E, SEC | AUTO |
-| TC-AU-03 | 8.1 rule 2 | | Denial path | Cause a denial and fail the separate denial write | Caller still gets the denial (fail closed); failure logged and alerted | P0 | E | AUTO |
-| TC-AU-04 | 8.1 rule 3 | | A transaction without `transaction_timeout` or longer than the bound | Try to insert audit rows | Refused by the trigger; migrations never write audit rows | P0 | SEC | AUTO |
-| TC-AU-05 | RA-R1-12, AC-36 | `ADM-1` | | Try to delete or edit audit entries via UI, API, and SQL as `app_*` roles | Not available / refused for every role including admin; the attempt is logged | P0 | N, SEC | AUTO |
-| TC-AU-06 | RA-R1-12 | `CMP-1` | | Use the audit viewer filters: who, what, when, from where | Shows the required fields; PHI not shown | P1 | P | AUTO |
+| TC-AU-02 | HEAAA-12 8.1 rule 1 | `STF-DR-A1` and DBA fault injector | `ENV-INT` with a fault-injection switch that makes the audit insert fail; `SEED-CHART-1` | 1. Enable the audit-failure injection<br>2. Open the chart of `PAT-01` as `STF-DR-A1`<br>3. Make a change to a draft note under the same injection<br>4. Disable the injection and repeat | The read fails and the business change rolls back. PHI is never accessed without an audit row | P0 | E, SEC | AUTO |
+| TC-AU-03 | 8.1 rule 2 | `STF-FD-A` and fault injector | `PAT-06` is outside `STF-FD-A`'s scope; injection that fails the separate denial-write transaction | 1. Enable the denial-write failure injection<br>2. `STF-FD-A` opens `PAT-06` by ID<br>3. Check the response, the application error log and the alerts<br>4. Disable injection | Caller still gets the denial (fail closed); failure logged and alerted | P0 | E | AUTO |
+| TC-AU-04 | 8.1 rule 3 | DBA test role in `ENV-INT` (not a production role) | An audit table with the trigger described in HEAAA-12 8.1 | 1. Start a transaction without `transaction_timeout` and insert an audit row<br>2. Start a transaction longer than the bound (set a shorter test bound) and insert an audit row<br>3. Run a migration that tries to insert an audit row | Steps 1–3 are refused by the trigger; no audit row is written | P0 | SEC | AUTO |
+| TC-AU-05 | RA-R1-12, AC-36 | `ADM-1` | `ADM-1` elevated; one audit entry E; a DB connection as each `app_*` role | Try to delete or edit audit entries via UI, API, and SQL as `app_*` roles | Not available / refused for every role including admin; the attempt is logged | P0 | N, SEC | AUTO |
+| TC-AU-06 | RA-R1-12 | `CMP-1` | `CMP-1` signed in and elevated; audit events from TC-AU-01 and TC-SEC-12 exist | Use the audit viewer filters: who, what, when, from where | Shows the required fields; PHI not shown | P1 | P | AUTO |
 | TC-AU-07 | SA-F-11 | `CMP-1` | Large result | Request an export over the size limit | Runs as an asynchronous job with a size limit; notification when ready; exported file audited; rate limit | P1 | B | AUTO |
-| TC-AU-08 | SAR-10 | | Audit anchoring | Alter a stored audit row at DB owner level in `ENV-INT`, run the anchor check | Mismatch detected, alert `audit anchor mismatch` raised | P0 | SEC | AUTO |
-| TC-AU-09 | NFR-13 | | | Check retention configuration | Retention value set at G2 and applied; archival works | P1 | P | OPS |
-| TC-AU-10 | 8.1 | | Chart-view load | Audit write under the load profile (about 2 million events/day peak) | Within p95 targets; no loss (TC-PERF-04) | P0 | L | AUTO |
+| TC-AU-08 | SAR-10 | DBA test role (owner level) and `CMP-1` | `ENV-INT`; audit anchoring job has run at least once | 1. Note the latest anchor value<br>2. As DB owner change one stored audit row<br>3. Run the anchor check job<br>4. Open the alerts of `CMP-1` | Mismatch detected, alert `audit anchor mismatch` raised | P0 | SEC | AUTO |
+| TC-AU-09 | NFR-13 | Operations owner (provides) and QA (reads) | Retention period decided at G2 and set in configuration | 1. Read the configured retention value for audit and clinical records<br>2. Run the archive job on test data older than the retention value<br>3. Verify archived rows are still retrievable by `CMP-1` and that rows younger than the value are untouched | The configured value equals the G2 decision; archive moves only older rows; retrieval of archived rows works and is audited. `BLOCKED` until the retention value is decided | P1 | P | OPS |
+| TC-AU-10 | 8.1 | Load generator | `ENV-LOAD`, `VOL-1` | 1. Duplicate of TC-PERF-04: not executed separately | Removed as a separate case: the audit write load is owned by **TC-PERF-04**. This ID is kept so references do not break, and carries no result of its own | P0 | L | n/a (owned by TC-PERF-04) |
 
 ### 9.3 Documents (RA-R1-13; J-19)
 
@@ -379,22 +404,22 @@ These cases run against the real PostgreSQL roles and policies. A test that only
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | TC-DOC-01 | RA-R1-13 | `PAT-01` | `SEED-FILES` clean PDF | Upload; wait for scan | Not openable by anyone until scanned clean. Then classification by staff and confirmation, then retained | P1 | P | AUTO |
 | TC-DOC-02 | AC-30, X-17 | `PAT-01` | EICAR file | Upload | Quarantined; uploader told; clinicians cannot open it; alert/ops record | P0 | N, SEC | AUTO |
-| TC-DOC-03 | NFR-17 | | Oversize, wrong MIME vs content, double extension | Upload each | Rejected with a safe error; no PHI in the message | P1 | N, B | AUTO |
+| TC-DOC-03 | NFR-17 | `PAT-01` | `SEED-FILES` oversize file, mismatched-type file, double-extension file; limit from HEAAA-13 | Upload each | Rejected with a safe error; no PHI in the message | P1 | N, B | AUTO |
 | TC-DOC-04 | AC-31, X-18 | `CMP-1` | Document on legal hold | Request deletion | Refused with reason recorded | P0 | N | AUTO |
-| TC-DOC-05 | CN-12 | | Uploads | Check the upload path | Uploads use pre-signed URLs and never pass through the API; URLs expire; one URL cannot read another's file | P0 | SEC | AUTO |
+| TC-DOC-05 | CN-12 | `PAT-01` and `PAT-02` | `PAT-01` has an uploaded clean file F1 | 1. Request an upload URL and note it goes to the object store, not the API<br>2. Upload using it<br>3. Wait until the URL has expired and try again<br>4. Use `PAT-01`'s URL to read F1 as `PAT-02` | Uploads use pre-signed URLs and never pass through the API; URLs expire; one URL cannot read another's file | P0 | SEC | AUTO |
 | TC-DOC-06 | AZ | `PAT-02` | Another patient's file ID | Download by ID | `404`; logged | P0 | N, SEC | AUTO |
-| TC-DOC-07 | BR-29 | | Retention | Delete after the retention period (clock control) | Allowed only after the legal period and no hold | P1 | B | AUTO |
-| TC-DOC-08 | Scanner outage | | Stop the scanner | Upload | File stays unavailable; visible failure; no bypass | P0 | E, SEC | AUTO |
+| TC-DOC-07 | BR-29 | `CMP-1` | Document D1 older than the retention period with no hold; document D2 younger; D3 older with legal hold; controllable clock | 1. Request deletion of D2<br>2. Request deletion of D1<br>3. Request deletion of D3 | Allowed only after the legal period and no hold | P1 | B | AUTO |
+| TC-DOC-08 | Scanner outage | `PAT-01` | Malware scanner service stopped on `ENV-INT` | 1. Stop the scanner<br>2. Upload a clean PDF<br>3. Try to open it as `PAT-01` and as `STF-DR-A1`<br>4. Restart the scanner and wait for the scan | File stays unavailable; visible failure; no bypass | P0 | E, SEC | AUTO |
 
 ### 9.4 Privacy requests (RA-R1-14; J-21)
 
 | ID | Req | Role | Pre / data | Steps | Expected | Pri | Type | Auto |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| TC-PR-01 | RA-R1-14 | `PAT-01` | | Set notification preferences | Saved and respected (TC-NT-08) | P2 | P | AUTO |
-| TC-PR-02 | RA-R1-14 | `PAT-01` | | Request a data export | Request recorded; identity verified; compliance sees it; export assembled asynchronously in chunks, each audited; delivered via the portal, no PHI in email | P1 | P | AUTO |
-| TC-PR-03 | RA-R1-14 | `PAT-01` | | Request account deletion | Request recorded and visible to compliance. **What deletion means is `BLOCKED` on D-8**; this case checks the request flow only | P1 | P | AUTO |
-| TC-PR-04 | RA-R1-14 | `PAT-02` | | Request another patient's export | Refused | P0 | N, SEC | AUTO |
-| TC-PR-05 | RA-R1-14 | `CMP-1` | | Process a request with identity not verified | Refused with reason recorded | P1 | N | AUTO+H |
+| TC-PR-01 | RA-R1-14 | `PAT-01` | `PAT-01` signed in | 1. Open notification preferences<br>2. Turn SMS off, email on<br>3. Save and reload | Saved and respected (TC-NT-08) | P2 | P | AUTO |
+| TC-PR-02 | RA-R1-14 | `PAT-01` | `PAT-01` signed in with MFA; chart `SEED-CHART-1` | 1. Request a data export<br>2. Pass the identity check<br>3. Observe the status<br>4. Open the finished export from the portal | Request recorded; identity verified; compliance sees it; export assembled asynchronously in chunks, each audited; delivered via the portal, no PHI in email | P1 | P | AUTO |
+| TC-PR-03 | RA-R1-14 | `PAT-01` | `PAT-01` signed in; **D-8 open** | 1. Request account deletion<br>2. Confirm identity<br>3. Open the request as `CMP-1` | Request recorded and visible to compliance. No data is deleted. What deletion means is `BLOCKED` on D-8 | P1 | P | AUTO |
+| TC-PR-04 | RA-R1-14 | `PAT-02` | `PAT-01` and `PAT-02` both have exports | 1. As `PAT-02` request the export belonging to `PAT-01` by its ID<br>2. As `PAT-02` download `PAT-01`'s export file | Refused | P0 | N, SEC | AUTO |
+| TC-PR-05 | RA-R1-14 | `CMP-1` | `CMP-1`; a privacy request from `PAT-01` whose identity check is not complete | 1. Open the request<br>2. Try to process the export<br>3. Record the reason for refusal | Refused with reason recorded | P1 | N | AUTO+H |
 
 ## 10. Admin, brand site, patient portal, messaging, merge and API conventions
 
@@ -402,43 +427,43 @@ These cases run against the real PostgreSQL roles and policies. A test that only
 
 | ID | Req | Role | Pre / data | Steps | Expected | Pri | Type | Auto |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| TC-AD-01 | RA-R1-15, F-AD-01 | `ADM-1` (elevated) | | Create clinics, rooms, hours, holidays | Saved; audited with before/after; appear in slot search | P1 | P | AUTO |
-| TC-AD-02 | RA-R1-15 | `ADM-1` | | Create services, including `SVC-SENS` with a neutral display name | Neutral name is required where a service name reveals a condition; patient-visible name is the neutral one everywhere (TC-NT-01) | P0 | SEC | AUTO |
-| TC-AD-03 | RA-R1-15, D-3 | `ADM-1` | | Set booking policy to block-only; try to set a fee | Block-only works. Fee/price fields are stored but nothing is charged in R1 (D-3 default). Rerun if D-3 changes | P1 | P | AUTO |
-| TC-AD-04 | RA-R1-15 | `ADM-1` | | Edit message templates | Template variables restricted to the allowlist; a template with a free-text binding is rejected | P0 | N, SEC | AUTO |
-| TC-AD-05 | RA-R1-15 | `ADM-1` | | Create a role and assign it | Needs the second approver (C4); no role is effective before approval | P0 | SEC | AUTO |
-| TC-AD-06 | RA-R1-15 | `STF-FD-A` | | Open admin routes | Refused | P0 | N | AUTO |
-| TC-AD-07 | BR-04 | `ADM-1` | | Set the future-appointment cap; test at the boundary | Cap applied (TC-BK-07) | P2 | B | AUTO |
+| TC-AD-01 | RA-R1-15, F-AD-01 | `ADM-1` (elevated) | `ADM-1` signed in and elevated (TC-SEC-02 grant) | Create clinics, rooms, hours, holidays | Saved; audited with before/after; appear in slot search | P1 | P | AUTO |
+| TC-AD-02 | RA-R1-15 | `ADM-1` | `ADM-1` elevated; the internal name "synthetic HIV clinic" and a neutral display name | Create services, including `SVC-SENS` with a neutral display name | Neutral name is required where a service name reveals a condition; patient-visible name is the neutral one everywhere (TC-NT-01) | P0 | SEC | AUTO |
+| TC-AD-03 | RA-R1-15, D-3 | `ADM-1` | `ADM-1` elevated; D-3 default (block-only) in effect | Set booking policy to block-only; try to set a fee | Block-only works. Fee/price fields are stored but nothing is charged in R1 (D-3 default). Rerun if D-3 changes | P1 | P | AUTO |
+| TC-AD-04 | RA-R1-15 | `ADM-1` | `ADM-1` elevated; the template editor open; variable allowlist from HEAAA-13 | Edit message templates | Template variables restricted to the allowlist; a template with a free-text binding is rejected | P0 | N, SEC | AUTO |
+| TC-AD-05 | RA-R1-15 | `ADM-1` | `ADM-1` and `ADM-2` elevated; a new role definition | Create a role and assign it | Needs the second approver (C4); no role is effective before approval | P0 | SEC | AUTO |
+| TC-AD-06 | RA-R1-15 | `STF-FD-A` | `STF-FD-A` signed in; admin route list | Open admin routes | Refused | P0 | N | AUTO |
+| TC-AD-07 | BR-04 | `ADM-1` | `ADM-1` elevated; `PAT-01`; cap = 3 | Set the future-appointment cap; test at the boundary | Cap applied (TC-BK-07) | P2 | B | AUTO |
 | TC-AD-08 | RA-R1-26, F-AD-11 | `ADM-1` | Feature flag per location | Turn a flag on for LOC-A1 only | Behaviour appears at LOC-A1 and not LOC-B1; audited | P2 | P | AUTO |
-| TC-AD-09 | RA-R1-26 | `ADM-1` | | Post a maintenance banner and remove it | Visible on all hosts, no PHI, removed cleanly | P3 | P | AUTO |
-| TC-AD-10 | RA-R1-26 | `ADM-1` | | Change flags without elevation | Refused (C1) | P0 | N | AUTO |
+| TC-AD-09 | RA-R1-26 | `ADM-1` | `ADM-1` elevated; all three hosts open in browsers | Post a maintenance banner and remove it | Visible on all hosts, no PHI, removed cleanly | P3 | P | AUTO |
+| TC-AD-10 | RA-R1-26 | `ADM-1` | `ADM-1` signed in with **no** active elevation | Change flags without elevation | Refused (C1) | P0 | N | AUTO |
 | TC-AD-11 | RA-R1-31 | `ADM-1` | Sandboxes: Google, email, SMS, push, analytics | For each integration: save, test, view health | Health shows OK/failed correctly with a real failure injected | P1 | P, E | AUTO |
-| TC-AD-12 | RA-R1-31, BD-11 | `ADM-1` | | Save a secret, then look for it in UI, API responses, logs, exports, audit | Secrets are write-only: never displayed, logged or exported. Audit has version IDs only | P0 | SEC | AUTO |
-| TC-AD-13 | RA-R1-31 | `ADM-1` | | Change an integration setting | Audit: who, what, before, after (secret fields as version ID) | P0 | SEC | AUTO |
+| TC-AD-12 | RA-R1-31, BD-11 | `ADM-1` | `ADM-1` elevated; a test SMS API secret value `SECRET-TEST-1` | Save a secret, then look for it in UI, API responses, logs, exports, audit | Secrets are write-only: never displayed, logged or exported. Audit has version IDs only | P0 | SEC | AUTO |
+| TC-AD-13 | RA-R1-31 | `ADM-1` | `ADM-1` elevated; an existing integration setting | Change an integration setting | Audit: who, what, before, after (secret fields as version ID) | P0 | SEC | AUTO |
 | TC-AD-14 | RA-R1-31, BD-11 O-2 | `ADM-1` | Admin-entered integration secret | Compromised-`api` scenario: write an approval row and enqueue a job directly | The worker-side check refuses without approval evidence the `api` alone cannot produce | P0 | SEC | AUTO |
-| TC-AD-15 | RA-R1-31 | `ADM-1` | | Disable an integration | Dependent features fail visibly, not silently | P1 | E | AUTO |
+| TC-AD-15 | RA-R1-31 | `ADM-1` | `ADM-1` elevated; email integration healthy; a booking to confirm | Disable an integration | Dependent features fail visibly, not silently | P1 | E | AUTO |
 
 ### 10.2 Brand site (RA-R1-16, 26; F-BS-01..07)
 
 | ID | Req | Role | Pre / data | Steps | Expected | Pri | Type | Auto |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| TC-BS-01 | RA-R1-16 | `VIS-01` | | Open services, doctors (with next available slot), locations, contact | Pages exist and are correct. Next available slot may be up to 60 s old | P1 | P | AUTO |
-| TC-BS-02 | RA-R1-16, J-01 | `VIS-01` | | Click "Book" from a doctor page | Hand-off to `my.` with service and doctor pre-selected; if not signed in, sign-in first | P1 | P | AUTO |
-| TC-BS-03 | RA-R1-16 | `STF-MKT` | | Edit a page in the CMS and publish | Change goes live without a developer; marketing user cannot reach patient data | P1 | P, N | AUTO+H |
-| TC-BS-04 | RA-R1-16 | | | Inspect analytics payloads | No health data in analytics events | P0 | SEC | AUTO |
-| TC-BS-05 | RA-R1-16 | | | Check SEO metadata, sitemap, structured data | Present and valid | P2 | P | AUTO |
-| TC-BS-06 | NFR-17 | | Public forms | Spam submission, rate limit, bot protection | Protected | P1 | SEC | AUTO |
-| TC-BS-07 | F-BS-06 | | | English only until D-9 | No broken language switch | P3 | P | AUTO |
+| TC-BS-01 | RA-R1-16 | `VIS-01` | `VIS-01` (anonymous browser); published pages; `STF-DR-A1` with free slots | Open services, doctors (with next available slot), locations, contact | Pages exist and are correct. Next available slot may be up to 60 s old | P1 | P | AUTO |
+| TC-BS-02 | RA-R1-16, J-01 | `VIS-01` | `VIS-01`; a doctor page for `STF-DR-A1` | Click "Book" from a doctor page | Hand-off to `my.` with service and doctor pre-selected; if not signed in, sign-in first | P1 | P | AUTO |
+| TC-BS-03 | RA-R1-16 | `STF-MKT` | `STF-MKT` signed in to the CMS; an existing page | 1. Edit a page title and body text<br>2. Publish<br>3. Open the public page as `VIS-01`<br>4. Try to open the staff host and a patient URL with the marketing session | Change goes live without a developer; marketing user cannot reach patient data | P1 | P, N | AUTO+H |
+| TC-BS-04 | RA-R1-16 | QA (browser dev tools / proxy) | `VIS-01` completes a booking hand-off; analytics sandbox receiving events | 1. Open the booking journey with network recording on<br>2. Record every analytics request after consent<br>3. Search the payloads for names, DOB, phone, email, service names flagged sensitive | No health data in analytics events | P0 | SEC | AUTO |
+| TC-BS-05 | RA-R1-16 | QA | Published brand site | 1. Fetch the sitemap and robots files<br>2. Run a structured-data validator on the doctor and service pages<br>3. Check title and description on five pages | Present and valid | P2 | P | AUTO |
+| TC-BS-06 | NFR-17 | `VIS-01` (script client) | Public contact form; rate limit value from HEAAA-13 | 1. Submit the form 1 time<br>2. Submit it past the rate limit from one IP<br>3. Submit with the bot-protection token missing | Protected | P1 | SEC | AUTO |
+| TC-BS-07 | F-BS-06 | `VIS-01` | D-9 not decided; English only | 1. Open the site and look for a language switch<br>2. Open each page | No language switch that leads to a broken or empty page | P3 | P | AUTO |
 | TC-BS-08 | RA-R1-26, F-BS-07 | `VIS-01` | Cookie banner | 1. Before consent: observe network<br>2. Accept analytics | Before consent: no non-essential analytics requests. After: allowed. Choice remembered | P1 | P | AUTO |
 
 ### 10.3 Patient portal profile, proxy and pre-visit (RA-R1-19, 20, 21)
 
 | ID | Req | Role | Pre / data | Steps | Expected | Pri | Type | Auto |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| TC-PP-01 | RA-R1-19 | `PAT-01` | | Edit demographics, emergency contact, insurance card, preferred pharmacy and language | Changes visible and audited | P1 | P | AUTO |
-| TC-PP-02 | RA-R1-19 | `PAT-01` | | Invalid input (dates in future, long strings, scripts from `SEED-ATTACK`) | Rejected or safely escaped; no stored script | P1 | N, SEC | AUTO |
+| TC-PP-01 | RA-R1-19 | `PAT-01` | `PAT-01` signed in | 1. Edit demographics, emergency contact, preferred pharmacy, language<br>2. Upload an insurance card image<br>3. Save and reload<br>4. Open the audit view as `CMP-1` | Changes visible and audited | P1 | P | AUTO |
+| TC-PP-02 | RA-R1-19 | `PAT-01` | `PAT-01`; `SEED-ATTACK` strings | Invalid input (dates in future, long strings, scripts from `SEED-ATTACK`) | Rejected or safely escaped; no stored script | P1 | N, SEC | AUTO |
 | TC-PP-03 | RA-R1-20a | `PRX-01` | `PAT-03` | Default proxy view | Appointments only (see TC-AZ-14) | P0 | P | AUTO |
-| TC-PP-04 | J-03 | `PRX-01` | | Request a proxy link | Request recorded; link needs verification (TC-PP-05 rules) | P1 | P | AUTO |
+| TC-PP-04 | J-03 | `PRX-01` | `PRX-01` signed in; `PAT-03` not yet linked or linked pending | 1. Request a proxy link for `PAT-03`<br>2. Check the request status as `PRX-01`<br>3. Open the request as `STF-FD-A` | Request recorded; link needs verification (TC-PP-05 rules) | P1 | P | AUTO |
 | TC-PP-05 | RA-R1-20b, AC-32 | `PRX-01` | `PAT-03` turns the age of consent | Age-out and revocation | **`BLOCKED` on D-7 / G-07**: rule values do not exist yet. Written when values are decided | P1 | E | BLOCKED |
 | TC-PP-06 | RA-R1-21 | `PAT-01` | **[G2 setting]** 72 h before | Receive the request; complete the questionnaire; e-sign consents; upload insurance cards | Staff see completion status; consent versions stored with date | P1 | P | AUTO |
 | TC-PP-07 | RA-R1-21 | `PAT-01` | Partial completion | Leave incomplete and check the staff view | Staff see "incomplete" and which items | P2 | P | AUTO |
@@ -447,10 +472,10 @@ These cases run against the real PostgreSQL roles and policies. A test that only
 
 | ID | Req | Role | Pre / data | Steps | Expected | Pri | Type | Auto |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| TC-MSG-01 | RA-R1-25, F-DR-12 | `STF-DR-A1`, `STF-FD-A` | | Create a task; send a secure message | Delivered in the alert/task area; audited; no PHI in any email/SMS notice about it | P1 | P | AUTO |
-| TC-MSG-02 | RA-R1-25 | Staff outside the org | | Send to a user in `ORG-2` | Refused | P0 | N | AUTO |
-| TC-MSG-03 | RA-R1-25, D-5 | `PAT-01` | | Patient messaging | Tested only if D-5 retains F-PP-09. Otherwise the case is `N/A` and recorded as such | P2 | P | AUTO |
-| TC-MSG-04 | RA-R1-25 | | `SEED-ATTACK` in a message | Open it | Script not executed; stored safely | P1 | SEC | AUTO |
+| TC-MSG-01 | RA-R1-25, F-DR-12 | `STF-DR-A1`, `STF-FD-A` | `STF-DR-A1` and `STF-FD-A` signed in at LOC-A1; email sandbox | Create a task; send a secure message | Delivered in the alert/task area; audited; no PHI in any email/SMS notice about it | P1 | P | AUTO |
+| TC-MSG-02 | RA-R1-25 | Staff outside the org | `STF-FD-A` (ORG-1) and a user of `ORG-2` | 1. Try to send a secure message to the `ORG-2` user<br>2. Try to assign a task to the `ORG-2` user | Refused | P0 | N | AUTO |
+| TC-MSG-03 | RA-R1-25, D-5 | `PAT-01` | D-5 decision known (retains F-PP-09 or not) | Patient messaging | Tested only if D-5 retains F-PP-09. Otherwise the case is `N/A` and recorded as such | P2 | P | AUTO |
+| TC-MSG-04 | RA-R1-25 | `PAT-01` and `STF-FD-A` | `SEED-ATTACK` script string | 1. `PAT-01` sends a message containing the string<br>2. `STF-FD-A` opens it<br>3. Check page source and browser console | Script not executed; stored safely | P1 | SEC | AUTO |
 
 ### 10.5 Duplicate detection and merge (RA-R1-27, BR-37; HEAAA-12 9.2)
 
@@ -458,34 +483,34 @@ These cases run against the real PostgreSQL roles and policies. A test that only
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | TC-MG-01 | RA-R1-27 | `STF-FD-A` | `SEED-DUP` | Register a patient with matching name, DOB and phone/email | Duplicate warning shown; user can proceed or cancel; the matching function returns no out-of-scope demographics | P0 | S | AUTO |
 | TC-MG-02 | RA-R1-27, BQ-3 | `STF-MRO-A` | `SEED-DUP` | Request a merge of `PAT-04` into `PAT-05`; approve per the approval rule | After approval: survivor's chart shows both histories; merge audited with both IDs and counts | P0 | S | AUTO |
-| TC-MG-03 | RA-R1-27 | `STF-FD-A` without `patient.merge` | | Request a merge | Refused | P0 | N | AUTO |
+| TC-MG-03 | RA-R1-27 | `STF-FD-A` without `patient.merge` | `STF-FD-A` without `patient.merge`; `SEED-DUP` | Request a merge | Refused | P0 | N | AUTO |
 | TC-MG-04 | 9.2 | Requester sees only one patient | Patients cared for at different locations | Merge | Whole merge completes; all rows of both patients handled (the job runs with the exact patient IDs, not the requester's scope) | P0 | S | AUTO |
-| TC-MG-05 | 9.2 | | Immutable rows | After merge, staff of the survivor open a signed note of the merged ID | Visible; original `patient_id` retained | P0 | S | AUTO |
-| TC-MG-06 | 9.2 | | Force a failure in one participant | Run a merge | Everything rolls back; no partial merge; operations alert; request `failed` | P0 | E | AUTO |
-| TC-MG-07 | 9.2 | Stale staff session and stale patient portal session | | Write against the merged ID after the merge | `409 patient.merged`; nothing written | P0 | X | AUTO |
-| TC-MG-08 | 9.2 | | Hold racing the merge, both orders | Run both orders | Hold first: counted and re-pointed. Merge first: hold refused and its occupancy rolled back. Never an orphan on the merged ID | P0 | X | AUTO |
-| TC-MG-09 | 9.2 | | Note insert racing the merge | Both orders | Same as above | P0 | X | AUTO |
-| TC-MG-10 | 9.2 | | Queued job with the merged ID | One `resolve` type, one `fail` type | Each behaves as declared; undeclared job type fails the CI check | P0 | E | AUTO |
-| TC-MG-11 | 9.2 | | Addendum to a signed note of a merged ID | Create | Carries the survivor's ID and refers to its parent | P0 | S | AUTO |
-| TC-MG-12 | 9.2 | | Request whose patient was merged meanwhile; two merges sharing a patient | Run at once | `patient.already_merged`; no deadlock | P0 | X | AUTO |
-| TC-MG-13 | 6.6, 6.8 | | Chained merge A→B then B→C; booking at a new location; ending a relationship | Run | C's staff see A's immutable rows; new location sees merged history; ending a relationship removes the merged-ID rows at that location | P0 | S | AUTO |
-| TC-MG-14 | 9.2 time bound | | Chart of 10× the largest expected size | Merge | Completes inside the 60 s transaction bound or rolls back completely and is reported; writer wait time recorded | P1 | L | AUTO |
+| TC-MG-05 | 9.2 | `STF-FD-A` of the survivor's location | `SEED-DUP` merge completed; a signed note authored under `PAT-04` | 1. Open the survivor chart<br>2. Open the signed note originally written under `PAT-04`<br>3. Read the `patient_id` of the note through the audit/API view | Visible; original `patient_id` retained | P0 | S | AUTO |
+| TC-MG-06 | 9.2 | `STF-MRO-A`, fault injector | `SEED-DUP`; an injected failure in one participant module (e.g. documents) | 1. Enable the injection<br>2. Approve the merge<br>3. Read both patients' data and the request status<br>4. Open the operations alerts | Everything rolls back; no partial merge; operations alert; request `failed` | P0 | E | AUTO |
+| TC-MG-07 | 9.2 | Stale staff session and stale patient portal session | Two stale sessions opened before the merge: a staff session on `PAT-04`'s chart and a patient portal session of `PAT-04`; `SEED-DUP` merge then approved | 1. Merge `PAT-04` into `PAT-05`<br>2. In the stale staff session, save a note on `PAT-04`<br>3. In the stale portal session, book an appointment as `PAT-04` | `409 patient.merged`; nothing written | P0 | X | AUTO |
+| TC-MG-08 | 9.2 | API client for `STF-MRO-A` and `PAT-04` | `SEED-DUP`; slot S1 free; controllable test hooks to order the transactions | 1. Run order A: place a hold for `PAT-04` on S1, then approve the merge<br>2. Reset; run order B: approve the merge, then place the hold using the merged ID<br>3. Count holds, occupancy and rows pointing to `PAT-04` | Hold first: counted and re-pointed. Merge first: hold refused and its occupancy rolled back. Never an orphan on the merged ID | P0 | X | AUTO |
+| TC-MG-09 | 9.2 | API client for `STF-DR-A1` and `STF-MRO-A` | `SEED-DUP`; test hooks to order transactions | 1. Order A: insert a note on `PAT-04`, then merge<br>2. Reset; order B: merge, then insert the note on the merged ID<br>3. Count notes on the merged ID | Same as above | P0 | X | AUTO |
+| TC-MG-10 | 9.2 | Operator (queue admin) and CI | `SEED-DUP`; one queued job typed `resolve` and one typed `fail` for `PAT-04`; one job type with no declared behaviour | 1. Merge `PAT-04` into `PAT-05`<br>2. Run the queue<br>3. Check the outcomes of the two jobs<br>4. Run the CI check that lists job types and their `on_merged` declaration | Each behaves as declared; undeclared job type fails the CI check | P0 | E | AUTO |
+| TC-MG-11 | 9.2 | `STF-DR-A1` | `SEED-DUP` merged; a signed note under `PAT-04` | 1. Open the signed note<br>2. Create an addendum<br>3. Read the addendum's `patient_id` and parent reference | Carries the survivor's ID and refers to its parent | P0 | S | AUTO |
+| TC-MG-12 | 9.2 | API clients for `STF-MRO-A` and `STF-MRO-A2` | `SEED-DUP`; a third patient `PAT-07`; merge requests M1 (PAT-04→PAT-05) and M2 (PAT-05→PAT-07) submitted at the same moment | 1. Submit M1 and M2 simultaneously<br>2. Read both request statuses<br>3. Read the database deadlock log | `patient.already_merged`; no deadlock | P0 | X | AUTO |
+| TC-MG-13 | 6.6, 6.8 | `STF-FD-A`, `STF-DR-B1`, `STF-MRO-A` | `PAT-04`, `PAT-05`, a third patient `PAT-07`; `PAT-04` seen only at LOC-A1; `PAT-07` seen only at LOC-B1 | 1. Merge A (`PAT-04`) into B (`PAT-05`)<br>2. Merge B into C (`PAT-07`)<br>3. As staff of C's location open the chart and look for A's signed notes<br>4. Book the merged patient at a new location LOC-A2 and open the chart there<br>5. End the care relationship at LOC-A2 and open again | C's staff see A's immutable rows; new location sees merged history; ending a relationship removes the merged-ID rows at that location | P0 | S | AUTO |
+| TC-MG-14 | 9.2 time bound | `STF-MRO-A`, operator | A synthetic patient chart 10× the largest expected (row counts from HEAAA-13); merge target `PAT-05` | 1. Approve the merge<br>2. Time the merge transaction<br>3. If it exceeds 60 s, confirm rollback<br>4. Read the writer-wait metric | Completes inside the 60 s transaction bound or rolls back completely and is reported; writer wait time recorded | P1 | L | AUTO |
 
 ### 10.6 API conventions (HEAAA-12 5.2) — cross-cutting
 
 | ID | Req | Role | Pre / data | Steps | Expected | Pri | Type | Auto |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| TC-API-01 | CN-03 | Any | | Trigger validation, auth and server errors on each module | `application/problem+json` with stable `code`, `status`, `title`, `requestId`; **no PHI in any error field**; validation errors list paths, not values | P0 | SEC | AUTO |
-| TC-API-02 | CN-04 | | | `401` without session; `403 auth.forbidden` with session but no right; `404` for out of scope | Status codes as stated | P0 | N | AUTO |
-| TC-API-03 | CN-05 | | | Search for a patient by name/DOB; inspect URLs and logs | Searches are `POST …/search`; no PHI in any path or query | P0 | SEC | AUTO |
-| TC-API-04 | CN-07 | | | Update without `If-Match`, with a stale one | `428/412` per design; no silent overwrite | P1 | N | AUTO |
-| TC-API-05 | CN-08 | | | `limit=1000`, tampered cursor, offset parameter | Limit capped at 100; tampered cursor refused; no offset pagination on PHI lists | P1 | B | AUTO |
-| TC-API-06 | CN-10 | | | Check headers | `Cache-Control: no-store` on every `/api/*` and `/partner/*` response | P0 | SEC | AUTO |
-| TC-API-07 | CN-11 | | | Exceed limits per principal and per IP | `429` with `Retry-After` | P1 | SEC | AUTO |
-| TC-API-08 | CN-12 | | | 1 MB+ JSON body; unknown JSON fields on portal and `integrations.` | Large body refused; unknown fields ignored on portals, rejected on `integrations.` | P1 | B | AUTO |
-| TC-API-09 | CN-01 | | | Compare each module's OpenAPI document with actual behaviour (contract test) | Responses match the contract for every R1 endpoint; no undocumented endpoints | P1 | P | AUTO |
-| TC-API-10 | CN-13 | | | Follow one `requestId` | It appears in the response header, log, trace and audit event | P2 | P | AUTO |
-| TC-API-11 | 8.2 | | Outbox | Kill the worker mid-job; restart | Job retried exactly once in effect (idempotent); exhausted jobs go to the dead-letter view | P1 | E | AUTO |
+| TC-API-01 | CN-03 | API client with `PAT-01` and `STF-DR-A1` sessions | `ENV-INT`; list of R1 modules from HEAAA-13 | 1. For each module send an invalid body (validation error)<br>2. Send a request without a session<br>3. Send a request with a session but without the right<br>4. Force a server error (fault injection endpoint)<br>5. Read every error body | Every body is `application/problem+json` with `code`, `status`, `title`, `requestId`; no field contains names, DOB, phone, email, diagnoses; validation errors list paths, not values | P0 | SEC | AUTO |
+| TC-API-02 | CN-04 | API client; `PAT-01` session; `STF-FD-A` session | `PAT-06` exists but is outside `STF-FD-A`'s scope; a route requiring a right `STF-FD-A` lacks | 1. Call a protected route with no cookie<br>2. Call a route needing a right `STF-FD-A` lacks, with its session<br>3. Call `GET /patients/{PAT-06}` with `STF-FD-A` | 1: 401. 2: 403 `auth.forbidden`. 3: 404 (CN-04) | P0 | N | AUTO |
+| TC-API-03 | CN-05 | API client; `STF-FD-A` session | `PAT-01` exists; access logs and proxy logs available to QA | 1. Search for `PAT-01` by name, DOB and phone with `POST …/search`<br>2. Try the same search as `GET` with query parameters<br>3. Read the access and application logs for those requests | POST works. GET with PHI in the URL is refused (404/405). Logs contain no name, DOB or phone | P0 | SEC | AUTO |
+| TC-API-04 | CN-07 | API client; `STF-DR-A1` session | A draft note resource with current `ETag` E1 | 1. PUT the note without `If-Match`<br>2. PUT with `If-Match: E0` (stale)<br>3. PUT with `If-Match: E1` | 1: `428`. 2: `412`, nothing written. 3: success and a new ETag | P1 | N | AUTO |
+| TC-API-05 | CN-08 | API client; `STF-FD-A` session | At least 300 appointments in the day list | 1. Request a list with `limit=1000`<br>2. Take a valid cursor and change one character<br>3. Request a PHI list with `offset=100` | 1: at most 100 items returned. 2: refused (`400`/`422`) and no data. 3: the parameter is rejected or ignored; the page follows the cursor | P1 | B | AUTO |
+| TC-API-06 | CN-10 | API client; sessions of each audience | One route per module and `/partner/*` | 1. Call a route in each module (success, error, redirect)<br>2. Read the `Cache-Control` header of each response | `Cache-Control: no-store` on every `/api/*` and `/partner/*` response | P0 | SEC | AUTO |
+| TC-API-07 | CN-11 | API client; `PAT-01` session and an anonymous client | Rate limits from HEAAA-13 (per principal, per IP) | 1. Send requests above the per-principal limit with `PAT-01`<br>2. Send requests above the per-IP limit anonymously<br>3. Read the status and headers of the first refused response | `429` with `Retry-After`; the next call after that time succeeds | P1 | SEC | AUTO |
+| TC-API-08 | CN-12 | API client; `PAT-01` session; partner test credential | A portal endpoint and an `integrations.` endpoint that accept JSON | 1. POST a body larger than 1 MB to each<br>2. POST a valid body with an extra unknown field to a portal endpoint<br>3. POST the same to an `integrations.` endpoint | 1: refused (`413`). 2: unknown field ignored (success). 3: rejected (`400`/`422`) | P1 | B | AUTO |
+| TC-API-09 | CN-01 | CI contract test runner | OpenAPI documents of all R1 modules from HEAAA-13; candidate deployed on `ENV-INT` | 1. Run the contract test against every documented R1 endpoint<br>2. List all routes the server exposes and diff with the documents | Every response matches its schema; no undocumented endpoint exists | P1 | P | AUTO |
+| TC-API-10 | CN-13 | API client; `PAT-01` session | Tracing and log search available | 1. Make one booking request and read its `X-Request-Id`<br>2. Search logs, traces and audit for that ID | The ID appears in the response header, the log, the trace and the audit event | P2 | P | AUTO |
+| TC-API-11 | 8.2 | Operator, `PAT-01` | Outbox with a job J (send confirmation email) queued; worker running | 1. Queue J<br>2. Kill the worker while J is executing<br>3. Restart the worker<br>4. Count emails sent and read the job state<br>5. Configure a job that always fails; wait for retries to exhaust; open the dead-letter view | Job retried exactly once in effect (idempotent); exhausted jobs go to the dead-letter view | P1 | E | AUTO |
 
 ## 11. Non-functional cases
 
@@ -495,15 +520,15 @@ These cases run against the real PostgreSQL roles and policies. A test that only
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | TC-A11Y-01 | NFR-10 | QA | Every portal and the brand site, each key page in the R1 journeys | Run the automated accessibility scan (tool and version recorded) | No WCAG 2.2 AA violations of serious/critical impact; known exceptions listed with reason and owner | P1 | A11Y | AUTO |
 | TC-A11Y-02 | NFR-10 | Human tester | `ENV-A11Y` | Keyboard only: complete sign-in, booking, check-in, note writing, admin role request | Everything reachable and operable; visible focus; no keyboard trap; logical order; the session-timeout warning is operable | P1 | A11Y | HUMAN |
-| TC-A11Y-03 | NFR-10 | Human tester using a screen reader (NVDA/JAWS on Windows, VoiceOver on macOS and iOS) | | Complete booking and the patient banner reading (BR-34) | Labels, roles, errors, live regions announce correctly; banner (name, DOB) is announced on chart screens | P1 | A11Y | HUMAN |
+| TC-A11Y-03 | NFR-10 | Human tester using a screen reader (NVDA/JAWS on Windows, VoiceOver on macOS and iOS) | `ENV-A11Y`; `PAT-01`; a chart open for `STF-DR-A1`; screen readers NVDA, JAWS, VoiceOver | Complete booking and the patient banner reading (BR-34) | Labels, roles, errors, live regions announce correctly; banner (name, DOB) is announced on chart screens | P1 | A11Y | HUMAN |
 | TC-A11Y-04 | NFR-10 | Human | 200% zoom and 400% reflow; 360 px width | Complete booking and a triage entry | No loss of content or function; no horizontal scroll at 360 px | P1 | A11Y | AUTO+H |
-| TC-A11Y-05 | NFR-10 | Human | | Contrast, colour-only meaning (vitals highlight, alert severities), reduced motion, text spacing | Highlights have a non-colour cue; contrast passes | P1 | A11Y | AUTO+H |
-| TC-A11Y-06 | NFR-10 | | Forms and errors | Submit invalid forms | Errors linked to fields, announced, no PHI in the message | P1 | A11Y | AUTO+H |
-| TC-A11Y-07 | NFR-10 | | Safety alerts | The red-flag alert and emergency advice | Perceivable with a screen reader and without colour or sound | P0 | A11Y, S | HUMAN |
-| TC-A11Y-08 | NFR-10 | | Accessible name for the video join controls and waiting room | Complete TC-TH-01 with a screen reader | Operable | P2 | A11Y | HUMAN |
+| TC-A11Y-05 | NFR-10 | Human | `ENV-A11Y`; vitals with a highlighted out-of-range value; alert severity colours; reduced-motion OS setting | 1. Open the vitals screen and the alert list<br>2. Remove colour (greyscale or forced-colours) and check the highlight remains recognisable<br>3. Run a contrast checker on text and controls<br>4. Enable reduced-motion and text spacing; reopen | Highlights have a non-colour cue; contrast passes | P1 | A11Y | AUTO+H |
+| TC-A11Y-06 | NFR-10 | Human tester (keyboard + screen reader) | `ENV-A11Y`; forms for booking and sign-up | 1. Submit each form empty<br>2. Submit with invalid values<br>3. Read the error messages with the screen reader | Errors linked to fields, announced, no PHI in the message | P1 | A11Y | AUTO+H |
+| TC-A11Y-07 | NFR-10 | Human tester (screen reader; also a colour-blind simulation) | `ENV-A11Y`; triage red-flag scenario from TC-SAF-01 | 1. Trigger the red-flag alert for the doctor<br>2. Perceive it with the screen reader only<br>3. Perceive it with sound off and in greyscale<br>4. Read the patient emergency advice with the screen reader | Perceivable with a screen reader and without colour or sound | P0 | A11Y, S | HUMAN |
+| TC-A11Y-08 | NFR-10 | Human tester (screen reader) | `ENV-A11Y`; video appointment with sandbox vendor | 1. Open the device check, waiting room and join page<br>2. Operate mute, camera and leave controls by keyboard<br>3. Read each control's announced name | Operable | P2 | A11Y | HUMAN |
 | TC-XB-01 | NFR-11 | QA | Current Chrome, Safari, Edge, Firefox | Run the booking, check-in, note, admin smoke journey on each | Same results on all four | P1 | P | AUTO |
-| TC-XB-02 | NFR-11 | | Phones from 360 px; tablet | Same on iOS Safari and Android Chrome real devices | Usable; no layout break | P1 | P | AUTO+H |
-| TC-XB-03 | NFR-11 | | Reverse: an unsupported old browser | Open `my.` | Clear unsupported message; no data corruption | P3 | N | AUTO |
+| TC-XB-02 | NFR-11 | QA (real devices) | iPhone with Safari, Android phone with Chrome, a tablet; `ENV-INT` | 1. Sign in as `PAT-01`<br>2. Complete TC-BK-01 on each device<br>3. Rotate the device and repeat the confirmation step | Usable; no layout break | P1 | P | AUTO+H |
+| TC-XB-03 | NFR-11 | `VIS-01` | An unsupported old browser version (list from HEAAA-14) | 1. Open `my.`<br>2. Try to sign in<br>3. Check that no partial page or error stack is shown | Clear unsupported message; no data corruption | P3 | N | AUTO |
 
 ### 11.2 Performance and load (NFR-6..9) — `ENV-LOAD`
 
@@ -528,7 +553,7 @@ Load results are valid only on `ENV-LOAD` (DEP-14) at ≥ 100% of the stated val
 | TC-REC-02 | NFR-3 | DevOps | `ENV-DR` | Timed restore of the database, documents, audit archive, identity, keys, secrets, images, DNS/CDN, jobs and integrations per component | Whole system serves again within 4 hours (RTO), per component steps in DEVOPS-PLAN | P0 | E | OPS |
 | TC-REC-03 | NFR-2, 3, D-26 | DevOps | Region loss simulated | Fail over to the second region | RPO ≤ 15 min and RTO ≤ 4 h hold, unless the owner has decided otherwise. Sign-in and sessions after failover (patient/partner pools, admin pool, staff) verified | P0 | E | OPS |
 | TC-REC-04 | NFR-5 | DevOps | Release rehearsal | Deploy with a database migration under load; then roll back | Zero downtime; rollback works for the application; the migration plan states what cannot be reversed | P0 | E | OPS + AUTO |
-| TC-REC-05 | NFR-3, DEP-16 | DevOps | `ENV-DR` | During TC-REC-03: admin sign-in and elevation; TC-SEC-25 | Recorded outcome | P1 | E | OPS |
+| TC-REC-05 | NFR-3, DEP-16 | DevOps | `ENV-DR` | Reserved. The drill is owned by TC-REC-03 and the admin sign-in/elevation check by **TC-SEC-25**; this ID has no steps of its own | None (no duplicate result is recorded here; see TC-SEC-25) | P1 | E | n/a (owned by TC-REC-03 and TC-SEC-25) |
 | TC-REC-06 | NFR-21, BR-33 | QA | Block each external service in turn: Google, SMS, email, video, malware scanner, directory | Run the matching journey | Timeout and back-off retry; failure visible on the operations dashboard; no silent drop; inbound messages idempotent | P0 | E | AUTO |
 | TC-REC-07 | NFR-1 | QA/DevOps | Primary DB failure | Stop the primary during load | Standby takes over; clients retry; no committed data lost; brief errors only | P0 | E | OPS + AUTO |
 | TC-REC-08 | NFR-20 | DevOps | Alert rules | Trigger uptime, error rate, latency, queue backlog, integration failure | Each alert reaches a **named on-call person** (DEP-15). If there is no named rota the case fails | P0 | E | OPS + HUMAN (the on-call person confirms receipt) |
@@ -539,16 +564,16 @@ Load results are valid only on `ENV-LOAD` (DEP-14) at ≥ 100% of the stated val
 | ID | Req | Role | Pre / data | Steps | Expected | Pri | Type | Auto |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | TC-NFR-01 | NFR-12 | QA | Each host | TLS scan | TLS 1.2+ only; strong ciphers; HSTS | P0 | SEC | AUTO |
-| TC-NFR-02 | NFR-12 | DevOps | | Review encryption at rest configuration and key rotation | Databases, object storage, backups, queues encrypted; managed key rotation enabled and evidenced | P0 | SEC | OPS |
+| TC-NFR-02 | NFR-12 | DevOps | Cloud console read access for QA; list of data stores from DEVOPS-PLAN | Review encryption at rest configuration and key rotation | Databases, object storage, backups, queues encrypted; managed key rotation enabled and evidenced | P0 | SEC | OPS |
 | TC-NFR-03 | NFR-15 | CI | Candidate commit | Run SAST | Report is non-empty, for the right commit, with no open blocking finding. Tool and version recorded | P0 | SEC | AUTO |
-| TC-NFR-04 | NFR-15 | CI | | Dependency scan | Same | P0 | SEC | AUTO |
-| TC-NFR-05 | NFR-15 | CI | | Secret scan (history and working tree) | No secrets | P0 | SEC | AUTO |
-| TC-NFR-06 | NFR-15 | CI | | Container image scan | No unwaived high/critical | P0 | SEC | AUTO |
-| TC-NFR-07 | NFR-15 | CI | | Introduce a deliberate blocking finding on a throwaway branch | The build fails. Proves the gate works, not only that it is configured | P0 | SEC | AUTO |
-| TC-NFR-08 | NFR-14 | Security Reviewer | | ASVS L2 checklist; L3 for authentication, prescribing and payment paths (R1: authentication) | Checklist complete, evidence per item | P0 | SEC | HUMAN (Security Reviewer) + AUTO |
-| TC-NFR-09 | BR-35 | QA | | Scan seed and fixture files for real-identifier patterns; confirm no production data is in non-production | None found | P0 | SEC | AUTO |
+| TC-NFR-04 | NFR-15 | CI | CI pipeline run on the candidate commit | Dependency scan | Same | P0 | SEC | AUTO |
+| TC-NFR-05 | NFR-15 | CI | CI pipeline run on the candidate commit; full git history available | Secret scan (history and working tree) | No secrets | P0 | SEC | AUTO |
+| TC-NFR-06 | NFR-15 | CI | CI pipeline run on the candidate image digest | Container image scan | No unwaived high/critical | P0 | SEC | AUTO |
+| TC-NFR-07 | NFR-15 | CI | A throwaway branch (never merged) off the candidate | 1. Add a known vulnerable dependency, a test-pattern secret and a SAST-triggering code pattern in separate commits<br>2. Push and watch CI<br>3. Delete the branch | The build fails. Proves the gate works, not only that it is configured | P0 | SEC | AUTO |
+| TC-NFR-08 | NFR-14 | Security Reviewer | ASVS 4/5 checklist template; the candidate; access to code and test results | ASVS L2 checklist; L3 for authentication, prescribing and payment paths (R1: authentication) | Checklist complete, evidence per item | P0 | SEC | HUMAN (Security Reviewer) + AUTO |
+| TC-NFR-09 | BR-35 | QA | All seed and fixture files; scanner for names/emails/phones/SSN-like patterns | Scan seed and fixture files for real-identifier patterns; confirm no production data is in non-production | None found | P0 | SEC | AUTO |
 | TC-NFR-10 | NFR-18, BR-36 | QA | Logs after all journeys | Scan logs, traces, error pages and analytics for names, DOB, phone, email, diagnoses, medicines, test names | None found | P0 | SEC | AUTO |
-| TC-NFR-11 | NFR-19 | Owner/DevOps | | Show the signed BAA with the hosting provider and every vendor that touches health data | On file before go-live; US region. QA reads the evidence; it does not judge legal sufficiency | P0 | SEC | HUMAN |
+| TC-NFR-11 | NFR-19 | Owner/DevOps | Owner/DevOps hold the BAA documents; list of vendors that handle health data | Show the signed BAA with the hosting provider and every vendor that touches health data | On file before go-live; US region. QA reads the evidence; it does not judge legal sufficiency | P0 | SEC | HUMAN |
 | TC-NFR-12 | NFR-17 | QA | Public forms | Rate limit, bot protection, upload scanning (TC-BS-06, TC-DOC-03) | Hold | P1 | SEC | AUTO |
 | TC-PEN-01 | NFR-16 | Independent tester | Candidate with the external surface | Independent penetration test before the production release | Report with no open high/critical findings. The independent tester is named. Absence of one is recorded, not waived (RA-R1-18) | P0 | SEC | HUMAN |
 | TC-NFR-13 | RA-R1-18 | Owner | A claimed exception | Check the exception record | Only for allowed NFRs (NFR-1..11, 20..22); never NFR-12..19, safety rules or legal requirements. Written, with reason, compensating control, expiry, and the independent reviewer's acknowledgement — or, with no independent reviewer, recorded as **self-granted by the owner** | P0 | SEC | HUMAN |
@@ -560,7 +585,7 @@ These cases need a real person or an operations exercise. They stay **pending** 
 | Person / role | Cases | What they must do |
 | --- | --- | --- |
 | Owner (product owner, Zain Naeem holds every gate role, PRD RK-5) | TC-SAF-07, TC-NFR-11, TC-NFR-13, TC-ID-07 (evidence) | Decide the R1 safety reviewer (D-12a), produce the BAA evidence, grant or refuse any NFR exception, provide the Workspace policy export |
-| Licensed clinician (not yet named, D-12) | TC-SAF-07, TC-SAF-02 (timing), TC-CL-09 | Review the R1 safety rules and test results; judge wrong-patient risk. **If none exists, the PRD interim self-review route applies and is reported as self-review** |
+| Licensed clinician (not yet named, D-12) | TC-SAF-07, TC-SAF-02 (timing, after PM-confirm-1), TC-CL-09, TC-SAF-08 (rule text review) | Review the R1 safety rules and test results; judge wrong-patient risk. **If none exists, the PRD interim self-review route applies and is reported as self-review** |
 | Accessibility tester with assistive technology | TC-A11Y-02, 03, 07, 08 (and the human part of 04, 05, 06) | Keyboard and screen-reader runs on real devices |
 | Device testers | TC-ID-03, TC-ID-04, TC-ID-05, TC-PC-02, TC-TH-01, TC-XB-02, TC-NT-03 | Passkey/security key, 2SV on a real device, phone camera QR, audio and video, three calendar clients |
 | Two named people (dual control) | TC-SEC-03 (physical key), TC-SEC-05, TC-SEC-11, TC-SEC-16, TC-SEC-23 | Bootstrap and enrolment under dual control; timed deprovisioning |
@@ -590,6 +615,10 @@ A blocked case is not waived. It keeps its criterion open until the decision exi
 | DEP-15 named on-call | TC-REC-08 | Open |
 | Retention period (set at G2) | TC-AU-09, TC-DOC-07 | Open |
 | UMLS licence account | TC-CL-04 (coded entry with a real terminology) | Open (HEAAA-12 UMLS) |
+| PM-confirm-1 | TC-SAF-02: escalation of an unacknowledged red-flag alert to the on-call doctor and its timer (PRD J-07/A-17 "derived") | Question to PM via Orchestrator; assertion withheld |
+| PM-confirm-2  | TC-PC-05: order of the triage queue by category (PRD RA-R1-06 states category and wait time only) | Question to PM; ordering not asserted |
+| PM-confirm-3 | TC-NT-08: security messages sent even if a channel is turned off (not in the PRD) | Question to PM; not asserted |
+| SEC-confirm-1 | TC-SEC-C7-04/05: path B equivalent of "outside the OU" and "super-admin" (Architecture C7 is path A wording) | Question to Cybersecurity via Orchestrator |
 | Sandboxes: Google Workspace test tenant (with an admin OU and Directory API), email/SMS, video vendor | Many AUTO cases | Not confirmed to exist. A case that needs one stays blocked rather than being mocked |
 
 ## 14. R2 and R3 outline (reserved IDs; detail after the contracts exist)
@@ -620,13 +649,13 @@ These cases are written now only as outlines so that the R1 data model, audit an
 | RA-R1-03 | TC-BK-13..18, TC-PERF-07 | |
 | RA-R1-04 | TC-CAL-01..06 | Real Google test tenant needed |
 | RA-R1-05 | TC-NT-01..08 | TC-NT-03 human |
-| RA-R1-06 | TC-PC-01..09 | |
+| RA-R1-06 | TC-PC-01..09, TC-PC-13..14 (the latter two serve BR-34) | |
 | RA-R1-07 | TC-SAF-01..04 | **Blocked until D-12a** |
-| RA-R1-08 | TC-SAF-05..07 | **Blocked until D-12a** |
+| RA-R1-08 | TC-SAF-05..08 | **Blocked until D-12a** |
 | RA-R1-09 | TC-CL-01..07 | |
 | RA-R1-10 | TC-TH-01..05, TC-PERF-06 | Video vendor sandbox |
-| RA-R1-11 | TC-AU-01..04, TC-AZ-10, TC-AZ-11 | |
-| RA-R1-12 | TC-AU-05..10 | Retention set at G2 |
+| RA-R1-11 | TC-AU-01..04, TC-AZ-10, TC-AZ-11, TC-AZ-16 | |
+| RA-R1-12 | TC-AU-05..09 (TC-AU-10 is a reserved ID owned by TC-PERF-04; not counted here) | Retention set at G2 |
 | RA-R1-13 | TC-DOC-01..08 | |
 | RA-R1-14 | TC-PR-01..05 | **Deletion meaning blocked on D-8** |
 | RA-R1-15 | TC-AD-01..07 | D-3 default |
@@ -639,7 +668,7 @@ These cases are written now only as outlines so that the R1 data model, audit an
 | RA-R1-21 | TC-PP-06..07 | |
 | RA-R1-22 | TC-BK-19..22 | |
 | RA-R1-23 | TC-DR-01..03 | |
-| RA-R1-24 | TC-CL-08..09, TC-PC-07 | |
+| RA-R1-24 | TC-CL-08..09, TC-PC-07, TC-PC-13, TC-PC-14 | |
 | RA-R1-25 | TC-MSG-01..04 | D-5 |
 | RA-R1-26 | TC-AD-08..10, TC-BS-08 | |
 | RA-R1-27 | TC-MG-01..14 | BQ-3 |
@@ -659,7 +688,7 @@ These cases are written now only as outlines so that the R1 data model, audit an
 | AC-07 | TC-SAF-05, 06 | AC-08 | TC-SAF-01 |
 | AC-09 | TC-PC-04 | AC-10 | TC-CL-02 |
 | AC-11 | TC-CL-03 | AC-12 | TC-AZ-10 |
-| AC-13..AC-29 | R2/R3 (section 14), except AC-26..29 R3 | AC-30 | TC-DOC-02 |
+| AC-13..AC-25, AC-26..AC-29 | AC-13..AC-22 are R2 and AC-23..AC-29 are R3 (section 14); no R1 case | AC-30 | TC-DOC-02 |
 | AC-31 | TC-DOC-04 | AC-32 | TC-PP-05 (blocked) |
 | AC-33 | TC-ID-09 | AC-34 | TC-AZ-01 |
 | AC-35 | TC-AZ-02 | AC-36 | TC-AU-05 |
@@ -667,16 +696,16 @@ These cases are written now only as outlines so that the R1 data model, audit an
 
 ### 15.3 Safety-critical rules (PRD 7, 8.3) — R1 subset
 
-| Rule | Cases |
-| --- | --- |
-| BR-09 | TC-SAF-05, 06, 07 |
-| BR-10 | TC-SAF-01..04, 07 |
-| BR-14 | TC-AZ-10, TC-AZ-11, TC-SAF-07 |
-| BR-34 | TC-PC-07, TC-CL-08, TC-CL-09, TC-A11Y-03 |
-| BR-37 | TC-MG-01..14, TC-SAF-07 |
-| BR-15, 16, 17 (partly), 19, 20, 22, 24, 25, 26, 27 | R2/R3 (section 14). BR-17 re-authentication to sign is in TC-ID-08 |
+| Rule | Positive | Negative | Boundary | Not covered / note |
+| --- | --- | --- | --- | --- |
+| BR-09 | TC-SAF-05 (consent present starts), TC-SAF-06 | TC-SAF-05, TC-SAF-06 (no reason refused), TC-PC-08 | TC-SAF-08 (one of two, old version, just signed, withdrawn) | Review by D-12a reviewer: TC-SAF-07 |
+| BR-10 | TC-SAF-01 | TC-SAF-03 (non-flag, blank), TC-SAF-04 (channel down) | TC-SAF-03 (near-miss answers), TC-SAF-02 (timing, after PM-confirm-1) | Review: TC-SAF-07 |
+| BR-14 | TC-AZ-10 | TC-AZ-10, TC-AZ-11 (reviewer cannot be the opener) | TC-AZ-16 (reason length limits) | |
+| BR-34 | TC-PC-07, TC-CL-08 | TC-PC-13 (route sweep, stale tab) | TC-PC-14 (no photo, long name, same-name patients) | Human judgement of wrong-patient risk: TC-CL-09, TC-A11Y-03 |
+| BR-37 | TC-MG-01, 02 | TC-MG-03, 06, 07 | TC-MG-14 (large chart) | Concurrency: TC-MG-08, 09, 12 |
+| BR-15, 16, 17 (partly), 19, 20, 22, 24, 25, 26, 27 | R2/R3 (section 14). BR-17 re-authentication to sign: TC-ID-08 (positive and negative; no boundary case in R1) | | | |
 
-Each has positive, negative and boundary cases as listed, and none can be waived by client acceptance.
+None of these can be waived by client acceptance. A rule whose cell above is empty has no case; the table states actual coverage, not an intent.
 
 ## 16. Evidence and exit rules (for the later QA-REPORT)
 
@@ -699,10 +728,25 @@ Each has positive, negative and boundary cases as listed, and none can be waived
 - Test automation tools (browser, API, load, accessibility, SAST, dependency, secret, container) are not chosen; DEVOPS-PLAN selects them. This plan names none.
 - Third-party sandboxes (Google Workspace test tenant with Directory API access, SMS/email, video, malware scanning) are assumed to be needed and are not confirmed.
 - Not legal or clinical advice. Rule text for safety-critical behaviour needs the licensed reviewer (D-12/D-12a).
-- The seven SEC-D-19 conditions come from the Architecture text (C7 quoted from section 8.4). The Cybersecurity decision comment `e6414334` itself was not re-read for this draft; the Architecture's rendering of it is the source used.
+- The Cybersecurity comment `e6414334` and ARCHITECTURE section 8.4 (git `f8d3d6e`) were both re-read for draft 2; the comparison and the difference between them are in 5.5. The PRD at `f8d3d6e` was used to check the PM-confirm items.
 
-**Review state.** Author: QA agent. Independent review: **not requested yet**; it needs a reviewer who is not the author, assigned by the Orchestrator. Review PASS would not be human approval.
+**Review state.** Author: QA agent. Independent review round 1 (Product Owner Reviewer, draft 1): CHANGES REQUIRED, findings TC-RV-01..07. Draft 2 addresses them (section 18) and awaits a recheck of the affected findings by that reviewer. Review PASS would not be human approval.
 
-**Cumulative review round for this artifact:** 0 of 3.
+**Cumulative review round for this artifact:** 1 of 3 (draft 2 is the correction for round 1).
 
-**Next permitted action.** The Orchestrator assigns an independent reviewer for the exact saved revision of this document. QA then revises on the reviewer's findings, and after HEAAA-13/14/16 align, re-binds names and values. The G2 package includes `TEST-CASES.md`; the human decision on the exact revision happens at G2. No test is executed before a candidate exists and valid G2 permits implementation.
+**Next permitted action.** The Product Owner Reviewer rechecks only TC-RV-01..07 on the exact saved revision of draft 2. QA then revises on the reviewer's findings, and after HEAAA-13/14/16 align, re-binds names and values. The G2 package includes `TEST-CASES.md`; the human decision on the exact revision happens at G2. No test is executed before a candidate exists and valid G2 permits implementation.
+
+
+## 18. Review findings and how draft 2 answers them (round 1, Product Owner Reviewer)
+
+| ID | Sev | Answer in draft 2 | Where |
+| --- | --- | --- | --- |
+| TC-RV-01 | High | C7 quoted from ARCHITECTURE 8.4 and from comment `e6414334`; "verbatim" dropped; the Architecture's seven items are a superset of the comment's four, each mapped to a comment condition; path B wording gap raised as SEC-confirm-1 | 5.5, 13, 17 |
+| TC-RV-02 | Med | New cases TC-SAF-08 (BR-09 boundary), TC-PC-13 (BR-34 negative), TC-PC-14 (BR-34 boundary), TC-AZ-16 (BR-14 boundary). 15.3 rewritten as a per-rule table of actual coverage | 8.1, 8.2, 6, 15.3 |
+| TC-RV-03 | Med | Every row with an empty Role or Pre cell now has both, and the named rows have numbered steps with concrete values (TC-BK-21, TC-PC-09, TC-AU-03/04/09, TC-CAL-05, TC-API-*, TC-MG-08..13, TC-TH-02/05/08). Rows that still describe one action are single-step by nature | 6–11 |
+| TC-RV-04 | Med | One owner per check: DR drill = TC-REC-03, admin-during-failover = TC-SEC-25 (TC-REC-05 is a reserved pointer with no result); hourly re-check = TC-SEC-18, assignment refusal = TC-SEC-C7-04; audit load = TC-PERF-04 (TC-AU-10 kept as a reserved pointer and left out of the matrix) | 5.4, 5.5, 9.2, 11.3, 15.1 |
+| TC-RV-05 | Med | TC-SAF-02, TC-PC-05, TC-NT-08 tagged PM-confirm-1..3 and the unsupported assertion withheld. TC-CL-04 now cites PRD (SA-F-08, [Rec]) and stops at the saved flag in R1. TC-SEC-04/05 cite Architecture 8.4 C1/C4. TC-SEC-04/05 specifics are architecture rules, not PRD rows | 7.4, 8.1, 8.2, 8.3, 13 |
+| TC-RV-06 | Low | One definition: acceptance of RA-R1-07/08 is blocked until D-12a; running TC-SAF is permitted and never counts as review. TC-SAF-02 shown consistently as AUTO with human timing review after PM-confirm-1; register updated | 8.2, 12 |
+| TC-RV-07 | Low | AC-13..AC-22 are R2 and AC-23..AC-29 are R3 | 15.2 |
+
+The review round counter is 1 of 3. No new scope was added beyond the four cases that close TC-RV-02.
