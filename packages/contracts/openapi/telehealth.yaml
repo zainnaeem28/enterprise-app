@@ -1,0 +1,674 @@
+openapi: 3.1.0
+info:
+  title: telehealth module contract
+  version: 1.0.0-r1
+  description: Routes owned by the telehealth module. Transcribed from ARCHITECTURE draft 8.1 sections 29-31. Later tickets edit only this file.
+paths:
+  /api/v1/appointments/{id}/video-session/admit:
+    post:
+      operationId: postAppointmentsByIdVideoSessionAdmit
+      tags:
+        - telehealth
+      summary: POST /api/v1/appointments/{id}/video-session/admit
+      description: 'staff.: `{waiting: [...]}`; both time zones. The `GET` is **passive** (26.2)'
+      x-access:
+        staff:
+          permission: telehealth.session.host
+          resolver: reservation
+          realm: google
+          idempotencyKey: true
+          ifMatch: false
+          pathAs: /api/v1/appointments/{id}/video-session/admit
+          catalogueRow: 29.3#79
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+        - $ref: common.yaml#/components/parameters/IdempotencyKey
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.idempotency_key_required
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - kernel.idempotency_conflict
+          - patient.merged
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+            Idempotent-Replay:
+              $ref: common.yaml#/components/headers/IdempotentReplay
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/OpaqueObject
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.idempotency_key_required, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: kernel.idempotency_conflict, patient.merged.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/appointments/{id}/video-session/end:
+    post:
+      operationId: postAppointmentsByIdVideoSessionEnd
+      tags:
+        - telehealth
+      summary: POST /api/v1/appointments/{id}/video-session/end
+      description: 'staff.: `{waiting: [...]}`; both time zones. The `GET` is **passive** (26.2)'
+      x-access:
+        staff:
+          permission: telehealth.session.host
+          resolver: reservation
+          realm: google
+          idempotencyKey: true
+          ifMatch: false
+          pathAs: /api/v1/appointments/{id}/video-session/end
+          catalogueRow: 29.3#79
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+        - $ref: common.yaml#/components/parameters/IdempotencyKey
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.idempotency_key_required
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - kernel.idempotency_conflict
+          - patient.merged
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+            Idempotent-Replay:
+              $ref: common.yaml#/components/headers/IdempotentReplay
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/OpaqueObject
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.idempotency_key_required, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: kernel.idempotency_conflict, patient.merged.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/appointments/{reservationId}/video-session:
+    get:
+      operationId: getAppointmentsByReservationIdVideoSession
+      tags:
+        - telehealth
+      summary: GET /api/v1/appointments/{reservationId}/video-session
+      description: |-
+        my.: `{status, admission, joinOpensAt, needsLocationConfirmation}`. Polled every 5 s while waiting. **Passive** (26.2): does not extend the session
+        staff.: `{waiting: [...]}`; both time zones. The `GET` is **passive** (26.2)
+      x-access:
+        my:
+          permission: patient, proxy
+          resolver: reservation
+          realm: patient
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/appointments/{reservationId}/video-session
+          catalogueRow: 29.2#40
+        staff:
+          permission: telehealth.session.host
+          resolver: reservation
+          realm: google
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/appointments/{id}/video-session
+          catalogueRow: 29.3#79
+      x-passive: true
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: reservationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/GetAppointmentsByReservationIdVideoSessionResponseMy'
+                  - $ref: '#/components/schemas/GetAppointmentsByReservationIdVideoSessionResponseStaff'
+                description: 'The response differs by host: my / staff. See x-access for the host of each.'
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/appointments/{reservationId}/video-session/device-check:
+    post:
+      operationId: postAppointmentsByReservationIdVideoSessionDeviceCheck
+      tags:
+        - telehealth
+      summary: POST /api/v1/appointments/{reservationId}/video-session/device-check
+      description: 'my.: Pass/fail per device'
+      x-access:
+        my:
+          permission: patient
+          resolver: reservation
+          realm: patient
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/appointments/{reservationId}/video-session/device-check
+          catalogueRow: 29.2#41
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: reservationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: common.yaml#/components/schemas/OpaqueObject
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '413':
+          - kernel.payload_too_large
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/OpaqueObject
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '413':
+          $ref: common.yaml#/components/responses/Error413
+          description: 'Codes: kernel.payload_too_large.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/appointments/{reservationId}/video-session/join:
+    post:
+      operationId: postAppointmentsByReservationIdVideoSessionJoin
+      tags:
+        - telehealth
+      summary: POST /api/v1/appointments/{reservationId}/video-session/join
+      description: |-
+        my.: `{vendor, meetingId, attendeeToken}` once admitted; `409 telehealth.not_admitted`, `telehealth.location_required`, `telehealth.session_closed`
+        staff.: `{waiting: [...]}`; both time zones. The `GET` is **passive** (26.2)
+      x-access:
+        my:
+          permission: patient, proxy
+          resolver: reservation
+          realm: patient
+          idempotencyKey: true
+          ifMatch: false
+          pathAs: /api/v1/appointments/{reservationId}/video-session/join
+          catalogueRow: 29.2#43
+        staff:
+          permission: telehealth.session.host
+          resolver: reservation
+          realm: google
+          idempotencyKey: true
+          ifMatch: false
+          pathAs: /api/v1/appointments/{id}/video-session/join
+          catalogueRow: 29.3#79
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: reservationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+        - $ref: common.yaml#/components/parameters/IdempotencyKey
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.idempotency_key_required
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - kernel.idempotency_conflict
+          - patient.merged
+          - telehealth.location_required
+          - telehealth.not_admitted
+          - telehealth.session_closed
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+            Idempotent-Replay:
+              $ref: common.yaml#/components/headers/IdempotentReplay
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/PostAppointmentsByReservationIdVideoSessionJoinResponseMy'
+                  - $ref: common.yaml#/components/schemas/OpaqueObject
+                description: 'The response differs by host: my / staff. See x-access for the host of each.'
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.idempotency_key_required, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: kernel.idempotency_conflict, patient.merged, telehealth.location_required, telehealth.not_admitted, telehealth.session_closed.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/appointments/{reservationId}/video-session/location:
+    post:
+      operationId: postAppointmentsByReservationIdVideoSessionLocation
+      tags:
+        - telehealth
+      summary: POST /api/v1/appointments/{reservationId}/video-session/location
+      description: 'my.: Body `{state}`; `422 telehealth.licensing_refused` (TL-1)'
+      x-access:
+        my:
+          permission: patient
+          resolver: reservation
+          realm: patient
+          idempotencyKey: true
+          ifMatch: false
+          pathAs: /api/v1/appointments/{reservationId}/video-session/location
+          catalogueRow: 29.2#42
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: reservationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+        - $ref: common.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostAppointmentsByReservationIdVideoSessionLocationRequest'
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.idempotency_key_required
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - kernel.idempotency_conflict
+          - patient.merged
+        '413':
+          - kernel.payload_too_large
+        '422':
+          - telehealth.licensing_refused
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+            Idempotent-Replay:
+              $ref: common.yaml#/components/headers/IdempotentReplay
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/OpaqueObject
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.idempotency_key_required, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: kernel.idempotency_conflict, patient.merged.'
+        '413':
+          $ref: common.yaml#/components/responses/Error413
+          description: 'Codes: kernel.payload_too_large.'
+        '422':
+          $ref: common.yaml#/components/responses/Error422
+          description: 'Codes: telehealth.licensing_refused.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+components:
+  schemas:
+    GetAppointmentsByReservationIdVideoSessionResponseMy:
+      type: object
+      properties:
+        status:
+          type: string
+        admission:
+          type: string
+        joinOpensAt:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+        needsLocationConfirmation:
+          type: boolean
+      required:
+        - status
+        - admission
+        - joinOpensAt
+        - needsLocationConfirmation
+    GetAppointmentsByReservationIdVideoSessionResponseStaff:
+      type: object
+      properties:
+        waiting:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+      required:
+        - waiting
+      additionalProperties: true
+    PostAppointmentsByReservationIdVideoSessionJoinResponseMy:
+      type: object
+      properties:
+        vendor:
+          type: string
+        meetingId:
+          type: string
+        attendeeToken:
+          type: string
+      required:
+        - vendor
+        - meetingId
+        - attendeeToken
+    PostAppointmentsByReservationIdVideoSessionLocationRequest:
+      type: object
+      properties:
+        state:
+          type: string
+      required:
+        - state
+    TelehealthErrorCode:
+      type: string
+      enum:
+        - telehealth.not_admitted
+        - telehealth.location_required
+        - telehealth.licensing_refused
+        - telehealth.session_closed
+        - telehealth.vendor_unavailable
+      x-registry:
+        - code: telehealth.not_admitted
+          http: '409'
+          retryable: yes (poll)
+        - code: telehealth.location_required
+          http: 409/422/503
+          retryable: last one yes
+        - code: telehealth.licensing_refused
+          http: 409/422/503
+          retryable: last one yes
+        - code: telehealth.session_closed
+          http: 409/422/503
+          retryable: last one yes
+        - code: telehealth.vendor_unavailable
+          http: 409/422/503
+          retryable: last one yes
+      description: Section 30 error codes with the telehealth prefix.
+  securitySchemes:
+    sessionCookie:
+      $ref: common.yaml#/components/securitySchemes/sessionCookie
+tags:
+  - name: telehealth
+    description: Module telehealth
+servers:
+  - url: https://my.{domain}
+    description: Patient portal host (my.)
+    variables:
+      domain:
+        default: example.invalid
+  - url: https://staff.{domain}
+    description: Staff and admin portal host (staff.)
+    variables:
+      domain:
+        default: example.invalid
+  - url: https://integrations.{domain}
+    description: Integrations host (integrations.)
+    variables:
+      domain:
+        default: example.invalid

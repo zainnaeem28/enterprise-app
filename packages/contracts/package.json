@@ -5,6 +5,16 @@
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "generate": "node ../../scripts/contracts/generate-types.mjs",
+    "generate:check": "node ../../scripts/contracts/generate-types.mjs --check",
+    "openapi:lint": "node ../../scripts/contracts/lint.mjs",
+    "openapi:check-routes": "node ../../scripts/contracts/check-routes.mjs --report dist/contract-reports/route-check.json",
+    "verify": "pnpm run openapi:lint && pnpm run openapi:check-routes && pnpm run generate:check && pnpm run typecheck"
+  },
+  "devDependencies": {
+    "@redocly/openapi-core": "1.34.23",
+    "openapi-typescript": "7.13.0",
+    "yaml": "2.8.1"
   }
 }
