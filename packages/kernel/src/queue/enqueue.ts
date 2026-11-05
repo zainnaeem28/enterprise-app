@@ -15,7 +15,13 @@ export interface JobType {
   onMerged: OnMerged;
   carriesPatientIds: boolean;
   jobScope: 'patients' | 'org';
+  /** Class in `queue_api.task_type` (21.8). Default `job`. Only `handler` and `job` may be enqueued by the API tier. */
+  jobClass?: JobClass;
+  /** May `queue_api.enqueue` accept this type? Default: true for `handler` and `job`, never for the others. */
+  apiEnqueue?: boolean;
 }
+
+export type JobClass = 'handler' | 'job' | 'system' | 'data_repair';
 
 const JOB_NAME = /^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$/;
 const EVENT_NAME = JOB_NAME;
@@ -44,7 +50,24 @@ export class JobRegistry {
         `${t.name}: a job that carries patient IDs must declare on_merged = resolve (22.16)`,
       );
     }
-    this.types.set(t.name, { ...t });
+    const jobClass = t.jobClass ?? 'job';
+    const apiEnqueue = t.apiEnqueue ?? (jobClass === 'handler' || jobClass === 'job');
+    if (apiEnqueue && jobClass !== 'handler' && jobClass !== 'job') {
+      throw new QueueError(`${t.name}: class ${jobClass} can never be enqueued by the API tier`);
+    }
+    this.types.set(t.name, { ...t, jobClass, apiEnqueue });
+  }
+
+  /** Every defined type, in a stable order: the source of `queue_api.task_type` (sync-task-types). */
+  list(): { name: string; maxAttempts: number; jobClass: JobClass; apiEnqueue: boolean }[] {
+    return [...this.types.values()]
+      .sort((a, b) => (a.name < b.name ? -1 : 1))
+      .map((t) => ({
+        name: t.name,
+        maxAttempts: t.maxAttempts,
+        jobClass: t.jobClass as JobClass,
+        apiEnqueue: t.apiEnqueue as boolean,
+      }));
   }
 
   get(name: string): JobType {
@@ -97,9 +120,15 @@ export interface EnqueueOptions {
   priority?: number;
 }
 
+/** `api` enqueues through `queue_api.enqueue` (the API tier has no right in schema `queue`); `worker` calls `queue.add_job`. */
+export type QueuePath = 'api' | 'worker';
+
+const JOB_KEY = /^[A-Za-z0-9_:.-]{1,100}$/;
+
 export class Queue {
   constructor(
     private readonly registry: JobRegistry,
+    private readonly path: QueuePath = 'api',
     private readonly schema = 'queue',
   ) {
     if (!/^[a-z_][a-z0-9_]{0,62}$/.test(schema)) throw new QueueError('bad queue schema');
@@ -114,15 +143,27 @@ export class Queue {
   ): Promise<void> {
     const type = this.registry.get(jobName);
     assertPayloadIsIdsOnly(payload);
+    if (opts.jobKey !== undefined && !JOB_KEY.test(opts.jobKey))
+      throw new QueueError('bad job key');
+    const priority = opts.priority ?? 0;
+    if (this.path === 'api') {
+      if (!type.apiEnqueue) throw new QueueError(`${jobName} cannot be enqueued by the API tier`);
+      await tx.query(
+        'SELECT queue_api.enqueue($1::text, $2::jsonb, $3::timestamptz, $4::text, $5::smallint)',
+        [jobName, JSON.stringify(payload), opts.runAt ?? null, opts.jobKey ?? null, priority],
+      );
+      return;
+    }
+    // Same `<task_identifier>:<key>` namespace as the wrapper, so one task type cannot replace another's job.
     await tx.query(
-      `SELECT ${this.schema}.add_job($1::text, $2::json, run_at => $3::timestamptz, max_attempts => $4::int, job_key => $5::text, priority => $6::int)`,
+      `SELECT ${this.schema}.add_job($1::text, $2::json, run_at => $3::timestamptz, max_attempts => $4::int, job_key => $5::text, priority => $6::int, job_key_mode => 'replace')`,
       [
         jobName,
         JSON.stringify(payload),
         opts.runAt ?? null,
         type.maxAttempts,
-        opts.jobKey ?? null,
-        opts.priority ?? 0,
+        opts.jobKey === undefined ? null : `${jobName}:${opts.jobKey}`,
+        priority,
       ],
     );
   }

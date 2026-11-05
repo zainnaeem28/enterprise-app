@@ -29,7 +29,8 @@ export {
   parseIdempotencyKey,
 } from './idempotency/store.js';
 export { JobRegistry, Queue, QueueError, assertPayloadIsIdsOnly } from './queue/enqueue.js';
-export type { JobType } from './queue/enqueue.js';
+export type { JobClass, JobType, QueuePath } from './queue/enqueue.js';
+export { syncTaskTypes } from './queue/sync-task-types.js';
 export {
   ParticipantRegistries,
   RegistryError,

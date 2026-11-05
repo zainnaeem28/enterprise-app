@@ -2,10 +2,16 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { Tx } from '../scope/with-scope.js';
 import { JobRegistry, Queue, QueueError, assertPayloadIsIdsOnly } from './enqueue.js';
+import type { QueuePath } from './enqueue.js';
+import { syncTaskTypes } from './sync-task-types.js';
 
 const ID = '0192e0a0-0000-7000-8000-000000000001';
 
-function setup(): { q: Queue; calls: { sql: string; params: unknown[] }[]; tx: Tx } {
+function setup(path: QueuePath = 'api'): {
+  q: Queue;
+  calls: { sql: string; params: unknown[] }[];
+  tx: Tx;
+} {
   const reg = new JobRegistry();
   reg.defineJob({
     name: 'notifications.send_message',
@@ -41,15 +47,87 @@ function setup(): { q: Queue; calls: { sql: string; params: unknown[] }[]; tx: T
     },
     { audience: 'staff' },
   );
-  return { q: new Queue(reg), calls, tx };
+  return { q: new Queue(reg, path), calls, tx };
 }
 
-test('enqueue goes through the caller transaction handle with the type attempt limit', async () => {
-  const { q, calls, tx } = setup();
-  await q.enqueue(tx, 'notifications.send_message', { notificationId: ID, patientId: ID });
+test('api path enqueues only through queue_api.enqueue on the caller transaction handle', async () => {
+  const { q, calls, tx } = setup('api');
+  await q.enqueue(
+    tx,
+    'notifications.send_message',
+    { notificationId: ID, patientId: ID },
+    { jobKey: 'k1' },
+  );
   assert.equal(calls.length, 1);
+  assert.match(calls[0]!.sql, /queue_api\.enqueue/);
+  assert.doesNotMatch(calls[0]!.sql, /queue\.add_job/);
+  assert.equal(calls[0]!.params[3], 'k1', 'the namespace prefix is added by the database wrapper');
+});
+
+test('worker path calls queue.add_job with the type attempt limit and the namespaced job key', async () => {
+  const { q, calls, tx } = setup('worker');
+  await q.enqueue(tx, 'notifications.send_message', { notificationId: ID }, { jobKey: 'k1' });
   assert.match(calls[0]!.sql, /queue\.add_job/);
   assert.equal(calls[0]!.params[3], 5);
+  assert.equal(calls[0]!.params[4], 'notifications.send_message:k1');
+});
+
+test('system and data_repair types, and bad job keys, never reach the api path', async () => {
+  const reg = new JobRegistry();
+  reg.defineJob({
+    name: 'ops.repair',
+    maxAttempts: 1,
+    onMerged: 'none',
+    carriesPatientIds: false,
+    jobScope: 'org',
+    jobClass: 'data_repair',
+  });
+  assert.throws(
+    () =>
+      reg.defineJob({
+        name: 'ops.bad',
+        maxAttempts: 1,
+        onMerged: 'none',
+        carriesPatientIds: false,
+        jobScope: 'org',
+        jobClass: 'system',
+        apiEnqueue: true,
+      }),
+    QueueError,
+  );
+  const { calls, tx } = setup();
+  await assert.rejects(new Queue(reg, 'api').enqueue(tx, 'ops.repair', {}), QueueError);
+  await assert.rejects(
+    setup().q.enqueue(tx, 'notifications.send_message', {}, { jobKey: 'bad key!' }),
+    QueueError,
+  );
+  assert.equal(calls.length, 0);
+});
+
+test('syncTaskTypes upserts every registered type in a stable order and never deletes', async () => {
+  const { tx, calls } = setup();
+  const reg = new JobRegistry();
+  reg.defineJob({
+    name: 'b.two',
+    maxAttempts: 2,
+    onMerged: 'none',
+    carriesPatientIds: false,
+    jobScope: 'org',
+  });
+  reg.defineJob({
+    name: 'a.one',
+    maxAttempts: 4,
+    onMerged: 'none',
+    carriesPatientIds: false,
+    jobScope: 'org',
+    jobClass: 'handler',
+  });
+  assert.equal(await syncTaskTypes(tx, reg), 2);
+  assert.deepEqual(
+    calls.map((c) => c.params[0]),
+    ['a.one', 'b.two'],
+  );
+  assert.ok(calls.every((c) => /ON CONFLICT/.test(c.sql) && !/DELETE/i.test(c.sql)));
 });
 
 test('publish fans out one job per registered handler, in a stable order', async () => {
@@ -114,5 +192,5 @@ test('job types: patient IDs require on_merged, duplicates and unknown types ref
     /already/,
   );
   assert.throws(() => reg.get('x.y'), /unknown/);
-  assert.throws(() => new Queue(reg, 'queue; DROP'), QueueError);
+  assert.throws(() => new Queue(reg, 'api', 'queue; DROP'), QueueError);
 });

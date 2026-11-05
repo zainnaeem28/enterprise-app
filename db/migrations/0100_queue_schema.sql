@@ -9,4 +9,4 @@
 CREATE SCHEMA queue;
 COMMENT ON SCHEMA queue IS 'Queue library tables: the outbox (ARCHITECTURE 21.8). IDs only (BD-09), class C1';
 REVOKE ALL ON SCHEMA queue FROM PUBLIC;
-GRANT USAGE ON SCHEMA queue TO app_api, app_worker;
+GRANT USAGE ON SCHEMA queue TO app_worker; -- app_api has no right in schema queue (21.8, amendment A-1)
