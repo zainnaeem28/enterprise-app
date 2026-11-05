@@ -138,7 +138,8 @@ for (const row of rows) {
     if (idemExpected && r.method === 'POST' && !a.idempotencyKey)
       fail(`${where}: row is marked Idem, POST lacks Idempotency-Key`);
     const ifm = row.flags?.ifMatch;
-    if (a.ifMatch && !ifm) fail(`${where}: If-Match required but the row does not say so`);
+    if (a.ifMatch && !ifm && r.method !== 'PATCH')
+      fail(`${where}: If-Match required but the row does not say so`);
     if (
       ifm &&
       ['PATCH', 'PUT', 'DELETE'].includes(r.method) &&
@@ -146,8 +147,10 @@ for (const row of rows) {
       (!ifm.onMethod || ifm.onMethod === r.method)
     )
       fail(`${where}: row requires If-Match, ${r.method} lacks it`);
+    // 28.2 (CN-07): PATCH on an existing resource always requires If-Match, whatever the row marks
+    if (r.method === 'PATCH' && !a.ifMatch) fail(`${where}: PATCH requires If-Match (28.2)`);
     if (a.ifMatch && r.method === 'GET') fail(`${where}: If-Match on a GET`);
-    if (ifm?.onMethod && a.ifMatch && r.method !== ifm.onMethod)
+    if (ifm?.onMethod && a.ifMatch && r.method !== 'PATCH' && r.method !== ifm.onMethod)
       fail(`${where}: If-Match only on ${ifm.onMethod} per the row`);
     // parameters declared on the operation match the access flags (all hosts considered)
     const params = (y.op.parameters ?? []).map((p) => p.$ref ?? p.name);

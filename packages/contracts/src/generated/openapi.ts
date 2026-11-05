@@ -5073,10 +5073,10 @@ export interface components {
     Limit: number;
     /** @description Opaque cursor from nextCursor; HMAC-signed, so a forged or altered cursor is refused (28.2, CN-08). */
     Cursor: string;
-    /** @description UUID v4 or v7. Required on every portal POST marked "Idem" (28.3). Missing: 400 kernel.idempotency_key_required. Same key and request hash replays the stored response; same key with a different hash: 409 kernel.idempotency_conflict. */
-    IdempotencyKey: string;
     /** @description The ETag (row version) of the resource as last read (CN-07, 28.2). Missing: 428 kernel.precondition_required. Stale: 412 kernel.precondition_failed with the current ETag. */
     IfMatch: string;
+    /** @description UUID v4 or v7. Required on every portal POST marked "Idem" (28.3). Missing: 400 kernel.idempotency_key_required. Same key and request hash replays the stored response; same key with a different hash: 409 kernel.idempotency_conflict. */
+    IdempotencyKey: string;
     /** @description As IfMatch, but the route requires it on only some of its hosts; x-access states which. */
     IfMatchOptional: string;
   };
@@ -5090,10 +5090,10 @@ export interface components {
     XSessionIdleExpiresAt: string;
     /** @description Seconds to wait after 429 kernel.rate_limited. */
     RetryAfter: number;
-    /** @description true when a stored response, or for bodies over 64 KB a re-read, is replayed (28.3). */
-    IdempotentReplay: 'true';
     /** @description Quoted row_version of a mutable resource (28.2). */
     ETag: string;
+    /** @description true when a stored response, or for bodies over 64 KB a re-read, is replayed (28.3). */
+    IdempotentReplay: 'true';
     /** @description Redirect target. */
     Location: string;
     /** @description max-age=60 on /public/v1/* only (28.2). */
@@ -5855,6 +5855,8 @@ export interface operations {
       header: {
         /** @description r<releaseNumber>.<gitSha12>, for example r142.3f9a1c2b7d10, sent by every portal bundle on every /api/* call (28.6). Missing, malformed or releaseNumber < min_client_release is refused with 400 kernel.client_release_unsupported before any session lookup. */
         'X-Client-Release': components['parameters']['ClientRelease'];
+        /** @description The ETag (row version) of the resource as last read (CN-07, 28.2). Missing: 428 kernel.precondition_required. Stale: 412 kernel.precondition_failed with the current ETag. */
+        'If-Match': components['parameters']['IfMatch'];
       };
       path?: never;
       cookie?: never;
@@ -5870,6 +5872,7 @@ export interface operations {
         headers: {
           'X-Request-Id': components['headers']['XRequestId'];
           'Cache-Control': components['headers']['CacheNoStore'];
+          ETag: components['headers']['ETag'];
           'X-Session-Idle-Expires-At': components['headers']['XSessionIdleExpiresAt'];
           [name: string]: unknown;
         };
@@ -5887,10 +5890,14 @@ export interface operations {
       404: components['responses']['Error404'];
       /** @description Codes: patient.merged. */
       409: components['responses']['Error409'];
+      /** @description Codes: kernel.precondition_failed. */
+      412: components['responses']['Error412'];
       /** @description Codes: kernel.payload_too_large. */
       413: components['responses']['Error413'];
       /** @description Codes: organisation.neutral_name_required. */
       422: components['responses']['Error422'];
+      /** @description Codes: kernel.precondition_required. */
+      428: components['responses']['Error428'];
       /** @description Codes: kernel.rate_limited. */
       429: components['responses']['Error429'];
       /** @description Codes: kernel.unavailable. */
@@ -6898,6 +6905,8 @@ export interface operations {
       header: {
         /** @description r<releaseNumber>.<gitSha12>, for example r142.3f9a1c2b7d10, sent by every portal bundle on every /api/* call (28.6). Missing, malformed or releaseNumber < min_client_release is refused with 400 kernel.client_release_unsupported before any session lookup. */
         'X-Client-Release': components['parameters']['ClientRelease'];
+        /** @description The ETag (row version) of the resource as last read (CN-07, 28.2). Missing: 428 kernel.precondition_required. Stale: 412 kernel.precondition_failed with the current ETag. */
+        'If-Match': components['parameters']['IfMatch'];
       };
       path?: never;
       cookie?: never;
@@ -6913,6 +6922,7 @@ export interface operations {
         headers: {
           'X-Request-Id': components['headers']['XRequestId'];
           'Cache-Control': components['headers']['CacheNoStore'];
+          ETag: components['headers']['ETag'];
           'X-Session-Idle-Expires-At': components['headers']['XSessionIdleExpiresAt'];
           [name: string]: unknown;
         };
@@ -6930,8 +6940,12 @@ export interface operations {
       404: components['responses']['Error404'];
       /** @description Codes: patient.merged. */
       409: components['responses']['Error409'];
+      /** @description Codes: kernel.precondition_failed. */
+      412: components['responses']['Error412'];
       /** @description Codes: kernel.payload_too_large. */
       413: components['responses']['Error413'];
+      /** @description Codes: kernel.precondition_required. */
+      428: components['responses']['Error428'];
       /** @description Codes: kernel.rate_limited. */
       429: components['responses']['Error429'];
       /** @description Codes: kernel.unavailable. */
@@ -7041,6 +7055,8 @@ export interface operations {
       header: {
         /** @description r<releaseNumber>.<gitSha12>, for example r142.3f9a1c2b7d10, sent by every portal bundle on every /api/* call (28.6). Missing, malformed or releaseNumber < min_client_release is refused with 400 kernel.client_release_unsupported before any session lookup. */
         'X-Client-Release': components['parameters']['ClientRelease'];
+        /** @description The ETag (row version) of the resource as last read (CN-07, 28.2). Missing: 428 kernel.precondition_required. Stale: 412 kernel.precondition_failed with the current ETag. */
+        'If-Match': components['parameters']['IfMatch'];
       };
       path?: never;
       cookie?: never;
@@ -7056,6 +7072,7 @@ export interface operations {
         headers: {
           'X-Request-Id': components['headers']['XRequestId'];
           'Cache-Control': components['headers']['CacheNoStore'];
+          ETag: components['headers']['ETag'];
           'X-Session-Idle-Expires-At': components['headers']['XSessionIdleExpiresAt'];
           [name: string]: unknown;
         };
@@ -7073,8 +7090,12 @@ export interface operations {
       404: components['responses']['Error404'];
       /** @description Codes: patient.merged. */
       409: components['responses']['Error409'];
+      /** @description Codes: kernel.precondition_failed. */
+      412: components['responses']['Error412'];
       /** @description Codes: kernel.payload_too_large. */
       413: components['responses']['Error413'];
+      /** @description Codes: kernel.precondition_required. */
+      428: components['responses']['Error428'];
       /** @description Codes: kernel.rate_limited. */
       429: components['responses']['Error429'];
       /** @description Codes: kernel.unavailable. */
@@ -7136,6 +7157,8 @@ export interface operations {
       header: {
         /** @description r<releaseNumber>.<gitSha12>, for example r142.3f9a1c2b7d10, sent by every portal bundle on every /api/* call (28.6). Missing, malformed or releaseNumber < min_client_release is refused with 400 kernel.client_release_unsupported before any session lookup. */
         'X-Client-Release': components['parameters']['ClientRelease'];
+        /** @description The ETag (row version) of the resource as last read (CN-07, 28.2). Missing: 428 kernel.precondition_required. Stale: 412 kernel.precondition_failed with the current ETag. */
+        'If-Match': components['parameters']['IfMatch'];
       };
       path: {
         id: string;
@@ -7153,6 +7176,7 @@ export interface operations {
         headers: {
           'X-Request-Id': components['headers']['XRequestId'];
           'Cache-Control': components['headers']['CacheNoStore'];
+          ETag: components['headers']['ETag'];
           'X-Session-Idle-Expires-At': components['headers']['XSessionIdleExpiresAt'];
           [name: string]: unknown;
         };
@@ -7170,8 +7194,12 @@ export interface operations {
       404: components['responses']['Error404'];
       /** @description Codes: patient.merged. */
       409: components['responses']['Error409'];
+      /** @description Codes: kernel.precondition_failed. */
+      412: components['responses']['Error412'];
       /** @description Codes: kernel.payload_too_large. */
       413: components['responses']['Error413'];
+      /** @description Codes: kernel.precondition_required. */
+      428: components['responses']['Error428'];
       /** @description Codes: kernel.rate_limited. */
       429: components['responses']['Error429'];
       /** @description Codes: kernel.unavailable. */
@@ -7471,6 +7499,8 @@ export interface operations {
       header: {
         /** @description r<releaseNumber>.<gitSha12>, for example r142.3f9a1c2b7d10, sent by every portal bundle on every /api/* call (28.6). Missing, malformed or releaseNumber < min_client_release is refused with 400 kernel.client_release_unsupported before any session lookup. */
         'X-Client-Release': components['parameters']['ClientRelease'];
+        /** @description The ETag (row version) of the resource as last read (CN-07, 28.2). Missing: 428 kernel.precondition_required. Stale: 412 kernel.precondition_failed with the current ETag. */
+        'If-Match': components['parameters']['IfMatch'];
       };
       path?: never;
       cookie?: never;
@@ -7486,6 +7516,7 @@ export interface operations {
         headers: {
           'X-Request-Id': components['headers']['XRequestId'];
           'Cache-Control': components['headers']['CacheNoStore'];
+          ETag: components['headers']['ETag'];
           'X-Session-Idle-Expires-At': components['headers']['XSessionIdleExpiresAt'];
           [name: string]: unknown;
         };
@@ -7503,8 +7534,12 @@ export interface operations {
       404: components['responses']['Error404'];
       /** @description Codes: patient.merged. */
       409: components['responses']['Error409'];
+      /** @description Codes: kernel.precondition_failed. */
+      412: components['responses']['Error412'];
       /** @description Codes: kernel.payload_too_large. */
       413: components['responses']['Error413'];
+      /** @description Codes: kernel.precondition_required. */
+      428: components['responses']['Error428'];
       /** @description Codes: kernel.rate_limited. */
       429: components['responses']['Error429'];
       /** @description Codes: kernel.unavailable. */
@@ -7952,6 +7987,8 @@ export interface operations {
       header: {
         /** @description r<releaseNumber>.<gitSha12>, for example r142.3f9a1c2b7d10, sent by every portal bundle on every /api/* call (28.6). Missing, malformed or releaseNumber < min_client_release is refused with 400 kernel.client_release_unsupported before any session lookup. */
         'X-Client-Release': components['parameters']['ClientRelease'];
+        /** @description The ETag (row version) of the resource as last read (CN-07, 28.2). Missing: 428 kernel.precondition_required. Stale: 412 kernel.precondition_failed with the current ETag. */
+        'If-Match': components['parameters']['IfMatch'];
       };
       path?: never;
       cookie?: never;
@@ -7967,6 +8004,7 @@ export interface operations {
         headers: {
           'X-Request-Id': components['headers']['XRequestId'];
           'Cache-Control': components['headers']['CacheNoStore'];
+          ETag: components['headers']['ETag'];
           'X-Session-Idle-Expires-At': components['headers']['XSessionIdleExpiresAt'];
           [name: string]: unknown;
         };
@@ -7984,8 +8022,12 @@ export interface operations {
       404: components['responses']['Error404'];
       /** @description Codes: patient.merged. */
       409: components['responses']['Error409'];
+      /** @description Codes: kernel.precondition_failed. */
+      412: components['responses']['Error412'];
       /** @description Codes: kernel.payload_too_large. */
       413: components['responses']['Error413'];
+      /** @description Codes: kernel.precondition_required. */
+      428: components['responses']['Error428'];
       /** @description Codes: kernel.rate_limited. */
       429: components['responses']['Error429'];
       /** @description Codes: kernel.unavailable. */
@@ -9069,6 +9111,8 @@ export interface operations {
       header: {
         /** @description r<releaseNumber>.<gitSha12>, for example r142.3f9a1c2b7d10, sent by every portal bundle on every /api/* call (28.6). Missing, malformed or releaseNumber < min_client_release is refused with 400 kernel.client_release_unsupported before any session lookup. */
         'X-Client-Release': components['parameters']['ClientRelease'];
+        /** @description The ETag (row version) of the resource as last read (CN-07, 28.2). Missing: 428 kernel.precondition_required. Stale: 412 kernel.precondition_failed with the current ETag. */
+        'If-Match': components['parameters']['IfMatch'];
       };
       path?: never;
       cookie?: never;
@@ -9084,6 +9128,7 @@ export interface operations {
         headers: {
           'X-Request-Id': components['headers']['XRequestId'];
           'Cache-Control': components['headers']['CacheNoStore'];
+          ETag: components['headers']['ETag'];
           'X-Session-Idle-Expires-At': components['headers']['XSessionIdleExpiresAt'];
           [name: string]: unknown;
         };
@@ -9101,8 +9146,12 @@ export interface operations {
       404: components['responses']['Error404'];
       /** @description Codes: patient.merged. */
       409: components['responses']['Error409'];
+      /** @description Codes: kernel.precondition_failed. */
+      412: components['responses']['Error412'];
       /** @description Codes: kernel.payload_too_large. */
       413: components['responses']['Error413'];
+      /** @description Codes: kernel.precondition_required. */
+      428: components['responses']['Error428'];
       /** @description Codes: kernel.rate_limited. */
       429: components['responses']['Error429'];
       /** @description Codes: kernel.unavailable. */
@@ -9216,6 +9265,8 @@ export interface operations {
       header: {
         /** @description r<releaseNumber>.<gitSha12>, for example r142.3f9a1c2b7d10, sent by every portal bundle on every /api/* call (28.6). Missing, malformed or releaseNumber < min_client_release is refused with 400 kernel.client_release_unsupported before any session lookup. */
         'X-Client-Release': components['parameters']['ClientRelease'];
+        /** @description The ETag (row version) of the resource as last read (CN-07, 28.2). Missing: 428 kernel.precondition_required. Stale: 412 kernel.precondition_failed with the current ETag. */
+        'If-Match': components['parameters']['IfMatch'];
       };
       path?: never;
       cookie?: never;
@@ -9231,6 +9282,7 @@ export interface operations {
         headers: {
           'X-Request-Id': components['headers']['XRequestId'];
           'Cache-Control': components['headers']['CacheNoStore'];
+          ETag: components['headers']['ETag'];
           'X-Session-Idle-Expires-At': components['headers']['XSessionIdleExpiresAt'];
           [name: string]: unknown;
         };
@@ -9248,10 +9300,14 @@ export interface operations {
       404: components['responses']['Error404'];
       /** @description Codes: patient.merged. */
       409: components['responses']['Error409'];
+      /** @description Codes: kernel.precondition_failed. */
+      412: components['responses']['Error412'];
       /** @description Codes: kernel.payload_too_large. */
       413: components['responses']['Error413'];
       /** @description Codes: organisation.neutral_name_required. */
       422: components['responses']['Error422'];
+      /** @description Codes: kernel.precondition_required. */
+      428: components['responses']['Error428'];
       /** @description Codes: kernel.rate_limited. */
       429: components['responses']['Error429'];
       /** @description Codes: kernel.unavailable. */
@@ -16138,6 +16194,8 @@ export interface operations {
       header: {
         /** @description r<releaseNumber>.<gitSha12>, for example r142.3f9a1c2b7d10, sent by every portal bundle on every /api/* call (28.6). Missing, malformed or releaseNumber < min_client_release is refused with 400 kernel.client_release_unsupported before any session lookup. */
         'X-Client-Release': components['parameters']['ClientRelease'];
+        /** @description The ETag (row version) of the resource as last read (CN-07, 28.2). Missing: 428 kernel.precondition_required. Stale: 412 kernel.precondition_failed with the current ETag. */
+        'If-Match': components['parameters']['IfMatch'];
       };
       path: {
         id: string;
@@ -16155,6 +16213,7 @@ export interface operations {
         headers: {
           'X-Request-Id': components['headers']['XRequestId'];
           'Cache-Control': components['headers']['CacheNoStore'];
+          ETag: components['headers']['ETag'];
           'X-Session-Idle-Expires-At': components['headers']['XSessionIdleExpiresAt'];
           [name: string]: unknown;
         };
@@ -16172,10 +16231,14 @@ export interface operations {
       404: components['responses']['Error404'];
       /** @description Codes: patient.merged. */
       409: components['responses']['Error409'];
+      /** @description Codes: kernel.precondition_failed. */
+      412: components['responses']['Error412'];
       /** @description Codes: kernel.payload_too_large. */
       413: components['responses']['Error413'];
       /** @description Codes: clinical.referral_target_invalid. */
       422: components['responses']['Error422'];
+      /** @description Codes: kernel.precondition_required. */
+      428: components['responses']['Error428'];
       /** @description Codes: kernel.rate_limited. */
       429: components['responses']['Error429'];
       /** @description Codes: kernel.unavailable. */

@@ -252,7 +252,7 @@ paths:
           permission: integration.connection.read / .manage
           realm: admin_pool
           idempotencyKey: false
-          ifMatch: false
+          ifMatch: true
           elevationRequired: true
           pathAs: /api/v1/admin/integrations/{id}
           catalogueRow: 29.4#128
@@ -266,6 +266,7 @@ paths:
             type: string
             format: uuid
         - $ref: common.yaml#/components/parameters/ClientRelease
+        - $ref: common.yaml#/components/parameters/IfMatch
       requestBody:
         required: true
         content:
@@ -284,8 +285,12 @@ paths:
           - kernel.not_found
         '409':
           - patient.merged
+        '412':
+          - kernel.precondition_failed
         '413':
           - kernel.payload_too_large
+        '428':
+          - kernel.precondition_required
         '429':
           - kernel.rate_limited
         '503':
@@ -300,6 +305,8 @@ paths:
               $ref: common.yaml#/components/headers/XRequestId
             Cache-Control:
               $ref: common.yaml#/components/headers/CacheNoStore
+            ETag:
+              $ref: common.yaml#/components/headers/ETag
             X-Session-Idle-Expires-At:
               $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
           content:
@@ -321,9 +328,15 @@ paths:
         '409':
           $ref: common.yaml#/components/responses/Error409
           description: 'Codes: patient.merged.'
+        '412':
+          $ref: common.yaml#/components/responses/Error412
+          description: 'Codes: kernel.precondition_failed.'
         '413':
           $ref: common.yaml#/components/responses/Error413
           description: 'Codes: kernel.payload_too_large.'
+        '428':
+          $ref: common.yaml#/components/responses/Error428
+          description: 'Codes: kernel.precondition_required.'
         '429':
           $ref: common.yaml#/components/responses/Error429
           description: 'Codes: kernel.rate_limited.'

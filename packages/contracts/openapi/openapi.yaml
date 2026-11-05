@@ -86,7 +86,7 @@ x-catalogue-interpretations:
     text: † applies to the code span it follows (per route), which is how the rows read; for a row with one dagger after the last item only that item is marked elevationRequired.
   - id: I-07
     where: Idem / If-Match columns
-    text: "Idempotency-Key is required on POST routes of a row marked Idem (28.3 says 'portal POST'). If-Match is required on PATCH, PUT and DELETE routes of a row marked If-Match, and on these state-changing POSTs of such rows: appointments cancel, reschedule, check-in, no-show; questionnaire-responses submit; notes sign; encounters complete; documents confirm. 'If-Match on PUT' applies to PUT only. Per-host differences are kept in x-access; the parameter is then optional with a description."
+    text: "Idempotency-Key is required on POST routes of a row marked Idem (28.3 says 'portal POST'). If-Match is required on every PATCH route (28.2, CN-07: PATCH on an existing resource), whatever the row marks, and on PUT and DELETE routes of a row marked If-Match, and on these state-changing POSTs of such rows: appointments cancel, reschedule, check-in, no-show; questionnaire-responses submit; notes sign; encounters complete; documents confirm. 'If-Match on PUT' applies to PUT only. Per-host differences are kept in x-access; the parameter is then optional with a description."
   - id: I-08
     where: Routes on both my. and staff.
     text: One operation carries both hosts in x-access when method and normalised path coincide (OpenAPI cannot hold two operations on one path). The path parameter name of the first host is used ({reservationId} for appointments); the document's own spelling is kept in x-access.<host>.pathAs. Where the two hosts return different bodies the response is a oneOf.
