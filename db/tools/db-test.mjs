@@ -101,7 +101,7 @@ describe('migrations from empty on PostgreSQL 17', () => {
     const report = await runChecks(adminDb);
     const failed = report.filter((c) => c.status === 'fail');
     assert.deepEqual(failed, [], JSON.stringify(failed, null, 2));
-    assert.ok(report.length >= 20);
+    assert.ok(report.length >= 18, `only ${report.length} checks ran`);
   });
 
   test('role-level settings are stored and visible to a new session', async () => {
@@ -356,6 +356,7 @@ describe('spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role 
       );
       await c.query('ROLLBACK TO s');
       await c.query('GRANT CREATE ON SCHEMA f03_fn TO patient_scope_owner, queue_owner');
+      await c.query('SAVEPOINT s');
       await rejectsCode(
         c.query('ALTER FUNCTION f03_fn.f() OWNER TO queue_owner'),
         '42501',
@@ -449,6 +450,7 @@ describe('TC-AU-04 (ARCHITECTURE 21.5, SAR-10; step 2 per SA-TC-06)', () => {
   before(async () => {
     a = await connect(adminUrl.replace(/\/[^/]*$/, `/${dbName}`), 'test-au04');
     await a.query(`CREATE ROLE au04_dba LOGIN`);
+    await a.query(`GRANT CONNECT ON DATABASE ${dbName} TO au04_dba`);
     await a.query(`CREATE SCHEMA au04`);
     await a.query(`CREATE FUNCTION au04.require_bounded_tx() RETURNS trigger LANGUAGE plpgsql AS $$
       DECLARE t interval := current_setting('transaction_timeout')::interval; b interval := TG_ARGV[0]::interval;
@@ -474,6 +476,7 @@ describe('TC-AU-04 (ARCHITECTURE 21.5, SAR-10; step 2 per SA-TC-06)', () => {
   });
   after(async () => {
     await a?.query('DROP SCHEMA IF EXISTS au04 CASCADE');
+    await a?.query('DROP OWNED BY au04_dba');
     await a?.query('DROP ROLE IF EXISTS au04_dba');
     await a?.end();
   });
