@@ -103,7 +103,7 @@ All navigation items in section 3.2 now map to a screen ID in this table, as a m
 | --- | --- | --- |
 | Desktop 1 Brand site, Find a doctor | Filter set from the intake (specialty, language, location, gender, availability); "next available" with a note that it is about a minute old; cookie banner with "Essential only" equal in weight to "Accept all" | J-01, F-BS-02, BR-36, SBR (60 s staleness) |
 | Desktop 2 Patient, Choose a time | Stepper; in-person/video toggle; time zone label; slot grid showing available times only; selection summary; **hold countdown**; cancellation policy sentence (**placeholder text in the mockup; real wording and cut-off are an admin setting, G2 decision**) | J-04, BR-01, BR-05, X-01, CN-06 (hold has its own idempotency key) |
-| Desktop 3 Pre-consultation arrivals | Board with status chips, missing items, waits; red-flag bar with "Alert doctor" and "Reassign" only (no dismiss); triage panel with out-of-range vitals in red with text "Out of range"; keyboard hints | J-06, J-07, BR-09, BR-10, X-06 |
+| Desktop 3 Pre-consultation arrivals | Board with status chips, missing items, waits; red-flag bar is a read-only status ("Doctor alerted: [name]. Not yet acknowledged. Escalation time not set.") with no button and no dismiss (UXR-02); triage panel with out-of-range vitals in red with text "Out of range"; keyboard hints | J-06, J-07, BR-09, BR-10, X-06 |
 | Desktop 4 Doctor chart and note | Patient banner with allergies; uncoded medication warning; vitals trend; SOAP editor; sign-and-lock wording; draft status | J-09, BR-11, BR-34, SA-F-08 |
 | Desktop 5 Pharmacy portal (R2) | Only own pharmacy's queue; "Ack due in 24 min" for the 2 h target; controlled substance marker and hand-over ID check notice; reject needs reason | J-12, BR-20, BR-21, BR-22 |
 | Desktop 6 Admin audit and BTG | Admin banner; audit table with denied/allowed; BTG review with justified / not justified and a required note; re-enter security key | J-18, BR-14, AC-36, 7.2.5 |
@@ -143,7 +143,7 @@ Each screen must define these states. The build tickets must list the ones that 
 
 ### 7.1 Session and timeouts
 
-Staff idle timeout default 15 minutes (G2 setting). The UI warns at 13 minutes with a dialog: "You will be signed out in 2:00. Stay signed in" (the dialog takes focus and reads out the time on open; it does not trap the user if they have a screen reader running). A draft note is preserved on sign-out (X-20). Signing a note or prescription always asks to re-authenticate (BR-17) regardless of timer. Patient and pharmacy timeouts are values for HEAAA-13 and G2; the same warning pattern applies. WCAG 2.2.1: timeouts are adjustable or extendable; the hold countdown extends only by returning to the previous step, and says so.
+Staff idle timeout default 15 minutes (G2 setting). The UI warns at 13 minutes with a dialog: "You will be signed out in 2:00. Stay signed in" (the dialog takes focus and reads out the time on open; it does not trap the user if they have a screen reader running). A draft note is preserved on sign-out (X-20). Signing a note re-authenticates only when the server answers `401 auth.reauth_required` (sign-in older than `note_sign_max_auth_age`, 12 h, G2 setting; BQ-8). The dialog then goes to `/auth/reauth`, returns, and repeats the request with the **same** idempotency key; the draft is kept (UXR-03). Prescriptions (R2) always re-authenticate through the vendor (BR-17). Patient and pharmacy timeouts are values for HEAAA-13 and G2; the same warning pattern applies. WCAG 2.2.1: timeouts are adjustable or extendable; the hold countdown extends only by returning to the previous step, and says so.
 
 ### 7.2 Slot hold and booking (PP-12 to PP-14)
 
@@ -163,7 +163,7 @@ At registration the warning lists only fields the user may see. It never shows d
 - Staff: live alert bar and tray from the SSE stream. Alert content: type, location/room, patient name and DOB only inside the signed-in app. Acknowledge is one click and recorded. Unacknowledged alerts escalate (X-06, X-15); the UI shows "Escalates to on-call in 4:10".
 - Reconnect: if the stream drops, a banner states it and a visible "Check for alerts" button polls. On reconnect, missed alerts appear first (SBR-10 replay).
 - Admin realm receives compliance alert types only.
-- Patient and pharmacy portals poll (no realtime). Proposal: refresh on focus and every 30 s while the screen is open and visible, with "Updated at" text (UX-A-06).
+- Patient and pharmacy portals have no realtime and **no timer-driven polling** on interactive routes, because that would reset the idle timer (contract 26.2). They refresh on focus, on user action ("Refresh" button) and on navigation, with "Updated at" text. The video waiting room checks status every 5 s on the passive status route only (UXR-01). A live patient view would need a new passive route (UX-A-06).
 - Toasts never carry the only copy of a safety message.
 
 ### 7.5 External links
@@ -185,9 +185,9 @@ Each needs a negative-path test and clinical safety review (PRD 7). The patterns
 | **Drug alerts (R2, BR-15/16)** | Panel splits "Serious" (blocks signing until changed or an override reason is chosen/typed) from "Other" (acknowledge). Override is logged and the reason shown next to the medicine afterwards. No auto-dismiss, no dark patterns. Alert text is read in full by screen readers |
 | **Signing** (BR-11, BR-17) | Dialog: patient name + DOB, what will be locked, re-authentication, button "Sign and lock note". After sign, note is read-only with "Add addendum". EPCS signing (R2) is a separate dialog that shows the two-factor step and the prescriber identity status; if the user is not identity-proofed the dialog states the reason and offers no override |
 | **Consent gate** (BR-09) | "Start consultation" is disabled with the reason "Telehealth consent not signed." and a link to send/sign it. Emergency exception is a separate secondary action requiring a reason, recorded (X-07) |
-| **Red flag** (BR-10, X-06) | Full-width danger bar, has no Dismiss or close control. The only actions are "Alert doctor" (acknowledges and notifies) and "Reassign"; it leaves the screen only once one of them is recorded; for the patient, a screen with the fixed emergency text and a call button on phones. No clinical advice beyond the reviewed text |
+| **Red flag** (BR-10, X-06) | Full-width danger bar, has no Dismiss or close control. Nurse side it is a status, not an action: saving triage already alerts the on-duty doctor in the same transaction. It reads "Doctor alerted: [name]. Not yet acknowledged. Escalates in m:ss" (or "escalation time not set" while D-12a is open) and stays until the target doctor acknowledges; escalation re-targets automatically and the bar updates. Nurses cannot acknowledge or close it (UXR-02); for the patient, a screen with the fixed emergency text and a call button on phones. No clinical advice beyond the reviewed text |
 | **Out-of-range vitals** | Red border + "Out of range" text + value; threshold source is configurable (UX-A-10). Does not block saving |
-| **Break-the-glass** (BR-14) | Dialog "This patient is not assigned to you." Reason required (selection + free text), consequence stated: "Your access is logged and reviewed by compliance." Banner on the chart shows "Emergency access" until closed |
+| **Break-the-glass** (BR-14) | Dialog "This patient is not assigned to you." Reason required (free text, at least 10 characters; a selection may only prefill the text) (UXR-05), consequence stated: "Your access is logged and reviewed by compliance." Banner on the chart shows "Emergency access" until closed |
 | **Critical result (R3, BR-25)** | Persistent alert, acknowledge required, escalation countdown visible; window from the clinical safety reviewer (D-11) |
 | **Result release (R3, BR-26)** | Doctor sees "Releases to patient: now (normal)" or "Held for your review: abnormal" with the deadline in text |
 | **Controlled hand-over (R2, BR-22)** | Pharmacy form has required fields: ID checked (checkbox), who received it (patient / authorised proxy), name. Submit disabled until complete |
@@ -271,10 +271,10 @@ None of these is a decision. Each is a request to check feasibility or a gap in 
 | --- | --- | --- | --- |
 | UX-A-01 | Hold response returns server `expiresAt`; confirm failure codes for hold expired (`scheduling.hold_expired`) and slot taken (`scheduling.slot_taken`) | Architect | PP-12/13 countdown and errors (X-01, X-02) |
 | UX-A-02 | Slot search returns alternatives for the same doctor/service when a slot is taken, and next-available per doctor with a freshness timestamp | Architect | Mobile mockup 2; brand "updated ~1 min ago" |
-| UX-A-03 | Slot search response flag `calendarBusyStale` (X-03) | Architect | Stale-data chip |
+| UX-A-03 | Slot search response flag `availabilityStale` on `POST /availability/search` (X-03; UXR-04) | Architect | Stale-data chip |
 | UX-A-04 | Staff alert acknowledge endpoint and `escalatesAt` on each alert; alert types for red flag, BTG, R3 critical | Architect | Alert tray and countdown |
 | UX-A-05 | Arrivals board: single call returning appointment, status, missing items, wait minutes, per location; define "wait" source | Architect | PC-01 |
-| UX-A-06 | Patient and partner portals poll; confirm acceptable interval and conditional requests (ETag) | Architect | Updated-at text, battery/rate limits (CN-11) |
+| UX-A-06 | Architect: no 304/ETag, all routes no-store; portals refresh on focus/action/navigation only, no timer polling (UXR-01). Any live view needs a passive route | Architect | Updated-at text, battery/rate limits (CN-11) |
 | UX-A-07 | `403 auth.forbidden` vs `404` copy: UI treats them as in section 6; confirm no endpoint leaks existence through other fields | Architect | CN-04 |
 | UX-A-08 | Patient photo: where stored, who may set it, how the banner gets it without a PHI URL (signed short-lived image URL) | Architect | Patient banner (BR-34) |
 | UX-A-09 | Allergy, medication and problem lists with coded/uncoded flag and last-reviewed date | Architect | Banner and chart |
@@ -325,7 +325,7 @@ Round 2 independent review of this exact revision, limited to the changed rows a
 
 ## 18. Revision log (cumulative)
 
-| Round | Finding | Status in draft 2 | Change |
+| Round | Finding | Status | Change |
 | --- | --- | --- | --- |
 | 1 | PMR-01 No patient screens for F-PP-07 | Addressed, review pending | PP-25, PP-26, PP-27 added to the J-06 row in section 4 |
 | 1 | PMR-02 Nav items without screens | Addressed, review pending | Three rows added to section 4 (PP-35..37, DR-11..13, PC-07/08); messaging marked optional until D-5 |
@@ -334,3 +334,15 @@ Round 2 independent review of this exact revision, limited to the changed rows a
 | 1 | PMR-05 Unsupported claims in mockups | Addressed, review pending | "30+ clinics", "Free cancellation until 24 h before" and "Nothing was charged" removed or replaced by marked placeholders in both images |
 
 Images were re-rendered from the edited SVG sources; hashes are in `MOCKUP-MANIFEST.md`. Owner decisions UX-P-01..03, UX-O-06/07 and brand files UX-O-01 remain open for the G2 package.
+
+### Round 2 (Architect, contract feasibility; draft 3)
+
+| Round | Finding | Status | Change |
+| --- | --- | --- | --- |
+| 2 | UXR-01 Portal polling resets idle timer | Addressed, review pending | 7.4: no timer polling; refresh on focus/action/navigation; waiting room 5 s passive only; UX-A-06 reworded |
+| 2 | UXR-02 Red-flag bar actions not in contract | Addressed, review pending | Section 5 and 8 and desktop mockup 3: read-only status, no buttons, no dismiss (PMR-04 kept) |
+| 2 | UXR-03 Note signing always re-auth | Addressed, review pending | 7.1: re-auth only on `auth.reauth_required`, same idempotency key, draft kept |
+| 2 | UXR-04 `calendarBusyStale` name | Addressed, review pending | UX-A-03 uses `availabilityStale` |
+| 2 | UXR-05 BTG reason selection | Addressed, review pending | Section 8: free text, min 10 characters; selection may only prefill |
+
+Architect dispositions for UX-A-01..19 are accepted as given. Architect-owned gaps (`escalatesAt`/`escalationLevel` on alerts, arrivals board fields) go to HEAAA-13 via Orchestrator. UX-A-09 last-reviewed date and UX-A-10 range source go to PM/clinical reviewer.
