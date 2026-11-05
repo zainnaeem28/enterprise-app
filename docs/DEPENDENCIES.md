@@ -22,9 +22,22 @@ Every top-level dependency, with licence and reason. A new top-level dependency 
 | prettier | 3.9.10 | MIT | Formatting check (DEVOPS-PLAN 5.1). |
 | @types/node | 24.19.2 | MIT | Node typings matching the pinned major. |
 
+## Kernel runtime dependencies (`packages/kernel`, F-04 unblock, HEAAA-150)
+
+Checked 2026-11-05 against the npm registry and `pnpm audit --prod` on the committed lockfile. Evidence is what was executed; no OSV-Scanner binary is available on this host, so the DELIVERY-PLAN section 9 OSV job in CI remains the authoritative scan.
+
+| Package | Version | Licence | Known-vulnerability check | Maintenance evidence | Reason |
+| --- | --- | --- | --- | --- | --- |
+| pg | 8.23.1 | MIT | `pnpm audit --prod`: no known vulnerabilities (pg and its 6 direct runtime dependencies, all MIT, `pg-int8` ISC). | node-postgres, maintained by brianc; 8.23.1 published 2026-09-30, minor releases roughly monthly through 2026 (8.18.0 2026-01-30 to 8.23.0 2026-08-08). | PostgreSQL driver for the kernel `Queryable`/`PoolLike` surface (`packages/kernel/src/db.ts`), the migration runner, and the `db/tools` scripts, which import it dynamically. |
+| graphile-worker | 0.18.0 | MIT | `pnpm audit --prod`: no known vulnerabilities across its resolved tree (see below). | graphile/worker, maintained by Benjie Gillam; 0.17.0 2026-06-12, patch releases to 0.17.3 2026-07-08, 0.18.0 2026-09-08. | ARCHITECTURE 21.8 first candidate queue library: `add_job` is plain SQL, so enqueue runs inside the caller's transaction (outbox). **Still Unverified** against the G2 acceptance test SBR-17 (b)-(d) on `FORCE`d tables; that needs a real PostgreSQL 17 and is not executed here. If it fails the test, it is replaced (pg-boss is the alternative). |
+
+Resolved transitive runtime packages of these two (16 in total, from `pnpm ls --prod`): `@graphile/logger` 0.3.0, `@types/debug` 4.1.13, `@types/pg` 8.23.1, `cosmiconfig` 8.3.6, `graphile-config` 0.0.1-beta.18, `json5` 2.2.3, `yargs` 17.7.3 (graphile-worker); `pg-cloudflare`, `pg-connection-string`, `pg-pool`, `pg-protocol`, `pg-types`, `pgpass` (pg). Licences read from the installed manifests: all MIT except `pg-int8` and `yargs-parser` (ISC); no copyleft.
+
+Caveats for the reviewer: `graphile-config` is a pre-release (`0.0.1-beta.18`) pulled in by graphile-worker; it is pinned by the lockfile and not a direct dependency. `@types/pg` is a transitive dependency of graphile-worker and is not declared by the kernel.
+
 ## Not chosen here
 
-- Framework and library choices (NestJS, Kysely/Drizzle, Next.js, React, queue library, test runner) are made by the tickets that first need them, inside their own app or package manifest.
+- Framework and library choices (NestJS, Kysely/Drizzle, Next.js, React, test runner) are made by the tickets that first need them, inside their own app or package manifest.
 - **k6 (AGPL-3.0) is not adopted or assumed.** C-22 (owner and counsel decision on use as an unmodified test tool) is open; no load-test dependency is added by F-01.
 - `pharmacy` is not scaffolded (R2).
 
