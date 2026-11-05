@@ -58,7 +58,7 @@ export const checks = {
           WHERE NOT EXISTS (
             SELECT 1 FROM pg_roles ro, unnest(ro.rolconfig) c
             WHERE ro.rolname = r AND c LIKE 'transaction_timeout=%'
-              AND substring(c FROM 'transaction_timeout=(.*)') ~ '^(60s|60000ms|1min|[1-5]?[0-9]s|[1-5]?[0-9]000ms)$')`,
+              AND substring(c FROM 'transaction_timeout=(.*)') ~ '^(1min|(60|[1-5][0-9]|[1-9])s|(60|[1-5][0-9]|[1-9])000ms)$')`,
   },
   'R-app-owner-no-audit-insert': {
     title: 'app_owner has no INSERT on any audit table',

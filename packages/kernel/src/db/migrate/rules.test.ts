@@ -32,6 +32,14 @@ for (const [name, sql] of [
   ['CTE DML', 'WITH x AS (DELETE FROM t RETURNING *) SELECT * FROM x'],
   ['SELECT INTO', 'SELECT * INTO t2 FROM t'],
   ['CTAS', 'CREATE TABLE t2 AS SELECT * FROM t'],
+  ['EXPLAIN ANALYZE INSERT', 'EXPLAIN ANALYZE INSERT INTO t VALUES (1)'],
+  ['EXPLAIN (ANALYZE) DELETE', 'EXPLAIN (ANALYZE) DELETE FROM t'],
+  [
+    'CREATE RULE with DML action',
+    'CREATE RULE r AS ON UPDATE TO t DO ALSO INSERT INTO u VALUES (1)',
+  ],
+  ['parenthesised INSERT', '(INSERT INTO t VALUES (1))'],
+  ['CTAS with column list', 'CREATE TABLE t2 (a, b) AS SELECT 1, 2'],
   ['lower case and odd spacing', '  insert\n  into t values (1)'],
 ] as const) {
   test(`DML ban rejects ${name} (SBR-17)`, () => {
@@ -43,6 +51,11 @@ test('DML ban does not reject DDL that mentions DML words', () => {
   const sql = expand(
     `CREATE TABLE t_audit_insert (id uuid PRIMARY KEY, "update" text);\nCOMMENT ON TABLE t_audit_insert IS 'INSERT; UPDATE';\nGRANT INSERT, UPDATE ON t_audit_insert TO app_api;`,
   );
+  assert.deepEqual(rules(sql), []);
+});
+
+test('DML ban does not reject a generated column (F03-R1-03)', () => {
+  const sql = expand('CREATE TABLE t (a int, b int GENERATED ALWAYS AS (a + 1) STORED)');
   assert.deepEqual(rules(sql), []);
 });
 

@@ -40,7 +40,7 @@ export function parseHeader(sql: string): MigrationHeader {
 }
 
 const first = (s: Statement): string =>
-  (/^\s*([A-Za-z_\\]+)/.exec(s.masked)?.[1] ?? '').toUpperCase();
+  (/^[\s(]*([A-Za-z_\\]+)/.exec(s.masked)?.[1] ?? '').toUpperCase();
 const norm = (s: Statement): string => s.masked.replace(/\s+/g, ' ').trim().toUpperCase();
 const excerpt = (s: Statement): string => s.text.split('\n')[0]!.slice(0, 80);
 
@@ -64,7 +64,16 @@ function dmlFinding(s: Statement): string | null {
   if (w === 'WITH' && /\b(INSERT|UPDATE|DELETE|MERGE)\b/.test(n))
     return 'data-modifying WITH statement';
   if (w === 'SELECT' && /\bINTO\b/.test(n)) return 'SELECT ... INTO creates data';
-  if (w === 'CREATE' && /^CREATE (?:\w+ )*TABLE\b.*\bAS\b/.test(n))
+  if (w === 'EXPLAIN' && /\b(INSERT|UPDATE|DELETE|MERGE)\b/.test(n))
+    return 'EXPLAIN of a data-modifying statement (ANALYZE executes it)';
+  if (w === 'CREATE' && /^CREATE (?:OR REPLACE )?RULE\b/.test(n))
+    return 'CREATE RULE can carry DML actions';
+  if (
+    w === 'CREATE' &&
+    /^CREATE (?:\w+ )*TABLE (?:IF NOT EXISTS )?[\w."]+ (?:\([^)]*\) )?(?:USING \w+ )?(?:WITH \([^)]*\) )?(?:TABLESPACE \w+ )?AS\b/.test(
+      n,
+    )
+  )
     return 'CREATE TABLE AS creates data';
   if (/\bBEGIN ATOMIC\b/.test(n)) return 'BEGIN ATOMIC body (use a dollar-quoted body)';
   return null;

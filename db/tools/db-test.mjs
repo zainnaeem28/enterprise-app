@@ -443,6 +443,22 @@ describe('spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role 
   });
 });
 
+describe('R-timeouts negative control (F03-R1-02)', () => {
+  for (const bad of ['0s', '0ms', '0000ms', '61s', '120s']) {
+    test(`R-timeouts fails when an audit-writing role has transaction_timeout = ${bad}`, async () => {
+      const a = await connect(adminUrl.replace(/\/[^/]*$/, `/${dbName}`), 'test-timeout-neg');
+      try {
+        await a.query(`ALTER ROLE app_api SET transaction_timeout = '${bad}'`);
+        const r = await runChecks(a);
+        assert.equal(r.find((x) => x.id === 'R-timeouts').status, 'fail');
+      } finally {
+        await a.query(`ALTER ROLE app_api SET transaction_timeout = '60s'`);
+        await a.end();
+      }
+    });
+  }
+});
+
 describe('TC-AU-04 (ARCHITECTURE 21.5, SAR-10; step 2 per SA-TC-06)', () => {
   // The audit schema is a later ticket. This fixture reproduces only the trigger contract: it checks the
   // SETTING of transaction_timeout, not elapsed time. Test bound B = 5 s; production bound = 60 s.
