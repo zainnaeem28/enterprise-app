@@ -1,7 +1,7 @@
 // Real-database acceptance tests for F-04 (SBR-17 (a)-(d), idempotency concurrency, job rollback).
 //   EHR_TEST_ADMIN_URL=postgres://postgres@host:5432/postgres node --test dist/queue/queue.dbtest.js
 // Superuser URL on a throwaway PostgreSQL 17; synthetic data only. Missing configuration FAILS; nothing skips.
-// UNEXECUTED at the time of writing (no database available). Not matched by the default `test` glob.
+// Not matched by the default `test` glob.
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { after, before, describe, test } from 'node:test';
@@ -171,6 +171,120 @@ describe('queue on FORCEd tables', () => {
       assert.equal(r.rows[0].n, 1);
     } finally {
       await w.end();
+    }
+  });
+
+  test('app_api is refused DELETE and the views (BR-F04-2 evidence of the actual grants)', async () => {
+    const a = await open('app_api');
+    try {
+      await assert.rejects(
+        a.query('DELETE FROM queue._private_jobs'),
+        (e: { code?: string }) => e.code === '42501',
+      );
+      await assert.rejects(
+        a.query('SELECT 1 FROM queue.jobs'),
+        (e: { code?: string }) => e.code === '42501',
+      );
+    } finally {
+      await a.end();
+    }
+  });
+
+  test('(c) back-off: a failing job is rescheduled later with attempts incremented', async () => {
+    const c = await open('app_api');
+    try {
+      await queue.enqueue(
+        c,
+        'f04.probe',
+        { id: '00000000-0000-7000-8000-0000000000b4' },
+        { jobKey: 'backoff' },
+      );
+    } finally {
+      await c.end();
+    }
+    await runOnce({
+      connectionString: urlFor('app_worker'),
+      schema: 'queue',
+      taskList: {
+        'f04.probe': async () => {
+          throw new Error('synthetic failure');
+        },
+      },
+    });
+    const w = await open('app_worker');
+    try {
+      const r = await w.query(
+        "SELECT attempts, last_error, run_at > now() + interval '1 second' AS later FROM queue.jobs WHERE key = 'backoff'",
+      );
+      assert.equal(r.rows[0].attempts, 1);
+      assert.match(r.rows[0].last_error, /synthetic failure/);
+      assert.equal(r.rows[0].later, true, 'retry is scheduled with back-off');
+    } finally {
+      await w.end();
+    }
+  });
+
+  test('publish fans out one job per registered handler in the caller transaction', async () => {
+    const reg = new JobRegistry();
+    for (const m of ['alpha', 'beta'])
+      reg.defineJob({
+        name: `${m}.on_created`,
+        maxAttempts: 2,
+        onMerged: 'none',
+        carriesPatientIds: false,
+        jobScope: 'org',
+      });
+    reg.registerHandler('thing.created', 'alpha');
+    reg.registerHandler('thing.created', 'beta');
+    const q = new Queue(reg);
+    const c = await open('app_api');
+    try {
+      await c.query('BEGIN');
+      const names = await q.publish(c, 'thing.created', {
+        id: '00000000-0000-7000-8000-0000000000b5',
+      });
+      await c.query('ROLLBACK');
+      assert.deepEqual(names.sort(), ['alpha.on_created', 'beta.on_created']);
+      await c.query('BEGIN');
+      await q.publish(c, 'thing.created', { id: '00000000-0000-7000-8000-0000000000b5' });
+      await c.query('COMMIT');
+    } finally {
+      await c.end();
+    }
+    const w = await open('app_worker');
+    try {
+      const r = await w.query(
+        "SELECT count(*)::int AS n FROM queue.jobs WHERE task_identifier IN ('alpha.on_created','beta.on_created')",
+      );
+      assert.equal(r.rows[0].n, 2, 'rollback left none; commit left exactly two');
+    } finally {
+      await w.end();
+    }
+  });
+
+  test('install is repeatable after the ownership handover and keeps the hardening', async () => {
+    await installQueue(urlFor('app_owner'));
+    await installQueue(urlFor('app_owner'));
+    const o = await open('app_owner');
+    try {
+      const r = await o.query(
+        `SELECT (SELECT pg_get_userbyid(nspowner) FROM pg_namespace WHERE nspname = 'queue') AS schema_owner,
+                (SELECT count(*)::int FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+                  WHERE n.nspname = 'queue' AND c.relkind = 'r' AND (NOT c.relforcerowsecurity OR pg_get_userbyid(c.relowner) <> 'queue_owner')) AS unhardened`,
+      );
+      assert.equal(r.rows[0].schema_owner, 'queue_owner');
+      assert.equal(r.rows[0].unhardened, 0);
+    } finally {
+      await o.end();
+    }
+    const a = await open('app_api');
+    try {
+      await assert.rejects(
+        a.query('DELETE FROM queue._private_jobs'),
+        (e: { code?: string }) => e.code === '42501',
+      );
+    } finally {
+      await a.end();
     }
   });
 });
