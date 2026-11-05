@@ -122,6 +122,58 @@ describe('worker boots against PostgreSQL 17 and runs a queued job', () => {
     assert.match(text, /worker stopped/);
   });
 
+  test('a failing job leaks neither its message nor its stack into any output (BR-F05-02)', async () => {
+    const lines: string[] = [];
+    const log = createLogger({ sink: (l) => lines.push(l) });
+    const out: string[] = [];
+    const orig = { log: console.log, warn: console.warn, error: console.error, info: console.info };
+    for (const k of ['log', 'warn', 'error', 'info'] as const)
+      console[k] = (...a: unknown[]) => void out.push(a.join(' '));
+    let attempts = 0;
+    let seen!: () => void;
+    const failed = new Promise<void>((r) => (seen = r));
+    const pool = await createPool(cfg());
+    const worker = await startWorker({
+      cfg: cfg(),
+      pool,
+      log,
+      tasks: {
+        'f05.probe': () => {
+          attempts++;
+          seen();
+          throw new Error('SENTINEL-PHI-VALUE');
+        },
+      },
+    });
+    const api = new pg.Client({ connectionString: urlFor('app_api') });
+    await api.connect();
+    try {
+      await api.query('BEGIN');
+      const tx = {
+        query: (sql: string, params?: unknown[]) => api.query(sql, params),
+        scope: { audience: 'staff', orgId: ORG },
+      };
+      await new Queue(registry, 'api').enqueue(
+        tx as never,
+        'f05.probe',
+        { id: '00000000-0000-7000-8000-0000000000b2' },
+        { jobKey: 'leak' },
+      );
+      await api.query('COMMIT');
+      await Promise.race([failed, new Promise((r) => globalThis.setTimeout(r, 20_000).unref())]);
+      await new Promise((r) => globalThis.setTimeout(r, 500)); // let the library log the failure
+    } finally {
+      Object.assign(console, orig);
+      await api.end();
+      await worker.stop();
+    }
+    assert.ok(attempts >= 1);
+    const all = lines.join('\n') + out.join('\n');
+    assert.match(all, /job failed/);
+    assert.ok(!all.includes('SENTINEL-PHI-VALUE'), 'message leaked');
+    assert.ok(!/\n\s+at /.test(all), 'stack leaked');
+  });
+
   test('start fails fast when the queue schema is missing', async () => {
     const bad = loadConfig({
       EHR_ENV: 'ci',

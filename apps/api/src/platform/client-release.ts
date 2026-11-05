@@ -37,7 +37,8 @@ export function isReleaseChecked(req: Req, cfg: PlatformConfig): boolean {
   // Express matches routes case-insensitively, so the comparison is too: `/API/v1/...` must not escape the check.
   const path = req.path.toLowerCase();
   if (!path.startsWith('/api/')) return false; // health and any non-API path
-  if (hostOf(req).startsWith(cfg.integrationsHostPrefix)) return false; // the whole integrations. host
+  // The whole machine-client host, matched against the configured exact name, never a prefix of a header value.
+  if (cfg.integrationsHost !== undefined && hostOf(req) === cfg.integrationsHost) return false;
   const method = req.method === 'HEAD' ? 'GET' : req.method;
   return !EXEMPT.some((e) => e.method === method && e.re.test(path));
 }

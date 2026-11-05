@@ -1,5 +1,5 @@
 // Test harness: a real Nest application on an ephemeral loopback port, driven with real HTTP requests.
-import { Controller, Get, Patch, Post } from '@nestjs/common';
+import { Controller, Get, HttpException, Param, Patch, Post } from '@nestjs/common';
 import type { Type } from '@nestjs/common';
 import { createLogger } from '@ehr/kernel';
 import { createApp } from '../../src/platform/app.js';
@@ -16,7 +16,7 @@ export const MIN_RELEASE = 141;
 export const cfg = (over: Partial<PlatformConfig> = {}): PlatformConfig => ({
   minClientRelease: MIN_RELEASE,
   instanceCount: 1,
-  integrationsHostPrefix: 'integrations.',
+  integrationsHost: 'integrations.example.test',
   port: 0,
   requestTimeoutMs: 15_000,
   ...over,
@@ -90,6 +90,11 @@ export class FixtureController {
   @Route({ ...open, releaseExempt: true })
   ics(): { ok: true } {
     return { ok: true };
+  }
+  @Get('api/v1/throw/:status')
+  @Route(open)
+  throwStatus(@Param('status') status: string): never {
+    throw new HttpException('SENTINEL-MESSAGE', Number(status));
   }
   @Get('public/v1/status')
   @Route(open)

@@ -6,8 +6,8 @@ export interface PlatformConfig {
   readonly minClientRelease: number;
   /** Instances behind the load balancer; the in-memory rate limit is divided by it (31.3). */
   readonly instanceCount: number;
-  /** Host name prefix of the machine-client host (exempt from the release check and from cookies). */
-  readonly integrationsHostPrefix: string;
+  /** Exact host name of the machine-client host (exempt from the release check and from cookies); undefined = none. */
+  readonly integrationsHost: string | undefined;
   readonly port: number;
   readonly requestTimeoutMs: number;
 }
@@ -30,7 +30,7 @@ export function loadPlatformConfig(
   const cfg: PlatformConfig = {
     minClientRelease: int('EHR_MIN_CLIENT_RELEASE', undefined, 1, 2_000_000_000),
     instanceCount: int('EHR_INSTANCE_COUNT', 1, 1, 100),
-    integrationsHostPrefix: env['EHR_INTEGRATIONS_HOST_PREFIX'] ?? 'integrations.',
+    integrationsHost: env['EHR_INTEGRATIONS_HOST']?.toLowerCase(),
     port: int('EHR_PORT', 3000, 1, 65535),
     requestTimeoutMs: int('EHR_REQUEST_TIMEOUT_MS', 15_000, 100, 120_000),
   };

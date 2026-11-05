@@ -16,6 +16,8 @@ export interface RateLimiter {
   hit(key: string, limit: number, windowMs: number, now?: number): Promise<Hit>;
 }
 
+const MAX_KEYS = 50_000;
+
 export class MemoryRateLimiter implements RateLimiter {
   private readonly windows = new Map<string, { start: number; count: number }>();
   constructor(private readonly instanceCount = 1) {}
@@ -27,15 +29,23 @@ export class MemoryRateLimiter implements RateLimiter {
     const cur = w !== undefined && w.start === start ? w : { start, count: 0 };
     cur.count += 1;
     this.windows.set(key, cur);
-    if (this.windows.size > 50_000) this.sweep(start);
+    if (this.windows.size > MAX_KEYS) this.sweep(start);
     return Promise.resolve({
       allowed: cur.count <= effective,
       retryAfterSeconds: Math.max(1, Math.ceil((start + windowMs - now) / 1000)),
     });
   }
 
+  /** Drop older windows; if the current window alone is over the cap, evict the oldest keys down to half the cap
+   * so the next sweeps are amortised O(1) per hit rather than a scan on every request. */
   private sweep(currentStart: number): void {
     for (const [k, w] of this.windows) if (w.start < currentStart) this.windows.delete(k);
+    if (this.windows.size <= MAX_KEYS) return;
+    let drop = this.windows.size - MAX_KEYS / 2;
+    for (const k of this.windows.keys()) {
+      if (drop-- <= 0) break;
+      this.windows.delete(k); // Map iterates in insertion order: oldest first
+    }
   }
 }
 

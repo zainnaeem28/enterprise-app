@@ -98,3 +98,13 @@ test('platform config names bad variables, never values', () => {
   }
   assert.equal(loadPlatformConfig({ EHR_MIN_CLIENT_RELEASE: '141' }).minClientRelease, 141);
 });
+
+test('memory limiter stays bounded under many distinct keys in one window (BR-F05-04)', async () => {
+  const l = new MemoryRateLimiter(1);
+  const now = 1_000_000;
+  for (let i = 0; i < 120_000; i++) await l.hit('k' + i, 10, 60_000, now);
+  const size = (l as unknown as { windows: Map<string, unknown> }).windows.size;
+  assert.ok(size <= 50_000, 'size ' + size);
+  const h = await l.hit('fresh', 1, 60_000, now);
+  assert.equal(h.allowed, true);
+});

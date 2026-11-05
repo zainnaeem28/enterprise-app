@@ -10,6 +10,23 @@ import { sendProblem } from './respond.js';
 
 export const LOGGER = Symbol('LOGGER');
 
+const STATUS_TO_ERROR: Record<number, { code: string; retryable: boolean } | undefined> = {
+  400: { code: 'kernel.validation_failed', retryable: false }, // e.g. malformed JSON
+  401: { code: 'auth.unauthenticated', retryable: false },
+  403: { code: 'auth.forbidden', retryable: false },
+  404: { code: 'kernel.not_found', retryable: false },
+  405: { code: 'kernel.not_found', retryable: false },
+  409: { code: 'kernel.idempotency_conflict', retryable: false },
+  412: { code: 'kernel.precondition_failed', retryable: false },
+  413: { code: 'kernel.payload_too_large', retryable: false },
+  415: { code: 'kernel.validation_failed', retryable: false },
+  422: { code: 'kernel.validation_failed', retryable: false },
+  428: { code: 'kernel.precondition_required', retryable: false },
+  429: { code: 'kernel.rate_limited', retryable: true },
+  503: { code: 'kernel.unavailable', retryable: true },
+  504: { code: 'kernel.timeout', retryable: true },
+};
+
 /** Any thrown value -> the API error to send. Logs the class of unexpected failures, never their messages. */
 export function translateError(err: unknown, req: Req, log: Logger): ApiError {
   if (err instanceof ApiError) return err;
@@ -22,9 +39,9 @@ export function translateError(err: unknown, req: Req, log: Logger): ApiError {
         : typeof o?.statusCode === 'number'
           ? o.statusCode
           : undefined;
-  if (s === 404 || s === 405) return new ApiError(404, 'kernel.not_found');
-  if (s === 413) return new ApiError(413, 'kernel.payload_too_large');
-  if (s === 400) return new ApiError(400, 'kernel.validation_failed'); // e.g. malformed JSON
+  // Framework and module exceptions map by status onto the 28.4 / 30 registry (never the exception's message).
+  const byStatus = s === undefined ? undefined : STATUS_TO_ERROR[s];
+  if (byStatus !== undefined) return new ApiError(s as number, byStatus.code, byStatus.retryable);
   const m = mapDatabaseError(err, 'kernel');
   // Driver messages can carry values (PHI): log the class and SQLSTATE only.
   log.error('request failed', {

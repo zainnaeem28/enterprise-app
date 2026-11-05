@@ -1,7 +1,7 @@
 // Worker platform layer (ARCHITECTURE 3.1, 21.8): boots the queue runner against PostgreSQL, wraps every task so a
 // failure is logged by class only and retried by the library, and stops cleanly. Task handlers are registered by the
 // modules that own the job types (33); this layer owns none.
-import { run } from 'graphile-worker';
+import { Logger as WorkerLogger, run } from 'graphile-worker';
 import type { Runner, Task } from 'graphile-worker';
 import type { KernelConfig, Logger } from '@ehr/kernel';
 
@@ -58,6 +58,29 @@ export function wrapTask(name: string, task: Task, log: Logger): Task {
   };
 }
 
+/**
+ * Bridge the library's logger onto the kernel logger. At warn and error the library's text carries the thrown
+ * error's message and stack (a driver message can hold a value, i.e. PHI), so only the scope and the level leave;
+ * the task wrapper above already logs the error class and SQLSTATE.
+ */
+export function workerLogger(log: Logger): WorkerLogger {
+  return new WorkerLogger((scope) => {
+    const l = log.child({
+      worker: scope.workerId,
+      label: scope.label,
+      jobType: scope.taskIdentifier,
+      job: scope.jobId,
+    });
+    return (level, message) => {
+      if (level === 'error' || level === 'warning') {
+        l[level === 'error' ? 'error' : 'warn']('worker library reported a problem');
+      } else if (level === 'info') {
+        l.info(message);
+      }
+    };
+  });
+}
+
 export async function startWorker(opts: {
   cfg: KernelConfig;
   pool: PoolLike;
@@ -78,6 +101,7 @@ export async function startWorker(opts: {
     schema: cfg.queueSchema,
     concurrency: opts.concurrency ?? 5,
     noHandleSignals: true,
+    logger: workerLogger(log),
     taskList,
   });
   log.info('worker started', {

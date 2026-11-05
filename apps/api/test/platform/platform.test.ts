@@ -130,6 +130,45 @@ describe('client-release check (28.6, 38.2 item 20; TC-API-11)', () => {
     assert.equal(b.status, 200);
   });
 
+  test('a spoofed integrations-like Host does not exempt a portal request (BR-F05-03)', async () => {
+    for (const host of [
+      'integrations.evil',
+      'integrations.example.test.evil.test',
+      'xintegrations.example.test',
+    ]) {
+      const r = await raw('GET', '/api/v1/ping', { host });
+      assert.equal(r.status, 400, host);
+      assert.equal(JSON.parse(r.body).code, 'kernel.client_release_unsupported');
+    }
+  });
+
+  test('framework exceptions map by status onto the registry, without their message (BR-F05-01)', async () => {
+    const want: Record<number, [string, boolean]> = {
+      400: ['kernel.validation_failed', false],
+      401: ['auth.unauthenticated', false],
+      403: ['auth.forbidden', false],
+      404: ['kernel.not_found', false],
+      409: ['kernel.idempotency_conflict', false],
+      412: ['kernel.precondition_failed', false],
+      413: ['kernel.payload_too_large', false],
+      415: ['kernel.validation_failed', false],
+      422: ['kernel.validation_failed', false],
+      428: ['kernel.precondition_required', false],
+      429: ['kernel.rate_limited', true],
+      503: ['kernel.unavailable', true],
+      504: ['kernel.timeout', true],
+    };
+    for (const [status, [code, retryable]] of Object.entries(want)) {
+      const r = await get('/api/v1/throw/' + status, { 'x-client-release': R(MIN_RELEASE) });
+      const body = await r.text();
+      assert.equal(r.status, Number(status), status);
+      const b = JSON.parse(body);
+      assert.equal(b.code, code, status);
+      assert.equal(b.retryable, retryable, status);
+      assert.ok(!body.includes('SENTINEL-MESSAGE'));
+    }
+  });
+
   test('a client header cannot turn the check off', async () => {
     const r = await raw('GET', '/api/v1/ping', {
       ...portal,
