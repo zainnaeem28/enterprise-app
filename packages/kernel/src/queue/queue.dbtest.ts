@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 const PG: string = 'pg';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const pg: any = (await import(PG)).default;
+import { runOnce } from 'graphile-worker';
 import { installQueue } from './install.js';
 import { JobRegistry, Queue } from './enqueue.js';
 
@@ -56,7 +57,7 @@ describe('queue on FORCEd tables', () => {
         env,
         stdio: 'inherit',
       });
-    await installQueue(urlFor('queue_owner'));
+    await installQueue(urlFor('app_owner'));
   });
   after(async () => {
     const admin = new pg.Client({ connectionString: adminUrl });
@@ -101,13 +102,28 @@ describe('queue on FORCEd tables', () => {
   });
 
   test('(b) app_worker dequeues under FORCE; the table owner and app_api cannot read', async () => {
-    const w = await open('app_worker');
+    const c = await open('app_api');
     try {
-      const r = await w.query("SELECT queue.get_job('{f04.probe}'::text[]) AS j");
-      assert.ok(r.rows[0].j !== null, 'worker dequeued the committed job');
+      await queue.enqueue(
+        c,
+        'f04.probe',
+        { id: '00000000-0000-7000-8000-0000000000b2' },
+        { jobKey: 'deq' },
+      );
     } finally {
-      await w.end();
+      await c.end();
     }
+    const handled: string[] = [];
+    await runOnce({
+      connectionString: urlFor('app_worker'),
+      schema: 'queue',
+      taskList: {
+        'f04.probe': async (payload: unknown) => {
+          handled.push(JSON.stringify(payload));
+        },
+      },
+    });
+    assert.ok(handled.length >= 1, 'worker dequeued and ran a job under FORCE');
     const a = await open('app_api');
     try {
       await assert.rejects(
@@ -119,10 +135,25 @@ describe('queue on FORCEd tables', () => {
     }
   });
 
+  const enqueueLater = async (jobKey: string) => {
+    const c = await open('app_api');
+    try {
+      await queue.enqueue(
+        c,
+        'f04.probe',
+        { id: '00000000-0000-7000-8000-0000000000b3' },
+        { jobKey, runAt: new Date(Date.now() + 3_600_000) },
+      );
+    } finally {
+      await c.end();
+    }
+  };
+
   test('(c) max attempts are carried on the job', async () => {
+    await enqueueLater('maxa');
     const w = await open('app_worker');
     try {
-      const r = await w.query("SELECT max_attempts FROM queue.jobs WHERE key = 'ok'");
+      const r = await w.query("SELECT max_attempts FROM queue.jobs WHERE key = 'maxa'");
       assert.equal(r.rows[0].max_attempts, 3);
     } finally {
       await w.end();
@@ -130,11 +161,12 @@ describe('queue on FORCEd tables', () => {
   });
 
   test('(d) dead jobs are visible (attempts >= max_attempts)', async () => {
+    await enqueueLater('dead');
     const w = await open('app_worker');
     try {
-      await w.query("UPDATE queue.jobs SET attempts = max_attempts WHERE key = 'ok'");
+      await w.query("UPDATE queue._private_jobs SET attempts = max_attempts WHERE key = 'dead'");
       const r = await w.query(
-        'SELECT count(*)::int AS n FROM queue.jobs WHERE attempts >= max_attempts',
+        "SELECT count(*)::int AS n FROM queue.jobs WHERE key = 'dead' AND attempts >= max_attempts",
       );
       assert.equal(r.rows[0].n, 1);
     } finally {
