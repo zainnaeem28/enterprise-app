@@ -2,11 +2,11 @@
 
 | Field | Value |
 | --- | --- |
-| Task | HEAAA-14 `[SDLC:ux-design]` |
+| Task | HEAAA-14 `[SDLC:ux-design]`; draft 5: HEAAA-49 `[SDLC:design-align-fix]` |
 | Author | UI/UX Designer agent (`1ddacad6-d28d-4bff-a938-a6957593b3ff`) |
-| Version | Draft 4 (revises draft 3, commit `c9d6ef4`, against Architect round 3 findings UXR-02 residual, UXR-06, UXR-07; one human-approved bounded fix cycle, confirmation `c40be67a`) |
-| Status | **DRAFT. Draft 4 re-review pending, limited to UXR-02 residual, UXR-06 and UXR-07. Not human-approved. Not G2.** Reviewers: Product Manager (journey coverage), Solution Architect (contract feasibility), per the task policy. |
-| Inputs | Intake pack rev 2 (commit `6ea01b5`); PRD rev 3 and BA feature map (HEAAA-11 `prd`); ARCHITECTURE (HEAAA-11); SHARED-BOUNDARIES rev 3 (HEAAA-12, section 11 row "HEAAA-14 UX") |
+| Version | **Draft 5** (HEAAA-49, one human-accepted bounded correction cycle, confirmation `a524dfdd`, limited to design-alignment findings AL-01, AL-02, AL-04 UX part and AL-06). Base: draft 4, branch commit `9dcb7aa`, `UI-UX.md` sha256 `1176b121…`, synced unchanged to the task documents as revision 1 (AL-06). Draft 4 revised draft 3 (`c9d6ef4`) against UXR-02 residual, UXR-06, UXR-07 (confirmation `c40be67a`). Change list: section 18, round 4 |
+| Status | **DRAFT. Draft 5 review pending, limited to the diff from draft 4 (AL-01, AL-02, AL-04 UX part; AL-06 is a hash-checked sync). Not human-approved. Not G2.** Reviewer for this task: Solution Architect Reviewer (`338c0bb5`), with a Product Manager check of the desktop image still pending from draft 4 (the images are unchanged in draft 5). |
+| Inputs | Intake pack rev 2 (commit `6ea01b5`); PRD rev 3 and BA feature map (HEAAA-11 `prd`); ARCHITECTURE (HEAAA-11); SHARED-BOUNDARIES rev 3 (HEAAA-12, section 11 row "HEAAA-14 UX"); **draft 5 binds to ARCHITECTURE draft 8.1 = HEAAA-48 `architecture` rev `b276930a`, `docs/ARCHITECTURE.md` @ `481f32a` (review PASS HEAAA-53 rev `4ccbdafd`)**, sections 22.11, 28.2, 28.6, 29.3 and 32 |
 | Companions | `BRAND-BRIEF.md`, `UI-Mockups-Desktop.png`, `UI-Mockups-Mobile.png`, `MOCKUP-MANIFEST.md` (all in `docs/design/`) |
 | Not covered | HEAAA-13 API contracts are not final. Anything needing an endpoint or field not yet written is in section 13 and goes to the Architect. |
 
@@ -22,7 +22,7 @@ Release tags follow the intake: R1 (by end May 2027) is designed in full detail.
 
 | ID | Rule | Source |
 | --- | --- | --- |
-| UX-R1 | **Patient banner** on every screen that shows or edits a patient's clinical data: photo or initials, full name, date of birth and age, MRN, allergies. Sticky on scroll. On phones it collapses to avatar (photo or initials) + name + DOB + allergy flag and expands on tap; photo/initials, name and DOB always stay visible (PMR-03). | BR-34 `[06 §2]` |
+| UX-R1 | **Patient banner** on every screen that shows or edits a patient's clinical data: photo or initials, full name, date of birth and age, MRN, allergies. Sticky on scroll. On phones it collapses to avatar (photo or initials) + name + DOB + allergy flag and expands on tap; photo/initials, name and DOB always stay visible (PMR-03). **Allergy block rules (AL-01, ARCH 28.2 `patientBanner.allergies`):** the block is drawn from the banner that comes with the screen's own call, never from a second call. Listed severe first, at most 10, then "+{moreCount} more" that opens the allergy list. `state` `none_recorded` reads "No allergies recorded", never "No known allergies" (BQ-11). A chip "{n} uncoded: needs review" shows when `uncodedCount` > 0. `allergies` is `null` when the signed-in role passes neither the chart read nor the pre-visit read: the banner then shows a neutral chip "Allergies not shown for your role" so that a hidden block is never read as "none". It is the same on phones (flag shows the same three states). Patient-portal screens have no banner. | BR-34 `[06 §2]` |
 | UX-R2 | **One portal, one accent, one written name** in the app bar. Colour is never the only cue. | `[06 §2]` |
 | UX-R3 | **Risky actions state their consequence** in the button label and a confirm dialog: "Sign and lock note", "Reject with reason", "Cancel appointment (a fee applies)". No "OK/Yes/No". | `[06 §2]` |
 | UX-R4 | **No PHI in URLs, page titles, tab titles, notifications or analytics.** Routes carry random IDs only. Browser tab title is the portal name and screen type ("Chart"), never a patient name. | CN-05, BR-23, BR-36 |
@@ -138,6 +138,8 @@ Each screen must define these states. The build tickets must list the ones that 
 | **Partial failure** | List what worked and what did not, per item, e.g. an upload batch | BR-33 |
 | **Idempotent retry** | Buttons disable on submit and show progress. A retry after a timeout reuses the same key for that step. UI shows the final state returned by the server | CN-06 |
 | **Maintenance** | Banner with time and what is affected; sign-in remains visible | F-AD-11 |
+| **New version available (non-blocking)** | Slim bar under the app bar: "A new version is available. Finish or save what you are doing, then reload." Actions "Reload" and "Remind me later". Never moves focus, never reloads by itself. Full behaviour in 7.7 | AL-04, ARCH 28.6 |
+| **Page out of date (400 `kernel.client_release_unsupported`)** | Blocking dialog that asks to reload; the refused action had no effect. Unsaved input on the open form is lost on reload, and the dialog says so. Full behaviour in 7.7 | AL-04, ARCH 28.6, 30 |
 
 ## 7. Cross-cutting behaviour
 
@@ -160,7 +162,7 @@ At registration the warning lists only fields the user may see. It never shows d
 ### 7.4 Notifications and alerts
 
 - Patient: email, SMS, push and in-app. All external text is the fixed PHI-free prompt (BR-23). The in-app notice may say more after sign-in.
-- Staff: live alert bar and tray from the SSE stream. Alert content: type, location/room, patient name and DOB only inside the signed-in app. Acknowledge is one click and recorded. Unacknowledged alerts escalate (X-06, X-15); the UI shows "Escalates to on-call in 4:10".
+- Staff: live alert bar and tray from the SSE stream. Alert content: type, location/room, patient name and DOB only inside the signed-in app. Acknowledge is one click and recorded. Unacknowledged alerts escalate (X-06, X-15). **Countdown rule (AL-02, ARCH 29.3 `GET /alerts`):** the UI shows "Escalates in 4:10" only while `escalatesAt` is not null. The remaining time is `escalatesAt` minus the server time taken from the response `Date` header, moved on by the local time elapsed since that response; the device clock alone is never used. `open-ids` (the 60 s passive poll) refreshes `escalatesAt`, `escalationLevel` and `status`, so the tray corrects a drifting countdown without an interactive call. When `escalatesAt` is null the row says, by case: "Escalation time not set" (open alert with no configured time, for a red flag until D-12a), "Escalated" with the level (`status` escalated; R1 escalates once), or no escalation text (acknowledged). An escalated alert stays in every target's tray until someone acknowledges it (N-6). On acknowledge the row shows "Acknowledged by {name} at {time}" from the response; if the response says `alreadyAcknowledged` it says "Already acknowledged by {name}" with no second confirmation sound or toast; `409 notifications.alert_closed` shows "This alert is closed." and removes the row. The countdown is text, not announced every second (section 10).
 - Reconnect: if the stream drops, a banner states it and a visible "Check for alerts" button polls. On reconnect, missed alerts appear first (SBR-10 replay).
 - Admin realm receives compliance alert types only.
 - Patient and pharmacy portals have no realtime and **no timer-driven polling** on interactive routes, because that would reset the idle timer (contract 26.2). They refresh on focus, on user action ("Refresh" button) and on navigation, with "Updated at" text. The video waiting room checks status every 5 s on the passive status route only (UXR-01). A live patient view would need a new passive route (UX-A-06).
@@ -174,6 +176,53 @@ Delivery tracking links open the pharmacy's own page. Show an interstitial the f
 
 Print views carry the patient banner on every page and an access-logged footer (NFR-13). Export actions say what will be exported and are logged; admin and compliance export of audit data never includes record contents (6.7).
 
+### 7.7 New version and half-completed forms (AL-04 UX part, ARCH 28.6)
+
+**Why it exists.** A tab can stay open for days on an old portal bundle. The API refuses bundles older than its supported release. The user must learn that in time, without losing what they typed. All wording below is a **Proposal** for review. It applies to the patient, staff, admin and (from R2) partner portals. The public brand site has no API calls with the header and shows no prompt.
+
+**What the user can rely on (rules, in priority order)**
+
+1. **The page never reloads by itself** while any form on it has unsaved input, and the design does not reload by itself in other cases either: reload happens only when the user chooses it. This keeps the Architect's constraint without a special case.
+2. **A form is "unsaved"** when a field differs from the last value the server accepted. The page tracks this in memory only. Nothing about it, and no field value, is written to `localStorage`, `sessionStorage` or IndexedDB (ARCH 26.2; UX-A-12 stays "server-side drafts only").
+3. **The prompt is the moment to save.** The non-blocking prompt asks the user to finish or save first, and offers a save action only where the server has a draft route.
+4. **A refused request changed nothing** (checked before the session lookup, ARCH 28.6). The blocking dialog says so, and says the action can be repeated after reload.
+
+**Non-blocking prompt (a newer release exists).** Trigger: the page reads `release.json` (every 5 minutes and when the tab regains focus) and its release number is higher than the bundle's. That request is a static file on the portal's own origin, not an API call, so it does not touch the idle timer (ARCH 28.6).
+
+| Part | Design |
+| --- | --- |
+| Placement | Slim bar under the app bar (below the patient banner is not used, so the banner stays at the top of the content area). Not a modal. Not a toast: it does not disappear on its own |
+| Text | "A new version is available. Finish or save what you are doing, then reload." If a form is unsaved, the second line adds: "This page has unsaved input." |
+| Actions | **Reload** (primary) and **Remind me later**. "Remind me later" hides the bar for 30 minutes, kept in memory only; it comes back earlier if an API call is refused (blocking dialog) |
+| Reload with no unsaved input | Reloads at once to the same route (IDs only, no PHI in the route) |
+| Reload with unsaved input | A confirm dialog first: "Reload and lose unsaved input?" listing the forms by name (for example "Visit note", "Message to clinic"), never by content. Buttons "Stay on this page" (default, focused) and "Reload anyway". If the form has a draft route, the dialog's first button is **Save draft and reload** (see below); the reload happens only after the server confirms the save |
+| Focus and announcement | `role="status"` (polite), announced once. Focus is not moved. The bar is reachable by keyboard in reading order right after the skip link target and never hidden behind sticky elements (2.4.11) |
+
+**Per form type**
+
+| Form | What is already saved | What the prompt does |
+| --- | --- | --- |
+| Clinical note (SOAP) | Autosaves a server draft every 30 s (ARCH 28.6, 26.2). The editor shows "Draft saved 09:41:12" | Offers **Save draft and reload**: saves now, shows "Draft saved", then reloads. If the save fails, nothing reloads and the error state (section 6) shows with "Try again". At most the last 30 s is at risk, and the prompt says so if the last save is older than 30 s |
+| Pre-visit questionnaire | Saves with an explicit "Save and continue later" (`PUT` of the response) | Offers **Save and reload** with the same rule: reload only after the server confirms |
+| Any other form (booking steps, messages, admin settings, search filters) | Nothing is saved until submit | No save offered. The prompt asks the user to submit or finish first; the confirm dialog states plainly that unsaved input will be lost. A slot hold keeps running on the server and is not lost by a reload; the booking page restores the held slot from the hold, not from stored form data |
+
+**Blocking dialog (`400 kernel.client_release_unsupported`).** Trigger: any API call is refused with that code, or the live alert stream is refused (see below).
+
+| Part | Design |
+| --- | --- |
+| Pattern | `role="alertdialog"`, takes focus, one assertive announcement (section 10), focus returns to the page if the user chooses to stay |
+| Text | "This page is out of date and can't save changes. Reload to continue. Your last action did not go through, and you can repeat it after reload. Anything you typed on this page that was not saved will be lost." No technical detail; the `requestId` is shown for support, as for other errors |
+| Actions | **Reload** (primary, the only way forward) and **Keep this page open** (secondary). Keep-open shows a red bar "This page is out of date. Saving is turned off. Reload to continue." and disables submit and save actions, because every API call would be refused. It lets the user read or write down what they typed. It does not offer to copy or store it |
+| Not shown | No automatic reload, no countdown, no "try again" that would repeat a doomed request |
+
+**Live alerts (staff).** The alert stream cannot send the header, so the client passes it as `clientRelease` and a refusal ends the stream with a plain `400` and no reconnect (ARCH 28.6). Missing alerts is a safety issue, so when the stream is refused the alert bar shows, in the alert colour and not as a small notice: "Live alerts are paused because this page is out of date. Reload now." with a **Reload** button, together with the blocking dialog. This state must never look like "no alerts". Missed alerts appear first after reload (SBR-10 replay, 7.4).
+
+**Order against other states.** `401` session ended (section 6) wins over the release prompt: sign in first, then the page reloads on the new bundle anyway. A maintenance banner and the release bar can show together; the maintenance banner is above.
+
+**Accessibility.** The bar and the dialogs are operable by keyboard and screen reader, have visible focus, hold text contrast at AA, reflow at 320 px and 200 % zoom, use no motion, and have no time limit (2.2.1). The non-blocking bar is never the only way to learn of the change: the blocking dialog follows the first refused call.
+
+**What the design does not claim.** Whether the pipeline assigns the increasing release number and produces `release.json` is the DevOps confirmation DEV-1 (HEAAA-50). The 5 minute interval is DEVOPS-PLAN 6.2's. Real wording and the 30 minute reminder are a proposal for the reviewers, not a decision.
+
 ## 8. Safety-critical patterns
 
 Each needs a negative-path test and clinical safety review (PRD 7). The patterns below are design proposals; wording requires the clinical safety reviewer (D-12).
@@ -185,8 +234,8 @@ Each needs a negative-path test and clinical safety review (PRD 7). The patterns
 | **Drug alerts (R2, BR-15/16)** | Panel splits "Serious" (blocks signing until changed or an override reason is chosen/typed) from "Other" (acknowledge). Override is logged and the reason shown next to the medicine afterwards. No auto-dismiss, no dark patterns. Alert text is read in full by screen readers |
 | **Signing** (BR-11, BR-17) | Dialog: patient name + DOB, what will be locked, re-authentication only when the server requires it (§7.1), button "Sign and lock note". After sign, note is read-only with "Add addendum". EPCS signing (R2) is a separate dialog that shows the two-factor step and the prescriber identity status; if the user is not identity-proofed the dialog states the reason and offers no override |
 | **Consent gate** (BR-09) | "Start consultation" is disabled with the reason "Telehealth consent not signed." and a link to send/sign it. Emergency exception is a separate secondary action requiring a reason, recorded (X-07) |
-| **Red flag** (BR-10, X-06) | Full-width danger bar, has no Dismiss or close control. Nurse side it is a status, not an action: saving triage already alerts the on-duty doctor in the same transaction. It reads "Doctor alerted: [name]. Not yet acknowledged. Escalates in m:ss" (or "escalation time not set" while D-12a is open) and stays until the target doctor acknowledges; escalation re-targets automatically and the bar updates. Nurses cannot acknowledge or close it (UXR-02); for the patient, a screen with the fixed emergency text and a call button on phones. No clinical advice beyond the reviewed text |
-| **Out-of-range vitals** | Red border + "Out of range" text + value; threshold source is configurable (UX-A-10). Does not block saving |
+| **Red flag** (BR-10, X-06) | Full-width danger bar, has no Dismiss or close control. Nurse side it is a status, not an action: saving triage already alerts the on-duty doctor in the same transaction. It reads "Doctor alerted: [name]. Not yet acknowledged. Escalates in m:ss" (the time follows the countdown rule in 7.4; "escalation time not set" while `escalatesAt` is null because D-12a is open; "Escalated to [name]" once `status` is escalated) and stays until the target doctor acknowledges; escalation re-targets automatically and the bar updates. Nurses cannot acknowledge or close it (UXR-02); for the patient, a screen with the fixed emergency text and a call button on phones. No clinical advice beyond the reviewed text |
+| **Out-of-range vitals** | Driven by the stored `rangeStatus` of each vital (AL-02, ARCH 22.11; the range table `clinical.vital_range` ships empty until the D-12a reviewer enters content). Never blocks saving. States: `out_of_range` = red border + the words "Out of range" + the value + "Range {low}-{high} {unit}"; `in_range` = value with "Range {low}-{high} {unit}" in neutral text, no green tick and no reassurance text; `no_range` = value only, with the neutral note "No reference range set", never drawn as normal or as out of range; `unit_mismatch` = value, with "Unit differs from the reference range, range not applied" and the entry form offers the range's unit for that code; `entered_in_error` (value empty) = struck-through history row with "Entered in error", no range. Bounds shown are the ones stored on that reading, so an old reading keeps the range it was judged against. Not designed in R1 (ARCH non-goals): percentile ranges for children, condition or pregnancy ranges, unit conversion. Nothing in the UI states or implies that a range is clinically validated |
 | **Break-the-glass** (BR-14) | Dialog "This patient is not assigned to you." Reason required (free text, at least 10 characters; a selection may only prefill the text) (UXR-05), consequence stated: "Your access is logged and reviewed by compliance." Banner on the chart shows "Emergency access" until closed |
 | **Critical result (R3, BR-25)** | Persistent alert, acknowledge required, escalation countdown visible; window from the clinical safety reviewer (D-11) |
 | **Result release (R3, BR-26)** | Doctor sees "Releases to patient: now (normal)" or "Held for your review: abnormal" with the deadline in text |
@@ -261,7 +310,7 @@ Data tables: sticky header; on narrow widths each row becomes a card; the primar
 
 ## 12. Component and state inventory for the build
 
-Frontend will need, at minimum: App shell (portal accent, realm banner, help, user menu), Tabs, Stepper, Data table + card list, Filter bar, Status chip, Banner, Dialog (confirm risk, reauth, security key), Toast, Form field set, OTP input, Passkey prompt, Slot grid, Calendar week, Schedule day/week, Patient banner, Allergy block, Vitals form, SOAP editor with sign, Timeline, Alert bar + tray, Upload with scan states, Document list, Message thread, Audit table with filters, BTG review panel, Empty/Error/Skeleton set. The design-system ticket belongs to the Delivery Planner; this list is input to it.
+Frontend will need, at minimum: App shell (portal accent, realm banner, help, user menu), Tabs, Stepper, Data table + card list, Filter bar, Status chip, Banner, Dialog (confirm risk, reauth, security key), Toast, Form field set, OTP input, Passkey prompt, Slot grid, Calendar week, Schedule day/week, Patient banner, Allergy block, Vitals form, SOAP editor with sign, Timeline, Alert bar + tray (with escalation countdown and paused-stream state), Release prompt (non-blocking bar, blocking dialog, confirm-reload dialog), Allergy block (recorded, none recorded, not shown, uncoded chip), Range text for vitals (five states), Upload with scan states, Document list, Message thread, Audit table with filters, BTG review panel, Empty/Error/Skeleton set. The design-system ticket belongs to the Delivery Planner; this list is input to it.
 
 ## 13. Needs routed to the Solution Architect and Product Manager
 
@@ -288,9 +337,21 @@ None of these is a decision. Each is a request to check feasibility or a gap in 
 | UX-A-17 | Patient merge response `409 patient.merged` with optional survivor ID only if visible (9.2) | Architect | Merge handling |
 | UX-A-18 | Elevation grant: state endpoint so the UI can show "Elevated until …" and handle expiry mid-form | Architect | Admin and privileged dialogs |
 | UX-A-19 | Role changes/permissions seen by UI: the BA matrix is a proposal; UI gating is by capability flags returned by the API, never by role name | Architect | Permission-limited views |
+| UX-A-20 | Draft 5 (AL-04): confirm the producer of the increasing release number and of `release.json` (DEV-1), and that the poll of it never carries a cookie | DevOps via Orchestrator | 7.7 |
 | UX-P-01 | Confirm BQ-2: may a clinician's display name appear in messages? | PM | Notification content |
 | UX-P-02 | Confirm whether fees/deposits (D-3), patient messaging (D-5), visit summary (D-6) stay in R1; designs for them are marked optional | PM | PP-13, messages, visit summary |
 | UX-P-03 | Emergency advice wording and clinical thresholds need the clinical safety reviewer (D-12) | PM / owner | PP-22 and triage |
+
+### 13.1 Dispositions from ARCHITECTURE draft 8.1 (draft 5)
+
+| ID | Architect answer (ARCH draft 8.1) | What the design does with it |
+| --- | --- | --- |
+| UX-A-04 | `escalationLevel` and `escalatesAt` bound in `GET /alerts`, `open-ids`, SSE `alert` and the acknowledge response; null rule in 29.3; acknowledge idempotent; `409 notifications.alert_closed` | Countdown rule and null cases in 7.4 and the red-flag row of section 8. **Answered** |
+| UX-A-09 | `patientBanner.allergies` with `state`, `items` (severe first, at most 10), `moreCount`, `uncodedCount`, `lastChangedAt`; `null` unless the caller has chart read or pre-visit read (28.2) | Allergy block rules in UX-R1. The "last-reviewed date" for list entries is not in the banner and remains a chart-list need for PM. **Answered for the banner (AL-01)** |
+| UX-A-10 | `clinical.vital_range` table, ships empty, status stored per reading (22.11) | Five display states in the out-of-range row of section 8. Range content is BQ-12 to the D-12a reviewer. **Answered for the mechanism; content open** |
+| UX-A-12 | Unchanged: no PHI in browser storage (26.2) | The unsaved-input rule in 7.7 relies on it. Unchanged |
+| BQ-11 | R1 has no "no known allergies" assertion | Wording "No allergies recorded" (UX-R1). If PM adds the assertion, the text changes, nothing else |
+| BQ-12 | Vital range content and number of escalations | The UI shows what the API returns; no default range text exists in the design |
 
 ## 14. Open items and decisions needed
 
@@ -308,7 +369,7 @@ None of these is a decision. Each is a request to check feasibility or a gap in 
 
 ## 15. Visual verification plan for the build (BUILD_REVIEW)
 
-When screens exist, UI/UX compares the running candidate to this design for each R1 journey at 360, 768 and 1280 px: layout, patient banner presence, states in section 6, focus order and visible focus, contrast with measured values, text zoom and reduced motion. Findings get stable IDs `UXV-nn`, are tied to the candidate commit and screenshot hashes, and are cumulative across rounds (maximum three consolidated rounds). Real screenshots are taken by running the candidate; **the mockups are never reused as evidence**.
+When screens exist, UI/UX compares the running candidate to this design for each R1 journey at 360, 768 and 1280 px: layout, patient banner presence, states in section 6, focus order and visible focus, contrast with measured values, text zoom and reduced motion. Findings get stable IDs `UXV-nn`, are tied to the candidate commit and screenshot hashes, and are cumulative across rounds (maximum three consolidated rounds). Real screenshots are taken by running the candidate; **the mockups are never reused as evidence**. Draft 5 adds these checks: the banner allergy block in its states (recorded, none recorded, not shown for the role, uncoded chip, "+n more") on every screen that shows or edits clinical data, including pre-visit staff screens and the phone collapse; the escalation countdown from `escalatesAt` (null cases, escalated, already acknowledged, closed); the five vital range states; and the release prompts (non-blocking bar, confirm-reload with unsaved input, blocking dialog, paused-alerts bar) with an unsaved form to prove that nothing is lost without a confirmation.
 
 ## 16. Limitations
 
@@ -317,11 +378,12 @@ When screens exist, UI/UX compares the running candidate to this design for each
 - Contrast ratios were calculated for token pairs, not measured in a browser.
 - I could not see HEAAA-13 contracts; section 13 lists what I need confirmed.
 - R2/R3 screens are patterns, not final.
+- Draft 5 changes only text. The mockups are unchanged from draft 4 (hashes in `MOCKUP-MANIFEST.md`); they do not show the allergy `null` state, the countdown null cases, the vital range states or the release prompts. Those are specified in text and checked at BUILD_REVIEW.
 - This draft has no independent review yet and no human approval.
 
 ## 17. Next permitted action
 
-Re-review of draft 4, limited to UXR-02 residual, UXR-06 and UXR-07 (section 18), by the Solution Architect; the Product Manager checks the changed desktop image. No further rounds without a new human decision. After revision against findings the package goes to the Delivery Planner for the G2 package. The human UI/UX decision at G2 is the owner's.
+Independent review of draft 5, limited to its diff from draft 4 (AL-01, AL-02, AL-04 UX part, section 18 round 4), by the Solution Architect Reviewer; AL-06 is checked by hash. The Product Manager check of the draft 4 desktop image is still pending. This task is the single bounded correction cycle (`a524dfdd`): no further UX edits are made, and any unresolved finding goes back to the Orchestrator for a human decision. After revision against findings the package goes to the Delivery Planner for the G2 package. The human UI/UX decision at G2 is the owner's.
 
 ## 18. Revision log (cumulative)
 
@@ -354,3 +416,16 @@ Architect dispositions for UX-A-01..19 are accepted as given. Architect-owned ga
 | 3 | UXR-02 residual "Reassign" button in triage panel | Addressed, review pending | Button removed from desktop mockup 3 (the contract has no reassign operation); image re-rendered |
 | 3 | UXR-06 Re-authentication wording unconditional | Addressed, review pending | Section 4 J-09 row and section 8 Signing row now say re-authentication only when the server requires it (7.1) |
 | 3 | UXR-07 Stale header and section 17 | Addressed, review pending | Header and section 17 show draft 4 and the current review state |
+
+### Round 4 (HEAAA-17 alignment findings; draft 5; bounded correction cycle `a524dfdd`)
+
+Ledger is cumulative and not reset: UX rounds 1-3 (PMR-01..05, UXR-01..05, UXR-02 residual, UXR-06, UXR-07) used three rounds; this is the one extra bounded cycle a human accepted. Finding IDs are the alignment IDs from HEAAA-17 `design-align` rev `4447e3ec`, section 4.
+
+| Round | Finding | Status | Change |
+| --- | --- | --- | --- |
+| 4 | AL-06 UI/UX documents stale | Addressed, review pending | Draft 4 files copied unchanged from `9dcb7aa` into the task documents `ui-ux`, `brand-brief`, `mockup-manifest` (revision 1 each) and the two PNGs attached. Hash check: `UI-UX.md` `1176b121`, `BRAND-BRIEF.md` `d27cbb5b`, `MOCKUP-MANIFEST.md` `3b99fe3e`, PNGs `cda636a8` and `01d432df`, all equal to `9dcb7aa`. Draft 5 is revision 2 of `ui-ux` and `mockup-manifest` |
+| 4 | AL-04 UX part: reload prompt and form preservation | Addressed, review pending | New 7.7, two state rows in section 6, UX-A-20, component list, visual checks |
+| 4 | AL-01 banner allergy flag (UX follow-up to the Architect's decision) | Addressed, review pending | UX-R1 allergy block rules (recorded, none recorded, null for the role, uncoded, phone); UX-A-09 disposition in 13.1 |
+| 4 | AL-02 alert countdown and vitals ranges (UX follow-up) | Addressed, review pending | 7.4 countdown rule and null cases; red-flag row; five vital range states in section 8; UX-A-04 and UX-A-10 dispositions in 13.1 |
+
+`BRAND-BRIEF.md` is unchanged in draft 5 and still reads draft 2 inside the file; the reviewed file is what the AL-06 check binds to. Images are unchanged.

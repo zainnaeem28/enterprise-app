@@ -1,6 +1,6 @@
-# Mockup manifest (HEAAA-14, draft 4)
+# Mockup manifest (HEAAA-14, draft 4 images; draft 5 text revision, HEAAA-49)
 
-Proposed design mockups. **Not runtime screenshots.** Placeholder brand, synthetic data. Draft; draft 4 re-review pending; not approved.
+Proposed design mockups. **Not runtime screenshots.** Placeholder brand, synthetic data. Draft; draft 5 review pending; not approved.
 
 | File | Size (px) | SHA-256 |
 | --- | --- | --- |
@@ -16,3 +16,5 @@ Changes from draft 1 (commit `8b2d3f4`): desktop 3 red-flag button "Dismiss" is 
 Changes from draft 2 (`4f61820`): desktop 3 red-flag bar buttons "Alert doctor" and "Reassign" removed; the bar is now a read-only status ("Doctor alerted: [name]. Not yet acknowledged. Escalation time not set."). Captions say draft 3. Both images re-rendered; the desktop image was viewed by the author; no independent review yet.
 
 Changes from draft 3 (`c9d6ef4`): desktop 3 triage-panel "Reassign" button removed (UXR-02 residual); captions say draft 4. Both images re-rendered; not independently reviewed.
+
+Draft 5 (HEAAA-49, `UI-UX.md` only): no image or SVG changed; the hashes above are unchanged and equal `9dcb7aa`. The mockups do not show the allergy `null` state, countdown null cases, vital range states or release prompts; those are specified in text (UI-UX.md 7.4, 7.7, 8).
