@@ -4,8 +4,8 @@
 | --- | --- |
 | Task | HEAAA-14 `[SDLC:ux-design]` |
 | Author | UI/UX Designer agent (`1ddacad6-d28d-4bff-a938-a6957593b3ff`) |
-| Version | Draft 2 (revises draft 1, commit `8b2d3f4`, against PM review PMR-01..05, round 1 of 3) |
-| Status | **DRAFT. Round 2 review pending. Not human-approved. Not G2.** Reviewers: Product Manager (journey coverage), Solution Architect (contract feasibility), per the task policy. |
+| Version | Draft 4 (revises draft 3, commit `c9d6ef4`, against Architect round 3 findings UXR-02 residual, UXR-06, UXR-07; one human-approved bounded fix cycle, confirmation `c40be67a`) |
+| Status | **DRAFT. Draft 4 re-review pending, limited to UXR-02 residual, UXR-06 and UXR-07. Not human-approved. Not G2.** Reviewers: Product Manager (journey coverage), Solution Architect (contract feasibility), per the task policy. |
 | Inputs | Intake pack rev 2 (commit `6ea01b5`); PRD rev 3 and BA feature map (HEAAA-11 `prd`); ARCHITECTURE (HEAAA-11); SHARED-BOUNDARIES rev 3 (HEAAA-12, section 11 row "HEAAA-14 UX") |
 | Companions | `BRAND-BRIEF.md`, `UI-Mockups-Desktop.png`, `UI-Mockups-Mobile.png`, `MOCKUP-MANIFEST.md` (all in `docs/design/`) |
 | Not covered | HEAAA-13 API contracts are not final. Anything needing an endpoint or field not yet written is in section 13 and goes to the Architect. |
@@ -80,7 +80,7 @@ Every PRD journey maps to screens. IDs: `BS` brand site, `PP` patient, `PC` pre-
 | J-06 Arrival to queue | R1 | **PC-01 Arrivals board (M, desktop 3)**, PC-02 Check-in (find patient by `POST` search; QR scan), PC-03 Forms/consents/insurance review (staff side), **PP-25 Pre-visit questionnaire, PP-26 Consents to read and e-sign (a required consent not signed keeps the consultation gate closed, BR-09), PP-27 Insurance card upload (front/back, scan state, SH-01 pattern) with status of all three items (to do / done / needs fixing)**, **PC-04 Triage panel with vitals (M, desktop 3)**, PC-05 Assign doctor/room, PP-20 Self check-in (QR landing), PP-21 Virtual waiting room |
 | J-07 Red flag | R1 | **PC-06 Red-flag alert bar (M, desktop 3)**, DR-10 Alert tray and acknowledge **(M, phone 6)**, PP-22 Emergency advice screen shown to the patient |
 | J-08 Telehealth | R1 | **PP-23 Device check and join (M, phone 3)**, PP-21 Waiting room, DR-04 Video + notes side by side |
-| J-09 Consultation and documentation | R1 | DR-01 Schedule, DR-02 Patient list, **DR-03 Chart summary and note editor (M, desktop 4)**, DR-05 Sign dialog (re-authentication), DR-06 Addendum, DR-07 Co-sign queue, DR-08 Tasks & messages |
+| J-09 Consultation and documentation | R1 | DR-01 Schedule, DR-02 Patient list, **DR-03 Chart summary and note editor (M, desktop 4)**, DR-05 Sign dialog (re-authentication when the server requires it, §7.1), DR-06 Addendum, DR-07 Co-sign queue, DR-08 Tasks & messages |
 | J-18 Break-the-glass | R1 | DR-09 BTG reason dialog; **AD-02 BTG review (M, desktop 6)** |
 | J-19 Document upload | R1 | SH-01 Upload with progress, scan state, classification, confirm; SH-02 Document list/viewer |
 | J-21 Privacy request | R1 | PP-24 My privacy (download my data, deletion request), AD-05 Request queue and decision |
@@ -183,7 +183,7 @@ Each needs a negative-path test and clinical safety review (PRD 7). The patterns
 | **Wrong-patient prevention** (BR-34) | Sticky patient banner (UX-R1). Before signing a note or prescription, the confirm dialog restates name + DOB. Two charts open in tabs show the patient name in the browser **window** only through the banner, never the tab title (UX-R4). Consider a distinct banner stripe colour per open chart; not required for R1 |
 | **Allergies and uncoded items** | Allergy block on the banner in red with text. Uncoded allergy or medicine entries carry a chip "Uncoded: needs review" and, from R2, require acknowledgement in checks (SA-F-08) |
 | **Drug alerts (R2, BR-15/16)** | Panel splits "Serious" (blocks signing until changed or an override reason is chosen/typed) from "Other" (acknowledge). Override is logged and the reason shown next to the medicine afterwards. No auto-dismiss, no dark patterns. Alert text is read in full by screen readers |
-| **Signing** (BR-11, BR-17) | Dialog: patient name + DOB, what will be locked, re-authentication, button "Sign and lock note". After sign, note is read-only with "Add addendum". EPCS signing (R2) is a separate dialog that shows the two-factor step and the prescriber identity status; if the user is not identity-proofed the dialog states the reason and offers no override |
+| **Signing** (BR-11, BR-17) | Dialog: patient name + DOB, what will be locked, re-authentication only when the server requires it (§7.1), button "Sign and lock note". After sign, note is read-only with "Add addendum". EPCS signing (R2) is a separate dialog that shows the two-factor step and the prescriber identity status; if the user is not identity-proofed the dialog states the reason and offers no override |
 | **Consent gate** (BR-09) | "Start consultation" is disabled with the reason "Telehealth consent not signed." and a link to send/sign it. Emergency exception is a separate secondary action requiring a reason, recorded (X-07) |
 | **Red flag** (BR-10, X-06) | Full-width danger bar, has no Dismiss or close control. Nurse side it is a status, not an action: saving triage already alerts the on-duty doctor in the same transaction. It reads "Doctor alerted: [name]. Not yet acknowledged. Escalates in m:ss" (or "escalation time not set" while D-12a is open) and stays until the target doctor acknowledges; escalation re-targets automatically and the bar updates. Nurses cannot acknowledge or close it (UXR-02); for the patient, a screen with the fixed emergency text and a call button on phones. No clinical advice beyond the reviewed text |
 | **Out-of-range vitals** | Red border + "Out of range" text + value; threshold source is configurable (UX-A-10). Does not block saving |
@@ -321,7 +321,7 @@ When screens exist, UI/UX compares the running candidate to this design for each
 
 ## 17. Next permitted action
 
-Round 2 independent review of this exact revision, limited to the changed rows and images listed in section 18 by the Product Manager (journey coverage) and Solution Architect (contract feasibility). After revision against findings the package goes to the Delivery Planner for the G2 package. The human UI/UX decision at G2 is the owner's.
+Re-review of draft 4, limited to UXR-02 residual, UXR-06 and UXR-07 (section 18), by the Solution Architect; the Product Manager checks the changed desktop image. No further rounds without a new human decision. After revision against findings the package goes to the Delivery Planner for the G2 package. The human UI/UX decision at G2 is the owner's.
 
 ## 18. Revision log (cumulative)
 
@@ -346,3 +346,11 @@ Images were re-rendered from the edited SVG sources; hashes are in `MOCKUP-MANIF
 | 2 | UXR-05 BTG reason selection | Addressed, review pending | Section 8: free text, min 10 characters; selection may only prefill |
 
 Architect dispositions for UX-A-01..19 are accepted as given. Architect-owned gaps (`escalatesAt`/`escalationLevel` on alerts, arrivals board fields) go to HEAAA-13 via Orchestrator. UX-A-09 last-reviewed date and UX-A-10 range source go to PM/clinical reviewer.
+
+### Round 3 (Architect, draft 4; bounded fix cycle approved by confirmation `c40be67a`)
+
+| Round | Finding | Status | Change |
+| --- | --- | --- | --- |
+| 3 | UXR-02 residual "Reassign" button in triage panel | Addressed, review pending | Button removed from desktop mockup 3 (the contract has no reassign operation); image re-rendered |
+| 3 | UXR-06 Re-authentication wording unconditional | Addressed, review pending | Section 4 J-09 row and section 8 Signing row now say re-authentication only when the server requires it (7.1) |
+| 3 | UXR-07 Stale header and section 17 | Addressed, review pending | Header and section 17 show draft 4 and the current review state |
