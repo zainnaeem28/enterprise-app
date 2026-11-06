@@ -19,7 +19,14 @@ export function extendSession(api: Api) {
 }
 
 export function signOutSession(api: Api) {
-  return async (): Promise<void> => {
-    await api.POST('/api/v1/auth/sign-out', { params: { header: api.header } });
+  return async (): Promise<boolean> => {
+    try {
+      const { response } = await api.POST('/api/v1/auth/sign-out', {
+        params: { header: api.header },
+      });
+      return response.ok;
+    } catch {
+      return false;
+    }
   };
 }

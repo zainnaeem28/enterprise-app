@@ -21,7 +21,7 @@ function setup(
   extendResult: ExtendResult = { ok: true, idleExpiresAt: new Date(T0 + 40 * MIN).toISOString() },
 ) {
   const extend = vi.fn(async () => extendResult);
-  const signOut = vi.fn(async () => {});
+  const signOut = vi.fn(async () => true);
   const store = new SessionStore({ extend, signOut });
   const onSignIn = vi.fn();
   const view = render(
@@ -112,5 +112,38 @@ describe('session ended and held-back sign-out', () => {
     expect(signOut).not.toHaveBeenCalled();
     await act(async () => fireEvent.click(screen.getByRole('button', { name: s.signOutAnyway })));
     expect(signOut).toHaveBeenCalledOnce();
+  });
+
+  it('warns before signing out with forms that cannot be kept as a draft', async () => {
+    const { store, signOut } = setup();
+    store.setForms([{ name: 'Allergy entry' }]);
+    await act(async () => store.signOut());
+    const dialog = screen.getByRole('alertdialog');
+    expect(dialog).toHaveTextContent(s.unsavedTitle);
+    expect(dialog).toHaveTextContent('Allergy entry');
+    expect(signOut).not.toHaveBeenCalled();
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: s.goBack })));
+    expect(screen.queryByRole('alertdialog')).toBeNull();
+    await act(async () => store.signOut());
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: s.signOutAnyway })));
+    expect(signOut).toHaveBeenCalledOnce();
+  });
+
+  it('go back does not claim to extend, and the countdown stays visible', async () => {
+    const { store, extend } = setup();
+    open();
+    store.setForms([{ name: 'Visit note', saveDraft: async () => false }]);
+    await act(async () => store.signOut());
+    expect(screen.getByRole('timer')).toHaveTextContent('2:00');
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: s.goBack })));
+    expect(extend).not.toHaveBeenCalled();
+  });
+
+  it('tells the user when sign-out failed and stays signed in', async () => {
+    const { store, signOut, onSignIn } = setup();
+    signOut.mockResolvedValue(false);
+    await act(async () => store.signOut());
+    expect(screen.getByRole('alertdialog')).toHaveTextContent(s.signOutFailedBody);
+    expect(onSignIn).not.toHaveBeenCalled();
   });
 });

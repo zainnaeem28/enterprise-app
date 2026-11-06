@@ -14,7 +14,7 @@ afterEach(() => vi.useRealTimers());
 
 function make(extendResult: ExtendResult = { ok: true, idleExpiresAt: iso(30 * MIN) }) {
   const extend = vi.fn(async () => extendResult);
-  const signOut = vi.fn(async () => {});
+  const signOut = vi.fn(async () => true);
   const afterSignOut = vi.fn();
   const store = new SessionStore({ extend, signOut, afterSignOut });
   return { store, extend, signOut, afterSignOut };
@@ -94,6 +94,14 @@ describe('extend', () => {
 });
 
 describe('sign-out keeps drafts (X-20)', () => {
+  it('keeps the session and reports when sign-out fails', async () => {
+    const { store, signOut, afterSignOut } = make();
+    signOut.mockResolvedValue(false);
+    await store.signOut();
+    expect(afterSignOut).not.toHaveBeenCalled();
+    expect(store.getSnapshot().signOutFailed).toBe(true);
+  });
+
   it('saves server drafts first, then signs out', async () => {
     const { store, signOut, afterSignOut } = make();
     const order: string[] = [];
@@ -108,6 +116,7 @@ describe('sign-out keeps drafts (X-20)', () => {
     ]);
     signOut.mockImplementation(async () => {
       order.push('signOut');
+      return true;
     });
     await store.signOut();
     expect(order).toEqual(['save', 'signOut']);

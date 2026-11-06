@@ -12,11 +12,12 @@ describe('realmKind', () => {
     expect(realmKind({ audience: 'admin_pool' })).toBe('admin');
     expect(realmKind({ audience: 'patient' })).toBe('patient');
     expect(realmKind(undefined)).toBe('unknown');
+    expect(realmKind({ audience: 'my-staff-admin-x' })).toBe('unknown');
   });
 });
 
 function bar(realm: 'staff' | 'admin') {
-  const signOut = vi.fn(async () => {});
+  const signOut = vi.fn(async () => true);
   const store = new SessionStore({ extend: async () => ({ ok: false, expired: false }), signOut });
   render(<RealmBar realm={realm} productName="Clinic" displayName="Dr Sample" store={store} />);
   return signOut;

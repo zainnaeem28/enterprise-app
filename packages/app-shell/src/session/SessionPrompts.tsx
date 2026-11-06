@@ -30,25 +30,48 @@ export function SessionPrompts({
     return () => document.removeEventListener('keydown', onKey);
   }, [state.phase, store]);
 
-  if (state.signOutBlocked) {
+  if (state.phase === 'ended') return <SessionEndedDialog onSignIn={onSignIn} />;
+  const held = state.signOutBlocked
+    ? { title: s.signOutBlockedTitle, body: <p>{s.signOutBlockedBody}</p>, retry: s.signOutAnyway }
+    : state.lossWarning !== undefined
+      ? {
+          title: s.unsavedTitle,
+          body: (
+            <>
+              <p>{s.unsavedBody}</p>
+              <ul>
+                {state.lossWarning.map((n) => (
+                  <li key={n}>{n}</li>
+                ))}
+              </ul>
+            </>
+          ),
+          retry: s.signOutAnyway,
+        }
+      : state.signOutFailed
+        ? { title: s.signOutFailedTitle, body: <p>{s.signOutFailedBody}</p>, retry: s.tryAgain }
+        : undefined;
+  if (held !== undefined) {
+    const mm = Math.floor(state.secondsLeft / 60);
+    const ss = String(state.secondsLeft % 60).padStart(2, '0');
     return (
       <AlertDialog
-        title={s.signOutBlockedTitle}
+        title={held.title}
         initialFocus="[data-default]"
         actions={
           <>
             <Button data-default variant="primary" onClick={() => store.cancelSignOut()}>
-              {s.stayHere}
+              {s.goBack}
             </Button>
-            <Button onClick={() => void store.signOut(true)}>{s.signOutAnyway}</Button>
+            <Button onClick={() => void store.signOut(true)}>{held.retry}</Button>
           </>
         }
       >
-        <p>{s.signOutBlockedBody}</p>
+        {held.body}
+        {state.phase === 'warning' && <p role="timer">{s.endsIn(`${mm}:${ss}`)}</p>}
       </AlertDialog>
     );
   }
-  if (state.phase === 'ended') return <SessionEndedDialog onSignIn={onSignIn} />;
   if (state.phase !== 'warning') return null;
   return (
     <>

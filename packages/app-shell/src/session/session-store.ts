@@ -12,6 +12,10 @@ export interface SessionState {
   extendFailed: boolean;
   /** Sign-out was held back because a draft could not be saved; the user may sign out anyway. */
   signOutBlocked: boolean;
+  /** Forms with unsaved input and no draft route; sign-out waits for the user to confirm losing them. */
+  lossWarning: string[] | undefined;
+  /** `POST /auth/sign-out` failed: the server session is still live. */
+  signOutFailed: boolean;
 }
 
 export type ExtendResult = { ok: true; idleExpiresAt: string } | { ok: false; expired: boolean };
@@ -20,7 +24,7 @@ export interface SessionStoreOptions {
   /** `POST /auth/session/extend`. Called only from `extend()`, which only the prompt's button calls. */
   extend: () => Promise<ExtendResult>;
   /** `POST /auth/sign-out`. */
-  signOut: () => Promise<void>;
+  signOut: () => Promise<boolean>;
   /** Where to go after sign-out completes (the sign-in page). */
   afterSignOut?: () => void;
   now?: () => number;
@@ -37,6 +41,8 @@ export class SessionStore {
     secondsLeft: 0,
     extendFailed: false,
     signOutBlocked: false,
+    lossWarning: undefined,
+    signOutFailed: false,
   };
   private listeners = new Set<() => void>();
   private expiresAt: number | undefined;
@@ -118,20 +124,25 @@ export class SessionStore {
         } catch {
           /* treated as not saved */
         }
-        if (!saved) return this.set({ signOutBlocked: true });
+        if (!saved) return this.set({ signOutBlocked: true, lossWarning: undefined });
       }
+      const lost = this.unsavedWithoutDraft();
+      if (lost.length > 0) return this.set({ lossWarning: lost, signOutBlocked: false });
     }
+    let done = false;
     try {
-      await this.options.signOut();
-    } finally {
-      this.set({ signOutBlocked: false });
-      clearTimeout(this.timer);
-      this.options.afterSignOut?.();
+      done = await this.options.signOut();
+    } catch {
+      /* treated as failed */
     }
+    this.set({ signOutBlocked: false, lossWarning: undefined, signOutFailed: !done });
+    if (!done) return;
+    clearTimeout(this.timer);
+    this.options.afterSignOut?.();
   }
 
   cancelSignOut() {
-    this.set({ signOutBlocked: false });
+    this.set({ signOutBlocked: false, lossWarning: undefined, signOutFailed: false });
   }
 
   /** Forms that have unsaved input and no draft route: they are lost on sign-out and the UI says so. */

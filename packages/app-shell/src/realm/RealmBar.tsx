@@ -9,7 +9,7 @@ const portalName: Record<RealmKind, string> = {
   admin: s.adminPortal,
   patient: s.patientPortal,
   partner: s.partnerPortal,
-  unknown: s.staffPortal,
+  unknown: s.neutralPortal,
 };
 
 /**

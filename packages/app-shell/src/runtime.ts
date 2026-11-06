@@ -41,8 +41,9 @@ export function createShellRuntime(options: ShellRuntimeOptions) {
   session = new SessionStore({
     extend: extendSession(api),
     signOut: async () => {
-      await signOutSession(api)();
-      csrf = undefined;
+      const done = await signOutSession(api)();
+      if (done) csrf = undefined;
+      return done;
     },
     ...(options.afterSignOut === undefined ? {} : { afterSignOut: options.afterSignOut }),
   });
