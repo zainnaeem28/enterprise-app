@@ -25,7 +25,11 @@ export function AlertDialog({ title, children, actions, initialFocus }: AlertDia
     target?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Tab') return;
-      const items = [...root.querySelectorAll<HTMLElement>('button:not([disabled])')];
+      const items = [
+        ...root.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), a[href]',
+        ),
+      ];
       const first = items[0];
       const last = items[items.length - 1];
       if (first === undefined || last === undefined) return;

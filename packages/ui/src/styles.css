@@ -1,23 +1,5 @@
-/* Placeholder design tokens (BRAND-BRIEF 3). PLACEHOLDER visual identity until the owner supplies brand files (UX-O-01). */
-:root {
-  --ink: #1b2430;
-  --muted: #4a5565;
-  --bg: #f4f6f8;
-  --surface: #ffffff;
-  --border: #c9d1db;
-  --border-control: #6b7685;
-  --focus: #1f4fd8;
-  --danger: #b42318;
-  --danger-tint: #fdecea;
-  --warning: #7a4b00;
-  --warning-tint: #fff3d1;
-  --success: #1b6b3a;
-  --success-tint: #e3f4e8;
-  --info: #1f5fa8;
-  --info-tint: #e4eef9;
-  --accent-staff: #1f5fa8;
-  --font: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-}
+@import './tokens.css';
+@import './components.css';
 * {
   box-sizing: border-box;
 }
@@ -32,7 +14,7 @@ body {
 :focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 2px;
-  box-shadow: 0 0 0 2px #fff;
+  box-shadow: 0 0 0 2px var(--surface);
 }
 .ehr-skip-link {
   position: absolute;
@@ -52,8 +34,8 @@ body {
   align-items: center;
   gap: 12px;
   padding: 8px 16px;
-  background: var(--accent-staff);
-  color: #fff;
+  background: var(--accent);
+  color: var(--on-accent);
 }
 .ehr-appbar__name {
   font-size: 18px;
@@ -79,13 +61,15 @@ body {
   cursor: pointer;
 }
 .ehr-btn--primary {
-  background: var(--accent-staff);
-  border-color: var(--accent-staff);
-  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
 }
 .ehr-btn[disabled] {
   cursor: not-allowed;
-  opacity: 0.6;
+  color: var(--disabled-ink);
+  background: var(--disabled-bg);
+  border-color: var(--disabled-ink);
 }
 .ehr-bar {
   display: flex;
@@ -113,7 +97,7 @@ body {
   display: grid;
   place-items: center;
   padding: 16px;
-  background: rgb(27 36 48 / 60%);
+  background: var(--scrim);
   z-index: 50;
 }
 .ehr-dialog {

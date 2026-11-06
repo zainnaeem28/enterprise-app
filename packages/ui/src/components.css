@@ -1,0 +1,608 @@
+/* Component styles. Read tokens only (tokens.css); no literal colours here except the focus-ring white offset. */
+.ehr-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.ehr-muted {
+  color: var(--muted);
+}
+.ehr-plain-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-2);
+}
+.ehr-link-btn {
+  min-height: 24px;
+  padding: 0 var(--sp-1);
+  font: inherit;
+  color: var(--accent);
+  background: none;
+  border: 0;
+  text-decoration: underline;
+  cursor: pointer;
+}
+a {
+  color: var(--accent);
+}
+html {
+  scroll-padding-top: var(--sticky-offset);
+}
+.ehr-appbar-wrap {
+  position: relative;
+}
+.ehr-appbar__spacer {
+  flex: 1;
+}
+.ehr-appbar__portal {
+  margin: 0;
+  font-size: var(--fs-caption);
+}
+.ehr-realm-banner {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-4);
+  background: var(--accent-tint);
+  color: var(--ink);
+  border-bottom: 1px solid var(--border);
+}
+.ehr-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: 2px var(--sp-2);
+  border-radius: 999px;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  border: 1px solid currentColor;
+}
+.ehr-chip--neutral {
+  background: var(--surface);
+  color: var(--muted);
+}
+.ehr-chip--info {
+  background: var(--info-tint);
+  color: var(--info);
+}
+.ehr-chip--success {
+  background: var(--success-tint);
+  color: var(--success);
+}
+.ehr-chip--warning {
+  background: var(--warning-tint);
+  color: var(--warning);
+}
+.ehr-chip--danger {
+  background: var(--danger-tint);
+  color: var(--danger);
+}
+.ehr-banner {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: flex-start;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid currentColor;
+  border-radius: var(--radius-control);
+}
+.ehr-banner--info {
+  background: var(--info-tint);
+  color: var(--info);
+}
+.ehr-banner--warning {
+  background: var(--warning-tint);
+  color: var(--warning);
+}
+.ehr-banner--danger {
+  background: var(--danger-tint);
+  color: var(--danger);
+}
+.ehr-banner__body {
+  flex: 1;
+}
+.ehr-banner__title {
+  display: block;
+}
+.ehr-banner__actions {
+  display: flex;
+  gap: var(--sp-2);
+}
+.ehr-skeleton {
+  display: grid;
+  gap: var(--sp-2);
+}
+.ehr-skeleton__line {
+  display: block;
+  height: 14px;
+  border-radius: var(--radius-control);
+  background: var(--border);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ehr-skeleton__line {
+    animation: ehr-pulse 1.4s ease-in-out infinite;
+  }
+  .ehr-progress__bar {
+    animation: ehr-slide 1.2s linear infinite;
+  }
+}
+@keyframes ehr-pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+@keyframes ehr-slide {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+.ehr-progress {
+  position: relative;
+  overflow: hidden;
+  padding-top: 4px;
+  color: var(--muted);
+}
+.ehr-progress__bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--accent);
+}
+.ehr-progress__text {
+  font-size: var(--fs-caption);
+}
+.ehr-state {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-5);
+  justify-items: start;
+}
+.ehr-state__title {
+  margin: 0;
+  font-size: var(--fs-h3);
+}
+.ehr-state__sub {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-lead);
+}
+.ehr-state__text {
+  margin: 0;
+}
+.ehr-preserve {
+  white-space: pre-wrap;
+  margin: 0;
+}
+.ehr-permission-note {
+  margin: 0;
+  color: var(--muted);
+}
+.ehr-countdown {
+  font-size: var(--fs-h2);
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+}
+.ehr-field {
+  display: grid;
+  gap: var(--sp-1);
+  margin-bottom: var(--sp-3);
+}
+.ehr-field__label {
+  font-weight: 600;
+}
+.ehr-field__hint {
+  margin: 0;
+  color: var(--muted);
+}
+.ehr-field__error {
+  margin: 0;
+  color: var(--danger);
+  font-weight: 600;
+}
+.ehr-input {
+  min-height: var(--target);
+  padding: var(--sp-2) var(--sp-3);
+  font: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  border: 2px solid var(--border-control);
+  border-radius: var(--radius-control);
+}
+.ehr-input--area {
+  min-height: 6rem;
+  resize: vertical;
+}
+.ehr-field--error .ehr-input {
+  border-color: var(--danger);
+}
+.ehr-error-summary {
+  padding: var(--sp-3) var(--sp-4);
+  color: var(--danger);
+  background: var(--danger-tint);
+  border: 2px solid var(--danger);
+  border-radius: var(--radius-control);
+}
+.ehr-error-summary__title {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-lead);
+}
+.ehr-error-summary a {
+  color: var(--danger);
+}
+.ehr-toasts {
+  position: fixed;
+  right: var(--sp-4);
+  bottom: var(--sp-4);
+  display: grid;
+  gap: var(--sp-2);
+  z-index: 60;
+}
+.ehr-toast {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: center;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--ink);
+  color: var(--surface);
+  border-radius: var(--radius-control);
+  box-shadow: var(--shadow-overlay);
+}
+.ehr-toast__close {
+  min-width: 24px;
+  min-height: 24px;
+  color: inherit;
+  background: none;
+  border: 1px solid currentColor;
+  border-radius: var(--radius-control);
+  cursor: pointer;
+}
+.ehr-tabs__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  border-bottom: 1px solid var(--border);
+}
+.ehr-tab {
+  min-height: var(--target);
+  padding: var(--sp-2) var(--sp-4);
+  font: inherit;
+  color: var(--ink);
+  background: none;
+  border: 0;
+  border-bottom: 4px solid transparent;
+  cursor: pointer;
+}
+.ehr-tab--active {
+  font-weight: 700;
+  border-bottom-color: var(--accent);
+}
+.ehr-tabs__panel {
+  padding: var(--sp-4) 0;
+}
+.ehr-stepper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ehr-step {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.ehr-step__mark {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  color: var(--accent);
+  background: var(--surface);
+}
+.ehr-step--current {
+  font-weight: 700;
+}
+.ehr-step--current .ehr-step__mark,
+.ehr-step--done .ehr-step__mark {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.ehr-table-wrap {
+  overflow: auto;
+  max-width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+}
+.ehr-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.ehr-table th {
+  position: sticky;
+  top: 0;
+  text-align: left;
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--surface);
+  border-bottom: 2px solid var(--border-control);
+  font-size: var(--fs-caption);
+}
+.ehr-table td {
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--border);
+}
+.ehr-row--selected {
+  background: var(--accent-tint);
+  box-shadow: inset 4px 0 0 var(--accent);
+}
+.ehr-cardlist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-3);
+}
+.ehr-filterbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  align-items: flex-end;
+}
+.ehr-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 var(--sp-4);
+  border-left: 3px solid var(--border-control);
+  display: grid;
+  gap: var(--sp-3);
+}
+.ehr-timeline__item time {
+  margin-right: var(--sp-2);
+  color: var(--muted);
+}
+.ehr-timeline__detail {
+  margin: var(--sp-1) 0 0;
+}
+.ehr-upload__row,
+.ehr-schedule__event {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  align-items: center;
+}
+.ehr-thread {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-3);
+}
+.ehr-message {
+  padding: var(--sp-3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+}
+.ehr-message--mine {
+  background: var(--accent-tint);
+}
+.ehr-message__head,
+.ehr-message__body {
+  margin: 0;
+}
+.ehr-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+.ehr-slot {
+  min-height: var(--target);
+  min-width: 96px;
+  padding: var(--sp-2) var(--sp-3);
+  font: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  border: 2px solid var(--border-control);
+  border-radius: var(--radius-control);
+  cursor: pointer;
+}
+.ehr-slot--selected {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+}
+.ehr-week__nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+}
+.ehr-week__title {
+  flex: 1;
+  margin: 0;
+}
+.ehr-week__days {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+}
+.ehr-week__head {
+  margin: 0 0 var(--sp-2);
+}
+.ehr-patient-banner {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  align-items: center;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--surface);
+  border-bottom: 2px solid var(--border-control);
+}
+.ehr-avatar {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  overflow: hidden;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-tint);
+  border: 2px solid var(--accent);
+}
+.ehr-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ehr-patient-banner__name,
+.ehr-patient-banner__dob,
+.ehr-patient-banner__mrn {
+  margin: 0;
+}
+.ehr-patient-banner__name {
+  font-size: var(--fs-lead);
+  font-weight: 700;
+}
+.ehr-patient-banner__more {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  align-items: center;
+  flex: 1;
+}
+.ehr-patient-banner__toggle {
+  display: none;
+}
+.ehr-patient-banner__actions {
+  display: flex;
+  gap: var(--sp-2);
+}
+@media (max-width: 640px) {
+  .ehr-patient-banner__toggle {
+    display: inline-block;
+  }
+  .ehr-patient-banner__more {
+    display: none;
+    flex-basis: 100%;
+  }
+  .ehr-patient-banner__more--open {
+    display: flex;
+  }
+}
+.ehr-allergy {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+  padding: var(--sp-1) var(--sp-3);
+  border: 2px solid var(--border-control);
+  border-radius: var(--radius-control);
+}
+.ehr-allergy--recorded {
+  color: var(--danger);
+  background: var(--danger-tint);
+  border-color: var(--danger);
+}
+.ehr-allergy__list {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-weight: 600;
+}
+.ehr-allergy__list li:not(:last-child)::after {
+  content: ',';
+}
+.ehr-allergy--recorded .ehr-link-btn {
+  color: var(--danger);
+}
+.ehr-range--out {
+  color: var(--danger);
+  font-weight: 600;
+}
+.ehr-range--out .ehr-range__value {
+  padding: 2px var(--sp-2);
+  border: 2px solid var(--danger);
+  border-radius: var(--radius-control);
+}
+.ehr-range__text {
+  color: var(--muted);
+  font-weight: 400;
+}
+.ehr-range--out .ehr-range__text {
+  color: var(--danger);
+}
+.ehr-range__struck {
+  color: var(--muted);
+}
+.ehr-tray {
+  display: grid;
+  gap: var(--sp-3);
+}
+.ehr-tray__row {
+  padding: var(--sp-3);
+  background: var(--surface);
+  border: 2px solid var(--danger);
+  border-radius: var(--radius-card);
+}
+.ehr-tray__esc {
+  color: var(--danger);
+  font-weight: 600;
+}
+.ehr-alertbar {
+  border-bottom-width: 3px;
+}
+.ehr-dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--sp-1) var(--sp-4);
+  margin: 0 0 var(--sp-3);
+}
+.ehr-dl dt {
+  font-weight: 600;
+}
+.ehr-dl dd {
+  margin: 0;
+}
+.ehr-radio {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--target);
+}
+.ehr-soap__status {
+  margin: 0 0 var(--sp-3);
+  color: var(--muted);
+}
+.ehr-dialog__patient {
+  margin: 0 0 var(--sp-2);
+}
+.ehr-btn:hover:not([disabled]) {
+  filter: brightness(0.95);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ehr-btn,
+  .ehr-slot,
+  .ehr-tab {
+    transition:
+      background-color var(--motion),
+      border-color var(--motion);
+  }
+}
