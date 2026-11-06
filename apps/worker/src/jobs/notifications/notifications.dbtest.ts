@@ -109,7 +109,8 @@ describe('notifications on PostgreSQL 17 (BE-06, worker side)', () => {
   registry.registerHandler('notifications.delivery_failed', 'probe');
   const queue = new Queue(registry, 'worker');
   const provider = new FakeProvider();
-  let clockNow = new Date();
+  // undefined = the real clock (a stale fixed instant made rows look not yet due when setup took over a second)
+  let clockNow: Date | undefined;
   let prefs: Record<
     string,
     {
@@ -165,7 +166,7 @@ describe('notifications on PostgreSQL 17 (BE-06, worker side)', () => {
     recipients: { patient: patientContributor, principal: principalContributor },
     log,
     survivorOf: (id: string) => Promise.resolve(survivors.get(id)),
-    now: () => clockNow,
+    now: () => clockNow ?? new Date(),
   });
   let gw: VendorGateway;
   const run = (
@@ -585,7 +586,7 @@ describe('notifications on PostgreSQL 17 (BE-06, worker side)', () => {
       clockNow = new Date('2030-01-16T12:00:01Z');
       assert.equal(await run(id, P1), 'sent');
       assert.equal(provider.calls.length, 1);
-      clockNow = new Date();
+      clockNow = undefined;
     });
 
     test('a template that leaks text is stopped at send time by the output scan; the provider is never called', async () => {
@@ -666,7 +667,7 @@ describe('notifications on PostgreSQL 17 (BE-06, worker side)', () => {
       n = await row(c);
       assert.equal(n['status'], 'queued');
       assert.equal(provider.calls.length, 0);
-      clockNow = new Date();
+      clockNow = undefined;
     });
 
     test("a patient merged while the job waited: the job follows the survivor and sends to the survivor's contacts (on_merged = resolve)", async () => {
