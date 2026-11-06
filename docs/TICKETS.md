@@ -57,7 +57,7 @@ Sizes: S=1, M=2, L=3, XL=5 relative effort points. They are estimates, not commi
 | BE-24 | HEAAA-120 | admin API: users and roles, audit viewer and export, BTG review, privacy decisions, integration settings | HEAAA-23 | Backend Engineer | Backend Reviewer → Security Reviewer | L | M5 | BE-05, BE-01, BE-20, BE-02 | Blocked |
 | FE-01 | HEAAA-75 | Design system: tokens, shared components, accessibility tests | HEAAA-22 | Frontend Engineer | Frontend Reviewer → UI/UX Designer | L | M2 | F-06 | Blocked |
 | FE-02 | HEAAA-77 | App shell: API client, session and realm handling, idle warning, release prompts, error pages | HEAAA-22 | Frontend Engineer | Frontend Reviewer | L | M2 | FE-01, F-08 | Blocked |
-| FE-03 | HEAAA-91 | Patient portal: sign-up, verification, passkey/MFA, sign-in | HEAAA-22 | Frontend Engineer | Frontend Reviewer | M | M3 | FE-02, BE-04 | Blocked |
+| FE-03 | HEAAA-91 | Patient portal: managed-login handoff, callback landing, auth error states | HEAAA-22 | Frontend Engineer | Frontend Reviewer → DevOps Reviewer (pnpm-lock.yaml only) | M | M3 | FE-02, BE-04 | Blocked |
 | FE-04 | HEAAA-107 | Patient portal: book, reschedule, cancel, waitlist | HEAAA-22 | Frontend Engineer | Frontend Reviewer → UI/UX Designer | L | M3 | FE-03, BE-12 | Blocked |
 | FE-05 | HEAAA-127 | Patient portal: profile, proxies, notification preferences, privacy, messages (flagged) | HEAAA-22 | Frontend Engineer | Frontend Reviewer | L | M4 | FE-03, BE-08, BE-20 | Blocked |
 | FE-06 | HEAAA-105 | Shared documents UI: upload with scan state, classification, list and viewer | HEAAA-22 | Frontend Engineer | Frontend Reviewer | M | M4 | FE-02, BE-10 | Blocked |
@@ -1779,7 +1779,7 @@ Correction ticket `COR-<finding ID>`: same lane master as the repaired ticket; o
 - Common checks of TICKETS.md section 3 also apply.
 
 
-#### FE-03 — Patient portal: sign-up, verification, passkey/MFA, sign-in  (HEAAA-91)
+#### FE-03 — Patient portal: managed-login handoff, callback landing, auth error states  (HEAAA-91)
 
 **Ticket FE-03** · release R1 · milestone M3 · size M (2 effort points) · status at creation: **Blocked until prerequisites are done**
 
@@ -1787,11 +1787,11 @@ Correction ticket `COR-<finding ID>`: same lane master as the repaired ticket; o
 | --- | --- |
 | Lane (parent) | HEAAA-22 |
 | Owner (one) | Frontend Engineer (`2d280e70`) |
-| Independent reviewer stages (in order) | Frontend Reviewer (`b0c4372e`) |
+| Independent reviewer stages (in order) | Frontend Reviewer (`b0c4372e`) → DevOps Reviewer (`fe9b5f91`; reviews the `pnpm-lock.yaml` diff only) |
 | Conditions | C-16 |
 | Requirements / rows | see source column |
 
-**Source and design revisions.** Frozen manifest in DELIVERY-PLAN section 2 (G2 candidate revisions; `design-align` rev `ea043d8d`). Sections used: UI-UX 3.1, 4 (J-02: PP-01..05); PRD RA-R1-01.
+**Source and design revisions.** Frozen manifest in DELIVERY-PLAN section 2 (G2 candidate revisions; `design-align` rev `ea043d8d`). Sections used: UI-UX 3.1, 4 (J-02: PP-01..05); PRD RA-R1-01; ARCHITECTURE 7, 26.1; `identity.yaml` `getAuthSignIn`. Scope revised per decision HEAAA-172 (Solution Architect): `patient_pool` uses Cognito managed login (OIDC code + PKCE), so FE-03 is the handoff, not a sign-up/OTP/passkey/MFA UI. Architecture and contracts are unchanged.
 
 **Technical prerequisites.** HEAAA-77 (`FE-02`), HEAAA-82 (`BE-04`)
 
@@ -1802,9 +1802,21 @@ Correction ticket `COR-<finding ID>`: same lane master as the repaired ticket; o
 **Allowed paths (write).** Anything else is out of scope; a needed change elsewhere is a request to the Orchestrator, not an edit.
 - `apps/patient/src/features/auth/**`
 - `apps/patient/src/app/**`
+- Scaffold of `apps/patient` (single writer until FE-03 lands; mirror `apps/staff`): `apps/patient/package.json`, `apps/patient/tsconfig.json`, `apps/patient/index.html`, `apps/patient/vite.config.ts`, `apps/patient/playwright.config.ts`, `apps/patient/e2e/**`, `apps/patient/scripts/**`, `apps/patient/.gitignore`, `apps/patient/src/main.tsx`, `apps/patient/src/test-setup.ts`, `apps/patient/src/vite-env.d.ts`, `apps/patient/src/index.ts` (replace or remove the stub)
+- `pnpm-lock.yaml`, only as produced by `pnpm install` (never hand-edited), only if the diff stays inside the `apps/patient` importer and adds no new resolved package. Otherwise it is a request to DevOps. DevOps Reviewer reviews this file as a review stage.
+
+**Scaffold conditions.** Dependencies are limited to the exact versions already pinned in `apps/staff/package.json` plus `workspace:*` packages; any new package or version is a request to the Orchestrator and DEPENDENCIES.md. `.github/**` stays DevOps-owned: if `ci.yml` does not yet run the `apps/patient` unit, Playwright and axe jobs, record local raw reports with commands and versions; the Orchestrator opens a DevOps request for the wiring, and acceptance on `ci` waits on it.
+
+**Scope (decision HEAAA-172).** (1) PP-05 sign-in and PP-01 entry: "Sign in" and "Create account" both navigate to `GET /api/v1/auth/sign-in?returnTo=<relative path>` (`getAuthSignIn`); no invented sign-up hint parameter; `returnTo` is a relative same-host path checked before navigating; a short pre-redirect message says verification and passkey setup happen on the secure sign-in page. (2) Landing after the API-owned `GET /auth/callback`: land on `returnTo`, start the session through the FE-02 shell (`GET /auth/session`, `GET /me`), show the signed-in state; sign-out via `POST /auth/sign-out`; `/me` with no linked patient is a neutral state and self-registration is not called (SA-FE03-02). (3) Error states: each documented code of sign-in, callback and session (`kernel.validation_failed`, `patient.merged`, `kernel.rate_limited`, `kernel.unavailable`, `kernel.timeout`, the contract's callback failure codes, cancelled sign-in at the IdP, expired pre-auth cookie) has its own accessible state with a retry or sign-in-again path. Generated client only; no tokens or codes in storage or logs.
+
+**Moved out of FE-03 (not dropped).** OTP paste and autofill, passkey or security key first, MFA offered (PP-02, PP-04) belong to the hosted page: configuration in DO-04 (HEAAA-87), evidence in TC-ID-03 (AUTO+H, real device, real staging pool). PP-03 optional ID check has no architecture, contract or vendor and is out of FE-03 (SA-FE03-01, routed to PM and a human).
 
 **Acceptance (each is observable; all must hold on the exact submitted revision).**
-- PP-01..PP-05 work end to end against the real API on `ci`; OTP fields accept paste and autofill; passkey and security-key paths are offered first; no cognitive test.
+- The entry and PP-05 start the code flow only through `getAuthSignIn` with a checked relative `returnTo`. `apps/patient` renders no password, OTP or MFA input.
+- On `ci`, against the conformance IdP fixture, a Playwright journey passes: sign-in, callback, landing shows the `GET /me` principal, sign-out ends the session.
+- Every error state above is reachable in unit tests, and at least the callback failure is reachable in Playwright.
+- axe passes on the entry, pre-redirect, landing and error pages. WCAG 3.3.8 holds on our pages: no cognitive test.
+- The `pnpm-lock.yaml` diff is confined to the `apps/patient` importer with no new resolved package, and is approved by DevOps Reviewer.
 
 **Required checks (record tool and version, candidate commit, command, raw report, result).**
 - unit
@@ -2420,6 +2432,7 @@ Correction ticket `COR-<finding ID>`: same lane master as the repaired ticket; o
 **Acceptance (each is observable; all must hold on the exact submitted revision).**
 - Every `gh-*` role is denied until an approved-release record is applied by a human platform admin; role trust conditions carry repository, environment, ref and workflow ref; DPR-37 (staging apply role) and DPR-38 (named creator of loadtest, bootstrap and ENV-DR stacks) are resolved in the code and the plan text correction is routed to the Solution Architect Reviewer.
 - Where GitHub plan features are absent the evidence says procedural only (C-13).
+- `patient_pool` hosted managed login is configured with passkey and email OTP enabled, SMS as fallback and MFA optional, in code (decision HEAAA-172). PP-02 and PP-04 properties (OTP paste/autofill, passkey or security key first, MFA offered) are evidenced by TC-ID-03 on a real staging pool, not by the `ci` fixture.
 
 **Required checks (record tool and version, candidate commit, command, raw report, result).**
 - terraform/opentofu fmt, validate, tflint, Checkov or Trivy config scan, plan output as artifact (no apply anywhere)
