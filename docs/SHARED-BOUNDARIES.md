@@ -350,10 +350,12 @@ Every login role that can insert audit rows has `transaction_timeout` set at rol
 | `patient.lock_patients` (ARCHITECTURE 21.6, folded in by SB-A1) | `patient_scope_owner` | Locks visible patient roots `FOR KEY SHARE` or `FOR NO KEY UPDATE` in ascending order | Nothing | None | ARCHITECTURE 21.2 point 2, 25.2 |
 | `integration_core.receive_inbound` (ARCHITECTURE 21.6, folded in by SB-A1) | `integration_receiver_owner` | Inserts one verified inbound message | Inserted or duplicate | None (the handler audits) | ARCHITECTURE 29.5 |
 | `queue_api.enqueue` (ARCHITECTURE 21.6 amendment A-1, folded in by SB-A1) | `queue_owner` | Inserts one job of an allow-listed API task type | The job ID | None (payloads hold IDs only) | ARCHITECTURE 21.8 |
+| `scheduling.check_twin` (trigger function; ARCHITECTURE 21.6 amendment A-3, folded in by SB-A2) | `scheduling_booking_owner` | Reads one `slot_occupancy` row by the reservation's ID at commit | Nothing, or `PS001` | None | 6.5 |
+| `scheduling.replace_busy_blocks` (ARCHITECTURE 21.6 amendment A-3, folded in by SB-A2) | `scheduling_booking_owner` | Owns the only write path of `scheduling.busy_block` (C1): replaces one clinician's `google` blocks in the caller's organisation. Audience `system` with `job_scope = org` only; `EXECUTE` to `app_worker` only | Counts | None (no PHI) | ARCHITECTURE 22.8, 33.1 |
 
 `patient.staff_sees` is **not** a definer function. It is an invoker function and runs under the caller's own policies (6.3).
 
-**Not in the inventory (SB-A1).** A second copy of the merge write guard in another schema (for example `scheduling.guard_open_patient`) is refused: every table with `patient_id` calls the one `patient.guard_open_patient`, which takes the `FOR KEY SHARE` root lock that 9.2 depends on. A function-owner role other than `patient_scope_owner` and `patient_match_owner` gets no right on `patient.patient` for this purpose; `scheduling_booking_owner` keeps C1 rows only (6.8). How a migration attaches the one guard is in ARCHITECTURE 21.2. The merge request, its decision and the execute job's bookkeeping are definer functions rather than invoker statements because the approver need not see the patients (BQ-3), because `merge_request` then has one write path that enforces its state machine (rule 2), and because invoker access would give every organisation-wide job write access to merge decisions.
+**Not in the inventory (SB-A1, SB-A2).** A second copy of the merge write guard in another schema (for example `scheduling.guard_open_patient`, and by SB-A2 `documents.guard_open_patient`, `telehealth.guard_open_patient`, `scheduling.flow_guard_open_patient` and `scheduling.guard_open_patient_at_commit`) is refused: every table with `patient_id` calls the one `patient.guard_open_patient`, which takes the `FOR KEY SHARE` root lock that 9.2 depends on. A function-owner role other than `patient_scope_owner` and `patient_match_owner` gets no right on `patient.patient` for this purpose; `scheduling_booking_owner` keeps C1 rows only (6.8). How a migration attaches the one guard is in ARCHITECTURE 21.2. The merge request, its decision and the execute job's bookkeeping are definer functions rather than invoker statements because the approver need not see the patients (BQ-3), because `merge_request` then has one write path that enforces its state machine (rule 2), and because invoker access would give every organisation-wide job write access to merge decisions.
 
 **Definer-function pattern (Fixed).** A small number of operations must see or change rows that the caller's own scope cannot see: expiring another patient's stale hold, computing free slots, keeping the staff scope table current, and finding duplicate patients. Each one is a `SECURITY DEFINER` function that follows the same rules:
 
@@ -750,6 +752,18 @@ Limitations:
 This document is not G2 and authorises no implementation.
 
 ## 15. Change log
+
+### 15.00 Amendment SB-A2 (HEAAA-190; INT02-F02)
+
+Authority: HEAAA-190 assignment to the Solution Architect, from the HEAAA-186 triage of the db-foundation failures on the M3 combined candidate `52fd4cd`. This amendment changes only the 6.2 inventory and the "Not in the inventory" paragraph. Every other section is unchanged.
+
+| Item | Change | Where |
+| --- | --- | --- |
+| SB-A2.1 | Accepted as definer functions: `scheduling.check_twin` (trigger function) and `scheduling.replace_busy_blocks` (worker only). Their rows and conditions are in ARCHITECTURE 21.6 amendment A-3 | 6.2 inventory |
+| SB-A2.2 | Refused: the guard copies `documents.guard_open_patient`, `telehealth.guard_open_patient`, `scheduling.flow_guard_open_patient` and the stopgap `scheduling.guard_open_patient_at_commit`. One guard everywhere, as SB-A1 already says | 6.2, after the inventory |
+| SB-A2.3 | How a migration attaches the one guard when the runner refuses `SET ROLE`: ARCHITECTURE 21.2 point 5 (owner steps) | Reference only |
+
+Not changed: modules, data ownership, scope settings, policies, the merge protocol of 9.2, and every API, UX, QA and DevOps contract. Review: Solution Architect Reviewer (independent, this exact revision) and Cybersecurity (the owner-step mechanism). Not human-approved.
 
 ### 15.0 Amendment SB-A1 (HEAAA-179; SEC-03 finding SEC03-F06)
 
