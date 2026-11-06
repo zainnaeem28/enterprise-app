@@ -143,6 +143,24 @@ describe('RA-R1-03: parallel booking of one slot (TC-BK-13, 14, 15)', () => {
     t.overbook.delete(doc);
   });
 
+  test('BE11-F01 regression: 20 rounds of 100 different patients on fresh slots: every round has exactly one winner and never a deadlock (40P01)', async () => {
+    const doc = (await t.doctor()).principalId;
+    for (let round = 0; round < 20; round++) {
+      const s = slotStart(nextDay());
+      const casts = await Promise.all(
+        Array.from({ length: 100 }, async (_, i) => {
+          const pid = await t.bare(2000 + round * 100 + i);
+          return { pid, scope: await t.patientScope(pid) };
+        }),
+      );
+      const out = await Promise.all(casts.map((c) => book(c.scope, holdInput(c.pid, doc, s))));
+      const odd = out.filter((x): x is { ok: false; err: unknown } => !x.ok && !(x.err instanceof SlotTakenError));
+      assert.equal(odd.length, 0, `round ${round}: ${odd.slice(0, 1).map((x) => String((x.err as { code?: unknown } | null)?.code ?? x.err))}`);
+      assert.equal(wins(out), 1, `round ${round}: exactly one winner`);
+      assert.equal(await activeCount(doc, s), 1);
+    }
+  });
+
   test('an overbook cap of 0 (the default) refuses every overbook row', async () => {
     const doc = (await t.doctor()).principalId;
     t.overbook.set(doc, 'SESSION-0');

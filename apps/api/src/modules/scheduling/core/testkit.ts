@@ -8,7 +8,13 @@ import type { ScopeSettings, Tx } from '@ehr/kernel';
 import { OrganisationService } from '../../organisation/index.js';
 import { registerIdentityParticipants } from '../../identity/index.js';
 import { registerNotificationsParticipants } from '../../notifications/index.js';
-import { createMergeControllers, executeMerge, MERGE_JOBS, MergeService, mergeResolvers } from '../../patient/merge/index.js';
+import {
+  createMergeControllers,
+  executeMerge,
+  MERGE_JOBS,
+  MergeService,
+  mergeResolvers,
+} from '../../patient/merge/index.js';
 import type { ExecuteDeps, ExecuteResult } from '../../patient/merge/index.js';
 import {
   ORG,
@@ -86,7 +92,11 @@ export interface SchedKit {
   /** Runs `fn` in a scoped transaction on the big pool. */
   as<T>(scope: ScopeSettings, fn: (tx: Tx) => Promise<T>): Promise<T>;
   /** Executes the merge of `mergedId` into `survivorId` end to end (request, second-staff approval, execute job). */
-  merge(survivorId: string, mergedId: string, over?: Partial<ExecuteDeps>): Promise<{ requestId: string; result: ExecuteResult }>;
+  merge(
+    survivorId: string,
+    mergedId: string,
+    over?: Partial<ExecuteDeps>,
+  ): Promise<{ requestId: string; result: ExecuteResult }>;
   /** Request by the lead and approval by a second staff member: returns the approved request ID. */
   approved(survivorId: string, mergedId: string): Promise<string>;
   run(requestId: string, over?: Partial<ExecuteDeps>): Promise<ExecuteResult>;
@@ -110,35 +120,45 @@ export async function setupScheduling(name: string): Promise<SchedKit> {
   const org = new OrganisationService();
   const overbook = new Map<string, string>();
 
-  const k = await setup({
-    name,
-    fixtures: async (f) => {
-      await standardFixtures(f);
-      await f.sa.query(
-        `INSERT INTO organisation.service (id, organisation_id, internal_name, patient_display_name, duration_min, buffer_min, mode, active)
+  const k = await retrySetup(() =>
+    setup({
+      name,
+      fixtures: async (f) => {
+        await standardFixtures(f);
+        await f.sa.query(
+          `INSERT INTO organisation.service (id, organisation_id, internal_name, patient_display_name, duration_min, buffer_min, mode, active)
          VALUES ($1, $3, 'Consult', 'Appointment', 30, 0, 'either', true), ($2, $3, 'Consult 2', 'Appointment 2', 30, 0, 'either', true)`,
-        [SVC, SVC2, ORG],
-      );
-      await f.sa.query(
-        `INSERT INTO organisation.room (id, organisation_id, location_id, name, active) VALUES ($1, $3, $4, 'Room 1', true), ($2, $3, $4, 'Room 2', true)`,
-        [ROOM1, ROOM2, ORG, A1],
-      );
-      await f.sa.query(
-        `INSERT INTO organisation.operating_state (organisation_id, jurisdiction_code, telehealth_allowed, effective_from) VALUES ($1, 'NY', true, '2020-01-01'), ($1, 'NJ', false, '2020-01-01')`,
-        [ORG],
-      );
-    },
-    controllers: [
-      ...createMergeControllers({ db: lazyDb, merges }),
-      ...createSchedulingControllers({ db: lazyDb, scheduling: lazySvc }),
-    ],
-    beforeStart: ({ identity }) => {
-      for (const [n, fn] of Object.entries({ ...mergeResolvers(), ...schedulingResolvers() }))
-        identity.policy.registerResolver(n, fn);
-    },
-  });
+          [SVC, SVC2, ORG],
+        );
+        await f.sa.query(
+          `INSERT INTO organisation.room (id, organisation_id, location_id, name, active) VALUES ($1, $3, $4, 'Room 1', true), ($2, $3, $4, 'Room 2', true)`,
+          [ROOM1, ROOM2, ORG, A1],
+        );
+        await f.sa.query(
+          `INSERT INTO organisation.operating_state (organisation_id, jurisdiction_code, telehealth_allowed, effective_from) VALUES ($1, 'NY', true, '2020-01-01'), ($1, 'NJ', false, '2020-01-01')`,
+          [ORG],
+        );
+      },
+      controllers: [
+        ...createMergeControllers({ db: lazyDb, merges }),
+        ...createSchedulingControllers({ db: lazyDb, scheduling: lazySvc }),
+      ],
+      beforeStart: ({ identity }) => {
+        for (const [n, fn] of Object.entries({ ...mergeResolvers(), ...schedulingResolvers() }))
+          identity.policy.registerResolver(n, fn);
+      },
+    }),
+  );
   holder.k = k;
-  for (const j of [...MERGE_JOBS, ...SCHEDULING_CORE_JOBS]) if (!safeHas(k, j.name)) k.registry.defineJob(j);
+  // BE11-F02: the BE-08 kit's own pools have no error handler, so an idle client told to go while the test database is dropped is
+  // an uncaught exception. Only idle-client errors are absorbed here; a failing query still rejects its own promise.
+  for (const d of [k.db, k.wdb])
+    (d as unknown as { pool: { on(e: 'error', f: () => void): void } }).pool.on(
+      'error',
+      () => undefined,
+    );
+  for (const j of [...MERGE_JOBS, ...SCHEDULING_CORE_JOBS])
+    if (!safeHas(k, j.name)) k.registry.defineJob(j);
   const wc = new pg.Client({ connectionString: k.urlFor('app_worker') });
   await wc.connect();
   await syncTaskTypes(wc, k.registry);
@@ -163,9 +183,16 @@ export async function setupScheduling(name: string): Promise<SchedKit> {
 
   const apiPool = new pg.Pool({ connectionString: k.urlFor('app_api'), max: 40 });
   const workerPool = new pg.Pool({ connectionString: k.urlFor('app_worker'), max: 8 });
+  // An idle client may be told to go when the test database is dropped; that is the teardown, not a failure (BE11-F02).
+  for (const pool of [apiPool, workerPool]) pool.on('error', () => undefined);
   const api = new KernelDb(apiPool as never);
   const worker = new KernelDb(workerPool as never);
-  const workerScope: ScopeSettings = { audience: 'system', realm: 'worker', orgId: ORG, jobScope: 'org' };
+  const workerScope: ScopeSettings = {
+    audience: 'system',
+    realm: 'worker',
+    orgId: ORG,
+    jobScope: 'org',
+  };
   // The settings the booking policy falls back on (hold, cut-off, BR-04, licensing mode) are the catalogue's, applied by the real job.
   await worker.withScope(workerScope, (tx) => org.applySettingDefaults(tx, undefined));
 
@@ -175,7 +202,10 @@ export async function setupScheduling(name: string): Promise<SchedKit> {
   registerSchedulingParticipants(regs);
 
   const lead = await (async () => {
-    const p = await seedPrincipal(k, 'google', { name: 'Lead AB', email: `lead.ab.${randomUUID().slice(0, 6)}@example.com` });
+    const p = await seedPrincipal(k, 'google', {
+      name: 'Lead AB',
+      email: `lead.ab.${randomUUID().slice(0, 6)}@example.com`,
+    });
     await assignRole(k, p.principalId, 'front_desk_lead', A1);
     await assignRole(k, p.principalId, 'front_desk_lead', B1);
     return seedSession(k, p, 'google');
@@ -225,7 +255,9 @@ export async function setupScheduling(name: string): Promise<SchedKit> {
       return pid;
     },
     async patientScope(patientId, o = {}) {
-      const p = await seedPrincipal(k, 'patient_pool', { name: `Patient account ${patientId.slice(-4)}` });
+      const p = await seedPrincipal(k, 'patient_pool', {
+        name: `Patient account ${patientId.slice(-4)}`,
+      });
       return {
         audience: 'patient',
         realm: 'patient_pool',
@@ -239,13 +271,23 @@ export async function setupScheduling(name: string): Promise<SchedKit> {
     async staffScope(locations = [A1], role = 'front_desk') {
       const p = await seedPrincipal(k, 'google', { name: 'Staff scope' });
       await assignRole(k, p.principalId, role, locations[0]);
-      return { audience: 'staff', realm: 'google', orgId: ORG, principalId: p.principalId, personId: p.personId, locationIds: locations };
+      return {
+        audience: 'staff',
+        realm: 'google',
+        orgId: ORG,
+        principalId: p.principalId,
+        personId: p.personId,
+        locationIds: locations,
+      };
     },
     async age(reservationId) {
       await k.sa.query('BEGIN');
       try {
         await k.sa.query(`SET LOCAL session_replication_role = replica`);
-        await k.sa.query(`UPDATE scheduling.slot_occupancy SET expires_at = now() - interval '1 minute' WHERE id = $1 AND status = 'held'`, [reservationId]);
+        await k.sa.query(
+          `UPDATE scheduling.slot_occupancy SET expires_at = now() - interval '1 minute' WHERE id = $1 AND status = 'held'`,
+          [reservationId],
+        );
         await k.sa.query('COMMIT');
       } catch (e) {
         await k.sa.query('ROLLBACK');
@@ -284,6 +326,21 @@ export async function setupScheduling(name: string): Promise<SchedKit> {
     },
   };
   return kit;
+}
+
+/**
+ * BE11-F02: two test files starting at once both run the cluster-wide role bootstrap (db/tools/migrate.mjs) and can collide on the
+ * shared roles; the loser's setup throws before anything of this file exists. A new database name per attempt makes a retry safe.
+ */
+async function retrySetup<T>(f: () => Promise<T>): Promise<T> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await f();
+    } catch (e) {
+      if (attempt >= 4) throw e;
+      await new Promise((r) => setTimeout(r, 500 * attempt + Math.floor(Math.random() * 500)));
+    }
+  }
 }
 
 function safeHas(k: Kit, name: string): boolean {

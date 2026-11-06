@@ -29,6 +29,8 @@ DECLARE
   v_principal uuid := kernel.uuid1('app.principal_id');
   v_expires   timestamptz;
   v_count     integer;
+  v_lk1       text;
+  v_lk2       text;
 BEGIN
   IF v_org IS NULL OR v_aud IS NULL OR v_aud NOT IN ('patient', 'staff', 'system') THEN
     RAISE EXCEPTION 'occupy: not available to this caller' USING ERRCODE = '42501';
@@ -47,6 +49,16 @@ BEGIN
      OR (NOT p_overbook AND p_session_key IS NOT NULL) THEN
     RAISE EXCEPTION 'occupy: bad argument' USING ERRCODE = '22023';
   END IF;
+
+  -- BE11-F01: two concurrent inserts into a GiST exclusion constraint that conflict with each other each wait for the other's
+  -- uncommitted row and deadlock (40P01), and the victim may be the one that would have won. So the writers of one doctor's (and one
+  -- room's) time are serialised first, by transaction advisory locks taken in one global order (sorted keys), after the patient locks
+  -- (25.2) and before the overbook lock. The constraint stays the authority; the lock only removes the deadlock.
+  v_lk1 := 'dr:' || p_clinician::text;
+  v_lk2 := CASE WHEN p_room IS NULL THEN NULL ELSE 'rm:' || p_room::text END;
+  IF v_lk2 IS NOT NULL AND v_lk2 < v_lk1 THEN v_lk1 := v_lk2; v_lk2 := 'dr:' || p_clinician::text; END IF;
+  PERFORM pg_advisory_xact_lock(hashtext(v_lk1));
+  IF v_lk2 IS NOT NULL THEN PERFORM pg_advisory_xact_lock(hashtext(v_lk2)); END IF;
 
   -- SAR-09: expire the stale holds in the way, on the doctor AND on the room, so a lapsed hold never causes a false "taken". The
   -- rows are locked in id order, so two racing callers wait for each other instead of deadlocking; the one that waits then finds
@@ -90,6 +102,8 @@ DECLARE
   v_org     uuid := kernel.uuid1('app.org_id');
   v_status  text;
   v_expires timestamptz;
+  v_lk1     text;
+  v_lk2     text;
 BEGIN
   IF v_org IS NULL OR v_aud IS NULL OR v_aud NOT IN ('patient', 'staff', 'system') THEN
     RAISE EXCEPTION 'set_status: not available to this caller' USING ERRCODE = '42501';
@@ -112,6 +126,24 @@ BEGIN
   END IF;
   IF v_aud = 'staff' AND kernel.setting('app.realm') <> 'google' THEN
     RAISE EXCEPTION 'set_status: not available to this caller' USING ERRCODE = '42501';
+  END IF;
+
+  -- BE11-F01: an update that keeps the row in the exclusion constraints' predicate (held -> confirmed, checked_in, ...) writes a new
+  -- index entry and so waits for any concurrent inserter of the same doctor's or room's time, who in turn waits for it: a deadlock.
+  -- The same doctor and room locks as scheduling.occupy, same order (sorted keys), taken before the row lock. A move out of the
+  -- predicate (cancel, expire, no-show, rescheduled) writes no index entry and needs none.
+  IF p_to IN ('held', 'confirmed', 'checked_in', 'in_consultation', 'completed') THEN
+    SELECT 'dr:' || o.clinician_principal_id::text, CASE WHEN o.room_id IS NULL THEN NULL ELSE 'rm:' || o.room_id::text END
+      INTO v_lk1, v_lk2 FROM scheduling.slot_occupancy o WHERE o.id = p_id AND o.organisation_id = v_org;
+    IF v_lk1 IS NOT NULL THEN
+      IF v_lk2 IS NOT NULL AND v_lk2 < v_lk1 THEN
+        PERFORM pg_advisory_xact_lock(hashtext(v_lk2));
+        PERFORM pg_advisory_xact_lock(hashtext(v_lk1));
+      ELSE
+        PERFORM pg_advisory_xact_lock(hashtext(v_lk1));
+        IF v_lk2 IS NOT NULL THEN PERFORM pg_advisory_xact_lock(hashtext(v_lk2)); END IF;
+      END IF;
+    END IF;
   END IF;
 
   SELECT o.status, o.expires_at INTO v_status, v_expires FROM scheduling.slot_occupancy o

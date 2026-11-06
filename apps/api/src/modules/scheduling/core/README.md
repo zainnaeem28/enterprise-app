@@ -37,7 +37,14 @@ participant (38.2 item 11) and the confirm-versus-merge races (38.2 item 1), all
   `pg_advisory_xact_lock(hashtext('ob:' || doctor || session_key))` against `overbook_cap_per_session` (the API reads it from the booking
   policy and passes it; a cap of 0 refuses). The cap is the number of appointments in the session (TC-BK-15: cap 2, exactly 2).
 * **Lock order (25.2)**: `lockPatients` once at the start (`key_share` for hold and cancel, `no_key_update` where `ensure_care_relationship`
-  runs: confirm, reschedule), then `pg_advisory_xact_lock('pt:' || patient)`, then `ob:`, then the occupancy insert.
+  runs: confirm, reschedule), then `pg_advisory_xact_lock('pt:' || patient)`, then the doctor and room locks (`dr:` / `rm:`, sorted keys),
+  then `ob:`, then the occupancy insert.
+* **Doctor and room locks (BE11-F01)**: two concurrent writers into a GiST exclusion constraint wait for each other's uncommitted rows and
+  deadlock (`40P01`); the victim can be the one that would have won (seen with 100 different patients: a confirm's `held -> confirmed`
+  update waiting on a loser's insert, and the loser on the update). `scheduling.occupy`, and `scheduling.set_status` for any move that stays
+  inside the constraints' predicate, take `pg_advisory_xact_lock` on `dr:<doctor>` and `rm:<room>` in sorted order first, so these writers
+  of one doctor's or room's time run one after the other. The constraints stay the authority; the lock only removes the deadlock.
+  Regression: `concurrency.dbtest.ts` "BE11-F01 regression" (20 rounds x 100 patients).
 * **Same-patient overlap (BQ-9)** and BR-04 are checked under the `pt:` lock, so two concurrent holds for one patient serialise; the second
   sees the first and gets `422 scheduling.overlapping_appointment`. If the very slot asked for is already someone's, the answer is
   `409 scheduling.slot_taken` with alternatives (TC-BK-13).
