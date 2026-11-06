@@ -10,7 +10,7 @@ module.exports = {
       startServerCommand:
         'pnpm --filter @ehr/staff exec vite preview --host 127.0.0.1 --port 4173 --strictPort' +
         (process.env.SMOKE_DIST_DIR ? ` --outDir ${process.env.SMOKE_DIST_DIR}` : ''),
-      startServerReadyPattern: 'Local:',
+      startServerReadyPattern: 'Local',
       startServerReadyTimeout: 60000,
       url: ['http://127.0.0.1:4173/'],
       numberOfRuns: 3,

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Empty-run guard for the Lighthouse CI budget job: the output directory must hold one Lighthouse report (lhr-*.json) per
+// Empty-run guard for the Lighthouse CI budget job: the output directory must hold one Lighthouse report (*.report.json) per
 // configured run, each with a measured LCP and a script-size summary. `lhci autorun` enforces the budgets (exit 1); this
 // proves it measured something.   check-lighthouse.mjs <lhci-output-dir> <runs>
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
@@ -7,7 +7,7 @@ import { join } from 'node:path';
 
 const [dir, runsRaw] = process.argv.slice(2);
 const runs = Number(runsRaw);
-const files = existsSync(dir) ? readdirSync(dir).filter((f) => /^lhr-.*\.json$/.test(f)) : [];
+const files = existsSync(dir) ? readdirSync(dir).filter((f) => /\.report\.json$/.test(f)) : [];
 const problems = [];
 if (files.length < runs)
   problems.push(

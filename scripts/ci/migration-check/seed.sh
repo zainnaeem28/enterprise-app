@@ -10,11 +10,13 @@ RESULTS="$REPORT_ROOT/seeded-$JOB.txt"
 mkdir -p "$REPORT_ROOT"
 : >"$RESULTS"
 WORK="$(mktemp -d)"
+LOGS="$REPORT_ROOT/seeded-$JOB-logs"
+mkdir -p "$LOGS"
 trap 'rm -rf "$WORK"' EXIT
 bad=0
 
-# fresh_copy <name> [git]: copy the tree (no .git, reports) and link the installed dependencies; with `git`, make it a
-# repository whose first commit is tagged r1 (the "previous release").
+# fresh_copy <name> [git]: copy the tree (no .git, reports) into a new repository and link the installed dependencies;
+# with `git`, the first commit is tagged r1 (the "previous release").
 fresh_copy() {
   local d="$WORK/$1" src="$CI_ROOT" nm rel
   mkdir -p "$d"
@@ -23,9 +25,11 @@ fresh_copy() {
     rel="${nm#"$src"/}"
     ln -s "$nm" "$d/$rel"
   done < <(find "$src" -maxdepth 3 -name node_modules -prune -not -path '*/.git/*')
+  # Always a repository (the secret-reference lint reads `git ls-files`); the linked node_modules are never committed.
+  (cd "$d" && git init -q -b main && git config user.name seed && git config user.email seed@example.invalid &&
+    printf 'node_modules\n' >>.git/info/exclude && git add -A && git commit -q -m baseline)
   if [ "${2:-}" = git ]; then
-    (cd "$d" && git init -q -b main && git add -A && git -c user.name=seed -c user.email=seed@example.invalid commit -q -m baseline &&
-      git tag r1 && git config user.name seed && git config user.email seed@example.invalid)
+    (cd "$d" && git tag r1)
   fi
   echo "$d"
 }
@@ -34,7 +38,7 @@ fresh_copy() {
 expect_fail() {
   local label="$1" pattern="$2" dir="$3"
   shift 3
-  local log="$WORK/${label//[^A-Za-z0-9]/_}.log" rc=0
+  local log="$LOGS/${label//[^A-Za-z0-9]/_}.log" rc=0
   (cd "$dir" && REPORT_ROOT="$dir/reports" "$@") >"$log" 2>&1 || rc=$?
   if [ "$rc" -ne 0 ] && grep -Eq -- "$pattern" "$log"; then
     printf 'PASS (rc=%s, matched /%s/)  %s\n' "$rc" "$pattern" "$label" | tee -a "$RESULTS"

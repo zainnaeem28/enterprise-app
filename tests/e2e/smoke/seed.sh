@@ -10,6 +10,8 @@ RESULTS="$REPORT_ROOT/seeded-$JOB.txt"
 mkdir -p "$REPORT_ROOT"
 : >"$RESULTS"
 WORK="$(mktemp -d)"
+LOGS="$REPORT_ROOT/seeded-$JOB-logs"
+mkdir -p "$LOGS"
 trap 'rm -rf "$WORK"; [ -z "${STUB_PID:-}" ] || kill "$STUB_PID" 2>/dev/null' EXIT
 SMOKE="$CI_ROOT/tests/e2e/smoke"
 cd "$CI_ROOT"
@@ -18,7 +20,7 @@ bad=0
 expect_fail() { # expect_fail <label> <pattern> <command...>
   local label="$1" pattern="$2"
   shift 2
-  local log="$WORK/${label//[^A-Za-z0-9]/_}.log" rc=0
+  local log="$LOGS/${label//[^A-Za-z0-9]/_}.log" rc=0
   "$@" >"$log" 2>&1 || rc=$?
   if [ "$rc" -ne 0 ] && grep -Eq -- "$pattern" "$log"; then
     printf 'PASS (rc=%s, matched /%s/)  %s\n' "$rc" "$pattern" "$label" | tee -a "$RESULTS"
