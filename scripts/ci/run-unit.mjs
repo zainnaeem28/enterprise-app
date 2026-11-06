@@ -36,7 +36,10 @@ writeFileSync(
 
 // Workspace suites. Every package that defines a `test` script is a suite and MUST write at least
 // one JUnit report into its own $JUNIT_DIR; a script that exits 0 without a report fails.
-const ls = spawnSync('pnpm', ['-r', 'ls', '--json', '--depth', '-1'], { cwd: root, encoding: 'utf8' });
+const ls = spawnSync('pnpm', ['-r', 'ls', '--json', '--depth', '-1'], {
+  cwd: root,
+  encoding: 'utf8',
+});
 if (ls.status !== 0) failures.push(`pnpm ls failed: ${ls.stderr}`);
 const pkgs = ls.status === 0 ? JSON.parse(ls.stdout) : [];
 for (const p of pkgs) {
@@ -48,7 +51,9 @@ for (const p of pkgs) {
   mkdirSync(dir, { recursive: true });
   run(`test ${p.name ?? p.path}`, 'pnpm', ['--dir', p.path, 'run', 'test'], { JUNIT_DIR: dir });
   if (!readdirSync(dir).some((f) => f.endsWith('.xml')))
-    failures.push(`${p.name ?? p.path}: test script wrote no JUnit report to $JUNIT_DIR (a suite that runs nothing fails)`);
+    failures.push(
+      `${p.name ?? p.path}: test script wrote no JUnit report to $JUNIT_DIR (a suite that runs nothing fails)`,
+    );
 }
 
 let tests = 0;
