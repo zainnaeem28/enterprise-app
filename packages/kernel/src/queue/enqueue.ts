@@ -5,7 +5,8 @@
 
 import type { Tx } from '../scope/with-scope.js';
 
-export type OnMerged = 'resolve' | 'none';
+/** SHARED-BOUNDARIES 9.2: `resolve` follows a merged ID to its survivor, `fail` dead-letters the job (`patient.merged`); `none` = no patient IDs. */
+export type OnMerged = 'resolve' | 'fail' | 'none';
 
 export interface JobType {
   /** `<module>.<verb_noun>` */
@@ -45,9 +46,9 @@ export class JobRegistry {
     if (!Number.isInteger(t.maxAttempts) || t.maxAttempts < 1 || t.maxAttempts > 25) {
       throw new QueueError(`${t.name}: maxAttempts must be 1..25`);
     }
-    if (t.carriesPatientIds && t.onMerged !== 'resolve') {
+    if (t.carriesPatientIds && t.onMerged !== 'resolve' && t.onMerged !== 'fail') {
       throw new QueueError(
-        `${t.name}: a job that carries patient IDs must declare on_merged = resolve (22.16)`,
+        `${t.name}: a job that carries patient IDs must declare on_merged = resolve or fail (9.2, 22.16)`,
       );
     }
     const jobClass = t.jobClass ?? 'job';
