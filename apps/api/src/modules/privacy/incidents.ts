@@ -5,6 +5,7 @@
 import type { Tx } from '@ehr/kernel';
 import type { AuditService } from '../audit/index.js';
 import {
+  InvalidTransitionError,
   PreconditionFailedError,
   PrivacyNotFoundError,
   PrivacyScopeError,
@@ -292,12 +293,15 @@ export class IncidentService {
     if (fields.length === 0) throw new PrivacyValidationError(['body']);
     try {
       const cur = (
-        await tx.query(`SELECT row_version FROM privacy.incident WHERE id = $1::uuid FOR UPDATE`, [
-          id,
-        ])
+        await tx.query(
+          `SELECT row_version, status FROM privacy.incident WHERE id = $1::uuid FOR UPDATE`,
+          [id],
+        )
       ).rows[0] as Row | undefined;
       if (cur === undefined) throw new PrivacyNotFoundError();
       if (Number(cur['row_version']) !== expectedVersion) throw new PreconditionFailedError();
+      // BE20-F1: a closed incident is final, links included (the database says the same, 1903).
+      if (cur['status'] === 'closed') throw new InvalidTransitionError();
       if (sets.length > 0)
         await tx.query(
           `UPDATE privacy.incident SET ${sets.join(', ')} WHERE id = $1::uuid`,

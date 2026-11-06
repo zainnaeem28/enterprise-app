@@ -1334,6 +1334,43 @@ describe('privacy (BE-20) on PostgreSQL 17', () => {
   });
 
   // ---- incident register ---------------------------------------------------------------------------------------------------------
+  test('BE20-F2: refusing an in-progress export closes its assembling package; the request can be neither retried nor stuck', async () => {
+    const p = await mk();
+    const requestId = String((await req(p, 'export', 'refuse me later'))['id']);
+    assert.equal((await t.verify(requestId)).status, 200);
+    const d = await t.decide(requestId, 'approve');
+    assert.equal(d.status, 200, d.body);
+    const packageId = String((d.json()['package'] as Record<string, unknown>)['id']);
+    const bad = await t.decide(requestId, 'refuse', 'short');
+    assert.equal(bad.status, 422);
+    assert.equal(
+      (await row(`SELECT status FROM privacy.export_package WHERE id = $1`, [packageId]))['status'],
+      'assembling',
+    );
+    const r = await t.decide(requestId, 'refuse', 'The requester withdrew the request in writing');
+    assert.equal(r.status, 200, r.body);
+    assert.equal(r.json()['status'], 'refused');
+    const pk = await row(`SELECT status, failure_code FROM privacy.export_package WHERE id = $1`, [
+      packageId,
+    ]);
+    assert.equal(pk['status'], 'failed');
+    assert.equal(pk['failure_code'], 'privacy.request_refused');
+    // The table refuses the same step while the request is still live.
+    const q = String((await req(p, 'export', 'second'))['id']);
+    assert.equal((await t.verify(q)).status, 200);
+    const d2 = await t.decide(q, 'approve');
+    const pid2 = String((d2.json()['package'] as Record<string, unknown>)['id']);
+    await assert.rejects(
+      t.as(adminScope(t.compliance, ['privacy_requests']), (tx) =>
+        tx.query(
+          `UPDATE privacy.export_package SET status = 'failed', failure_code = 'privacy.request_refused' WHERE id = $1::uuid`,
+          [pid2],
+        ),
+      ),
+      /only the worker finishes an assembly/,
+    );
+  });
+
   test('incident register: create, list, update with If-Match, forward-only status, patients and events only added, final when closed', async () => {
     const p1 = await mk();
     const p2 = await mk();
@@ -1397,6 +1434,40 @@ describe('privacy (BE-20) on PostgreSQL 17', () => {
     assert.equal(
       code(await patch({ title: 'Renamed after closure' }, 'W/"3"')),
       'privacy.invalid_transition',
+    );
+    // BE20-F1: links are final too, through the route and through the table.
+    const p3 = await mk();
+    assert.equal(
+      code(await patch({ patients: [{ patientId: p3.patientId }] }, 'W/"3"')),
+      'privacy.invalid_transition',
+    );
+    assert.equal(
+      code(
+        await patch(
+          { patients: [{ patientId: p2.patientId, auditEventIds: [uuidv7()] }] },
+          'W/"3"',
+        ),
+      ),
+      'privacy.invalid_transition',
+    );
+    await assert.rejects(
+      t.as(adminScope(t.compliance, ['incidents']), (tx) =>
+        tx.query(
+          `INSERT INTO privacy.incident_patient (incident_id, patient_id, organisation_id, audit_event_ids, created_by)
+           VALUES ($1::uuid, $2::uuid, $3::uuid, '{}', $4::uuid)`,
+          [id, p3.patientId, ORG, t.compliance.seeded.principalId],
+        ),
+      ),
+      /closed incident is final/,
+    );
+    await assert.rejects(
+      t.as(adminScope(t.compliance, ['incidents']), (tx) =>
+        tx.query(
+          `UPDATE privacy.incident_patient SET audit_event_ids = audit_event_ids || $2::uuid[] WHERE incident_id = $1::uuid`,
+          [id, [uuidv7()]],
+        ),
+      ),
+      /closed incident is final/,
     );
     // Validation.
     const body = { title: 'T', description: 'D', severity: 'low', discoveredAt: disc };

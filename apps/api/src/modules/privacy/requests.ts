@@ -443,6 +443,11 @@ export class RequestService {
           [id, person, now, reason],
         );
         change = { status: 'refused' };
+        // BE20-F2: a refused request leaves no live assembly behind (it would hold the one-live-package index forever).
+        await tx.query(
+          `UPDATE privacy.export_package SET status = 'failed', failure_code = 'privacy.request_refused' WHERE request_id = $1::uuid AND status = 'assembling'`,
+          [id],
+        );
       } else if (decision === 'approve') {
         if (kind === 'deletion') throw new BlockedOnDecisionError();
         if (status !== 'identity_verified') throw new InvalidTransitionError();
