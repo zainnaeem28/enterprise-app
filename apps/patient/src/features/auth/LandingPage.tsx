@@ -3,7 +3,7 @@ import { Button, LoadingState } from '@ehr/ui';
 import type { SessionInfo } from '@ehr/app-shell';
 import type { PatientRuntime } from '../../app/runtime.js';
 import { ProblemPage } from './ProblemPage.js';
-import type { Problem } from './problems.js';
+import { problemCodeOf, requestIdOf, type Problem } from './problems.js';
 
 type State =
   | { kind: 'loading' }
@@ -33,9 +33,21 @@ export function LandingPage({
           problem: runtime.lastSessionProblem() ?? { code: 'identity.sign_in_failed' },
         });
       }
-      const { data } = await runtime.api.GET('/api/v1/me', {
+      const { data, error, response } = await runtime.api.GET('/api/v1/me', {
         params: { header: runtime.api.header },
       });
+      if (error !== undefined || !response.ok) {
+        const requestId = requestIdOf(error);
+        return setState({
+          kind: 'problem',
+          problem: {
+            code: problemCodeOf(response.status, error),
+            ...(requestId === undefined ? {} : { requestId }),
+          },
+        });
+      }
+      // Assumption (FE03-R1-02): `getMe` is an opaque object in the contract; we read only an optional
+      // `patients` array. The displayed name is the session principal (`/auth/session` displayName).
       const patients = (data as { patients?: unknown } | undefined)?.patients;
       setState({
         kind: 'signed-in',

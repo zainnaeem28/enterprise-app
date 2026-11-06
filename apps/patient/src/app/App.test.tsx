@@ -127,6 +127,20 @@ describe('landing after the callback', () => {
   });
 
   it.each([
+    [409, 'patient.merged', 'This account was combined with another'],
+    [503, 'kernel.unavailable', 'Sign-in is not available right now'],
+    [401, 'auth.unauthenticated', 'You are not signed in'],
+  ])(
+    'a valid session but GET /me answering %i shows its own state, not "not linked"',
+    async (status, code, title) => {
+      window.history.replaceState(null, '', '/account');
+      mount((r) => (new URL(r.url).pathname === '/api/v1/me' ? json(status, { code }) : happy(r)));
+      expect(await screen.findByRole('heading', { name: title })).toBeInTheDocument();
+      expect(screen.queryByText(/not linked/)).not.toBeInTheDocument();
+    },
+  );
+
+  it.each([
     ['signin.cancelled', 'Sign-in was cancelled'],
     ['signin.expired', 'Your sign-in took too long'],
     ['identity.sign_in_failed', 'We could not sign you in'],
