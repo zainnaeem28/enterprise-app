@@ -83,7 +83,7 @@ describe('reporting (BE-21) on PostgreSQL 17', () => {
   }
   async function mkJob(
     task: string,
-    state: 'ready' | 'running' | 'failed' | 'dead',
+    state: 'ready' | 'running' | 'running_last' | 'failed' | 'dead',
     payload: object = {},
   ): Promise<void> {
     const key = `${task}:${++seq}`;
@@ -94,11 +94,13 @@ describe('reporting (BE-21) on PostgreSQL 17', () => {
     const set =
       state === 'running'
         ? "locked_at = now(), locked_by = 'w1'"
-        : state === 'failed'
-          ? 'attempts = 1'
-          : state === 'dead'
-            ? 'attempts = max_attempts'
-            : 'attempts = 0';
+        : state === 'running_last'
+          ? "locked_at = now(), locked_by = 'w2', attempts = max_attempts"
+          : state === 'failed'
+            ? 'attempts = 1'
+            : state === 'dead'
+              ? 'attempts = max_attempts'
+              : 'attempts = 0';
     await q(`UPDATE queue._private_jobs SET ${set} WHERE key = $1`, [key]);
   }
 
@@ -142,6 +144,7 @@ describe('reporting (BE-21) on PostgreSQL 17', () => {
 
       await mkJob('notifications.send', 'ready');
       await mkJob('notifications.send', 'running');
+      await mkJob('notifications.send', 'running_last', { connectionId: down });
       await mkJob('notifications.send', 'failed');
       await mkJob('notifications.send', 'dead', { connectionId: down });
       await mkJob('notifications.send', 'dead', { connectionId: down });
@@ -226,7 +229,7 @@ describe('reporting (BE-21) on PostgreSQL 17', () => {
         string,
         unknown
       >;
-      assert.deepEqual([n['ready'], n['running'], n['failed'], n['dead']], [1, 1, 1, 2]);
+      assert.deepEqual([n['ready'], n['running'], n['failed'], n['dead']], [1, 2, 1, 2]);
       assert.ok(Number(n['oldest_ready_age_s']) >= 119);
       const s = rows.find((x) => x['task_identifier'] === 'scheduling.expire_holds') as Record<
         string,

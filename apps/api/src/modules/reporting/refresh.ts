@@ -49,7 +49,7 @@ export async function runRefreshOps(deps: RefreshDeps, orgId: string): Promise<R
        dead AS (
          SELECT payload ->> 'connectionId' AS connection_id, count(*)::int AS n
          FROM queue._private_jobs
-         WHERE attempts >= max_attempts AND payload ->> 'connectionId' ~ '^[0-9a-f-]{36}$'
+         WHERE locked_at IS NULL AND attempts >= max_attempts AND payload ->> 'connectionId' ~ '^[0-9a-f-]{36}$'
          GROUP BY 1)
        INSERT INTO reporting.ops_integration_health
          (organisation_id, connection_id, kind, vendor, enabled, health, circuit_state, health_changed_at, last_success_at,
@@ -85,9 +85,9 @@ export async function runRefreshOps(deps: RefreshDeps, orgId: string): Promise<R
       `INSERT INTO reporting.ops_queue (organisation_id, task_identifier, ready, running, failed, dead, oldest_ready_age_s, refreshed_at)
        SELECT $1, t.identifier,
               count(*) FILTER (WHERE j.locked_at IS NULL AND j.attempts = 0 AND j.run_at <= now())::int,
-              count(*) FILTER (WHERE j.locked_at IS NOT NULL AND j.attempts < j.max_attempts)::int,
+              count(*) FILTER (WHERE j.locked_at IS NOT NULL)::int,
               count(*) FILTER (WHERE j.locked_at IS NULL AND j.attempts > 0 AND j.attempts < j.max_attempts)::int,
-              count(*) FILTER (WHERE j.attempts >= j.max_attempts)::int,
+              count(*) FILTER (WHERE j.locked_at IS NULL AND j.attempts >= j.max_attempts)::int,
               floor(extract(epoch FROM now() - min(j.run_at) FILTER (WHERE j.locked_at IS NULL AND j.attempts = 0 AND j.run_at <= now())))::int,
               now()
        FROM queue._private_jobs j JOIN queue._private_tasks t ON t.id = j.task_id

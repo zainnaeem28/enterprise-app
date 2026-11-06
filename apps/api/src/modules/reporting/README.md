@@ -34,4 +34,6 @@ R1 operations read models and the dashboard feed (ARCHITECTURE 22.15, 29.4, 33.1
 - **O-3.** Dead letters per connection are the dead jobs whose payload carries `connectionId`; jobs without it appear only in `ops_queue.dead`. "Last success" looks back 35 days.
 - **O-4.** `ops_calendar_staleness` is derived from `scheduling.busy_block.synced_at`; a clinician with a link but no busy block yet is not listed until the calendar-sync ticket (BE-14) provides a link table to read.
 - **O-5.** Queue statistics are deployment-wide (the queue has no organisation column); they are stored under the refreshing organisation.
+- **Feed snapshot (BE21-F2).** The feed reads every model in one SQL statement, so a refresh committing mid-read cannot produce a mix of two runs.
+- **Dead vs running (BE21-F1).** dead = `locked_at IS NULL AND attempts >= max_attempts`; running = `locked_at IS NOT NULL` (graphile-worker raises `attempts` at lock time).
 - **O-6.** The feed is `stale: true` when no model row is younger than 180 s (three missed minutes).

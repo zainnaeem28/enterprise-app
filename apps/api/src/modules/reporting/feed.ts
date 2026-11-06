@@ -64,36 +64,37 @@ const iso = (v: unknown): string | null =>
   v === null || v === undefined ? null : new Date(v as Date).toISOString();
 
 export async function readOpsFeed(tx: Tx, withCompliance: boolean): Promise<OpsFeed> {
-  const health = (
+  // One statement = one snapshot: a refresh committing between separate reads must not give a feed that mixes two runs (BE21-F2).
+  const snap = (
     await tx.query(
-      `SELECT * FROM reporting.ops_integration_health ORDER BY kind, vendor, connection_id`,
-    )
-  ).rows as Row[];
-  const queues = (
-    await tx.query(
-      `SELECT * FROM reporting.ops_queue ORDER BY dead DESC, failed DESC, task_identifier`,
-    )
-  ).rows as Row[];
-  const cals = (
-    await tx.query(
-      `SELECT * FROM reporting.ops_calendar_staleness ORDER BY stale DESC, last_synced_at, clinician_principal_id`,
-    )
-  ).rows as Row[];
-  const alerts = (
-    await tx.query(
-      `SELECT * FROM reporting.ops_alert_backlog
-       ORDER BY CASE severity WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END, alert_type, status`,
-    )
-  ).rows as Row[];
-  const age = (
-    await tx.query(
-      `SELECT max(r) AS refreshed_at, floor(extract(epoch FROM now() - max(r)))::int AS age_s FROM (
-         SELECT max(refreshed_at) AS r FROM reporting.ops_integration_health UNION ALL
-         SELECT max(refreshed_at) FROM reporting.ops_queue UNION ALL
-         SELECT max(refreshed_at) FROM reporting.ops_calendar_staleness UNION ALL
-         SELECT max(refreshed_at) FROM reporting.ops_alert_backlog) s`,
+      `SELECT
+         (SELECT coalesce(jsonb_agg(to_jsonb(t)), '[]') FROM (SELECT * FROM reporting.ops_integration_health ORDER BY kind, vendor, connection_id) t) AS health,
+         (SELECT coalesce(jsonb_agg(to_jsonb(t)), '[]') FROM (SELECT * FROM reporting.ops_queue ORDER BY dead DESC, failed DESC, task_identifier) t) AS queues,
+         (SELECT coalesce(jsonb_agg(to_jsonb(t)), '[]') FROM (SELECT * FROM reporting.ops_calendar_staleness ORDER BY stale DESC, last_synced_at, clinician_principal_id) t) AS cals,
+         (SELECT coalesce(jsonb_agg(to_jsonb(t)), '[]') FROM (SELECT * FROM reporting.ops_alert_backlog
+            ORDER BY CASE severity WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END, alert_type, status) t) AS alerts,
+         (SELECT max(r) FROM (
+            SELECT max(refreshed_at) AS r FROM reporting.ops_integration_health UNION ALL
+            SELECT max(refreshed_at) FROM reporting.ops_queue UNION ALL
+            SELECT max(refreshed_at) FROM reporting.ops_calendar_staleness UNION ALL
+            SELECT max(refreshed_at) FROM reporting.ops_alert_backlog) s) AS refreshed_at,
+         (SELECT floor(extract(epoch FROM now() - max(r)))::int FROM (
+            SELECT max(refreshed_at) AS r FROM reporting.ops_integration_health UNION ALL
+            SELECT max(refreshed_at) FROM reporting.ops_queue UNION ALL
+            SELECT max(refreshed_at) FROM reporting.ops_calendar_staleness UNION ALL
+            SELECT max(refreshed_at) FROM reporting.ops_alert_backlog) s) AS age_s,
+         ${
+           withCompliance
+             ? `(SELECT coalesce(jsonb_agg(to_jsonb(t)), '[]') FROM (SELECT metric, age_bucket, grants FROM reporting.compliance_btg_summary ORDER BY metric, age_bucket) t)`
+             : `NULL::jsonb`
+         } AS btg`,
     )
   ).rows[0] as Row;
+  const health = snap['health'] as Row[];
+  const queues = snap['queues'] as Row[];
+  const cals = snap['cals'] as Row[];
+  const alerts = snap['alerts'] as Row[];
+  const age = snap;
   // An empty model set (never refreshed, or genuinely nothing to show) is reported as stale only when it has never been written.
   const ageS = numOrNull(age['age_s']);
   const feed: OpsFeed = {
@@ -149,11 +150,7 @@ export async function readOpsFeed(tx: Tx, withCompliance: boolean): Promise<OpsF
     })),
   };
   if (withCompliance) {
-    const btg = (
-      await tx.query(
-        `SELECT metric, age_bucket, grants FROM reporting.compliance_btg_summary ORDER BY metric, age_bucket`,
-      )
-    ).rows as Row[];
+    const btg = snap['btg'] as Row[];
     feed.compliance = {
       btg: btg.map((b) => ({
         metric: b['metric'] as string,
