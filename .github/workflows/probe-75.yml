@@ -1,7 +1,7 @@
-name: axe-75
+name: probe-75
 on:
   push:
-    branches: [ci/HEAAA-75-axe-55e8ac5]
+    branches: [ci/HEAAA-75-probe-55e8ac5]
 permissions:
   contents: read
 jobs:
@@ -19,11 +19,11 @@ jobs:
       - run: pnpm --filter @ehr/ui exec playwright install --with-deps chromium
       - run: pnpm --filter @ehr/ui exec playwright --version
       - id: run
-        run: mkdir -p packages/ui/dist-reports && pnpm --filter @ehr/ui test:a11y 2>&1 | tee packages/ui/dist-reports/playwright-output.txt
+        run: mkdir -p packages/ui/dist-reports && pnpm --filter @ehr/ui test:a11y -- zz-overflow-probe 2>&1 | tee packages/ui/dist-reports/playwright-output.txt
         continue-on-error: true
       - uses: actions/upload-artifact@v4
         with:
-          name: axe-report-55e8ac5
+          name: overflow-probe-55e8ac5
           path: |
             packages/ui/dist-reports
             packages/ui/test-results
