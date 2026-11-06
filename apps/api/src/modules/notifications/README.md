@@ -1,0 +1,52 @@
+# notifications module (BE-06)
+
+Owner: Backend Engineer. Migrations `0600`-`0601`; API side here, worker side in `apps/worker/src/jobs/notifications`.
+Design: ARCHITECTURE 22.13, 22.16, 24, 25.7, 33.1; SHARED-BOUNDARIES 8.3 (BD-10), 3.2 rule 7; PRD BR-08, BR-23, BR-36; RA-R1-05.
+Scope: templates, notifications (send, dedupe, cancel), delivery receipts, in-app reads, recipient resolution, merge and export
+participants. **Staff alerts (`staff_alert*`) are BE-07.**
+
+## What it does
+
+| Interface (ARCHITECTURE 24)                                        | Where                           | Behaviour                                                                                                                                                                                                                                                                                                    |
+| ------------------------------------------------------------------ | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `send(templateKey, recipientRef, variables, dedupeKey, sendAfter)` | API `send.ts`                   | Validates names and values against the allowlist, scans a location name for condition text, inserts one `queued` row per channel of the latest published version and enqueues `notifications.send_message` **in the caller's transaction**. A repeated dedupe key creates nothing (unique index, savepoint). |
+| `cancel(dedupeKey prefix)`                                         | API `send.ts`                   | `queued`/`failed` rows whose key starts with the prefix become `cancelled`; returns the count. A prefix needs a resource part (`reminder:<id>`), never just a name.                                                                                                                                          |
+| Templates                                                          | API `templates.ts`              | `createDraft`, `updateDraft`, `renderCheck`, `publish`. A version is a set of rows (channel x language). Check = every channel x every configured language renders, no condition text, channel limits. Publish re-runs it; content is frozen afterwards.                                                     |
+| Recipient resolution (rule 7)                                      | `recipient.ts`                  | `RecipientContributor` per kind, injected. Returns permitted channels with address, language, quiet hours, preferences applied. `applyCommunicationPreferences` is the rule (TC-NT-08). Addresses are never stored.                                                                                          |
+| Send job                                                           | worker `send-message.ts`        | claim -> resolve -> render -> vendor call via BE-02 `callVendor` -> record. See the header of that file.                                                                                                                                                                                                     |
+| Channel adapters                                                   | worker `adapters.ts`            | `EmailAdapter`, `SmsAdapter`, `PushAdapter` implement BE-02 `VendorAdapter` over an injected `ProviderClient`. No real provider is chosen (C-10, C-11).                                                                                                                                                      |
+| `notifications.on_receipt`                                         | worker `receipt.ts`             | Inbound handler for `(source, 'delivery_receipt')`: inserts a receipt for a known sent notification, idempotent by vendor event, on the **survivor's** patient ID.                                                                                                                                           |
+| `repointPatient`, `exportPart`                                     | API `merge.ts`                  | Registered with the kernel registries. Notification `queued`/`sending`/`failed` re-point; `sent`/`suppressed`/`cancelled`, receipts and reads are kept. Counts add up; scope enforced.                                                                                                                       |
+| In-app notices                                                     | API `send.ts`                   | `listInApp`, `markRead` (`GET /notices`, `POST /notices/{id}/read`).                                                                                                                                                                                                                                         |
+| Event published                                                    | `notifications.delivery_failed` | On a final failure or the last attempt (operations view, BR-33).                                                                                                                                                                                                                                             |
+
+## The PHI rule, in layers (BR-23, BR-36, RA-R1-05, TC-NT-01/05/06)
+
+1. **Allowlist** (`allowlist.ts`, copied to the migration): `start_at`, `end_at`, `offer_expires_at`, `location_name`, the five links, `code`, `time_zone`, `event_uid`. No service, diagnosis, medicine, test or clinician field exists.
+2. **Template save**: a declaration or placeholder off the list is refused (422 `notifications.render_check_failed`), and again by the table (`variables_declared_ok`, `guard_template`).
+3. **Send**: a value of the wrong type, an unknown name, a link off the deployment hosts, or a location name that spells out a condition is refused (400, field names only).
+4. **Render check** (publish gate): every row rendered for every configured language and channel, static text and output scanned (`forbidden.ts`), plus `deployment_term`s.
+5. **Send job**: the rendered output is scanned again; a hit is a final failure `phi_guard`, nothing leaves.
+6. Rows hold template key/version and allowlisted values only; no address and no text. Logs and the vendor call log hold IDs and error classes only (tested).
+
+## Open notes (for Architect / Orchestrator / Security)
+
+- **NOT-N1 preferences belong to `patient`** (SHARED-BOUNDARIES 3.2 rule 7). This module owns the rule that applies them (`applyCommunicationPreferences`) and consumes the contributor; the `communication_preference` table, its merge rule and the contributor registration are BE-08. Until BE-08, recipients resolve through whatever the composition root injects; a missing contributor **suppresses** (`no_recipient`), it never falls back to a stored address. **PM-confirm-3** (are sign-in codes exempt from preferences) is unanswered, so nothing is exempt and the tests assert only the preference part.
+- **NOT-N2 no HTTP routes.** The admin template routes and `/notices` need the platform controller layer and guard policy (same as INT-N2). The service boundary is tested against the real database; wiring is an integration step. Route permission `notifications.template.manage` and elevation are the guard's job.
+- **NOT-N3 T-STAFF deferred** (same reason as identity 0502): it needs `patient.staff_scope` (BE-08). Until then a `google`-realm session can **insert** a queued notification (so `send()` works from staff flows) but can neither read nor cancel patient-recipient rows and cannot read receipts. `cancel()` returns the count so a caller notices. BE-08/INT-01 adds the T-STAFF SELECT/UPDATE policies. The staff insert policy has no patient predicate for the same reason; the row is queued-only, carries no content, and cannot be read back.
+- **NOT-N4 catalog check `M-5-patient-guard`** flags `notifications.notification`, `delivery_receipt`, `in_app_read` until `patient.guard_open_patient` exists (BE-08 attaches it). Same situation as AUD-N8.
+- **NOT-N5 service name excluded.** SHARED-BOUNDARIES 8.3 allows the service's neutral display name, but this ticket's acceptance and TC-NT-01 ("only a log-in prompt and links") do not, so the allowlist has no service field. Adding one is a contract change plus a migration edit. `time_zone` was added so times print in the location's zone. Clinician name stays out (BQ-2 open).
+- **NOT-N6 no real provider.** `ProviderClient` is the seam; the tests use a recording double and prove only our side. Hostnames are never read from `settings` (INT-N7). C-10/C-11 are not provisioned, so TC-NT-02/03/04 sandbox parts stay blocked as TEST-CASES 3 says.
+- **NOT-N7 dedupe key shape.** Stored as `<caller key>:<channel>` (one row per channel); unique per organisation. The caller's key must not contain the recipient ID (checked in the service and by CHECK).
+- **NOT-N8 shared files are copied**, not imported, between API and worker (separate packages): `allowlist.ts`, `forbidden.ts`, `render.ts`, `recipient.ts`, `ids.ts`. A test compares their hashes; the job lists are compared the same way.
+- **NOT-N9 `on_receipt` is a handler, not a job.** It runs inside `integration_core.dispatch_inbound`; it reads a **normalised** body (`providerMessageId`, `eventId`, `status`, `occurredAt`). Vendor wire formats arrive with the real adapters.
+- **NOT-N10 crash window.** A job that dies after the vendor accepted and before `sent` is written retries with the same `n-<id>` token; vendors that honour it do not send twice, and BE-02's `find` covers those that do not. A row left `sending` is claimable again.
+- **NOT-N11 configured languages** have no setting in the catalogue yet; the template service takes them from an injected function (PRD: English only in R1, B8 open).
+- **NOT-N12 BE-07** must add the staff-alert tables to `merge.ts` (one participant per module).
+
+## Tests
+
+No database: `pnpm --filter @ehr/api build && node --test apps/api/dist/src/modules/notifications/notifications.test.js`.
+Real PostgreSQL 17 (superuser URL, throwaway server):
+`EHR_TEST_ADMIN_URL=... node --test apps/api/dist/src/modules/notifications/notifications.dbtest.js` and
+`EHR_TEST_ADMIN_URL=... node --test apps/worker/dist/jobs/notifications/notifications.dbtest.js`.
