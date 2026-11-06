@@ -51,7 +51,7 @@ export const ownerRightsViews = [];
 /** Views reporting_ro may read (C0/C1 only, M-4). */
 export const reportingViews = [];
 /** Tables with a patient_id column that are exempt from the merge write guard (SHARED-BOUNDARIES 9.2). */
-export const patientGuardExempt = [];
+export const patientGuardExempt = ['audit.event', 'audit.btg_grant'];
 /** SECURITY DEFINER functions of SHARED-BOUNDARIES 6.2 and ARCHITECTURE 21.6 (schema.name). Empty: none exist yet. */
 export const definerInventory = [];
 
