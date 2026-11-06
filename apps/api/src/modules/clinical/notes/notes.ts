@@ -377,6 +377,14 @@ export class NoteService {
     if (text.trim().length < 1 || Buffer.byteLength(text, 'utf8') > MAX_ADDENDUM_BYTES)
       throw new NotesValidationError(['body']);
     const n = await this.load(tx, id);
+    const enc = (
+      await tx.query(`SELECT location_id FROM clinical.encounter WHERE id = $1::uuid`, [
+        String(n['encounter_id']),
+      ])
+    ).rows[0] as Row | undefined;
+    if (enc === undefined) throw new NotesNotFoundError();
+    // A signed addendum is a signature: an assistant or trainee who prepared the draft cannot append to the locked note (27.3, BR-12).
+    if (!ctx.grants.has(SIGN_PERMISSION, String(enc['location_id']))) throw new NotesScopeError();
     const live = await this.livePatient(tx, String(n['patient_id']));
     await this.deps.access.requireChart(tx, ctx, meta, live);
     try {

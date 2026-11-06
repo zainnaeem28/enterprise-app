@@ -304,6 +304,14 @@ BEGIN
   IF v_who IS NOT NULL AND NEW.author_principal_id <> v_who THEN
     RAISE EXCEPTION 'an addendum is written by its author' USING ERRCODE = 'PS001';
   END IF;
+  -- A signed addendum is a signature: only a holder of clinical.note.sign at the encounter's place writes one (27.3, BR-11, BR-12).
+  IF NOT EXISTS (SELECT 1 FROM identity.role_assignment ra
+                   JOIN identity.role_permission rp ON rp.role_id = ra.role_id
+                   JOIN clinical.encounter e ON e.id = v_note.encounter_id
+                  WHERE ra.principal_id = NEW.author_principal_id AND ra.revoked_at IS NULL AND rp.permission_key = 'clinical.note.sign'
+                    AND (ra.location_id IS NULL OR ra.location_id = e.location_id)) THEN
+    RAISE EXCEPTION 'the author of an addendum does not hold clinical.note.sign' USING ERRCODE = 'PS001';
+  END IF;
   IF v_note.patient_id <> NEW.patient_id
      AND NOT EXISTS (SELECT 1 FROM patient.patient_merge m WHERE m.merged_id = v_note.patient_id AND m.final_survivor_id = NEW.patient_id) THEN
     RAISE EXCEPTION 'an addendum belongs to the note''s patient or the survivor of a merge' USING ERRCODE = 'PS001';

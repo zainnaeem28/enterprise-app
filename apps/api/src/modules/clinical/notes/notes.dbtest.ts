@@ -820,6 +820,22 @@ describe('clinical notes (BE-17) on PostgreSQL 17', () => {
       });
       assert.equal(add.status, 201, add.body);
       assert.equal(add.json()['authorPrincipalId'], t.supervisor.seeded.principalId);
+      // BE17-F1: the trainee who wrote the released note holds no clinical.note.sign, so cannot append a signed addendum, in the route or in SQL
+      const byTrainee = await t.scall(t.trainee, 'POST', `/api/v1/notes/${id}/addenda`, {
+        body: 'SYNTHETIC trainee addendum',
+      });
+      assert.equal(byTrainee.status, 403, byTrainee.body);
+      await assert.rejects(
+        t.as(t.staffScope(t.trainee), (tx) =>
+          tx.query(
+            `INSERT INTO clinical.note_addendum (id, organisation_id, note_id, patient_id, author_principal_id, body, created_by)
+             SELECT gen_random_uuid(), organisation_id, id, patient_id, $2::uuid, 'x', $2::uuid FROM clinical.note WHERE id = $1`,
+            [id, t.trainee.seeded.principalId],
+          ),
+        ),
+        (e: { code?: string }) => e.code === 'PS001',
+        'the database refuses a trainee addendum too',
+      );
     });
 
     test('a trainee with no supervisor on file cannot submit (422); the encounter of a trainee completes with the note submitted', async () => {
@@ -911,6 +927,32 @@ describe('clinical notes (BE-17) on PostgreSQL 17', () => {
       assert.equal(byDoctor.status, 200, byDoctor.body);
       assert.equal(byDoctor.json()['signedBy'], doctor.seeded.principalId);
       assert.equal(byDoctor.json()['authorPrincipalId'], t.assistant.seeded.principalId);
+      // BE17-F1: the assistant who prepared the draft (assigned through `authored`) cannot append a signed addendum to the locked note
+      const byAssistant = await t.scall(
+        t.assistant,
+        'POST',
+        `/api/v1/notes/${String(d['id'])}/addenda`,
+        { body: 'SYNTHETIC assistant addendum' },
+      );
+      assert.equal(byAssistant.status, 403, byAssistant.body);
+      await assert.rejects(
+        t.as(t.staffScope(t.assistant), (tx) =>
+          tx.query(
+            `INSERT INTO clinical.note_addendum (id, organisation_id, note_id, patient_id, author_principal_id, body, created_by)
+             SELECT gen_random_uuid(), organisation_id, id, patient_id, $2::uuid, 'x', $2::uuid FROM clinical.note WHERE id = $1`,
+            [d['id'], t.assistant.seeded.principalId],
+          ),
+        ),
+        (e: { code?: string }) => e.code === 'PS001',
+        'the database refuses an assistant addendum too',
+      );
+      const byDoctorAdd = await t.scall(
+        doctor,
+        'POST',
+        `/api/v1/notes/${String(d['id'])}/addenda`,
+        { body: 'SYNTHETIC doctor addendum' },
+      );
+      assert.equal(byDoctorAdd.status, 201, byDoctorAdd.body);
       // an assistant of nobody (not assigned) cannot even prepare a draft for this patient
       const lone = await staffMember(t.k, 'assistant', A1, 'Assistant of nobody');
       const refused = await t.scall(lone, 'POST', `/api/v1/encounters/${encounterId}/notes`, {});
