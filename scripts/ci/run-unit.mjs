@@ -1,0 +1,72 @@
+// Unit-test gate. Runs every workspace `test` script and the root boundary test, then requires a
+// JUnit report per suite under reports/unit/. Fails when: no suite exists, a suite exits non-zero,
+// a report is missing/malformed, a suite ran zero tests, or any test was skipped.
+//
+// Contract for workspace packages: `test` must write JUnit XML to $JUNIT_DIR/<anything>.xml
+// (for example `node --test --test-reporter=junit --test-reporter-destination=$JUNIT_DIR/kernel.xml`).
+import { spawnSync } from 'node:child_process';
+import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
+
+const root = resolve(import.meta.dirname, '../..');
+const outDir = join(process.env.REPORT_ROOT ?? join(root, 'reports'), 'unit');
+const junitDir = join(outDir, 'junit');
+rmSync(outDir, { recursive: true, force: true });
+mkdirSync(junitDir, { recursive: true });
+
+const failures = [];
+const run = (label, cmd, args, extraEnv = {}) => {
+  console.log(`\n== ${label}: ${cmd} ${args.join(' ')}`);
+  const r = spawnSync(cmd, args, {
+    cwd: root,
+    stdio: 'inherit',
+    env: { ...process.env, JUNIT_DIR: junitDir, ...extraEnv },
+  });
+  if (r.status !== 0) failures.push(`${label} exited with ${r.status ?? r.signal}`);
+  return r.status === 0;
+};
+
+// Root boundary test (F-01): a failing and a passing fixture. Wrapped into a JUnit record here.
+const boundaryOk = run('boundary', 'pnpm', ['run', 'test:boundary']);
+writeFileSync(
+  join(junitDir, 'boundary.xml'),
+  `<?xml version="1.0" encoding="UTF-8"?>\n<testsuites><testsuite name="boundary" tests="1" failures="${boundaryOk ? 0 : 1}" skipped="0">` +
+    `<testcase classname="boundary" name="upward import rejected, downward import accepted">${boundaryOk ? '' : '<failure message="test:boundary failed"/>'}</testcase></testsuite></testsuites>\n`,
+);
+
+// Workspace suites. --if-present: a package without `test` is not a suite; the count check below
+// still guarantees at least one suite ran.
+run('workspace tests', 'pnpm', ['-r', '--if-present', 'run', 'test']);
+
+let tests = 0;
+let skipped = 0;
+let failed = 0;
+const reports = readdirSync(junitDir).filter((f) => f.endsWith('.xml'));
+for (const f of reports) {
+  const xml = readFileSync(join(junitDir, f), 'utf8');
+  if (!/<testsuite[ s>]/.test(xml)) {
+    failures.push(`${f}: not a JUnit report`);
+    continue;
+  }
+  const cases = (xml.match(/<testcase[\s>]/g) ?? []).length;
+  const skips = (xml.match(/<skipped[\s/>]/g) ?? []).length;
+  const fails = (xml.match(/<(failure|error)[\s/>]/g) ?? []).length;
+  console.log(`${f}: ${cases} tests, ${skips} skipped, ${fails} failed`);
+  if (cases === 0) failures.push(`${f}: suite ran zero tests`);
+  tests += cases;
+  skipped += skips;
+  failed += fails;
+}
+if (skipped > 0) failures.push(`${skipped} skipped test(s): skipped tests count as failure`);
+if (failed > 0) failures.push(`${failed} failed test case(s) in reports`);
+if (tests === 0) failures.push('no tests ran (an empty suite fails)');
+
+writeFileSync(
+  join(outDir, 'summary.json'),
+  JSON.stringify({ reports, tests, skipped, failed, failures }, null, 2),
+);
+if (failures.length > 0) {
+  for (const f of failures) console.error(`::error::${f}`);
+  process.exit(1);
+}
+console.log(`unit: ${tests} tests in ${reports.length} report(s), none skipped or failed`);

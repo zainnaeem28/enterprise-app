@@ -1,0 +1,2 @@
+# Trivy suppressions. One finding id per line with a comment: owner, reason, expiry date.
+# None exist today.

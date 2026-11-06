@@ -1,0 +1,301 @@
+# Pull-request CI (HEAAA-68 / F-02; DEVOPS-PLAN 4.2 and 5.1).
+#
+# Rules for this file (enforced by the `workflow-hygiene` job):
+#   - every `uses:` is a full 40-character commit SHA from .github/ACTIONS-ALLOWLIST.md;
+#   - `permissions` is declared (none by default, `contents: read` per job);
+#   - no `continue-on-error`, no `|| true`; every job has a timeout;
+#   - no secrets other than the read-only GITHUB_TOKEN and no cloud credentials, so nothing here can
+#     reach a cloud account, including from forks.
+#
+# Jobs that need application code are NOT in this file and are NOT passing: integration-db,
+# migration-check, contract (Schemathesis), a11y-smoke, e2e-smoke and bundle-budget are pending in
+# F-09 (HEAAA-79). Container image scanning has nothing to scan until a Dockerfile exists; the job
+# says so explicitly instead of reporting an image pass.
+name: ci
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions: {}
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CI_TOOLS_DIR: ${{ github.workspace }}/.ci-tools
+  CI: 'true'
+
+jobs:
+  workflow-hygiene:
+    name: workflow-hygiene
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Install actionlint (pinned, sha256-verified)
+        run: scripts/ci/install-tools.sh actionlint
+      - name: actionlint
+        run: |
+          mkdir -p reports/workflow-hygiene
+          "$CI_TOOLS_DIR/bin/actionlint" -version > reports/workflow-hygiene/actionlint-version.txt
+          "$CI_TOOLS_DIR/bin/actionlint" -color -verbose 2>&1 | tee reports/workflow-hygiene/actionlint.txt
+      - name: SHA pins, allow-list, permissions, no swallowed failures
+        run: node scripts/ci/check-workflow-hygiene.mjs 2>&1 | tee reports/workflow-hygiene/hygiene.txt
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: workflow-hygiene-reports
+          path: reports/workflow-hygiene
+          if-no-files-found: error
+          retention-days: 30
+
+  lint-types:
+    name: lint-types
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Install (frozen lockfile)
+        run: corepack enable && pnpm install --frozen-lockfile
+      - name: Lint, format, types
+        run: |
+          mkdir -p reports/lint-types
+          {
+            echo "== pnpm lint"; pnpm lint
+            echo "== pnpm format:check"; pnpm format:check
+            echo "== pnpm typecheck"; pnpm typecheck
+          } 2>&1 | tee reports/lint-types/lint-types.txt
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: lint-types-reports
+          path: reports/lint-types
+          if-no-files-found: error
+          retention-days: 30
+
+  unit:
+    name: unit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Install (frozen lockfile)
+        run: corepack enable && pnpm install --frozen-lockfile
+      - name: Unit tests (an empty or skipped suite fails)
+        run: node scripts/ci/run-unit.mjs
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: unit-reports
+          path: reports/unit
+          if-no-files-found: error
+          retention-days: 30
+
+  build:
+    name: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Install (frozen lockfile)
+        run: corepack enable && pnpm install --frozen-lockfile
+      - name: Build
+        run: |
+          mkdir -p reports/build
+          pnpm build 2>&1 | tee reports/build/build.txt
+          find apps packages -path '*/node_modules' -prune -o -path '*/dist/*' -type f -print | sort > reports/build/dist-files.txt
+          test -s reports/build/dist-files.txt || { echo "::error::build produced no output files"; exit 1; }
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: build-reports
+          path: reports/build
+          if-no-files-found: error
+          retention-days: 30
+
+  sast:
+    name: sast
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Install Semgrep CE (pinned version, no account, no metrics)
+        run: |
+          python3 -m venv "$RUNNER_TEMP/semgrep-venv"
+          "$RUNNER_TEMP/semgrep-venv/bin/pip" install --quiet "semgrep==1.184.0"
+          echo "$RUNNER_TEMP/semgrep-venv/bin" >> "$GITHUB_PATH"
+      - name: Semgrep with the committed ruleset
+        run: scripts/ci/sast.sh
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: sast-reports
+          path: reports/sast
+          if-no-files-found: error
+          retention-days: 30
+
+  secrets:
+    name: secrets
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Install gitleaks (pinned, sha256-verified)
+        run: scripts/ci/install-tools.sh gitleaks
+      - name: gitleaks (PR commits; full history on main)
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: scripts/ci/secrets.sh
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: secrets-reports
+          path: reports/secrets
+          if-no-files-found: error
+          retention-days: 30
+
+  deps:
+    name: deps
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install OSV-Scanner (pinned, sha256-verified)
+        run: scripts/ci/install-tools.sh osv-scanner
+      - name: OSV-Scanner on pnpm-lock.yaml
+        run: scripts/ci/deps.sh
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: deps-reports
+          path: reports/deps
+          if-no-files-found: error
+          retention-days: 30
+
+  container-scan:
+    name: container-scan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Install Trivy (pinned, sha256-verified)
+        run: scripts/ci/install-tools.sh trivy
+      - name: Trivy config scan, then image scan of every Dockerfile
+        run: scripts/ci/container-scan.sh
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: container-scan-reports
+          path: reports/container-scan
+          if-no-files-found: error
+          retention-days: 30
+
+  sbom:
+    name: sbom
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Install Syft (pinned, sha256-verified)
+        run: scripts/ci/install-tools.sh syft
+      - name: Syft CycloneDX SBOM
+        run: scripts/ci/sbom.sh
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: sbom-reports
+          path: reports/sbom
+          if-no-files-found: error
+          retention-days: 30
+
+  # Single required check for the branch ruleset (when the plan can enforce one). A skipped or
+  # cancelled job is a failure here.
+  ci-status:
+    name: ci-status
+    if: ${{ always() }}
+    needs: [workflow-hygiene, lint-types, unit, build, sast, secrets, deps, container-scan, sbom]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Every required job succeeded
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
+        run: node scripts/ci/check-needs.mjs
