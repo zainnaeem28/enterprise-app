@@ -13,7 +13,7 @@ export const REQUEST_TIMEOUT_MS = 15_000;
 export function bodyLimitFor(method: string, rawPath: string): number {
   const path = rawPath.toLowerCase();
   if (method === 'PATCH' && /^\/api\/v1\/notes\/[^/]+\/?$/.test(path)) return SMALL_BODY_LIMIT;
-  if (path.startsWith('/webhooks/')) return SMALL_BODY_LIMIT;
+  if (isWebhookPath(path)) return SMALL_BODY_LIMIT;
   return JSON_BODY_LIMIT;
 }
 
@@ -30,10 +30,18 @@ export function bodyLimitMiddleware(req: Req, res: Res, next: Next): void {
   next();
 }
 
-/** `verify` hook for the JSON parser: also enforces the limit on chunked bodies. */
+export function isWebhookPath(rawPath: string): boolean {
+  return rawPath.toLowerCase().startsWith('/webhooks/');
+}
+
+/**
+ * `verify` hook for the JSON parser: also enforces the limit on chunked bodies, and keeps the exact bytes for
+ * `/webhooks/*` (vendor signatures are computed over them). No other route retains raw bodies.
+ */
 export function verifyBodySize(req: Req, _res: unknown, buf: Buffer): void {
   if (buf.length > (req.bodyLimit ?? JSON_BODY_LIMIT))
     throw new ApiError(413, 'kernel.payload_too_large');
+  if (isWebhookPath(req.path)) req.rawBody = buf;
 }
 
 /** Request timeout at the API (31.2). SSE streams are exempt. */
