@@ -1,0 +1,28 @@
+diff --git a/db/tools/catalog-lists.mjs b/db/tools/catalog-lists.mjs
+index e9c5323..9f823cb 100644
+--- a/db/tools/catalog-lists.mjs
++++ b/db/tools/catalog-lists.mjs
+@@ -25,6 +25,8 @@ export const policyRoles = [
+   'identity_signin_ro',
+   'directory_ro',
+   'queue_owner',
++  // BE-21: the reporting read models carry one SELECT policy TO reporting_ro (organisation only; C0/C1 operations tables).
++  'reporting_ro',
+   ...functionOwnerRoles,
+ ];
+ /** audit-writing roles: role-level transaction_timeout must be 1..60 s (SAR-10). */
+@@ -58,7 +60,13 @@ export const ownerRightsViews = [
+   'identity.public_clinician',
+ ];
+ /** Views reporting_ro may read (C0/C1 only, M-4). */
+-export const reportingViews = [];
++export const reportingViews = [
++  // BE-21 (reporting, ARCHITECTURE 22.15): the C1 operations read models. compliance_btg_summary is NOT listed: reporting_ro has no right on it.
++  'reporting.ops_integration_health',
++  'reporting.ops_queue',
++  'reporting.ops_calendar_staleness',
++  'reporting.ops_alert_backlog',
++];
+ /** INT01-F6 interim exemptions: emptied by BE-08 (all five tables now carry the guard). */
+ export const interimGuardExempt = [];
+ /** Tables with a patient_id column that are exempt from the merge write guard (SHARED-BOUNDARIES 9.2). */
