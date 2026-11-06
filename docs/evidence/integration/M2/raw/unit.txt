@@ -1,0 +1,338 @@
+
+== boundary: pnpm run test:boundary
+$ node eslint/test-boundary-fixture.mjs
+failing fixture messages: [
+  {
+    "file": "boundary/apps/api/src/modules/audit/violation.ts",
+    "ruleId": "boundaries/module-boundaries",
+    "message": "Import of module \"identity\" from module \"audit\" is not an allowed edge (BD-02: downwards only)."
+  }
+]
+passing fixture messages: []
+PASS: upward import rejected, downward import accepted
+
+== test @ehr/api: pnpm --dir /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-95-sdlc-ticket-int-01-integrate-m2-platform-audit-integration-core-organisation-identity-core-notifications-first-/apps/api run test
+$ pnpm run build && node --test "dist/test/**/*.test.js"
+$ tsc -p tsconfig.json
+✔ every platform route declares a permission and a resolver (1.508018ms)
+✔ the inventory fails a route without a declaration (CI gate) (0.508263ms)
+✔ the inventory fails an empty permission, a missing resolver and an unknown permission (0.301756ms)
+✔ the catalogue holds the 27.2 permissions (spot check) and no duplicates (0.137428ms)
+▶ client-release check (28.6, 38.2 item 20; TC-API-11)
+  ✔ refused: no header -> 400 kernel.client_release_unsupported, no effect (14.490195ms)
+  ✔ refused: malformed (no r prefix) -> 400 kernel.client_release_unsupported, no effect (2.929506ms)
+  ✔ refused: malformed (short sha) -> 400 kernel.client_release_unsupported, no effect (2.530698ms)
+  ✔ refused: malformed (zero) -> 400 kernel.client_release_unsupported, no effect (1.941853ms)
+  ✔ refused: malformed (injection) -> 400 kernel.client_release_unsupported, no effect (1.977059ms)
+  ✔ refused: below min_client_release -> 400 kernel.client_release_unsupported, no effect (1.830695ms)
+  ✔ accepted: N-1, N and N+1 (15.884881ms)
+  ✔ a path in other letter case does not escape the check (2.689025ms)
+  ✔ exempt routes work without the header: four navigations, /healthz, /readyz (6.480477ms)
+  ✔ exemption is by route template and method: POST to a navigation route is still checked (0.887135ms)
+  ✔ the integrations. host is exempt as a whole, including /api/* paths and public/v1 (1.483734ms)
+  ✔ a spoofed integrations-like Host does not exempt a portal request (BR-F05-03) (1.421517ms)
+  ✔ framework exceptions map by status onto the registry, without their message (BR-F05-01) (10.140294ms)
+  ✔ a client header cannot turn the check off (0.812905ms)
+  ✔ SSE: outdated or missing clientRelease -> plain 400 before any event; current is accepted by the check (4.083121ms)
+  ✔ no Access-Control-Allow-* header on portal-host responses, and a preflight is not answered (3.599913ms)
+✔ client-release check (28.6, 38.2 item 20; TC-API-11) (163.441182ms)
+▶ guard, deny by default (27.1, 38.2 item 9)
+  ✔ a handler with no declaration is refused 403 and never runs (1.344362ms)
+  ✔ a declared permission without a session is 401 until identity supplies the policy (1.024212ms)
+  ✔ a public declaration passes (1.041514ms)
+  ✔ an unknown route is the standard 404 (1.059247ms)
+✔ guard, deny by default (27.1, 38.2 item 9) (4.815254ms)
+▶ headers (28.2)
+  ✔ every response carries X-Request-Id and Cache-Control: no-store (success, error, 404, health) (5.544913ms)
+  ✔ a caller request id is echoed when well formed and replaced when not (1.793485ms)
+  ✔ /public/v1/* is the one max-age=60 exception (0.963567ms)
+  ✔ the error body request id equals the response header (0.888608ms)
+✔ headers (28.2) (9.475297ms)
+▶ request limits (31.2)
+  ✔ JSON body over 1 MB -> 413 kernel.payload_too_large; under is accepted (18.062628ms)
+  ✔ note PATCH is limited to 256 KB (4.349499ms)
+  ✔ a chunked body with no Content-Length is limited too (6.329806ms)
+  ✔ malformed JSON -> 400 kernel.validation_failed, body never echoed (1.664723ms)
+  ✔ header block over 16 KB is refused by the server (1.463937ms)
+✔ request limits (31.2) (32.277746ms)
+▶ health (DPR-04)
+  ✔ /healthz is shallow and /readyz reports ready, with no header and no PHI (2.21679ms)
+  ✔ /readyz is 503 kernel.unavailable when draining (5.926889ms)
+  ✔ /readyz is 503 when the database is down or the a declared relation is missing (14.174554ms)
+✔ health (DPR-04) (22.574803ms)
+▶ rate limits (31.3) and timeout (31.2)
+  ✔ writes: 60/min per client, then 429 kernel.rate_limited with Retry-After; reads have their own budget (61.773884ms)
+  ✔ a request over the timeout -> 504 kernel.timeout (159.041628ms)
+✔ rate limits (31.3) and timeout (31.2) (221.082251ms)
+▶ stream shell (32)
+  ✔ an authorised client gets text/event-stream, ping framing, and event: closed on drain (8.475301ms)
+✔ stream shell (32) (8.62902ms)
+✔ validation normalises: NFC, control characters stripped, trimmed, uuid lower-cased (1.539608ms)
+✔ validation failure lists paths and reason codes and never a value (0.844465ms)
+✔ unknown fields: ignored on portal routes, refused when strict (integrations., CN-12) (0.50639ms)
+✔ body must be an object (0.526839ms)
+✔ multiline text keeps line breaks but not other control characters (0.113513ms)
+✔ body limits by route class (31.2) (0.180458ms)
+✔ release header parser: format r<n>.<sha12> (0.256712ms)
+✔ memory limiter: window resets, limit divided by instance count (0.339957ms)
+✔ platform config names bad variables, never values (0.425379ms)
+✔ memory limiter stays bounded under many distinct keys in one window (BR-F05-04) (344.249516ms)
+ℹ tests 49
+ℹ suites 7
+ℹ pass 49
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1365.299025
+
+== test @ehr/staff: pnpm --dir /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-95-sdlc-ticket-int-01-integrate-m2-platform-audit-integration-core-organisation-identity-core-notifications-first-/apps/staff run test
+$ NODE_ENV=test vitest run
+
+ RUN  v5.1.0 /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-95-sdlc-ticket-int-01-integrate-m2-platform-audit-integration-core-organisation-identity-core-notifications-first-/apps/staff
+
+
+ Test Files  2 passed (2)
+      Tests  4 passed (4)
+   Start at  05:08:20
+   Duration  1.69s (environment 58%, transform 14%, tests 13%, setup 9%, import 6%)
+
+
+== test @ehr/worker: pnpm --dir /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-95-sdlc-ticket-int-01-integrate-m2-platform-audit-integration-core-organisation-identity-core-notifications-first-/apps/worker run test
+$ pnpm run build && node --test "dist/**/*.test.js"
+$ tsc -p tsconfig.json
+▶ merkle root
+  ✔ empty is the hash of nothing; one leaf is its leaf hash (1.318484ms)
+  ✔ two and three leaves follow the 0x00 / 0x01 domain separation, an odd node is carried up (0.486493ms)
+  ✔ any change, swap, removal or addition changes the root (1.555669ms)
+  ✔ a leaf cannot be passed off as an inner node (0.302216ms)
+✔ merkle root (4.982637ms)
+▶ anchor hash
+  ✔ depends on every input (0.407114ms)
+✔ anchor hash (0.530286ms)
+▶ the 27.2 catalogue and the 27.3 default mapping as data (a Proposal until G2)
+  ✔ 80 permissions, flags as in 27.2, and compliance slices only on the six slice permissions (2.642678ms)
+  ✔ eleven roles; privileged roles live in admin_pool only; staff roles are location-bound, admin roles are not (0.199724ms)
+  ✔ 27.3: the rows that are easy to get wrong (3.238696ms)
+  ✔ every permission a role holds is in the catalogue, and privileged ones only in privileged roles (1.190072ms)
+  ✔ the checksum is stable and changes with the data (3.893555ms)
+  ✔ expandRole refuses what the database would also refuse (0.872076ms)
+✔ the 27.2 catalogue and the 27.3 default mapping as data (a Proposal until G2) (13.413485ms)
+▶ callVendor (34.2, 34.3)
+  ✔ a good call is recorded once with IDs, outcome, status and latency only (2.959242ms)
+  ✔ the same idempotency token is used on every attempt of one call (0.70898ms)
+  ✔ retries with exponential back-off and logs every attempt; exhaustion is 503 integration.vendor_unavailable (1.370622ms)
+  ✔ a vendor 4xx is not retried, is 502 integration.vendor_rejected and does not count against the circuit (2.595358ms)
+  ✔ a timeout is enforced, aborts the adapter signal, and is logged as timeout (43.114798ms)
+  ✔ after the circuit opens, a call fails fast: adapter not called, attempt logged as rejected/circuit_open (3.523961ms)
+  ✔ disabled connection: refused before it leaves and logged as rejected/disabled (0.348884ms)
+  ✔ no connection row: fails without calling anything; no adapter installed: rejected/no_adapter (0.281227ms)
+  ✔ a vendor without an idempotency token gets a pending row first; after a timeout the vendor is asked before a repeat (34.3) (10.072236ms)
+  ✔ a failed log write after a successful call does not undo it and is reported (0.521609ms)
+  ✔ unknown kind, unknown operation and bad correlation are refused before anything happens (0.431088ms)
+  ✔ an adapter exception with a vendor message never leaks into the error or the log (0.51699ms)
+✔ callVendor (34.2, 34.3) (68.110652ms)
+▶ circuit state (34.2)
+  ✔ opens after 5 consecutive failures, and not after 4 (2.10039ms)
+  ✔ a success resets the consecutive count (0.2508ms)
+  ✔ opens at 50 % errors over 20 calls inside one minute (0.169548ms)
+  ✔ 49 % over 20 calls stays closed; 19 calls are not enough to judge (0.413977ms)
+  ✔ calls older than a minute leave the window (0.194434ms)
+  ✔ half-open after 30 s admits exactly one probe; success closes (0.731543ms)
+  ✔ a failed probe re-opens for another 30 s (0.226716ms)
+  ✔ a released probe slot (vendor 4xx) lets the next call probe (0.170791ms)
+  ✔ state is per connection (0.321373ms)
+✔ circuit state (34.2) (6.127005ms)
+▶ adapter interfaces (acceptance: one per kind)
+  ✔ the six R1 kinds each have an operation list, and the registry refuses duplicates and unknown kinds (1.374028ms)
+✔ adapter interfaces (acceptance: one per kind) (2.244331ms)
+▶ canonical request (SEC-01 O2-1)
+  ✔ is length-prefixed, versioned and stable; the challenge is its SHA-256 (0.665658ms)
+  ✔ a different value, nonce or request ID changes the fingerprint; the value itself is not in the bytes (0.253115ms)
+✔ canonical request (SEC-01 O2-1) (1.09837ms)
+▶ health derivation (34.2)
+  ✔ first failed probe degrades, the second in a row is down; a good probe restores (0.472266ms)
+  ✔ a passing probe with >= 50 % failures over >= 5 recent calls is degraded (0.114134ms)
+✔ health derivation (34.2) (0.828975ms)
+▶ secret cache (9.1: at most 5 minutes, memory only)
+  ✔ reads through once inside the TTL, again after it, and clear() drops everything (0.929073ms)
+  ✔ a TTL above 5 minutes is refused (0.170299ms)
+  ✔ the cached value does not serialise or inspect (0.162646ms)
+✔ secret cache (9.1: at most 5 minutes, memory only) (1.532976ms)
+▶ inbound handler registry
+  ✔ one handler per (source, type); a second is refused; lookup is exact (1.204861ms)
+✔ inbound handler registry (1.382463ms)
+▶ job list
+  ✔ matches ARCHITECTURE 33.1 and the API-side list (0.245281ms)
+✔ job list (0.33007ms)
+ℹ tests 42
+ℹ suites 11
+ℹ pass 42
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 147.501188
+
+== test @ehr/app-shell: pnpm --dir /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-95-sdlc-ticket-int-01-integrate-m2-platform-audit-integration-core-organisation-identity-core-notifications-first-/packages/app-shell run test
+$ NODE_ENV=test vitest run
+
+ RUN  v5.1.0 /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-95-sdlc-ticket-int-01-integrate-m2-platform-audit-integration-core-organisation-identity-core-notifications-first-/packages/app-shell
+
+
+ Test Files  8 passed (8)
+      Tests  57 passed (57)
+   Start at  05:08:24
+   Duration  3.34s (environment 64%, tests 14%, setup 12%, transform 6%, import 4%)
+
+Environment  jsdom was created 8 times · 5.20s total, 64% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+
+== test @ehr/kernel: pnpm --dir /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-95-sdlc-ticket-int-01-integrate-m2-platform-audit-integration-core-organisation-identity-core-notifications-first-/packages/kernel run test
+$ pnpm run build && node --test "dist/**/*.test.js"
+$ tsc -p tsconfig.json
+✔ valid configuration with defaults (1.304356ms)
+✔ the worker requires the organisation for dequeue scope (0.475763ms)
+✔ errors name variables, never values (0.212098ms)
+✔ describeDatabase drops credentials (0.227948ms)
+✔ migrations load in version order and pass the rules (6.984052ms)
+✔ the runner rejects an out-of-order version instead of applying it silently (1.990004ms)
+✔ in-order pending versions are applied, once, in order (1.943917ms)
+✔ a changed or missing applied migration is rejected (0.307057ms)
+✔ the runner fails a directory that contains DML before it touches the database (SBR-17) (0.565289ms)
+✔ scanner ignores comments, strings, identifiers and dollar bodies (1.827148ms)
+✔ E-strings honour backslash escapes (0.175669ms)
+✔ DML ban rejects INSERT (SBR-17) (1.238022ms)
+✔ DML ban rejects UPDATE (SBR-17) (0.568567ms)
+✔ DML ban rejects DELETE (SBR-17) (1.65835ms)
+✔ DML ban rejects MERGE (SBR-17) (0.198542ms)
+✔ DML ban rejects COPY (SBR-17) (1.047866ms)
+✔ DML ban rejects psql \copy (SBR-17) (0.290224ms)
+✔ DML ban rejects TRUNCATE (SBR-17) (0.35678ms)
+✔ DML ban rejects DO block (SBR-17) (0.379582ms)
+✔ DML ban rejects CTE DML (SBR-17) (0.619002ms)
+✔ DML ban rejects SELECT INTO (SBR-17) (0.150993ms)
+✔ DML ban rejects CTAS (SBR-17) (0.419227ms)
+✔ DML ban rejects EXPLAIN ANALYZE INSERT (SBR-17) (0.104075ms)
+✔ DML ban rejects EXPLAIN (ANALYZE) DELETE (SBR-17) (0.063839ms)
+✔ DML ban rejects CREATE RULE with DML action (SBR-17) (0.104496ms)
+✔ DML ban rejects parenthesised INSERT (SBR-17) (0.059231ms)
+✔ DML ban rejects CTAS with column list (SBR-17) (0.137468ms)
+✔ DML ban rejects lower case and odd spacing (SBR-17) (0.063711ms)
+✔ DML ban does not reject DDL that mentions DML words (0.685155ms)
+✔ DML ban does not reject a generated column (F03-R1-03) (0.118852ms)
+✔ the runner owns transactions, role switching and timeouts; roles come from db/roles (0.126718ms)
+✔ a file without a class header is rejected (0.152105ms)
+✔ expand file rejects DROP TABLE (0.078126ms)
+✔ expand file rejects DROP COLUMN (0.383239ms)
+✔ expand file rejects DROP CONSTRAINT (0.273133ms)
+✔ expand file rejects RENAME COLUMN (0.067446ms)
+✔ expand file rejects RENAME TABLE (0.059532ms)
+✔ expand file rejects column type change (0.05873ms)
+✔ expand file rejects SET NOT NULL (0.056826ms)
+✔ expand file rejects NOT NULL column without default (0.088105ms)
+✔ expand file rejects non-concurrent index on an existing table (3.523841ms)
+✔ expand file rejects unique index on an existing table (0.10147ms)
+✔ expand file rejects foreign key that validates immediately (0.119033ms)
+✔ expand file rejects check that validates immediately (0.10092ms)
+✔ expand file rejects primary key built in place (0.085912ms)
+✔ expand file rejects volatile default (0.073488ms)
+✔ expand file rejects serial column (0.078507ms)
+✔ expand file accepts the safe forms (0.225934ms)
+✔ CREATE INDEX CONCURRENTLY needs "-- transaction: none" (0.136476ms)
+✔ contract file needs an approval reference and only destructive statements (0.161933ms)
+✔ SQLSTATE PM001 -> patient.merged, no PHI in the body (1.406628ms)
+✔ SQLSTATE PS001 -> scheduling.invalid_transition, no PHI in the body (6.230058ms)
+✔ SQLSTATE PK001 -> kernel.idempotency_conflict, no PHI in the body (0.131687ms)
+✔ SQLSTATE 23P01 -> scheduling.slot_taken, no PHI in the body (0.100458ms)
+✔ SQLSTATE 40001 -> kernel.unavailable, no PHI in the body (0.107652ms)
+✔ SQLSTATE 40P01 -> kernel.unavailable, no PHI in the body (0.086052ms)
+✔ SQLSTATE 57014 -> kernel.timeout, no PHI in the body (0.114545ms)
+✔ SQLSTATE 25P04 -> kernel.timeout, no PHI in the body (0.090339ms)
+✔ SQLSTATE 42501 -> auth.forbidden, no PHI in the body (0.133159ms)
+✔ SQLSTATE PA001 -> kernel.internal, no PHI in the body (0.193864ms)
+✔ SQLSTATE XX000 -> kernel.internal, no PHI in the body (0.099316ms)
+✔ PS002 uses the reason code of DETAIL only when it has the registry shape (0.264245ms)
+✔ 42501 is 404 for a by-ID write and audited (0.676249ms)
+✔ 40001/40P01 are retried internally first, then 503 kernel.unavailable (0.099506ms)
+✔ an unknown module cannot inject text into a code (0.107542ms)
+✔ non-object errors map to 500 without throwing (5.236725ms)
+✔ canonical JSON sorts keys and drops whitespace (0.90119ms)
+✔ same request, different key order and method case, same hash (0.707187ms)
+✔ any difference in method, route, path params, query or body changes the hash (0.31501ms)
+✔ field boundaries cannot be shifted to collide (0.248146ms)
+✔ Idempotency-Key must be a uuid v4 or v7 (0.534753ms)
+✔ first request inserts and proceeds as new (0.928121ms)
+✔ duplicate with the same hash replays the stored response (0.292238ms)
+✔ a body over 64 KB is replayed by re-reading the resource (0.199043ms)
+✔ same key with a different hash is 409 kernel.idempotency_conflict (0.47406ms)
+✔ completion drops a body over 64 KB (0.265548ms)
+✔ synthetic-PHI canary never appears in any output shape (5.961094ms)
+✔ operational fields survive (0.76792ms)
+✔ level filter, and callers cannot overwrite level/time/msg (0.24446ms)
+✔ bearer tokens and JWTs are scrubbed from messages (0.22426ms)
+✔ api path enqueues only through queue_api.enqueue on the caller transaction handle (1.62625ms)
+✔ worker path calls queue.add_job with the type attempt limit and the namespaced job key (0.251071ms)
+✔ system and data_repair types, and bad job keys, never reach the api path (0.727655ms)
+✔ syncTaskTypes upserts every registered type in a stable order and never deletes (0.910648ms)
+✔ publish fans out one job per registered handler, in a stable order (0.446838ms)
+✔ payloads are IDs and scope keys only (0.239118ms)
+✔ a PHI payload never reaches the database (0.240721ms)
+✔ job types: patient IDs require on_merged, duplicates and unknown types refused (0.454052ms)
+✔ merge participants: register, duplicate refused, listed in a stable order (1.734324ms)
+✔ export contributors: register, duplicate refused, listed in a stable order (1.33764ms)
+✔ merge participant declarations are validated (0.297749ms)
+✔ the two registries are independent and a participant is stored by copy (0.282289ms)
+✔ exits non-zero and names file, line and rule for a handler without lockPatients (48.352273ms)
+✔ exits zero for a compliant handler (28.020989ms)
+✔ sign-in setter outside the allowed path fails, inside it passes (69.101723ms)
+✔ scanning a directory finds the violating file (28.785284ms)
+✔ usage error exits 2 (25.196611ms)
+✔ passes when lockPatients comes first (2.782009ms)
+✔ fails a handler that calls a patient_scope_owner function without lockPatients (0.35233ms)
+✔ fails when lockPatients is after the call (0.39969ms)
+✔ fails a call outside any withScope callback (0.192641ms)
+✔ comments do not count as a lock or as a call (0.375644ms)
+✔ two handlers in one file are judged separately (0.20266ms)
+✔ generic type argument on withScope is understood (0.210425ms)
+✔ sign-in setter call sites are limited to the allowed files (0.255129ms)
+✔ scope statement sets every 21.3 setting in one statement, transaction-local, unset ones empty (1.204269ms)
+✔ scope values are validated: no SQL or list injection through a setting (0.429696ms)
+✔ withScope: BEGIN, scope, work, COMMIT; handle is dead afterwards (3.518631ms)
+✔ withScope rolls back on error and rethrows (0.355988ms)
+✔ a failed rollback destroys the connection (2.380225ms)
+✔ 40P01 is retried as a whole new transaction only when idempotent, at most twice (2.857571ms)
+✔ lockPatients sorts IDs, once only; scope-owner functions need it first and no_key_update (1.129489ms)
+✔ the sign-in setter exists only on the sign-in handle and only for audience anonymous (0.482815ms)
+ℹ tests 113
+ℹ suites 0
+ℹ pass 113
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 511.084916
+
+== test @ehr/ui: pnpm --dir /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-95-sdlc-ticket-int-01-integrate-m2-platform-audit-integration-core-organisation-identity-core-notifications-first-/packages/ui run test
+$ NODE_ENV=test vitest run
+
+ RUN  v5.1.0 /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-95-sdlc-ticket-int-01-integrate-m2-platform-audit-integration-core-organisation-identity-core-notifications-first-/packages/ui
+
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+
+ Test Files  3 passed (3)
+      Tests  171 passed (171)
+   Start at  05:08:29
+   Duration  2.27s (tests 42%, environment 35%, setup 10%, transform 9%, import 5%)
+
+boundary.xml: 1 tests, 0 skipped, 0 failed
+::error::@ehr/api: test script wrote no JUnit report to $JUNIT_DIR (a suite that runs nothing fails)
+::error::@ehr/staff: test script wrote no JUnit report to $JUNIT_DIR (a suite that runs nothing fails)
+::error::@ehr/worker: test script wrote no JUnit report to $JUNIT_DIR (a suite that runs nothing fails)
+::error::@ehr/app-shell: test script wrote no JUnit report to $JUNIT_DIR (a suite that runs nothing fails)
+::error::@ehr/kernel: test script wrote no JUnit report to $JUNIT_DIR (a suite that runs nothing fails)
+::error::@ehr/ui: test script wrote no JUnit report to $JUNIT_DIR (a suite that runs nothing fails)
+exit=1

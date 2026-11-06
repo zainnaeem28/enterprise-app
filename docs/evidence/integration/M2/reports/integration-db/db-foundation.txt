@@ -1,0 +1,562 @@
+▶ migrations from empty on PostgreSQL 17
+  ✔ a second run applies nothing (89.629554ms)
+  ✖ catalog checks M-1..M-5 and the role checks all pass (72.233928ms)
+  ✔ role-level settings are stored and visible to a new session (18.563977ms)
+  ✔ the runner tracker is not reachable by application roles (4.195041ms)
+✖ migrations from empty on PostgreSQL 17 (1055.958559ms)
+▶ spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics)
+  ✔ FORCE RLS: the table owner cannot insert, and its UPDATE changes 0 rows (SBR-17) (10.434156ms)
+  ✔ a missing setting returns 0 rows on every kernel table (fail closed) (12.382962ms)
+  ✔ setting: admin_pool staff reads and writes its organisation; WITH CHECK refuses everything else (25.61689ms)
+  ✔ audience anonymous reads only pre_auth settings and nothing in idempotency_key (7.517092ms)
+  ✔ app_api cannot act as audience system; app_worker can, within its job scope (19.560417ms)
+  ✔ idempotency_key: a principal sees only its own keys; updates bump row_version (11.881881ms)
+  ✔ reporting_ro is refused on the kernel tables (M-4) (3.711853ms)
+  ✔ role switching: app_api reaches only identity_signin_ro, which holds no table right (7.989318ms)
+  ✔ app_owner holds SET but not INHERIT on directory_ro: it can switch but gains no rights (3.541073ms)
+  ✔ function ownership transfer needs SET membership and CREATE on the schema (21.2 point 1) (5.269535ms)
+  ✔ SELECT ... FOR KEY SHARE needs UPDATE rights: a SELECT-only role is refused (15.261412ms)
+  ✖ an owner-rights view returns 0 rows under FORCE; a security_invoker view returns the caller rows (M-4) (85.657172ms)
+  ✔ negative control: the catalog checks fail on a table without FORCE and on a policy TO PUBLIC (61.131379ms)
+✖ spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics) (278.865782ms)
+▶ R-timeouts negative control (F03-R1-02)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 0s (58.801779ms)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 0ms (57.430134ms)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 0000ms (67.40527ms)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 61s (61.981074ms)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 120s (65.502589ms)
+✔ R-timeouts negative control (F03-R1-02) (311.60853ms)
+▶ TC-AU-04 (ARCHITECTURE 21.5, SAR-10; step 2 per SA-TC-06)
+  ✔ step 1: transaction_timeout unset (0) -> refused PA001, no row (4.74934ms)
+  ✔ step 2 (SA-TC-06): B + 1 s -> refused PA001, no row (3.809096ms)
+  ✔ step 3: app_owner -> privilege error 42501 raised before the trigger, no row (3.617106ms)
+  ✔ step 4 (positive control): at or below the bound -> accepted and written (4.401879ms)
+  ✔ production shape: the role-level 60 s of app_api and app_worker is accepted, 120 s is refused (13.393077ms)
+✔ TC-AU-04 (ARCHITECTURE 21.5, SAR-10; step 2 per SA-TC-06) (43.739601ms)
+▶ the runner against a real database
+  ✔ applies 0001 and 0003, then rejects 0002 as out of order and leaves the schema untouched (17.124398ms)
+  ✔ a migration that fails at run time rolls back with its tracker row (2.818518ms)
+✔ the runner against a real database (87.567696ms)
+ℹ tests 29
+ℹ suites 5
+ℹ pass 27
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1998.541113
+
+✖ failing tests:
+
+test at db/tools/db-test.mjs:100:3
+✖ catalog checks M-1..M-5 and the role checks all pass (72.233928ms)
+  AssertionError [ERR_ASSERTION]: [
+    {
+      "id": "M-3",
+      "title": "policies target only known roles; identity_signin_ro and directory_ro hold no table-level SELECT (column grants only)",
+      "status": "fail",
+      "violations": [
+        {
+          "table": "organisation.public_location",
+          "policyname": "table-level SELECT",
+          "role": "directory_ro"
+        },
+        {
+          "table": "organisation.public_service",
+          "policyname": "table-level SELECT",
+          "role": "directory_ro"
+        },
+        {
+          "table": "organisation.public_service_location",
+          "policyname": "table-level SELECT",
+          "role": "directory_ro"
+        },
+        {
+          "table": "organisation.public_service_clinician",
+          "policyname": "table-level SELECT",
+          "role": "directory_ro"
+        },
+        {
+          "table": "organisation.public_opening_hours",
+          "policyname": "table-level SELECT",
+          "role": "directory_ro"
+        },
+        {
+          "table": "organisation.public_holiday",
+          "policyname": "table-level SELECT",
+          "role": "directory_ro"
+        },
+        {
+          "table": "organisation.public_banner",
+          "policyname": "table-level SELECT",
+          "role": "directory_ro"
+        },
+        {
+          "table": "identity.public_clinician",
+          "policyname": "table-level SELECT",
+          "role": "directory_ro"
+        }
+      ]
+    },
+    {
+      "id": "M-4-views",
+      "title": "every view not on the C0/C1 owner-rights list has security_invoker = true",
+      "status": "fail",
+      "violations": [
+        {
+          "view": "organisation.public_location"
+        },
+        {
+          "view": "organisation.public_service"
+        },
+        {
+          "view": "organisation.public_service_location"
+        },
+        {
+          "view": "organisation.public_service_clinician"
+        },
+        {
+          "view": "organisation.public_opening_hours"
+        },
+        {
+          "view": "organisation.public_holiday"
+        },
+        {
+          "view": "organisation.public_banner"
+        },
+        {
+          "view": "identity.public_clinician"
+        }
+      ]
+    },
+    {
+      "id": "M-5-patient-guard",
+      "title": "every table with a patient_id column has the merge write guard or is exempt",
+      "status": "fail",
+      "violations": [
+        {
+          "table": "identity.patient_link"
+        },
+        {
+          "table": "identity.proxy_grant"
+        },
+        {
+          "table": "notifications.notification"
+        },
+        {
+          "table": "notifications.delivery_receipt"
+        },
+        {
+          "table": "notifications.in_app_read"
+        }
+      ]
+    },
+    {
+      "id": "M-5-definer",
+      "title": "every SECURITY DEFINER function is in the inventory, has a fixed search_path and a NOLOGIN owner",
+      "status": "fail",
+      "violations": [
+        {
+          "function": "integration_core.receive_inbound(text,text,text,bytea)",
+          "in_inventory": false,
+          "fixed_search_path": true,
+          "owner": "integration_receiver_owner"
+        }
+      ]
+    },
+    {
+      "id": "M-5-anonymous",
+      "title": "the policies that can match audience anonymous are exactly the ARCHITECTURE 21.3 list",
+      "status": "fail",
+      "violations": [
+        {
+          "problem": "unexpected",
+          "id": "integration_core.inbound_message.inbound_message_receive"
+        },
+        {
+          "problem": "unexpected",
+          "id": "identity.person.person_signin_insert"
+        },
+        {
+          "problem": "unexpected",
+          "id": "identity.principal.principal_signin_select"
+        },
+        {
+          "problem": "unexpected",
+          "id": "identity.principal.principal_signin_insert"
+        },
+        {
+          "problem": "unexpected",
+          "id": "identity.principal.principal_signin_update"
+        },
+        {
+          "problem": "unexpected",
+          "id": "identity.session.session_lookup"
+        },
+        {
+          "problem": "unexpected",
+          "id": "identity.session.session_signin_insert"
+        }
+      ]
+    },
+    {
+      "id": "M-5-public",
+      "title": "the policies that can match audience public are exactly the T-DIRECTORY policies (plus recorded exceptions)",
+      "status": "fail",
+      "violations": [
+        {
+          "problem": "unexpected",
+          "id": "organisation.location.location_directory"
+        },
+        {
+          "problem": "unexpected",
+          "id": "organisation.service.service_directory"
+        },
+        {
+          "problem": "unexpected",
+          "id": "organisation.service_location.service_location_directory"
+        },
+        {
+          "problem": "unexpected",
+          "id": "organisation.service_clinician.service_clinician_directory"
+        },
+        {
+          "problem": "unexpected",
+          "id": "organisation.opening_hours.opening_hours_directory"
+        },
+        {
+          "problem": "unexpected",
+          "id": "organisation.holiday.holiday_directory"
+        },
+        {
+          "problem": "unexpected",
+          "id": "organisation.banner.banner_directory"
+        },
+        {
+          "problem": "unexpected",
+          "id": "identity.principal.principal_directory"
+        },
+        {
+          "problem": "unexpected",
+          "id": "identity.staff_profile.staff_profile_directory"
+        }
+      ]
+    },
+    {
+      "id": "M-5-directory",
+      "title": "every object owned by directory_ro is a view on the C0 list",
+      "status": "fail",
+      "violations": [
+        {
+          "object": "organisation.public_location"
+        },
+        {
+          "object": "organisation.public_service"
+        },
+        {
+          "object": "organisation.public_service_location"
+        },
+        {
+          "object": "organisation.public_service_clinician"
+        },
+        {
+          "object": "organisation.public_opening_hours"
+        },
+        {
+          "object": "organisation.public_holiday"
+        },
+        {
+          "object": "organisation.public_banner"
+        },
+        {
+          "object": "identity.public_clinician"
+        }
+      ]
+    }
+  ]
+  + actual - expected
+  
+  + [
+  +   {
+  +     id: 'M-3',
+  +     status: 'fail',
+  +     title: 'policies target only known roles; identity_signin_ro and directory_ro hold no table-level SELECT (column grants only)',
+  +     violations: [
+  +       {
+  +         policyname: 'table-level SELECT',
+  +         role: 'directory_ro',
+  +         table: 'organisation.public_location'
+  +       },
+  +       {
+  +         policyname: 'table-level SELECT',
+  +         role: 'directory_ro',
+  +         table: 'organisation.public_service'
+  +       },
+  +       {
+  +         policyname: 'table-level SELECT',
+  +         role: 'directory_ro',
+  +         table: 'organisation.public_service_location'
+  +       },
+  +       {
+  +         policyname: 'table-level SELECT',
+  +         role: 'directory_ro',
+  +         table: 'organisation.public_service_clinician'
+  +       },
+  +       {
+  +         policyname: 'table-level SELECT',
+  +         role: 'directory_ro',
+  +         table: 'organisation.public_opening_hours'
+  +       },
+  +       {
+  +         policyname: 'table-level SELECT',
+  +         role: 'directory_ro',
+  +         table: 'organisation.public_holiday'
+  +       },
+  +       {
+  +         policyname: 'table-level SELECT',
+  +         role: 'directory_ro',
+  +         table: 'organisation.public_banner'
+  +       },
+  +       {
+  +         policyname: 'table-level SELECT',
+  +         role: 'directory_ro',
+  +         table: 'identity.public_clinician'
+  +       }
+  +     ]
+  +   },
+  +   {
+  +     id: 'M-4-views',
+  +     status: 'fail',
+  +     title: 'every view not on the C0/C1 owner-rights list has security_invoker = true',
+  +     violations: [
+  +       {
+  +         view: 'organisation.public_location'
+  +       },
+  +       {
+  +         view: 'organisation.public_service'
+  +       },
+  +       {
+  +         view: 'organisation.public_service_location'
+  +       },
+  +       {
+  +         view: 'organisation.public_service_clinician'
+  +       },
+  +       {
+  +         view: 'organisation.public_opening_hours'
+  +       },
+  +       {
+  +         view: 'organisation.public_holiday'
+  +       },
+  +       {
+  +         view: 'organisation.public_banner'
+  +       },
+  +       {
+  +         view: 'identity.public_clinician'
+  +       }
+  +     ]
+  +   },
+  +   {
+  +     id: 'M-5-patient-guard',
+  +     status: 'fail',
+  +     title: 'every table with a patient_id column has the merge write guard or is exempt',
+  +     violations: [
+  +       {
+  +         table: 'identity.patient_link'
+  +       },
+  +       {
+  +         table: 'identity.proxy_grant'
+  +       },
+  +       {
+  +         table: 'notifications.notification'
+  +       },
+  +       {
+  +         table: 'notifications.delivery_receipt'
+  +       },
+  +       {
+  +         table: 'notifications.in_app_read'
+  +       }
+  +     ]
+  +   },
+  +   {
+  +     id: 'M-5-definer',
+  +     status: 'fail',
+  +     title: 'every SECURITY DEFINER function is in the inventory, has a fixed search_path and a NOLOGIN owner',
+  +     violations: [
+  +       {
+  +         fixed_search_path: true,
+  +         function: 'integration_core.receive_inbound(text,text,text,bytea)',
+  +         in_inventory: false,
+  +         owner: 'integration_receiver_owner'
+  +       }
+  +     ]
+  +   },
+  +   {
+  +     id: 'M-5-anonymous',
+  +     status: 'fail',
+  +     title: 'the policies that can match audience anonymous are exactly the ARCHITECTURE 21.3 list',
+  +     violations: [
+  +       {
+  +         id: 'integration_core.inbound_message.inbound_message_receive',
+  +         problem: 'unexpected'
+  +       },
+  +       {
+  +         id: 'identity.person.person_signin_insert',
+  +         problem: 'unexpected'
+  +       },
+  +       {
+  +         id: 'identity.principal.principal_signin_select',
+  +         problem: 'unexpected'
+  +       },
+  +       {
+  +         id: 'identity.principal.principal_signin_insert',
+  +         problem: 'unexpected'
+  +       },
+  +       {
+  +         id: 'identity.principal.principal_signin_update',
+  +         problem: 'unexpected'
+  +       },
+  +       {
+  +         id: 'identity.session.session_lookup',
+  +         problem: 'unexpected'
+  +       },
+  +       {
+  +         id: 'identity.session.session_signin_insert',
+  +         problem: 'unexpected'
+  +       }
+  +     ]
+  +   },
+  +   {
+  +     id: 'M-5-public',
+  +     status: 'fail',
+  +     title: 'the policies that can match audience public are exactly the T-DIRECTORY policies (plus recorded exceptions)',
+  +     violations: [
+  +       {
+  +         id: 'organisation.location.location_directory',
+  +         problem: 'unexpected'
+  +       },
+  +       {
+  +         id: 'organisation.service.service_directory',
+  +         problem: 'unexpected'
+  +       },
+  +       {
+  +         id: 'organisation.service_location.service_location_directory',
+  +         problem: 'unexpected'
+  +       },
+  +       {
+  +         id: 'organisation.service_clinician.service_clinician_directory',
+  +         problem: 'unexpected'
+  +       },
+  +       {
+  +         id: 'organisation.opening_hours.opening_hours_directory',
+  +         problem: 'unexpected'
+  +       },
+  +       {
+  +         id: 'organisation.holiday.holiday_directory',
+  +         problem: 'unexpected'
+  +       },
+  +       {
+  +         id: 'organisation.banner.banner_directory',
+  +         problem: 'unexpected'
+  +       },
+  +       {
+  +         id: 'identity.principal.principal_directory',
+  +         problem: 'unexpected'
+  +       },
+  +       {
+  +         id: 'identity.staff_profile.staff_profile_directory',
+  +         problem: 'unexpected'
+  +       }
+  +     ]
+  +   },
+  +   {
+  +     id: 'M-5-directory',
+  +     status: 'fail',
+  +     title: 'every object owned by directory_ro is a view on the C0 list',
+  +     violations: [
+  +       {
+  +         object: 'organisation.public_location'
+  +       },
+  +       {
+  +         object: 'organisation.public_service'
+  +       },
+  +       {
+  +         object: 'organisation.public_service_location'
+  +       },
+  +       {
+  +         object: 'organisation.public_service_clinician'
+  +       },
+  +       {
+  +         object: 'organisation.public_opening_hours'
+  +       },
+  +       {
+  +         object: 'organisation.public_holiday'
+  +       },
+  +       {
+  +         object: 'organisation.public_banner'
+  +       },
+  +       {
+  +         object: 'identity.public_clinician'
+  +       }
+  +     ]
+  +   }
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-95-sdlc-ticket-int-01-integrate-m2-platform-audit-integration-core-organisation-identity-core-notifications-first-/db/tools/db-test.mjs:103:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { id: 'M-3', title: 'policies target only known roles; identity_signin_ro and directory_ro hold no table-level SELECT (column grants only)', status: 'fail', violations: [Array] }, { id: 'M-4-views', title: 'every view not on the C0/C1 owner-rights list has security_invoker = true', status: 'fail', violations: [Array] }, { id: 'M-5-patient-guard', title: 'every table with a patient_id column has the merge write guard or is exempt', status: 'fail', violations: [Array] }, { id: 'M-5-definer', title: 'every SECURITY DEFINER function is in the inventory, has a fixed search_path and a NOLOGIN owner', status: 'fail', violations: [Array] }, { id: 'M-5-anonymous', title: 'the policies that can match audience anonymous are exactly the ARCHITECTURE 21.3 list', status: 'fail', violations: [Array] }, { id: 'M-5-public', title: 'the policies that can match audience public are exactly the T-DIRECTORY policies (plus recorded exceptions)', status: 'fail', violations: [Array] }, { id: 'M-5-directory', title: 'every object owned by directory_ro is a view on the C0 list', status: 'fail', violations: [Array] } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at db/tools/db-test.mjs:395:3
+✖ an owner-rights view returns 0 rows under FORCE; a security_invoker view returns the caller rows (M-4) (85.657172ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+      {
+  +     view: 'organisation.public_location'
+  +   },
+  +   {
+  +     view: 'organisation.public_service'
+  +   },
+  +   {
+  +     view: 'organisation.public_service_location'
+  +   },
+  +   {
+  +     view: 'organisation.public_service_clinician'
+  +   },
+  +   {
+  +     view: 'organisation.public_opening_hours'
+  +   },
+  +   {
+  +     view: 'organisation.public_holiday'
+  +   },
+  +   {
+  +     view: 'organisation.public_banner'
+  +   },
+  +   {
+  +     view: 'identity.public_clinician'
+  +   },
+  +   {
+        view: 'f03_view.owner_rights'
+      }
+    ]
+  
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-95-sdlc-ticket-int-01-integrate-m2-platform-audit-integration-core-organisation-identity-core-notifications-first-/db/tools/db-test.mjs:421:14)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ { view: 'organisation.public_location' }, { view: 'organisation.public_service' }, { view: 'organisation.public_service_location' }, { view: 'organisation.public_service_clinician' }, { view: 'organisation.public_opening_hours' }, { view: 'organisation.public_holiday' }, { view: 'organisation.public_banner' }, { view: 'identity.public_clinician' }, { view: 'f03_view.owner_rights' } ],
+    expected: [ { view: 'f03_view.owner_rights' } ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
