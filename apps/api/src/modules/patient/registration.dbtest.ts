@@ -12,6 +12,7 @@ import {
   STAFF_HOST,
   call,
   clock,
+  confirmedBooking,
   id,
   patientAccount,
   registerViaApi,
@@ -427,6 +428,7 @@ describe('self-registration on my. (6.6)', () => {
     );
     const pid = r.json()['patientId'] as string;
     assert.equal((await get(deskA1, `/api/v1/patients/${pid}`)).status, 404);
+    await confirmedBooking(k, pid, A1);
     await k.db.withScope(
       {
         audience: 'patient',
@@ -647,6 +649,7 @@ describe('care relationships and the staff scope (6.6; TC-AZ-04, SBR-11)', () =>
     assert.equal((await get(deskA1, `/api/v1/patients/${pid}`)).status, 404);
     // a booking at A1 (a patient or staff caller) -> ensure_care_relationship under the booking transaction
     const acct = await patientAccount(k, pid);
+    await confirmedBooking(k, pid, A1);
     await k.db.withScope(
       {
         audience: 'patient',
@@ -823,6 +826,7 @@ describe('care relationships and the staff scope (6.6; TC-AZ-04, SBR-11)', () =>
     );
     // a booking at A2 for the survivor after the merge
     const acct = await patientAccount(k, c);
+    await confirmedBooking(k, c, A2);
     await k.db.withScope(
       {
         audience: 'patient',

@@ -145,6 +145,12 @@ describe('constraints in the database (22.8, SBR-01)', () => {
   test('overbook rows are excluded from the constraints', async () => {
     const a = (await t.doctor()).principalId;
     const s = slotStart(nextDay());
+    // SEC-03 F03: an overbook row needs a stored policy that allows overbooking (cap 2 here).
+    await t.k.sa.query(
+      `INSERT INTO organisation.booking_policy (id, organisation_id, service_id, location_id, cutoff_hours, max_future_per_patient, overbook_cap_per_session)
+       VALUES ($1, $2, $3, $4, 24, 3, 2) ON CONFLICT DO NOTHING`,
+      [randomUUID(), ORG, SVC, A1],
+    );
     await ownerTx(async (c) => {
       await ins(c, a, null, s, 30, { overbook: true, key: 'S' });
       await ins(c, a, null, s, 30, { overbook: true, key: 'S' });

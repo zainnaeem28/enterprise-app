@@ -529,3 +529,45 @@ export const standardFixtures = async ({ sa }: { sa: Client }): Promise<void> =>
       [lid, ORG, name],
     );
 };
+
+/**
+ * SEC-03 F04: `ensure_care_relationship(..., 'booking')` needs a confirmed appointment of the patient at the location. This seeds
+ * one directly (reservation and its occupancy twin in one transaction, a doctor of its own so that no slot ever collides), the way
+ * the booking service leaves the database after a confirm. Returns the reservation ID.
+ */
+export async function confirmedBooking(k: Kit, patientId: string, locationId: string): Promise<string> {
+  const doctor = await seedPrincipal(k, 'google', { name: 'Seeded doctor' });
+  const rid = uuidv7();
+  const svc = id(399);
+  const start = new Date(Date.now() + 30 * 86_400_000);
+  start.setUTCHours(9, 0, 0, 0);
+  const end = new Date(start.getTime() + 30 * 60_000);
+  await k.sa.query('BEGIN');
+  try {
+    await k.sa.query(
+      `SELECT set_config('app.org_id', $1, true), set_config('app.audience', 'system', true)`,
+      [ORG],
+    );
+    await k.sa.query(
+      `INSERT INTO organisation.service (id, organisation_id, internal_name, patient_display_name, duration_min, buffer_min, mode, active)
+       VALUES ($1, $2, 'Seeded consult', 'Appointment', 30, 0, 'either', true) ON CONFLICT DO NOTHING`,
+      [svc, ORG],
+    );
+    await k.sa.query(
+      `INSERT INTO scheduling.slot_reservation (id, organisation_id, patient_id, service_id, location_id, clinician_principal_id, mode,
+                                                 booked_by_principal_id, booked_via)
+       VALUES ($1, $2, $3, $4, $5, $6, 'in_person', $6, 'staff')`,
+      [rid, ORG, patientId, svc, locationId, doctor.principalId],
+    );
+    await k.sa.query(
+      `INSERT INTO scheduling.slot_occupancy (id, organisation_id, location_id, clinician_principal_id, period, status)
+       VALUES ($1, $2, $3, $4, tstzrange($5::timestamptz, $6::timestamptz, '[)'), 'confirmed')`,
+      [rid, ORG, locationId, doctor.principalId, start.toISOString(), end.toISOString()],
+    );
+    await k.sa.query('COMMIT');
+  } catch (e) {
+    await k.sa.query('ROLLBACK');
+    throw e;
+  }
+  return rid;
+}
