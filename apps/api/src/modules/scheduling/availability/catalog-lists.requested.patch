@@ -1,0 +1,20 @@
+diff --git a/db/tools/catalog-lists.mjs b/db/tools/catalog-lists.mjs
+index 7fde56d..6737660 100644
+--- a/db/tools/catalog-lists.mjs
++++ b/db/tools/catalog-lists.mjs
+@@ -56,6 +56,8 @@ export const ownerRightsViews = [
+   'organisation.public_holiday',
+   'organisation.public_banner',
+   'identity.public_clinician',
++  // BE-12: the ninth directory view (22.5.1), owned by directory_ro.
++  'scheduling.public_clinician_location',
+ ];
+ /** Views reporting_ro may read (C0/C1 only, M-4). */
+ export const reportingViews = [];
+@@ -120,4 +122,6 @@ export const publicPolicies = [
+   'organisation.banner.banner_directory',
+   'identity.principal.principal_directory',
+   'identity.staff_profile.staff_profile_directory',
++  // BE-12: T-DIRECTORY on scheduling.availability_template (TO directory_ro).
++  'scheduling.availability_template.availability_template_directory',
+ ];
