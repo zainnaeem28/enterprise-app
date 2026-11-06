@@ -486,6 +486,9 @@ html {
   align-items: center;
   flex: 1;
 }
+.ehr-patient-banner__allergy {
+  flex: 1;
+}
 .ehr-patient-banner__toggle {
   display: none;
 }
@@ -496,6 +499,9 @@ html {
 @media (max-width: 640px) {
   .ehr-patient-banner__toggle {
     display: inline-block;
+  }
+  .ehr-patient-banner__allergy {
+    flex-basis: 100%;
   }
   .ehr-patient-banner__more {
     display: none;

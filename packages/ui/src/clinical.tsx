@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import type { ReactNode } from 'react';
 import { AlertDialog } from './alert-dialog.js';
 import { Button } from './button.js';
@@ -56,15 +56,15 @@ export function AllergyBlock({
       className={cx('ehr-allergy', allergies.state === 'recorded' && 'ehr-allergy--recorded')}
       data-allergy-state={allergies.state}
     >
-      <strong className="ehr-allergy__label">Allergies</strong>{' '}
+      <strong className="ehr-allergy__label">{s.allergiesLabel}</strong>{' '}
       {allergies.state === 'none_recorded' ? (
         <span>{s.allergyNoneRecorded}</span>
       ) : (
-        <ul className="ehr-allergy__list" aria-label="Allergies">
+        <ul className="ehr-allergy__list" aria-label={s.allergiesLabel}>
           {shown.map((a) => (
             <li key={a.id}>
               {a.name}
-              {a.severity === 'severe' && <span className="ehr-allergy__sev"> (severe)</span>}
+              {a.severity === 'severe' && <span className="ehr-allergy__sev"> ({s.severe})</span>}
             </li>
           ))}
         </ul>
@@ -73,7 +73,7 @@ export function AllergyBlock({
         (onOpenList !== undefined ? (
           <button type="button" className="ehr-link-btn" onClick={onOpenList}>
             {s.allergyMore(more)}
-            <span className="ehr-visually-hidden"> allergies, open the allergy list</span>
+            <span className="ehr-visually-hidden"> {s.allergyOpenList}</span>
           </button>
         ) : (
           <span>{s.allergyMore(more)}</span>
@@ -119,34 +119,40 @@ export function PatientBanner({
   copy?: Copy;
 }) {
   const [open, setOpen] = useState(false);
+  const s = pick(copy);
+  const moreId = useId();
   return (
-    <section className="ehr-patient-banner" aria-label="Patient">
+    <section className="ehr-patient-banner" aria-label={s.patientLabel}>
       <div className="ehr-avatar" aria-hidden="true">
         {photoUrl !== undefined ? <img src={photoUrl} alt="" /> : initials(name)}
       </div>
       <div className="ehr-patient-banner__id">
         <p className="ehr-patient-banner__name">{name}</p>
         <p className="ehr-patient-banner__dob">
-          DOB {dob} ({age})
+          {s.dobLabel} {dob} ({age})
         </p>
+      </div>
+      {/* The allergy block stays outside the collapsible region: a hidden block reads as "none" (UX-R1). */}
+      <div className="ehr-patient-banner__allergy">
+        <AllergyBlock allergies={allergies} onOpenList={onOpenAllergies} copy={copy} />
       </div>
       <div
         className={cx('ehr-patient-banner__more', open && 'ehr-patient-banner__more--open')}
-        id="ehr-banner-more"
+        id={moreId}
       >
         <p className="ehr-patient-banner__mrn">
-          {sex !== undefined && `${sex} · `}MRN {mrn}
+          {sex !== undefined && `${sex} · `}
+          {s.mrnLabel} {mrn}
         </p>
-        <AllergyBlock allergies={allergies} onOpenList={onOpenAllergies} copy={copy} />
       </div>
       <button
         type="button"
         className="ehr-btn ehr-patient-banner__toggle"
         aria-expanded={open}
-        aria-controls="ehr-banner-more"
+        aria-controls={moreId}
         onClick={() => setOpen((v) => !v)}
       >
-        {open ? 'Hide details' : 'Show details'}
+        {open ? s.hideDetails : s.showDetails}
       </button>
       {actions !== undefined && <div className="ehr-patient-banner__actions">{actions}</div>}
     </section>
@@ -255,7 +261,7 @@ export function ConfirmRiskDialog({
     >
       {patient !== undefined && (
         <p className="ehr-dialog__patient">
-          <strong>{patient.name}</strong>, DOB {patient.dob}
+          <strong>{patient.name}</strong>, {s.dobLabel} {patient.dob}
         </p>
       )}
       <p>{consequence}</p>
@@ -276,7 +282,7 @@ export function SignNoteDialog(props: {
   return (
     <ConfirmRiskDialog
       title={s.signAndLock}
-      consequence="Signing locks this note. Later changes are addenda with author and time."
+      consequence={s.signConsequence}
       confirmLabel={s.signAndLock}
       {...props}
     />
@@ -360,13 +366,8 @@ export function PasskeyPrompt({
 
 /** Security-key step (admin and break-the-glass review re-entry): same pattern, its own words. */
 export function SecurityKeyPrompt(props: { onCancel: () => void; waiting?: boolean; copy?: Copy }) {
-  return (
-    <PasskeyPrompt
-      {...props}
-      title="Use your security key"
-      body="Touch your security key to continue."
-    />
-  );
+  const s = pick(props.copy);
+  return <PasskeyPrompt {...props} title={s.securityKeyTitle} body={s.securityKeyBody} />;
 }
 
 /** Re-authentication dialog (`401 auth.reauth_required`): the draft is kept; the caller repeats the request
@@ -374,23 +375,26 @@ export function SecurityKeyPrompt(props: { onCancel: () => void; waiting?: boole
 export function ReauthDialog({
   onReauth,
   onCancel,
+  copy,
 }: {
   onReauth: () => void;
   onCancel: () => void;
+  copy?: Copy;
 }) {
+  const s = pick(copy);
   return (
     <AlertDialog
-      title="Confirm it's you"
+      title={s.reauthTitle}
       actions={
         <>
           <Button variant="primary" onClick={onReauth}>
-            Sign in again
+            {s.reauthSignIn}
           </Button>
-          <Button onClick={onCancel}>Cancel</Button>
+          <Button onClick={onCancel}>{s.cancel}</Button>
         </>
       }
     >
-      <p>For your safety, sign in again to finish this. Your draft is kept.</p>
+      <p>{s.reauthBody}</p>
     </AlertDialog>
   );
 }
@@ -418,19 +422,15 @@ export function SoapEditor({
 }) {
   const s = pick(copy);
   const fields = [
-    ['s', 'S: Subjective'],
-    ['o', 'O: Objective'],
-    ['a', 'A: Assessment'],
-    ['p', 'P: Plan'],
+    ['s', s.soapS],
+    ['o', s.soapO],
+    ['a', s.soapA],
+    ['p', s.soapP],
   ] as const;
   return (
-    <form className="ehr-soap" aria-label="Visit note" onSubmit={(e) => e.preventDefault()}>
+    <form className="ehr-soap" aria-label={s.visitNote} onSubmit={(e) => e.preventDefault()}>
       <p role="status" className="ehr-soap__status">
-        {signed
-          ? 'Signed. This note is read-only.'
-          : draftSavedAt
-            ? `Draft saved ${draftSavedAt}`
-            : 'Draft, not signed'}
+        {signed ? s.noteSigned : draftSavedAt ? s.draftSaved(draftSavedAt) : s.draftNotSigned}
       </p>
       {fields.map(([k, label]) => (
         <TextAreaField
@@ -443,10 +443,10 @@ export function SoapEditor({
       ))}
       <div className="ehr-dialog__actions">
         {signed ? (
-          onAddAddendum && <Button onClick={onAddAddendum}>Add addendum</Button>
+          onAddAddendum && <Button onClick={onAddAddendum}>{s.addAddendum}</Button>
         ) : (
           <>
-            <Button onClick={onSaveDraft}>Save draft</Button>
+            <Button onClick={onSaveDraft}>{s.saveDraft}</Button>
             <Button variant="primary" onClick={onSign}>
               {s.signAndLock}
             </Button>
@@ -482,7 +482,11 @@ function mmss(ms: number) {
 export function escalationText(row: AlertRow, serverNow: number, copy?: Copy): string | null {
   const s = pick(copy);
   if (row.status === 'acknowledged' || row.status === 'closed') return null;
-  if (row.escalatesAtMs !== null) return s.escalatesIn(mmss(row.escalatesAtMs - serverNow));
+  if (row.escalatesAtMs !== null) {
+    const left = row.escalatesAtMs - serverNow;
+    // Past the deadline: say so, never a frozen "0:00" (UI-UX 7.4).
+    return left <= 0 ? s.escalationOverdue : s.escalatesIn(mmss(left));
+  }
   if (row.status === 'escalated') return s.escalated(row.escalationLevel ?? 1);
   return s.escalationNotSet;
 }
@@ -507,8 +511,8 @@ export function AlertTray({
     return () => clearInterval(t);
   }, [alerts]);
   return (
-    <section aria-label="Alerts" className="ehr-tray">
-      {alerts.length === 0 && <p className="ehr-muted">No open alerts.</p>}
+    <section aria-label={s.alertsLabel} className="ehr-tray">
+      {alerts.length === 0 && <p className="ehr-muted">{s.noOpenAlerts}</p>}
       <ul className="ehr-plain-list">
         {alerts.map((a) => {
           const esc = escalationText(a, serverNow(), copy);
@@ -520,15 +524,18 @@ export function AlertTray({
               {a.status === 'closed' && <p>{s.alertClosed}</p>}
               {a.status === 'acknowledged' && (
                 <p>
-                  {a.alreadyAcknowledged ? s.alreadyAcknowledged : 'Acknowledged'}
-                  {a.acknowledgedBy !== undefined && ` by ${a.acknowledgedBy}`}
-                  {a.acknowledgedAt !== undefined && ` at ${a.acknowledgedAt}`}
+                  {a.alreadyAcknowledged ? s.alreadyAcknowledged : s.acknowledged}
+                  {a.acknowledgedBy !== undefined && ` ${s.by} ${a.acknowledgedBy}`}
+                  {a.acknowledgedAt !== undefined && ` ${s.at} ${a.acknowledgedAt}`}
                 </p>
               )}
               {(a.status === 'open' || a.status === 'escalated') && (
                 <Button variant="primary" onClick={() => onAcknowledge(a.id)}>
                   {s.acknowledge}
-                  <span className="ehr-visually-hidden"> alert, {a.type}</span>
+                  <span className="ehr-visually-hidden">
+                    {' '}
+                    {s.alertSuffix}, {a.type}
+                  </span>
                 </Button>
               )}
             </li>
@@ -570,7 +577,7 @@ export function AlertBar({
       </p>
       {state === 'paused' && onReload !== undefined && (
         <Button variant="primary" onClick={onReload}>
-          Reload
+          {s.reload}
         </Button>
       )}
       {state === 'disconnected' && onCheck !== undefined && (
@@ -587,30 +594,33 @@ export function BtgReviewPanel({
   patient,
   reason,
   onDecide,
+  copy,
 }: {
   who: string;
   opened: string;
   patient: string;
   reason: string;
   onDecide: (decision: 'justified' | 'not-justified', note: string) => void;
+  copy?: Copy;
 }) {
+  const s = pick(copy);
   const [note, setNote] = useState('');
   const [decision, setDecision] = useState<'justified' | 'not-justified' | null>(null);
   const [tried, setTried] = useState(false);
   return (
-    <section className="ehr-card" aria-label="Break-the-glass review">
-      <h3 className="ehr-state__sub">Break-the-glass review</h3>
+    <section className="ehr-card" aria-label={s.btgReviewTitle}>
+      <h3 className="ehr-state__sub">{s.btgReviewTitle}</h3>
       <dl className="ehr-dl">
-        <dt>Who</dt>
+        <dt>{s.btgWho}</dt>
         <dd>{who}</dd>
-        <dt>Opened</dt>
+        <dt>{s.btgOpened}</dt>
         <dd>{opened}</dd>
-        <dt>Patient</dt>
+        <dt>{s.btgPatient}</dt>
         <dd>{patient}</dd>
-        <dt>Reason given</dt>
+        <dt>{s.btgReasonGiven}</dt>
         <dd>{reason}</dd>
       </dl>
-      <div role="radiogroup" aria-label="Decision" className="ehr-dialog__actions">
+      <div role="radiogroup" aria-label={s.btgDecision} className="ehr-dialog__actions">
         {(['justified', 'not-justified'] as const).map((d) => (
           <label key={d} className="ehr-radio">
             <input
@@ -619,19 +629,15 @@ export function BtgReviewPanel({
               checked={decision === d}
               onChange={() => setDecision(d)}
             />{' '}
-            {d === 'justified' ? 'Justified' : 'Not justified'}
+            {d === 'justified' ? s.btgJustified : s.btgNotJustified}
           </label>
         ))}
       </div>
       <TextAreaField
-        label="Reviewer note (required)"
+        label={s.btgNote}
         value={note}
         onChange={(e) => setNote(e.target.value)}
-        error={
-          tried && (note.trim() === '' || decision === null)
-            ? 'Choose a decision and enter a note.'
-            : undefined
-        }
+        error={tried && (note.trim() === '' || decision === null) ? s.btgNeedDecision : undefined}
       />
       <Button
         variant="primary"
@@ -640,7 +646,7 @@ export function BtgReviewPanel({
           else onDecide(decision, note.trim());
         }}
       >
-        Submit review
+        {s.btgSubmit}
       </Button>
     </section>
   );

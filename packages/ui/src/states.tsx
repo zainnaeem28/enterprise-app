@@ -301,7 +301,7 @@ export function SessionWarningDialog({
           <Button variant="primary" onClick={onStay}>
             {s.staySignedIn}
           </Button>
-          {onSignOut !== undefined && <Button onClick={onSignOut}>Sign out now</Button>}
+          {onSignOut !== undefined && <Button onClick={onSignOut}>{s.signOutNow}</Button>}
         </>
       }
     >

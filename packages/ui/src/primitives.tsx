@@ -5,6 +5,8 @@ import type {
   SelectHTMLAttributes,
   TextareaHTMLAttributes,
 } from 'react';
+import { pick } from './strings.js';
+import type { Copy } from './strings.js';
 import { cx } from './cx.js';
 
 export type Tone = 'neutral' | 'info' | 'success' | 'warning' | 'danger';
@@ -196,11 +198,13 @@ export interface FieldError {
 
 /** Summary at the top that receives focus; names what to change, never the entered value (CN-03, 3.3.3). */
 export function ErrorSummary({
-  title = 'There is a problem',
+  title,
   errors,
+  copy,
 }: {
   title?: string;
   errors: FieldError[];
+  copy?: Copy;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -209,7 +213,7 @@ export function ErrorSummary({
   if (errors.length === 0) return null;
   return (
     <div ref={ref} tabIndex={-1} role="alert" className="ehr-error-summary">
-      <h2 className="ehr-error-summary__title">{title}</h2>
+      <h2 className="ehr-error-summary__title">{title ?? pick(copy).errorSummaryTitle}</h2>
       <ul>
         {errors.map((e) => (
           <li key={e.fieldId}>
@@ -276,13 +280,15 @@ export function ToastRegion({
 
 /** Single-field code entry (OTP). One input with autocomplete one-time-code, paste allowed (3.3.8). */
 export function OtpInput({
-  label = 'Verification code',
+  label,
   length = 6,
   value,
   onChange,
   error,
   hint,
+  copy,
 }: {
+  copy?: Copy;
   label?: string;
   length?: number;
   value: string;
@@ -292,7 +298,7 @@ export function OtpInput({
 }) {
   return (
     <TextField
-      label={label}
+      label={label ?? pick(copy).otpLabel}
       hint={hint}
       error={error}
       value={value}

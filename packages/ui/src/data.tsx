@@ -22,8 +22,9 @@ export function DataTable<T>({
   rows,
   rowKey,
   onOpen,
-  emptyMessage = 'Nothing to show.',
+  emptyMessage,
   selectedKey,
+  copy,
 }: {
   caption: string;
   columns: Column<T>[];
@@ -32,9 +33,11 @@ export function DataTable<T>({
   onOpen?: (row: T) => void;
   emptyMessage?: string;
   selectedKey?: string;
+  copy?: Copy;
 }) {
   const refs = useRef<Array<HTMLTableRowElement | null>>([]);
-  if (rows.length === 0) return <EmptyState message={emptyMessage} />;
+  if (rows.length === 0)
+    return <EmptyState message={emptyMessage ?? pick(copy).nothingToShow} copy={copy} />;
   const move = (i: number, d: number) =>
     refs.current[Math.min(rows.length - 1, Math.max(0, i + d))]?.focus();
   const onKey = (e: KeyboardEvent, i: number, row: T) => {
@@ -97,7 +100,8 @@ export function CardList<T>({
   title,
   meta,
   action,
-  emptyMessage = 'Nothing to show.',
+  emptyMessage,
+  copy,
 }: {
   label: string;
   rows: T[];
@@ -106,8 +110,10 @@ export function CardList<T>({
   meta?: (row: T) => ReactNode;
   action?: (row: T) => ReactNode;
   emptyMessage?: string;
+  copy?: Copy;
 }) {
-  if (rows.length === 0) return <EmptyState message={emptyMessage} />;
+  if (rows.length === 0)
+    return <EmptyState message={emptyMessage ?? pick(copy).nothingToShow} copy={copy} />;
   return (
     <ul className="ehr-cardlist" aria-label={label}>
       {rows.map((r) => (
@@ -254,7 +260,7 @@ export interface DocumentItem {
 /** Document list: offers download and states plainly when text is not available (PDFs are not guaranteed accessible). */
 export function DocumentList({ documents, copy }: { documents: DocumentItem[]; copy?: Copy }) {
   const s = pick(copy);
-  if (documents.length === 0) return <EmptyState message="No documents yet." />;
+  if (documents.length === 0) return <EmptyState message={s.noDocuments} copy={copy} />;
   return (
     <ul className="ehr-plain-list" aria-label="Documents">
       {documents.map((d) => (
@@ -318,9 +324,11 @@ const OUTCOME: Record<AuditRow['outcome'], { tone: Tone; text: string }> = {
 export function AuditTable({
   rows,
   onOpen,
+  copy,
 }: {
   rows: AuditRow[];
   onOpen?: (row: AuditRow) => void;
+  copy?: Copy;
 }) {
   return (
     <DataTable
@@ -328,7 +336,8 @@ export function AuditTable({
       rows={rows}
       rowKey={(r) => r.id}
       onOpen={onOpen}
-      emptyMessage="No audit entries match."
+      emptyMessage={pick(copy).noAuditEntries}
+      copy={copy}
       columns={[
         { key: 'time', header: 'Time', render: (r) => r.time },
         { key: 'who', header: 'Who', render: (r) => r.who },
