@@ -16,7 +16,13 @@ import { ForbiddenError, UnauthenticatedError } from './errors.js';
 import type { ScopeBuilder } from './scope.js';
 import { isPassive } from './sessions.js';
 import type { SessionService } from './sessions.js';
-import { constantTimeEqual, hashPresentedToken, parseCookies, sha256, SID_COOKIE } from './tokens.js';
+import {
+  constantTimeEqual,
+  hashPresentedToken,
+  parseCookies,
+  sha256,
+  SID_COOKIE,
+} from './tokens.js';
 import type { AuthContext, PrincipalRealm, SessionRow } from './types.js';
 
 export const IDLE_HEADER = 'X-Session-Idle-Expires-At';
@@ -27,7 +33,11 @@ export interface ResolvedResource {
   locationId?: string;
 }
 /** Returns undefined when the resource does not exist or is not visible to the caller (-> 404). */
-export type ResourceResolver = (req: Req, ctx: AuthContext, tx: Tx) => Promise<ResolvedResource | undefined>;
+export type ResourceResolver = (
+  req: Req,
+  ctx: AuthContext,
+  tx: Tx,
+) => Promise<ResolvedResource | undefined>;
 
 /** Is the staff scope allowed to touch this patient? Provided by the patient module (`patient.staff_sees`, 21.4). */
 export type PatientInScope = (tx: Tx, ctx: AuthContext, patientId: string) => Promise<boolean>;
@@ -106,7 +116,8 @@ export class IdentityGuardPolicy implements GuardPolicy {
 
   /** A module names its resolver (the `resolver` field of the route declaration). A route naming an unregistered one is refused. */
   registerResolver(name: string, fn: ResourceResolver): void {
-    if (name === 'none' || name === 'session' || this.resolvers.has(name)) throw new Error(`resolver ${name} cannot be registered`);
+    if (name === 'none' || name === 'session' || this.resolvers.has(name))
+      throw new Error(`resolver ${name} cannot be registered`);
     this.resolvers.set(name, fn);
   }
 
@@ -114,12 +125,13 @@ export class IdentityGuardPolicy implements GuardPolicy {
     // Routes that need no session (sign-in, callback, health): the guard does not read or touch a session for them.
     if (decl.permission === PUBLIC && decl.resolver !== 'session') return;
 
-    const ctx = await this.authenticate(req, decl);
+    const ctx = await this.authenticate(req);
     contexts.set(req, ctx);
     (req as Req & { res?: Res }).res?.setHeader(IDLE_HEADER, ctx.idleExpiresAt.toISOString());
 
     const realm = expectedRealm(decl, req.path);
-    if (realm !== undefined && ctx.session.realm !== realm) return this.deny(req, ctx, decl, 'forbidden');
+    if (realm !== undefined && ctx.session.realm !== realm)
+      return this.deny(req, ctx, decl, 'forbidden');
     if (decl.permission === PUBLIC) return; // any session ('session' resolver)
 
     // `patient` and `proxy` are realm capabilities (27.2): the realm check above is their permission check. Which
@@ -127,7 +139,8 @@ export class IdentityGuardPolicy implements GuardPolicy {
     if (!(PATIENT_REALM as readonly string[]).includes(decl.permission)) {
       if (!ctx.grants.has(decl.permission)) return this.deny(req, ctx, decl, 'forbidden');
       if (decl.elevation === true || ctx.grants.needsElevation(decl.permission)) {
-        if (!(await (this.deps.elevation ?? NO_ELEVATION).isElevated(ctx))) throw new ForbiddenError('identity.elevation_required');
+        if (!(await (this.deps.elevation ?? NO_ELEVATION).isElevated(ctx)))
+          throw new ForbiddenError('identity.elevation_required');
       }
     }
 
@@ -141,7 +154,13 @@ export class IdentityGuardPolicy implements GuardPolicy {
     });
   }
 
-  private async checkResource(req: Req, ctx: AuthContext, decl: RouteDeclaration, tx: Tx, res: ResolvedResource): Promise<void> {
+  private async checkResource(
+    req: Req,
+    ctx: AuthContext,
+    decl: RouteDeclaration,
+    tx: Tx,
+    res: ResolvedResource,
+  ): Promise<void> {
     const staff = ctx.session.audience === 'staff';
     if (staff && !(PATIENT_REALM as readonly string[]).includes(decl.permission)) {
       // Location-bound roles count only for resources at their locations.
@@ -149,10 +168,15 @@ export class IdentityGuardPolicy implements GuardPolicy {
         return this.deny(req, ctx, decl, 'forbidden', res);
       if (res.patientId !== undefined) {
         const btg = ctx.scope.btgPatientIds?.includes(res.patientId) === true;
-        const inScope = btg || (this.deps.patientInScope !== undefined && (await this.deps.patientInScope(tx, ctx, res.patientId)));
+        const inScope =
+          btg ||
+          (this.deps.patientInScope !== undefined &&
+            (await this.deps.patientInScope(tx, ctx, res.patientId)));
         if (!inScope) return this.deny(req, ctx, decl, 'not_visible', res);
         if (ASSIGNMENT_BOUND_PERMISSIONS.has(decl.permission) && !btg) {
-          if (!(await this.deps.assignment.isAssigned(tx, ctx.session.principalId, res.patientId))) {
+          if (
+            !(await this.deps.assignment.isAssigned(tx, ctx.session.principalId, res.patientId))
+          ) {
             await this.audit(req, ctx, decl, 'forbidden', res);
             throw new NotAssignedError();
           }
@@ -163,11 +187,18 @@ export class IdentityGuardPolicy implements GuardPolicy {
       // route (the appointment routes) is open to a proxy, whose scope is appointments only (D-7 default, RA-R1-20a).
       const access = ctx.patients.find((p) => p.patientId === res.patientId);
       if (access === undefined) return this.deny(req, ctx, decl, 'not_visible', res);
-      if (access.scope === 'appointments' && decl.permission !== 'proxy') return this.deny(req, ctx, decl, 'not_visible', res);
+      if (access.scope === 'appointments' && decl.permission !== 'proxy')
+        return this.deny(req, ctx, decl, 'not_visible', res);
     }
   }
 
-  private async audit(req: Req, ctx: AuthContext, decl: RouteDeclaration, reason: 'forbidden' | 'not_visible', res?: ResolvedResource): Promise<void> {
+  private async audit(
+    req: Req,
+    ctx: AuthContext,
+    decl: RouteDeclaration,
+    reason: 'forbidden' | 'not_visible',
+    res?: ResolvedResource,
+  ): Promise<void> {
     await this.deps.onDenied?.({
       req,
       ctx,
@@ -178,14 +209,20 @@ export class IdentityGuardPolicy implements GuardPolicy {
     });
   }
 
-  private async deny(req: Req, ctx: AuthContext, decl: RouteDeclaration, reason: 'forbidden' | 'not_visible', res?: ResolvedResource): Promise<never> {
+  private async deny(
+    req: Req,
+    ctx: AuthContext,
+    decl: RouteDeclaration,
+    reason: 'forbidden' | 'not_visible',
+    res?: ResolvedResource,
+  ): Promise<never> {
     await this.audit(req, ctx, decl, reason, res);
     if (reason === 'not_visible') throw new ApiError(404, 'kernel.not_found');
     throw new ForbiddenError();
   }
 
   /** Session valid, CSRF and Origin, then the one authenticated transaction: principal state, touch, scope. */
-  private async authenticate(req: Req, decl: RouteDeclaration): Promise<AuthContext> {
+  private async authenticate(req: Req): Promise<AuthContext> {
     const presented = parseCookies(req.headers['cookie']).get(SID_COOKIE);
     const hashHex = hashPresentedToken(presented);
     if (hashHex === undefined) throw new UnauthenticatedError();
@@ -220,9 +257,12 @@ export class IdentityGuardPolicy implements GuardPolicy {
 
   private checkCsrf(req: Req, session: SessionRow): void {
     const origin = req.header('origin');
-    if (origin === undefined || !this.deps.allowedOrigins.includes(origin)) throw new ForbiddenError('auth.csrf_failed');
+    if (origin === undefined || !this.deps.allowedOrigins.includes(origin))
+      throw new ForbiddenError('auth.csrf_failed');
     const token = req.header('x-csrf-token');
-    if (token === undefined || token.length === 0 || token.length > 256) throw new ForbiddenError('auth.csrf_failed');
-    if (!constantTimeEqual(sha256(token), session.csrfHash)) throw new ForbiddenError('auth.csrf_failed');
+    if (token === undefined || token.length === 0 || token.length > 256)
+      throw new ForbiddenError('auth.csrf_failed');
+    if (!constantTimeEqual(sha256(token), session.csrfHash))
+      throw new ForbiddenError('auth.csrf_failed');
   }
 }

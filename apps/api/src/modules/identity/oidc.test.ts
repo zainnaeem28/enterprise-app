@@ -14,13 +14,28 @@ after(() => idp.stop());
 
 const google = (over: { domain?: string; now?: () => number } = {}): GoogleRealmAdapter =>
   new GoogleRealmAdapter(
-    { endpoints: idp.endpoints, clientId: idp.clientId, clientSecret: 'x'.repeat(24), redirectUri: REDIRECT, workspaceDomain: over.domain ?? 'example.com' },
+    {
+      endpoints: idp.endpoints,
+      clientId: idp.clientId,
+      clientSecret: 'x'.repeat(24),
+      redirectUri: REDIRECT,
+      workspaceDomain: over.domain ?? 'example.com',
+    },
     over.now,
   );
-const patient = (): OidcPatientAdapter => new OidcPatientAdapter({ endpoints: idp.endpoints, clientId: idp.clientId, redirectUri: REDIRECT });
+const patient = (): OidcPatientAdapter =>
+  new OidcPatientAdapter({
+    endpoints: idp.endpoints,
+    clientId: idp.clientId,
+    redirectUri: REDIRECT,
+  });
 
 /** Runs the browser's part: authorise at the IdP, follow its redirect, hand code and verifier to the adapter. */
-async function login(adapter: RealmAdapter, l: Login, opts: { maxAgeSeconds?: number; prompt?: 'login' } = {}) {
+async function login(
+  adapter: RealmAdapter,
+  l: Login,
+  opts: { maxAgeSeconds?: number; prompt?: 'login' } = {},
+) {
   idp.nextLogin = l;
   const pkce = newPkce();
   const nonce = randomUrlToken();
@@ -42,7 +57,13 @@ async function login(adapter: RealmAdapter, l: Login, opts: { maxAgeSeconds?: nu
     ...(opts.maxAgeSeconds === undefined ? {} : { maxAgeSeconds: opts.maxAgeSeconds }),
   });
 }
-const good: Login = { sub: 'g-1', email: 'Dr.Jane@Example.com', email_verified: true, hd: 'example.com', name: 'Dr Jane Smith' };
+const good: Login = {
+  sub: 'g-1',
+  email: 'Dr.Jane@Example.com',
+  email_verified: true,
+  hd: 'example.com',
+  name: 'Dr Jane Smith',
+};
 
 describe('authorisation request (code + PKCE, 26.1; BQ-8)', () => {
   test('S256 challenge, response_type code, nonce and state, hd hint only', async () => {
@@ -56,7 +77,11 @@ describe('authorisation request (code + PKCE, 26.1; BQ-8)', () => {
     assert.equal(p.get('max_age'), null);
   });
   test('re-authentication asks for prompt=login and max_age', async () => {
-    await login(google(), { ...good, auth_time: Math.floor(Date.now() / 1000) }, { prompt: 'login', maxAgeSeconds: 300 });
+    await login(
+      google(),
+      { ...good, auth_time: Math.floor(Date.now() / 1000) },
+      { prompt: 'login', maxAgeSeconds: 300 },
+    );
     assert.equal(idp.lastAuthorize.get('prompt'), 'login');
     assert.equal(idp.lastAuthorize.get('max_age'), '300');
   });
@@ -73,25 +98,64 @@ describe('verified identity (google)', () => {
   });
   test('a stale auth_time is refused when max_age was asked for; a missing one is accepted (prompt=login forced it)', async () => {
     const old = Math.floor(Date.now() / 1000) - 3600;
-    await assert.rejects(login(google(), { ...good, auth_time: old }, { prompt: 'login', maxAgeSeconds: 300 }), (e: unknown) => e instanceof OidcVerificationError && e.reason === 'auth_time_stale');
+    await assert.rejects(
+      login(google(), { ...good, auth_time: old }, { prompt: 'login', maxAgeSeconds: 300 }),
+      (e: unknown) => e instanceof OidcVerificationError && e.reason === 'auth_time_stale',
+    );
     const v = await login(google(), good, { prompt: 'login', maxAgeSeconds: 300 });
     assert.ok(Math.abs(v.authTime.getTime() - Date.now()) < 5000);
     const fresh = Math.floor(Date.now() / 1000) - 30;
-    assert.equal((await login(google(), { ...good, auth_time: fresh }, { prompt: 'login', maxAgeSeconds: 300 })).authTime.getTime(), fresh * 1000);
+    assert.equal(
+      (
+        await login(
+          google(),
+          { ...good, auth_time: fresh },
+          { prompt: 'login', maxAgeSeconds: 300 },
+        )
+      ).authTime.getTime(),
+      fresh * 1000,
+    );
   });
   const realmFailures: [string, Login, string][] = [
     ['no hd claim', { sub: 'g', email: 'a@example.com', email_verified: true }, 'hd'],
-    ['hd of another domain', { sub: 'g', email: 'a@example.com', email_verified: true, hd: 'other.com' }, 'hd'],
-    ['email not verified', { sub: 'g', email: 'a@example.com', email_verified: false, hd: 'example.com' }, 'email_not_verified'],
-    ['email_verified missing', { sub: 'g', email: 'a@example.com', hd: 'example.com' }, 'email_not_verified'],
-    ['email domain is a lookalike (endsWith trap)', { sub: 'g', email: 'a@evilexample.com', email_verified: true, hd: 'example.com' }, 'email_domain'],
-    ['email domain is a subdomain', { sub: 'g', email: 'a@mail.example.com', email_verified: true, hd: 'example.com' }, 'email_domain'],
-    ['email with an extra @ part', { sub: 'g', email: 'a@example.com@evil.com', email_verified: true, hd: 'example.com' }, 'email_domain'],
+    [
+      'hd of another domain',
+      { sub: 'g', email: 'a@example.com', email_verified: true, hd: 'other.com' },
+      'hd',
+    ],
+    [
+      'email not verified',
+      { sub: 'g', email: 'a@example.com', email_verified: false, hd: 'example.com' },
+      'email_not_verified',
+    ],
+    [
+      'email_verified missing',
+      { sub: 'g', email: 'a@example.com', hd: 'example.com' },
+      'email_not_verified',
+    ],
+    [
+      'email domain is a lookalike (endsWith trap)',
+      { sub: 'g', email: 'a@evilexample.com', email_verified: true, hd: 'example.com' },
+      'email_domain',
+    ],
+    [
+      'email domain is a subdomain',
+      { sub: 'g', email: 'a@mail.example.com', email_verified: true, hd: 'example.com' },
+      'email_domain',
+    ],
+    [
+      'email with an extra @ part',
+      { sub: 'g', email: 'a@example.com@evil.com', email_verified: true, hd: 'example.com' },
+      'email_domain',
+    ],
     ['no email', { sub: 'g', email_verified: true, hd: 'example.com' }, 'email'],
   ];
   for (const [name, l, reason] of realmFailures)
     test(`refused: ${name}`, async () => {
-      await assert.rejects(login(google(), l), (e: unknown) => e instanceof RealmCheckError && e.reason === reason);
+      await assert.rejects(
+        login(google(), l),
+        (e: unknown) => e instanceof RealmCheckError && e.reason === reason,
+      );
     });
   test('email_verified as the string "true" (Google sends it so on some paths) is accepted, "false" is not', async () => {
     assert.equal((await login(google(), { ...good, email_verified: 'true' })).subject, 'g-1');
@@ -114,15 +178,24 @@ describe('ID token checks (signature, issuer, audience, exp, nonce)', () => {
   ];
   for (const [defect, reason] of defects)
     test(`refused: ${defect}`, async () => {
-      await assert.rejects(login(google(), { ...good, defect }), (e: unknown) => e instanceof OidcVerificationError && e.reason === reason);
+      await assert.rejects(
+        login(google(), { ...good, defect }),
+        (e: unknown) => e instanceof OidcVerificationError && e.reason === reason,
+      );
     });
   test('an unknown signing key is refused (after one JWKS refetch)', async () => {
-    await assert.rejects(login(google(), { ...good, defect: 'unknown_kid' }), (e: unknown) => e instanceof OidcVerificationError && e.reason === 'unknown_key');
+    await assert.rejects(
+      login(google(), { ...good, defect: 'unknown_kid' }),
+      (e: unknown) => e instanceof OidcVerificationError && e.reason === 'unknown_key',
+    );
   });
   test('the token endpoint failing never leaks the IdP text', async () => {
     await assert.rejects(login(google(), { ...good, defect: 'token_error' }), (e: unknown) => {
       assert.ok(e instanceof OidcVerificationError);
-      assert.ok(!JSON.stringify(e).includes('SECRET-IDP-TEXT') && !String(e.message).includes('SECRET-IDP-TEXT'));
+      assert.ok(
+        !JSON.stringify(e).includes('SECRET-IDP-TEXT') &&
+          !String(e.message).includes('SECRET-IDP-TEXT'),
+      );
       return true;
     });
   });
@@ -130,9 +203,18 @@ describe('ID token checks (signature, issuer, audience, exp, nonce)', () => {
     idp.nextLogin = good;
     const pkce = newPkce();
     const a = google();
-    const r = await fetch(a.authorizationUrl({ state: 's'.repeat(24), nonce: 'n'.repeat(24), codeChallenge: pkce.challenge }), { redirect: 'manual' });
+    const r = await fetch(
+      a.authorizationUrl({
+        state: 's'.repeat(24),
+        nonce: 'n'.repeat(24),
+        codeChallenge: pkce.challenge,
+      }),
+      { redirect: 'manual' },
+    );
     const code = new URL(r.headers.get('location') ?? '').searchParams.get('code') ?? '';
-    await assert.rejects(a.complete({ code, codeVerifier: newPkce().verifier, nonce: 'n'.repeat(24) })); // wrong verifier burns the code
+    await assert.rejects(
+      a.complete({ code, codeVerifier: newPkce().verifier, nonce: 'n'.repeat(24) }),
+    ); // wrong verifier burns the code
     await assert.rejects(a.complete({ code, codeVerifier: pkce.verifier, nonce: 'n'.repeat(24) })); // and it cannot be replayed
   });
   test('the JWKS is cached between sign-ins', async () => {
@@ -146,14 +228,24 @@ describe('ID token checks (signature, issuer, audience, exp, nonce)', () => {
 
 describe('patient realm adapter', () => {
   test('a patient needs no hd and no email; the realm is the adapter, not a claim', async () => {
-    const v = await login(patient(), { sub: 'p-1', name: 'Pat Jones', extra: { realm: 'google', hd: 'example.com' } });
+    const v = await login(patient(), {
+      sub: 'p-1',
+      name: 'Pat Jones',
+      extra: { realm: 'google', hd: 'example.com' },
+    });
     assert.equal(v.realm, 'patient_pool');
     assert.equal(v.subject, 'p-1');
     assert.equal(v.email, undefined);
   });
   test('an unverified patient email is dropped, a verified one is kept lower-cased', async () => {
-    assert.equal((await login(patient(), { sub: 'p-2', email: 'P@X.org', email_verified: false })).email, undefined);
-    assert.equal((await login(patient(), { sub: 'p-3', email: 'P@X.org', email_verified: true })).email, 'p@x.org');
+    assert.equal(
+      (await login(patient(), { sub: 'p-2', email: 'P@X.org', email_verified: false })).email,
+      undefined,
+    );
+    assert.equal(
+      (await login(patient(), { sub: 'p-3', email: 'P@X.org', email_verified: true })).email,
+      'p@x.org',
+    );
   });
   test('a patient token still has to verify', async () => {
     await assert.rejects(login(patient(), { sub: 'p-4', defect: 'bad_signature' }));

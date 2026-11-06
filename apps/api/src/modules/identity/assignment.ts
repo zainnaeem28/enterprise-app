@@ -30,16 +30,26 @@ export class AssignmentResolver {
   }
 
   async lookbackMonths(tx: Tx): Promise<number> {
-    const { rows } = await tx.query(`SELECT value FROM kernel.setting WHERE key = 'assignment_lookback_months' AND location_id IS NULL`);
+    const { rows } = await tx.query(
+      `SELECT value FROM kernel.setting WHERE key = 'assignment_lookback_months' AND location_id IS NULL`,
+    );
     const v = rows[0]?.['value'];
-    return typeof v === 'number' && Number.isInteger(v) && v >= 1 && v <= 240 ? v : DEFAULT_LOOKBACK_MONTHS;
+    return typeof v === 'number' && Number.isInteger(v) && v >= 1 && v <= 240
+      ? v
+      : DEFAULT_LOOKBACK_MONTHS;
   }
 
   /** Direct assignment of one principal, by the three rules. */
-  private async direct(tx: Tx, principalId: string, patientId: string, lookbackMonths: number): Promise<boolean> {
+  private async direct(
+    tx: Tx,
+    principalId: string,
+    patientId: string,
+    lookbackMonths: number,
+  ): Promise<boolean> {
     for (const rule of ['care_team', 'reservation', 'authored'] as const) {
       const src = this.sources.get(rule);
-      if (src !== undefined && (await src(tx, principalId, patientId, { lookbackMonths }))) return true;
+      if (src !== undefined && (await src(tx, principalId, patientId, { lookbackMonths })))
+        return true;
     }
     return false;
   }

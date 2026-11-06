@@ -8,12 +8,20 @@ import { systemScope } from './scope.js';
 export const PURGE_AFTER_HOURS = 24;
 const BATCH = 1000;
 
-export async function runPurgeSessions(deps: { db: KernelDb; orgId: string; now?: () => Date }): Promise<{ deleted: number }> {
-  const cutoff = new Date((deps.now ?? (() => new Date()))().getTime() - PURGE_AFTER_HOURS * 3_600_000);
+export async function runPurgeSessions(deps: {
+  db: KernelDb;
+  orgId: string;
+  now?: () => Date;
+}): Promise<{ deleted: number }> {
+  const cutoff = new Date(
+    (deps.now ?? (() => new Date()))().getTime() - PURGE_AFTER_HOURS * 3_600_000,
+  );
   let deleted = 0;
   for (;;) {
     const n = await deps.db.withScope(systemScope(deps.orgId), async (tx) => {
-      const hasChallenges = (await tx.query(`SELECT to_regclass('identity.webauthn_challenge') IS NOT NULL AS present`)).rows[0]?.['present'] === true;
+      const hasChallenges =
+        (await tx.query(`SELECT to_regclass('identity.webauthn_challenge') IS NOT NULL AS present`))
+          .rows[0]?.['present'] === true;
       const r = await tx.query(
         `DELETE FROM identity.session WHERE id IN (
            SELECT s.id FROM identity.session s

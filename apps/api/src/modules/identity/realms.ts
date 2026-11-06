@@ -24,7 +24,12 @@ export interface RealmAdapter {
   readonly realm: SignInRealm;
   authorizationUrl(p: AuthorizationParams): string;
   /** Exchanges the code and verifies the ID token. Throws on any failure; the message never reaches a client. */
-  complete(input: { code: string; codeVerifier: string; nonce: string; maxAgeSeconds?: number }): Promise<VerifiedIdentity>;
+  complete(input: {
+    code: string;
+    codeVerifier: string;
+    nonce: string;
+    maxAgeSeconds?: number;
+  }): Promise<VerifiedIdentity>;
 }
 
 /** The patient identity service adapter (ARCHITECTURE 26.1, patient_pool). */
@@ -70,7 +75,8 @@ export class GoogleRealmAdapter implements RealmAdapter {
 
   constructor(cfg: GoogleRealmConfig, now: () => number = Date.now) {
     this.domain = cfg.workspaceDomain.toLowerCase();
-    if (!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(this.domain)) throw new Error('workspace domain is not a domain');
+    if (!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(this.domain))
+      throw new Error('workspace domain is not a domain');
     this.client = new OidcClient({ extraIssuers: ['accounts.google.com'], ...cfg, now });
     this.now = now;
   }
@@ -82,14 +88,20 @@ export class GoogleRealmAdapter implements RealmAdapter {
     return base.toString();
   }
 
-  async complete(input: { code: string; codeVerifier: string; nonce: string; maxAgeSeconds?: number }): Promise<VerifiedIdentity> {
+  async complete(input: {
+    code: string;
+    codeVerifier: string;
+    nonce: string;
+    maxAgeSeconds?: number;
+  }): Promise<VerifiedIdentity> {
     const idToken = await this.client.exchangeCode(input.code, input.codeVerifier);
     const c = await this.client.verifyIdToken(idToken, {
       nonce: input.nonce,
       ...(input.maxAgeSeconds === undefined ? {} : { maxAgeSeconds: input.maxAgeSeconds }),
     });
     if (!isTrue(c.email_verified)) throw new RealmCheckError('email_not_verified');
-    if (typeof c.hd !== 'string' || c.hd.toLowerCase() !== this.domain) throw new RealmCheckError('hd');
+    if (typeof c.hd !== 'string' || c.hd.toLowerCase() !== this.domain)
+      throw new RealmCheckError('hd');
     if (typeof c.email !== 'string' || c.email.length > 320) throw new RealmCheckError('email');
     const email = c.email.toLowerCase();
     const at = email.lastIndexOf('@');
@@ -99,8 +111,11 @@ export class GoogleRealmAdapter implements RealmAdapter {
       subject: c.sub,
       email,
       displayName: nameOf(c, email.slice(0, at)),
-      authTime: typeof c.auth_time === 'number' ? new Date(c.auth_time * 1000) : new Date(this.now()),
-      amr: Array.isArray(c.amr) ? c.amr.filter((x): x is string => typeof x === 'string').slice(0, 8) : [],
+      authTime:
+        typeof c.auth_time === 'number' ? new Date(c.auth_time * 1000) : new Date(this.now()),
+      amr: Array.isArray(c.amr)
+        ? c.amr.filter((x): x is string => typeof x === 'string').slice(0, 8)
+        : [],
     };
   }
 }
@@ -120,20 +135,31 @@ export class OidcPatientAdapter implements PatientIdentityAdapter {
     return this.client.authorizationUrl(p);
   }
 
-  async complete(input: { code: string; codeVerifier: string; nonce: string; maxAgeSeconds?: number }): Promise<VerifiedIdentity> {
+  async complete(input: {
+    code: string;
+    codeVerifier: string;
+    nonce: string;
+    maxAgeSeconds?: number;
+  }): Promise<VerifiedIdentity> {
     const idToken = await this.client.exchangeCode(input.code, input.codeVerifier);
     const c = await this.client.verifyIdToken(idToken, {
       nonce: input.nonce,
       ...(input.maxAgeSeconds === undefined ? {} : { maxAgeSeconds: input.maxAgeSeconds }),
     });
-    const email = typeof c.email === 'string' && isTrue(c.email_verified) ? c.email.toLowerCase().slice(0, 320) : undefined;
+    const email =
+      typeof c.email === 'string' && isTrue(c.email_verified)
+        ? c.email.toLowerCase().slice(0, 320)
+        : undefined;
     return {
       realm: 'patient_pool',
       subject: c.sub,
       ...(email === undefined ? {} : { email }),
       displayName: nameOf(c, 'Patient'),
-      authTime: typeof c.auth_time === 'number' ? new Date(c.auth_time * 1000) : new Date(this.now()),
-      amr: Array.isArray(c.amr) ? c.amr.filter((x): x is string => typeof x === 'string').slice(0, 8) : [],
+      authTime:
+        typeof c.auth_time === 'number' ? new Date(c.auth_time * 1000) : new Date(this.now()),
+      amr: Array.isArray(c.amr)
+        ? c.amr.filter((x): x is string => typeof x === 'string').slice(0, 8)
+        : [],
     };
   }
 }

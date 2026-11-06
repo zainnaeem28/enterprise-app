@@ -7,7 +7,8 @@ import { UnauthenticatedError } from './errors.js';
 import { AUDIENCE_OF } from './types.js';
 import type { PrincipalRealm, SessionAudience, SessionRow } from './types.js';
 
-export type RevokeReason = 'sign_out' | 'kill_switch' | 'role_change' | 'idle' | 'absolute' | 'realm_switch';
+export type RevokeReason =
+  'sign_out' | 'kill_switch' | 'role_change' | 'idle' | 'absolute' | 'realm_switch';
 
 /** Defaults are the PRD 7.2 / 26.2 values; the stored `kernel.setting` rows (pre_auth keys) win when present and valid. */
 const IDLE_KEY: Readonly<Record<PrincipalRealm, string>> = {
@@ -52,7 +53,8 @@ export interface SessionLifetimes {
 }
 
 const toDate = (v: unknown): Date => (v instanceof Date ? v : new Date(String(v)));
-const toDateOrNull = (v: unknown): Date | null => (v === null || v === undefined ? null : toDate(v));
+const toDateOrNull = (v: unknown): Date | null =>
+  v === null || v === undefined ? null : toDate(v);
 
 export function rowToSession(r: Record<string, unknown>): SessionRow {
   return {
@@ -80,7 +82,10 @@ export async function lifetimesFor(tx: Tx, realm: PrincipalRealm): Promise<Sessi
     [key],
   );
   const v = rows[0]?.['value'];
-  const idleMin = typeof v === 'number' && Number.isInteger(v) && v >= 1 && v <= 1440 ? v : IDLE_DEFAULT_MIN[realm];
+  const idleMin =
+    typeof v === 'number' && Number.isInteger(v) && v >= 1 && v <= 1440
+      ? v
+      : IDLE_DEFAULT_MIN[realm];
   return { idleMs: idleMin * 60_000, absoluteMs: ABSOLUTE_HOURS[realm] * 3_600_000 };
 }
 
@@ -91,9 +96,7 @@ export type Lookup =
   | { state: 'revoked'; session: SessionRow };
 
 export class SessionService {
-  constructor(
-    private readonly deps: { db: KernelDb; orgId: string; now?: () => Date },
-  ) {}
+  constructor(private readonly deps: { db: KernelDb; orgId: string; now?: () => Date }) {}
 
   private now(): Date {
     return (this.deps.now ?? (() => new Date()))();
@@ -116,7 +119,8 @@ export class SessionService {
     const session = rowToSession(row);
     if (session.revokedAt !== null) return { state: 'revoked', session };
     const t = this.now().getTime();
-    if (t >= session.absoluteExpiresAt.getTime()) return { state: 'expired', session, reason: 'absolute' };
+    if (t >= session.absoluteExpiresAt.getTime())
+      return { state: 'expired', session, reason: 'absolute' };
     if (t >= session.idleExpiresAt.getTime()) return { state: 'expired', session, reason: 'idle' };
     return { state: 'live', session };
   }
@@ -167,7 +171,10 @@ export class SessionService {
     const row = r.rows[0];
     if (row !== undefined) return toDate(row['idle_expires_at']);
     // Not touched (within the minute, or the row just ended): report what is stored.
-    const cur = await tx.query(`SELECT idle_expires_at, revoked_at FROM identity.session WHERE id = $1`, [s.id]);
+    const cur = await tx.query(
+      `SELECT idle_expires_at, revoked_at FROM identity.session WHERE id = $1`,
+      [s.id],
+    );
     const c = cur.rows[0];
     if (c === undefined || c['revoked_at'] !== null) throw new UnauthenticatedError();
     const idle = toDate(c['idle_expires_at']);
@@ -199,7 +206,9 @@ export class SessionService {
     const now = this.now();
     const life = await lifetimesFor(tx, p.realm);
     const absoluteExpiresAt = new Date(now.getTime() + life.absoluteMs);
-    const idleExpiresAt = new Date(Math.min(now.getTime() + life.idleMs, absoluteExpiresAt.getTime()));
+    const idleExpiresAt = new Date(
+      Math.min(now.getTime() + life.idleMs, absoluteExpiresAt.getTime()),
+    );
     await tx.query(
       `INSERT INTO identity.session (id, organisation_id, token_hash, principal_id, person_id, realm, audience, auth_time, amr,
          csrf_hash, idle_expires_at, absolute_expires_at, last_seen_at, last_interaction_at, ip, user_agent)

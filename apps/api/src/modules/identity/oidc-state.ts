@@ -23,11 +23,13 @@ export interface OidcStateKeys {
 }
 
 const AAD = Buffer.from('ehr-oidc-state-v1');
-const derive = (secret: string): Buffer => createHash('sha256').update(`ehr-oidc-state:${secret}`).digest();
+const derive = (secret: string): Buffer =>
+  createHash('sha256').update(`ehr-oidc-state:${secret}`).digest();
 
 function checkKeys(keys: OidcStateKeys): void {
   if (keys.current.length < 32) throw new Error('oidc state key too short');
-  if (keys.previous !== undefined && keys.previous.length < 32) throw new Error('oidc state key too short');
+  if (keys.previous !== undefined && keys.previous.length < 32)
+    throw new Error('oidc state key too short');
 }
 
 export function sealOidcState(s: OidcState, keys: OidcStateKeys): string {

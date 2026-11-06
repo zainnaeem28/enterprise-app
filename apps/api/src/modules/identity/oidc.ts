@@ -116,13 +116,23 @@ export class OidcClient {
       client_id: this.cfg.clientId,
       code_verifier: codeVerifier,
     });
-    const headers: Record<string, string> = { 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json' };
+    const headers: Record<string, string> = {
+      'content-type': 'application/x-www-form-urlencoded',
+      accept: 'application/json',
+    };
     if (this.cfg.clientSecret !== undefined) {
-      headers['authorization'] = `Basic ${Buffer.from(`${encodeURIComponent(this.cfg.clientId)}:${encodeURIComponent(this.cfg.clientSecret)}`).toString('base64')}`;
+      headers['authorization'] =
+        `Basic ${Buffer.from(`${encodeURIComponent(this.cfg.clientId)}:${encodeURIComponent(this.cfg.clientSecret)}`).toString('base64')}`;
     }
     let res: Response;
     try {
-      res = await this.f(this.cfg.endpoints.tokenEndpoint, { method: 'POST', headers, body, redirect: 'error', signal: AbortSignal.timeout(5000) });
+      res = await this.f(this.cfg.endpoints.tokenEndpoint, {
+        method: 'POST',
+        headers,
+        body,
+        redirect: 'error',
+        signal: AbortSignal.timeout(5000),
+      });
     } catch {
       throw new OidcVerificationError('token_endpoint_unreachable');
     }
@@ -141,17 +151,24 @@ export class OidcClient {
   private async keys(refresh: boolean): Promise<Jwk[]> {
     const t = this.now();
     // A cached set is reused for 10 minutes; an unknown `kid` forces one refetch, at most once a minute.
-    if (this.jwks !== undefined && !refresh && t - this.jwks.fetchedAt < 600_000) return this.jwks.keys;
-    if (this.jwks !== undefined && refresh && t - this.jwks.fetchedAt < 60_000) return this.jwks.keys;
+    if (this.jwks !== undefined && !refresh && t - this.jwks.fetchedAt < 600_000)
+      return this.jwks.keys;
+    if (this.jwks !== undefined && refresh && t - this.jwks.fetchedAt < 60_000)
+      return this.jwks.keys;
     let res: Response;
     try {
-      res = await this.f(this.cfg.endpoints.jwksUri, { headers: { accept: 'application/json' }, redirect: 'error', signal: AbortSignal.timeout(5000) });
+      res = await this.f(this.cfg.endpoints.jwksUri, {
+        headers: { accept: 'application/json' },
+        redirect: 'error',
+        signal: AbortSignal.timeout(5000),
+      });
     } catch {
       throw new OidcVerificationError('jwks_unreachable');
     }
     if (!res.ok) throw new OidcVerificationError('jwks_refused');
     const j = (await res.json().catch(() => undefined)) as { keys?: unknown } | undefined;
-    if (j === undefined || !Array.isArray(j.keys)) throw new OidcVerificationError('jwks_malformed');
+    if (j === undefined || !Array.isArray(j.keys))
+      throw new OidcVerificationError('jwks_malformed');
     this.jwks = { keys: j.keys as Jwk[], fetchedAt: t };
     return this.jwks.keys;
   }
@@ -175,11 +192,17 @@ export class OidcClient {
     if (alg !== 'RS256' && alg !== 'ES256') throw new OidcVerificationError('alg');
     const kid = typeof header.kid === 'string' ? header.kid : undefined;
     const pick = (keys: Jwk[]): Jwk | undefined =>
-      keys.find((k) => (kid === undefined || k.kid === kid) && (k.use === undefined || k.use === 'sig') && (k.alg === undefined || k.alg === alg) && k.kty === (alg === 'RS256' ? 'RSA' : 'EC'));
+      keys.find(
+        (k) =>
+          (kid === undefined || k.kid === kid) &&
+          (k.use === undefined || k.use === 'sig') &&
+          (k.alg === undefined || k.alg === alg) &&
+          k.kty === (alg === 'RS256' ? 'RSA' : 'EC'),
+      );
     let jwk = pick(await this.keys(false));
     if (jwk === undefined) jwk = pick(await this.keys(true));
     if (jwk === undefined) throw new OidcVerificationError('unknown_key');
-    let ok = false;
+    let ok: boolean;
     try {
       const key = createPublicKey({ key: jwk, format: 'jwk' });
       const data = Buffer.from(`${h}.${p}`);
@@ -194,24 +217,35 @@ export class OidcClient {
     if (!ok) throw new OidcVerificationError('signature');
 
     const issuers = [this.cfg.endpoints.issuer, ...(this.cfg.extraIssuers ?? [])];
-    if (typeof claims.iss !== 'string' || !issuers.includes(claims.iss)) throw new OidcVerificationError('iss');
+    if (typeof claims.iss !== 'string' || !issuers.includes(claims.iss))
+      throw new OidcVerificationError('iss');
     const aud = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
     if (!aud.includes(this.cfg.clientId)) throw new OidcVerificationError('aud');
     if (aud.length > 1 && claims.azp !== this.cfg.clientId) throw new OidcVerificationError('azp');
-    if (claims.azp !== undefined && claims.azp !== this.cfg.clientId) throw new OidcVerificationError('azp');
+    if (claims.azp !== undefined && claims.azp !== this.cfg.clientId)
+      throw new OidcVerificationError('azp');
     const nowS = Math.floor(this.now() / 1000);
-    if (typeof claims.exp !== 'number' || claims.exp + this.skew <= nowS) throw new OidcVerificationError('exp');
-    if (claims.iat !== undefined && (typeof claims.iat !== 'number' || claims.iat - this.skew > nowS)) throw new OidcVerificationError('iat');
+    if (typeof claims.exp !== 'number' || claims.exp + this.skew <= nowS)
+      throw new OidcVerificationError('exp');
+    if (
+      claims.iat !== undefined &&
+      (typeof claims.iat !== 'number' || claims.iat - this.skew > nowS)
+    )
+      throw new OidcVerificationError('iat');
     if (typeof claims.nonce !== 'string') throw new OidcVerificationError('nonce');
     const a = Buffer.from(claims.nonce);
     const b = Buffer.from(expect.nonce);
     if (a.length !== b.length || !timingSafeEqual(a, b)) throw new OidcVerificationError('nonce');
-    if (typeof claims.sub !== 'string' || claims.sub.length === 0 || claims.sub.length > 255) throw new OidcVerificationError('sub');
+    if (typeof claims.sub !== 'string' || claims.sub.length === 0 || claims.sub.length > 255)
+      throw new OidcVerificationError('sub');
     // BQ-8: when a maximum age was asked for, a stale `auth_time` is refused. A token without `auth_time` is accepted,
     // because the request carried `prompt=login` and the IdP re-authenticated the user (Google may omit the claim,
     // Part I C1 note); the session then records the time of this callback.
     if (expect.maxAgeSeconds !== undefined && claims.auth_time !== undefined) {
-      if (typeof claims.auth_time !== 'number' || nowS - claims.auth_time > expect.maxAgeSeconds + this.skew)
+      if (
+        typeof claims.auth_time !== 'number' ||
+        nowS - claims.auth_time > expect.maxAgeSeconds + this.skew
+      )
         throw new OidcVerificationError('auth_time_stale');
     }
     return claims;

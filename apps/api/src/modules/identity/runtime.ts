@@ -54,7 +54,8 @@ export function createIdentity(deps: IdentityDeps): Identity {
   const sessions = new SessionService({ db: deps.db, orgId: c.orgId, now });
   const scopes = new ScopeBuilder({
     orgId: c.orgId,
-    activeBtgPatientIds: async (tx, principalId) => (await deps.audit.activeBtgGrants(tx, principalId)).map((g) => g.patientId),
+    activeBtgPatientIds: async (tx, principalId) =>
+      (await deps.audit.activeBtgGrants(tx, principalId)).map((g) => g.patientId),
   });
   const assignment = new AssignmentResolver();
   const limiter = new SignInLimiter({
@@ -64,7 +65,13 @@ export function createIdentity(deps: IdentityDeps): Identity {
     now: () => now().getTime(),
     ...(deps.onSignInAlert === undefined ? {} : { onGlobalAlert: deps.onSignInAlert }),
   });
-  const signIn = new SignInService({ db: deps.db, orgId: c.orgId, sessions, queue: deps.queue, now });
+  const signIn = new SignInService({
+    db: deps.db,
+    orgId: c.orgId,
+    sessions,
+    queue: deps.queue,
+    now,
+  });
   const policy = new IdentityGuardPolicy({
     db: deps.db,
     orgId: c.orgId,
@@ -100,5 +107,12 @@ export function createIdentity(deps: IdentityDeps): Identity {
     audit: deps.audit,
     now: () => now().getTime(),
   });
-  return { policy, controllers: [controller], sessions, scopes, assignment, proxies: new ProxyService() };
+  return {
+    policy,
+    controllers: [controller],
+    sessions,
+    scopes,
+    assignment,
+    proxies: new ProxyService(),
+  };
 }

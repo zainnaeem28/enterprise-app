@@ -28,7 +28,9 @@ export function issueToken(): IssuedToken {
 
 /** Accepts only what `issueToken` can produce, so a malformed cookie never reaches the database. */
 const TOKEN_SHAPE = /^[A-Za-z0-9_-]{43}$/;
-export function hashPresentedToken(presented: string | undefined): IssuedToken['hashHex'] | undefined {
+export function hashPresentedToken(
+  presented: string | undefined,
+): IssuedToken['hashHex'] | undefined {
   if (presented === undefined || !TOKEN_SHAPE.test(presented)) return undefined;
   return sha256(presented).toString('hex');
 }

@@ -30,7 +30,8 @@ interface Limits {
   clinic: BlockList;
 }
 
-const intIn = (v: unknown, dflt: number): number => (typeof v === 'number' && Number.isInteger(v) && v >= 1 && v <= 1_000_000 ? v : dflt);
+const intIn = (v: unknown, dflt: number): number =>
+  typeof v === 'number' && Number.isInteger(v) && v >= 1 && v <= 1_000_000 ? v : dflt;
 
 /** Same validation as the IaC check (31.3 (b)): refuse IPv4 shorter than /24, IPv6 shorter than /48 and non-public ranges. */
 export function parseClinicCidrs(value: unknown): BlockList {
@@ -41,15 +42,25 @@ export function parseClinicCidrs(value: unknown): BlockList {
     const [addr, bitsRaw] = entry.split('/');
     const bits = Number(bitsRaw);
     if (addr === undefined || !Number.isInteger(bits)) continue;
-    if (isIPv4(addr) && bits >= 24 && bits <= 32 && !privateV4(addr)) list.addSubnet(addr, bits, 'ipv4');
-    else if (isIPv6(addr) && bits >= 48 && bits <= 128 && !/^(::1?|f[cd]|fe[89ab])/i.test(addr)) list.addSubnet(addr, bits, 'ipv6');
+    if (isIPv4(addr) && bits >= 24 && bits <= 32 && !privateV4(addr))
+      list.addSubnet(addr, bits, 'ipv4');
+    else if (isIPv6(addr) && bits >= 48 && bits <= 128 && !/^(::1?|f[cd]|fe[89ab])/i.test(addr))
+      list.addSubnet(addr, bits, 'ipv6');
   }
   return list;
 }
 
 function privateV4(a: string): boolean {
   const [o1 = 0, o2 = 0] = a.split('.').map(Number);
-  return o1 === 10 || o1 === 127 || o1 === 0 || (o1 === 172 && o2 >= 16 && o2 <= 31) || (o1 === 192 && o2 === 168) || (o1 === 169 && o2 === 254) || o1 >= 224;
+  return (
+    o1 === 10 ||
+    o1 === 127 ||
+    o1 === 0 ||
+    (o1 === 172 && o2 >= 16 && o2 <= 31) ||
+    (o1 === 192 && o2 === 168) ||
+    (o1 === 169 && o2 === 254) ||
+    o1 >= 224
+  );
 }
 
 export class SignInLimiter {
@@ -87,34 +98,41 @@ export class SignInLimiter {
     const clinic = (isIPv4(ip) || isIPv6(ip)) && limits.clinic.check(ip, type);
     const limit = clinic ? limits.clinicIpFailures : limits.ipFailures;
     const start = this.windowStart();
-    const count = await this.d.db.withScope({ audience: 'anonymous', orgId: this.d.orgId }, async (tx) => {
-      const r = await tx.query(
-        `SELECT count FROM kernel.rate_counter WHERE key = $1 AND window_start = to_timestamp($2 / 1000.0)`,
-        [this.key('signin_ip', ip), start],
-      );
-      return Number(r.rows[0]?.['count'] ?? 0);
-    });
-    if (count >= limit) throw new RateLimitedError(Math.max(1, Math.ceil((start + WINDOW_MS - this.now()) / 1000)));
+    const count = await this.d.db.withScope(
+      { audience: 'anonymous', orgId: this.d.orgId },
+      async (tx) => {
+        const r = await tx.query(
+          `SELECT count FROM kernel.rate_counter WHERE key = $1 AND window_start = to_timestamp($2 / 1000.0)`,
+          [this.key('signin_ip', ip), start],
+        );
+        return Number(r.rows[0]?.['count'] ?? 0);
+      },
+    );
+    if (count >= limit)
+      throw new RateLimitedError(Math.max(1, Math.ceil((start + WINDOW_MS - this.now()) / 1000)));
   }
 
   /** One failure, in its own transaction. Never throws: a counting failure must not hide the original refusal. */
   async recordFailure(ip: string, realm: string): Promise<void> {
     const start = this.windowStart();
     try {
-      const global = await this.d.db.withScope({ audience: 'anonymous', orgId: this.d.orgId }, async (tx) => {
-        let last = 0;
-        for (const k of [this.key('signin_ip', ip), this.key('signin_global', realm)]) {
-          const r = await tx.query(
-            `INSERT INTO kernel.rate_counter (organisation_id, key, window_start, count)
+      const global = await this.d.db.withScope(
+        { audience: 'anonymous', orgId: this.d.orgId },
+        async (tx) => {
+          let last = 0;
+          for (const k of [this.key('signin_ip', ip), this.key('signin_global', realm)]) {
+            const r = await tx.query(
+              `INSERT INTO kernel.rate_counter (organisation_id, key, window_start, count)
              VALUES ($1, $2, to_timestamp($3 / 1000.0), 1)
              ON CONFLICT (organisation_id, key, window_start) DO UPDATE SET count = kernel.rate_counter.count + 1, updated_at = now()
              RETURNING count`,
-            [this.d.orgId, k, start],
-          );
-          last = Number(r.rows[0]?.['count'] ?? 0);
-        }
-        return last;
-      });
+              [this.d.orgId, k, start],
+            );
+            last = Number(r.rows[0]?.['count'] ?? 0);
+          }
+          return last;
+        },
+      );
       if (global === GLOBAL_ALERT_FAILURES) this.d.onGlobalAlert?.({ realm, failures: global });
     } catch {
       // swallowed on purpose; the caller logs the class of the original failure

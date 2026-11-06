@@ -1,6 +1,15 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
-import { buildCookie, clearCookie, constantTimeEqual, hashPresentedToken, issueToken, parseCookies, safeReturnTo, sha256 } from './tokens.js';
+import {
+  buildCookie,
+  clearCookie,
+  constantTimeEqual,
+  hashPresentedToken,
+  issueToken,
+  parseCookies,
+  safeReturnTo,
+  sha256,
+} from './tokens.js';
 import { openOidcState, sealOidcState } from './oidc-state.js';
 
 describe('session tokens (26.2)', () => {
@@ -15,7 +24,8 @@ describe('session tokens (26.2)', () => {
     assert.ok(!a.hashHex.includes(a.token));
   });
   test('a presented value that is not a token never becomes a lookup key', () => {
-    for (const bad of [undefined, '', 'short', 'a'.repeat(44), `${'a'.repeat(42)}!`, "' OR 1=1 --"]) assert.equal(hashPresentedToken(bad), undefined);
+    for (const bad of [undefined, '', 'short', 'a'.repeat(44), `${'a'.repeat(42)}!`, "' OR 1=1 --"])
+      assert.equal(hashPresentedToken(bad), undefined);
     const t = issueToken();
     assert.equal(hashPresentedToken(t.token), t.hashHex);
   });
@@ -41,13 +51,32 @@ describe('cookies', () => {
   });
   test('returnTo is a relative path on the same host', () => {
     assert.equal(safeReturnTo('/patients/123?x=1'), '/patients/123?x=1');
-    for (const bad of ['https://evil.example/', '//evil.example', '/\\evil', 'javascript:alert(1)', '/a\nb', '', undefined, 5, ['/a'], `/${'a'.repeat(600)}`]) assert.equal(safeReturnTo(bad), '/');
+    for (const bad of [
+      'https://evil.example/',
+      '//evil.example',
+      '/\\evil',
+      'javascript:alert(1)',
+      '/a\nb',
+      '',
+      undefined,
+      5,
+      ['/a'],
+      `/${'a'.repeat(600)}`,
+    ])
+      assert.equal(safeReturnTo(bad), '/');
   });
 });
 
 describe('pre-authentication cookie (26.1, SEC01-F-11)', () => {
   const keys = { current: 'c'.repeat(40), previous: 'p'.repeat(40) };
-  const st = { realm: 'google' as const, state: 's', nonce: 'n', verifier: 'v', returnTo: '/x', expiresAt: Date.now() + 60_000 };
+  const st = {
+    realm: 'google' as const,
+    state: 's',
+    nonce: 'n',
+    verifier: 'v',
+    returnTo: '/x',
+    expiresAt: Date.now() + 60_000,
+  };
   test('round trip, and it is not readable', () => {
     const sealed = sealOidcState(st, keys);
     assert.deepEqual(openOidcState(sealed, keys), st);

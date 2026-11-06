@@ -9,7 +9,16 @@ type Row = Record<string, unknown>;
 
 /** What a module may add to a principal's scope (24: `registerScopeContributor`). Identity fields are not on this list. */
 export type ScopeContribution = Partial<
-  Pick<ScopeSettings, 'locationIds' | 'btgPatientIds' | 'patientIds' | 'proxyPatientIds' | 'pharmacyOrgId' | 'complianceScopes' | 'phiAccess'>
+  Pick<
+    ScopeSettings,
+    | 'locationIds'
+    | 'btgPatientIds'
+    | 'patientIds'
+    | 'proxyPatientIds'
+    | 'pharmacyOrgId'
+    | 'complianceScopes'
+    | 'phiAccess'
+  >
 >;
 
 export type ScopeContributor = (
@@ -18,7 +27,13 @@ export type ScopeContributor = (
   session: Readonly<SessionRow>,
 ) => Promise<ScopeContribution>;
 
-const ARRAY_KEYS = ['locationIds', 'btgPatientIds', 'patientIds', 'proxyPatientIds', 'complianceScopes'] as const;
+const ARRAY_KEYS = [
+  'locationIds',
+  'btgPatientIds',
+  'patientIds',
+  'proxyPatientIds',
+  'complianceScopes',
+] as const;
 
 export interface BuiltScope {
   scope: ScopeSettings;
@@ -52,8 +67,10 @@ export class ScopeBuilder {
         [session.principalId],
       )
     ).rows[0];
-    const active = principal?.['principal_status'] === 'active' && principal['person_status'] === 'active';
-    const displayName = typeof principal?.['display_name'] === 'string' ? principal['display_name'] : '';
+    const active =
+      principal?.['principal_status'] === 'active' && principal['person_status'] === 'active';
+    const displayName =
+      typeof principal?.['display_name'] === 'string' ? principal['display_name'] : '';
     const base: ScopeSettings = {
       audience: session.audience,
       realm: session.realm,
@@ -61,7 +78,15 @@ export class ScopeBuilder {
       principalId: session.principalId,
       personId: session.personId,
     };
-    if (!active) return { scope: base, roles: [], grants: new PermissionGrants(), patients: [], displayName, principalActive: false };
+    if (!active)
+      return {
+        scope: base,
+        roles: [],
+        grants: new PermissionGrants(),
+        patients: [],
+        displayName,
+        principalActive: false,
+      };
 
     const roles: RoleGrant[] = [];
     const grants = new PermissionGrants();
@@ -106,8 +131,12 @@ export class ScopeBuilder {
 
     const patients: PatientAccess[] = [];
     if (session.audience === 'patient') {
-      const self = await tx.query(`SELECT patient_id FROM identity.patient_link WHERE principal_id = $1`, [session.principalId]);
-      for (const r of self.rows) patients.push({ patientId: r['patient_id'] as string, relation: 'self', scope: 'full' });
+      const self = await tx.query(
+        `SELECT patient_id FROM identity.patient_link WHERE principal_id = $1`,
+        [session.principalId],
+      );
+      for (const r of self.rows)
+        patients.push({ patientId: r['patient_id'] as string, relation: 'self', scope: 'full' });
       // D-7 default: a proxy sees appointments only. A patient who is also their own proxy keeps full access.
       const proxy = await tx.query(
         `SELECT patient_id, scope, patient_display_name FROM identity.proxy_grant
@@ -118,12 +147,18 @@ export class ScopeBuilder {
       for (const r of proxy.rows) {
         const id = r['patient_id'] as string;
         if (have.has(id)) continue;
-        patients.push({ patientId: id, relation: 'proxy', scope: 'appointments', displayName: r['patient_display_name'] as string });
+        patients.push({
+          patientId: id,
+          relation: 'proxy',
+          scope: 'appointments',
+          displayName: r['patient_display_name'] as string,
+        });
       }
     }
 
     let btg: string[] = [];
-    if (session.audience === 'staff') btg = await this.deps.activeBtgPatientIds(tx, session.principalId);
+    if (session.audience === 'staff')
+      btg = await this.deps.activeBtgPatientIds(tx, session.principalId);
 
     const scope: ScopeSettings = {
       ...base,
@@ -131,20 +166,27 @@ export class ScopeBuilder {
       ...(btg.length > 0 ? { btgPatientIds: btg } : {}),
       ...(patients.length > 0 ? { patientIds: patients.map((p) => p.patientId) } : {}),
       ...(patients.some((p) => p.relation === 'proxy')
-        ? { proxyPatientIds: patients.filter((p) => p.relation === 'proxy').map((p) => p.patientId) }
+        ? {
+            proxyPatientIds: patients.filter((p) => p.relation === 'proxy').map((p) => p.patientId),
+          }
         : {}),
-      ...(complianceScopes.size > 0 ? { complianceScopes: [...complianceScopes].sort(), phiAccess: 'limited' as const } : {}),
+      ...(complianceScopes.size > 0
+        ? { complianceScopes: [...complianceScopes].sort(), phiAccess: 'limited' as const }
+        : {}),
     };
     for (const c of this.contributors) {
       const add = await c(tx, scope, session);
       const out = scope as unknown as Record<string, unknown>;
       for (const k of ARRAY_KEYS) {
         const v = add[k];
-        if (v !== undefined) out[k] = [...new Set([...((out[k] as string[] | undefined) ?? []), ...v])];
+        if (v !== undefined)
+          out[k] = [...new Set([...((out[k] as string[] | undefined) ?? []), ...v])];
       }
-      if (add.pharmacyOrgId !== undefined && scope.pharmacyOrgId === undefined) scope.pharmacyOrgId = add.pharmacyOrgId;
+      if (add.pharmacyOrgId !== undefined && scope.pharmacyOrgId === undefined)
+        scope.pharmacyOrgId = add.pharmacyOrgId;
       // phiAccess may only narrow what identity set, never widen it.
-      if (add.phiAccess !== undefined && scope.phiAccess === undefined) scope.phiAccess = add.phiAccess;
+      if (add.phiAccess !== undefined && scope.phiAccess === undefined)
+        scope.phiAccess = add.phiAccess;
     }
     return { scope, roles, grants, patients, displayName, principalActive: true };
   }

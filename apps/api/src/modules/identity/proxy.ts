@@ -40,7 +40,12 @@ export class ProxyService {
     input: { patientId: string; relationship: ProxyRelationship; patientDisplayName: string },
   ): Promise<string> {
     const principalId = tx.scope.principalId;
-    if (tx.scope.audience !== 'patient' || principalId === undefined || tx.scope.orgId === undefined) throw new IdentityScopeError();
+    if (
+      tx.scope.audience !== 'patient' ||
+      principalId === undefined ||
+      tx.scope.orgId === undefined
+    )
+      throw new IdentityScopeError();
     const bad: string[] = [];
     if (!isUuid(input.patientId)) bad.push('patientId');
     if (!PROXY_RELATIONSHIPS.includes(input.relationship)) bad.push('relationship');
@@ -71,19 +76,29 @@ export class ProxyService {
   /** The proxies of the patients in the caller's own scope (T-PAT-OWN). */
   async listForPatient(tx: Tx, patientId: string): Promise<ProxyGrantView[]> {
     if (!isUuid(patientId)) throw new IdentityValidationError(['patientId']);
-    const r = await tx.query(`SELECT ${COLS} FROM identity.proxy_grant WHERE patient_id = $1 ORDER BY created_at`, [patientId]);
+    const r = await tx.query(
+      `SELECT ${COLS} FROM identity.proxy_grant WHERE patient_id = $1 ORDER BY created_at`,
+      [patientId],
+    );
     return r.rows.map(view);
   }
 
   /** The grants of the calling proxy (T-PRINCIPAL(proxy)), so they can tell linked patients apart without reading the patient. */
   async listMine(tx: Tx): Promise<ProxyGrantView[]> {
-    if (tx.scope.audience !== 'patient' || tx.scope.principalId === undefined) throw new IdentityScopeError();
-    const r = await tx.query(`SELECT ${COLS} FROM identity.proxy_grant WHERE proxy_principal_id = $1 ORDER BY created_at`, [tx.scope.principalId]);
+    if (tx.scope.audience !== 'patient' || tx.scope.principalId === undefined)
+      throw new IdentityScopeError();
+    const r = await tx.query(
+      `SELECT ${COLS} FROM identity.proxy_grant WHERE proxy_principal_id = $1 ORDER BY created_at`,
+      [tx.scope.principalId],
+    );
     return r.rows.map(view);
   }
 }
 
 /** What a patient session may reach, as the scope builder computed it: the interface the patient module reads (24). */
-export function patientAccessOf(patients: readonly PatientAccess[], patientId: string): PatientAccess | undefined {
+export function patientAccessOf(
+  patients: readonly PatientAccess[],
+  patientId: string,
+): PatientAccess | undefined {
   return patients.find((p) => p.patientId === patientId);
 }

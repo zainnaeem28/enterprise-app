@@ -56,4 +56,3 @@ export class IdentityValidationError extends IdentityError {
     this.name = 'IdentityValidationError';
   }
 }
-

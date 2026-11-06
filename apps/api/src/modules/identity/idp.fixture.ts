@@ -48,14 +48,24 @@ export class LocalIdp {
   private readonly key = generateKeyPairSync('rsa', { modulusLength: 2048 });
   readonly kid = 'k1';
   clientId = 'test-client';
-  nextLogin: Login = { sub: 'sub-default', email: 'user@example.com', email_verified: true, hd: 'example.com' };
+  nextLogin: Login = {
+    sub: 'sub-default',
+    email: 'user@example.com',
+    email_verified: true,
+    hd: 'example.com',
+  };
   /** Parameters of the last authorisation request (prompt, max_age, hd, ...). */
   lastAuthorize: URLSearchParams = new URLSearchParams();
   tokenCalls = 0;
   jwksCalls = 0;
   base = '';
 
-  get endpoints(): { issuer: string; authorizationEndpoint: string; tokenEndpoint: string; jwksUri: string } {
+  get endpoints(): {
+    issuer: string;
+    authorizationEndpoint: string;
+    tokenEndpoint: string;
+    jwksUri: string;
+  } {
     return {
       issuer: this.base,
       authorizationEndpoint: `${this.base}/authorize`,
@@ -112,7 +122,10 @@ export class LocalIdp {
     res.end(JSON.stringify({ keys: [{ ...jwk, kid: this.kid, alg: 'RS256', use: 'sig' }] }));
   }
 
-  private async token(req: import('node:http').IncomingMessage, res: import('node:http').ServerResponse): Promise<void> {
+  private async token(
+    req: import('node:http').IncomingMessage,
+    res: import('node:http').ServerResponse,
+  ): Promise<void> {
     this.tokenCalls++;
     let body = '';
     for await (const c of req) body += c;
@@ -120,15 +133,28 @@ export class LocalIdp {
     const pend = this.pending.get(f.get('code') ?? '');
     this.pending.delete(f.get('code') ?? ''); // single use
     const verifier = f.get('code_verifier') ?? '';
-    const pkceOk = pend !== undefined && createHash('sha256').update(verifier).digest('base64url') === pend.challenge;
-    if (pend === undefined || !pkceOk || f.get('redirect_uri') !== pend.redirectUri || pend.login.defect === 'token_error') {
+    const pkceOk =
+      pend !== undefined &&
+      createHash('sha256').update(verifier).digest('base64url') === pend.challenge;
+    if (
+      pend === undefined ||
+      !pkceOk ||
+      f.get('redirect_uri') !== pend.redirectUri ||
+      pend.login.defect === 'token_error'
+    ) {
       res.statusCode = 400;
       res.setHeader('content-type', 'application/json');
       res.end(JSON.stringify({ error: 'invalid_grant', error_description: 'SECRET-IDP-TEXT' }));
       return;
     }
     res.setHeader('content-type', 'application/json');
-    res.end(JSON.stringify({ access_token: 'unused', token_type: 'Bearer', id_token: this.idToken(pend) }));
+    res.end(
+      JSON.stringify({
+        access_token: 'unused',
+        token_type: 'Bearer',
+        id_token: this.idToken(pend),
+      }),
+    );
   }
 
   idToken(p: Pending): string {
@@ -147,7 +173,9 @@ export class LocalIdp {
       ...(l.name === undefined ? {} : { name: l.name }),
       ...(l.auth_time === undefined ? {} : { auth_time: l.auth_time }),
       ...(l.amr === undefined ? {} : { amr: l.amr }),
-      ...(l.defect === 'wrong_azp' ? { azp: 'other-client', aud: [this.clientId, 'other-client'] } : {}),
+      ...(l.defect === 'wrong_azp'
+        ? { azp: 'other-client', aud: [this.clientId, 'other-client'] }
+        : {}),
       ...l.extra,
     };
     if (l.defect === 'no_nonce') delete claims['nonce'];
@@ -158,7 +186,13 @@ export class LocalIdp {
     if (alg === 'none') return `${signingInput}.`;
     if (alg === 'HS256') return `${signingInput}.${randomBytes(32).toString('base64url')}`;
     const sig = createSign('RSA-SHA256').update(signingInput).sign(this.key.privateKey);
-    const out = l.defect === 'bad_signature' ? Buffer.concat([sig.subarray(0, sig.length - 1), Buffer.from([(sig[sig.length - 1] ?? 0) ^ 1])]) : sig;
+    const out =
+      l.defect === 'bad_signature'
+        ? Buffer.concat([
+            sig.subarray(0, sig.length - 1),
+            Buffer.from([(sig[sig.length - 1] ?? 0) ^ 1]),
+          ])
+        : sig;
     return `${signingInput}.${out.toString('base64url')}`;
   }
 }

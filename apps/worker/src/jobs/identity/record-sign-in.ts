@@ -40,16 +40,30 @@ export async function runRecordSignIn(
   jobId: string,
 ): Promise<{ written: number }> {
   const { principalId, sessionId, kind } = payload;
-  if (!isUuid(principalId) || !isUuid(sessionId) || typeof kind !== 'string' || !KINDS.includes(kind))
+  if (
+    !isUuid(principalId) ||
+    !isUuid(sessionId) ||
+    typeof kind !== 'string' ||
+    !KINDS.includes(kind)
+  )
     throw new Error('identity.record_sign_in: bad payload');
   return deps.db.withScope(systemScope(deps.orgId), async (tx) => {
     const p = (
-      await tx.query(`SELECT person_id, realm, subject, email, created_by FROM identity.principal WHERE id = $1`, [principalId])
+      await tx.query(
+        `SELECT person_id, realm, subject, email, created_by FROM identity.principal WHERE id = $1`,
+        [principalId],
+      )
     ).rows[0];
     if (p === undefined) throw new Error('identity.record_sign_in: principal not found');
     const audience = p['realm'] === 'patient_pool' ? 'patient' : 'staff';
     let written = 0;
-    const write = async (purpose: string, action: 'sign_in' | 'update', type: string, resourceId: string, change: Record<string, unknown> | null) => {
+    const write = async (
+      purpose: string,
+      action: 'sign_in' | 'update',
+      type: string,
+      resourceId: string,
+      change: Record<string, unknown> | null,
+    ) => {
       const r = await tx.query(INSERT, [
         eventIdFor(purpose, sessionId),
         deps.orgId,
@@ -65,7 +79,13 @@ export async function runRecordSignIn(
       ]);
       written += r.rowCount ?? 0;
     };
-    await write('sign_in', 'sign_in', 'identity.session', sessionId, kind === 'created' ? { provisioned: true } : null);
+    await write(
+      'sign_in',
+      'sign_in',
+      'identity.session',
+      sessionId,
+      kind === 'created' ? { provisioned: true } : null,
+    );
     if (kind === 'bound') {
       await write('bound', 'update', 'identity.principal', principalId, {
         bound: 'subject',
@@ -75,7 +95,12 @@ export async function runRecordSignIn(
       });
       const preregisteredBy = p['created_by'];
       if (deps.queue !== undefined && isUuid(preregisteredBy))
-        await deps.queue.publish(tx, 'identity.principal_bound', { principalId, preregisteredBy }, { jobKey: sessionId });
+        await deps.queue.publish(
+          tx,
+          'identity.principal_bound',
+          { principalId, preregisteredBy },
+          { jobKey: sessionId },
+        );
     }
     return { written };
   });

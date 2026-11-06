@@ -3,9 +3,30 @@
 import type { JobType } from '@ehr/kernel';
 
 export const IDENTITY_JOBS: readonly JobType[] = [
-  { name: 'identity.record_sign_in', maxAttempts: 8, onMerged: 'none', carriesPatientIds: false, jobScope: 'org', jobClass: 'job' },
-  { name: 'identity.apply_reference_data', maxAttempts: 3, onMerged: 'none', carriesPatientIds: false, jobScope: 'org', jobClass: 'system' },
-  { name: 'identity.purge_sessions', maxAttempts: 3, onMerged: 'none', carriesPatientIds: false, jobScope: 'org', jobClass: 'system' },
+  {
+    name: 'identity.record_sign_in',
+    maxAttempts: 8,
+    onMerged: 'none',
+    carriesPatientIds: false,
+    jobScope: 'org',
+    jobClass: 'job',
+  },
+  {
+    name: 'identity.apply_reference_data',
+    maxAttempts: 3,
+    onMerged: 'none',
+    carriesPatientIds: false,
+    jobScope: 'org',
+    jobClass: 'system',
+  },
+  {
+    name: 'identity.purge_sessions',
+    maxAttempts: 3,
+    onMerged: 'none',
+    carriesPatientIds: false,
+    jobScope: 'org',
+    jobClass: 'system',
+  },
 ];
 
 /** Events this module publishes (24). Handlers register in the notifications module (BE-06). */

@@ -67,84 +67,126 @@ export class SignInService {
     client: { ip: string | null; userAgent: string | null },
   ): Promise<SignInResult> {
     const now = (this.d.now ?? (() => new Date()))();
-    return this.d.db.withSignInScope({ audience: 'anonymous', orgId: this.d.orgId, sessionTokenHash: token.hashHex }, async (tx) => {
-      // Only now, after the IdP verification, are the T-SIGNIN settings set (21.3).
-      await tx.setAuthIdentity({ realm: identity.realm, subject: identity.subject, ...(identity.email === undefined ? {} : { email: identity.email }) });
+    return this.d.db.withSignInScope(
+      { audience: 'anonymous', orgId: this.d.orgId, sessionTokenHash: token.hashHex },
+      async (tx) => {
+        // Only now, after the IdP verification, are the T-SIGNIN settings set (21.3).
+        await tx.setAuthIdentity({
+          realm: identity.realm,
+          subject: identity.subject,
+          ...(identity.email === undefined ? {} : { email: identity.email }),
+        });
 
-      const found = (
-        await tx.query(
-          `SELECT id, person_id, status, subject, COALESCE(preregistered_at, created_at) AS registered_at
+        const found = (
+          await tx.query(
+            `SELECT id, person_id, status, subject, COALESCE(preregistered_at, created_at) AS registered_at
              FROM identity.principal
             WHERE realm = $1 AND (subject = $2 OR ($1 = 'google' AND subject IS NULL AND lower(email) = $3))
             ORDER BY (subject IS NULL) LIMIT 1`,
-          [identity.realm, identity.subject, identity.email ?? null],
-        )
-      ).rows[0];
+            [identity.realm, identity.subject, identity.email ?? null],
+          )
+        ).rows[0];
 
-      let kind: SignInKind = 'sign_in';
-      let principalId: string;
-      let personId: string;
-      if (found !== undefined) {
-        if (found['status'] !== 'active') throw new SignInFailedError();
-        principalId = found['id'] as string;
-        personId = found['person_id'] as string;
-        if (found['subject'] === null) {
-          const days = await this.preregistrationDays(tx);
-          const registeredAt = found['registered_at'] as Date;
-          if (now.getTime() - registeredAt.getTime() > days * 86_400_000) throw new SignInFailedError(); // re-issue the pre-registration
-          // Binds at most once: a concurrent second sign-in updates 0 rows (the WHERE re-checks `subject IS NULL`).
-          const bound = await tx.query(
-            `UPDATE identity.principal SET subject = $2, last_sign_in_at = $3 WHERE id = $1 AND subject IS NULL`,
-            [principalId, identity.subject, now],
-          );
-          if ((bound.rowCount ?? 0) === 1) kind = 'bound';
-          else {
-            const again = (await tx.query(`SELECT id FROM identity.principal WHERE id = $1 AND subject = $2`, [principalId, identity.subject])).rows[0];
-            if (again === undefined) throw new SignInFailedError(); // bound to someone else in the meantime
-            await tx.query(`UPDATE identity.principal SET last_sign_in_at = $2 WHERE id = $1`, [principalId, now]);
+        let kind: SignInKind = 'sign_in';
+        let principalId: string;
+        let personId: string;
+        if (found !== undefined) {
+          if (found['status'] !== 'active') throw new SignInFailedError();
+          principalId = found['id'] as string;
+          personId = found['person_id'] as string;
+          if (found['subject'] === null) {
+            const days = await this.preregistrationDays(tx);
+            const registeredAt = found['registered_at'] as Date;
+            if (now.getTime() - registeredAt.getTime() > days * 86_400_000)
+              throw new SignInFailedError(); // re-issue the pre-registration
+            // Binds at most once: a concurrent second sign-in updates 0 rows (the WHERE re-checks `subject IS NULL`).
+            const bound = await tx.query(
+              `UPDATE identity.principal SET subject = $2, last_sign_in_at = $3 WHERE id = $1 AND subject IS NULL`,
+              [principalId, identity.subject, now],
+            );
+            if ((bound.rowCount ?? 0) === 1) kind = 'bound';
+            else {
+              const again = (
+                await tx.query(`SELECT id FROM identity.principal WHERE id = $1 AND subject = $2`, [
+                  principalId,
+                  identity.subject,
+                ])
+              ).rows[0];
+              if (again === undefined) throw new SignInFailedError(); // bound to someone else in the meantime
+              await tx.query(`UPDATE identity.principal SET last_sign_in_at = $2 WHERE id = $1`, [
+                principalId,
+                now,
+              ]);
+            }
+          } else {
+            await tx.query(`UPDATE identity.principal SET last_sign_in_at = $2 WHERE id = $1`, [
+              principalId,
+              now,
+            ]);
           }
         } else {
-          await tx.query(`UPDATE identity.principal SET last_sign_in_at = $2 WHERE id = $1`, [principalId, now]);
-        }
-      } else {
-        if (identity.realm === 'google' && identity.email === undefined) throw new SignInFailedError();
-        personId = uuidv7();
-        principalId = uuidv7();
-        kind = 'created';
-        await tx.query(`INSERT INTO identity.person (id, organisation_id, display_name, status) VALUES ($1, $2, $3, 'active')`, [personId, this.d.orgId, identity.displayName]);
-        try {
+          if (identity.realm === 'google' && identity.email === undefined)
+            throw new SignInFailedError();
+          personId = uuidv7();
+          principalId = uuidv7();
+          kind = 'created';
           await tx.query(
-            `INSERT INTO identity.principal (id, organisation_id, person_id, realm, subject, email, status, last_sign_in_at)
-             VALUES ($1, $2, $3, $4, $5, $6, 'active', $7)`,
-            [principalId, this.d.orgId, personId, identity.realm, identity.subject, identity.email ?? null, now],
+            `INSERT INTO identity.person (id, organisation_id, display_name, status) VALUES ($1, $2, $3, 'active')`,
+            [personId, this.d.orgId, identity.displayName],
           );
-        } catch (e) {
-          if ((e as { code?: string }).code === '23505') throw new RetryProvisioning();
-          throw e;
+          try {
+            await tx.query(
+              `INSERT INTO identity.principal (id, organisation_id, person_id, realm, subject, email, status, last_sign_in_at)
+             VALUES ($1, $2, $3, $4, $5, $6, 'active', $7)`,
+              [
+                principalId,
+                this.d.orgId,
+                personId,
+                identity.realm,
+                identity.subject,
+                identity.email ?? null,
+                now,
+              ],
+            );
+          } catch (e) {
+            if ((e as { code?: string }).code === '23505') throw new RetryProvisioning();
+            throw e;
+          }
         }
-      }
 
-      const sessionId = uuidv7();
-      const life = await this.d.sessions.insertSession(tx, {
-        id: sessionId,
-        tokenHash: token.hash,
-        csrfHash: sha256(csrfFor(sessionId)),
-        principalId,
-        personId,
-        realm: identity.realm,
-        authTime: identity.authTime,
-        amr: identity.amr,
-        ip: client.ip,
-        userAgent: client.userAgent,
-      });
-      await this.d.queue.enqueue(tx, 'identity.record_sign_in', { principalId, sessionId, kind }, { jobKey: sessionId });
-      return { kind, principalId, personId, sessionId, ...life };
-    });
+        const sessionId = uuidv7();
+        const life = await this.d.sessions.insertSession(tx, {
+          id: sessionId,
+          tokenHash: token.hash,
+          csrfHash: sha256(csrfFor(sessionId)),
+          principalId,
+          personId,
+          realm: identity.realm,
+          authTime: identity.authTime,
+          amr: identity.amr,
+          ip: client.ip,
+          userAgent: client.userAgent,
+        });
+        await this.d.queue.enqueue(
+          tx,
+          'identity.record_sign_in',
+          { principalId, sessionId, kind },
+          { jobKey: sessionId },
+        );
+        return { kind, principalId, personId, sessionId, ...life };
+      },
+    );
   }
 
-  private async preregistrationDays(tx: { query(sql: string, p?: unknown[]): Promise<{ rows: Record<string, unknown>[] }> }): Promise<number> {
-    const r = await tx.query(`SELECT value FROM kernel.setting WHERE key = 'preregistration_days' AND location_id IS NULL`);
+  private async preregistrationDays(tx: {
+    query(sql: string, p?: unknown[]): Promise<{ rows: Record<string, unknown>[] }>;
+  }): Promise<number> {
+    const r = await tx.query(
+      `SELECT value FROM kernel.setting WHERE key = 'preregistration_days' AND location_id IS NULL`,
+    );
     const v = r.rows[0]?.['value'];
-    return typeof v === 'number' && Number.isInteger(v) && v >= 1 && v <= 30 ? v : DEFAULT_PREREGISTRATION_DAYS;
+    return typeof v === 'number' && Number.isInteger(v) && v >= 1 && v <= 30
+      ? v
+      : DEFAULT_PREREGISTRATION_DAYS;
   }
 }

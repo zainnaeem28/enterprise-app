@@ -19,7 +19,17 @@ import type { RealmAdapter, SignInRealm } from './realms.js';
 import type { SessionService } from './sessions.js';
 import type { SignInService } from './signin.js';
 import type { SignInLimiter } from './signin-limiter.js';
-import { buildCookie, clearCookie, issueToken, OIDC_COOKIE, OIDC_COOKIE_SECONDS, parseCookies, safeReturnTo, SID_COOKIE, hashPresentedToken } from './tokens.js';
+import {
+  buildCookie,
+  clearCookie,
+  issueToken,
+  OIDC_COOKIE,
+  OIDC_COOKIE_SECONDS,
+  parseCookies,
+  safeReturnTo,
+  SID_COOKIE,
+  hashPresentedToken,
+} from './tokens.js';
 import type { AuditService } from '../audit/index.js';
 
 /** BQ-8: a re-authentication must have happened within this many seconds (with `prompt=login`). */
@@ -51,7 +61,10 @@ function failurePage(res: Res, status: number, requestId: string, clearOidc: str
   res.status(status);
   res.setHeader('Set-Cookie', [clearOidc]);
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'");
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'",
+  );
   res.end(
     `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Sign-in did not complete</title></head><body><main><h1>We could not sign you in</h1><p>Please go back and try again. If it keeps happening, quote this reference: <code>${escapeHtml(requestId)}</code></p></main></body></html>`,
   );
@@ -67,22 +80,40 @@ export function createAuthController(d: AuthControllerDeps): Type<unknown> {
   };
 
   /** Starts the code flow: state, nonce and PKCE verifier go into the sealed Lax pre-auth cookie (SEC01-F-11). */
-  function redirectToIdp(req: Req, res: Res, realm: SignInRealm, returnTo: string, opts: { reauth?: boolean } = {}): void {
+  function redirectToIdp(
+    req: Req,
+    res: Res,
+    realm: SignInRealm,
+    returnTo: string,
+    opts: { reauth?: boolean } = {},
+  ): void {
     const pkce = newPkce();
     const state = randomUrlToken();
     const nonce = randomUrlToken();
     const maxAgeSeconds = opts.reauth === true ? REAUTH_MAX_AGE_SECONDS : undefined;
     const sealed = sealOidcState(
-      { realm, state, nonce, verifier: pkce.verifier, returnTo, expiresAt: now() + OIDC_COOKIE_SECONDS * 1000, ...(maxAgeSeconds === undefined ? {} : { maxAgeSeconds }) },
+      {
+        realm,
+        state,
+        nonce,
+        verifier: pkce.verifier,
+        returnTo,
+        expiresAt: now() + OIDC_COOKIE_SECONDS * 1000,
+        ...(maxAgeSeconds === undefined ? {} : { maxAgeSeconds }),
+      },
       d.oidcKeys,
     );
     const url = d.realms[realm].authorizationUrl({
       state,
       nonce,
       codeChallenge: pkce.challenge,
-      ...(opts.reauth === true ? { prompt: 'login' as const, maxAgeSeconds: REAUTH_MAX_AGE_SECONDS } : {}),
+      ...(opts.reauth === true
+        ? { prompt: 'login' as const, maxAgeSeconds: REAUTH_MAX_AGE_SECONDS }
+        : {}),
     });
-    res.setHeader('Set-Cookie', [buildCookie(OIDC_COOKIE, sealed, { maxAgeSeconds: OIDC_COOKIE_SECONDS, sameSite: 'Lax' })]);
+    res.setHeader('Set-Cookie', [
+      buildCookie(OIDC_COOKIE, sealed, { maxAgeSeconds: OIDC_COOKIE_SECONDS, sameSite: 'Lax' }),
+    ]);
     res.setHeader('Location', url);
     res.status(302);
     res.end();
@@ -108,11 +139,19 @@ export function createAuthController(d: AuthControllerDeps): Type<unknown> {
       await d.limiter.assertAllowed(ip);
       try {
         const q = req.query;
-        const code = typeof q['code'] === 'string' && q['code'].length <= 2048 ? q['code'] : undefined;
-        const stateParam = typeof q['state'] === 'string' && q['state'].length <= 256 ? q['state'] : undefined;
+        const code =
+          typeof q['code'] === 'string' && q['code'].length <= 2048 ? q['code'] : undefined;
+        const stateParam =
+          typeof q['state'] === 'string' && q['state'].length <= 256 ? q['state'] : undefined;
         const sealed = parseCookies(req.headers['cookie']).get(OIDC_COOKIE);
         const st = openOidcState(sealed, d.oidcKeys, now());
-        if (code === undefined || stateParam === undefined || st === undefined || st.realm !== realm) throw new SignInFailedError();
+        if (
+          code === undefined ||
+          stateParam === undefined ||
+          st === undefined ||
+          st.realm !== realm
+        )
+          throw new SignInFailedError();
         const a = Buffer.from(stateParam);
         const b = Buffer.from(st.state);
         if (a.length !== b.length || !a.equals(b)) throw new SignInFailedError();
@@ -134,15 +173,25 @@ export function createAuthController(d: AuthControllerDeps): Type<unknown> {
         const old = hashPresentedToken(parseCookies(req.headers['cookie']).get(SID_COOKIE));
         if (old !== undefined) {
           const found = await d.sessions.lookup(old);
-          if (found.state === 'live') await d.sessions.revoke(found.session, found.session.realm === realm ? 'sign_out' : 'realm_switch');
+          if (found.state === 'live')
+            await d.sessions.revoke(
+              found.session,
+              found.session.realm === realm ? 'sign_out' : 'realm_switch',
+            );
         }
 
         const token = issueToken();
-        const result = await d.signIn.signIn(identity, token, { ip: req.ip ?? null, userAgent: req.header('user-agent') ?? null }, (id) =>
-          csrfTokenFor(d.csrfKey, id),
+        const result = await d.signIn.signIn(
+          identity,
+          token,
+          { ip: req.ip ?? null, userAgent: req.header('user-agent') ?? null },
+          (id) => csrfTokenFor(d.csrfKey, id),
         );
         const maxAge = Math.max(1, Math.floor((result.absoluteExpiresAt.getTime() - now()) / 1000));
-        res.setHeader('Set-Cookie', [clearOidc, buildCookie(SID_COOKIE, token.token, { maxAgeSeconds: maxAge, sameSite: lax(realm) })]);
+        res.setHeader('Set-Cookie', [
+          clearOidc,
+          buildCookie(SID_COOKIE, token.token, { maxAgeSeconds: maxAge, sameSite: lax(realm) }),
+        ]);
         res.setHeader('Location', st.returnTo);
         res.status(302);
         res.end();
@@ -164,9 +213,16 @@ export function createAuthController(d: AuthControllerDeps): Type<unknown> {
         displayName: ctx.displayName,
         csrfToken: csrfTokenFor(d.csrfKey, ctx.session.id),
         idleExpiresAt: ctx.idleExpiresAt.toISOString(),
-        roles: ctx.roles.map((r) => ({ key: r.key, ...(r.locationId === undefined ? {} : { locationId: r.locationId }) })),
+        roles: ctx.roles.map((r) => ({
+          key: r.key,
+          ...(r.locationId === undefined ? {} : { locationId: r.locationId }),
+        })),
         permissions: ctx.grants.keys(),
-        patients: ctx.patients.map((p) => ({ patientId: p.patientId, relation: p.relation, scope: p.scope })),
+        patients: ctx.patients.map((p) => ({
+          patientId: p.patientId,
+          relation: p.relation,
+          scope: p.scope,
+        })),
       };
     }
 
@@ -184,7 +240,10 @@ export function createAuthController(d: AuthControllerDeps): Type<unknown> {
     async signOut(@ReqParam() req: Req, @ResParam() res: Res): Promise<void> {
       const ctx = requireAuthContext(req);
       await d.db.withScope(ctx.scope, async (tx) => {
-        const r = await tx.query(`UPDATE identity.session SET revoked_at = now(), revoke_reason = 'sign_out' WHERE id = $1 AND revoked_at IS NULL`, [ctx.session.id]);
+        const r = await tx.query(
+          `UPDATE identity.session SET revoked_at = now(), revoke_reason = 'sign_out' WHERE id = $1 AND revoked_at IS NULL`,
+          [ctx.session.id],
+        );
         if ((r.rowCount ?? 0) === 1)
           await d.audit.record(tx, {
             requestId: req.requestId ?? null,
@@ -209,4 +268,3 @@ export function createAuthController(d: AuthControllerDeps): Type<unknown> {
   }
   return AuthController;
 }
-
