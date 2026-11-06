@@ -194,3 +194,26 @@ test('job types: patient IDs require on_merged, duplicates and unknown types ref
   assert.throws(() => reg.get('x.y'), /unknown/);
   assert.throws(() => new Queue(reg, 'api', 'queue; DROP'), QueueError);
 });
+
+test('SEC03-F07: the registry can declare on_merged = fail; a patient-carrying type must declare resolve or fail', () => {
+  const reg = new JobRegistry();
+  reg.defineJob({
+    name: 'patient.example_fail',
+    maxAttempts: 1,
+    onMerged: 'fail',
+    carriesPatientIds: true,
+    jobScope: 'patients',
+  });
+  assert.equal(reg.get('patient.example_fail').onMerged, 'fail');
+  assert.throws(
+    () =>
+      reg.defineJob({
+        name: 'patient.example_none',
+        maxAttempts: 1,
+        onMerged: 'none',
+        carriesPatientIds: true,
+        jobScope: 'patients',
+      }),
+    QueueError,
+  );
+});

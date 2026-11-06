@@ -1,0 +1,11 @@
+-- migration-class: expand
+-- The scheduling flow's two PHI-free messages (the waitlist offer and the pre-visit invitation, ARCHITECTURE 25.6, 33.1) are queued by
+-- worker jobs (audience `system`) through `notifications.send`. That function lists the column `created_by` in its INSERT (it is the
+-- calling principal on the API tier and NULL for a job), and 0601 grants app_worker `created_by_job` but not `created_by`, so a job
+-- could never queue a message: "permission denied for table notification".
+--
+-- DEPARTURE FOR THE ORCHESTRATOR (ticket BE-13, README D2): the right fix is in the notifications module (BE-06, outside this ticket's
+-- paths): `send` should write `created_by_job` when the scope is a job. Until then this grant, the smallest one that lets the call work,
+-- is the only thing here: one column, no policy change (the system INSERT policy of 0601 still decides which rows a job may write).
+-- When BE-06 makes the change, a later `contract` migration revokes this grant.
+GRANT INSERT (created_by) ON notifications.notification TO app_worker;

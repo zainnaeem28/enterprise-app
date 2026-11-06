@@ -63,6 +63,17 @@ participant (38.2 item 11) and the confirm-versus-merge races (38.2 item 1), all
   Orchestrator**: `GRANT EXECUTE ON FUNCTION patient.guard_open_patient() TO app_owner` in the patient range, after which `0901` can use the
   original; or accept the copy. The four definer functions need the inventory entry in `catalog-lists.requested.patch` (this ticket may not
   edit `db/tools`).
+
+* **SEC-03 F02..F05 (HEAAA-178, migration `0904`).** The three applied definer functions cannot be replaced by `app_owner` (the runner
+  refuses `SET ROLE`), so each rule is a trigger on the table, running as the writing role whichever route reaches it:
+  F02 `slot_occupancy_caller_guard` (a status change needs a `slot_reservation` row visible to the caller's scope through
+  `reservation_owner_caller_select`; the only exception is expiring a hold whose time has run out), F03 `slot_occupancy_overbook_guard`
+  (an overbook row needs a stored `booking_policy` cap > 0 at the location and fewer overlapping overbook rows than the largest cap;
+  **BE-12 replaces it with a check against the stored template**), F04 `care_relationship_origin_guard` (booking needs a confirmed
+  reservation of that patient at that location; a referral only from staff), F05 `slot_reservation_guard_open_commit` (the merge
+  guard repeated at commit with a new snapshot). **Still requested (Orchestrator):** `GRANT EXECUTE ON FUNCTION
+  patient.guard_open_patient() TO app_owner`, after which the original trigger replaces both scheduling guards and
+  `scheduling.guard_open_patient_at_commit` is dropped. The new definer function is in `catalog-lists.requested.patch`.
 * **D2. Twin in both directions.** 22.8 names the deferred key occupancy -> reservation; `slot_reservation.id` also references the occupancy
   (deferred), and a deferred constraint trigger checks that the two agree on organisation, location, clinician and booker.
 * **D3. Occupied period** is the service's `duration_min`. The buffer between visits belongs to the slot grid the availability module offers

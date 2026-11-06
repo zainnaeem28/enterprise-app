@@ -110,12 +110,16 @@ export const checks = {
                             AND has_column_privilege('reporting_ro', c.oid, a.attnum, 'SELECT,INSERT,UPDATE,REFERENCES')))`,
   },
   'M-5-patient-guard': {
-    title: 'every table with a patient_id column has the merge write guard or is exempt',
+    title:
+      'every table with a patient_id column has the merge write guard (an enabled BEFORE INSERT OR UPDATE row trigger on a listed guard function) or is exempt',
     sql: `SELECT c.oid::regclass::text AS "table" FROM pg_class c JOIN pg_attribute a ON a.attrelid = c.oid AND a.attname = 'patient_id' AND NOT a.attisdropped
           WHERE c.relnamespace IN ${modSchemas} AND c.relkind IN ('r','p') AND NOT c.relispartition
             AND NOT (c.oid::regclass::text = ANY (${q(L.patientGuardExempt)}))
             AND NOT EXISTS (SELECT 1 FROM pg_trigger t JOIN pg_proc p ON p.oid = t.tgfoid
-                            WHERE t.tgrelid = c.oid AND NOT t.tgisinternal AND p.proname = 'guard_open_patient')`,
+                            WHERE t.tgrelid = c.oid AND NOT t.tgisinternal
+                              AND p.oid::regproc::text = ANY (${q(L.patientGuardFunctions)})
+                              AND t.tgenabled = 'O'
+                              AND (t.tgtype & 1) = 1 AND (t.tgtype & 2) = 2 AND (t.tgtype & 4) = 4 AND (t.tgtype & 16) = 16)`,
   },
   'M-5-interim-exempt': {
     title:
@@ -145,6 +149,42 @@ export const checks = {
     title:
       'the policies that can match audience public are exactly the T-DIRECTORY policies (plus recorded exceptions)',
     sql: policySetSql('public', L.publicPolicies),
+  },
+  'M-5-setting-grants': {
+    title:
+      'app_api and app_worker hold exactly the column lists of ARCHITECTURE 21.2 (N-3) for INSERT and UPDATE on kernel.setting',
+    sql: `WITH expected(role, priv, col) AS (VALUES ${Object.entries(L.settingColumnGrants)
+      .flatMap(([r, byPriv]) =>
+        Object.entries(byPriv).flatMap(([p, cols]) => cols.map((c) => `('${r}','${p}','${c}')`)),
+      )
+      .join(',')}),
+          actual AS (SELECT r.role, pv.priv, a.attname::text AS col FROM unnest(${q(Object.keys(L.settingColumnGrants))}) r(role),
+                          unnest(ARRAY['INSERT','UPDATE']) pv(priv), pg_attribute a
+                     WHERE a.attrelid = 'kernel.setting'::regclass AND a.attnum > 0 AND NOT a.attisdropped
+                       AND has_column_privilege(r.role, 'kernel.setting'::regclass, a.attnum, pv.priv))
+          SELECT 'unexpected' AS problem, role, priv, col FROM actual a
+            WHERE NOT EXISTS (SELECT 1 FROM expected e WHERE (e.role, e.priv, e.col) = (a.role, a.priv, a.col))
+          UNION ALL
+          SELECT 'missing', role, priv, col FROM expected e
+            WHERE NOT EXISTS (SELECT 1 FROM actual a WHERE (e.role, e.priv, e.col) = (a.role, a.priv, a.col))`,
+  },
+  'M-5-hidden-columns': {
+    title:
+      'no application role can read a column on the hidden-columns list (the occupancy twin names no principal, F09)',
+    sql: `SELECT t.tbl AS "table", a.attname::text AS column, r.rolname AS role
+          FROM (VALUES ${Object.entries(L.hiddenColumns)
+            .flatMap(([t, cols]) => cols.map((c) => `('${t}','${c}')`))
+            .join(',')}) t(tbl, col)
+          JOIN pg_attribute a ON a.attrelid = t.tbl::regclass AND a.attname = t.col AND NOT a.attisdropped
+          JOIN pg_roles r ON r.rolname = ANY (${q(L.appRoles)})
+          WHERE has_column_privilege(r.oid, a.attrelid, a.attnum, 'SELECT')`,
+  },
+  'M-5-policy-tautology': {
+    title:
+      'no policy predicate compares an expression with itself (the F01 tautology; the behavioural matrix of F07 covers the rest)',
+    sql: `SELECT schemaname || '.' || tablename AS "table", policyname, 'self-comparison' AS problem FROM pg_policies
+          WHERE schemaname NOT LIKE 'pg\\_%' AND schemaname <> ALL (${q(L.skippedSchemas)})
+            AND coalesce(qual, '') || ' ' || coalesce(with_check, '') ~ '\\m([a-z_]+\\.[a-z_]+) = \\1\\M'`,
   },
   'M-5-directory': {
     title: 'every object owned by directory_ro is a view on the C0 list',

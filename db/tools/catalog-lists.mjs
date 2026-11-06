@@ -81,6 +81,8 @@ export const definerInventory = [
   'patient.attach',
   'patient.match_candidates',
   'patient.identity_label',
+  // HEAAA-181 F09 (0951): the twin check reads the hidden occupancy columns, so it runs as the twin's owner.
+  'scheduling.check_twin',
 ];
 
 /** Policies that can match audience `anonymous` (ARCHITECTURE 21.3 list, kernel rows only so far). */
@@ -121,3 +123,41 @@ export const publicPolicies = [
   'identity.principal.principal_directory',
   'identity.staff_profile.staff_profile_directory',
 ];
+
+/**
+ * SEC03-F13 item 1: the functions that may serve as the merge write guard. patient.guard_open_patient is the original;
+ * scheduling.guard_open_patient is the copy on slot_reservation (0901, until the owner grant of D1 lets the original be used).
+ */
+export const patientGuardFunctions = [
+  'patient.guard_open_patient',
+  'scheduling.guard_open_patient',
+];
+
+/**
+ * SEC03-F13 item 3 (ARCHITECTURE 21.2, N-3): the exact column lists the application roles hold on kernel.setting.
+ * app_api carries `id` beyond the six columns of 21.2 (NOT NULL, no default); see migration 0953.
+ */
+export const settingColumnGrants = {
+  app_api: {
+    INSERT: ['id', 'organisation_id', 'key', 'value', 'value_schema', 'location_id', 'created_by'],
+    UPDATE: ['value'],
+  },
+  app_worker: {
+    INSERT: [
+      'id',
+      'organisation_id',
+      'key',
+      'value',
+      'value_schema',
+      'location_id',
+      'pre_auth',
+      'created_by_job',
+    ],
+    UPDATE: ['value'],
+  },
+};
+
+/** SEC03-F09: columns of the PHI-free occupancy twin that no application role may read (the twin names no principal). */
+export const hiddenColumns = {
+  'scheduling.slot_occupancy': ['created_by', 'created_by_job', 'session_key'],
+};
