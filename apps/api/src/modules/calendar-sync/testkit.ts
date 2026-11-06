@@ -40,6 +40,7 @@ export {
   STAFF_HOST,
   call,
   id,
+  pg,
   saWrite,
   seedPrincipal,
   seedSession,
