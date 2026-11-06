@@ -28,13 +28,17 @@ test('browser shell -> same-origin API -> PostgreSQL (scope setter, RLS) -> rend
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1, name: 'Staff portal' })).toBeVisible();
   await expect(page.getByText('Checking the server…')).toBeHidden();
-  // The shell has no identity yet (INT-01): the real API answers "not signed in", and the shell renders that answer.
-  await expect(page.getByText('You are not signed in')).toBeVisible();
+  // No identity module exists yet (first real authentication slice is INT-01): the real API answers GET /api/v1/auth/session
+  // with its problem document ("Not found" plus a support reference), and the shell renders exactly that answer.
+  const region = page.getByRole('region', { name: 'Server connection' });
+  await expect(region.getByText('Not found')).toBeVisible();
+  await expect(region.getByText('Reference for support:')).toBeVisible();
   const text = (await page.locator('body').innerText()).trim();
   console.log(`RENDERED_BODY_TEXT<<${text}>>`);
   console.log(`API_CALLS ${JSON.stringify(api)}`);
   await page.screenshot({ path: process.env.JOURNEY_SHOT ?? 'journey.png' });
   expect(api.length).toBeGreaterThan(0);
+  expect(api.map((c) => c.status)).toContain(404);
   for (const c of api) {
     expect(c.release).toMatch(/^r[1-9][0-9]*\.[0-9a-f]{12}$/);
     expect(c.status).toBeLessThan(500);
