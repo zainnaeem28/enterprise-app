@@ -1,2 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuites><testsuite name="boundary" tests="1" failures="0" skipped="0"><testcase classname="boundary" name="upward import rejected, downward import accepted"></testcase></testsuite></testsuites>
