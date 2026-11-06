@@ -1,0 +1,19 @@
+# Trivy configuration (config scan of Dockerfiles/Terraform; image scan flags are on the command line).
+skip-dirs:
+  - node_modules
+  - reports
+  - docs
+  - semgrep/rules
+misconfiguration:
+  scanners:
+    - dockerfile
+    - terraform
+    - terraformplan-json
+    - kubernetes
+    - cloudformation
+severity:
+  - UNKNOWN
+  - LOW
+  - MEDIUM
+  - HIGH
+  - CRITICAL

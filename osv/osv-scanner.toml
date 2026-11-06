@@ -1,0 +1,7 @@
+# OSV-Scanner configuration. HIGH/CRITICAL with a fix fails the dependency scan unless listed here.
+# Each ignore needs: id, ignoreUntil (expiry date, at most 90 days out), reason naming owner and reviewer.
+#
+# [[IgnoredVulns]]
+# id = "GHSA-xxxx-xxxx-xxxx"
+# ignoreUntil = 2027-01-31
+# reason = "owner: <role>; reviewer: <role>; not reachable because ..."

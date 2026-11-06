@@ -1,0 +1,25 @@
+# Weekly dependency update pull requests (DEVOPS-PLAN 4.2). Dependabot proposes; a human reviews and
+# merges. GitHub Actions updates keep the full-SHA pin. Dependabot *alerts* are a separate repository
+# setting that is currently disabled and can only be enabled by the repository owner.
+#
+# Not configured yet because the manifest does not exist (Dependabot reports an error for a missing
+# manifest): `docker` (first Dockerfile) and `terraform` (first infra/ root). The ticket that adds the
+# manifest extends this file.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
+    labels: [dependencies]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
+    labels: [dependencies, ci]
