@@ -6,6 +6,7 @@ a patient merge with only BE-11's participant fails with `patient.merge_particip
 `scheduling/core/concurrency.dbtest.ts`: "item 11", "the participant is registered ...", "38.2 item 1, confirm first").
 
 Needed (tests/composition only):
+
 1. `scheduling/core/testkit.ts` and `patient/merge/{testkit,merge.dbtest,concurrency.dbtest}.ts`: register
    `registerSchedulingFlowParticipants` instead of `registerSchedulingParticipants`.
 2. `scheduling/core/concurrency.dbtest.ts` lines ~311-317 and ~400: use the flow registration instead of `schedulingMergeParticipant`
