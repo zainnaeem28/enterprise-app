@@ -275,12 +275,17 @@ export async function seedPrincipal(
   const principalId = uuidv7();
   const subject = o.subject === undefined ? `sub-${principalId}` : o.subject;
   await k.sa.query('BEGIN');
-  await k.sa.query(`INSERT INTO identity.person (id, organisation_id, display_name) VALUES ($1, $2, $3)`, [personId, ORG, o.name ?? 'Test Person']);
-  await k.sa.query(
-    `INSERT INTO identity.principal (id, organisation_id, person_id, realm, subject, email, status, preregistered_at, created_by) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-    [principalId, ORG, personId, realm, subject, o.email ?? null, o.status ?? 'active', o.preregisteredAt ?? null, o.createdBy ?? null],
-  );
-  await k.sa.query('COMMIT');
+  try {
+    await k.sa.query(`INSERT INTO identity.person (id, organisation_id, display_name) VALUES ($1, $2, $3)`, [personId, ORG, o.name ?? 'Test Person']);
+    await k.sa.query(
+      `INSERT INTO identity.principal (id, organisation_id, person_id, realm, subject, email, status, preregistered_at, created_by) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+      [principalId, ORG, personId, realm, subject, o.email ?? null, o.status ?? 'active', o.preregisteredAt ?? null, o.createdBy ?? null],
+    );
+    await k.sa.query('COMMIT');
+  } catch (e) {
+    await k.sa.query('ROLLBACK');
+    throw e;
+  }
   return { personId, principalId };
 }
 
