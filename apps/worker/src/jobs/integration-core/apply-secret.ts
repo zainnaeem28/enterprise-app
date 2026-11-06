@@ -192,12 +192,15 @@ export async function runApplySecret(
          SET secret_arn = EXCLUDED.secret_arn, current_version_id = EXCLUDED.current_version_id, rotated_at = now()`,
       [req.connection_id, req.name, deps.orgId, written.arn, written.versionId],
     );
-    await tx.query(
+    const moved = await tx.query(
       `UPDATE integration_core.secret_change_request
           SET status = 'applied', applied_at = now(), applied_version_id = $2, job_id = $3
         WHERE id = $1::uuid AND status = 'approved'`,
       [requestId, written.versionId, jobId],
     );
+    // BR-BE02-02: no request moved (concurrent close) -> throw so the reference and the audit row roll back.
+    if (moved.rowCount !== 1)
+      throw new Error('integration_core.apply_inbound_secret: request no longer approved');
     await audit(tx, deps.orgId, jobId, 'secret_write', requestId, {
       name: String(req.name),
       versionId: written.versionId,

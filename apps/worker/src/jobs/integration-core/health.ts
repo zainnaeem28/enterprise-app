@@ -128,7 +128,7 @@ export async function runHealthCheck(deps: HealthDeps): Promise<HealthChange[]> 
               connectionId: id,
               organisationId: deps.orgId,
             });
-          else if (previous === 'down')
+          else if (previous === 'down' && (next === 'ok' || next === 'degraded'))
             await deps.queue.publish(tx, 'integration_core.connection_restored', {
               connectionId: id,
               organisationId: deps.orgId,

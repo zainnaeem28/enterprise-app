@@ -662,6 +662,26 @@ describe('integration-core on PostgreSQL 17 (BE-02, worker side)', () => {
       assert.equal((await upJobs()).length, 1);
     });
 
+    test('BR-BE02-01: a down connection that is disabled reads unknown and publishes no connection_restored', async () => {
+      const reg = adapterWith(() => 'throw');
+      await run(reg);
+      await run(reg);
+      await run(reg);
+      assert.equal((await health()).health, 'down');
+      const before = (await upJobs()).length;
+      await admin.query(
+        `UPDATE integration_core.connection SET enabled = false WHERE kind = 'video'`,
+      );
+      await run(reg);
+      assert.equal((await health()).health, 'unknown');
+      assert.equal((await upJobs()).length, before);
+      await admin.query(
+        `UPDATE integration_core.connection SET enabled = true WHERE kind = 'video'`,
+      );
+      await run(adapterWith(() => true));
+      assert.equal((await health()).health, 'ok');
+    });
+
     test('the shared state and the last test result are stored without any credential or vendor text', async () => {
       const h = await health();
       assert.ok(h.last_test_at);

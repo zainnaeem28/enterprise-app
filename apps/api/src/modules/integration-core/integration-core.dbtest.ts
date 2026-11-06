@@ -262,8 +262,11 @@ describe('integration-core on PostgreSQL 17 (BE-02, API side)', () => {
     await syncTaskTypes(w, registry);
     await w.end();
     admin = new pg.Client({ connectionString: urlFor(new URL(adminUrl).username) });
+    // BR-BE02-03: an idle-client error (e.g. a backend terminated by a test) must not become an unhandled 'error' event.
+    admin.on('error', () => undefined);
     await admin.connect();
     pool = new pg.Pool({ connectionString: urlFor('app_api'), max: 8 });
+    pool.on('error', () => undefined);
     db = new KernelDb(pool);
     rx = new InboundReceiver({
       db,
