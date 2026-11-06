@@ -1,0 +1,34 @@
+name: axe-157
+on:
+  push:
+    branches: [ci/HEAAA-157-axe-0700ac3]
+permissions:
+  contents: read
+jobs:
+  axe:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 0700ac39919aa45ec9b0c06616ca190391c37917
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: git rev-parse HEAD
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @ehr/staff build
+      - run: pnpm --filter @ehr/staff exec playwright install --with-deps chromium
+      - run: pnpm --filter @ehr/staff exec playwright --version
+      - id: run
+        run: mkdir -p apps/staff/dist-reports && pnpm --filter @ehr/staff test:a11y 2>&1 | tee apps/staff/dist-reports/playwright-output.txt
+        continue-on-error: true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: axe-report-0700ac3
+          path: |
+            apps/staff/dist-reports
+            apps/staff/test-results
+      - if: steps.run.outcome != 'success'
+        run: exit 1
