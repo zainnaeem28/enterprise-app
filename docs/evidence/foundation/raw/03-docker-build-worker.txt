@@ -1,0 +1,93 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile.worker
+#1 transferring dockerfile: 2.00kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/node:24.22.2-slim@sha256:01d566e8d94d8c619591d78652babfccd3c6992a3dffa9ed5ab39e11cf6c70e9
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [build 1/7] FROM docker.io/library/node:24.22.2-slim@sha256:01d566e8d94d8c619591d78652babfccd3c6992a3dffa9ed5ab39e11cf6c70e9
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 32.58kB 0.0s done
+#5 DONE 0.0s
+
+#6 [build 2/7] WORKDIR /src
+#6 CACHED
+
+#7 [build 4/7] COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc tsconfig.base.json ./
+#7 CACHED
+
+#8 [build 5/7] COPY apps ./apps
+#8 CACHED
+
+#9 [build 3/7] RUN corepack enable
+#9 CACHED
+
+#10 [build 6/7] COPY packages ./packages
+#10 CACHED
+
+#11 [build 7/7] RUN find . -name node_modules -type d -prune -exec rm -rf {} +  && pnpm install --frozen-lockfile  && pnpm --filter @ehr/worker... run build  && pnpm --filter @ehr/worker --prod deploy /out  && rm -rf /out/src /out/test /out/dist/test /out/tsconfig.json /out/pnpm-workspace.yaml
+#11 0.149 ! Corepack is about to download https://registry.npmjs.org/pnpm/-/pnpm-12.16.1.tgz
+#11 0.668 Downloading the pnpm 12.16.1 binary for linux-x64...
+#11 1.388 Scope: all 11 workspace projects
+#11 1.416 ? Verifying lockfile against supply-chain policies (401 entries)...
+#11 1.557 Update available! 12.16.1 → 12.18.0.
+#11 1.557 Changelog: https://pnpm.io/v/12.18.0
+#11 1.557 To update, run: curl -fsSL https://get.pnpm.io/install.sh | sh -
+#11 1.566 Packages are hard linked from the content-addressable store to the virtual store.
+#11 1.566   Content-addressable store is at: /root/.local/share/pnpm/store/v11
+#11 1.566   Virtual store is at:             node_modules/.pnpm
+#11 2.049 Downloading @rolldown/binding-linux-x64-gnu@1.2.16: 0.00 B/8.82 MB
+#11 3.050 Progress: resolved 376, reused 0, downloaded 322, added 322
+#11 3.116 ✓ Lockfile passes supply-chain policies (401 entries in 1.7s)
+#11 3.116 Lockfile is up to date, resolution step is skipped
+#11 3.438 Packages: +376
+#11 3.438 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#11 3.492 Progress: resolved 376, reused 0, downloaded 376, added 376, done
+#11 3.639 
+#11 3.639 devDependencies:
+#11 3.639 + @eslint/js 10.0.1
+#11 3.639 + @types/node 24.19.2
+#11 3.639 + eslint 10.14.0
+#11 3.639 + eslint-config-prettier 10.1.8
+#11 3.639 + globals 17.14.0
+#11 3.639 + pg 8.23.1
+#11 3.639 + prettier 3.9.10
+#11 3.639 + typescript 5.9.3
+#11 3.639 + typescript-eslint 8.72.1
+#11 3.639 
+#11 3.717 Done in 2.3s using pnpm v12.16.1
+#11 3.806 Scope: 2 of 11 workspace projects
+#11 3.812 $ tsc -p tsconfig.json
+#11 5.036 $ tsc -p tsconfig.json
+#11 6.104 ? Verifying lockfile at ../out/pnpm-lock.yaml against supply-chain policies (70 entries)...
+#11 6.113 Packages are hard linked from the content-addressable store to the virtual store.
+#11 6.113   Content-addressable store is at: /root/.local/share/pnpm/store/v11
+#11 6.113   Virtual store is at:             ../out/node_modules/.pnpm
+#11 6.349 ✓ Lockfile at ../out/pnpm-lock.yaml passes supply-chain policies (70 entries in 245ms)
+#11 6.354 ../out                                   | Progress: resolved 70, reused 69, downloaded 0, added 70, done
+#11 6.369 Done in 302ms using pnpm v12.16.1
+#11 DONE 10.2s
+
+#12 [stage-1 2/4] WORKDIR /app
+#12 CACHED
+
+#13 [stage-1 3/4] RUN rm -rf /usr/local/lib/node_modules /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
+#13 CACHED
+
+#14 [stage-1 4/4] COPY --from=build --chown=node:node /out/ /app/
+#14 DONE 0.3s
+
+#15 exporting to image
+#15 exporting layers
+#15 exporting layers 0.4s done
+#15 writing image sha256:30396d4e5fe5c8409403eb23f86507e4c56566dee93c46c5f564727ad2e30121 done
+#15 naming to docker.io/library/ehr-worker:ci done
+#15 DONE 0.4s

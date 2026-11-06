@@ -1,0 +1,1 @@
+trivy config: 2 target(s) scanned, no blocking misconfigurations

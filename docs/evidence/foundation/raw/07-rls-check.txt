@@ -1,0 +1,4 @@
+{"name":"scoped read sees only its own organisation counters (>=1 row written by the journey)","pass":true,"detail":{"rows":1,"totalHits":1}}
+{"name":"another organisation scope sees none of those rows (RLS)","pass":true,"detail":{"rows":0}}
+{"name":"writing another organisation counters is refused with 42501 (RLS WITH CHECK)","pass":true,"detail":{"sqlstate":"42501"}}
+{"name":"no scope set: app_api sees no counter rows","pass":true,"detail":{"rows":0}}

@@ -1,0 +1,2 @@
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+queue installed

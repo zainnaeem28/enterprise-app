@@ -1,0 +1,2 @@
+sha256:82541b1627b47b5281088ea7b5a7e5d328626acbe94a26c76a6219cf77271757 user=node healthcheck={"Interval":30000000000,"Retries":3,"StartPeriod":10000000000,"Test":["CMD","node","-e","fetch('http://127.0.0.1:'+(process.env.EHR_PORT||3000)+'/healthz').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"],"Timeout":3000000000} size=251855103
+sha256:30396d4e5fe5c8409403eb23f86507e4c56566dee93c46c5f564727ad2e30121 user=node healthcheck={"Interval":30000000000,"Retries":3,"StartPeriod":10000000000,"Test":["CMD","node","-e","process.kill(1,0)"],"Timeout":3000000000} size=240049207

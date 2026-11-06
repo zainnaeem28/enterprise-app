@@ -1,0 +1,19 @@
+
+Running 1 test using 1 worker
+
+RENDERED_BODY_TEXT<<Skip to main content
+
+Staff portal
+
+Placeholder identity
+Staff portal
+Server connection
+
+Not found Reference for support: 3d95dae5-5927-49c3-b011-8a2162d9382b
+
+Check again>>
+API_CALLS [{"path":"/api/v1/auth/session","status":404,"release":"r1.000000000000"}]
+  ✓  1 ../../docs/evidence/foundation/journey/journey.spec.ts:6:5 › browser shell -> same-origin API -> PostgreSQL (scope setter, RLS) -> rendered result (259ms)
+
+  1 passed (1.3s)
+playwright_exit=0

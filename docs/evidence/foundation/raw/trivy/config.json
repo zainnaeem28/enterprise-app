@@ -1,0 +1,39 @@
+{
+  "SchemaVersion": 2,
+  "Trivy": {
+    "Version": "0.76.2"
+  },
+  "ReportID": "01a1ae93-3fe5-77ae-9aa3-81644f8ac7eb",
+  "CreatedAt": "2026-11-06T01:57:28.165506818Z",
+  "ArtifactID": "sha256:d6a0bff4dc3a0f37ccf842c621eb4706f6decde9211e210d93c974396e931108",
+  "ArtifactName": ".",
+  "ArtifactType": "repository",
+  "Metadata": {
+    "RepoURL": "https://github.com/zainnaeem28/enterprise-app",
+    "Branch": "ci/HEAAA-81-9593424-b",
+    "Commit": "e24d08693eb59ae79d42e07d7eea01e865cbdbd6",
+    "CommitMsg": "ci: throwaway foundation-proof trigger for HEAAA-81 (not for merge)",
+    "Author": "zainnaeem28 \u003c194086586+zainnaeem28@users.noreply.github.com\u003e",
+    "Committer": "zainnaeem28 \u003c194086586+zainnaeem28@users.noreply.github.com\u003e"
+  },
+  "Results": [
+    {
+      "Target": "docker/Dockerfile.api",
+      "Class": "config",
+      "Type": "dockerfile",
+      "MisconfSummary": {
+        "Successes": 27,
+        "Failures": 0
+      }
+    },
+    {
+      "Target": "docker/Dockerfile.worker",
+      "Class": "config",
+      "Type": "dockerfile",
+      "MisconfSummary": {
+        "Successes": 27,
+        "Failures": 0
+      }
+    }
+  ]
+}
