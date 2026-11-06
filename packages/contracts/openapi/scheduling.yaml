@@ -1,0 +1,4208 @@
+openapi: 3.1.0
+info:
+  title: scheduling module contract
+  version: 1.0.0-r1
+  description: Routes owned by the scheduling module. Transcribed from ARCHITECTURE draft 8.1 sections 29-31. Later tickets edit only this file.
+paths:
+  /api/v1/admin/clinicians/{id}/availability-templates:
+    get:
+      operationId: getAdminCliniciansByIdAvailabilityTemplates
+      tags:
+        - scheduling
+      summary: GET /api/v1/admin/clinicians/{id}/availability-templates
+      description: 'staff.: Any clinician. Same bodies and errors as 29.3'
+      x-access:
+        staff:
+          permission: scheduling.template.manage / .blocked_time.manage
+          realm: admin_pool
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/admin/clinicians/{id}/availability-templates
+          catalogueRow: 29.4#119
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+        - $ref: common.yaml#/components/parameters/Limit
+        - $ref: common.yaml#/components/parameters/Cursor
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetAdminCliniciansByIdAvailabilityTemplatesResponse'
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+    post:
+      operationId: postAdminCliniciansByIdAvailabilityTemplates
+      tags:
+        - scheduling
+      summary: POST /api/v1/admin/clinicians/{id}/availability-templates
+      description: 'staff.: Any clinician. Same bodies and errors as 29.3'
+      x-access:
+        staff:
+          permission: scheduling.template.manage / .blocked_time.manage
+          realm: admin_pool
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/admin/clinicians/{id}/availability-templates
+          catalogueRow: 29.4#119
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: common.yaml#/components/schemas/OpaqueObject
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '413':
+          - kernel.payload_too_large
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/OpaqueObject
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '413':
+          $ref: common.yaml#/components/responses/Error413
+          description: 'Codes: kernel.payload_too_large.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/admin/clinicians/{id}/availability-templates/{templateId}:
+    delete:
+      operationId: deleteAdminCliniciansByIdAvailabilityTemplatesByTemplateId
+      tags:
+        - scheduling
+      summary: DELETE /api/v1/admin/clinicians/{id}/availability-templates/{templateId}
+      description: 'staff.: Any clinician. Same bodies and errors as 29.3'
+      x-access:
+        staff:
+          permission: scheduling.template.manage / .blocked_time.manage
+          realm: admin_pool
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/admin/clinicians/{id}/availability-templates/{templateId}
+          catalogueRow: 29.4#119
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+    put:
+      operationId: putAdminCliniciansByIdAvailabilityTemplatesByTemplateId
+      tags:
+        - scheduling
+      summary: PUT /api/v1/admin/clinicians/{id}/availability-templates/{templateId}
+      description: 'staff.: Any clinician. Same bodies and errors as 29.3'
+      x-access:
+        staff:
+          permission: scheduling.template.manage / .blocked_time.manage
+          realm: admin_pool
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/admin/clinicians/{id}/availability-templates/{templateId}
+          catalogueRow: 29.4#119
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: common.yaml#/components/schemas/OpaqueObject
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '413':
+          - kernel.payload_too_large
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/OpaqueObject
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '413':
+          $ref: common.yaml#/components/responses/Error413
+          description: 'Codes: kernel.payload_too_large.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/admin/clinicians/{id}/blocked-times:
+    delete:
+      operationId: deleteAdminCliniciansByIdBlockedTimes
+      tags:
+        - scheduling
+      summary: DELETE /api/v1/admin/clinicians/{id}/blocked-times
+      description: 'staff.: Any clinician. Same bodies and errors as 29.3'
+      x-access:
+        staff:
+          permission: scheduling.template.manage / .blocked_time.manage
+          realm: admin_pool
+          idempotencyKey: false
+          ifMatch: false
+          elevationRequired: true
+          pathAs: /api/v1/admin/clinicians/{id}/blocked-times
+          catalogueRow: 29.4#119
+      x-catalogue-gap: The catalogue lists DELETE on the collection and names no identifier of the blocked time to delete
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+    get:
+      operationId: getAdminCliniciansByIdBlockedTimes
+      tags:
+        - scheduling
+      summary: GET /api/v1/admin/clinicians/{id}/blocked-times
+      description: 'staff.: Any clinician. Same bodies and errors as 29.3'
+      x-access:
+        staff:
+          permission: scheduling.template.manage / .blocked_time.manage
+          realm: admin_pool
+          idempotencyKey: false
+          ifMatch: false
+          elevationRequired: true
+          pathAs: /api/v1/admin/clinicians/{id}/blocked-times
+          catalogueRow: 29.4#119
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+        - $ref: common.yaml#/components/parameters/Limit
+        - $ref: common.yaml#/components/parameters/Cursor
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetAdminCliniciansByIdBlockedTimesResponse'
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+    post:
+      operationId: postAdminCliniciansByIdBlockedTimes
+      tags:
+        - scheduling
+      summary: POST /api/v1/admin/clinicians/{id}/blocked-times
+      description: 'staff.: Any clinician. Same bodies and errors as 29.3'
+      x-access:
+        staff:
+          permission: scheduling.template.manage / .blocked_time.manage
+          realm: admin_pool
+          idempotencyKey: false
+          ifMatch: false
+          elevationRequired: true
+          pathAs: /api/v1/admin/clinicians/{id}/blocked-times
+          catalogueRow: 29.4#119
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: common.yaml#/components/schemas/OpaqueObject
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '413':
+          - kernel.payload_too_large
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/OpaqueObject
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '413':
+          $ref: common.yaml#/components/responses/Error413
+          description: 'Codes: kernel.payload_too_large.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/admin/locations/{id}/roster:
+    delete:
+      operationId: deleteAdminLocationsByIdRoster
+      tags:
+        - scheduling
+      summary: DELETE /api/v1/admin/locations/{id}/roster
+      description: 'staff.: All duties, including `compliance_on_call`'
+      x-access:
+        staff:
+          permission: scheduling.roster.manage
+          realm: admin_pool
+          idempotencyKey: false
+          ifMatch: false
+          elevationRequired: true
+          pathAs: /api/v1/admin/locations/{id}/roster
+          catalogueRow: 29.4#120
+      x-catalogue-gap: The catalogue lists DELETE on the collection and names no identifier of the roster entry to delete
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+    get:
+      operationId: getAdminLocationsByIdRoster
+      tags:
+        - scheduling
+      summary: GET /api/v1/admin/locations/{id}/roster
+      description: 'staff.: All duties, including `compliance_on_call`'
+      x-access:
+        staff:
+          permission: scheduling.roster.manage
+          realm: admin_pool
+          idempotencyKey: false
+          ifMatch: false
+          elevationRequired: true
+          pathAs: /api/v1/admin/locations/{id}/roster
+          catalogueRow: 29.4#120
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+        - $ref: common.yaml#/components/parameters/Limit
+        - $ref: common.yaml#/components/parameters/Cursor
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetAdminLocationsByIdRosterResponse'
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+    post:
+      operationId: postAdminLocationsByIdRoster
+      tags:
+        - scheduling
+      summary: POST /api/v1/admin/locations/{id}/roster
+      description: 'staff.: All duties, including `compliance_on_call`'
+      x-access:
+        staff:
+          permission: scheduling.roster.manage
+          realm: admin_pool
+          idempotencyKey: false
+          ifMatch: false
+          elevationRequired: true
+          pathAs: /api/v1/admin/locations/{id}/roster
+          catalogueRow: 29.4#120
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: common.yaml#/components/schemas/OpaqueObject
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '413':
+          - kernel.payload_too_large
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/OpaqueObject
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '413':
+          $ref: common.yaml#/components/responses/Error413
+          description: 'Codes: kernel.payload_too_large.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/appointments/{id}/assignment:
+    put:
+      operationId: putAppointmentsByIdAssignment
+      tags:
+        - scheduling
+      summary: PUT /api/v1/appointments/{id}/assignment
+      description: 'staff.: Body `{clinicianId?, roomId?}`; re-checks occupancy for the new doctor or room (`409 scheduling.slot_taken`)'
+      x-access:
+        staff:
+          permission: scheduling.queue.manage
+          resolver: reservation
+          realm: google
+          idempotencyKey: false
+          ifMatch: true
+          pathAs: /api/v1/appointments/{id}/assignment
+          catalogueRow: 29.3#68
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+        - $ref: common.yaml#/components/parameters/IfMatch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutAppointmentsByIdAssignmentRequest'
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+          - scheduling.slot_taken
+        '412':
+          - kernel.precondition_failed
+        '413':
+          - kernel.payload_too_large
+        '428':
+          - kernel.precondition_required
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            ETag:
+              $ref: common.yaml#/components/headers/ETag
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/OpaqueObject
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged, scheduling.slot_taken.'
+        '412':
+          $ref: common.yaml#/components/responses/Error412
+          description: 'Codes: kernel.precondition_failed.'
+        '413':
+          $ref: common.yaml#/components/responses/Error413
+          description: 'Codes: kernel.payload_too_large.'
+        '428':
+          $ref: common.yaml#/components/responses/Error428
+          description: 'Codes: kernel.precondition_required.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/appointments/{id}/check-in:
+    post:
+      operationId: postAppointmentsByIdCheckIn
+      tags:
+        - scheduling
+      summary: POST /api/v1/appointments/{id}/check-in
+      description: 'staff.: `{previsit: {questionnaire, consents, insurance}}` (AC-09 flags)'
+      x-access:
+        staff:
+          permission: scheduling.check_in
+          resolver: reservation
+          realm: google
+          idempotencyKey: true
+          ifMatch: true
+          pathAs: /api/v1/appointments/{id}/check-in
+          catalogueRow: 29.3#66
+      x-banner: true
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+        - $ref: common.yaml#/components/parameters/IdempotencyKey
+        - $ref: common.yaml#/components/parameters/IfMatch
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.idempotency_key_required
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - kernel.idempotency_conflict
+          - patient.merged
+        '412':
+          - kernel.precondition_failed
+        '428':
+          - kernel.precondition_required
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            ETag:
+              $ref: common.yaml#/components/headers/ETag
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+            Idempotent-Replay:
+              $ref: common.yaml#/components/headers/IdempotentReplay
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostAppointmentsByIdCheckInResponse'
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.idempotency_key_required, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: kernel.idempotency_conflict, patient.merged.'
+        '412':
+          $ref: common.yaml#/components/responses/Error412
+          description: 'Codes: kernel.precondition_failed.'
+        '428':
+          $ref: common.yaml#/components/responses/Error428
+          description: 'Codes: kernel.precondition_required.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/appointments/{id}/no-show:
+    post:
+      operationId: postAppointmentsByIdNoShow
+      tags:
+        - scheduling
+      summary: POST /api/v1/appointments/{id}/no-show
+      description: 'staff.: `422 scheduling.grace_not_elapsed`'
+      x-access:
+        staff:
+          permission: scheduling.check_in
+          resolver: reservation
+          realm: google
+          idempotencyKey: true
+          ifMatch: true
+          pathAs: /api/v1/appointments/{id}/no-show
+          catalogueRow: 29.3#67
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+        - $ref: common.yaml#/components/parameters/IdempotencyKey
+        - $ref: common.yaml#/components/parameters/IfMatch
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.idempotency_key_required
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - kernel.idempotency_conflict
+          - patient.merged
+        '412':
+          - kernel.precondition_failed
+        '422':
+          - scheduling.grace_not_elapsed
+        '428':
+          - kernel.precondition_required
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            ETag:
+              $ref: common.yaml#/components/headers/ETag
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+            Idempotent-Replay:
+              $ref: common.yaml#/components/headers/IdempotentReplay
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/OpaqueObject
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.idempotency_key_required, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: kernel.idempotency_conflict, patient.merged.'
+        '412':
+          $ref: common.yaml#/components/responses/Error412
+          description: 'Codes: kernel.precondition_failed.'
+        '422':
+          $ref: common.yaml#/components/responses/Error422
+          description: 'Codes: scheduling.grace_not_elapsed.'
+        '428':
+          $ref: common.yaml#/components/responses/Error428
+          description: 'Codes: kernel.precondition_required.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/appointments/{reservationId}:
+    get:
+      operationId: getAppointmentsByReservationId
+      tags:
+        - scheduling
+      summary: GET /api/v1/appointments/{reservationId}
+      description: 'my.: With location time zone; video: both zones (BR-05)'
+      x-access:
+        my:
+          permission: patient, proxy
+          resolver: reservation
+          realm: patient
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/appointments/{reservationId}
+          catalogueRow: 29.2#26
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: reservationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/OpaqueObject
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/appointments/{reservationId}/calendar.ics:
+    get:
+      operationId: getAppointmentsByReservationIdCalendarIcs
+      tags:
+        - scheduling
+      summary: GET /api/v1/appointments/{reservationId}/calendar.ics
+      description: 'my.: `text/calendar`; summary "Appointment"; no service or clinician name (BR-23)'
+      x-access:
+        my:
+          permission: patient, proxy
+          resolver: reservation
+          realm: patient
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/appointments/{reservationId}/calendar.ics
+          catalogueRow: 29.2#29
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: reservationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      x-error-codes:
+        '400':
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            text/calendar:
+              schema:
+                type: string
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/appointments/{reservationId}/cancel:
+    post:
+      operationId: postAppointmentsByReservationIdCancel
+      tags:
+        - scheduling
+      summary: POST /api/v1/appointments/{reservationId}/cancel
+      description: |-
+        my.: Body `{reason?, acceptFee?}`. `422 scheduling.cutoff_passed` (block) or `scheduling.fee_acceptance_required` (fee)
+        staff.: As 29.2; staff cancel uses `cancelled_clinic` and `reason` required
+      x-access:
+        my:
+          permission: patient, proxy
+          resolver: reservation
+          realm: patient
+          idempotencyKey: true
+          ifMatch: true
+          pathAs: /api/v1/appointments/{reservationId}/cancel
+          catalogueRow: 29.2#27
+        staff:
+          permission: scheduling.booking.manage (or .own_schedule for a doctor's own calendar)
+          resolver: patient in scope
+          realm: google
+          idempotencyKey: true
+          ifMatch: false
+          pathAs: /api/v1/appointments/{id}/cancel
+          catalogueRow: 29.3#65
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: reservationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+        - $ref: common.yaml#/components/parameters/IdempotencyKey
+        - $ref: common.yaml#/components/parameters/IfMatchOptional
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostAppointmentsByReservationIdCancelRequest'
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.idempotency_key_required
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - kernel.idempotency_conflict
+          - patient.merged
+        '412':
+          - kernel.precondition_failed
+        '413':
+          - kernel.payload_too_large
+        '422':
+          - scheduling.cutoff_passed
+          - scheduling.fee_acceptance_required
+        '428':
+          - kernel.precondition_required
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            ETag:
+              $ref: common.yaml#/components/headers/ETag
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+            Idempotent-Replay:
+              $ref: common.yaml#/components/headers/IdempotentReplay
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/OpaqueObject
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.idempotency_key_required, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: kernel.idempotency_conflict, patient.merged.'
+        '412':
+          $ref: common.yaml#/components/responses/Error412
+          description: 'Codes: kernel.precondition_failed.'
+        '413':
+          $ref: common.yaml#/components/responses/Error413
+          description: 'Codes: kernel.payload_too_large.'
+        '422':
+          $ref: common.yaml#/components/responses/Error422
+          description: 'Codes: scheduling.cutoff_passed, scheduling.fee_acceptance_required.'
+        '428':
+          $ref: common.yaml#/components/responses/Error428
+          description: 'Codes: kernel.precondition_required.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/appointments/{reservationId}/confirm:
+    post:
+      operationId: postAppointmentsByReservationIdConfirm
+      tags:
+        - scheduling
+      summary: POST /api/v1/appointments/{reservationId}/confirm
+      description: |-
+        my.: `200` appointment; `409 scheduling.hold_expired` (+`alternatives`)
+        staff.: As 29.2; staff cancel uses `cancelled_clinic` and `reason` required
+      x-access:
+        my:
+          permission: patient, proxy
+          resolver: reservation
+          realm: patient
+          idempotencyKey: true
+          ifMatch: false
+          pathAs: /api/v1/appointments/{reservationId}/confirm
+          catalogueRow: 29.2#24
+        staff:
+          permission: scheduling.booking.manage (or .own_schedule for a doctor's own calendar)
+          resolver: patient in scope
+          realm: google
+          idempotencyKey: true
+          ifMatch: false
+          pathAs: /api/v1/appointments/{id}/confirm
+          catalogueRow: 29.3#65
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: reservationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+        - $ref: common.yaml#/components/parameters/IdempotencyKey
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.idempotency_key_required
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - kernel.idempotency_conflict
+          - patient.merged
+          - scheduling.hold_expired
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+            Idempotent-Replay:
+              $ref: common.yaml#/components/headers/IdempotentReplay
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/OpaqueObject
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.idempotency_key_required, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: kernel.idempotency_conflict, patient.merged, scheduling.hold_expired.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/appointments/{reservationId}/previsit:
+    get:
+      operationId: getAppointmentsByReservationIdPrevisit
+      tags:
+        - scheduling
+      summary: GET /api/v1/appointments/{reservationId}/previsit
+      description: 'my.: Questionnaire (template + response), required consents and their status, insurance status'
+      x-access:
+        my:
+          permission: patient
+          resolver: reservation
+          realm: patient
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/appointments/{reservationId}/previsit
+          catalogueRow: 29.2#32
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: reservationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/OpaqueObject
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/appointments/{reservationId}/reschedule:
+    post:
+      operationId: postAppointmentsByReservationIdReschedule
+      tags:
+        - scheduling
+      summary: POST /api/v1/appointments/{reservationId}/reschedule
+      description: |-
+        my.: Body `{newHoldId}`
+        staff.: As 29.2; staff cancel uses `cancelled_clinic` and `reason` required
+      x-access:
+        my:
+          permission: patient, proxy
+          resolver: reservation
+          realm: patient
+          idempotencyKey: true
+          ifMatch: true
+          pathAs: /api/v1/appointments/{reservationId}/reschedule
+          catalogueRow: 29.2#28
+        staff:
+          permission: scheduling.booking.manage (or .own_schedule for a doctor's own calendar)
+          resolver: patient in scope
+          realm: google
+          idempotencyKey: true
+          ifMatch: false
+          pathAs: /api/v1/appointments/{id}/reschedule
+          catalogueRow: 29.3#65
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: reservationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+        - $ref: common.yaml#/components/parameters/IdempotencyKey
+        - $ref: common.yaml#/components/parameters/IfMatchOptional
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostAppointmentsByReservationIdRescheduleRequest'
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.idempotency_key_required
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - kernel.idempotency_conflict
+          - patient.merged
+        '412':
+          - kernel.precondition_failed
+        '413':
+          - kernel.payload_too_large
+        '428':
+          - kernel.precondition_required
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            ETag:
+              $ref: common.yaml#/components/headers/ETag
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+            Idempotent-Replay:
+              $ref: common.yaml#/components/headers/IdempotentReplay
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/OpaqueObject
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.idempotency_key_required, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: kernel.idempotency_conflict, patient.merged.'
+        '412':
+          $ref: common.yaml#/components/responses/Error412
+          description: 'Codes: kernel.precondition_failed.'
+        '413':
+          $ref: common.yaml#/components/responses/Error413
+          description: 'Codes: kernel.payload_too_large.'
+        '428':
+          $ref: common.yaml#/components/responses/Error428
+          description: 'Codes: kernel.precondition_required.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/availability/search:
+    post:
+      operationId: postAvailabilitySearch
+      tags:
+        - scheduling
+      summary: POST /api/v1/availability/search
+      description: |-
+        my.: Body `{serviceId, locationId?, clinicianId?, mode, from, to}` (range ≤ 31 days). `{slots: [{startsAt, endsAt, clinicianId, locationId, mode}], availabilityStale: bool}`. p95 < 1 s (NFR-8)
+        staff.: As 29.2, plus `includeOverbook` for staff
+      x-access:
+        my:
+          permission: patient
+          resolver: —
+          realm: patient
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/availability/search
+          catalogueRow: 29.2#22
+        staff:
+          permission: scheduling.availability.search
+          resolver: —
+          realm: google
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/availability/search
+          catalogueRow: 29.3#64
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: common.yaml#/components/parameters/ClientRelease
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostAvailabilitySearchRequest'
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '413':
+          - kernel.payload_too_large
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostAvailabilitySearchResponse'
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '413':
+          $ref: common.yaml#/components/responses/Error413
+          description: 'Codes: kernel.payload_too_large.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/check-ins:
+    post:
+      operationId: postCheckIns
+      tags:
+        - scheduling
+      summary: POST /api/v1/check-ins
+      description: 'my.: QR token is derived per location and local day (22.8 note), so it changes daily. `422 scheduling.check_in_not_allowed` (also for a wrong or stale token)'
+      x-access:
+        my:
+          permission: patient
+          resolver: body `reservationId`, `qrToken`
+          realm: patient
+          idempotencyKey: true
+          ifMatch: false
+          pathAs: /api/v1/check-ins
+          catalogueRow: 29.2#49
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: common.yaml#/components/parameters/ClientRelease
+        - $ref: common.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostCheckInsRequest'
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.idempotency_key_required
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - kernel.idempotency_conflict
+          - patient.merged
+        '413':
+          - kernel.payload_too_large
+        '422':
+          - scheduling.check_in_not_allowed
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+            Idempotent-Replay:
+              $ref: common.yaml#/components/headers/IdempotentReplay
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/OpaqueObject
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.idempotency_key_required, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: kernel.idempotency_conflict, patient.merged.'
+        '413':
+          $ref: common.yaml#/components/responses/Error413
+          description: 'Codes: kernel.payload_too_large.'
+        '422':
+          $ref: common.yaml#/components/responses/Error422
+          description: 'Codes: scheduling.check_in_not_allowed.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/clinicians/{id}/availability-templates:
+    get:
+      operationId: getCliniciansByIdAvailabilityTemplates
+      tags:
+        - scheduling
+      summary: GET /api/v1/clinicians/{id}/availability-templates
+      description: 'staff.: Takes effect in the next search (RA-R1-23)'
+      x-access:
+        staff:
+          permission: scheduling.template.manage (own; see the row below)
+          resolver: clinician
+          realm: google
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/clinicians/{id}/availability-templates
+          catalogueRow: 29.3#72
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+        - $ref: common.yaml#/components/parameters/Limit
+        - $ref: common.yaml#/components/parameters/Cursor
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCliniciansByIdAvailabilityTemplatesResponse'
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+    post:
+      operationId: postCliniciansByIdAvailabilityTemplates
+      tags:
+        - scheduling
+      summary: POST /api/v1/clinicians/{id}/availability-templates
+      description: 'staff.: Takes effect in the next search (RA-R1-23)'
+      x-access:
+        staff:
+          permission: scheduling.template.manage (own; see the row below)
+          resolver: clinician
+          realm: google
+          idempotencyKey: true
+          ifMatch: false
+          pathAs: /api/v1/clinicians/{id}/availability-templates
+          catalogueRow: 29.3#72
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+        - $ref: common.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: common.yaml#/components/schemas/OpaqueObject
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.idempotency_key_required
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - kernel.idempotency_conflict
+          - patient.merged
+        '413':
+          - kernel.payload_too_large
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+            Idempotent-Replay:
+              $ref: common.yaml#/components/headers/IdempotentReplay
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/OpaqueObject
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.idempotency_key_required, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: kernel.idempotency_conflict, patient.merged.'
+        '413':
+          $ref: common.yaml#/components/responses/Error413
+          description: 'Codes: kernel.payload_too_large.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/clinicians/{id}/availability-templates/{templateId}:
+    delete:
+      operationId: deleteCliniciansByIdAvailabilityTemplatesByTemplateId
+      tags:
+        - scheduling
+      summary: DELETE /api/v1/clinicians/{id}/availability-templates/{templateId}
+      description: 'staff.: Takes effect in the next search (RA-R1-23)'
+      x-access:
+        staff:
+          permission: scheduling.template.manage (own; see the row below)
+          resolver: clinician
+          realm: google
+          idempotencyKey: false
+          ifMatch: true
+          pathAs: /api/v1/clinicians/{id}/availability-templates/{templateId}
+          catalogueRow: 29.3#72
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+        - $ref: common.yaml#/components/parameters/IfMatch
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '412':
+          - kernel.precondition_failed
+        '428':
+          - kernel.precondition_required
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            ETag:
+              $ref: common.yaml#/components/headers/ETag
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '412':
+          $ref: common.yaml#/components/responses/Error412
+          description: 'Codes: kernel.precondition_failed.'
+        '428':
+          $ref: common.yaml#/components/responses/Error428
+          description: 'Codes: kernel.precondition_required.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+    put:
+      operationId: putCliniciansByIdAvailabilityTemplatesByTemplateId
+      tags:
+        - scheduling
+      summary: PUT /api/v1/clinicians/{id}/availability-templates/{templateId}
+      description: 'staff.: Takes effect in the next search (RA-R1-23)'
+      x-access:
+        staff:
+          permission: scheduling.template.manage (own; see the row below)
+          resolver: clinician
+          realm: google
+          idempotencyKey: false
+          ifMatch: true
+          pathAs: /api/v1/clinicians/{id}/availability-templates/{templateId}
+          catalogueRow: 29.3#72
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+        - $ref: common.yaml#/components/parameters/IfMatch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: common.yaml#/components/schemas/OpaqueObject
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '412':
+          - kernel.precondition_failed
+        '413':
+          - kernel.payload_too_large
+        '428':
+          - kernel.precondition_required
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            ETag:
+              $ref: common.yaml#/components/headers/ETag
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/OpaqueObject
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '412':
+          $ref: common.yaml#/components/responses/Error412
+          description: 'Codes: kernel.precondition_failed.'
+        '413':
+          $ref: common.yaml#/components/responses/Error413
+          description: 'Codes: kernel.payload_too_large.'
+        '428':
+          $ref: common.yaml#/components/responses/Error428
+          description: 'Codes: kernel.precondition_required.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/clinicians/{id}/blocked-times:
+    delete:
+      operationId: deleteCliniciansByIdBlockedTimes
+      tags:
+        - scheduling
+      summary: DELETE /api/v1/clinicians/{id}/blocked-times
+      description: 'staff.: `409 scheduling.conflicts_with_appointments` lists counts only'
+      x-access:
+        staff:
+          permission: scheduling.blocked_time.manage
+          resolver: clinician
+          realm: google
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/clinicians/{id}/blocked-times
+          catalogueRow: 29.3#73
+      x-catalogue-gap: The catalogue lists DELETE on the collection and names no identifier of the blocked time to delete
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+          - scheduling.conflicts_with_appointments
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged, scheduling.conflicts_with_appointments.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+    get:
+      operationId: getCliniciansByIdBlockedTimes
+      tags:
+        - scheduling
+      summary: GET /api/v1/clinicians/{id}/blocked-times
+      description: 'staff.: `409 scheduling.conflicts_with_appointments` lists counts only'
+      x-access:
+        staff:
+          permission: scheduling.blocked_time.manage
+          resolver: clinician
+          realm: google
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/clinicians/{id}/blocked-times
+          catalogueRow: 29.3#73
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+        - $ref: common.yaml#/components/parameters/Limit
+        - $ref: common.yaml#/components/parameters/Cursor
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+          - scheduling.conflicts_with_appointments
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCliniciansByIdBlockedTimesResponse'
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged, scheduling.conflicts_with_appointments.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+    post:
+      operationId: postCliniciansByIdBlockedTimes
+      tags:
+        - scheduling
+      summary: POST /api/v1/clinicians/{id}/blocked-times
+      description: 'staff.: `409 scheduling.conflicts_with_appointments` lists counts only'
+      x-access:
+        staff:
+          permission: scheduling.blocked_time.manage
+          resolver: clinician
+          realm: google
+          idempotencyKey: true
+          ifMatch: false
+          pathAs: /api/v1/clinicians/{id}/blocked-times
+          catalogueRow: 29.3#73
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+        - $ref: common.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: common.yaml#/components/schemas/OpaqueObject
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.idempotency_key_required
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - kernel.idempotency_conflict
+          - patient.merged
+          - scheduling.conflicts_with_appointments
+        '413':
+          - kernel.payload_too_large
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+            Idempotent-Replay:
+              $ref: common.yaml#/components/headers/IdempotentReplay
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/OpaqueObject
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.idempotency_key_required, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: kernel.idempotency_conflict, patient.merged, scheduling.conflicts_with_appointments.'
+        '413':
+          $ref: common.yaml#/components/responses/Error413
+          description: 'Codes: kernel.payload_too_large.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/holds:
+    post:
+      operationId: postHolds
+      tags:
+        - scheduling
+      summary: POST /api/v1/holds
+      description: |-
+        my.: `201 {reservationId, expiresAt}`; `409 scheduling.slot_taken` (+`alternatives`), `422 scheduling.max_future_reached`, `scheduling.overlapping_appointment`, `scheduling.licensing_refused`, `scheduling.lead_time`, `scheduling.outside_hours`
+        staff.: As 29.2; staff cancel uses `cancelled_clinic` and `reason` required
+      x-access:
+        my:
+          permission: patient, proxy
+          resolver: body `patientId`
+          realm: patient
+          idempotencyKey: true
+          ifMatch: false
+          pathAs: /api/v1/holds
+          catalogueRow: 29.2#23
+        staff:
+          permission: scheduling.booking.manage (or .own_schedule for a doctor's own calendar)
+          resolver: patient in scope
+          realm: google
+          idempotencyKey: true
+          ifMatch: false
+          pathAs: /api/v1/holds
+          catalogueRow: 29.3#65
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: common.yaml#/components/parameters/ClientRelease
+        - $ref: common.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostHoldsRequest'
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.idempotency_key_required
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - kernel.idempotency_conflict
+          - patient.merged
+          - scheduling.slot_taken
+        '413':
+          - kernel.payload_too_large
+        '422':
+          - scheduling.lead_time
+          - scheduling.licensing_refused
+          - scheduling.max_future_reached
+          - scheduling.outside_hours
+          - scheduling.overlapping_appointment
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '201':
+          description: Success (201)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+            Idempotent-Replay:
+              $ref: common.yaml#/components/headers/IdempotentReplay
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostHoldsResponse201'
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.idempotency_key_required, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: kernel.idempotency_conflict, patient.merged, scheduling.slot_taken.'
+        '413':
+          $ref: common.yaml#/components/responses/Error413
+          description: 'Codes: kernel.payload_too_large.'
+        '422':
+          $ref: common.yaml#/components/responses/Error422
+          description: 'Codes: scheduling.lead_time, scheduling.licensing_refused, scheduling.max_future_reached, scheduling.outside_hours, scheduling.overlapping_appointment.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/locations/{id}/roster:
+    delete:
+      operationId: deleteLocationsByIdRoster
+      tags:
+        - scheduling
+      summary: DELETE /api/v1/locations/{id}/roster
+      description: "staff.: Doctor duties only from this route (T-CONF-STAFF(loc)); `compliance_on_call` only through 29.4. `422 scheduling.roster_principal_ineligible` if the principal does not hold the duty's role at the location"
+      x-access:
+        staff:
+          permission: scheduling.roster.manage
+          resolver: location
+          realm: google
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/locations/{id}/roster
+          catalogueRow: 29.3#76
+      x-catalogue-gap: The catalogue lists DELETE on the collection and names no identifier of the roster entry to delete
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '422':
+          - scheduling.roster_principal_ineligible
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '422':
+          $ref: common.yaml#/components/responses/Error422
+          description: 'Codes: scheduling.roster_principal_ineligible.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+    get:
+      operationId: getLocationsByIdRoster
+      tags:
+        - scheduling
+      summary: GET /api/v1/locations/{id}/roster
+      description: "staff.: Doctor duties only from this route (T-CONF-STAFF(loc)); `compliance_on_call` only through 29.4. `422 scheduling.roster_principal_ineligible` if the principal does not hold the duty's role at the location"
+      x-access:
+        staff:
+          permission: scheduling.roster.manage
+          resolver: location
+          realm: google
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/locations/{id}/roster
+          catalogueRow: 29.3#76
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+        - $ref: common.yaml#/components/parameters/Limit
+        - $ref: common.yaml#/components/parameters/Cursor
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '422':
+          - scheduling.roster_principal_ineligible
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetLocationsByIdRosterResponse'
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '422':
+          $ref: common.yaml#/components/responses/Error422
+          description: 'Codes: scheduling.roster_principal_ineligible.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+    post:
+      operationId: postLocationsByIdRoster
+      tags:
+        - scheduling
+      summary: POST /api/v1/locations/{id}/roster
+      description: "staff.: Doctor duties only from this route (T-CONF-STAFF(loc)); `compliance_on_call` only through 29.4. `422 scheduling.roster_principal_ineligible` if the principal does not hold the duty's role at the location"
+      x-access:
+        staff:
+          permission: scheduling.roster.manage
+          resolver: location
+          realm: google
+          idempotencyKey: true
+          ifMatch: false
+          pathAs: /api/v1/locations/{id}/roster
+          catalogueRow: 29.3#76
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+        - $ref: common.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: common.yaml#/components/schemas/OpaqueObject
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.idempotency_key_required
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - kernel.idempotency_conflict
+          - patient.merged
+        '413':
+          - kernel.payload_too_large
+        '422':
+          - scheduling.roster_principal_ineligible
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+            Idempotent-Replay:
+              $ref: common.yaml#/components/headers/IdempotentReplay
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/OpaqueObject
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.idempotency_key_required, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: kernel.idempotency_conflict, patient.merged.'
+        '413':
+          $ref: common.yaml#/components/responses/Error413
+          description: 'Codes: kernel.payload_too_large.'
+        '422':
+          $ref: common.yaml#/components/responses/Error422
+          description: 'Codes: scheduling.roster_principal_ineligible.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/locations/{locationId}/arrivals:
+    get:
+      operationId: getLocationsByLocationIdArrivals
+      tags:
+        - scheduling
+      summary: GET /api/v1/locations/{locationId}/arrivals
+      description: 'staff.: Arrivals board'
+      x-access:
+        staff:
+          permission: scheduling.check_in
+          resolver: location
+          realm: google
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/locations/{locationId}/arrivals
+          catalogueRow: 29.3#69
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: locationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+        - name: date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/OpaqueObject
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/locations/{locationId}/check-in-qr:
+    get:
+      operationId: getLocationsByLocationIdCheckInQr
+      tags:
+        - scheduling
+      summary: GET /api/v1/locations/{locationId}/check-in-qr
+      description: "staff.: `{token, localDate}` for today's QR code (22.8 note)"
+      x-access:
+        staff:
+          permission: scheduling.check_in
+          resolver: location
+          realm: google
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/locations/{locationId}/check-in-qr
+          catalogueRow: 29.3#77
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: locationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetLocationsByLocationIdCheckInQrResponse'
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/locations/{locationId}/queue:
+    get:
+      operationId: getLocationsByLocationIdQueue
+      tags:
+        - scheduling
+      summary: GET /api/v1/locations/{locationId}/queue
+      description: 'staff.: Queue with stage and waiting time'
+      x-access:
+        staff:
+          permission: scheduling.queue.manage
+          resolver: location
+          realm: google
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/locations/{locationId}/queue
+          catalogueRow: 29.3#70
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: locationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/OpaqueObject
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/queue-entries/{id}/stage:
+    put:
+      operationId: putQueueEntriesByIdStage
+      tags:
+        - scheduling
+      summary: PUT /api/v1/queue-entries/{id}/stage
+      description: 'staff.: —'
+      x-access:
+        staff:
+          permission: scheduling.queue.manage
+          resolver: entry
+          realm: google
+          idempotencyKey: false
+          ifMatch: true
+          pathAs: /api/v1/queue-entries/{id}/stage
+          catalogueRow: 29.3#71
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+        - $ref: common.yaml#/components/parameters/IfMatch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: common.yaml#/components/schemas/OpaqueObject
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '412':
+          - kernel.precondition_failed
+        '413':
+          - kernel.payload_too_large
+        '428':
+          - kernel.precondition_required
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            ETag:
+              $ref: common.yaml#/components/headers/ETag
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/OpaqueObject
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '412':
+          $ref: common.yaml#/components/responses/Error412
+          description: 'Codes: kernel.precondition_failed.'
+        '413':
+          $ref: common.yaml#/components/responses/Error413
+          description: 'Codes: kernel.payload_too_large.'
+        '428':
+          $ref: common.yaml#/components/responses/Error428
+          description: 'Codes: kernel.precondition_required.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/waitlist:
+    get:
+      operationId: getWaitlist
+      tags:
+        - scheduling
+      summary: GET /api/v1/waitlist
+      description: 'staff.: —'
+      x-access:
+        staff:
+          permission: scheduling.waitlist.manage
+          resolver: location
+          realm: google
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/waitlist
+          catalogueRow: 29.3#75
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: common.yaml#/components/parameters/ClientRelease
+        - name: serviceId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: locationId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/Limit
+        - $ref: common.yaml#/components/parameters/Cursor
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetWaitlistResponse'
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/waitlist-entries:
+    post:
+      operationId: postWaitlistEntries
+      tags:
+        - scheduling
+      summary: POST /api/v1/waitlist-entries
+      description: 'my.: `422 scheduling.waitlist_disabled`'
+      x-access:
+        my:
+          permission: patient, proxy
+          resolver: body/path
+          realm: patient
+          idempotencyKey: true
+          ifMatch: false
+          pathAs: /api/v1/waitlist-entries
+          catalogueRow: 29.2#30
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: common.yaml#/components/parameters/ClientRelease
+        - $ref: common.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: common.yaml#/components/schemas/OpaqueObject
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.idempotency_key_required
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - kernel.idempotency_conflict
+          - patient.merged
+        '413':
+          - kernel.payload_too_large
+        '422':
+          - scheduling.waitlist_disabled
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+            Idempotent-Replay:
+              $ref: common.yaml#/components/headers/IdempotentReplay
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/OpaqueObject
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.idempotency_key_required, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: kernel.idempotency_conflict, patient.merged.'
+        '413':
+          $ref: common.yaml#/components/responses/Error413
+          description: 'Codes: kernel.payload_too_large.'
+        '422':
+          $ref: common.yaml#/components/responses/Error422
+          description: 'Codes: scheduling.waitlist_disabled.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/waitlist-entries/{id}:
+    delete:
+      operationId: deleteWaitlistEntriesById
+      tags:
+        - scheduling
+      summary: DELETE /api/v1/waitlist-entries/{id}
+      description: 'my.: `422 scheduling.waitlist_disabled`'
+      x-access:
+        my:
+          permission: patient, proxy
+          resolver: body/path
+          realm: patient
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/waitlist-entries/{id}
+          catalogueRow: 29.2#30
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '422':
+          - scheduling.waitlist_disabled
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '422':
+          $ref: common.yaml#/components/responses/Error422
+          description: 'Codes: scheduling.waitlist_disabled.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/waitlist-offers/{offerId}/accept:
+    post:
+      operationId: postWaitlistOffersByOfferIdAccept
+      tags:
+        - scheduling
+      summary: POST /api/v1/waitlist-offers/{offerId}/accept
+      description: 'my.: `409 scheduling.offer_expired`'
+      x-access:
+        my:
+          permission: patient, proxy
+          resolver: offer
+          realm: patient
+          idempotencyKey: true
+          ifMatch: false
+          pathAs: /api/v1/waitlist-offers/{offerId}/accept
+          catalogueRow: 29.2#31
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: offerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+        - $ref: common.yaml#/components/parameters/IdempotencyKey
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.idempotency_key_required
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - kernel.idempotency_conflict
+          - patient.merged
+          - scheduling.offer_expired
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+            Idempotent-Replay:
+              $ref: common.yaml#/components/headers/IdempotentReplay
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/OpaqueObject
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.idempotency_key_required, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: kernel.idempotency_conflict, patient.merged, scheduling.offer_expired.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/waitlist-offers/{offerId}/decline:
+    post:
+      operationId: postWaitlistOffersByOfferIdDecline
+      tags:
+        - scheduling
+      summary: POST /api/v1/waitlist-offers/{offerId}/decline
+      description: 'my.: `409 scheduling.offer_expired`'
+      x-access:
+        my:
+          permission: patient, proxy
+          resolver: offer
+          realm: patient
+          idempotencyKey: true
+          ifMatch: false
+          pathAs: /api/v1/waitlist-offers/{offerId}/decline
+          catalogueRow: 29.2#31
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: offerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+        - $ref: common.yaml#/components/parameters/IdempotencyKey
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.idempotency_key_required
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - kernel.idempotency_conflict
+          - patient.merged
+          - scheduling.offer_expired
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+            Idempotent-Replay:
+              $ref: common.yaml#/components/headers/IdempotentReplay
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/OpaqueObject
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.idempotency_key_required, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: kernel.idempotency_conflict, patient.merged, scheduling.offer_expired.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /public/v1/clinicians/{id}/next-available:
+    get:
+      operationId: getPublicV1CliniciansByIdNextAvailable
+      tags:
+        - scheduling
+      summary: GET /public/v1/clinicians/{id}/next-available
+      description: 'integrations.: `scheduling.next_available`; start time only'
+      x-access:
+        integrations:
+          caller: '`site` server'
+          authentication: none
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /public/v1/clinicians/{id}/next-available
+          catalogueRow: 29.5#142
+      security: []
+      x-authentication: none
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: serviceId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      x-error-codes:
+        '400':
+          - kernel.validation_failed
+        '404':
+          - kernel.not_found
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CachePublic
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/OpaqueObject
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.validation_failed.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+components:
+  schemas:
+    GetAdminCliniciansByIdAvailabilityTemplatesResponse:
+      type: object
+      required:
+        - items
+        - nextCursor
+      properties:
+        items:
+          type: array
+          items:
+            $ref: common.yaml#/components/schemas/OpaqueObject
+        nextCursor:
+          oneOf:
+            - type: string
+            - type: 'null'
+    GetAdminCliniciansByIdBlockedTimesResponse:
+      type: object
+      required:
+        - items
+        - nextCursor
+      properties:
+        items:
+          type: array
+          items:
+            $ref: common.yaml#/components/schemas/OpaqueObject
+        nextCursor:
+          oneOf:
+            - type: string
+            - type: 'null'
+    GetAdminLocationsByIdRosterResponse:
+      type: object
+      required:
+        - items
+        - nextCursor
+      properties:
+        items:
+          type: array
+          items:
+            $ref: common.yaml#/components/schemas/OpaqueObject
+        nextCursor:
+          oneOf:
+            - type: string
+            - type: 'null'
+    GetCliniciansByIdAvailabilityTemplatesResponse:
+      type: object
+      required:
+        - items
+        - nextCursor
+      properties:
+        items:
+          type: array
+          items:
+            $ref: common.yaml#/components/schemas/OpaqueObject
+        nextCursor:
+          oneOf:
+            - type: string
+            - type: 'null'
+    GetCliniciansByIdBlockedTimesResponse:
+      type: object
+      required:
+        - items
+        - nextCursor
+      properties:
+        items:
+          type: array
+          items:
+            $ref: common.yaml#/components/schemas/OpaqueObject
+        nextCursor:
+          oneOf:
+            - type: string
+            - type: 'null'
+    GetLocationsByIdRosterResponse:
+      type: object
+      required:
+        - items
+        - nextCursor
+      properties:
+        items:
+          type: array
+          items:
+            $ref: common.yaml#/components/schemas/OpaqueObject
+        nextCursor:
+          oneOf:
+            - type: string
+            - type: 'null'
+    GetLocationsByLocationIdCheckInQrResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        localDate:
+          type: string
+          format: date
+      required:
+        - token
+        - localDate
+    GetWaitlistResponse:
+      type: object
+      required:
+        - items
+        - nextCursor
+      properties:
+        items:
+          type: array
+          items:
+            $ref: common.yaml#/components/schemas/OpaqueObject
+        nextCursor:
+          oneOf:
+            - type: string
+            - type: 'null'
+    PostAppointmentsByIdCheckInResponse:
+      type: object
+      properties:
+        previsit:
+          type: object
+          properties:
+            questionnaire: {}
+            consents: {}
+            insurance: {}
+          required:
+            - questionnaire
+            - consents
+            - insurance
+        patientBanner:
+          $ref: common.yaml#/components/schemas/PatientBanner
+      required:
+        - previsit
+        - patientBanner
+    PostAppointmentsByReservationIdCancelRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          maxLength: 500
+        acceptFee:
+          type: boolean
+    PostAppointmentsByReservationIdRescheduleRequest:
+      type: object
+      properties:
+        newHoldId:
+          type: string
+          format: uuid
+      required:
+        - newHoldId
+    PostAvailabilitySearchRequest:
+      type: object
+      properties:
+        serviceId:
+          type: string
+          format: uuid
+        locationId:
+          type: string
+          format: uuid
+        clinicianId:
+          type: string
+          format: uuid
+        mode:
+          type: string
+        from:
+          type: string
+          format: date-time
+          description: Half-open range [from, to), from < to; the range is at most 31 days (31.1).
+        to:
+          type: string
+          format: date-time
+          description: Half-open range [from, to), from < to; the range is at most 31 days (31.1).
+        includeOverbook:
+          type: boolean
+      required:
+        - serviceId
+        - mode
+        - from
+        - to
+    PostAvailabilitySearchResponse:
+      type: object
+      properties:
+        slots:
+          type: array
+          items:
+            type: object
+            properties:
+              startsAt:
+                type: string
+                format: date-time
+              endsAt:
+                type: string
+                format: date-time
+              clinicianId:
+                type: string
+                format: uuid
+              locationId:
+                type: string
+                format: uuid
+              mode:
+                type: string
+            required:
+              - startsAt
+              - endsAt
+              - clinicianId
+              - locationId
+              - mode
+        availabilityStale:
+          type: boolean
+      required:
+        - slots
+        - availabilityStale
+    PostCheckInsRequest:
+      type: object
+      properties:
+        reservationId:
+          type: string
+          format: uuid
+        qrToken:
+          type: string
+      required:
+        - reservationId
+        - qrToken
+    PostHoldsRequest:
+      type: object
+      properties:
+        patientId:
+          type: string
+          format: uuid
+      required:
+        - patientId
+      additionalProperties: true
+    PostHoldsResponse201:
+      type: object
+      properties:
+        reservationId:
+          type: string
+          format: uuid
+        expiresAt:
+          type: string
+          format: date-time
+      required:
+        - reservationId
+        - expiresAt
+    PutAppointmentsByIdAssignmentRequest:
+      type: object
+      properties:
+        clinicianId:
+          type: string
+          format: uuid
+        roomId:
+          type: string
+          format: uuid
+    SchedulingErrorCode:
+      type: string
+      enum:
+        - scheduling.slot_taken
+        - scheduling.hold_expired
+        - scheduling.max_future_reached
+        - scheduling.overlapping_appointment
+        - scheduling.licensing_refused
+        - scheduling.lead_time
+        - scheduling.outside_hours
+        - scheduling.cutoff_passed
+        - scheduling.fee_acceptance_required
+        - scheduling.waitlist_disabled
+        - scheduling.check_in_not_allowed
+        - scheduling.grace_not_elapsed
+        - scheduling.invalid_transition
+        - scheduling.conflicts_with_appointments
+        - scheduling.offer_expired
+        - scheduling.roster_principal_ineligible
+      x-registry:
+        - code: scheduling.slot_taken
+          http: '409'
+          retryable: no
+        - code: scheduling.hold_expired
+          http: '409'
+          retryable: no
+        - code: scheduling.max_future_reached
+          http: 409/422
+          retryable: no
+        - code: scheduling.overlapping_appointment
+          http: 409/422
+          retryable: no
+        - code: scheduling.licensing_refused
+          http: 409/422
+          retryable: no
+        - code: scheduling.lead_time
+          http: 409/422
+          retryable: no
+        - code: scheduling.outside_hours
+          http: 409/422
+          retryable: no
+        - code: scheduling.cutoff_passed
+          http: 409/422
+          retryable: no
+        - code: scheduling.fee_acceptance_required
+          http: 409/422
+          retryable: no
+        - code: scheduling.waitlist_disabled
+          http: 409/422
+          retryable: no
+        - code: scheduling.check_in_not_allowed
+          http: 409/422
+          retryable: no
+        - code: scheduling.grace_not_elapsed
+          http: 409/422
+          retryable: no
+        - code: scheduling.invalid_transition
+          http: 409/422
+          retryable: no
+        - code: scheduling.conflicts_with_appointments
+          http: 409/422
+          retryable: no
+        - code: scheduling.offer_expired
+          http: '409'
+          retryable: no
+        - code: scheduling.roster_principal_ineligible
+          http: '422'
+          retryable: no
+      description: Section 30 error codes with the scheduling prefix.
+  securitySchemes:
+    sessionCookie:
+      $ref: common.yaml#/components/securitySchemes/sessionCookie
+tags:
+  - name: scheduling
+    description: Module scheduling
+servers:
+  - url: https://my.{domain}
+    description: Patient portal host (my.)
+    variables:
+      domain:
+        default: example.invalid
+  - url: https://staff.{domain}
+    description: Staff and admin portal host (staff.)
+    variables:
+      domain:
+        default: example.invalid
+  - url: https://integrations.{domain}
+    description: Integrations host (integrations.)
+    variables:
+      domain:
+        default: example.invalid
