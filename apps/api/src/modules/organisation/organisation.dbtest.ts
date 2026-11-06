@@ -109,6 +109,12 @@ const VIEWS = [
   'public_holiday',
   'public_banner',
 ];
+/** Agreed directory-view / public-policy list: docs/evidence/integration/M2/DIRECTORY-VIEWS-AND-PUBLIC-POLICIES.md (INT01-F2). */
+const IDENTITY_DIRECTORY_VIEWS = ['public_clinician'];
+const IDENTITY_PUBLIC_POLICIES = [
+  'identity.principal.principal_directory',
+  'identity.staff_profile.staff_profile_directory',
+];
 const TABLES = [
   'organisation',
   'jurisdiction',
@@ -916,7 +922,7 @@ describe('organisation module on PostgreSQL 17 (BE-03)', () => {
   });
 
   describe('directory views and the directory_ro role (22.5.1, 21.2, 38.2 item 17)', () => {
-    test('seven organisation views exist, owned by directory_ro, owner-rights (no security_invoker), nothing else owned by it', async () => {
+    test('seven organisation views exist (plus identity.public_clinician owned by directory_ro), owner-rights (no security_invoker), nothing else owned by it', async () => {
       const v = await q<{ relname: string; owner: string; reloptions: string[] | null }>(
         `SELECT c.relname, pg_get_userbyid(c.relowner) AS owner, c.reloptions FROM pg_class c
           WHERE c.relnamespace = 'organisation'::regnamespace AND c.relkind = 'v' ORDER BY 1`,
@@ -934,7 +940,10 @@ describe('organisation module on PostgreSQL 17 (BE-03)', () => {
       );
       assert.deepEqual(
         owned.map((x) => x.object).sort(),
-        VIEWS.map((x) => `organisation.${x}`).sort(),
+        [
+          ...VIEWS.map((x) => `organisation.${x}`),
+          ...IDENTITY_DIRECTORY_VIEWS.map((x) => `identity.${x}`),
+        ].sort(),
       );
       assert.deepEqual(
         await q(
@@ -1199,7 +1208,7 @@ describe('organisation module on PostgreSQL 17 (BE-03)', () => {
       }
     });
 
-    test('M-5: the policies that can match audience public are exactly the seven T-DIRECTORY policies (plus the recorded kernel exception)', async () => {
+    test('M-5: the policies that can match audience public are exactly the seven organisation T-DIRECTORY policies, the two identity ones and the recorded kernel exception', async () => {
       const matching = await publicMatchingPolicies();
       const org7 = matching.filter((x) => x.startsWith('organisation.')).sort();
       assert.deepEqual(
@@ -1209,8 +1218,8 @@ describe('organisation module on PostgreSQL 17 (BE-03)', () => {
           .sort(),
       );
       assert.deepEqual(
-        matching.filter((x) => !x.startsWith('organisation.')),
-        ['kernel.rate_counter.rate_counter_org'],
+        matching.filter((x) => !x.startsWith('organisation.')).sort(),
+        [...IDENTITY_PUBLIC_POLICIES, 'kernel.rate_counter.rate_counter_org'].sort(),
       );
       for (const p of await q<{ roles: string[] }>(
         `SELECT roles::text[] AS roles FROM pg_policies WHERE policyname LIKE '%\\_directory'`,

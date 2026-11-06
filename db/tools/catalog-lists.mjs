@@ -47,7 +47,16 @@ export const expectedMemberships = {
 };
 
 /** Views that may lack security_invoker (C0/C1 lists). Empty until the directory and reporting tickets. */
-export const ownerRightsViews = [];
+export const ownerRightsViews = [
+  'organisation.public_location',
+  'organisation.public_service',
+  'organisation.public_service_location',
+  'organisation.public_service_clinician',
+  'organisation.public_opening_hours',
+  'organisation.public_holiday',
+  'organisation.public_banner',
+  'identity.public_clinician',
+];
 /** Views reporting_ro may read (C0/C1 only, M-4). */
 export const reportingViews = [];
 /** Tables with a patient_id column that are exempt from the merge write guard (SHARED-BOUNDARIES 9.2). */
@@ -66,4 +75,15 @@ export const anonymousPolicies = [
  * it can match `public` at the database level while 21.3 says public cannot reach it. No /public/v1 code path
  * touches it; the Architect decides whether to add `audience <> 'public'`.
  */
-export const publicPolicies = ['kernel.rate_counter.rate_counter_org'];
+export const publicPolicies = [
+  'kernel.rate_counter.rate_counter_org',
+  'organisation.location.location_directory',
+  'organisation.service.service_directory',
+  'organisation.service_location.service_location_directory',
+  'organisation.service_clinician.service_clinician_directory',
+  'organisation.opening_hours.opening_hours_directory',
+  'organisation.holiday.holiday_directory',
+  'organisation.banner.banner_directory',
+  'identity.principal.principal_directory',
+  'identity.staff_profile.staff_profile_directory',
+];
