@@ -15,11 +15,10 @@ EHR_TEST_ADMIN_URL=postgres://postgres@host:5432/postgres \
 
 ## Open items for the Orchestrator / other owners
 
-- `catalog-lists.requested.patch` (this folder): `db/tools` is not in this ticket's paths. Without it the M-5 checks report
-  `patient.staff_scope` (guard-exempt) and nine patient definer functions (inventory).
-- This ticket attaches the merge write guard (`patient.guard_open_patient`) to `identity.patient_link`, `identity.proxy_grant` and the
-  notifications tables, as BE-04 (identity 0502) and BE-06 (NOT-N4) recorded. Their db tests use patient IDs with no
-  `patient.patient` row and now fail with `PM008 patient not found` (identity rls/guard, notifications api and worker). Their
-  fixtures need real patients; that is a change in BE-04/BE-06 test paths, not made here.
+- Round 2 (Orchestrator decision on HEAAA-168): the catalog allow-list patch is applied to `db/tools/catalog-lists.mjs`
+  (`catalog-lists.requested.patch` is kept as the record). The BE-04 identity and BE-06 notifications db test fixtures now create real
+  `patient.patient` rows (fixture-only edits, no assertion changed).
+- The merge write guard refuses a transaction with no organisation, another organisation, or an audience outside patient/staff/system
+  with 42501, and an unknown patient in an allowed context with PM008.
 - `organisation.dbtest` failures about `identity.public_clinician` and the identity `*_directory` / signin policies predate this
   ticket (BE-04 objects against BE-03's expected lists).

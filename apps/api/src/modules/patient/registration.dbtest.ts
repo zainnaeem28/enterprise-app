@@ -907,9 +907,14 @@ describe('care relationships and the staff scope (6.6; TC-AZ-04, SBR-11)', () =>
       (e: unknown) => (e as { code?: string }).code === 'PM001',
       'even a superuser session cannot write a merged patient: the trigger fires for every role',
     );
-    // and a write the guard cannot judge is refused too (fail closed): no organisation in the settings, so the root is unreadable
+    // and a write the guard cannot judge is refused too (fail closed): no organisation in the settings is a privilege failure
     await assert.rejects(
       k.sa.query(contact, [ORG, b]),
+      (e: unknown) => (e as { code?: string }).code === '42501',
+    );
+    // an unknown patient in an allowed context is PM008
+    await assert.rejects(
+      saWrite(k, contact, [ORG, '00000000-0000-7000-8000-00000000dead']),
       (e: unknown) => (e as { code?: string }).code === 'PM008',
     );
     // writes to the survivor pass

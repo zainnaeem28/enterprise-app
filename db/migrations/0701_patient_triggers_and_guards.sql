@@ -29,10 +29,17 @@ BEGIN
   IF NEW.patient_id IS NULL THEN
     RETURN NEW;
   END IF;
+  -- A transaction with no organisation, an organisation other than the row's, or an audience that may not touch patient data is
+  -- refused as a privilege failure before any lookup, the same refusal the row-level policies of the written table would give.
+  IF (SELECT kernel.setting('app.audience')) IS NULL
+     OR (SELECT kernel.setting('app.audience')) NOT IN ('patient', 'staff', 'system')
+     OR (SELECT kernel.uuid1('app.org_id')) IS DISTINCT FROM NEW.organisation_id THEN
+    RAISE EXCEPTION 'not permitted' USING ERRCODE = '42501';
+  END IF;
   SELECT p.status INTO v_status FROM patient.patient p WHERE p.id = NEW.patient_id FOR KEY SHARE;
   IF NOT FOUND THEN
-    -- The root is not readable here: it does not exist, or the transaction carries no organisation or audience (a missing setting
-    -- fails closed everywhere, 6.1). A guard that cannot read the root cannot say the patient is open, so the write is refused.
+    -- The root does not exist in this organisation (the context above is already allowed to read it). A guard that cannot find
+    -- the root cannot say the patient is open, so the write is refused.
     RAISE EXCEPTION 'patient not found' USING ERRCODE = 'PM008';
   END IF;
   IF v_status = 'merged' THEN
