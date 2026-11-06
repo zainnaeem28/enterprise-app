@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -p tsconfig.json --noEmit && vite build",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "NODE_ENV=test vitest run",
+    "test": "NODE_ENV=test vitest run --reporter=default --reporter=junit --outputFile.junit=\"${JUNIT_DIR:-.junit}/staff.xml\"",
     "test:a11y": "playwright test",
     "test:a11y:jsdom": "NODE_ENV=test vitest run src/a11y.test.tsx",
     "bundle-budget": "node scripts/bundle-budget.mjs"
