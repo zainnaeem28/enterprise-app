@@ -1,0 +1,25 @@
+diff --git a/db/tools/catalog-lists.mjs b/db/tools/catalog-lists.mjs
+--- a/db/tools/catalog-lists.mjs
++++ b/db/tools/catalog-lists.mjs
+@@ -81,6 +81,12 @@
+   'patient.attach',
+   'patient.match_candidates',
+   'patient.identity_label',
++  // BE-19 (messaging): the merge write guard (2001, owned by patient_scope_owner) and the three "am I a participant / owner / creator" predicates of
++  // the thread and thread_participant policies (2002), which break the policy cycle between the two tables (module README).
++  'messaging.guard_open_patient',
++  'messaging.is_participant',
++  'messaging.is_owner',
++  'messaging.is_creator',
+   // HEAAA-181 F09 (0951): the twin check reads the hidden occupancy columns, so it runs as the twin's owner.
+   'scheduling.check_twin',
+ ];
+@@ -131,6 +137,8 @@
+ export const patientGuardFunctions = [
+   'patient.guard_open_patient',
+   'scheduling.guard_open_patient',
++  // BE-19: the copy on thread, message and task (2001), moved to patient_scope_owner.
++  'messaging.guard_open_patient',
+ ];
+ 
+ /**
