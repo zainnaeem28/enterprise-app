@@ -86,7 +86,10 @@ export interface AvailabilityPort {
   resolve(
     tx: Tx,
     q: SlotQuery,
-  ): Promise<{ ok: true; overbook?: { sessionKey: string } } | { ok: false; code: 'scheduling.outside_hours' }>;
+  ): Promise<
+    | { ok: true; overbook?: { sessionKey: string } }
+    | { ok: false; code: 'scheduling.outside_hours' }
+  >;
   /** Up to five alternative start times (ISO) for the same service, as the slot search would offer them. */
   alternatives(tx: Tx, q: SlotQuery): Promise<string[]>;
 }

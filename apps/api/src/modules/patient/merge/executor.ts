@@ -239,7 +239,7 @@ export async function executeMerge(deps: ExecuteDeps, input: ExecuteInput): Prom
     const code = failureCode(e);
     // The session that ran the merge may have been ended by the server (the transaction bound), and a pool can hand that dead
     // connection out once more; the recording is tried again on a fresh one.
-    let recorded = false;
+    let recorded: boolean;
     for (let tries = 1; ; tries++) {
       try {
         recorded = await deps.db.withScope(orgScope, async (tx) => {

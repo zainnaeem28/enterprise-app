@@ -83,10 +83,13 @@ export const schedulingMergeParticipant: MergeParticipant = {
         WHERE r.patient_id = $1::uuid AND o.status = ANY($2::text[])`,
       [mergedId, R_STATES],
     );
-    if (left !== 0) throw new Error('scheduling.repointPatient: an R row is left on the merged patient');
+    if (left !== 0)
+      throw new Error('scheduling.repointPatient: an R row is left on the merged patient');
     const repointed = moved.rowCount ?? 0;
     if (found !== repointed + kept)
-      throw new Error('scheduling.repointPatient: counts do not add up for scheduling.slot_reservation');
+      throw new Error(
+        'scheduling.repointPatient: counts do not add up for scheduling.slot_reservation',
+      );
 
     const overlaps = await count(
       tx,
@@ -106,17 +109,24 @@ export const schedulingMergeParticipant: MergeParticipant = {
       [
         `scheduling.repointPatient:${requestId}`.slice(0, 200),
         survivorId,
-        JSON.stringify({ mergeRequestId: requestId, survivorId, mergedId, overlapsAfterMerge: overlaps }),
+        JSON.stringify({
+          mergeRequestId: requestId,
+          survivorId,
+          mergedId,
+          overlapsAfterMerge: overlaps,
+        }),
       ],
     );
-    return [{ table: 'scheduling.slot_reservation', found, repointed, resolved: 0, kept, deleted: [] }];
+    return [
+      { table: 'scheduling.slot_reservation', found, repointed, resolved: 0, kept, deleted: [] },
+    ];
   },
 };
 
 /** The privacy export part (22.16, 24): the patient's reservations with their appointment status and time. No clinician names, no free text beyond the stored reason. */
 export const schedulingExportContributor: ExportContributor = {
   module: 'scheduling',
-  async exportPart(tx: Tx, patientIds: readonly string[], _requestId: string): Promise<unknown> {
+  async exportPart(tx: Tx, patientIds: readonly string[]): Promise<unknown> {
     if (patientIds.some((p) => !isUuid(p))) throw new SchedulingValidationError(['patientIds']);
     const r = await tx.query(
       `SELECT r.id, r.patient_id, r.service_id, r.location_id, r.clinician_principal_id, r.mode, r.reason, r.patient_stated_state,
@@ -126,7 +136,8 @@ export const schedulingExportContributor: ExportContributor = {
         WHERE r.patient_id = ANY($1::uuid[]) ORDER BY lower(o.period), r.id`,
       [[...patientIds]],
     );
-    const iso = (v: unknown): string | null => (v instanceof Date ? v.toISOString() : v === null ? null : String(v));
+    const iso = (v: unknown): string | null =>
+      v instanceof Date ? v.toISOString() : v === null ? null : String(v);
     return {
       reservations: (r.rows as Row[]).map((x) => ({
         id: x['id'],
