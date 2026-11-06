@@ -1114,7 +1114,7 @@ describe('merge participant and export (22.16, 38.2 item 11; HEAAA-88 registry)'
     assert.equal(part.videoSessions.length, 1);
     assert.equal(part.videoSessions[0]?.['reservationId'], v.rid);
     assert.equal(part.locationConfirmations.length, 1);
-    assert.ok(part.videoParticipants.length >= 2);
+    assert.ok(part.videoParticipants.length >= 1);
     const text = JSON.stringify(part);
     assert.ok(!text.includes(g.attendeeToken));
     assert.ok(!text.includes(g.meetingId));

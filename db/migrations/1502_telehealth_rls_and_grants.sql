@@ -131,5 +131,5 @@ GRANT UPDATE (status, revoked_at, revoke_reason) ON telehealth.join_token TO app
 -- IDs, SBR-03).
 GRANT INSERT (id, organisation_id, reservation_id, patient_id, clinician_principal_id) ON telehealth.video_session TO app_worker;
 GRANT UPDATE (patient_id, vendor, vendor_meeting_id, status, opened_at, ended_at) ON telehealth.video_session TO app_worker;
-GRANT UPDATE (patient_id) ON telehealth.participant TO app_worker;
+GRANT UPDATE (patient_id, left_at) ON telehealth.participant TO app_worker;
 GRANT UPDATE (patient_id, status, revoked_at, revoke_reason) ON telehealth.join_token TO app_worker;
