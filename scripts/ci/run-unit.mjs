@@ -2,7 +2,7 @@
 // JUnit report per suite under reports/unit/. Fails when: no suite exists, a suite exits non-zero,
 // a report is missing/malformed, a suite ran zero tests, or any test was skipped.
 //
-// Contract for workspace packages: `test` must write JUnit XML to $JUNIT_DIR/<anything>.xml
+// Contract for workspace packages: every package with a `test` script must write JUnit XML to $JUNIT_DIR/<anything>.xml
 // (for example `node --test --test-reporter=junit --test-reporter-destination=$JUNIT_DIR/kernel.xml`).
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
@@ -34,14 +34,27 @@ writeFileSync(
     `<testcase classname="boundary" name="upward import rejected, downward import accepted">${boundaryOk ? '' : '<failure message="test:boundary failed"/>'}</testcase></testsuite></testsuites>\n`,
 );
 
-// Workspace suites. --if-present: a package without `test` is not a suite; the count check below
-// still guarantees at least one suite ran.
-run('workspace tests', 'pnpm', ['-r', '--if-present', 'run', 'test']);
+// Workspace suites. Every package that defines a `test` script is a suite and MUST write at least
+// one JUnit report into its own $JUNIT_DIR; a script that exits 0 without a report fails.
+const ls = spawnSync('pnpm', ['-r', 'ls', '--json', '--depth', '-1'], { cwd: root, encoding: 'utf8' });
+if (ls.status !== 0) failures.push(`pnpm ls failed: ${ls.stderr}`);
+const pkgs = ls.status === 0 ? JSON.parse(ls.stdout) : [];
+for (const p of pkgs) {
+  if (resolve(p.path) === root) continue;
+  const scripts = JSON.parse(readFileSync(join(p.path, 'package.json'), 'utf8')).scripts ?? {};
+  if (!scripts.test) continue;
+  const name = (p.name ?? p.path).replace(/[^A-Za-z0-9_.-]/g, '_');
+  const dir = join(junitDir, name);
+  mkdirSync(dir, { recursive: true });
+  run(`test ${p.name ?? p.path}`, 'pnpm', ['--dir', p.path, 'run', 'test'], { JUNIT_DIR: dir });
+  if (!readdirSync(dir).some((f) => f.endsWith('.xml')))
+    failures.push(`${p.name ?? p.path}: test script wrote no JUnit report to $JUNIT_DIR (a suite that runs nothing fails)`);
+}
 
 let tests = 0;
 let skipped = 0;
 let failed = 0;
-const reports = readdirSync(junitDir).filter((f) => f.endsWith('.xml'));
+const reports = readdirSync(junitDir, { recursive: true }).filter((f) => f.endsWith('.xml'));
 for (const f of reports) {
   const xml = readFileSync(join(junitDir, f), 'utf8');
   if (!/<testsuite[ s>]/.test(xml)) {

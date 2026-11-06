@@ -57,6 +57,18 @@ if want_job workflow-hygiene; then
   sed -i 's#run: scripts/ci/sbom.sh#run: scripts/ci/sbom.sh || true#' "$d/.github/workflows/ci.yml"
   expect_fail "workflow-hygiene: '|| true'" "$d" node scripts/ci/check-workflow-hygiene.mjs
 
+  d="$(fresh_copy hyg-colon)"
+  sed -i 's#run: scripts/ci/sbom.sh#run: scripts/ci/sbom.sh || :#' "$d/.github/workflows/ci.yml"
+  expect_fail "workflow-hygiene: '|| :'" "$d" node scripts/ci/check-workflow-hygiene.mjs
+
+  d="$(fresh_copy hyg-exit0)"
+  sed -i 's#run: scripts/ci/sbom.sh#run: scripts/ci/sbom.sh || exit 0#' "$d/.github/workflows/ci.yml"
+  expect_fail "workflow-hygiene: '|| exit 0'" "$d" node scripts/ci/check-workflow-hygiene.mjs
+
+  d="$(fresh_copy hyg-unlisted)"
+  sed -i 's#container-scan, sbom\]#container-scan]#' "$d/.github/workflows/ci.yml"
+  expect_fail "workflow-hygiene: job missing from ci-status needs" "$d" node scripts/ci/check-workflow-hygiene.mjs
+
   d="$(fresh_copy hyg-coe)"
   sed -i '0,/    timeout-minutes: 10/s##    timeout-minutes: 10\n    continue-on-error: true#' "$d/.github/workflows/ci.yml"
   expect_fail "workflow-hygiene: continue-on-error" "$d" node scripts/ci/check-workflow-hygiene.mjs
@@ -116,6 +128,13 @@ if want_job unit; then
     j.scripts.test="exit 3";
     fs.writeFileSync(p,JSON.stringify(j,null,2));')
   expect_fail "unit: a suite that exits non-zero without writing a report" "$d" node scripts/ci/run-unit.mjs
+
+  d="$(fresh_copy unit-noop)"
+  (cd "$d" && node -e '
+    const fs=require("fs"),p="packages/kernel/package.json",j=JSON.parse(fs.readFileSync(p));
+    j.scripts.test="echo no tests; exit 0";
+    fs.writeFileSync(p,JSON.stringify(j,null,2));')
+  expect_fail "unit: a test script that runs nothing and exits 0" "$d" node scripts/ci/run-unit.mjs
 
   d="$(fresh_copy unit-noboundary)"
   (cd "$d" && node -e '

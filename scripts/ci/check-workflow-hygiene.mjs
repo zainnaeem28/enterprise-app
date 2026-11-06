@@ -91,7 +91,7 @@ for (const file of files) {
       }
     }
     if (/continue-on-error/.test(l)) fail(rel, n, 'continue-on-error is not allowed');
-    if (/\|\|\s*(true|:|exit\s+0)\b/.test(l) || /;\s*true\s*$/.test(l))
+    if (/\|\|\s*(true\b|:(\s|$)|exit\s+0\b)/.test(l) || /;\s*true\s*$/.test(l))
       fail(rel, n, 'failure is swallowed (|| true / || : / || exit 0 / ; true)');
     if (/pull_request_target/.test(l)) fail(rel, n, 'pull_request_target is not allowed');
     if (isCi) {
@@ -105,6 +105,13 @@ for (const file of files) {
   });
   if (!topPermissions) fail(rel, 0, 'no top-level `permissions:` declared');
   for (const j of jobs) if (!j.timeout) fail(rel, j.line, `job ${j.name} has no timeout-minutes`);
+  if (isCi) {
+    // every job except ci-status must be gated by ci-status (R1-03)
+    const nm = /^ {4}needs:\s*\[([^\]]*)\]/m.exec(lines.slice(lines.findIndex((x) => /^ {2}ci-status:/.test(x))).join('\n'));
+    const gated = new Set((nm?.[1] ?? '').split(',').map((x) => x.trim()).filter(Boolean));
+    if (!nm) fail(rel, 0, 'ci-status has no inline `needs: [..]` list');
+    for (const j of jobs) if (j.name !== 'ci-status' && !gated.has(j.name)) fail(rel, j.line, `job ${j.name} is not in ci-status needs (ungated)`);
+  }
   if (jobs.length === 0 && rel.startsWith('.github/workflows/')) fail(rel, 0, 'no jobs found');
 }
 
