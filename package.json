@@ -10,7 +10,7 @@
   "scripts": {
     "lint": "eslint .",
     "format:check": "prettier --check .",
-    "typecheck": "pnpm -r run typecheck",
+    "typecheck": "pnpm --filter @ehr/kernel --filter @ehr/contracts run build && pnpm -r run typecheck",
     "build": "pnpm -r run build",
     "test:boundary": "node eslint/test-boundary-fixture.mjs"
   },
