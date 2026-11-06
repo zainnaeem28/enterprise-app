@@ -14,6 +14,8 @@ export interface Req {
   requestId?: string;
   routeClass?: string;
   bodyLimit?: number;
+  /** Exact request bytes; retained for `/webhooks/*` only, so vendor signatures can be verified. */
+  rawBody?: Buffer;
 }
 
 export interface Res {
