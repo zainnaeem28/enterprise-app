@@ -563,10 +563,22 @@ describe('POST /webhooks/video/{vendor} (acceptance 2, part 2; TC-API webhook pa
     assert.ok(Buffer.from(stored).equals(body));
   });
 
-  test('KNOWN GAP (platform): a JSON content type is parsed by the platform without a raw copy, so it is refused 503 and stored nothing', async () => {
+  test('JSON content type (platform parser keeps the raw bytes for /webhooks/*): valid 200, duplicate 200 with one message, tampered 401', async () => {
     const body = event('evt-json');
-    const r = await post(body, { ...signedHeaders(body), 'content-type': 'application/json' });
-    assert.equal(r.status, 503);
-    assert.equal(await messages('evt-json'), 0);
+    const h = { ...signedHeaders(body), 'content-type': 'application/json' };
+    assert.equal((await post(body, h)).status, 200);
+    assert.equal((await post(body, h)).status, 200);
+    assert.equal(await messages('evt-json'), 1);
+    const stored = (
+      await t.k.q<{ payload: Buffer }>(
+        `SELECT payload FROM integration_core.inbound_message WHERE event_id = 'evt-json'`,
+      )
+    )[0]?.payload as Buffer;
+    assert.ok(Buffer.from(stored).equals(body), 'stored bytes are the exact request bytes');
+    const bad = event('evt-json-bad');
+    const hb = { ...signedHeaders(bad), 'content-type': 'application/json' };
+    const tampered = Buffer.from(bad.toString().replace('m-1', 'm-2'));
+    assert.equal((await post(tampered, hb)).status, 401);
+    assert.equal(await messages('evt-json-bad'), 0);
   });
 });

@@ -48,7 +48,7 @@ No vendor verifier is registered by this module: vendor-specific schemes arrive 
 
 ## Open items (need someone outside this ticket's allowed paths)
 
-1. **Raw body for JSON webhooks.** `apps/api/src/platform/limits.ts` `verifyBodySize` sees the raw `Buffer` but keeps no copy, so a request with `Content-Type: application/json` reaches the handler parsed only. `rawBodyOf` therefore answers `503` (the vendor retries, nothing is stored) for JSON until the platform sets `req.rawBody = buf` for paths under `/webhooks/` in that hook. Non-JSON content types work now (the stream is read here). Needed before any JSON vendor can be enabled (INT-N2).
+1. **Raw body for JSON webhooks.** Resolved by the platform correction HEAAA-183 (commit `9914cfd`: `verifyBodySize` sets `req.rawBody` for `/webhooks/*`). `rawBodyOf` still answers `503` if a parsed body arrives with no raw copy (fail closed). The dbtest drives signed JSON (valid, duplicate, tampered) through the real `createApp` parser. This module's candidate must be integrated together with that commit.
 2. **Module graph.** This module imports no other module (ports only), so `eslint/module-graph.mjs` needs no edit; adding `integrations-host` to a layer is only needed if a later change imports another module directly.
 3. **`next-available`** as above.
 4. Composition root registration (`apps/api/src/main.ts`) belongs to the integrator.

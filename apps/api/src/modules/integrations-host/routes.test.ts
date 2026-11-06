@@ -282,7 +282,7 @@ describe('webhooks over HTTP', () => {
     nextStatus = 200;
   });
 
-  test('a JSON body parsed without a raw copy fails closed with 503 and is never handed to the receiver', async () => {
+  test('a JSON body reaches the receiver as the exact raw bytes (platform keeps them for /webhooks/*)', async () => {
     received.length = 0;
     const r = await http(
       'POST',
@@ -290,8 +290,9 @@ describe('webhooks over HTTP', () => {
       { ...sig, 'content-type': 'application/json' },
       '{"id":"e1"}',
     );
-    assert.equal(r.status, 503);
-    assert.equal(received.length, 0);
+    assert.equal(r.status, 200);
+    assert.equal(received.length, 1);
+    assert.ok(received[0]?.rawBody.equals(Buffer.from('{"id":"e1"}')));
   });
 
   test('a body over 256 KB is 413 before the receiver', async () => {
