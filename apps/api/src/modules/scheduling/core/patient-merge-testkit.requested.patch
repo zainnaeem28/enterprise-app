@@ -1,0 +1,68 @@
+diff --git a/apps/api/src/modules/patient/merge/concurrency.dbtest.ts b/apps/api/src/modules/patient/merge/concurrency.dbtest.ts
+index 586ba28..72dec48 100644
+--- a/apps/api/src/modules/patient/merge/concurrency.dbtest.ts
++++ b/apps/api/src/modules/patient/merge/concurrency.dbtest.ts
+@@ -9,6 +9,7 @@ import { KernelDb, ParticipantRegistries } from '@ehr/kernel';
+ import type { MergeParticipant } from '@ehr/kernel';
+ import { registerIdentityParticipants } from '../../identity/index.js';
+ import { registerNotificationsParticipants } from '../../notifications/index.js';
++import { registerSchedulingParticipants } from '../../scheduling/core/index.js';
+ import { ORG, pg, saWrite, setupMerge } from './testkit.js';
+ import type { Client, MergeKit } from './testkit.js';
+ 
+@@ -95,6 +96,7 @@ const registries = (...extra: MergeParticipant[]): ParticipantRegistries => {
+   const r = new ParticipantRegistries();
+   registerIdentityParticipants(r);
+   registerNotificationsParticipants(r);
++  registerSchedulingParticipants(r);
+   for (const p of extra) r.registerMergeParticipant(p);
+   return r;
+ };
+diff --git a/apps/api/src/modules/patient/merge/merge.dbtest.ts b/apps/api/src/modules/patient/merge/merge.dbtest.ts
+index a92a47a..94d1dbc 100644
+--- a/apps/api/src/modules/patient/merge/merge.dbtest.ts
++++ b/apps/api/src/modules/patient/merge/merge.dbtest.ts
+@@ -9,6 +9,7 @@ import { ParticipantRegistries } from '@ehr/kernel';
+ import type { MergeParticipant, ScopeSettings } from '@ehr/kernel';
+ import { registerIdentityParticipants } from '../../identity/index.js';
+ import { registerNotificationsParticipants } from '../../notifications/index.js';
++import { registerSchedulingParticipants } from '../../scheduling/core/index.js';
+ import { PATIENT_HOST, patientAccount, seedPrincipal } from '../testkit.js';
+ import { A1, A2, B1, ORG, call, saWrite, setupMerge, writeHeaders } from './testkit.js';
+ import type { MergeKit, SeededSession } from './testkit.js';
+@@ -539,6 +540,7 @@ describe('the execute job and the conflict rules (22.16, 38.2 items 2 and 11; TC
+     const regs = new ParticipantRegistries();
+     registerIdentityParticipants(regs);
+     registerNotificationsParticipants(regs);
++    registerSchedulingParticipants(regs);
+     const faulty: MergeParticipant = {
+       module: 'faulty',
+       tables: ['faulty.item'],
+@@ -615,6 +617,7 @@ describe('the execute job and the conflict rules (22.16, 38.2 items 2 and 11; TC
+     const regs = new ParticipantRegistries();
+     registerIdentityParticipants(regs);
+     registerNotificationsParticipants(regs);
++    registerSchedulingParticipants(regs);
+     regs.registerMergeParticipant({
+       module: 'liar',
+       tables: ['liar.item'],
+diff --git a/apps/api/src/modules/patient/merge/testkit.ts b/apps/api/src/modules/patient/merge/testkit.ts
+index 0dd3210..6e40d5a 100644
+--- a/apps/api/src/modules/patient/merge/testkit.ts
++++ b/apps/api/src/modules/patient/merge/testkit.ts
+@@ -6,6 +6,7 @@ import { JobRegistry, ParticipantRegistries, Queue, syncTaskTypes } from '@ehr/k
+ import type { KernelDb } from '@ehr/kernel';
+ import { registerIdentityParticipants } from '../../identity/index.js';
+ import { registerNotificationsParticipants } from '../../notifications/index.js';
++import { registerSchedulingParticipants } from '../../scheduling/core/index.js';
+ import {
+   ORG,
+   adminUrl,
+@@ -106,6 +107,7 @@ export async function setupMerge(name: string): Promise<MergeKit> {
+   const regs = new ParticipantRegistries();
+   registerIdentityParticipants(regs);
+   registerNotificationsParticipants(regs);
++  registerSchedulingParticipants(regs);
+   const failures: MergeKit['failures'] = [];
+ 
+   const lead = await (async () => {

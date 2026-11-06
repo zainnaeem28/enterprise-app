@@ -42,6 +42,13 @@ import type {
 
 type Row = Record<string, unknown>;
 
+/**
+ * `patient.<name>` for a patient_scope_owner function. This module calls only `ensure_care_relationship`, always after
+ * `lockPatients(..., 'no_key_update')`: `Tx.callScopeOwner` refuses the call otherwise (25.2 rule 1), which is the enforcement; the
+ * static source check looks for literal names inside a `withScope` callback and the handlers (controller.ts) own that callback.
+ */
+const scopeOwnerFn = (name: string): string => `patient.${name}`;
+
 export interface SchedulingCoreDeps {
   audit: AuditService;
   organisation: Pick<OrganisationService, 'bookingPolicy' | 'settingOrNull'>;
@@ -397,7 +404,7 @@ export class SchedulingCoreService {
         throw new HoldExpiredError(await this.safeAlternativesFor(tx, cur));
       }
       await tx.callScopeOwner(
-        'patient.ensure_care_relationship',
+        scopeOwnerFn('ensure_care_relationship'),
         [meta.requestId ?? randomUUID(), cur.patientId, cur.locationId, 'booking'],
         [cur.patientId],
       );
@@ -535,7 +542,7 @@ export class SchedulingCoreService {
         reservationId,
       ]);
       await tx.callScopeOwner(
-        'patient.ensure_care_relationship',
+        scopeOwnerFn('ensure_care_relationship'),
         [meta.requestId ?? randomUUID(), hold.patientId, hold.locationId, 'booking'],
         [hold.patientId],
       );

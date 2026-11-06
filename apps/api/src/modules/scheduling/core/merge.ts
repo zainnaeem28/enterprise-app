@@ -98,14 +98,15 @@ export const schedulingMergeParticipant: MergeParticipant = {
           AND upper(oa.period) > now() AND upper(ob.period) > now() AND oa.period && ob.period`,
       [survivorId, R_STATES],
     );
+    // The merge's own audit row (resource patient.merge_request, id = the request) is the executor's; this one is the module's report and
+    // names the request in `change`, so a query on the request finds exactly one row of the merge itself.
     await tx.query(
-      `INSERT INTO audit.event (event_id, organisation_id, job_id, realm, audience, action, resource_type, resource_id, patient_id, change, outcome)
-       VALUES (gen_random_uuid(), kernel.uuid1('app.org_id'), $1, 'worker', 'system', 'merge', 'scheduling.slot_reservation', $2::uuid, $3::uuid, $4::jsonb, 'allowed')`,
+      `INSERT INTO audit.event (event_id, organisation_id, job_id, realm, audience, action, resource_type, patient_id, change, outcome)
+       VALUES (gen_random_uuid(), kernel.uuid1('app.org_id'), $1, 'worker', 'system', 'merge', 'scheduling.slot_reservation', $2::uuid, $3::jsonb, 'allowed')`,
       [
         `scheduling.repointPatient:${requestId}`.slice(0, 200),
-        requestId,
         survivorId,
-        JSON.stringify({ survivorId, mergedId, overlapsAfterMerge: overlaps }),
+        JSON.stringify({ mergeRequestId: requestId, survivorId, mergedId, overlapsAfterMerge: overlaps }),
       ],
     );
     return [{ table: 'scheduling.slot_reservation', found, repointed, resolved: 0, kept, deleted: [] }];
