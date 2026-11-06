@@ -1165,7 +1165,10 @@ describe('the Google push route (ARCHITECTURE 29.5; TC-CAL-05 steps 1-7)', () =>
 
   test('1, 2, 7: a wrong HMAC, a token for another channel, an expired token, a bogus resource state: 401/400, nothing recorded, no job', async () => {
     const before = await messages();
-    const flip = ch.token.slice(0, -1) + (ch.token.endsWith('A') ? 'B' : 'A');
+    // Change the FIRST MAC character: all six of its bits are significant. (The last of the 43 base64url characters of a
+    // 32-byte MAC carries only 4 significant bits, so swapping it for 'A'/'B' left the decoded MAC unchanged in 1 run of 16.)
+    const at = ch.token.lastIndexOf('.') + 1;
+    const flip = `${ch.token.slice(0, at)}${ch.token[at] === 'A' ? 'B' : 'A'}${ch.token.slice(at + 1)}`;
     assert.equal((await post(hdr(flip))).status, 401);
     assert.equal(
       (await post(hdr(ch.token, { 'x-goog-channel-id': 'forged-channel' }))).status,
