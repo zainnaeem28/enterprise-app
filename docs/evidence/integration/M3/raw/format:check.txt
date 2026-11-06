@@ -1,0 +1,14 @@
+$ prettier --check .
+Checking formatting...
+[warn] apps/api/src/modules/patient/testkit.ts
+[warn] apps/api/src/modules/scheduling/core/binding.dbtest.ts
+[warn] apps/api/src/modules/scheduling/core/booking.dbtest.ts
+[warn] apps/api/src/modules/scheduling/core/concurrency.dbtest.ts
+[warn] apps/api/src/modules/scheduling/core/controller.ts
+[warn] apps/api/src/modules/scheduling/core/merge.ts
+[warn] apps/api/src/modules/scheduling/core/README.md
+[warn] apps/api/src/modules/scheduling/core/service.ts
+[warn] apps/api/src/modules/scheduling/core/types.ts
+[warn] apps/patient/src/features/booking/evidence/playwright-report.json
+[warn] Code style issues found in 10 files. Run Prettier with --write to fix.
+[ELIFECYCLE] Command failed with exit code 1.

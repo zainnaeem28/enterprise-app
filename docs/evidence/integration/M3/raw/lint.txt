@@ -1,0 +1,20 @@
+$ eslint .
+
+/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/src/modules/patient/merge/executor.ts
+  242:9  error  The value assigned to 'recorded' is not used in subsequent statements  no-useless-assignment
+
+/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/src/modules/scheduling/core/booking.dbtest.ts
+  40:1  error  Import reaches into module "patient" internals; use its public index  boundaries/module-boundaries
+
+/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/src/modules/scheduling/core/merge.ts
+  119:59  error  '_requestId' is defined but never used  @typescript-eslint/no-unused-vars
+
+/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/src/modules/scheduling/core/testkit.ts
+  11:1  error  Import reaches into module "patient" internals; use its public index  boundaries/module-boundaries
+  18:1  error  Import reaches into module "patient" internals; use its public index  boundaries/module-boundaries
+  19:1  error  Import reaches into module "patient" internals; use its public index  boundaries/module-boundaries
+  35:1  error  Import reaches into module "patient" internals; use its public index  boundaries/module-boundaries
+
+✖ 7 problems (7 errors, 0 warnings)
+
+[ELIFECYCLE] Command failed with exit code 1.
