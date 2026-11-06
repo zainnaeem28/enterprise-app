@@ -1,4 +1,4 @@
-// audit.verify_anchors (daily, key = date). Recomputes recent anchors from the stored rows and checks the chain. A
+// audit.verify_anchors (daily, key = date). Recomputes every anchor (or the optional lookback window) from the stored rows and checks the chain. A
 // changed, removed or added row in an anchored range, a broken link or a gap raises `audit.anchor_mismatch` (the
 // notifications handler turns it into the `audit_anchor_mismatch` staff alert, 22.13).
 import type { KernelDb, Queue } from '@ehr/kernel';
@@ -13,7 +13,7 @@ export interface Mismatch {
 }
 
 export interface VerifyOptions {
-  /** Anchors created within this many days are recomputed (default 3). The chain links are checked from there on. */
+  /** Restrict recomputation to anchors created within this many days. Default: every anchor (full chain), so tampering in older ranges is detected too. */
   lookbackDays?: number;
   pageSize?: number;
   /** Where mismatches are published. Without it the result still reports them. */
@@ -32,7 +32,8 @@ export async function runVerify(
   orgId: string,
   opts: VerifyOptions = {},
 ): Promise<VerifyResult> {
-  const lookback = Math.max(1, Math.floor(opts.lookbackDays ?? 3));
+  const lookback =
+    opts.lookbackDays === undefined ? null : Math.max(1, Math.floor(opts.lookbackDays));
   const page = Math.max(1, Math.floor(opts.pageSize ?? 5000));
   return db.withScope(systemScope(orgId), async (tx) => {
     const anchors = (
@@ -45,7 +46,7 @@ export async function runVerify(
                 (SELECT to_char(p.to_ts AT TIME ZONE 'UTC', ${ISO_US}) FROM audit.anchor p
                   WHERE p.organisation_id = a.organisation_id AND p.to_ts < a.to_ts ORDER BY p.to_ts DESC LIMIT 1) AS stored_prev_to
            FROM audit.anchor a
-          WHERE a.organisation_id = $1::uuid AND a.created_at >= now() - make_interval(days => $2::int)
+          WHERE a.organisation_id = $1::uuid AND ($2::int IS NULL OR a.created_at >= now() - make_interval(days => $2::int))
           ORDER BY a.to_ts`,
         [orgId, lookback],
       )

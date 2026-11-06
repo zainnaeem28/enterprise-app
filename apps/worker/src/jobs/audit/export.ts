@@ -147,6 +147,19 @@ export async function runExportChunk(
 
   // Step 3 ---------------------------------------------------------------------------------------------------------
   return db.withScope(systemScope(orgId, job.requestedBy), async (tx) => {
+    // Guard against an overlapping retry that already advanced or finished this chunk: re-read under a row lock.
+    const cur = (
+      await tx.query(
+        `SELECT status, chunks_done FROM audit.export_job WHERE id = $1::uuid AND organisation_id = $2::uuid FOR UPDATE`,
+        [exportId, orgId],
+      )
+    ).rows[0];
+    if (
+      cur === undefined ||
+      (cur.status !== 'queued' && cur.status !== 'running') ||
+      Number(cur.chunks_done) !== job.chunksDone
+    )
+      return { status: 'skipped', reason: 'already_done' } as const;
     const total = job.rowCount + rows.length;
     const done = job.chunksDone + (rows.length > 0 ? 1 : 0);
     const cursorAt = last === undefined ? job.lastAt : (last.occurred_at as string);

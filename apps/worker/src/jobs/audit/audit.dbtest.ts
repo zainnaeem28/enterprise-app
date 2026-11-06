@@ -301,6 +301,41 @@ describe('audit jobs on PostgreSQL 17 (BE-01)', () => {
       assert.ok(kinds.includes('hash'), kinds.join(','));
     });
 
+    test('BR-BE01-02: verification covers older anchored ranges, not just recent ones', async () => {
+      await admin.query(`BEGIN`);
+      await admin.query(`SET LOCAL session_replication_role = replica`);
+      await admin.query(
+        `UPDATE audit.anchor SET created_at = now() - interval '30 days' WHERE id = (SELECT min(id) FROM audit.anchor)`,
+      );
+      await admin.query(`DELETE FROM audit.event WHERE job_id = 'forged'`);
+      await admin.query(`COMMIT`);
+      // A clean chain stays clean in both modes (earlier tests leave the chain-link tamper; ignore that kind here).
+      const kindsOf = async (o: { lookbackDays?: number }): Promise<string[]> =>
+        (await runVerify(db, ORG, o)).mismatches
+          .filter((m) => m.kind === 'root' || m.kind === 'row_count')
+          .map((m) => m.kind);
+      assert.deepEqual(await kindsOf({}), []);
+      await admin.query(`BEGIN`);
+      await admin.query(`SET LOCAL session_replication_role = replica`);
+      const ch = await admin.query(
+        `UPDATE audit.event SET resource_type = 'tampered.old'
+          WHERE ctid = (SELECT e.ctid FROM audit.event e, audit.anchor a
+                         WHERE a.id = (SELECT min(id) FROM audit.anchor)
+                           AND e.organisation_id = $1 AND e.occurred_at >= a.from_ts AND e.occurred_at < a.to_ts
+                           LIMIT 1)
+        RETURNING 1`,
+        [ORG],
+      );
+      await admin.query(`COMMIT`);
+      assert.equal(ch.rows.length, 1);
+      assert.ok((await kindsOf({})).includes('root'), 'full verification sees the old range');
+      assert.deepEqual(
+        await kindsOf({ lookbackDays: 3 }),
+        [],
+        'the lookback window alone does not',
+      );
+    });
+
     test('nobody can UPDATE or DELETE an anchor (privilege error for roles, trigger for a superuser)', async () => {
       for (const user of ['app_api', 'app_worker', 'app_owner', 'audit_archiver']) {
         const c = new pg.Client({ connectionString: urlFor(user) });
@@ -449,6 +484,27 @@ describe('audit jobs on PostgreSQL 17 (BE-01)', () => {
         runExportChunk(db, ORG, id, 3, { sink: s2, queue, chunkRows: 10 }),
         /out of order/,
       );
+    });
+    test('BR-BE01-03: overlapping runs of the same chunk write one export audit row', async () => {
+      const id = '00000000-0000-7000-8000-0000000e0009';
+      await createJob(id, {
+        from: '2020-01-01T00:00:00Z',
+        to: '2100-01-01T00:00:00Z',
+        patientId: PAT,
+      });
+      const o = { sink: new MemorySink(), queue, chunkRows: 100000 };
+      const rs = await Promise.all([
+        runExportChunk(db, ORG, id, 0, o),
+        runExportChunk(db, ORG, id, 0, o),
+      ]);
+      assert.deepEqual(rs.map((r) => r.status).sort(), ['ready', 'skipped']);
+      const n = (
+        await admin.query(
+          `SELECT count(*)::int AS n FROM audit.event WHERE action = 'export' AND resource_id = $1`,
+          [id],
+        )
+      ).rows[0]?.n;
+      assert.equal(n, 1);
     });
     test('size limit: when the rows exceed audit_export_max_rows the job fails and writes nothing past the limit', async () => {
       const id = '00000000-0000-7000-8000-0000000e0003';
