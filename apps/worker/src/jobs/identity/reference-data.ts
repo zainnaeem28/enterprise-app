@@ -1,0 +1,147 @@
+// The permission catalogue (ARCHITECTURE 27.2) and the default role-to-permission mapping (27.3) as DATA. The mapping is a
+// PROPOSAL until the G2 settings are confirmed (27.3 heading): it is stored with that label (`identity.role.description`,
+// `kernel.reference_data_version` version `27.3-proposal-1`), and changing it is a data change plus a re-run of
+// `identity.apply_reference_data`, not a code path. Migrations are DDL only (SBR-17), so this job is the only loader.
+//
+// Interpretations of 27.3 that a reviewer should confirm (each is a Proposal):
+//   - `clinical.*`, `messaging.*`, `organisation.*`, `identity.*`, `integration.*` expand to the catalogue entries with that prefix;
+//     a privileged (double-dagger) permission is never given to a role in the staff realm (BD-05 rule 1), so `doctor` gets no
+//     `clinical.vital_range.manage`.
+//   - `triage_nurse` "front_desk read rights" = patient.read, scheduling.availability.search, documents.read and the alert
+//     read and acknowledge rights a nurse needs to receive a red flag.
+//   - `identity.* (except approve their own)`: the exclusion is a request rule enforced when a role change is approved (C4,
+//     BE-05), not a permission, so `org_admin` holds every `identity.*` permission here.
+
+export interface PermissionSeed {
+  key: string;
+  module: string;
+  privileged: boolean;
+  needsElevation: boolean;
+  complianceScope: string | null;
+}
+
+export const PERMISSIONS: readonly PermissionSeed[] = [
+  { key: 'identity.principal.read', module: 'identity', privileged: true, needsElevation: false, complianceScope: null },
+  { key: 'identity.role_change.request', module: 'identity', privileged: true, needsElevation: true, complianceScope: null },
+  { key: 'identity.role_change.approve', module: 'identity', privileged: true, needsElevation: true, complianceScope: null },
+  { key: 'identity.principal.kill', module: 'identity', privileged: true, needsElevation: true, complianceScope: null },
+  { key: 'identity.enrolment.request', module: 'identity', privileged: true, needsElevation: true, complianceScope: null },
+  { key: 'identity.enrolment.approve', module: 'identity', privileged: true, needsElevation: true, complianceScope: null },
+  { key: 'identity.person_link.request', module: 'identity', privileged: true, needsElevation: true, complianceScope: null },
+  { key: 'identity.person_link.approve', module: 'identity', privileged: true, needsElevation: true, complianceScope: null },
+  { key: 'identity.proxy.verify', module: 'identity', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'identity.proxy.revoke', module: 'identity', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'identity.staff_profile.manage', module: 'identity', privileged: true, needsElevation: true, complianceScope: null },
+  { key: 'organisation.location.manage', module: 'organisation', privileged: true, needsElevation: true, complianceScope: null },
+  { key: 'organisation.service.manage', module: 'organisation', privileged: true, needsElevation: true, complianceScope: null },
+  { key: 'organisation.policy.manage', module: 'organisation', privileged: true, needsElevation: true, complianceScope: null },
+  { key: 'organisation.template.manage', module: 'organisation', privileged: true, needsElevation: true, complianceScope: null },
+  { key: 'organisation.flag.manage', module: 'organisation', privileged: true, needsElevation: true, complianceScope: null },
+  { key: 'organisation.banner.manage', module: 'organisation', privileged: true, needsElevation: true, complianceScope: null },
+  { key: 'organisation.setting.manage', module: 'organisation', privileged: true, needsElevation: true, complianceScope: null },
+  { key: 'organisation.operating_state.manage', module: 'organisation', privileged: true, needsElevation: true, complianceScope: null },
+  { key: 'audit.event.read', module: 'audit', privileged: true, needsElevation: false, complianceScope: 'audit_events' },
+  { key: 'audit.export.create', module: 'audit', privileged: true, needsElevation: true, complianceScope: null },
+  { key: 'audit.btg.open', module: 'audit', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'audit.btg.review', module: 'audit', privileged: true, needsElevation: false, complianceScope: 'btg_grants' },
+  { key: 'integration.connection.read', module: 'integration-core', privileged: true, needsElevation: false, complianceScope: null },
+  { key: 'integration.connection.manage', module: 'integration-core', privileged: true, needsElevation: true, complianceScope: null },
+  { key: 'integration.secret.write', module: 'integration-core', privileged: true, needsElevation: true, complianceScope: null },
+  { key: 'integration.secret.approve', module: 'integration-core', privileged: true, needsElevation: true, complianceScope: null },
+  { key: 'integration.dead_letter.retry', module: 'integration-core', privileged: true, needsElevation: true, complianceScope: null },
+  { key: 'integration.ops.read', module: 'integration-core', privileged: true, needsElevation: false, complianceScope: null },
+  { key: 'notifications.template.manage', module: 'notifications', privileged: true, needsElevation: true, complianceScope: null },
+  { key: 'notifications.alert.read', module: 'notifications', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'notifications.alert.acknowledge', module: 'notifications', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'notifications.alert_setting.manage', module: 'notifications', privileged: true, needsElevation: true, complianceScope: null },
+  { key: 'clinical.alert.red_flag.receive', module: 'notifications', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'patient.read', module: 'patient', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'patient.register', module: 'patient', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'patient.update', module: 'patient', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'patient.match', module: 'patient', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'patient.attach', module: 'patient', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'patient.merge.request', module: 'patient', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'patient.merge.approve', module: 'patient', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'patient.insurance.verify', module: 'patient', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'patient.consent.read', module: 'patient', privileged: true, needsElevation: false, complianceScope: 'consents' },
+  { key: 'patient.label.read', module: 'patient', privileged: true, needsElevation: false, complianceScope: 'patient_label' },
+  { key: 'patient.care_team.manage', module: 'patient', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'documents.upload', module: 'documents', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'documents.read', module: 'documents', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'documents.classify', module: 'documents', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'documents.legal_hold.manage', module: 'documents', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'documents.deletion.decide', module: 'documents', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'scheduling.availability.search', module: 'scheduling', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'scheduling.booking.manage', module: 'scheduling', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'scheduling.booking.own_schedule', module: 'scheduling', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'scheduling.check_in', module: 'scheduling', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'scheduling.queue.manage', module: 'scheduling', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'scheduling.template.manage', module: 'scheduling', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'scheduling.blocked_time.manage', module: 'scheduling', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'scheduling.waitlist.manage', module: 'scheduling', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'scheduling.roster.manage', module: 'scheduling', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'calendar.link.own', module: 'calendar-sync', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'telehealth.session.host', module: 'telehealth', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'clinical.chart.read', module: 'clinical', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'clinical.chart.read_previsit', module: 'clinical', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'clinical.vitals.record', module: 'clinical', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'clinical.triage.record', module: 'clinical', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'clinical.note.write', module: 'clinical', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'clinical.note.sign', module: 'clinical', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'clinical.note.cosign', module: 'clinical', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'clinical.list.write', module: 'clinical', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'clinical.consultation.start', module: 'clinical', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'clinical.referral.manage', module: 'clinical', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'clinical.terminology.search', module: 'clinical', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'clinical.vital_range.manage', module: 'clinical', privileged: true, needsElevation: true, complianceScope: null },
+  { key: 'messaging.thread.staff', module: 'messaging', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'messaging.thread.patient', module: 'messaging', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'messaging.task.manage', module: 'messaging', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'privacy.request.create_for_patient', module: 'privacy', privileged: false, needsElevation: false, complianceScope: null },
+  { key: 'privacy.request.manage', module: 'privacy', privileged: true, needsElevation: false, complianceScope: 'privacy_requests' },
+  { key: 'privacy.incident.manage', module: 'privacy', privileged: true, needsElevation: false, complianceScope: 'incidents' },
+  { key: 'reporting.ops.read', module: 'reporting', privileged: true, needsElevation: false, complianceScope: null },
+];
+
+export interface RoleSeed {
+  key: string;
+  realm: 'google' | 'admin_pool';
+  privileged: boolean;
+  locationBound: boolean;
+  /** Literal permission keys or a `prefix.*` wildcard; `minus` removes keys after expansion. */
+  permissions: readonly string[];
+  minus?: readonly string[];
+}
+
+const FRONT_DESK = [
+  'patient.read', 'patient.register', 'patient.update', 'patient.match', 'patient.insurance.verify',
+  'scheduling.availability.search', 'scheduling.booking.manage', 'scheduling.check_in', 'scheduling.queue.manage', 'scheduling.waitlist.manage',
+  'documents.upload', 'documents.read', 'documents.classify',
+  'clinical.chart.read_previsit',
+  'messaging.thread.staff', 'messaging.task.manage',
+  'privacy.request.create_for_patient',
+  'notifications.alert.read', 'notifications.alert.acknowledge',
+] as const;
+
+const DOCTOR = [
+  'clinical.*', 'audit.btg.open', 'scheduling.booking.own_schedule', 'scheduling.template.manage', 'scheduling.blocked_time.manage',
+  'calendar.link.own', 'telehealth.session.host', 'messaging.*', 'documents.read', 'documents.upload',
+] as const;
+
+export const ROLES: readonly RoleSeed[] = [
+  { key: 'front_desk', realm: 'google', privileged: false, locationBound: true, permissions: FRONT_DESK },
+  { key: 'front_desk_lead', realm: 'google', privileged: false, locationBound: true, permissions: [...FRONT_DESK, 'patient.attach', 'patient.merge.request', 'scheduling.roster.manage'] },
+  { key: 'medical_records', realm: 'google', privileged: false, locationBound: true, permissions: ['patient.read', 'patient.merge.request', 'patient.merge.approve', 'documents.read', 'documents.classify', 'documents.legal_hold.manage', 'documents.deletion.decide'] },
+  { key: 'triage_nurse', realm: 'google', privileged: false, locationBound: true, permissions: ['patient.read', 'scheduling.availability.search', 'documents.read', 'clinical.vitals.record', 'clinical.triage.record', 'clinical.chart.read_previsit', 'clinical.alert.red_flag.receive', 'notifications.alert.read', 'notifications.alert.acknowledge'] },
+  { key: 'care_coordinator', realm: 'google', privileged: false, locationBound: true, permissions: ['scheduling.booking.manage', 'scheduling.waitlist.manage', 'clinical.referral.manage', 'messaging.*', 'clinical.chart.read_previsit'] },
+  { key: 'doctor', realm: 'google', privileged: false, locationBound: true, permissions: DOCTOR },
+  { key: 'trainee_doctor', realm: 'google', privileged: false, locationBound: true, permissions: DOCTOR, minus: ['clinical.note.sign', 'audit.btg.open'] },
+  { key: 'assistant', realm: 'google', privileged: false, locationBound: true, permissions: ['clinical.note.write', 'clinical.list.write', 'clinical.chart.read'] },
+  { key: 'org_admin', realm: 'admin_pool', privileged: true, locationBound: false, permissions: ['organisation.*', 'identity.*', 'clinical.vital_range.manage', 'integration.*', 'notifications.template.manage', 'notifications.alert_setting.manage', 'reporting.ops.read', 'scheduling.roster.manage', 'scheduling.template.manage', 'scheduling.blocked_time.manage'] },
+  { key: 'compliance_officer', realm: 'admin_pool', privileged: true, locationBound: false, permissions: ['audit.event.read', 'audit.export.create', 'audit.btg.review', 'patient.consent.read', 'patient.label.read', 'privacy.request.manage', 'privacy.incident.manage', 'reporting.ops.read'] },
+  { key: 'compliance_on_call', realm: 'admin_pool', privileged: true, locationBound: false, permissions: ['audit.btg.review', 'notifications.alert.read', 'notifications.alert.acknowledge'] },
+];
+
+export const REFERENCE_DATASET = 'identity.role_permission';
+export const REFERENCE_VERSION = '27.3-proposal-1';
+export const PROPOSAL_NOTE = 'Proposal until the G2 settings are confirmed (ARCHITECTURE 27.3)';
