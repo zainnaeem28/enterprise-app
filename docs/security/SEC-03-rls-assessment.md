@@ -317,5 +317,5 @@ SELECT id FROM patient.consent WHERE patient_id = :A;      -- must be 0 rows
 ## 9. Next permitted action
 
 1. Independent Security Reviewer reads this exact revision (`SEC-03-rls-assessment.md` as committed on the SEC-03 branch).
-2. Orchestrator: open correction tickets under HEAAA-25 for F01–F07 owned by the Backend Engineer (F07 with QA), a document-revision request to the Architect for F06, make the correction tickets block INT-01 and G3 consumers of BE-08/09/11, and keep SEC-03 consumers waiting for the fixes' independent review and retest. Medium and Low findings F08–F13 may be scheduled by the Orchestrator.
+2. Routing done by Cybersecurity (children of HEAAA-25, none depends on SEC-03): HEAAA-177 = F01 (Backend Engineer), HEAAA-178 = F02–F05 (Backend Engineer), HEAAA-179 = F06 (Solution Architect), HEAAA-180 = F07 (QA Engineer), HEAAA-181 = F08–F13 (Backend Engineer, low priority). Orchestrator: make HEAAA-177..180 block INT-01 and the G3 consumers of BE-08/09/11 (Cybersecurity did not edit other tickets' links), and keep SEC-03 consumers waiting for the fixes' independent review and retest.
 3. No code is changed by this ticket. Human gates are not touched: BUILD_REVIEW, ACCEPTANCE, G3 and OPERATIONS_RECEIPT remain human decisions.
