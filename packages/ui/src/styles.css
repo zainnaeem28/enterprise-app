@@ -1,0 +1,132 @@
+@import './tokens.css';
+@import './components.css';
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--bg);
+}
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--surface);
+}
+.ehr-skip-link {
+  position: absolute;
+  left: 8px;
+  top: -48px;
+  padding: 8px 12px;
+  background: var(--surface);
+  color: var(--ink);
+  border: 2px solid var(--focus);
+  z-index: 100;
+}
+.ehr-skip-link:focus {
+  top: 8px;
+}
+.ehr-appbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.ehr-appbar__name {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+.ehr-placeholder-mark {
+  display: inline-block;
+  padding: 2px 8px;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  font-size: 12px;
+}
+.ehr-btn {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 8px 16px;
+  font: inherit;
+  border-radius: 6px;
+  border: 2px solid var(--border-control);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+.ehr-btn--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+.ehr-btn[disabled] {
+  cursor: not-allowed;
+  color: var(--disabled-ink);
+  background: var(--disabled-bg);
+  border-color: var(--disabled-ink);
+}
+.ehr-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  border-bottom: 1px solid currentColor;
+}
+.ehr-bar--info {
+  background: var(--info-tint);
+  color: var(--info);
+}
+.ehr-bar--danger {
+  background: var(--danger-tint);
+  color: var(--danger);
+}
+.ehr-bar__text {
+  margin: 0;
+  flex: 1 1 20rem;
+}
+.ehr-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: var(--scrim);
+  z-index: 50;
+}
+.ehr-dialog {
+  max-width: 32rem;
+  padding: 24px;
+  background: var(--surface);
+  border-radius: 8px;
+  border: 2px solid var(--ink);
+}
+.ehr-dialog__title {
+  margin: 0 0 12px;
+  font-size: 20px;
+}
+.ehr-dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+.ehr-main {
+  padding: 24px 16px;
+  max-width: 60rem;
+  margin: 0 auto;
+}
+.ehr-card {
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}

@@ -1,0 +1,26 @@
+// Session and realm wording (UI-UX 3.1, 7.1). A proposal for reviewers there, not a brand decision.
+export const sessionStrings = {
+  extendFailed: 'Your session could not be extended. Try again, or sign out.',
+  signOutBlockedTitle: 'Your draft could not be saved',
+  signOutBlockedBody:
+    'Your unsaved work could not be saved to the server, so you have not been signed out.',
+  signOutAnyway: 'Sign out anyway',
+  goBack: 'Go back',
+  unsavedTitle: 'Unsaved work will be lost',
+  unsavedBody: 'These have not been saved and cannot be kept as a draft:',
+  signOutFailedTitle: 'You have not been signed out',
+  signOutFailedBody: 'Sign-out did not complete, so your session is still open. Try again.',
+  tryAgain: 'Try again',
+  endsIn: (t: string) => `Your session ends in ${t}.`,
+  unsavedLostNote: (names: string) => `Not saved and lost on sign-out: ${names}.`,
+  adminBanner: 'Administrator sign-in. Clinical data is not available here.',
+  switchToAdmin: 'Sign out to switch to administrator',
+  switchToStaff: 'Sign out to switch to staff',
+  switchDraftNote: 'Unsaved work is kept as a draft where the screen supports drafts.',
+  signOut: 'Sign out',
+  neutralPortal: 'Portal',
+  staffPortal: 'Staff portal',
+  adminPortal: 'Administrator portal',
+  patientPortal: 'Patient portal',
+  partnerPortal: 'Pharmacy portal',
+} as const;
