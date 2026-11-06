@@ -591,6 +591,57 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+  # FE-03 (HEAAA-176): apps/patient on the built portal. Unit suite (also run by `unit`; repeated here with NODE_ENV=test so this job
+  # stands alone), the gzip ceiling, then the Playwright journey with axe on every page (serious or critical violations block).
+  # The journey spec currently answers /api/v1 with a labelled CONTRACT MOCK (page.route); it does not yet start the API with the
+  # conformance IdP fixture (apps/api/src/modules/identity/idp.fixture.ts). Moving it onto the fixture needs a spec change owned
+  # by the Frontend Engineer; this job is not evidence of the fixture journey.
+  patient-e2e-a11y:
+    name: patient-e2e-a11y
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Install (frozen lockfile)
+        run: corepack enable && pnpm install --frozen-lockfile
+      - name: Build
+        run: pnpm build
+      - name: Patient unit tests (NODE_ENV=test is set by the package script)
+        env:
+          JUNIT_DIR: ${{ github.workspace }}/reports/patient/junit
+        run: |
+          mkdir -p reports/patient/junit
+          node --version | tee reports/patient/versions.txt
+          pnpm --version | tee -a reports/patient/versions.txt
+          pnpm --filter @ehr/patient test 2>&1 | tee reports/patient/unit.txt
+          test -s reports/patient/junit/patient.xml
+      - name: Patient gzip ceiling
+        run: pnpm --filter @ehr/patient bundle-budget 2>&1 | tee reports/patient/bundle-budget.txt
+      - name: Install Chromium for Playwright
+        run: pnpm --filter @ehr/patient exec playwright install --with-deps chromium
+      - name: Playwright journey and axe
+        run: |
+          pnpm --filter @ehr/patient exec playwright --version | tee -a reports/patient/versions.txt
+          pnpm --filter @ehr/patient exec playwright test 2>&1 | tee reports/patient/playwright.txt
+      - name: Empty-suite guard
+        run: node tests/e2e/smoke/check-report.mjs apps/patient/dist-reports/axe-report.json 3
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: patient-e2e-a11y-reports
+          path: |
+            reports/patient
+            apps/patient/dist-reports
+          if-no-files-found: error
+          retention-days: 30
+
   # Single required check for the branch ruleset (when the plan can enforce one). A skipped or
   # cancelled job is a failure here.
   ci-status:
@@ -613,6 +664,7 @@ jobs:
         a11y-smoke,
         e2e-smoke,
         bundle-budget,
+        patient-e2e-a11y,
       ]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
