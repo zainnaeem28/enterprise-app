@@ -1,0 +1,4569 @@
+{
+  "tables": [
+    "audit.anchor",
+    "audit.btg_grant",
+    "audit.btg_review",
+    "audit.event",
+    "audit.export_job",
+    "identity.licensed_state",
+    "identity.patient_link",
+    "identity.permission",
+    "identity.person",
+    "identity.principal",
+    "identity.proxy_grant",
+    "identity.push_subscription",
+    "identity.role",
+    "identity.role_assignment",
+    "identity.role_permission",
+    "identity.session",
+    "identity.staff_profile",
+    "identity.staff_support",
+    "integration_core.connection",
+    "integration_core.inbound_message",
+    "integration_core.outbound_call",
+    "integration_core.secret_change_request",
+    "integration_core.secret_ref",
+    "kernel.idempotency_key",
+    "kernel.rate_counter",
+    "kernel.reference_data_version",
+    "kernel.setting",
+    "notifications.delivery_receipt",
+    "notifications.in_app_read",
+    "notifications.notification",
+    "notifications.template",
+    "organisation.banner",
+    "organisation.booking_policy",
+    "organisation.consent_template",
+    "organisation.feature_flag",
+    "organisation.holiday",
+    "organisation.jurisdiction",
+    "organisation.location",
+    "organisation.opening_hours",
+    "organisation.operating_state",
+    "organisation.organisation",
+    "organisation.questionnaire_template",
+    "organisation.room",
+    "organisation.service",
+    "organisation.service_clinician",
+    "organisation.service_location",
+    "organisation.service_required_consent",
+    "patient.care_relationship",
+    "patient.care_team_member",
+    "patient.communication_preference",
+    "patient.consent",
+    "patient.duplicate_flag",
+    "patient.insurance_coverage",
+    "patient.match_check",
+    "patient.merge_request",
+    "patient.merge_residue",
+    "patient.patient",
+    "patient.patient_contact",
+    "patient.patient_merge",
+    "patient.staff_scope",
+    "queue_api.task_type",
+    "scheduling.slot_occupancy",
+    "scheduling.slot_reservation"
+  ],
+  "matrix": {
+    "staff of location A1": {
+      "audit.anchor": {
+        "all": 0
+      },
+      "audit.btg_grant": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.btg_review": {
+        "all": 0
+      },
+      "audit.event": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.export_job": {
+        "all": 0
+      },
+      "identity.licensed_state": {
+        "all": 0
+      },
+      "identity.patient_link": {
+        "A": 1,
+        "A_other": 0,
+        "B": 1
+      },
+      "identity.permission": {
+        "all": 80
+      },
+      "identity.person": {
+        "all": 15
+      },
+      "identity.principal": {
+        "all": 15
+      },
+      "identity.proxy_grant": {
+        "A": 1,
+        "A_other": 0,
+        "B": 1
+      },
+      "identity.push_subscription": {
+        "all": 0
+      },
+      "identity.role": {
+        "all": 11
+      },
+      "identity.role_assignment": {
+        "all": 6
+      },
+      "identity.role_permission": {
+        "all": 154
+      },
+      "identity.session": {
+        "all": 0
+      },
+      "identity.staff_profile": {
+        "all": 0
+      },
+      "identity.staff_support": {
+        "all": 0
+      },
+      "integration_core.connection": {
+        "all": 0
+      },
+      "integration_core.inbound_message": {
+        "all": "denied"
+      },
+      "integration_core.outbound_call": {
+        "all": 0
+      },
+      "integration_core.secret_change_request": {
+        "all": 0
+      },
+      "integration_core.secret_ref": {
+        "all": 0
+      },
+      "kernel.idempotency_key": {
+        "all": 0
+      },
+      "kernel.rate_counter": {
+        "all": 0
+      },
+      "kernel.reference_data_version": {
+        "all": 1
+      },
+      "kernel.setting": {
+        "all": 26
+      },
+      "notifications.delivery_receipt": {
+        "A": "denied",
+        "A_other": "denied",
+        "B": "denied"
+      },
+      "notifications.in_app_read": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "notifications.notification": {
+        "A": 1,
+        "A_other": 0,
+        "B": 1
+      },
+      "notifications.template": {
+        "all": 0
+      },
+      "organisation.banner": {
+        "all": 0
+      },
+      "organisation.booking_policy": {
+        "all": 0
+      },
+      "organisation.consent_template": {
+        "all": 0
+      },
+      "organisation.feature_flag": {
+        "all": 0
+      },
+      "organisation.holiday": {
+        "all": 0
+      },
+      "organisation.jurisdiction": {
+        "all": 2
+      },
+      "organisation.location": {
+        "all": 3
+      },
+      "organisation.opening_hours": {
+        "all": 0
+      },
+      "organisation.operating_state": {
+        "all": 2
+      },
+      "organisation.organisation": {
+        "all": 0
+      },
+      "organisation.questionnaire_template": {
+        "all": 0
+      },
+      "organisation.room": {
+        "all": 2
+      },
+      "organisation.service": {
+        "all": 2
+      },
+      "organisation.service_clinician": {
+        "all": 0
+      },
+      "organisation.service_location": {
+        "all": 0
+      },
+      "organisation.service_required_consent": {
+        "all": 0
+      },
+      "patient.care_relationship": {
+        "A": 1,
+        "A_other": 1,
+        "B": 1
+      },
+      "patient.care_team_member": {
+        "A": 1,
+        "A_other": 0,
+        "B": 1
+      },
+      "patient.communication_preference": {
+        "A": 1,
+        "A_other": 0,
+        "B": 1
+      },
+      "patient.consent": {
+        "A": 1,
+        "A_other": 0,
+        "B": 1
+      },
+      "patient.duplicate_flag": {
+        "A": 1,
+        "A_other": 0,
+        "B": 1
+      },
+      "patient.insurance_coverage": {
+        "A": 1,
+        "A_other": 0,
+        "B": 1
+      },
+      "patient.match_check": {
+        "all": 0
+      },
+      "patient.merge_request": {
+        "all": "denied"
+      },
+      "patient.merge_residue": {
+        "all": "denied"
+      },
+      "patient.patient": {
+        "A": 1,
+        "A_other": 1,
+        "B": 0
+      },
+      "patient.patient_contact": {
+        "A": 1,
+        "A_other": 0,
+        "B": 1
+      },
+      "patient.patient_merge": {
+        "all": 0
+      },
+      "patient.staff_scope": {
+        "A": 1,
+        "A_other": 1,
+        "B": 0
+      },
+      "queue_api.task_type": {
+        "all": "denied"
+      },
+      "scheduling.slot_occupancy": {
+        "all": 2
+      },
+      "scheduling.slot_reservation": {
+        "A": 1,
+        "A_other": 0,
+        "B": 0
+      }
+    },
+    "staff of location A2 (second location, same organisation)": {
+      "audit.anchor": {
+        "all": 0
+      },
+      "audit.btg_grant": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.btg_review": {
+        "all": 0
+      },
+      "audit.event": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.export_job": {
+        "all": 0
+      },
+      "identity.licensed_state": {
+        "all": 0
+      },
+      "identity.patient_link": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "identity.permission": {
+        "all": 80
+      },
+      "identity.person": {
+        "all": 15
+      },
+      "identity.principal": {
+        "all": 15
+      },
+      "identity.proxy_grant": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "identity.push_subscription": {
+        "all": 0
+      },
+      "identity.role": {
+        "all": 11
+      },
+      "identity.role_assignment": {
+        "all": 6
+      },
+      "identity.role_permission": {
+        "all": 154
+      },
+      "identity.session": {
+        "all": 0
+      },
+      "identity.staff_profile": {
+        "all": 0
+      },
+      "identity.staff_support": {
+        "all": 0
+      },
+      "integration_core.connection": {
+        "all": 0
+      },
+      "integration_core.inbound_message": {
+        "all": "denied"
+      },
+      "integration_core.outbound_call": {
+        "all": 0
+      },
+      "integration_core.secret_change_request": {
+        "all": 0
+      },
+      "integration_core.secret_ref": {
+        "all": 0
+      },
+      "kernel.idempotency_key": {
+        "all": 0
+      },
+      "kernel.rate_counter": {
+        "all": 0
+      },
+      "kernel.reference_data_version": {
+        "all": 1
+      },
+      "kernel.setting": {
+        "all": 26
+      },
+      "notifications.delivery_receipt": {
+        "A": "denied",
+        "A_other": "denied",
+        "B": "denied"
+      },
+      "notifications.in_app_read": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "notifications.notification": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "notifications.template": {
+        "all": 0
+      },
+      "organisation.banner": {
+        "all": 0
+      },
+      "organisation.booking_policy": {
+        "all": 0
+      },
+      "organisation.consent_template": {
+        "all": 0
+      },
+      "organisation.feature_flag": {
+        "all": 0
+      },
+      "organisation.holiday": {
+        "all": 0
+      },
+      "organisation.jurisdiction": {
+        "all": 2
+      },
+      "organisation.location": {
+        "all": 3
+      },
+      "organisation.opening_hours": {
+        "all": 0
+      },
+      "organisation.operating_state": {
+        "all": 2
+      },
+      "organisation.organisation": {
+        "all": 0
+      },
+      "organisation.questionnaire_template": {
+        "all": 0
+      },
+      "organisation.room": {
+        "all": 2
+      },
+      "organisation.service": {
+        "all": 2
+      },
+      "organisation.service_clinician": {
+        "all": 0
+      },
+      "organisation.service_location": {
+        "all": 0
+      },
+      "organisation.service_required_consent": {
+        "all": 0
+      },
+      "patient.care_relationship": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.care_team_member": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.communication_preference": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.consent": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.duplicate_flag": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.insurance_coverage": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.match_check": {
+        "all": 0
+      },
+      "patient.merge_request": {
+        "all": "denied"
+      },
+      "patient.merge_residue": {
+        "all": "denied"
+      },
+      "patient.patient": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.patient_contact": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.patient_merge": {
+        "all": 0
+      },
+      "patient.staff_scope": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "queue_api.task_type": {
+        "all": "denied"
+      },
+      "scheduling.slot_occupancy": {
+        "all": 2
+      },
+      "scheduling.slot_reservation": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      }
+    },
+    "staff of location B1 (second clinic)": {
+      "audit.anchor": {
+        "all": 0
+      },
+      "audit.btg_grant": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.btg_review": {
+        "all": 0
+      },
+      "audit.event": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.export_job": {
+        "all": 0
+      },
+      "identity.licensed_state": {
+        "all": 0
+      },
+      "identity.patient_link": {
+        "A": 1,
+        "A_other": 0,
+        "B": 1
+      },
+      "identity.permission": {
+        "all": 80
+      },
+      "identity.person": {
+        "all": 15
+      },
+      "identity.principal": {
+        "all": 15
+      },
+      "identity.proxy_grant": {
+        "A": 1,
+        "A_other": 0,
+        "B": 1
+      },
+      "identity.push_subscription": {
+        "all": 0
+      },
+      "identity.role": {
+        "all": 11
+      },
+      "identity.role_assignment": {
+        "all": 6
+      },
+      "identity.role_permission": {
+        "all": 154
+      },
+      "identity.session": {
+        "all": 0
+      },
+      "identity.staff_profile": {
+        "all": 0
+      },
+      "identity.staff_support": {
+        "all": 0
+      },
+      "integration_core.connection": {
+        "all": 0
+      },
+      "integration_core.inbound_message": {
+        "all": "denied"
+      },
+      "integration_core.outbound_call": {
+        "all": 0
+      },
+      "integration_core.secret_change_request": {
+        "all": 0
+      },
+      "integration_core.secret_ref": {
+        "all": 0
+      },
+      "kernel.idempotency_key": {
+        "all": 0
+      },
+      "kernel.rate_counter": {
+        "all": 0
+      },
+      "kernel.reference_data_version": {
+        "all": 1
+      },
+      "kernel.setting": {
+        "all": 26
+      },
+      "notifications.delivery_receipt": {
+        "A": "denied",
+        "A_other": "denied",
+        "B": "denied"
+      },
+      "notifications.in_app_read": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "notifications.notification": {
+        "A": 1,
+        "A_other": 0,
+        "B": 1
+      },
+      "notifications.template": {
+        "all": 0
+      },
+      "organisation.banner": {
+        "all": 0
+      },
+      "organisation.booking_policy": {
+        "all": 0
+      },
+      "organisation.consent_template": {
+        "all": 0
+      },
+      "organisation.feature_flag": {
+        "all": 0
+      },
+      "organisation.holiday": {
+        "all": 0
+      },
+      "organisation.jurisdiction": {
+        "all": 2
+      },
+      "organisation.location": {
+        "all": 3
+      },
+      "organisation.opening_hours": {
+        "all": 0
+      },
+      "organisation.operating_state": {
+        "all": 2
+      },
+      "organisation.organisation": {
+        "all": 0
+      },
+      "organisation.questionnaire_template": {
+        "all": 0
+      },
+      "organisation.room": {
+        "all": 2
+      },
+      "organisation.service": {
+        "all": 2
+      },
+      "organisation.service_clinician": {
+        "all": 0
+      },
+      "organisation.service_location": {
+        "all": 0
+      },
+      "organisation.service_required_consent": {
+        "all": 0
+      },
+      "patient.care_relationship": {
+        "A": 1,
+        "A_other": 1,
+        "B": 1
+      },
+      "patient.care_team_member": {
+        "A": 1,
+        "A_other": 0,
+        "B": 1
+      },
+      "patient.communication_preference": {
+        "A": 1,
+        "A_other": 0,
+        "B": 1
+      },
+      "patient.consent": {
+        "A": 1,
+        "A_other": 0,
+        "B": 1
+      },
+      "patient.duplicate_flag": {
+        "A": 1,
+        "A_other": 0,
+        "B": 1
+      },
+      "patient.insurance_coverage": {
+        "A": 1,
+        "A_other": 0,
+        "B": 1
+      },
+      "patient.match_check": {
+        "all": 0
+      },
+      "patient.merge_request": {
+        "all": "denied"
+      },
+      "patient.merge_residue": {
+        "all": "denied"
+      },
+      "patient.patient": {
+        "A": 0,
+        "A_other": 0,
+        "B": 1
+      },
+      "patient.patient_contact": {
+        "A": 1,
+        "A_other": 0,
+        "B": 1
+      },
+      "patient.patient_merge": {
+        "all": 0
+      },
+      "patient.staff_scope": {
+        "A": 0,
+        "A_other": 0,
+        "B": 1
+      },
+      "queue_api.task_type": {
+        "all": "denied"
+      },
+      "scheduling.slot_occupancy": {
+        "all": 2
+      },
+      "scheduling.slot_reservation": {
+        "A": 0,
+        "A_other": 0,
+        "B": 1
+      }
+    },
+    "staff of A1 and B1": {
+      "audit.anchor": {
+        "all": 0
+      },
+      "audit.btg_grant": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.btg_review": {
+        "all": 0
+      },
+      "audit.event": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.export_job": {
+        "all": 0
+      },
+      "identity.licensed_state": {
+        "all": 0
+      },
+      "identity.patient_link": {
+        "A": 1,
+        "A_other": 0,
+        "B": 1
+      },
+      "identity.permission": {
+        "all": 80
+      },
+      "identity.person": {
+        "all": 15
+      },
+      "identity.principal": {
+        "all": 15
+      },
+      "identity.proxy_grant": {
+        "A": 1,
+        "A_other": 0,
+        "B": 1
+      },
+      "identity.push_subscription": {
+        "all": 0
+      },
+      "identity.role": {
+        "all": 11
+      },
+      "identity.role_assignment": {
+        "all": 6
+      },
+      "identity.role_permission": {
+        "all": 154
+      },
+      "identity.session": {
+        "all": 0
+      },
+      "identity.staff_profile": {
+        "all": 0
+      },
+      "identity.staff_support": {
+        "all": 0
+      },
+      "integration_core.connection": {
+        "all": 0
+      },
+      "integration_core.inbound_message": {
+        "all": "denied"
+      },
+      "integration_core.outbound_call": {
+        "all": 0
+      },
+      "integration_core.secret_change_request": {
+        "all": 0
+      },
+      "integration_core.secret_ref": {
+        "all": 0
+      },
+      "kernel.idempotency_key": {
+        "all": 0
+      },
+      "kernel.rate_counter": {
+        "all": 0
+      },
+      "kernel.reference_data_version": {
+        "all": 1
+      },
+      "kernel.setting": {
+        "all": 26
+      },
+      "notifications.delivery_receipt": {
+        "A": "denied",
+        "A_other": "denied",
+        "B": "denied"
+      },
+      "notifications.in_app_read": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "notifications.notification": {
+        "A": 1,
+        "A_other": 0,
+        "B": 1
+      },
+      "notifications.template": {
+        "all": 0
+      },
+      "organisation.banner": {
+        "all": 0
+      },
+      "organisation.booking_policy": {
+        "all": 0
+      },
+      "organisation.consent_template": {
+        "all": 0
+      },
+      "organisation.feature_flag": {
+        "all": 0
+      },
+      "organisation.holiday": {
+        "all": 0
+      },
+      "organisation.jurisdiction": {
+        "all": 2
+      },
+      "organisation.location": {
+        "all": 3
+      },
+      "organisation.opening_hours": {
+        "all": 0
+      },
+      "organisation.operating_state": {
+        "all": 2
+      },
+      "organisation.organisation": {
+        "all": 0
+      },
+      "organisation.questionnaire_template": {
+        "all": 0
+      },
+      "organisation.room": {
+        "all": 2
+      },
+      "organisation.service": {
+        "all": 2
+      },
+      "organisation.service_clinician": {
+        "all": 0
+      },
+      "organisation.service_location": {
+        "all": 0
+      },
+      "organisation.service_required_consent": {
+        "all": 0
+      },
+      "patient.care_relationship": {
+        "A": 1,
+        "A_other": 1,
+        "B": 1
+      },
+      "patient.care_team_member": {
+        "A": 1,
+        "A_other": 0,
+        "B": 1
+      },
+      "patient.communication_preference": {
+        "A": 1,
+        "A_other": 0,
+        "B": 1
+      },
+      "patient.consent": {
+        "A": 1,
+        "A_other": 0,
+        "B": 1
+      },
+      "patient.duplicate_flag": {
+        "A": 1,
+        "A_other": 0,
+        "B": 1
+      },
+      "patient.insurance_coverage": {
+        "A": 1,
+        "A_other": 0,
+        "B": 1
+      },
+      "patient.match_check": {
+        "all": 0
+      },
+      "patient.merge_request": {
+        "all": "denied"
+      },
+      "patient.merge_residue": {
+        "all": "denied"
+      },
+      "patient.patient": {
+        "A": 1,
+        "A_other": 1,
+        "B": 1
+      },
+      "patient.patient_contact": {
+        "A": 1,
+        "A_other": 0,
+        "B": 1
+      },
+      "patient.patient_merge": {
+        "all": 0
+      },
+      "patient.staff_scope": {
+        "A": 1,
+        "A_other": 1,
+        "B": 1
+      },
+      "queue_api.task_type": {
+        "all": "denied"
+      },
+      "scheduling.slot_occupancy": {
+        "all": 2
+      },
+      "scheduling.slot_reservation": {
+        "A": 1,
+        "A_other": 0,
+        "B": 1
+      }
+    },
+    "staff with no location": {
+      "audit.anchor": {
+        "all": 0
+      },
+      "audit.btg_grant": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.btg_review": {
+        "all": 0
+      },
+      "audit.event": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.export_job": {
+        "all": 0
+      },
+      "identity.licensed_state": {
+        "all": 0
+      },
+      "identity.patient_link": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "identity.permission": {
+        "all": 80
+      },
+      "identity.person": {
+        "all": 15
+      },
+      "identity.principal": {
+        "all": 15
+      },
+      "identity.proxy_grant": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "identity.push_subscription": {
+        "all": 0
+      },
+      "identity.role": {
+        "all": 11
+      },
+      "identity.role_assignment": {
+        "all": 6
+      },
+      "identity.role_permission": {
+        "all": 154
+      },
+      "identity.session": {
+        "all": 0
+      },
+      "identity.staff_profile": {
+        "all": 0
+      },
+      "identity.staff_support": {
+        "all": 0
+      },
+      "integration_core.connection": {
+        "all": 0
+      },
+      "integration_core.inbound_message": {
+        "all": "denied"
+      },
+      "integration_core.outbound_call": {
+        "all": 0
+      },
+      "integration_core.secret_change_request": {
+        "all": 0
+      },
+      "integration_core.secret_ref": {
+        "all": 0
+      },
+      "kernel.idempotency_key": {
+        "all": 0
+      },
+      "kernel.rate_counter": {
+        "all": 0
+      },
+      "kernel.reference_data_version": {
+        "all": 1
+      },
+      "kernel.setting": {
+        "all": 26
+      },
+      "notifications.delivery_receipt": {
+        "A": "denied",
+        "A_other": "denied",
+        "B": "denied"
+      },
+      "notifications.in_app_read": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "notifications.notification": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "notifications.template": {
+        "all": 0
+      },
+      "organisation.banner": {
+        "all": 0
+      },
+      "organisation.booking_policy": {
+        "all": 0
+      },
+      "organisation.consent_template": {
+        "all": 0
+      },
+      "organisation.feature_flag": {
+        "all": 0
+      },
+      "organisation.holiday": {
+        "all": 0
+      },
+      "organisation.jurisdiction": {
+        "all": 2
+      },
+      "organisation.location": {
+        "all": 3
+      },
+      "organisation.opening_hours": {
+        "all": 0
+      },
+      "organisation.operating_state": {
+        "all": 2
+      },
+      "organisation.organisation": {
+        "all": 0
+      },
+      "organisation.questionnaire_template": {
+        "all": 0
+      },
+      "organisation.room": {
+        "all": 2
+      },
+      "organisation.service": {
+        "all": 2
+      },
+      "organisation.service_clinician": {
+        "all": 0
+      },
+      "organisation.service_location": {
+        "all": 0
+      },
+      "organisation.service_required_consent": {
+        "all": 0
+      },
+      "patient.care_relationship": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.care_team_member": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.communication_preference": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.consent": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.duplicate_flag": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.insurance_coverage": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.match_check": {
+        "all": 0
+      },
+      "patient.merge_request": {
+        "all": "denied"
+      },
+      "patient.merge_residue": {
+        "all": "denied"
+      },
+      "patient.patient": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.patient_contact": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.patient_merge": {
+        "all": 0
+      },
+      "patient.staff_scope": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "queue_api.task_type": {
+        "all": "denied"
+      },
+      "scheduling.slot_occupancy": {
+        "all": 2
+      },
+      "scheduling.slot_reservation": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      }
+    },
+    "staff of another organisation": {
+      "audit.anchor": {
+        "all": 0
+      },
+      "audit.btg_grant": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.btg_review": {
+        "all": 0
+      },
+      "audit.event": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.export_job": {
+        "all": 0
+      },
+      "identity.licensed_state": {
+        "all": 0
+      },
+      "identity.patient_link": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "identity.permission": {
+        "all": 0
+      },
+      "identity.person": {
+        "all": 0
+      },
+      "identity.principal": {
+        "all": 0
+      },
+      "identity.proxy_grant": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "identity.push_subscription": {
+        "all": 0
+      },
+      "identity.role": {
+        "all": 0
+      },
+      "identity.role_assignment": {
+        "all": 0
+      },
+      "identity.role_permission": {
+        "all": 0
+      },
+      "identity.session": {
+        "all": 0
+      },
+      "identity.staff_profile": {
+        "all": 0
+      },
+      "identity.staff_support": {
+        "all": 0
+      },
+      "integration_core.connection": {
+        "all": 0
+      },
+      "integration_core.inbound_message": {
+        "all": "denied"
+      },
+      "integration_core.outbound_call": {
+        "all": 0
+      },
+      "integration_core.secret_change_request": {
+        "all": 0
+      },
+      "integration_core.secret_ref": {
+        "all": 0
+      },
+      "kernel.idempotency_key": {
+        "all": 0
+      },
+      "kernel.rate_counter": {
+        "all": 0
+      },
+      "kernel.reference_data_version": {
+        "all": 0
+      },
+      "kernel.setting": {
+        "all": 0
+      },
+      "notifications.delivery_receipt": {
+        "A": "denied",
+        "A_other": "denied",
+        "B": "denied"
+      },
+      "notifications.in_app_read": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "notifications.notification": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "notifications.template": {
+        "all": 0
+      },
+      "organisation.banner": {
+        "all": 0
+      },
+      "organisation.booking_policy": {
+        "all": 0
+      },
+      "organisation.consent_template": {
+        "all": 0
+      },
+      "organisation.feature_flag": {
+        "all": 0
+      },
+      "organisation.holiday": {
+        "all": 0
+      },
+      "organisation.jurisdiction": {
+        "all": 0
+      },
+      "organisation.location": {
+        "all": 0
+      },
+      "organisation.opening_hours": {
+        "all": 0
+      },
+      "organisation.operating_state": {
+        "all": 0
+      },
+      "organisation.organisation": {
+        "all": 0
+      },
+      "organisation.questionnaire_template": {
+        "all": 0
+      },
+      "organisation.room": {
+        "all": 0
+      },
+      "organisation.service": {
+        "all": 0
+      },
+      "organisation.service_clinician": {
+        "all": 0
+      },
+      "organisation.service_location": {
+        "all": 0
+      },
+      "organisation.service_required_consent": {
+        "all": 0
+      },
+      "patient.care_relationship": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.care_team_member": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.communication_preference": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.consent": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.duplicate_flag": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.insurance_coverage": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.match_check": {
+        "all": 0
+      },
+      "patient.merge_request": {
+        "all": "denied"
+      },
+      "patient.merge_residue": {
+        "all": "denied"
+      },
+      "patient.patient": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.patient_contact": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.patient_merge": {
+        "all": 0
+      },
+      "patient.staff_scope": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "queue_api.task_type": {
+        "all": "denied"
+      },
+      "scheduling.slot_occupancy": {
+        "all": 0
+      },
+      "scheduling.slot_reservation": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      }
+    },
+    "patient A (own account)": {
+      "audit.anchor": {
+        "all": 0
+      },
+      "audit.btg_grant": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.btg_review": {
+        "all": 0
+      },
+      "audit.event": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.export_job": {
+        "all": 0
+      },
+      "identity.licensed_state": {
+        "all": 0
+      },
+      "identity.patient_link": {
+        "A": 1,
+        "A_other": 0,
+        "B": 0
+      },
+      "identity.permission": {
+        "all": 80
+      },
+      "identity.person": {
+        "all": 1
+      },
+      "identity.principal": {
+        "all": 1
+      },
+      "identity.proxy_grant": {
+        "A": 1,
+        "A_other": 0,
+        "B": 0
+      },
+      "identity.push_subscription": {
+        "all": 0
+      },
+      "identity.role": {
+        "all": 11
+      },
+      "identity.role_assignment": {
+        "all": 0
+      },
+      "identity.role_permission": {
+        "all": 154
+      },
+      "identity.session": {
+        "all": 1
+      },
+      "identity.staff_profile": {
+        "all": 0
+      },
+      "identity.staff_support": {
+        "all": 0
+      },
+      "integration_core.connection": {
+        "all": 0
+      },
+      "integration_core.inbound_message": {
+        "all": "denied"
+      },
+      "integration_core.outbound_call": {
+        "all": 0
+      },
+      "integration_core.secret_change_request": {
+        "all": 0
+      },
+      "integration_core.secret_ref": {
+        "all": 0
+      },
+      "kernel.idempotency_key": {
+        "all": 0
+      },
+      "kernel.rate_counter": {
+        "all": 0
+      },
+      "kernel.reference_data_version": {
+        "all": 1
+      },
+      "kernel.setting": {
+        "all": 26
+      },
+      "notifications.delivery_receipt": {
+        "A": "denied",
+        "A_other": "denied",
+        "B": "denied"
+      },
+      "notifications.in_app_read": {
+        "A": 1,
+        "A_other": 0,
+        "B": 0
+      },
+      "notifications.notification": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "notifications.template": {
+        "all": 0
+      },
+      "organisation.banner": {
+        "all": 0
+      },
+      "organisation.booking_policy": {
+        "all": 0
+      },
+      "organisation.consent_template": {
+        "all": 0
+      },
+      "organisation.feature_flag": {
+        "all": 0
+      },
+      "organisation.holiday": {
+        "all": 0
+      },
+      "organisation.jurisdiction": {
+        "all": 2
+      },
+      "organisation.location": {
+        "all": 3
+      },
+      "organisation.opening_hours": {
+        "all": 0
+      },
+      "organisation.operating_state": {
+        "all": 2
+      },
+      "organisation.organisation": {
+        "all": 0
+      },
+      "organisation.questionnaire_template": {
+        "all": 0
+      },
+      "organisation.room": {
+        "all": 0
+      },
+      "organisation.service": {
+        "all": 0
+      },
+      "organisation.service_clinician": {
+        "all": 0
+      },
+      "organisation.service_location": {
+        "all": 0
+      },
+      "organisation.service_required_consent": {
+        "all": 0
+      },
+      "patient.care_relationship": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.care_team_member": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.communication_preference": {
+        "A": 1,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.consent": {
+        "A": 1,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.duplicate_flag": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.insurance_coverage": {
+        "A": 1,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.match_check": {
+        "all": 0
+      },
+      "patient.merge_request": {
+        "all": "denied"
+      },
+      "patient.merge_residue": {
+        "all": "denied"
+      },
+      "patient.patient": {
+        "A": 1,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.patient_contact": {
+        "A": 1,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.patient_merge": {
+        "all": 0
+      },
+      "patient.staff_scope": {
+        "A": 1,
+        "A_other": 0,
+        "B": 0
+      },
+      "queue_api.task_type": {
+        "all": "denied"
+      },
+      "scheduling.slot_occupancy": {
+        "all": 2
+      },
+      "scheduling.slot_reservation": {
+        "A": 1,
+        "A_other": 0,
+        "B": 0
+      }
+    },
+    "patient B_other without a link (second patient at B1)": {
+      "audit.anchor": {
+        "all": 0
+      },
+      "audit.btg_grant": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.btg_review": {
+        "all": 0
+      },
+      "audit.event": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.export_job": {
+        "all": 0
+      },
+      "identity.licensed_state": {
+        "all": 0
+      },
+      "identity.patient_link": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "identity.permission": {
+        "all": 80
+      },
+      "identity.person": {
+        "all": 1
+      },
+      "identity.principal": {
+        "all": 1
+      },
+      "identity.proxy_grant": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "identity.push_subscription": {
+        "all": 0
+      },
+      "identity.role": {
+        "all": 11
+      },
+      "identity.role_assignment": {
+        "all": 0
+      },
+      "identity.role_permission": {
+        "all": 154
+      },
+      "identity.session": {
+        "all": 1
+      },
+      "identity.staff_profile": {
+        "all": 0
+      },
+      "identity.staff_support": {
+        "all": 0
+      },
+      "integration_core.connection": {
+        "all": 0
+      },
+      "integration_core.inbound_message": {
+        "all": "denied"
+      },
+      "integration_core.outbound_call": {
+        "all": 0
+      },
+      "integration_core.secret_change_request": {
+        "all": 0
+      },
+      "integration_core.secret_ref": {
+        "all": 0
+      },
+      "kernel.idempotency_key": {
+        "all": 0
+      },
+      "kernel.rate_counter": {
+        "all": 0
+      },
+      "kernel.reference_data_version": {
+        "all": 1
+      },
+      "kernel.setting": {
+        "all": 26
+      },
+      "notifications.delivery_receipt": {
+        "A": "denied",
+        "A_other": "denied",
+        "B": "denied"
+      },
+      "notifications.in_app_read": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "notifications.notification": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "notifications.template": {
+        "all": 0
+      },
+      "organisation.banner": {
+        "all": 0
+      },
+      "organisation.booking_policy": {
+        "all": 0
+      },
+      "organisation.consent_template": {
+        "all": 0
+      },
+      "organisation.feature_flag": {
+        "all": 0
+      },
+      "organisation.holiday": {
+        "all": 0
+      },
+      "organisation.jurisdiction": {
+        "all": 2
+      },
+      "organisation.location": {
+        "all": 3
+      },
+      "organisation.opening_hours": {
+        "all": 0
+      },
+      "organisation.operating_state": {
+        "all": 2
+      },
+      "organisation.organisation": {
+        "all": 0
+      },
+      "organisation.questionnaire_template": {
+        "all": 0
+      },
+      "organisation.room": {
+        "all": 0
+      },
+      "organisation.service": {
+        "all": 0
+      },
+      "organisation.service_clinician": {
+        "all": 0
+      },
+      "organisation.service_location": {
+        "all": 0
+      },
+      "organisation.service_required_consent": {
+        "all": 0
+      },
+      "patient.care_relationship": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.care_team_member": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.communication_preference": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.consent": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.duplicate_flag": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.insurance_coverage": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.match_check": {
+        "all": 0
+      },
+      "patient.merge_request": {
+        "all": "denied"
+      },
+      "patient.merge_residue": {
+        "all": "denied"
+      },
+      "patient.patient": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.patient_contact": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.patient_merge": {
+        "all": 0
+      },
+      "patient.staff_scope": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "queue_api.task_type": {
+        "all": "denied"
+      },
+      "scheduling.slot_occupancy": {
+        "all": 2
+      },
+      "scheduling.slot_reservation": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      }
+    },
+    "patient B (second patient)": {
+      "audit.anchor": {
+        "all": 0
+      },
+      "audit.btg_grant": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.btg_review": {
+        "all": 0
+      },
+      "audit.event": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.export_job": {
+        "all": 0
+      },
+      "identity.licensed_state": {
+        "all": 0
+      },
+      "identity.patient_link": {
+        "A": 0,
+        "A_other": 0,
+        "B": 1
+      },
+      "identity.permission": {
+        "all": 80
+      },
+      "identity.person": {
+        "all": 1
+      },
+      "identity.principal": {
+        "all": 1
+      },
+      "identity.proxy_grant": {
+        "A": 0,
+        "A_other": 0,
+        "B": 1
+      },
+      "identity.push_subscription": {
+        "all": 0
+      },
+      "identity.role": {
+        "all": 11
+      },
+      "identity.role_assignment": {
+        "all": 0
+      },
+      "identity.role_permission": {
+        "all": 154
+      },
+      "identity.session": {
+        "all": 1
+      },
+      "identity.staff_profile": {
+        "all": 0
+      },
+      "identity.staff_support": {
+        "all": 0
+      },
+      "integration_core.connection": {
+        "all": 0
+      },
+      "integration_core.inbound_message": {
+        "all": "denied"
+      },
+      "integration_core.outbound_call": {
+        "all": 0
+      },
+      "integration_core.secret_change_request": {
+        "all": 0
+      },
+      "integration_core.secret_ref": {
+        "all": 0
+      },
+      "kernel.idempotency_key": {
+        "all": 0
+      },
+      "kernel.rate_counter": {
+        "all": 0
+      },
+      "kernel.reference_data_version": {
+        "all": 1
+      },
+      "kernel.setting": {
+        "all": 26
+      },
+      "notifications.delivery_receipt": {
+        "A": "denied",
+        "A_other": "denied",
+        "B": "denied"
+      },
+      "notifications.in_app_read": {
+        "A": 0,
+        "A_other": 0,
+        "B": 1
+      },
+      "notifications.notification": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "notifications.template": {
+        "all": 0
+      },
+      "organisation.banner": {
+        "all": 0
+      },
+      "organisation.booking_policy": {
+        "all": 0
+      },
+      "organisation.consent_template": {
+        "all": 0
+      },
+      "organisation.feature_flag": {
+        "all": 0
+      },
+      "organisation.holiday": {
+        "all": 0
+      },
+      "organisation.jurisdiction": {
+        "all": 2
+      },
+      "organisation.location": {
+        "all": 3
+      },
+      "organisation.opening_hours": {
+        "all": 0
+      },
+      "organisation.operating_state": {
+        "all": 2
+      },
+      "organisation.organisation": {
+        "all": 0
+      },
+      "organisation.questionnaire_template": {
+        "all": 0
+      },
+      "organisation.room": {
+        "all": 0
+      },
+      "organisation.service": {
+        "all": 0
+      },
+      "organisation.service_clinician": {
+        "all": 0
+      },
+      "organisation.service_location": {
+        "all": 0
+      },
+      "organisation.service_required_consent": {
+        "all": 0
+      },
+      "patient.care_relationship": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.care_team_member": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.communication_preference": {
+        "A": 0,
+        "A_other": 0,
+        "B": 1
+      },
+      "patient.consent": {
+        "A": 0,
+        "A_other": 0,
+        "B": 1
+      },
+      "patient.duplicate_flag": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.insurance_coverage": {
+        "A": 0,
+        "A_other": 0,
+        "B": 1
+      },
+      "patient.match_check": {
+        "all": 0
+      },
+      "patient.merge_request": {
+        "all": "denied"
+      },
+      "patient.merge_residue": {
+        "all": "denied"
+      },
+      "patient.patient": {
+        "A": 0,
+        "A_other": 0,
+        "B": 1
+      },
+      "patient.patient_contact": {
+        "A": 0,
+        "A_other": 0,
+        "B": 1
+      },
+      "patient.patient_merge": {
+        "all": 0
+      },
+      "patient.staff_scope": {
+        "A": 0,
+        "A_other": 0,
+        "B": 1
+      },
+      "queue_api.task_type": {
+        "all": "denied"
+      },
+      "scheduling.slot_occupancy": {
+        "all": 2
+      },
+      "scheduling.slot_reservation": {
+        "A": 0,
+        "A_other": 0,
+        "B": 1
+      }
+    },
+    "patient without any link": {
+      "audit.anchor": {
+        "all": 0
+      },
+      "audit.btg_grant": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.btg_review": {
+        "all": 0
+      },
+      "audit.event": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.export_job": {
+        "all": 0
+      },
+      "identity.licensed_state": {
+        "all": 0
+      },
+      "identity.patient_link": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "identity.permission": {
+        "all": 80
+      },
+      "identity.person": {
+        "all": 1
+      },
+      "identity.principal": {
+        "all": 1
+      },
+      "identity.proxy_grant": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "identity.push_subscription": {
+        "all": 0
+      },
+      "identity.role": {
+        "all": 11
+      },
+      "identity.role_assignment": {
+        "all": 0
+      },
+      "identity.role_permission": {
+        "all": 154
+      },
+      "identity.session": {
+        "all": 1
+      },
+      "identity.staff_profile": {
+        "all": 0
+      },
+      "identity.staff_support": {
+        "all": 0
+      },
+      "integration_core.connection": {
+        "all": 0
+      },
+      "integration_core.inbound_message": {
+        "all": "denied"
+      },
+      "integration_core.outbound_call": {
+        "all": 0
+      },
+      "integration_core.secret_change_request": {
+        "all": 0
+      },
+      "integration_core.secret_ref": {
+        "all": 0
+      },
+      "kernel.idempotency_key": {
+        "all": 0
+      },
+      "kernel.rate_counter": {
+        "all": 0
+      },
+      "kernel.reference_data_version": {
+        "all": 1
+      },
+      "kernel.setting": {
+        "all": 26
+      },
+      "notifications.delivery_receipt": {
+        "A": "denied",
+        "A_other": "denied",
+        "B": "denied"
+      },
+      "notifications.in_app_read": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "notifications.notification": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "notifications.template": {
+        "all": 0
+      },
+      "organisation.banner": {
+        "all": 0
+      },
+      "organisation.booking_policy": {
+        "all": 0
+      },
+      "organisation.consent_template": {
+        "all": 0
+      },
+      "organisation.feature_flag": {
+        "all": 0
+      },
+      "organisation.holiday": {
+        "all": 0
+      },
+      "organisation.jurisdiction": {
+        "all": 2
+      },
+      "organisation.location": {
+        "all": 3
+      },
+      "organisation.opening_hours": {
+        "all": 0
+      },
+      "organisation.operating_state": {
+        "all": 2
+      },
+      "organisation.organisation": {
+        "all": 0
+      },
+      "organisation.questionnaire_template": {
+        "all": 0
+      },
+      "organisation.room": {
+        "all": 0
+      },
+      "organisation.service": {
+        "all": 0
+      },
+      "organisation.service_clinician": {
+        "all": 0
+      },
+      "organisation.service_location": {
+        "all": 0
+      },
+      "organisation.service_required_consent": {
+        "all": 0
+      },
+      "patient.care_relationship": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.care_team_member": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.communication_preference": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.consent": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.duplicate_flag": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.insurance_coverage": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.match_check": {
+        "all": 0
+      },
+      "patient.merge_request": {
+        "all": "denied"
+      },
+      "patient.merge_residue": {
+        "all": "denied"
+      },
+      "patient.patient": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.patient_contact": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.patient_merge": {
+        "all": 0
+      },
+      "patient.staff_scope": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "queue_api.task_type": {
+        "all": "denied"
+      },
+      "scheduling.slot_occupancy": {
+        "all": 2
+      },
+      "scheduling.slot_reservation": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      }
+    },
+    "proxy of patient B": {
+      "audit.anchor": {
+        "all": 0
+      },
+      "audit.btg_grant": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.btg_review": {
+        "all": 0
+      },
+      "audit.event": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.export_job": {
+        "all": 0
+      },
+      "identity.licensed_state": {
+        "all": 0
+      },
+      "identity.patient_link": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "identity.permission": {
+        "all": 80
+      },
+      "identity.person": {
+        "all": 1
+      },
+      "identity.principal": {
+        "all": 1
+      },
+      "identity.proxy_grant": {
+        "A": 0,
+        "A_other": 0,
+        "B": 1
+      },
+      "identity.push_subscription": {
+        "all": 0
+      },
+      "identity.role": {
+        "all": 11
+      },
+      "identity.role_assignment": {
+        "all": 0
+      },
+      "identity.role_permission": {
+        "all": 154
+      },
+      "identity.session": {
+        "all": 1
+      },
+      "identity.staff_profile": {
+        "all": 0
+      },
+      "identity.staff_support": {
+        "all": 0
+      },
+      "integration_core.connection": {
+        "all": 0
+      },
+      "integration_core.inbound_message": {
+        "all": "denied"
+      },
+      "integration_core.outbound_call": {
+        "all": 0
+      },
+      "integration_core.secret_change_request": {
+        "all": 0
+      },
+      "integration_core.secret_ref": {
+        "all": 0
+      },
+      "kernel.idempotency_key": {
+        "all": 0
+      },
+      "kernel.rate_counter": {
+        "all": 0
+      },
+      "kernel.reference_data_version": {
+        "all": 1
+      },
+      "kernel.setting": {
+        "all": 26
+      },
+      "notifications.delivery_receipt": {
+        "A": "denied",
+        "A_other": "denied",
+        "B": "denied"
+      },
+      "notifications.in_app_read": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "notifications.notification": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "notifications.template": {
+        "all": 0
+      },
+      "organisation.banner": {
+        "all": 0
+      },
+      "organisation.booking_policy": {
+        "all": 0
+      },
+      "organisation.consent_template": {
+        "all": 0
+      },
+      "organisation.feature_flag": {
+        "all": 0
+      },
+      "organisation.holiday": {
+        "all": 0
+      },
+      "organisation.jurisdiction": {
+        "all": 2
+      },
+      "organisation.location": {
+        "all": 3
+      },
+      "organisation.opening_hours": {
+        "all": 0
+      },
+      "organisation.operating_state": {
+        "all": 2
+      },
+      "organisation.organisation": {
+        "all": 0
+      },
+      "organisation.questionnaire_template": {
+        "all": 0
+      },
+      "organisation.room": {
+        "all": 0
+      },
+      "organisation.service": {
+        "all": 0
+      },
+      "organisation.service_clinician": {
+        "all": 0
+      },
+      "organisation.service_location": {
+        "all": 0
+      },
+      "organisation.service_required_consent": {
+        "all": 0
+      },
+      "patient.care_relationship": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.care_team_member": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.communication_preference": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.consent": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.duplicate_flag": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.insurance_coverage": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.match_check": {
+        "all": 0
+      },
+      "patient.merge_request": {
+        "all": "denied"
+      },
+      "patient.merge_residue": {
+        "all": "denied"
+      },
+      "patient.patient": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.patient_contact": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.patient_merge": {
+        "all": 0
+      },
+      "patient.staff_scope": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "queue_api.task_type": {
+        "all": "denied"
+      },
+      "scheduling.slot_occupancy": {
+        "all": 2
+      },
+      "scheduling.slot_reservation": {
+        "A": 0,
+        "A_other": 0,
+        "B": 1
+      }
+    },
+    "admin_pool, no break-glass, no slice": {
+      "audit.anchor": {
+        "all": 0
+      },
+      "audit.btg_grant": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.btg_review": {
+        "all": 0
+      },
+      "audit.event": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.export_job": {
+        "all": 0
+      },
+      "identity.licensed_state": {
+        "all": 0
+      },
+      "identity.patient_link": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "identity.permission": {
+        "all": 80
+      },
+      "identity.person": {
+        "all": 15
+      },
+      "identity.principal": {
+        "all": 15
+      },
+      "identity.proxy_grant": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "identity.push_subscription": {
+        "all": 0
+      },
+      "identity.role": {
+        "all": 11
+      },
+      "identity.role_assignment": {
+        "all": 6
+      },
+      "identity.role_permission": {
+        "all": 154
+      },
+      "identity.session": {
+        "all": 0
+      },
+      "identity.staff_profile": {
+        "all": 0
+      },
+      "identity.staff_support": {
+        "all": 0
+      },
+      "integration_core.connection": {
+        "all": 0
+      },
+      "integration_core.inbound_message": {
+        "all": "denied"
+      },
+      "integration_core.outbound_call": {
+        "all": 0
+      },
+      "integration_core.secret_change_request": {
+        "all": 0
+      },
+      "integration_core.secret_ref": {
+        "all": 0
+      },
+      "kernel.idempotency_key": {
+        "all": 0
+      },
+      "kernel.rate_counter": {
+        "all": 0
+      },
+      "kernel.reference_data_version": {
+        "all": 1
+      },
+      "kernel.setting": {
+        "all": 26
+      },
+      "notifications.delivery_receipt": {
+        "A": "denied",
+        "A_other": "denied",
+        "B": "denied"
+      },
+      "notifications.in_app_read": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "notifications.notification": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "notifications.template": {
+        "all": 0
+      },
+      "organisation.banner": {
+        "all": 0
+      },
+      "organisation.booking_policy": {
+        "all": 0
+      },
+      "organisation.consent_template": {
+        "all": 0
+      },
+      "organisation.feature_flag": {
+        "all": 0
+      },
+      "organisation.holiday": {
+        "all": 0
+      },
+      "organisation.jurisdiction": {
+        "all": 2
+      },
+      "organisation.location": {
+        "all": 3
+      },
+      "organisation.opening_hours": {
+        "all": 0
+      },
+      "organisation.operating_state": {
+        "all": 2
+      },
+      "organisation.organisation": {
+        "all": 0
+      },
+      "organisation.questionnaire_template": {
+        "all": 0
+      },
+      "organisation.room": {
+        "all": 2
+      },
+      "organisation.service": {
+        "all": 2
+      },
+      "organisation.service_clinician": {
+        "all": 0
+      },
+      "organisation.service_location": {
+        "all": 0
+      },
+      "organisation.service_required_consent": {
+        "all": 0
+      },
+      "patient.care_relationship": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.care_team_member": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.communication_preference": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.consent": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.duplicate_flag": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.insurance_coverage": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.match_check": {
+        "all": 0
+      },
+      "patient.merge_request": {
+        "all": "denied"
+      },
+      "patient.merge_residue": {
+        "all": "denied"
+      },
+      "patient.patient": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.patient_contact": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.patient_merge": {
+        "all": 0
+      },
+      "patient.staff_scope": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "queue_api.task_type": {
+        "all": "denied"
+      },
+      "scheduling.slot_occupancy": {
+        "all": 2
+      },
+      "scheduling.slot_reservation": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      }
+    },
+    "admin_pool, phi_access limited, patient_label slice": {
+      "audit.anchor": {
+        "all": 0
+      },
+      "audit.btg_grant": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.btg_review": {
+        "all": 0
+      },
+      "audit.event": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.export_job": {
+        "all": 0
+      },
+      "identity.licensed_state": {
+        "all": 0
+      },
+      "identity.patient_link": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "identity.permission": {
+        "all": 80
+      },
+      "identity.person": {
+        "all": 15
+      },
+      "identity.principal": {
+        "all": 15
+      },
+      "identity.proxy_grant": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "identity.push_subscription": {
+        "all": 0
+      },
+      "identity.role": {
+        "all": 11
+      },
+      "identity.role_assignment": {
+        "all": 6
+      },
+      "identity.role_permission": {
+        "all": 154
+      },
+      "identity.session": {
+        "all": 0
+      },
+      "identity.staff_profile": {
+        "all": 0
+      },
+      "identity.staff_support": {
+        "all": 0
+      },
+      "integration_core.connection": {
+        "all": 0
+      },
+      "integration_core.inbound_message": {
+        "all": "denied"
+      },
+      "integration_core.outbound_call": {
+        "all": 0
+      },
+      "integration_core.secret_change_request": {
+        "all": 0
+      },
+      "integration_core.secret_ref": {
+        "all": 0
+      },
+      "kernel.idempotency_key": {
+        "all": 0
+      },
+      "kernel.rate_counter": {
+        "all": 0
+      },
+      "kernel.reference_data_version": {
+        "all": 1
+      },
+      "kernel.setting": {
+        "all": 26
+      },
+      "notifications.delivery_receipt": {
+        "A": "denied",
+        "A_other": "denied",
+        "B": "denied"
+      },
+      "notifications.in_app_read": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "notifications.notification": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "notifications.template": {
+        "all": 0
+      },
+      "organisation.banner": {
+        "all": 0
+      },
+      "organisation.booking_policy": {
+        "all": 0
+      },
+      "organisation.consent_template": {
+        "all": 0
+      },
+      "organisation.feature_flag": {
+        "all": 0
+      },
+      "organisation.holiday": {
+        "all": 0
+      },
+      "organisation.jurisdiction": {
+        "all": 2
+      },
+      "organisation.location": {
+        "all": 3
+      },
+      "organisation.opening_hours": {
+        "all": 0
+      },
+      "organisation.operating_state": {
+        "all": 2
+      },
+      "organisation.organisation": {
+        "all": 0
+      },
+      "organisation.questionnaire_template": {
+        "all": 0
+      },
+      "organisation.room": {
+        "all": 2
+      },
+      "organisation.service": {
+        "all": 2
+      },
+      "organisation.service_clinician": {
+        "all": 0
+      },
+      "organisation.service_location": {
+        "all": 0
+      },
+      "organisation.service_required_consent": {
+        "all": 0
+      },
+      "patient.care_relationship": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.care_team_member": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.communication_preference": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.consent": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.duplicate_flag": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.insurance_coverage": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.match_check": {
+        "all": 0
+      },
+      "patient.merge_request": {
+        "all": "denied"
+      },
+      "patient.merge_residue": {
+        "all": "denied"
+      },
+      "patient.patient": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.patient_contact": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.patient_merge": {
+        "all": 0
+      },
+      "patient.staff_scope": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "queue_api.task_type": {
+        "all": "denied"
+      },
+      "scheduling.slot_occupancy": {
+        "all": 2
+      },
+      "scheduling.slot_reservation": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      }
+    },
+    "partner": {
+      "audit.anchor": {
+        "all": 0
+      },
+      "audit.btg_grant": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.btg_review": {
+        "all": 0
+      },
+      "audit.event": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.export_job": {
+        "all": 0
+      },
+      "identity.licensed_state": {
+        "all": 0
+      },
+      "identity.patient_link": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "identity.permission": {
+        "all": 80
+      },
+      "identity.person": {
+        "all": 0
+      },
+      "identity.principal": {
+        "all": 0
+      },
+      "identity.proxy_grant": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "identity.push_subscription": {
+        "all": 0
+      },
+      "identity.role": {
+        "all": 11
+      },
+      "identity.role_assignment": {
+        "all": 0
+      },
+      "identity.role_permission": {
+        "all": 154
+      },
+      "identity.session": {
+        "all": 0
+      },
+      "identity.staff_profile": {
+        "all": 0
+      },
+      "identity.staff_support": {
+        "all": 0
+      },
+      "integration_core.connection": {
+        "all": 0
+      },
+      "integration_core.inbound_message": {
+        "all": "denied"
+      },
+      "integration_core.outbound_call": {
+        "all": 0
+      },
+      "integration_core.secret_change_request": {
+        "all": 0
+      },
+      "integration_core.secret_ref": {
+        "all": 0
+      },
+      "kernel.idempotency_key": {
+        "all": 0
+      },
+      "kernel.rate_counter": {
+        "all": 0
+      },
+      "kernel.reference_data_version": {
+        "all": 1
+      },
+      "kernel.setting": {
+        "all": 26
+      },
+      "notifications.delivery_receipt": {
+        "A": "denied",
+        "A_other": "denied",
+        "B": "denied"
+      },
+      "notifications.in_app_read": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "notifications.notification": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "notifications.template": {
+        "all": 0
+      },
+      "organisation.banner": {
+        "all": 0
+      },
+      "organisation.booking_policy": {
+        "all": 0
+      },
+      "organisation.consent_template": {
+        "all": 0
+      },
+      "organisation.feature_flag": {
+        "all": 0
+      },
+      "organisation.holiday": {
+        "all": 0
+      },
+      "organisation.jurisdiction": {
+        "all": 2
+      },
+      "organisation.location": {
+        "all": 3
+      },
+      "organisation.opening_hours": {
+        "all": 0
+      },
+      "organisation.operating_state": {
+        "all": 2
+      },
+      "organisation.organisation": {
+        "all": 0
+      },
+      "organisation.questionnaire_template": {
+        "all": 0
+      },
+      "organisation.room": {
+        "all": 0
+      },
+      "organisation.service": {
+        "all": 0
+      },
+      "organisation.service_clinician": {
+        "all": 0
+      },
+      "organisation.service_location": {
+        "all": 0
+      },
+      "organisation.service_required_consent": {
+        "all": 0
+      },
+      "patient.care_relationship": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.care_team_member": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.communication_preference": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.consent": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.duplicate_flag": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.insurance_coverage": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.match_check": {
+        "all": 0
+      },
+      "patient.merge_request": {
+        "all": "denied"
+      },
+      "patient.merge_residue": {
+        "all": "denied"
+      },
+      "patient.patient": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.patient_contact": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.patient_merge": {
+        "all": 0
+      },
+      "patient.staff_scope": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "queue_api.task_type": {
+        "all": "denied"
+      },
+      "scheduling.slot_occupancy": {
+        "all": 0
+      },
+      "scheduling.slot_reservation": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      }
+    },
+    "public": {
+      "audit.anchor": {
+        "all": 0
+      },
+      "audit.btg_grant": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.btg_review": {
+        "all": 0
+      },
+      "audit.event": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.export_job": {
+        "all": 0
+      },
+      "identity.licensed_state": {
+        "all": 0
+      },
+      "identity.patient_link": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "identity.permission": {
+        "all": 0
+      },
+      "identity.person": {
+        "all": 0
+      },
+      "identity.principal": {
+        "all": 0
+      },
+      "identity.proxy_grant": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "identity.push_subscription": {
+        "all": 0
+      },
+      "identity.role": {
+        "all": 0
+      },
+      "identity.role_assignment": {
+        "all": 0
+      },
+      "identity.role_permission": {
+        "all": 0
+      },
+      "identity.session": {
+        "all": 0
+      },
+      "identity.staff_profile": {
+        "all": 0
+      },
+      "identity.staff_support": {
+        "all": 0
+      },
+      "integration_core.connection": {
+        "all": 0
+      },
+      "integration_core.inbound_message": {
+        "all": "denied"
+      },
+      "integration_core.outbound_call": {
+        "all": 0
+      },
+      "integration_core.secret_change_request": {
+        "all": 0
+      },
+      "integration_core.secret_ref": {
+        "all": 0
+      },
+      "kernel.idempotency_key": {
+        "all": 0
+      },
+      "kernel.rate_counter": {
+        "all": 0
+      },
+      "kernel.reference_data_version": {
+        "all": 0
+      },
+      "kernel.setting": {
+        "all": 0
+      },
+      "notifications.delivery_receipt": {
+        "A": "denied",
+        "A_other": "denied",
+        "B": "denied"
+      },
+      "notifications.in_app_read": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "notifications.notification": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "notifications.template": {
+        "all": 0
+      },
+      "organisation.banner": {
+        "all": 0
+      },
+      "organisation.booking_policy": {
+        "all": 0
+      },
+      "organisation.consent_template": {
+        "all": 0
+      },
+      "organisation.feature_flag": {
+        "all": 0
+      },
+      "organisation.holiday": {
+        "all": 0
+      },
+      "organisation.jurisdiction": {
+        "all": 0
+      },
+      "organisation.location": {
+        "all": 0
+      },
+      "organisation.opening_hours": {
+        "all": 0
+      },
+      "organisation.operating_state": {
+        "all": 0
+      },
+      "organisation.organisation": {
+        "all": 0
+      },
+      "organisation.questionnaire_template": {
+        "all": 0
+      },
+      "organisation.room": {
+        "all": 0
+      },
+      "organisation.service": {
+        "all": 0
+      },
+      "organisation.service_clinician": {
+        "all": 0
+      },
+      "organisation.service_location": {
+        "all": 0
+      },
+      "organisation.service_required_consent": {
+        "all": 0
+      },
+      "patient.care_relationship": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.care_team_member": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.communication_preference": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.consent": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.duplicate_flag": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.insurance_coverage": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.match_check": {
+        "all": 0
+      },
+      "patient.merge_request": {
+        "all": "denied"
+      },
+      "patient.merge_residue": {
+        "all": "denied"
+      },
+      "patient.patient": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.patient_contact": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.patient_merge": {
+        "all": 0
+      },
+      "patient.staff_scope": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "queue_api.task_type": {
+        "all": "denied"
+      },
+      "scheduling.slot_occupancy": {
+        "all": 0
+      },
+      "scheduling.slot_reservation": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      }
+    },
+    "anonymous": {
+      "audit.anchor": {
+        "all": 0
+      },
+      "audit.btg_grant": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.btg_review": {
+        "all": 0
+      },
+      "audit.event": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.export_job": {
+        "all": 0
+      },
+      "identity.licensed_state": {
+        "all": 0
+      },
+      "identity.patient_link": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "identity.permission": {
+        "all": 0
+      },
+      "identity.person": {
+        "all": 0
+      },
+      "identity.principal": {
+        "all": 0
+      },
+      "identity.proxy_grant": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "identity.push_subscription": {
+        "all": 0
+      },
+      "identity.role": {
+        "all": 0
+      },
+      "identity.role_assignment": {
+        "all": 0
+      },
+      "identity.role_permission": {
+        "all": 0
+      },
+      "identity.session": {
+        "all": 0
+      },
+      "identity.staff_profile": {
+        "all": 0
+      },
+      "identity.staff_support": {
+        "all": 0
+      },
+      "integration_core.connection": {
+        "all": 0
+      },
+      "integration_core.inbound_message": {
+        "all": "denied"
+      },
+      "integration_core.outbound_call": {
+        "all": 0
+      },
+      "integration_core.secret_change_request": {
+        "all": 0
+      },
+      "integration_core.secret_ref": {
+        "all": 0
+      },
+      "kernel.idempotency_key": {
+        "all": 0
+      },
+      "kernel.rate_counter": {
+        "all": 0
+      },
+      "kernel.reference_data_version": {
+        "all": 0
+      },
+      "kernel.setting": {
+        "all": 8
+      },
+      "notifications.delivery_receipt": {
+        "A": "denied",
+        "A_other": "denied",
+        "B": "denied"
+      },
+      "notifications.in_app_read": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "notifications.notification": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "notifications.template": {
+        "all": 0
+      },
+      "organisation.banner": {
+        "all": 0
+      },
+      "organisation.booking_policy": {
+        "all": 0
+      },
+      "organisation.consent_template": {
+        "all": 0
+      },
+      "organisation.feature_flag": {
+        "all": 0
+      },
+      "organisation.holiday": {
+        "all": 0
+      },
+      "organisation.jurisdiction": {
+        "all": 0
+      },
+      "organisation.location": {
+        "all": 0
+      },
+      "organisation.opening_hours": {
+        "all": 0
+      },
+      "organisation.operating_state": {
+        "all": 0
+      },
+      "organisation.organisation": {
+        "all": 0
+      },
+      "organisation.questionnaire_template": {
+        "all": 0
+      },
+      "organisation.room": {
+        "all": 0
+      },
+      "organisation.service": {
+        "all": 0
+      },
+      "organisation.service_clinician": {
+        "all": 0
+      },
+      "organisation.service_location": {
+        "all": 0
+      },
+      "organisation.service_required_consent": {
+        "all": 0
+      },
+      "patient.care_relationship": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.care_team_member": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.communication_preference": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.consent": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.duplicate_flag": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.insurance_coverage": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.match_check": {
+        "all": 0
+      },
+      "patient.merge_request": {
+        "all": "denied"
+      },
+      "patient.merge_residue": {
+        "all": "denied"
+      },
+      "patient.patient": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.patient_contact": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.patient_merge": {
+        "all": 0
+      },
+      "patient.staff_scope": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "queue_api.task_type": {
+        "all": "denied"
+      },
+      "scheduling.slot_occupancy": {
+        "all": 0
+      },
+      "scheduling.slot_reservation": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      }
+    },
+    "audience unset (webhook transaction)": {
+      "audit.anchor": {
+        "all": 0
+      },
+      "audit.btg_grant": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.btg_review": {
+        "all": 0
+      },
+      "audit.event": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.export_job": {
+        "all": 0
+      },
+      "identity.licensed_state": {
+        "all": 0
+      },
+      "identity.patient_link": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "identity.permission": {
+        "all": 0
+      },
+      "identity.person": {
+        "all": 0
+      },
+      "identity.principal": {
+        "all": 0
+      },
+      "identity.proxy_grant": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "identity.push_subscription": {
+        "all": 0
+      },
+      "identity.role": {
+        "all": 0
+      },
+      "identity.role_assignment": {
+        "all": 0
+      },
+      "identity.role_permission": {
+        "all": 0
+      },
+      "identity.session": {
+        "all": 0
+      },
+      "identity.staff_profile": {
+        "all": 0
+      },
+      "identity.staff_support": {
+        "all": 0
+      },
+      "integration_core.connection": {
+        "all": 0
+      },
+      "integration_core.inbound_message": {
+        "all": "denied"
+      },
+      "integration_core.outbound_call": {
+        "all": 0
+      },
+      "integration_core.secret_change_request": {
+        "all": 0
+      },
+      "integration_core.secret_ref": {
+        "all": 0
+      },
+      "kernel.idempotency_key": {
+        "all": 0
+      },
+      "kernel.rate_counter": {
+        "all": 0
+      },
+      "kernel.reference_data_version": {
+        "all": 0
+      },
+      "kernel.setting": {
+        "all": 0
+      },
+      "notifications.delivery_receipt": {
+        "A": "denied",
+        "A_other": "denied",
+        "B": "denied"
+      },
+      "notifications.in_app_read": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "notifications.notification": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "notifications.template": {
+        "all": 0
+      },
+      "organisation.banner": {
+        "all": 0
+      },
+      "organisation.booking_policy": {
+        "all": 0
+      },
+      "organisation.consent_template": {
+        "all": 0
+      },
+      "organisation.feature_flag": {
+        "all": 0
+      },
+      "organisation.holiday": {
+        "all": 0
+      },
+      "organisation.jurisdiction": {
+        "all": 0
+      },
+      "organisation.location": {
+        "all": 0
+      },
+      "organisation.opening_hours": {
+        "all": 0
+      },
+      "organisation.operating_state": {
+        "all": 0
+      },
+      "organisation.organisation": {
+        "all": 0
+      },
+      "organisation.questionnaire_template": {
+        "all": 0
+      },
+      "organisation.room": {
+        "all": 0
+      },
+      "organisation.service": {
+        "all": 0
+      },
+      "organisation.service_clinician": {
+        "all": 0
+      },
+      "organisation.service_location": {
+        "all": 0
+      },
+      "organisation.service_required_consent": {
+        "all": 0
+      },
+      "patient.care_relationship": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.care_team_member": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.communication_preference": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.consent": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.duplicate_flag": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.insurance_coverage": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.match_check": {
+        "all": 0
+      },
+      "patient.merge_request": {
+        "all": "denied"
+      },
+      "patient.merge_residue": {
+        "all": "denied"
+      },
+      "patient.patient": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.patient_contact": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.patient_merge": {
+        "all": 0
+      },
+      "patient.staff_scope": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "queue_api.task_type": {
+        "all": "denied"
+      },
+      "scheduling.slot_occupancy": {
+        "all": 0
+      },
+      "scheduling.slot_reservation": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      }
+    },
+    "staff without an organisation": {
+      "audit.anchor": {
+        "all": 0
+      },
+      "audit.btg_grant": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.btg_review": {
+        "all": 0
+      },
+      "audit.event": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.export_job": {
+        "all": 0
+      },
+      "identity.licensed_state": {
+        "all": 0
+      },
+      "identity.patient_link": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "identity.permission": {
+        "all": 0
+      },
+      "identity.person": {
+        "all": 0
+      },
+      "identity.principal": {
+        "all": 0
+      },
+      "identity.proxy_grant": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "identity.push_subscription": {
+        "all": 0
+      },
+      "identity.role": {
+        "all": 0
+      },
+      "identity.role_assignment": {
+        "all": 0
+      },
+      "identity.role_permission": {
+        "all": 0
+      },
+      "identity.session": {
+        "all": 0
+      },
+      "identity.staff_profile": {
+        "all": 0
+      },
+      "identity.staff_support": {
+        "all": 0
+      },
+      "integration_core.connection": {
+        "all": 0
+      },
+      "integration_core.inbound_message": {
+        "all": "denied"
+      },
+      "integration_core.outbound_call": {
+        "all": 0
+      },
+      "integration_core.secret_change_request": {
+        "all": 0
+      },
+      "integration_core.secret_ref": {
+        "all": 0
+      },
+      "kernel.idempotency_key": {
+        "all": 0
+      },
+      "kernel.rate_counter": {
+        "all": 0
+      },
+      "kernel.reference_data_version": {
+        "all": 0
+      },
+      "kernel.setting": {
+        "all": 0
+      },
+      "notifications.delivery_receipt": {
+        "A": "denied",
+        "A_other": "denied",
+        "B": "denied"
+      },
+      "notifications.in_app_read": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "notifications.notification": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "notifications.template": {
+        "all": 0
+      },
+      "organisation.banner": {
+        "all": 0
+      },
+      "organisation.booking_policy": {
+        "all": 0
+      },
+      "organisation.consent_template": {
+        "all": 0
+      },
+      "organisation.feature_flag": {
+        "all": 0
+      },
+      "organisation.holiday": {
+        "all": 0
+      },
+      "organisation.jurisdiction": {
+        "all": 0
+      },
+      "organisation.location": {
+        "all": 0
+      },
+      "organisation.opening_hours": {
+        "all": 0
+      },
+      "organisation.operating_state": {
+        "all": 0
+      },
+      "organisation.organisation": {
+        "all": 0
+      },
+      "organisation.questionnaire_template": {
+        "all": 0
+      },
+      "organisation.room": {
+        "all": 0
+      },
+      "organisation.service": {
+        "all": 0
+      },
+      "organisation.service_clinician": {
+        "all": 0
+      },
+      "organisation.service_location": {
+        "all": 0
+      },
+      "organisation.service_required_consent": {
+        "all": 0
+      },
+      "patient.care_relationship": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.care_team_member": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.communication_preference": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.consent": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.duplicate_flag": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.insurance_coverage": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.match_check": {
+        "all": 0
+      },
+      "patient.merge_request": {
+        "all": "denied"
+      },
+      "patient.merge_residue": {
+        "all": "denied"
+      },
+      "patient.patient": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.patient_contact": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.patient_merge": {
+        "all": 0
+      },
+      "patient.staff_scope": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      },
+      "queue_api.task_type": {
+        "all": "denied"
+      },
+      "scheduling.slot_occupancy": {
+        "all": 0
+      },
+      "scheduling.slot_reservation": {
+        "A": 0,
+        "A_other": 0,
+        "B": 0
+      }
+    },
+    "worker, system, patients-scope job for B": {
+      "audit.anchor": {
+        "all": 0
+      },
+      "audit.btg_grant": {
+        "A": 0,
+        "A_other": 0,
+        "B": 1
+      },
+      "audit.btg_review": {
+        "all": "denied"
+      },
+      "audit.event": {
+        "A": 0,
+        "A_other": 0,
+        "B": 2
+      },
+      "audit.export_job": {
+        "all": 0
+      },
+      "identity.licensed_state": {
+        "all": 0
+      },
+      "identity.patient_link": {
+        "A": 0,
+        "A_other": 0,
+        "B": 1
+      },
+      "identity.permission": {
+        "all": 0
+      },
+      "identity.person": {
+        "all": 0
+      },
+      "identity.principal": {
+        "all": 0
+      },
+      "identity.proxy_grant": {
+        "A": 0,
+        "A_other": 0,
+        "B": 1
+      },
+      "identity.push_subscription": {
+        "all": 0
+      },
+      "identity.role": {
+        "all": 0
+      },
+      "identity.role_assignment": {
+        "all": 0
+      },
+      "identity.role_permission": {
+        "all": 0
+      },
+      "identity.session": {
+        "all": 0
+      },
+      "identity.staff_profile": {
+        "all": 0
+      },
+      "identity.staff_support": {
+        "all": 0
+      },
+      "integration_core.connection": {
+        "all": 0
+      },
+      "integration_core.inbound_message": {
+        "all": 0
+      },
+      "integration_core.outbound_call": {
+        "all": 0
+      },
+      "integration_core.secret_change_request": {
+        "all": 0
+      },
+      "integration_core.secret_ref": {
+        "all": 0
+      },
+      "kernel.idempotency_key": {
+        "all": 0
+      },
+      "kernel.rate_counter": {
+        "all": 0
+      },
+      "kernel.reference_data_version": {
+        "all": 1
+      },
+      "kernel.setting": {
+        "all": 26
+      },
+      "notifications.delivery_receipt": {
+        "A": 0,
+        "A_other": 0,
+        "B": 1
+      },
+      "notifications.in_app_read": {
+        "A": 0,
+        "A_other": 0,
+        "B": 1
+      },
+      "notifications.notification": {
+        "A": 0,
+        "A_other": 0,
+        "B": 1
+      },
+      "notifications.template": {
+        "all": 0
+      },
+      "organisation.banner": {
+        "all": 0
+      },
+      "organisation.booking_policy": {
+        "all": 0
+      },
+      "organisation.consent_template": {
+        "all": 0
+      },
+      "organisation.feature_flag": {
+        "all": 0
+      },
+      "organisation.holiday": {
+        "all": 0
+      },
+      "organisation.jurisdiction": {
+        "all": 2
+      },
+      "organisation.location": {
+        "all": 3
+      },
+      "organisation.opening_hours": {
+        "all": 0
+      },
+      "organisation.operating_state": {
+        "all": 2
+      },
+      "organisation.organisation": {
+        "all": 0
+      },
+      "organisation.questionnaire_template": {
+        "all": 0
+      },
+      "organisation.room": {
+        "all": 2
+      },
+      "organisation.service": {
+        "all": 2
+      },
+      "organisation.service_clinician": {
+        "all": 0
+      },
+      "organisation.service_location": {
+        "all": 0
+      },
+      "organisation.service_required_consent": {
+        "all": 0
+      },
+      "patient.care_relationship": {
+        "A": 0,
+        "A_other": 0,
+        "B": 1
+      },
+      "patient.care_team_member": {
+        "A": 0,
+        "A_other": 0,
+        "B": 1
+      },
+      "patient.communication_preference": {
+        "A": 0,
+        "A_other": 0,
+        "B": 1
+      },
+      "patient.consent": {
+        "A": 0,
+        "A_other": 0,
+        "B": 1
+      },
+      "patient.duplicate_flag": {
+        "A": 0,
+        "A_other": 0,
+        "B": 1
+      },
+      "patient.insurance_coverage": {
+        "A": 0,
+        "A_other": 0,
+        "B": 1
+      },
+      "patient.match_check": {
+        "all": 0
+      },
+      "patient.merge_request": {
+        "all": "denied"
+      },
+      "patient.merge_residue": {
+        "all": "denied"
+      },
+      "patient.patient": {
+        "A": 0,
+        "A_other": 0,
+        "B": 1
+      },
+      "patient.patient_contact": {
+        "A": 0,
+        "A_other": 0,
+        "B": 1
+      },
+      "patient.patient_merge": {
+        "all": 0
+      },
+      "patient.staff_scope": {
+        "A": 0,
+        "A_other": 0,
+        "B": 1
+      },
+      "queue_api.task_type": {
+        "all": 7
+      },
+      "scheduling.slot_occupancy": {
+        "all": 2
+      },
+      "scheduling.slot_reservation": {
+        "A": 0,
+        "A_other": 0,
+        "B": 1
+      }
+    },
+    "worker, system, patients-scope job for A": {
+      "audit.anchor": {
+        "all": 0
+      },
+      "audit.btg_grant": {
+        "A": 1,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.btg_review": {
+        "all": "denied"
+      },
+      "audit.event": {
+        "A": 2,
+        "A_other": 0,
+        "B": 0
+      },
+      "audit.export_job": {
+        "all": 0
+      },
+      "identity.licensed_state": {
+        "all": 0
+      },
+      "identity.patient_link": {
+        "A": 1,
+        "A_other": 0,
+        "B": 0
+      },
+      "identity.permission": {
+        "all": 0
+      },
+      "identity.person": {
+        "all": 0
+      },
+      "identity.principal": {
+        "all": 0
+      },
+      "identity.proxy_grant": {
+        "A": 1,
+        "A_other": 0,
+        "B": 0
+      },
+      "identity.push_subscription": {
+        "all": 0
+      },
+      "identity.role": {
+        "all": 0
+      },
+      "identity.role_assignment": {
+        "all": 0
+      },
+      "identity.role_permission": {
+        "all": 0
+      },
+      "identity.session": {
+        "all": 0
+      },
+      "identity.staff_profile": {
+        "all": 0
+      },
+      "identity.staff_support": {
+        "all": 0
+      },
+      "integration_core.connection": {
+        "all": 0
+      },
+      "integration_core.inbound_message": {
+        "all": 0
+      },
+      "integration_core.outbound_call": {
+        "all": 0
+      },
+      "integration_core.secret_change_request": {
+        "all": 0
+      },
+      "integration_core.secret_ref": {
+        "all": 0
+      },
+      "kernel.idempotency_key": {
+        "all": 0
+      },
+      "kernel.rate_counter": {
+        "all": 0
+      },
+      "kernel.reference_data_version": {
+        "all": 1
+      },
+      "kernel.setting": {
+        "all": 26
+      },
+      "notifications.delivery_receipt": {
+        "A": 1,
+        "A_other": 0,
+        "B": 0
+      },
+      "notifications.in_app_read": {
+        "A": 1,
+        "A_other": 0,
+        "B": 0
+      },
+      "notifications.notification": {
+        "A": 1,
+        "A_other": 0,
+        "B": 0
+      },
+      "notifications.template": {
+        "all": 0
+      },
+      "organisation.banner": {
+        "all": 0
+      },
+      "organisation.booking_policy": {
+        "all": 0
+      },
+      "organisation.consent_template": {
+        "all": 0
+      },
+      "organisation.feature_flag": {
+        "all": 0
+      },
+      "organisation.holiday": {
+        "all": 0
+      },
+      "organisation.jurisdiction": {
+        "all": 2
+      },
+      "organisation.location": {
+        "all": 3
+      },
+      "organisation.opening_hours": {
+        "all": 0
+      },
+      "organisation.operating_state": {
+        "all": 2
+      },
+      "organisation.organisation": {
+        "all": 0
+      },
+      "organisation.questionnaire_template": {
+        "all": 0
+      },
+      "organisation.room": {
+        "all": 2
+      },
+      "organisation.service": {
+        "all": 2
+      },
+      "organisation.service_clinician": {
+        "all": 0
+      },
+      "organisation.service_location": {
+        "all": 0
+      },
+      "organisation.service_required_consent": {
+        "all": 0
+      },
+      "patient.care_relationship": {
+        "A": 1,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.care_team_member": {
+        "A": 1,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.communication_preference": {
+        "A": 1,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.consent": {
+        "A": 1,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.duplicate_flag": {
+        "A": 1,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.insurance_coverage": {
+        "A": 1,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.match_check": {
+        "all": 0
+      },
+      "patient.merge_request": {
+        "all": "denied"
+      },
+      "patient.merge_residue": {
+        "all": "denied"
+      },
+      "patient.patient": {
+        "A": 1,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.patient_contact": {
+        "A": 1,
+        "A_other": 0,
+        "B": 0
+      },
+      "patient.patient_merge": {
+        "all": 0
+      },
+      "patient.staff_scope": {
+        "A": 1,
+        "A_other": 0,
+        "B": 0
+      },
+      "queue_api.task_type": {
+        "all": 7
+      },
+      "scheduling.slot_occupancy": {
+        "all": 2
+      },
+      "scheduling.slot_reservation": {
+        "A": 1,
+        "A_other": 0,
+        "B": 0
+      }
+    }
+  }
+}
