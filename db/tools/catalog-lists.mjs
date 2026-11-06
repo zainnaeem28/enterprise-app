@@ -56,6 +56,8 @@ export const ownerRightsViews = [
   'organisation.public_holiday',
   'organisation.public_banner',
   'identity.public_clinician',
+  // ARCHITECTURE 22.5.1 (TDR-14), the ninth C0 directory view; migration 1103, owner directory_ro (HEAAA-186 triage item 1).
+  'scheduling.public_clinician_location',
 ];
 /** Views reporting_ro may read (C0/C1 only, M-4). */
 export const reportingViews = [];
@@ -83,6 +85,19 @@ export const definerInventory = [
   'patient.identity_label',
   // HEAAA-181 F09 (0951): the twin check reads the hidden occupancy columns, so it runs as the twin's owner.
   'scheduling.check_twin',
+  // HEAAA-179 ruling (d18f0aa3, ARCHITECTURE amendment A-2 / SHARED-BOUNDARIES SB-A1, 6.2 and ARCHITECTURE 21.6): the merge and
+  // scheduling functions accepted as definers (conditions DF-1..DF-13), and the queue enqueue function of the queue install.
+  'queue_api.enqueue',
+  'patient.request_merge',
+  'patient.get_merge_request',
+  'patient.decide_merge',
+  'patient.load_merge_job',
+  'patient.begin_merge',
+  'patient.complete_merge',
+  'patient.fail_merge',
+  'scheduling.occupy',
+  'scheduling.set_status',
+  'scheduling.expire_holds',
 ];
 
 /** Policies that can match audience `anonymous` (ARCHITECTURE 21.3 list, kernel rows only so far). */
@@ -122,6 +137,8 @@ export const publicPolicies = [
   'organisation.banner.banner_directory',
   'identity.principal.principal_directory',
   'identity.staff_profile.staff_profile_directory',
+  // ARCHITECTURE 22.5.1: the T-DIRECTORY policy of the ninth C0 view (migration 1103; TO directory_ro, audience public/patient).
+  'scheduling.availability_template.availability_template_directory',
 ];
 
 /**
