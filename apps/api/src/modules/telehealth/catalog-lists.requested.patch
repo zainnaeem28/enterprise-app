@@ -1,0 +1,14 @@
+diff --git a/db/tools/catalog-lists.mjs b/db/tools/catalog-lists.mjs
+index e9c5323..0e930d9 100644
+--- a/db/tools/catalog-lists.mjs
++++ b/db/tools/catalog-lists.mjs
+@@ -83,6 +83,9 @@ export const definerInventory = [
+   'patient.identity_label',
+   // HEAAA-181 F09 (0951): the twin check reads the hidden occupancy columns, so it runs as the twin's owner.
+   'scheduling.check_twin',
++  // BE-15 (telehealth, 1501): the merge write guard of the four telehealth tables with a patient_id (a copy of patient.guard_open_patient,
++  // the BE-11 D1 / BE-13 pattern); owner patient_scope_owner, search_path = pg_catalog, EXECUTE revoked from PUBLIC.
++  'telehealth.guard_open_patient',
+ ];
+ 
+ /** Policies that can match audience `anonymous` (ARCHITECTURE 21.3 list, kernel rows only so far). */
