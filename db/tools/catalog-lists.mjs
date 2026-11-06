@@ -62,12 +62,14 @@ export const reportingViews = [];
 /** Tables with a patient_id column that are exempt from the merge write guard (SHARED-BOUNDARIES 9.2). */
 export const patientGuardExempt = ['audit.event', 'audit.btg_grant'];
 /** SECURITY DEFINER functions of SHARED-BOUNDARIES 6.2 and ARCHITECTURE 21.6 (schema.name). Empty: none exist yet. */
-export const definerInventory = [];
+export const definerInventory = ['integration_core.receive_inbound'];
 
 /** Policies that can match audience `anonymous` (ARCHITECTURE 21.3 list, kernel rows only so far). */
 export const anonymousPolicies = [
   'kernel.setting.setting_read_pre_auth',
   'kernel.rate_counter.rate_counter_org',
+  // BE-02 (INT-N1): a verified webhook has no session; the policy is TO integration_receiver_owner only.
+  'integration_core.inbound_message.inbound_message_receive',
 ];
 /**
  * Policies that can match audience `public`: must be exactly the T-DIRECTORY policies. Accepted exception,

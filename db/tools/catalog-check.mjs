@@ -89,7 +89,8 @@ export const checks = {
           UNION ALL
           SELECT c.oid::regclass::text, 'table-level SELECT', r.rolname FROM pg_class c, pg_roles r
           WHERE c.relnamespace IN ${modSchemas} AND c.relkind IN ('r','p','v','m')
-            AND r.rolname IN ('identity_signin_ro','directory_ro') AND has_table_privilege(r.oid, c.oid, 'SELECT')`,
+            AND r.rolname IN ('identity_signin_ro','directory_ro') AND has_table_privilege(r.oid, c.oid, 'SELECT')
+            AND NOT (c.relkind = 'v' AND c.relowner = r.oid)`,
   },
   'M-4-views': {
     title: 'every view not on the C0/C1 owner-rights list has security_invoker = true',

@@ -1,0 +1,177 @@
+▶ migrations from empty on PostgreSQL 17
+  ✔ a second run applies nothing (84.344628ms)
+  ✖ catalog checks M-1..M-5 and the role checks all pass (61.068092ms)
+  ✔ role-level settings are stored and visible to a new session (15.165593ms)
+  ✔ the runner tracker is not reachable by application roles (3.323577ms)
+✖ migrations from empty on PostgreSQL 17 (699.926638ms)
+▶ spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics)
+  ✔ FORCE RLS: the table owner cannot insert, and its UPDATE changes 0 rows (SBR-17) (7.951603ms)
+  ✔ a missing setting returns 0 rows on every kernel table (fail closed) (9.732005ms)
+  ✔ setting: admin_pool staff reads and writes its organisation; WITH CHECK refuses everything else (15.216698ms)
+  ✔ audience anonymous reads only pre_auth settings and nothing in idempotency_key (6.213272ms)
+  ✔ app_api cannot act as audience system; app_worker can, within its job scope (12.304983ms)
+  ✔ idempotency_key: a principal sees only its own keys; updates bump row_version (9.148861ms)
+  ✔ reporting_ro is refused on the kernel tables (M-4) (2.551879ms)
+  ✔ role switching: app_api reaches only identity_signin_ro, which holds no table right (6.485242ms)
+  ✔ app_owner holds SET but not INHERIT on directory_ro: it can switch but gains no rights (2.634525ms)
+  ✔ function ownership transfer needs SET membership and CREATE on the schema (21.2 point 1) (5.440821ms)
+  ✔ SELECT ... FOR KEY SHARE needs UPDATE rights: a SELECT-only role is refused (8.281824ms)
+  ✔ an owner-rights view returns 0 rows under FORCE; a security_invoker view returns the caller rows (M-4) (67.603958ms)
+  ✔ negative control: the catalog checks fail on a table without FORCE and on a policy TO PUBLIC (59.166142ms)
+✔ spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics) (222.445104ms)
+▶ R-timeouts negative control (F03-R1-02)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 0s (58.249753ms)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 0ms (58.528766ms)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 0000ms (57.258211ms)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 61s (59.929916ms)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 120s (60.826509ms)
+✔ R-timeouts negative control (F03-R1-02) (295.25949ms)
+▶ TC-AU-04 (ARCHITECTURE 21.5, SAR-10; step 2 per SA-TC-06)
+  ✔ step 1: transaction_timeout unset (0) -> refused PA001, no row (4.184623ms)
+  ✔ step 2 (SA-TC-06): B + 1 s -> refused PA001, no row (3.658196ms)
+  ✔ step 3: app_owner -> privilege error 42501 raised before the trigger, no row (2.880806ms)
+  ✔ step 4 (positive control): at or below the bound -> accepted and written (4.250487ms)
+  ✔ production shape: the role-level 60 s of app_api and app_worker is accepted, 120 s is refused (12.602632ms)
+✔ TC-AU-04 (ARCHITECTURE 21.5, SAR-10; step 2 per SA-TC-06) (40.181842ms)
+▶ the runner against a real database
+  ✔ applies 0001 and 0003, then rejects 0002 as out of order and leaves the schema untouched (16.468409ms)
+  ✔ a migration that fails at run time rolls back with its tracker row (2.619806ms)
+✔ the runner against a real database (84.301426ms)
+ℹ tests 29
+ℹ suites 5
+ℹ pass 28
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1533.549414
+
+✖ failing tests:
+
+test at db/tools/db-test.mjs:100:3
+✖ catalog checks M-1..M-5 and the role checks all pass (61.068092ms)
+  AssertionError [ERR_ASSERTION]: [
+    {
+      "id": "M-5-patient-guard",
+      "title": "every table with a patient_id column has the merge write guard or is exempt",
+      "status": "fail",
+      "violations": [
+        {
+          "table": "identity.patient_link"
+        },
+        {
+          "table": "identity.proxy_grant"
+        },
+        {
+          "table": "notifications.notification"
+        },
+        {
+          "table": "notifications.delivery_receipt"
+        },
+        {
+          "table": "notifications.in_app_read"
+        }
+      ]
+    },
+    {
+      "id": "M-5-anonymous",
+      "title": "the policies that can match audience anonymous are exactly the ARCHITECTURE 21.3 list",
+      "status": "fail",
+      "violations": [
+        {
+          "problem": "unexpected",
+          "id": "identity.person.person_signin_insert"
+        },
+        {
+          "problem": "unexpected",
+          "id": "identity.principal.principal_signin_select"
+        },
+        {
+          "problem": "unexpected",
+          "id": "identity.principal.principal_signin_insert"
+        },
+        {
+          "problem": "unexpected",
+          "id": "identity.principal.principal_signin_update"
+        },
+        {
+          "problem": "unexpected",
+          "id": "identity.session.session_lookup"
+        },
+        {
+          "problem": "unexpected",
+          "id": "identity.session.session_signin_insert"
+        }
+      ]
+    }
+  ]
+  + actual - expected
+  
+  + [
+  +   {
+  +     id: 'M-5-patient-guard',
+  +     status: 'fail',
+  +     title: 'every table with a patient_id column has the merge write guard or is exempt',
+  +     violations: [
+  +       {
+  +         table: 'identity.patient_link'
+  +       },
+  +       {
+  +         table: 'identity.proxy_grant'
+  +       },
+  +       {
+  +         table: 'notifications.notification'
+  +       },
+  +       {
+  +         table: 'notifications.delivery_receipt'
+  +       },
+  +       {
+  +         table: 'notifications.in_app_read'
+  +       }
+  +     ]
+  +   },
+  +   {
+  +     id: 'M-5-anonymous',
+  +     status: 'fail',
+  +     title: 'the policies that can match audience anonymous are exactly the ARCHITECTURE 21.3 list',
+  +     violations: [
+  +       {
+  +         id: 'identity.person.person_signin_insert',
+  +         problem: 'unexpected'
+  +       },
+  +       {
+  +         id: 'identity.principal.principal_signin_select',
+  +         problem: 'unexpected'
+  +       },
+  +       {
+  +         id: 'identity.principal.principal_signin_insert',
+  +         problem: 'unexpected'
+  +       },
+  +       {
+  +         id: 'identity.principal.principal_signin_update',
+  +         problem: 'unexpected'
+  +       },
+  +       {
+  +         id: 'identity.session.session_lookup',
+  +         problem: 'unexpected'
+  +       },
+  +       {
+  +         id: 'identity.session.session_signin_insert',
+  +         problem: 'unexpected'
+  +       }
+  +     ]
+  +   }
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-95-sdlc-ticket-int-01-integrate-m2-platform-audit-integration-core-organisation-identity-core-notifications-first-/db/tools/db-test.mjs:103:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { id: 'M-5-patient-guard', title: 'every table with a patient_id column has the merge write guard or is exempt', status: 'fail', violations: [Array] }, { id: 'M-5-anonymous', title: 'the policies that can match audience anonymous are exactly the ARCHITECTURE 21.3 list', status: 'fail', violations: [Array] } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
