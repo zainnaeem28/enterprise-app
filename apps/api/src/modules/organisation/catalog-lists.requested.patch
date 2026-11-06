@@ -1,0 +1,50 @@
+diff --git a/db/tools/catalog-check.mjs b/db/tools/catalog-check.mjs
+index 08aa330..2900912 100644
+--- a/db/tools/catalog-check.mjs
++++ b/db/tools/catalog-check.mjs
+@@ -89,7 +89,8 @@ export const checks = {
+           UNION ALL
+           SELECT c.oid::regclass::text, 'table-level SELECT', r.rolname FROM pg_class c, pg_roles r
+           WHERE c.relnamespace IN ${modSchemas} AND c.relkind IN ('r','p','v','m')
+-            AND r.rolname IN ('identity_signin_ro','directory_ro') AND has_table_privilege(r.oid, c.oid, 'SELECT')`,
++            AND r.rolname IN ('identity_signin_ro','directory_ro') AND has_table_privilege(r.oid, c.oid, 'SELECT')
++            AND NOT (c.relkind = 'v' AND c.relowner = r.oid)`,
+   },
+   'M-4-views': {
+     title: 'every view not on the C0/C1 owner-rights list has security_invoker = true',
+diff --git a/db/tools/catalog-lists.mjs b/db/tools/catalog-lists.mjs
+index 65c5dc5..82f2b6b 100644
+--- a/db/tools/catalog-lists.mjs
++++ b/db/tools/catalog-lists.mjs
+@@ -47,7 +47,15 @@ export const expectedMemberships = {
+ };
+ 
+ /** Views that may lack security_invoker (C0/C1 lists). Empty until the directory and reporting tickets. */
+-export const ownerRightsViews = [];
++export const ownerRightsViews = [
++  'organisation.public_location',
++  'organisation.public_service',
++  'organisation.public_service_location',
++  'organisation.public_service_clinician',
++  'organisation.public_opening_hours',
++  'organisation.public_holiday',
++  'organisation.public_banner',
++];
+ /** Views reporting_ro may read (C0/C1 only, M-4). */
+ export const reportingViews = [];
+ /** Tables with a patient_id column that are exempt from the merge write guard (SHARED-BOUNDARIES 9.2). */
+@@ -66,4 +74,13 @@ export const anonymousPolicies = [
+  * it can match `public` at the database level while 21.3 says public cannot reach it. No /public/v1 code path
+  * touches it; the Architect decides whether to add `audience <> 'public'`.
+  */
+-export const publicPolicies = ['kernel.rate_counter.rate_counter_org'];
++export const publicPolicies = [
++  'kernel.rate_counter.rate_counter_org',
++  'organisation.location.location_directory',
++  'organisation.service.service_directory',
++  'organisation.service_location.service_location_directory',
++  'organisation.service_clinician.service_clinician_directory',
++  'organisation.opening_hours.opening_hours_directory',
++  'organisation.holiday.holiday_directory',
++  'organisation.banner.banner_directory',
++];

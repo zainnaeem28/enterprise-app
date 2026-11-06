@@ -1,0 +1,17 @@
+# gitleaks configuration. Extends the default ruleset shipped with the pinned gitleaks version.
+# Allow-list entries need an owner, a reason and an expiry (or a stated reason for none).
+title = "enterprise-ehr gitleaks"
+
+[extend]
+useDefault = true
+
+# Allow-list (owner: DevOps Engineer; reviewer: DevOps Reviewer). The synthetic identifiers in the
+# design documents are not credentials; a false positive is reported here, never silently hidden.
+#
+# 1. `semgrep/rules/registry-snapshot.yml` is third-party rule text. It contains documentation
+#    placeholders and key-header patterns (Slack webhook example, "BEGIN PRIVATE KEY" patterns) that
+#    the secret rules match. It holds no credentials. Scoped to this one file for all rules; a secret
+#    anywhere else still fails. No expiry: re-check whenever the snapshot is refreshed.
+[[allowlists]]
+description = "Third-party Semgrep rule text (patterns and placeholders), not credentials"
+paths = ['''(^|/)semgrep/rules/registry-snapshot\.yml$''']

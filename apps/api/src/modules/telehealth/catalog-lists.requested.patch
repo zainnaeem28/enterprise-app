@@ -1,0 +1,19 @@
+--- a/db/tools/catalog-lists.mjs
++++ b/db/tools/catalog-lists.mjs
+@@ -83,6 +83,8 @@
+   'patient.identity_label',
+   // HEAAA-181 F09 (0951): the twin check reads the hidden occupancy columns, so it runs as the twin's owner.
+   'scheduling.check_twin',
++  // BE-15 (telehealth): the merge write guard copy on the four telehealth tables (migration 1500).
++  'telehealth.guard_open_patient',
+ ];
+ 
+ /** Policies that can match audience `anonymous` (ARCHITECTURE 21.3 list, kernel rows only so far). */
+@@ -131,6 +133,7 @@
+ export const patientGuardFunctions = [
+   'patient.guard_open_patient',
+   'scheduling.guard_open_patient',
++  'telehealth.guard_open_patient',
+ ];
+ 
+ /**

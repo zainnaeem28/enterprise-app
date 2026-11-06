@@ -1,0 +1,30 @@
+--- a/db/tools/catalog-lists.mjs	2026-11-06 05:07:12.328502304 +0000
++++ b/db/tools/catalog-lists.mjs	2026-11-06 05:43:40.128851387 +0000
+@@ -51,9 +51,25 @@
+ /** Views reporting_ro may read (C0/C1 only, M-4). */
+ export const reportingViews = [];
+ /** Tables with a patient_id column that are exempt from the merge write guard (SHARED-BOUNDARIES 9.2). */
+-export const patientGuardExempt = ['audit.event', 'audit.btg_grant'];
++export const patientGuardExempt = [
++  'audit.event',
++  'audit.btg_grant',
++  // BE-08: derived, definer-written; the derivation must work for merged IDs too (SHARED-BOUNDARIES 6.6).
++  'patient.staff_scope',
++];
+ /** SECURITY DEFINER functions of SHARED-BOUNDARIES 6.2 and ARCHITECTURE 21.6 (schema.name). Empty: none exist yet. */
+-export const definerInventory = [];
++export const definerInventory = [
++  // BE-08 (patient): owners patient_scope_owner (writes) and patient_match_owner (reads); all fix search_path.
++  'patient.guard_open_patient',
++  'patient.lock_patients',
++  'patient.ensure_care_relationship',
++  'patient.end_care_relationship',
++  'patient.verify_staff_scope',
++  'patient.register',
++  'patient.attach',
++  'patient.match_candidates',
++  'patient.identity_label',
++];
+ 
+ /** Policies that can match audience `anonymous` (ARCHITECTURE 21.3 list, kernel rows only so far). */
+ export const anonymousPolicies = [

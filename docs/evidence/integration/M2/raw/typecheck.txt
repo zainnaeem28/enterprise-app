@@ -1,0 +1,113 @@
+$ pnpm -r run typecheck
+Scope: 10 of 11 workspace projects
+apps/cms typecheck$ tsc -p tsconfig.json --noEmit
+apps/site typecheck$ tsc -p tsconfig.json --noEmit
+apps/patient typecheck$ tsc -p tsconfig.json --noEmit
+packages/contracts typecheck$ tsc -p tsconfig.json --noEmit
+apps/patient typecheck: Done
+packages/kernel typecheck$ tsc -p tsconfig.json --noEmit
+apps/site typecheck: Done
+packages/ui typecheck$ tsc -p tsconfig.json --noEmit
+packages/contracts typecheck: Done
+apps/cms typecheck: Done
+packages/kernel typecheck: Done
+apps/api typecheck$ tsc -p tsconfig.json --noEmit
+apps/worker typecheck$ tsc -p tsconfig.json --noEmit
+apps/worker typecheck: src/jobs/audit/anchor.ts(4,31): error TS2307: Cannot find module '@ehr/kernel' or its corresponding type declarations.
+apps/worker typecheck: src/jobs/audit/anchor.ts(31,50): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/audit/audit.dbtest.ts(11,30): error TS2307: Cannot find module '@ehr/kernel/dist/queue/install.js' or its corresponding type declarations.
+apps/worker typecheck: src/jobs/audit/audit.dbtest.ts(12,61): error TS2307: Cannot find module '@ehr/kernel' or its corresponding type declarations.
+apps/worker typecheck: src/jobs/audit/audit.dbtest.ts(89,14): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/audit/export.ts(5,38): error TS2307: Cannot find module '@ehr/kernel' or its corresponding type declarations.
+apps/worker typecheck: src/jobs/audit/export.ts(53,63): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/audit/export.ts(138,42): error TS7006: Parameter 'r' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/audit/export.ts(149,67): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/audit/index.ts(5,59): error TS2307: Cannot find module '@ehr/kernel' or its corresponding type declarations.
+apps/worker typecheck: src/jobs/audit/index.ts(69,14): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/audit/jobs.ts(3,30): error TS2307: Cannot find module '@ehr/kernel' or its corresponding type declarations.
+apps/worker typecheck: src/jobs/audit/scope.ts(1,36): error TS2307: Cannot find module '@ehr/kernel' or its corresponding type declarations.
+apps/worker typecheck: src/jobs/audit/verify.ts(4,38): error TS2307: Cannot find module '@ehr/kernel' or its corresponding type declarations.
+apps/worker typecheck: src/jobs/audit/verify.ts(38,50): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/identity/apply-reference-data.ts(7,35): error TS2307: Cannot find module '@ehr/kernel' or its corresponding type declarations.
+apps/worker typecheck: src/jobs/identity/apply-reference-data.ts(139,60): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/identity/identity.dbtest.ts(12,26): error TS2307: Cannot find module '@ehr/kernel' or its corresponding type declarations.
+apps/worker typecheck: src/jobs/identity/identity.dbtest.ts(179,10): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/identity/index.ts(5,51): error TS2307: Cannot find module '@ehr/kernel' or its corresponding type declarations.
+apps/worker typecheck: src/jobs/identity/jobs.ts(3,30): error TS2307: Cannot find module '@ehr/kernel' or its corresponding type declarations.
+apps/worker typecheck: src/jobs/identity/purge-sessions.ts(5,31): error TS2307: Cannot find module '@ehr/kernel' or its corresponding type declarations.
+apps/worker typecheck: src/jobs/identity/purge-sessions.ts(21,71): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/identity/record-sign-in.ts(8,38): error TS2307: Cannot find module '@ehr/kernel' or its corresponding type declarations.
+apps/worker typecheck: src/jobs/identity/record-sign-in.ts(50,60): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/identity/scope.ts(1,36): error TS2307: Cannot find module '@ehr/kernel' or its corresponding type declarations.
+apps/worker typecheck: src/jobs/integration-core/apply-secret.ts(11,50): error TS2307: Cannot find module '@ehr/kernel' or its corresponding type declarations.
+apps/worker typecheck: src/jobs/integration-core/apply-secret.ts(87,37): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/integration-core/apply-secret.ts(104,37): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/integration-core/apply-secret.ts(118,43): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/integration-core/apply-secret.ts(187,41): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/integration-core/call-vendor.test.ts(5,31): error TS2307: Cannot find module '@ehr/kernel' or its corresponding type declarations.
+apps/worker typecheck: src/jobs/integration-core/call-vendor.ts(11,39): error TS2307: Cannot find module '@ehr/kernel' or its corresponding type declarations.
+apps/worker typecheck: src/jobs/integration-core/call-vendor.ts(271,69): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/integration-core/call-vendor.ts(327,59): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/integration-core/call-vendor.ts(349,61): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/integration-core/call-vendor.ts(377,61): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/integration-core/dispatch.ts(6,50): error TS2307: Cannot find module '@ehr/kernel' or its corresponding type declarations.
+apps/worker typecheck: src/jobs/integration-core/dispatch.ts(91,54): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/integration-core/dispatch.ts(115,49): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/integration-core/dispatch.ts(123,37): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/integration-core/dispatch.ts(133,35): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/integration-core/health.ts(11,46): error TS2307: Cannot find module '@ehr/kernel' or its corresponding type declarations.
+apps/worker typecheck: src/jobs/integration-core/health.ts(47,49): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/integration-core/health.ts(99,64): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/integration-core/health.ts(117,45): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/integration-core/index.ts(5,34): error TS2307: Cannot find module '@ehr/kernel' or its corresponding type declarations.
+apps/worker typecheck: src/jobs/integration-core/integration-core.dbtest.ts(15,30): error TS2307: Cannot find module '@ehr/kernel/dist/queue/install.js' or its corresponding type declarations.
+apps/worker typecheck: src/jobs/integration-core/integration-core.dbtest.ts(16,75): error TS2307: Cannot find module '@ehr/kernel' or its corresponding type declarations.
+apps/worker typecheck: src/jobs/integration-core/integration-core.dbtest.ts(97,37): error TS7006: Parameter 'l' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/integration-core/integration-core.dbtest.ts(527,71): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/integration-core/integration-core.dbtest.ts(700,10): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/integration-core/jobs.ts(4,30): error TS2307: Cannot find module '@ehr/kernel' or its corresponding type declarations.
+apps/worker typecheck: src/jobs/integration-core/scope.ts(1,36): error TS2307: Cannot find module '@ehr/kernel' or its corresponding type declarations.
+apps/worker typecheck: src/jobs/integration-core/secrets.ts(5,31): error TS2307: Cannot find module '@ehr/kernel' or its corresponding type declarations.
+apps/worker typecheck: src/jobs/integration-core/secrets.ts(90,65): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/notifications/index.ts(5,34): error TS2307: Cannot find module '@ehr/kernel' or its corresponding type declarations.
+apps/worker typecheck: src/jobs/notifications/jobs.ts(3,30): error TS2307: Cannot find module '@ehr/kernel' or its corresponding type declarations.
+apps/worker typecheck: src/jobs/notifications/notifications.dbtest.ts(14,30): error TS2307: Cannot find module '@ehr/kernel/dist/queue/install.js' or its corresponding type declarations.
+apps/worker typecheck: src/jobs/notifications/notifications.dbtest.ts(15,75): error TS2307: Cannot find module '@ehr/kernel' or its corresponding type declarations.
+apps/worker typecheck: src/jobs/notifications/notifications.dbtest.ts(98,37): error TS7006: Parameter 'l' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/notifications/notifications.dbtest.ts(857,93): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/notifications/notifications.dbtest.ts(863,93): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/notifications/notifications.dbtest.ts(877,12): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/notifications/receipt.ts(10,43): error TS2307: Cannot find module '@ehr/kernel' or its corresponding type declarations.
+apps/worker typecheck: src/jobs/notifications/recipient.ts(7,25): error TS2307: Cannot find module '@ehr/kernel' or its corresponding type declarations.
+apps/worker typecheck: src/jobs/notifications/scope.ts(1,36): error TS2307: Cannot find module '@ehr/kernel' or its corresponding type declarations.
+apps/worker typecheck: src/jobs/notifications/send-message.ts(16,50): error TS2307: Cannot find module '@ehr/kernel' or its corresponding type declarations.
+apps/worker typecheck: src/jobs/notifications/send-message.ts(86,56): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/notifications/send-message.ts(100,58): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/notifications/send-message.ts(143,58): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/notifications/send-message.ts(302,62): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/notifications/send-message.ts(343,67): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/worker typecheck: src/jobs/notifications/send-message.ts(348,62): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+apps/worker typecheck: src/main.ts(2,73): error TS2307: Cannot find module '@ehr/kernel' or its corresponding type declarations.
+apps/worker typecheck: src/main.ts(6,37): error TS7006: Parameter 'l' implicitly has an 'any' type.
+apps/worker typecheck: src/main.ts(12,23): error TS18046: 'e' is of type 'unknown'.
+apps/worker typecheck: src/runner.dbtest.ts(8,30): error TS2307: Cannot find module '@ehr/kernel/dist/queue/install.js' or its corresponding type declarations.
+apps/worker typecheck: src/runner.dbtest.ts(9,77): error TS2307: Cannot find module '@ehr/kernel' or its corresponding type declarations.
+apps/worker typecheck: src/runner.dbtest.ts(79,39): error TS7006: Parameter 'l' implicitly has an 'any' type.
+apps/worker typecheck: src/runner.dbtest.ts(127,39): error TS7006: Parameter 'l' implicitly has an 'any' type.
+apps/worker typecheck: src/runner.ts(6,43): error TS2307: Cannot find module '@ehr/kernel' or its corresponding type declarations.
+apps/worker typecheck: Failed
+[ELIFECYCLE] Command failed with exit code 2.
+packages/ui typecheck: Failed
+[ELIFECYCLE] Command failed with signal SIGKILL.
+apps/api typecheck: Failed
+[ELIFECYCLE] Command failed with signal SIGKILL.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in /paperclip/instances/default/
+  │ projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-
+  │ 47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-95-sdlc-ticket-int-
+  │ 01-integrate-m2-platform-audit-integration-core-organisation-identity-
+  │ core-notifications-first-/apps/worker
+
+[ELIFECYCLE] Command failed with exit code 1.
+exit=1

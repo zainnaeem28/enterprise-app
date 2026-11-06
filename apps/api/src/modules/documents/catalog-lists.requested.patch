@@ -1,0 +1,13 @@
+diff --git a/db/tools/catalog-lists.mjs b/db/tools/catalog-lists.mjs
+--- a/db/tools/catalog-lists.mjs
++++ b/db/tools/catalog-lists.mjs
+@@ -81,6 +81,9 @@ export const definerInventory = [
+   'patient.attach',
+   'patient.match_candidates',
+   'patient.identity_label',
++  // BE-10 (documents): the merge write guard of the four documents tables, a copy of patient.guard_open_patient (with its
++  // FOR KEY SHARE lock) owned by patient_scope_owner; fixes search_path. See the module README, departure D1.
++  'documents.guard_open_patient',
+ ];
+ 
+ /** Policies that can match audience `anonymous` (ARCHITECTURE 21.3 list, kernel rows only so far). */

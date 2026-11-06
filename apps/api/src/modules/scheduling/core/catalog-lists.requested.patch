@@ -1,0 +1,20 @@
+diff --git a/db/tools/catalog-lists.mjs b/db/tools/catalog-lists.mjs
+index 7fde56d..cd8c83e 100644
+--- a/db/tools/catalog-lists.mjs
++++ b/db/tools/catalog-lists.mjs
+@@ -81,6 +81,15 @@ export const definerInventory = [
+   'patient.attach',
+   'patient.match_candidates',
+   'patient.identity_label',
++  // BE-11 (scheduling): owner scheduling_booking_owner; all fix search_path. guard_open_patient is the merge write guard of
++  // scheduling.slot_reservation (a copy of patient.guard_open_patient without the lock, deviation D1 in the module README).
++  'scheduling.occupy',
++  'scheduling.set_status',
++  'scheduling.expire_holds',
++  'scheduling.guard_open_patient',
++  // HEAAA-178 (SEC-03 F05, migration 0904): the deferred re-check of the merge guard at commit; goes away with guard_open_patient
++  // once GRANT EXECUTE ON FUNCTION patient.guard_open_patient() TO app_owner is made.
++  'scheduling.guard_open_patient_at_commit',
+ ];
+ 
+ /** Policies that can match audience `anonymous` (ARCHITECTURE 21.3 list, kernel rows only so far). */

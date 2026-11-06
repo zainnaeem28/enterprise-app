@@ -1,0 +1,14 @@
+diff --git a/db/tools/catalog-lists.mjs b/db/tools/catalog-lists.mjs
+index 1a2c69f..0712920 100644
+--- a/db/tools/catalog-lists.mjs
++++ b/db/tools/catalog-lists.mjs
+@@ -74,6 +74,9 @@ export const interimGuardExempt = [
+   'notifications.notification',
+   'notifications.delivery_receipt',
+   'notifications.in_app_read',
++  // BE-07 (ALR-N7): staff_alert and its event trail are guarded tables in the design (22.13, merge participant R/K).
++  'notifications.staff_alert',
++  'notifications.staff_alert_event',
+ ];
+ export const patientGuardExempt = ['audit.event', 'audit.btg_grant', ...interimGuardExempt];
+ /** SECURITY DEFINER functions of SHARED-BOUNDARIES 6.2 and ARCHITECTURE 21.6 (schema.name). Empty: none exist yet. */
