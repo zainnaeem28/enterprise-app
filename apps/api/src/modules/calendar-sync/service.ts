@@ -46,7 +46,8 @@ const GOOGLE_CODE = /^[\x21-\x7e]{1,2048}$/; // printable ASCII, no space: the s
 
 export class CalendarLinkService {
   constructor(private readonly d: CalendarLinkDeps) {
-    if (d.stateKeys.length === 0) throw new Error('calendar link: at least one state key is required');
+    if (d.stateKeys.length === 0)
+      throw new Error('calendar link: at least one state key is required');
   }
 
   private now(): Date {
@@ -56,7 +57,12 @@ export class CalendarLinkService {
   /** The caller's own principal, or 403: a google-realm staff scope with a principal. */
   private own(tx: Tx): string {
     const s = tx.scope;
-    if (s.audience !== 'staff' || s.realm !== 'google' || s.orgId === undefined || s.principalId === undefined)
+    if (
+      s.audience !== 'staff' ||
+      s.realm !== 'google' ||
+      s.orgId === undefined ||
+      s.principalId === undefined
+    )
       throw new CalendarScopeError();
     return s.principalId.toLowerCase();
   }
@@ -107,7 +113,10 @@ export class CalendarLinkService {
     const state = makeState(this.d.stateKeys[0] as Buffer, principal, this.now());
     const verifier = pkceVerifier(this.d.stateKeys[0] as Buffer, state);
     return {
-      authorizationUrl: this.d.oauth.authorizationUrl({ state, codeChallenge: pkceChallenge(verifier) }),
+      authorizationUrl: this.d.oauth.authorizationUrl({
+        state,
+        codeChallenge: pkceChallenge(verifier),
+      }),
     };
   }
 
@@ -127,7 +136,8 @@ export class CalendarLinkService {
     const verified = verifyState(this.d.stateKeys, q.state, principal, this.now());
     if (verified === undefined) throw new CalendarValidationError(['state']);
     if (q.error !== undefined) return 'denied'; // the doctor declined at Google; the value of `error` is not used
-    if (typeof q.code !== 'string' || !GOOGLE_CODE.test(q.code)) throw new CalendarValidationError(['code']);
+    if (typeof q.code !== 'string' || !GOOGLE_CODE.test(q.code))
+      throw new CalendarValidationError(['code']);
     const key = signingKey(this.d.stateKeys, q.state as string) as Buffer;
 
     // The connection must exist and be enabled BEFORE the single-use code is spent.
@@ -172,7 +182,15 @@ export class CalendarLinkService {
          ON CONFLICT (connection_id, name) DO UPDATE
            SET secret_arn = EXCLUDED.secret_arn, current_version_id = EXCLUDED.current_version_id,
                rotated_at = now(), rotated_by_person_id = EXCLUDED.rotated_by_person_id`,
-        [connectionId, name, org, stored.arn, stored.versionId, tx.scope.personId ?? null, principal],
+        [
+          connectionId,
+          name,
+          org,
+          stored.arn,
+          stored.versionId,
+          tx.scope.personId ?? null,
+          principal,
+        ],
       );
       await this.d.audit.record(tx, {
         requestId: meta.requestId,

@@ -92,7 +92,9 @@ export class GoogleCalendarAdapter implements VendorAdapter<'google_calendar'> {
     this.now = o.now ?? Date.now;
   }
 
-  async call(req: VendorCall & { operation: OperationOf<'google_calendar'> }): Promise<VendorResult> {
+  async call(
+    req: VendorCall & { operation: OperationOf<'google_calendar'> },
+  ): Promise<VendorResult> {
     const a = req.args;
     switch (req.operation) {
       case 'push_busy':
@@ -138,22 +140,35 @@ export class GoogleCalendarAdapter implements VendorAdapter<'google_calendar'> {
     };
   }
 
-  private async pushBusy(req: VendorCall, a: Readonly<Record<string, unknown>>): Promise<VendorResult> {
+  private async pushBusy(
+    req: VendorCall,
+    a: Readonly<Record<string, unknown>>,
+  ): Promise<VendorResult> {
     const eventId = str(a, 'eventId', 1024);
-    if (!/^[a-v0-9]{5,1024}$/.test(eventId)) throw new AdapterFailure(false, undefined, 'bad_argument');
+    if (!/^[a-v0-9]{5,1024}$/.test(eventId))
+      throw new AdapterFailure(false, undefined, 'bad_argument');
     const clinician = str(a, 'clinicianId', 64);
     const body = this.busyBody(a, eventId);
     const r = await this.send(req, clinician, 'POST', this.eventsPath(a), { body, ok: [409] });
     if (r.status === 409) {
       // The event exists already (a retry, or it was deleted and the ID is kept by Google): make it equal and confirmed.
-      await this.send(req, clinician, 'PUT', `${this.eventsPath(a)}/${encodeURIComponent(eventId)}`, {
-        body: { ...body, status: 'confirmed' },
-      });
+      await this.send(
+        req,
+        clinician,
+        'PUT',
+        `${this.eventsPath(a)}/${encodeURIComponent(eventId)}`,
+        {
+          body: { ...body, status: 'confirmed' },
+        },
+      );
     }
     return { data: { eventId }, httpStatus: r.status, vendorRef: eventId };
   }
 
-  private async deleteBusy(req: VendorCall, a: Readonly<Record<string, unknown>>): Promise<VendorResult> {
+  private async deleteBusy(
+    req: VendorCall,
+    a: Readonly<Record<string, unknown>>,
+  ): Promise<VendorResult> {
     const eventId = str(a, 'eventId', 1024);
     const r = await this.send(
       req,
@@ -162,7 +177,11 @@ export class GoogleCalendarAdapter implements VendorAdapter<'google_calendar'> {
       `${this.eventsPath(a)}/${encodeURIComponent(eventId)}`,
       { ok: [404, 410] },
     );
-    return { data: { eventId, alreadyGone: r.status !== 204 && r.status !== 200 }, httpStatus: r.status, vendorRef: eventId };
+    return {
+      data: { eventId, alreadyGone: r.status !== 204 && r.status !== 200 },
+      httpStatus: r.status,
+      vendorRef: eventId,
+    };
   }
 
   private async list(req: VendorCall, a: Readonly<Record<string, unknown>>): Promise<VendorResult> {
@@ -180,7 +199,12 @@ export class GoogleCalendarAdapter implements VendorAdapter<'google_calendar'> {
     }
     const pageToken = optStr(a, 'pageToken');
     if (pageToken !== undefined) q.set('pageToken', pageToken);
-    const r = await this.send(req, str(a, 'clinicianId', 64), 'GET', `${this.eventsPath(a)}?${q.toString()}`);
+    const r = await this.send(
+      req,
+      str(a, 'clinicianId', 64),
+      'GET',
+      `${this.eventsPath(a)}?${q.toString()}`,
+    );
     const j = r.json as {
       items?: GoogleEventLite[];
       nextPageToken?: string;
@@ -202,20 +226,29 @@ export class GoogleCalendarAdapter implements VendorAdapter<'google_calendar'> {
     };
   }
 
-  private async watch(req: VendorCall, a: Readonly<Record<string, unknown>>): Promise<VendorResult> {
+  private async watch(
+    req: VendorCall,
+    a: Readonly<Record<string, unknown>>,
+  ): Promise<VendorResult> {
     const expiresAt = Number(a['expiresAtMs']);
     if (!Number.isFinite(expiresAt)) throw new AdapterFailure(false, undefined, 'bad_argument');
     const address = str(a, 'address', 1024);
     if (!address.startsWith('https://')) throw new AdapterFailure(false, undefined, 'bad_argument');
-    const r = await this.send(req, str(a, 'clinicianId', 64), 'POST', `${this.eventsPath(a)}/watch`, {
-      body: {
-        id: str(a, 'channelId', 128),
-        type: 'web_hook',
-        address,
-        token: str(a, 'token', 256),
-        expiration: String(Math.floor(expiresAt)),
+    const r = await this.send(
+      req,
+      str(a, 'clinicianId', 64),
+      'POST',
+      `${this.eventsPath(a)}/watch`,
+      {
+        body: {
+          id: str(a, 'channelId', 128),
+          type: 'web_hook',
+          address,
+          token: str(a, 'token', 256),
+          expiration: String(Math.floor(expiresAt)),
+        },
       },
-    });
+    );
     const j = r.json as { resourceId?: unknown; expiration?: unknown } | null;
     if (typeof j?.resourceId !== 'string') throw new AdapterFailure(true, r.status, 'bad_response');
     const exp = Number(j.expiration);
@@ -225,11 +258,20 @@ export class GoogleCalendarAdapter implements VendorAdapter<'google_calendar'> {
     };
   }
 
-  private async stopWatch(req: VendorCall, a: Readonly<Record<string, unknown>>): Promise<VendorResult> {
-    const r = await this.send(req, str(a, 'clinicianId', 64), 'POST', '/calendar/v3/channels/stop', {
-      body: { id: str(a, 'channelId', 128), resourceId: str(a, 'resourceId', 256) },
-      ok: [404],
-    });
+  private async stopWatch(
+    req: VendorCall,
+    a: Readonly<Record<string, unknown>>,
+  ): Promise<VendorResult> {
+    const r = await this.send(
+      req,
+      str(a, 'clinicianId', 64),
+      'POST',
+      '/calendar/v3/channels/stop',
+      {
+        body: { id: str(a, 'channelId', 128), resourceId: str(a, 'resourceId', 256) },
+        ok: [404],
+      },
+    );
     return { data: {}, httpStatus: r.status };
   }
 
@@ -278,7 +320,8 @@ export class GoogleCalendarAdapter implements VendorAdapter<'google_calendar'> {
     if (status === 401) return new AdapterFailure(false, 401, 'token_revoked');
     if (status === 410) return new AdapterFailure(false, 410, 'gone');
     if (status === 403) {
-      const reason = (json as { error?: { errors?: { reason?: unknown }[] } } | null)?.error?.errors?.[0]?.reason;
+      const reason = (json as { error?: { errors?: { reason?: unknown }[] } } | null)?.error
+        ?.errors?.[0]?.reason;
       return typeof reason === 'string' && RATE_REASONS.has(reason)
         ? new AdapterFailure(true, 403, 'rate_limited')
         : new AdapterFailure(false, 403, 'forbidden');
@@ -292,7 +335,8 @@ export class GoogleCalendarAdapter implements VendorAdapter<'google_calendar'> {
     if (!force && hit !== undefined && hit.expiresAt > this.now() + 60_000) return hit.value;
     const creds: CredentialReader = req.credentials;
     const clientId = req.connection.settings['clientId'];
-    if (typeof clientId !== 'string' || clientId === '') throw new AdapterFailure(false, undefined, 'not_configured');
+    if (typeof clientId !== 'string' || clientId === '')
+      throw new AdapterFailure(false, undefined, 'not_configured');
     const refresh = await creds.get(tokenSecretName(clinician));
     const clientSecret = await creds.get(OAUTH_CLIENT_SECRET_NAME);
     let res: Response;
@@ -312,12 +356,17 @@ export class GoogleCalendarAdapter implements VendorAdapter<'google_calendar'> {
       throw new AdapterFailure(true, undefined, 'network');
     }
     if (!res.ok) {
-      if (retryableStatus(res.status)) throw new AdapterFailure(true, res.status, 'oauth_unavailable');
+      if (retryableStatus(res.status))
+        throw new AdapterFailure(true, res.status, 'oauth_unavailable');
       // 400 invalid_grant: the doctor revoked the app or the token was disabled. Not retryable: the link is broken (TC-CAL-06).
       throw new AdapterFailure(false, 401, 'token_revoked');
     }
-    const j = (await res.json().catch(() => null)) as { access_token?: unknown; expires_in?: unknown } | null;
-    if (typeof j?.access_token !== 'string') throw new AdapterFailure(true, res.status, 'bad_response');
+    const j = (await res.json().catch(() => null)) as {
+      access_token?: unknown;
+      expires_in?: unknown;
+    } | null;
+    if (typeof j?.access_token !== 'string')
+      throw new AdapterFailure(true, res.status, 'bad_response');
     const ttl = typeof j.expires_in === 'number' ? j.expires_in : 3000;
     this.access.set(clinician, new AccessToken(j.access_token, this.now() + ttl * 1000));
     return j.access_token;

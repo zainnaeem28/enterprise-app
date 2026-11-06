@@ -51,7 +51,8 @@ export function startOfDayIn(date: string, timeZone: string | undefined): number
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
   if (m === null) return undefined;
   const guess = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
-  if (Number.isNaN(guess)) return undefined;
+  // 2031-13-45 would roll over into a real date; a calendar date must read back as written.
+  if (Number.isNaN(guess) || new Date(guess).toISOString().slice(0, 10) !== date) return undefined;
   let zone = timeZone ?? 'UTC';
   try {
     new Intl.DateTimeFormat('en-US', { timeZone: zone });
@@ -78,7 +79,8 @@ export function toBusyChange(e: GoogleEventLite, calendarZone?: string): BusyCha
   if (e.status === 'cancelled') return none;
   if (e.transparency === 'transparent') return none;
   if (e.extendedProperties?.private?.[OWN_EVENT_KEY] === '1') return none;
-  if (e.attendees?.some((a) => a.self === true && a.responseStatus === 'declined') === true) return none;
+  if (e.attendees?.some((a) => a.self === true && a.responseStatus === 'declined') === true)
+    return none;
   const start = instant(e.start, calendarZone);
   const end = instant(e.end, calendarZone);
   if (start === undefined || end === undefined || end <= start) return none;

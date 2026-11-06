@@ -22,13 +22,7 @@ import { systemScope } from './scope.js';
 import { VendorRejectedError } from '../integration-core/errors.js';
 
 export type SyncOutcome =
-  | 'sweep'
-  | 'skipped'
-  | 'resync_enqueued'
-  | 'synced'
-  | 'superseded'
-  | 'token_revoked'
-  | 'error';
+  'sweep' | 'skipped' | 'resync_enqueued' | 'synced' | 'superseded' | 'token_revoked' | 'error';
 
 const DAY = 86_400_000;
 /** The window of a full listing: a day back (a running meeting), 400 days ahead (the longest booking horizon plus margin). */
@@ -66,7 +60,12 @@ const syncable = (l: LinkRow | undefined): l is LinkRow =>
 const markerOf = (l: LinkRow): string =>
   l.discardedHash === null ? 'initial' : discardedMarker(l.discardedHash);
 
-async function enqueueResync(deps: CalendarJobDeps, tx: Tx, clinicianId: string, marker: string): Promise<void> {
+async function enqueueResync(
+  deps: CalendarJobDeps,
+  tx: Tx,
+  clinicianId: string,
+  marker: string,
+): Promise<void> {
   await deps.queue.enqueue(
     tx,
     'calendar_sync.full_resync',
@@ -76,7 +75,9 @@ async function enqueueResync(deps: CalendarJobDeps, tx: Tx, clinicianId: string,
 }
 
 /** What Google said that is not a retry: 410 (token gone), 401 (grant revoked), anything else it refused. Retryable failures propagate. */
-function rejection(err: unknown): { kind: 'gone' | 'token_revoked' | 'rejected'; status?: number } | undefined {
+function rejection(
+  err: unknown,
+): { kind: 'gone' | 'token_revoked' | 'rejected'; status?: number } | undefined {
   if (!(err instanceof VendorRejectedError)) return undefined;
   if (err.httpStatus === 410) return { kind: 'gone' };
   if (err.httpStatus === 401) return { kind: 'token_revoked' };
@@ -133,7 +134,11 @@ async function listAll(
       },
       { type: 'calendar_link', id: clinicianId },
     );
-    const d = res.data as { changes?: BusyChange[]; nextPageToken?: string; nextSyncToken?: string };
+    const d = res.data as {
+      changes?: BusyChange[];
+      nextPageToken?: string;
+      nextSyncToken?: string;
+    };
     for (const c of d.changes ?? []) changes.set(c.eventId, c);
     if (d.nextPageToken !== undefined) {
       pageToken = d.nextPageToken;
@@ -185,11 +190,10 @@ async function write(
       else set.set(hash.toString('hex'), { hash, ...c.busy });
     }
     const blocks = [...set.values()].filter((b) => Date.parse(b.endsAt) >= cutoff);
-    await tx.query(`SELECT * FROM scheduling.replace_busy_blocks($1::uuid, $2::bytea[], $3::tstzrange[])`, [
-      clinicianId,
-      blocks.map((b) => b.hash),
-      blocks.map((b) => `[${b.startsAt},${b.endsAt})`),
-    ]);
+    await tx.query(
+      `SELECT * FROM scheduling.replace_busy_blocks($1::uuid, $2::bytea[], $3::tstzrange[])`,
+      [clinicianId, blocks.map((b) => b.hash), blocks.map((b) => `[${b.startsAt},${b.endsAt})`)],
+    );
     await tx.query(
       `UPDATE calendar_sync.calendar_link
           SET sync_token = $2, last_synced_at = now(), last_error_code = NULL, status = 'active'
@@ -201,7 +205,11 @@ async function write(
 }
 
 /** Step 1 of the 410 rule. */
-async function discardToken(deps: CalendarJobDeps, clinicianId: string, token: string): Promise<void> {
+async function discardToken(
+  deps: CalendarJobDeps,
+  clinicianId: string,
+  token: string,
+): Promise<void> {
   const hash = sha256(token);
   await deps.db.withScope(systemScope(deps.orgId), async (tx) => {
     const link = await readLink(tx, clinicianId, true);
@@ -227,7 +235,12 @@ async function sweep(deps: CalendarJobDeps): Promise<void> {
         const h = row.discarded_token_hash as Buffer | null;
         await enqueueResync(deps, tx, id, h === null ? 'initial' : discardedMarker(h));
       } else {
-        await deps.queue.enqueue(tx, 'calendar_sync.incremental_sync', { clinicianId: id }, { jobKey: `inc_${id}` });
+        await deps.queue.enqueue(
+          tx,
+          'calendar_sync.incremental_sync',
+          { clinicianId: id },
+          { jobKey: `inc_${id}` },
+        );
       }
     }
   });
@@ -271,7 +284,8 @@ export async function runIncrementalSync(
     await markLink(deps, clinicianId, 'error', `vendor_rejected_${rej.status ?? 0}`);
     return 'error';
   }
-  return (await write(deps, clinicianId, token, listed.nextSyncToken, listed.changes, 'merge')) === 'written'
+  return (await write(deps, clinicianId, token, listed.nextSyncToken, listed.changes, 'merge')) ===
+    'written'
     ? 'synced'
     : 'superseded';
 }
@@ -301,7 +315,14 @@ export async function runFullResync(
     await markLink(deps, clinicianId, 'error', `vendor_rejected_${rej.status ?? 0}`);
     return 'error';
   }
-  const done = await write(deps, clinicianId, null, listed.nextSyncToken, listed.changes, 'replace');
+  const done = await write(
+    deps,
+    clinicianId,
+    null,
+    listed.nextSyncToken,
+    listed.changes,
+    'replace',
+  );
   if (done === 'superseded') return 'superseded';
   if (marker === 'initial') await backfillBookings(deps, clinicianId);
   return 'synced';
@@ -320,7 +341,12 @@ async function backfillBookings(deps: CalendarJobDeps, clinicianId: string): Pro
     );
     for (const row of r.rows) {
       const id = String(row.id);
-      await deps.queue.enqueue(tx, 'calendar_sync.push_busy', { occupancyId: id }, { jobKey: `push_${id}` });
+      await deps.queue.enqueue(
+        tx,
+        'calendar_sync.push_busy',
+        { occupancyId: id },
+        { jobKey: `push_${id}` },
+      );
     }
   });
 }

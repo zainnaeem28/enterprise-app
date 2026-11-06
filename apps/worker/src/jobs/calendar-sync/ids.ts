@@ -12,7 +12,8 @@ export const tokenSecretName = (clinicianId: string): string => `cal-${clinician
  * The Google event ID of a Busy event, derived from the occupancy ID (34.3): a retry cannot create a duplicate. Google event IDs are
  * lower-case base32hex (a-v, 0-9), 5 to 1024 characters: 'ehr' plus the 32 hex digits of the UUID is inside that alphabet.
  */
-export const eventIdFor = (occupancyId: string): string => `ehr${occupancyId.toLowerCase().replaceAll('-', '')}`;
+export const eventIdFor = (occupancyId: string): string =>
+  `ehr${occupancyId.toLowerCase().replaceAll('-', '')}`;
 
 /** `calendar_sync.full_resync` marker for a discarded token: the first 128 bits of SHA-256(token) as a UUID (IDs-only payloads, BD-09). */
 export function discardedMarker(hash: Buffer): string {
@@ -21,4 +22,5 @@ export function discardedMarker(hash: Buffer): string {
 }
 
 /** The hash of a Google event ID stored as `scheduling.busy_block.external_hash` (22.8: the hash of the event ID, no title). */
-export const externalHash = (googleEventId: string): Buffer => sha256(`google-event\u0000${googleEventId}`);
+export const externalHash = (googleEventId: string): Buffer =>
+  sha256(`google-event\u0000${googleEventId}`);

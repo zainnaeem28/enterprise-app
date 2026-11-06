@@ -26,7 +26,9 @@ export function channelToken(
   channelId: string,
   expiryEpoch: number,
 ): string {
-  const mac = createHmac('sha256', key.key).update(`${channelId}.${expiryEpoch}`).digest('base64url');
+  const mac = createHmac('sha256', key.key)
+    .update(`${channelId}.${expiryEpoch}`)
+    .digest('base64url');
   return `v.${key.version}.${expiryEpoch}.${mac}`;
 }
 
@@ -51,7 +53,12 @@ async function sweep(deps: CalendarJobDeps): Promise<void> {
     );
     for (const row of r.rows) {
       const id = String(row.clinician_principal_id);
-      await deps.queue.enqueue(tx, 'calendar_sync.renew_watch', { clinicianId: id }, { jobKey: `renew_${id}` });
+      await deps.queue.enqueue(
+        tx,
+        'calendar_sync.renew_watch',
+        { clinicianId: id },
+        { jobKey: `renew_${id}` },
+      );
     }
   });
 }
@@ -112,7 +119,15 @@ export async function runRenewWatch(
     await tx.query(
       `INSERT INTO calendar_sync.watch_channel (id, organisation_id, clinician_principal_id, channel_id, resource_id, token_key_version, expires_at)
        VALUES ($1::uuid, $2::uuid, $3::uuid, $4, $5, $6, $7::timestamptz)`,
-      [randomUUID(), deps.orgId, clinicianId, channelId, registered.resourceId, key.version, new Date(effective).toISOString()],
+      [
+        randomUUID(),
+        deps.orgId,
+        clinicianId,
+        channelId,
+        registered.resourceId,
+        key.version,
+        new Date(effective).toISOString(),
+      ],
     );
     return prev.rows.map((r) => ({
       id: String(r.id),
@@ -130,11 +145,15 @@ export async function runRenewWatch(
       );
     } catch (err) {
       // Best effort: the old channel dies at its own expiry, and its row is dropped by the next sweep.
-      deps.log.warn('calendar_sync: stopping an old channel failed', { reason: err instanceof Error ? err.name : 'unknown' });
+      deps.log.warn('calendar_sync: stopping an old channel failed', {
+        reason: err instanceof Error ? err.name : 'unknown',
+      });
       continue;
     }
     await deps.db.withScope(systemScope(deps.orgId), (tx) =>
-      tx.query(`DELETE FROM calendar_sync.watch_channel WHERE id = $1::uuid`, [o.id]).then(() => undefined),
+      tx
+        .query(`DELETE FROM calendar_sync.watch_channel WHERE id = $1::uuid`, [o.id])
+        .then(() => undefined),
     );
   }
   return 'renewed';

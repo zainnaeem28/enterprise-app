@@ -5,7 +5,7 @@
 import type { Task } from 'graphile-worker';
 import type { JobRegistry } from '@ehr/kernel';
 import { runOnReservation } from './handlers.js';
-import { CALENDAR_SYNC_CRONTAB, CALENDAR_SYNC_JOBS } from './jobs.js';
+import { CALENDAR_SYNC_JOBS } from './jobs.js';
 import type { CalendarJobDeps } from './ports.js';
 import { runDeleteBusy, runPushBusy } from './push-busy.js';
 import { runFullResync, runIncrementalSync } from './sync.js';
@@ -24,7 +24,13 @@ export type { PushOutcome } from './push-busy.js';
 export { runRenewWatch, channelToken, CHANNEL_LIFETIME_MS } from './watch.js';
 export type { RenewOutcome } from './watch.js';
 export { runUnlinkCleanup } from './unlink.js';
-export { handlePush, parsePush, registerGooglePushHandler, GOOGLE_CALENDAR_SOURCE, GOOGLE_PUSH_MESSAGE_TYPE } from './push-handler.js';
+export {
+  handlePush,
+  parsePush,
+  registerGooglePushHandler,
+  GOOGLE_CALENDAR_SOURCE,
+  GOOGLE_PUSH_MESSAGE_TYPE,
+} from './push-handler.js';
 export { runOnReservation } from './handlers.js';
 export type { CalendarJobDeps, ChannelKeyProvider, VendorPort } from './ports.js';
 export { eventIdFor, externalHash, tokenSecretName } from './ids.js';

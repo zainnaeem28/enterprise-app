@@ -8,7 +8,7 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes, randomUUID }
 import { createServer } from 'node:http';
 import type { IncomingMessage, Server } from 'node:http';
 import { pathToFileURL } from 'node:url';
-import { JobRegistry, KernelDb, Queue, createLogger, syncTaskTypes } from '@ehr/kernel';
+import { KernelDb, Queue, createLogger, syncTaskTypes } from '@ehr/kernel';
 import type { ScopeSettings, Tx } from '@ehr/kernel';
 import {
   ORG,
@@ -35,7 +35,17 @@ import { GoogleCalendarPush } from './push.js';
 import { CalendarLinkService } from './service.js';
 import { uuidv7 } from './ids.js';
 
-export { ORG, STAFF_HOST, call, id, saWrite, seedPrincipal, seedSession, staffMember, writeHeaders };
+export {
+  ORG,
+  STAFF_HOST,
+  call,
+  id,
+  saWrite,
+  seedPrincipal,
+  seedSession,
+  staffMember,
+  writeHeaders,
+};
 export type { Kit, SeededSession };
 
 export const A1 = id(101);
@@ -85,7 +95,9 @@ export class FakeStore implements OutboundSecretStore {
   reader = {
     get: (arn: string, versionId: string): Promise<string> => {
       const v = this.values.get(`${arn}|${versionId}`);
-      return v === undefined ? Promise.reject(new Error('no such secret version')) : Promise.resolve(v);
+      return v === undefined
+        ? Promise.reject(new Error('no such secret version'))
+        : Promise.resolve(v);
     },
   };
 }
@@ -130,7 +142,13 @@ export class GoogleStub {
   denyInsert = false;
   created = new Map<string, Record<string, unknown>>();
   deleted = new Set<string>();
-  channels: { id: string; resourceId: string; token: string; address: string; expiration: string }[] = [];
+  channels: {
+    id: string;
+    resourceId: string;
+    token: string;
+    address: string;
+    expiration: string;
+  }[] = [];
   stopped: { id: string; resourceId: string }[] = [];
   private resSeq = 0;
 
@@ -147,7 +165,9 @@ export class GoogleStub {
     this.requests = [];
   }
   of(re: RegExp, method?: string): StubRequest[] {
-    return this.requests.filter((r) => re.test(r.path) && (method === undefined || r.method === method));
+    return this.requests.filter(
+      (r) => re.test(r.path) && (method === undefined || r.method === method),
+    );
   }
   /** Issues a sync token Google will accept. */
   newToken(): string {
@@ -161,7 +181,10 @@ export class GoogleStub {
     res.end(body === undefined ? '' : JSON.stringify(body));
   }
 
-  private async handle(req: IncomingMessage, res: import('node:http').ServerResponse): Promise<void> {
+  private async handle(
+    req: IncomingMessage,
+    res: import('node:http').ServerResponse,
+  ): Promise<void> {
     const chunks: Buffer[] = [];
     for await (const c of req) chunks.push(c as Buffer);
     const u = new URL(req.url ?? '/', this.url);
@@ -180,19 +203,26 @@ export class GoogleStub {
       if (form.get('grant_type') === 'authorization_code') {
         if (form.get('code') !== AUTH_CODE || !form.get('code_verifier'))
           return this.json(res, 400, { error: 'invalid_grant' });
-        return this.json(res, 200, { access_token: 'AT-initial', refresh_token: REFRESH_TOKEN, expires_in: 3599 });
+        return this.json(res, 200, {
+          access_token: 'AT-initial',
+          refresh_token: REFRESH_TOKEN,
+          expires_in: 3599,
+        });
       }
       if (this.revoked) return this.json(res, 400, { error: 'invalid_grant' });
-      if (form.get('refresh_token') !== REFRESH_TOKEN) return this.json(res, 400, { error: 'invalid_grant' });
+      if (form.get('refresh_token') !== REFRESH_TOKEN)
+        return this.json(res, 400, { error: 'invalid_grant' });
       return this.json(res, 200, { access_token: `AT-${randomUUID()}`, expires_in: 3599 });
     }
     if (u.pathname.startsWith('/discovery/')) return this.json(res, 200, { id: 'calendar:v3' });
-    if (!r.authorization?.startsWith('Bearer AT-')) return this.json(res, 401, { error: { code: 401 } });
+    if (this.revoked || !r.authorization?.startsWith('Bearer AT-'))
+      return this.json(res, 401, { error: { code: 401 } });
 
     const ev = /^\/calendar\/v3\/calendars\/([^/]+)\/events(?:\/([^/]+))?$/.exec(u.pathname);
     if (ev !== null && r.method === 'GET' && ev[2] === undefined) return this.list(u, res);
     if (ev !== null && r.method === 'POST' && ev[2] === undefined) {
-      if (this.denyInsert) return this.json(res, 403, { error: { errors: [{ reason: 'forbidden' }] } });
+      if (this.denyInsert)
+        return this.json(res, 403, { error: { errors: [{ reason: 'forbidden' }] } });
       const e = JSON.parse(body) as { id: string };
       if (this.created.has(e.id)) return this.json(res, 409, { error: { code: 409 } });
       this.created.set(e.id, JSON.parse(body) as Record<string, unknown>);
@@ -205,13 +235,19 @@ export class GoogleStub {
       return this.json(res, 200, { id: ev[2] });
     }
     if (ev !== null && r.method === 'DELETE' && ev[2] !== undefined) {
-      if (!this.created.has(ev[2]) || this.deleted.has(ev[2])) return this.json(res, 404, { error: { code: 404 } });
+      if (!this.created.has(ev[2]) || this.deleted.has(ev[2]))
+        return this.json(res, 404, { error: { code: 404 } });
       this.deleted.add(ev[2]);
       res.writeHead(204);
       return void res.end();
     }
     if (/\/events\/watch$/.test(u.pathname) && r.method === 'POST') {
-      const b = JSON.parse(body) as { id: string; token: string; address: string; expiration: string };
+      const b = JSON.parse(body) as {
+        id: string;
+        token: string;
+        address: string;
+        expiration: string;
+      };
       const resourceId = `res${++this.resSeq}`;
       this.channels.push({ ...b, resourceId });
       return this.json(res, 200, { id: b.id, resourceId, expiration: b.expiration });
@@ -230,7 +266,8 @@ export class GoogleStub {
       return this.json(res, 503, { error: { code: 503 } });
     }
     const syncToken = u.searchParams.get('syncToken');
-    if (syncToken !== null && !this.validTokens.has(syncToken)) return this.json(res, 410, { error: { code: 410 } });
+    if (syncToken !== null && !this.validTokens.has(syncToken))
+      return this.json(res, 410, { error: { code: 410 } });
     const all = syncToken === null ? [...this.events.values()] : this.delta;
     const page = Number(u.searchParams.get('pageToken') ?? '0');
     const slice = all.slice(page * this.pageSize, (page + 1) * this.pageSize);
@@ -248,7 +285,9 @@ export interface WorkerCalendar {
   CALENDAR_SYNC_JOBS: readonly import('@ehr/kernel').JobType[];
   CALENDAR_SYNC_CRONTAB: string;
   GoogleCalendarAdapter: new (o?: Record<string, unknown>) => unknown;
-  createCalendarSyncTasks(deps: unknown): Record<string, (payload: unknown, helpers: unknown) => Promise<void>>;
+  createCalendarSyncTasks(
+    deps: unknown,
+  ): Record<string, (payload: unknown, helpers: unknown) => Promise<void>>;
   registerGooglePushHandler(registry: unknown, deps: unknown): void;
   runIncrementalSync(deps: unknown, payload: Record<string, unknown>): Promise<string>;
   runFullResync(deps: unknown, payload: Record<string, unknown>): Promise<string>;
@@ -258,7 +297,11 @@ export interface WorkerCalendar {
   runUnlinkCleanup(deps: unknown, payload: Record<string, unknown>): Promise<string>;
   handlePush(deps: unknown, body: Buffer): Promise<string>;
   parsePush(body: Buffer): unknown;
-  channelToken(key: { version: string; key: Buffer }, channelId: string, expiryEpoch: number): string;
+  channelToken(
+    key: { version: string; key: Buffer },
+    channelId: string,
+    expiryEpoch: number,
+  ): string;
   eventIdFor(occupancyId: string): string;
   externalHash(eventId: string): Buffer;
   toBusyChange(e: unknown, zone?: string): unknown;
@@ -304,9 +347,14 @@ export interface CalendarKit {
     o?: { status?: string; serviceId?: string; minutes?: number },
   ): Promise<{ occupancyId: string; patientId: string }>;
   /** Makes the doctor's link `active` with a stored refresh token reference, as a completed callback leaves it. */
-  activeLink(doctorId: string, o?: { syncToken?: string | null; lastSyncedAt?: boolean }): Promise<void>;
+  activeLink(
+    doctorId: string,
+    o?: { syncToken?: string | null; lastSyncedAt?: boolean },
+  ): Promise<void>;
   /** The jobs waiting for a task, oldest first. */
-  queued(task: string): Promise<{ id: string; payload: Record<string, unknown>; key: string | null }[]>;
+  queued(
+    task: string,
+  ): Promise<{ id: string; payload: Record<string, unknown>; key: string | null }[]>;
   /** Runs (and removes) the waiting jobs of a task with the worker's real handler. Returns what ran. */
   runQueued(task: string): Promise<Record<string, unknown>[]>;
   scope(doctorId: string): ScopeSettings;
@@ -334,7 +382,10 @@ export async function setupCalendar(name: string): Promise<CalendarKit> {
   await stub.start();
   const connectionId = randomUUID();
   const store = new FakeStore();
-  const stateKeys = [Buffer.from('calendar-state-key-current-0123456789ab'), Buffer.from('calendar-state-key-previous-0123456789a')];
+  const stateKeys = [
+    Buffer.from('calendar-state-key-current-0123456789ab'),
+    Buffer.from('calendar-state-key-previous-0123456789a'),
+  ];
   const channelKey = { version: 'k2', key: randomBytes(32) };
   const oldChannelKey = { version: 'k1', key: randomBytes(32) };
 
@@ -370,7 +421,8 @@ export async function setupCalendar(name: string): Promise<CalendarKit> {
       }),
     ],
     beforeStart: ({ identity }) => {
-      for (const [n, fn] of Object.entries(calendarResolvers())) identity.policy.registerResolver(n, fn);
+      for (const [n, fn] of Object.entries(calendarResolvers()))
+        identity.policy.registerResolver(n, fn);
     },
   });
   holder.k = k;
@@ -458,7 +510,12 @@ export async function setupCalendar(name: string): Promise<CalendarKit> {
   w.registerGooglePushHandler(inbound, jobs);
   const tasks = w.createCalendarSyncTasks(jobs);
 
-  const workerScope: ScopeSettings = { audience: 'system', realm: 'worker', orgId: ORG, jobScope: 'org' };
+  const workerScope: ScopeSettings = {
+    audience: 'system',
+    realm: 'worker',
+    orgId: ORG,
+    jobScope: 'org',
+  };
 
   const kit: CalendarKit = {
     k,
@@ -478,8 +535,15 @@ export async function setupCalendar(name: string): Promise<CalendarKit> {
     api,
     worker,
     publish: (doctorId, event, payload) =>
-      api.withScope({ audience: 'staff', realm: 'google', orgId: ORG, principalId: doctorId, personId: randomUUID() }, (tx) =>
-        apiQueue.publish(tx, event, payload),
+      api.withScope(
+        {
+          audience: 'staff',
+          realm: 'google',
+          orgId: ORG,
+          principalId: doctorId,
+          personId: randomUUID(),
+        },
+        (tx) => apiQueue.publish(tx, event, payload),
       ),
     async doctor(n = 'Dr Calendar') {
       return staffMember(k, 'doctor', A1, n);
@@ -496,11 +560,22 @@ export async function setupCalendar(name: string): Promise<CalendarKit> {
       const end = new Date(start.getTime() + (o.minutes ?? 30) * 60_000);
       await k.sa.query('BEGIN');
       try {
-        await k.sa.query(`SELECT set_config('app.org_id', $1, true), set_config('app.audience', 'system', true)`, [ORG]);
+        await k.sa.query(
+          `SELECT set_config('app.org_id', $1, true), set_config('app.audience', 'system', true)`,
+          [ORG],
+        );
         await k.sa.query(
           `INSERT INTO scheduling.slot_occupancy (id, organisation_id, location_id, clinician_principal_id, period, status, expires_at)
            VALUES ($1, $2, $3, $4, tstzrange($5::timestamptz, $6::timestamptz, '[)'), $7, CASE WHEN $7 = 'held' THEN now() + interval '10 minutes' END)`,
-          [occupancyId, ORG, A1, doctorId, start.toISOString(), end.toISOString(), o.status ?? 'confirmed'],
+          [
+            occupancyId,
+            ORG,
+            A1,
+            doctorId,
+            start.toISOString(),
+            end.toISOString(),
+            o.status ?? 'confirmed',
+          ],
         );
         await k.sa.query(
           `INSERT INTO scheduling.slot_reservation (id, organisation_id, patient_id, service_id, location_id, clinician_principal_id, mode, booked_by_principal_id, booked_via, reason)
@@ -554,7 +629,13 @@ export async function setupCalendar(name: string): Promise<CalendarKit> {
       return ran;
     },
     scope(doctorId) {
-      return { audience: 'staff', realm: 'google', orgId: ORG, principalId: doctorId, personId: randomUUID() };
+      return {
+        audience: 'staff',
+        realm: 'google',
+        orgId: ORG,
+        principalId: doctorId,
+        personId: randomUUID(),
+      };
     },
     as: (scope, fn) => api.withScope(scope, fn),
     asWorker: (fn) => worker.withScope(workerScope, fn),

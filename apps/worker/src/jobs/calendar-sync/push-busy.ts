@@ -40,7 +40,10 @@ async function readOccupancy(deps: CalendarJobDeps, occupancyId: string): Promis
   });
 }
 
-async function linkOf(deps: CalendarJobDeps, clinicianId: string): Promise<{ calendarId: string } | undefined> {
+async function linkOf(
+  deps: CalendarJobDeps,
+  clinicianId: string,
+): Promise<{ calendarId: string } | undefined> {
   return deps.db.withScope(systemScope(deps.orgId), async (tx) => {
     const r = await tx.query(
       `SELECT google_calendar_id FROM calendar_sync.calendar_link WHERE clinician_principal_id = $1::uuid AND status IN ('active', 'error')`,
@@ -63,7 +66,11 @@ async function mapOf(
     const row = r.rows[0];
     return row === undefined
       ? undefined
-      : { clinicianId: String(row.clinician_principal_id), eventId: String(row.google_event_id), state: String(row.state) };
+      : {
+          clinicianId: String(row.clinician_principal_id),
+          eventId: String(row.google_event_id),
+          state: String(row.state),
+        };
   });
 }
 
@@ -152,7 +159,12 @@ export async function runPushBusy(
   const after = await readOccupancy(deps, occupancyId);
   if (after === undefined || !ACTIVE.has(after.status)) {
     try {
-      await removeEvent(deps, occupancyId, { clinicianId: occ.clinicianId, eventId }, link.calendarId);
+      await removeEvent(
+        deps,
+        occupancyId,
+        { clinicianId: occ.clinicianId, eventId },
+        link.calendarId,
+      );
     } catch (err) {
       return refused(deps, err, occupancyId, occ.clinicianId, eventId);
     }

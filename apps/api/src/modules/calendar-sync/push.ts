@@ -52,18 +52,26 @@ export class GoogleCalendarPush {
       orgId: d.orgId,
       verifiers: new Map([[GOOGLE_CALENDAR_SOURCE, googleCalendarVerifier]]),
       ...(d.logger === undefined ? {} : { logger: d.logger }),
-      ...(d.onVerificationFailure === undefined ? {} : { onVerificationFailure: d.onVerificationFailure }),
+      ...(d.onVerificationFailure === undefined
+        ? {}
+        : { onVerificationFailure: d.onVerificationFailure }),
       ...(d.now === undefined ? {} : { now: d.now }),
     });
   }
 
   /** Only the five Google headers are passed on (single values, lower-cased); the body is ignored: it is never the change source. */
-  receive(headers: Readonly<Record<string, string | string[] | undefined>>): Promise<ReceiveResult> {
+  receive(
+    headers: Readonly<Record<string, string | string[] | undefined>>,
+  ): Promise<ReceiveResult> {
     const h: Record<string, string | undefined> = {};
     for (const name of HEADERS) {
       const v = headers[name];
       h[name] = typeof v === 'string' ? v : undefined; // a repeated header is treated as missing
     }
-    return this.receiver.receive({ source: GOOGLE_CALENDAR_SOURCE, headers: h, rawBody: Buffer.alloc(0) });
+    return this.receiver.receive({
+      source: GOOGLE_CALENDAR_SOURCE,
+      headers: h,
+      rawBody: Buffer.alloc(0),
+    });
   }
 }

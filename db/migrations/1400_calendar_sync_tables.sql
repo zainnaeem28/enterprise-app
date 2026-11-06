@@ -41,7 +41,7 @@ CREATE TABLE calendar_sync.watch_channel (
   organisation_id        uuid        NOT NULL,
   clinician_principal_id uuid        NOT NULL REFERENCES identity.principal (id),
   channel_id             text        NOT NULL CHECK (channel_id ~ '^[A-Za-z0-9_-]{1,128}$'),
-  resource_id            text        NOT NULL CHECK (resource_id ~ '^[A-Za-z0-9_-]{1,256}$'),
+  resource_id            text        NOT NULL CHECK (resource_id ~ '^[A-Za-z0-9_-]{1,255}$'),
   -- 29.5 / TDR-05: which channel-token key signed this channel's token. No token and no token hash is stored: the API verifies the
   -- token without reading this table.
   token_key_version      text        NOT NULL CHECK (token_key_version ~ '^[A-Za-z0-9_-]{1,32}$'),

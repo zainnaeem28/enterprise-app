@@ -17,7 +17,10 @@ export async function runUnlinkCleanup(
   const clinicianId = raw.toLowerCase();
   const scope = systemScope(deps.orgId);
   const state = await deps.db.withScope(scope, async (tx) => {
-    const l = await tx.query(`SELECT 1 FROM calendar_sync.calendar_link WHERE clinician_principal_id = $1::uuid`, [clinicianId]);
+    const l = await tx.query(
+      `SELECT 1 FROM calendar_sync.calendar_link WHERE clinician_principal_id = $1::uuid`,
+      [clinicianId],
+    );
     if (l.rows.length > 0) return undefined;
     const ch = await tx.query(
       `SELECT id, channel_id, resource_id FROM calendar_sync.watch_channel WHERE clinician_principal_id = $1::uuid`,
@@ -57,14 +60,23 @@ export async function runUnlinkCleanup(
   }
   await deps.db.withScope(scope, async (tx) => {
     // The doctor may have linked again while the vendor calls ran: then nothing of the new link may be touched.
-    const l = await tx.query(`SELECT 1 FROM calendar_sync.calendar_link WHERE clinician_principal_id = $1::uuid`, [clinicianId]);
+    const l = await tx.query(
+      `SELECT 1 FROM calendar_sync.calendar_link WHERE clinician_principal_id = $1::uuid`,
+      [clinicianId],
+    );
     if (l.rows.length > 0) return;
-    await tx.query(`DELETE FROM calendar_sync.watch_channel WHERE clinician_principal_id = $1::uuid`, [clinicianId]);
+    await tx.query(
+      `DELETE FROM calendar_sync.watch_channel WHERE clinician_principal_id = $1::uuid`,
+      [clinicianId],
+    );
     await tx.query(
       `UPDATE calendar_sync.event_map SET state = 'deleted' WHERE clinician_principal_id = $1::uuid AND state IN ('pending', 'created')`,
       [clinicianId],
     );
-    await tx.query(`SELECT * FROM scheduling.replace_busy_blocks($1::uuid, '{}'::bytea[], '{}'::tstzrange[])`, [clinicianId]);
+    await tx.query(
+      `SELECT * FROM scheduling.replace_busy_blocks($1::uuid, '{}'::bytea[], '{}'::tstzrange[])`,
+      [clinicianId],
+    );
   });
   return 'cleaned';
 }

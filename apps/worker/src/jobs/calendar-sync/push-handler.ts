@@ -16,9 +16,11 @@ export const GOOGLE_PUSH_MESSAGE_TYPE = 'google_calendar.push';
 export type PushOutcome = 'enqueued' | 'ignored';
 
 const CHANNEL_ID = /^[A-Za-z0-9_-]{1,128}$/;
-const RESOURCE_ID = /^[A-Za-z0-9_-]{1,256}$/;
+const RESOURCE_ID = /^[A-Za-z0-9_-]{1,255}$/;
 
-export function parsePush(body: Buffer): { channelId: string; resourceId: string; state: string } | undefined {
+export function parsePush(
+  body: Buffer,
+): { channelId: string; resourceId: string; state: string } | undefined {
   if (body.length === 0 || body.length > 1024) return undefined;
   let j: unknown;
   try {
@@ -29,11 +31,16 @@ export function parsePush(body: Buffer): { channelId: string; resourceId: string
   if (j === null || typeof j !== 'object' || Array.isArray(j)) return undefined;
   const o = j as Record<string, unknown>;
   const keys = Object.keys(o);
-  if (keys.length !== 3 || !['channelId', 'resourceId', 'resourceState'].every((k) => keys.includes(k))) return undefined;
+  if (
+    keys.length !== 3 ||
+    !['channelId', 'resourceId', 'resourceState'].every((k) => keys.includes(k))
+  )
+    return undefined;
   const { channelId, resourceId, resourceState } = o;
   if (typeof channelId !== 'string' || !CHANNEL_ID.test(channelId)) return undefined;
   if (typeof resourceId !== 'string' || !RESOURCE_ID.test(resourceId)) return undefined;
-  if (resourceState !== 'sync' && resourceState !== 'exists' && resourceState !== 'not_exists') return undefined;
+  if (resourceState !== 'sync' && resourceState !== 'exists' && resourceState !== 'not_exists')
+    return undefined;
   return { channelId, resourceId, state: resourceState };
 }
 
@@ -53,12 +60,20 @@ export async function handlePush(deps: CalendarJobDeps, body: Buffer): Promise<P
     const id = r.rows[0]?.clinician_principal_id as string | undefined;
     if (id === undefined || !isUuid(id)) return 'ignored' as const;
     // One job per doctor (the key replaces one that has not started), so a burst of pushes is one sync.
-    await deps.queue.enqueue(tx, 'calendar_sync.incremental_sync', { clinicianId: id }, { jobKey: `inc_${id}` });
+    await deps.queue.enqueue(
+      tx,
+      'calendar_sync.incremental_sync',
+      { clinicianId: id },
+      { jobKey: `inc_${id}` },
+    );
     return 'enqueued' as const;
   });
 }
 
-export function registerGooglePushHandler(registry: InboundHandlerRegistry, deps: CalendarJobDeps): void {
+export function registerGooglePushHandler(
+  registry: InboundHandlerRegistry,
+  deps: CalendarJobDeps,
+): void {
   const fn: InboundHandlerFn = async (msg) => {
     await handlePush(deps, msg.body);
   };

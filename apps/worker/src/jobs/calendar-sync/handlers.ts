@@ -15,19 +15,36 @@ export async function runOnReservation(
   const reservationId = payload['reservationId'];
   const patientId = payload['patientId'];
   if (!isUuid(reservationId) || !isUuid(patientId))
-    throw new Error(`calendar_sync.on_reservation_${event}: reservationId and patientId are required`);
+    throw new Error(
+      `calendar_sync.on_reservation_${event}: reservationId and patientId are required`,
+    );
   const newId = payload['newReservationId'];
   if (event === 'rescheduled' && !isUuid(newId))
     throw new Error('calendar_sync.on_reservation_rescheduled: newReservationId is required');
   const rid = reservationId.toLowerCase();
   await deps.db.withScope(patientsScope(deps.orgId, [patientId.toLowerCase()]), async (tx) => {
     if (event === 'confirmed')
-      await deps.queue.enqueue(tx, 'calendar_sync.push_busy', { occupancyId: rid }, { jobKey: `push_${rid}` });
+      await deps.queue.enqueue(
+        tx,
+        'calendar_sync.push_busy',
+        { occupancyId: rid },
+        { jobKey: `push_${rid}` },
+      );
     else {
-      await deps.queue.enqueue(tx, 'calendar_sync.delete_busy', { occupancyId: rid }, { jobKey: `delete_${rid}` });
+      await deps.queue.enqueue(
+        tx,
+        'calendar_sync.delete_busy',
+        { occupancyId: rid },
+        { jobKey: `delete_${rid}` },
+      );
       if (event === 'rescheduled') {
         const nid = (newId as string).toLowerCase();
-        await deps.queue.enqueue(tx, 'calendar_sync.push_busy', { occupancyId: nid }, { jobKey: `push_${nid}` });
+        await deps.queue.enqueue(
+          tx,
+          'calendar_sync.push_busy',
+          { occupancyId: nid },
+          { jobKey: `push_${nid}` },
+        );
       }
     }
   });

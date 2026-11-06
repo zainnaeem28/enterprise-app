@@ -12,7 +12,8 @@ import { isUuid } from './ids.js';
 export const STATE_LIFETIME_SECONDS = 600;
 const STATE = /^v1\.([0-9a-f-]{36})\.(\d{9,12})\.([A-Za-z0-9_-]{22})\.([A-Za-z0-9_-]{43})$/;
 
-const mac = (key: Buffer, data: string): Buffer => createHmac('sha256', key).update(data, 'utf8').digest();
+const mac = (key: Buffer, data: string): Buffer =>
+  createHmac('sha256', key).update(data, 'utf8').digest();
 
 export function makeState(key: Buffer, principalId: string, now: Date): string {
   const expiry = Math.floor(now.getTime() / 1000) + STATE_LIFETIME_SECONDS;
