@@ -142,7 +142,7 @@ export class NotificationService {
       throw new NotificationsValidationError(['prefix']);
     const r = await tx.query(
       `UPDATE notifications.notification SET status = 'cancelled'
-        WHERE starts_with(dedupe_key, $1) AND status IN ('queued', 'failed')`,
+        WHERE (dedupe_key = $1 OR starts_with(dedupe_key, $1 || ':')) AND status IN ('queued', 'failed')`,
       [prefix],
     );
     return r.rowCount ?? 0;

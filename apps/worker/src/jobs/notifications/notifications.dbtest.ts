@@ -68,8 +68,13 @@ class FakeProvider implements ProviderClient {
   plan: (n: number, req: ProviderRequest) => { messageId: string } | ProviderError = (n) => ({
     messageId: `prov-${n}`,
   });
+  /** Runs inside the vendor call (a merge landing while the message is in flight). */
+  during: (() => Promise<void>) | undefined;
   async send(req: ProviderRequest): Promise<{ messageId: string; httpStatus: number }> {
     this.calls.push(req);
+    const hook = this.during;
+    this.during = undefined;
+    await hook?.();
     const r = this.plan(this.calls.length, req);
     if (r instanceof ProviderError) throw r;
     return { messageId: r.messageId, httpStatus: 202 };
@@ -115,20 +120,24 @@ describe('notifications on PostgreSQL 17 (BE-06, worker side)', () => {
       quiet?: ResolvedRecipient['quietHours'];
     }
   > = {};
+  let onResolve: (() => Promise<void>) | undefined;
   const patientContributor: RecipientContributor = {
-    resolve: (_tx, id) => {
+    resolve: async (_tx, id) => {
+      const hook = onResolve;
+      onResolve = undefined;
+      await hook?.();
       const p = prefs[id];
-      if (p === undefined) return Promise.resolve(undefined);
+      if (p === undefined) return undefined;
       const r = applyCommunicationPreferences(p.contacts, {
         channels: p.channels,
         language: p.language,
       });
-      return Promise.resolve({
+      return {
         active: p.active ?? true,
         language: p.language,
         ...r,
         ...(p.quiet === undefined ? {} : { quietHours: p.quiet }),
-      });
+      };
     },
   };
   const principalContributor: RecipientContributor = {
@@ -612,6 +621,52 @@ describe('notifications on PostgreSQL 17 (BE-06, worker side)', () => {
       assert.equal(await run(id, P1), 'failed');
       assert.equal((await row(id))['error_class'], 'render_missing_variable');
       assert.equal(provider.calls.length, 0);
+    });
+
+    test('BE06-F1: a merge that re-points the row during the vendor call - sent, failed and deferred outcomes are still recorded (under the survivor)', async () => {
+      prefs = {
+        [P1]: { channels: ['email'], language: 'en', contacts: ADDR },
+        [P2]: { channels: ['email'], language: 'en', contacts: ADDR2 },
+      };
+      const repoint = (id: string) => async (): Promise<void> => {
+        await admin.query(`UPDATE notifications.notification SET patient_id = $2 WHERE id = $1`, [
+          id,
+          P2,
+        ]);
+      };
+      // sent
+      provider.reset();
+      const a = await notification({ patient: P1, channel: 'email' });
+      provider.during = repoint(a);
+      assert.equal(await run(a, P1), 'sent');
+      let n = await row(a);
+      assert.equal(n['status'], 'sent');
+      assert.equal(n['provider_message_id'], 'prov-1');
+      // failed (vendor refusal)
+      provider.reset();
+      provider.plan = () => new ProviderError(false, 400, 'bad_request');
+      const b = await notification({ patient: P1, channel: 'email' });
+      provider.during = repoint(b);
+      assert.equal(await run(b, P1), 'failed');
+      n = await row(b);
+      assert.equal(n['status'], 'failed');
+      assert.equal(n['error_class'], 'vendor_rejected');
+      // deferred (quiet hours; merge between claim and the deferral write)
+      provider.reset();
+      prefs[P1] = {
+        channels: ['email'],
+        language: 'en',
+        contacts: ADDR,
+        quiet: { start: '22:00', end: '07:00', timeZone: 'America/New_York' },
+      };
+      clockNow = new Date('2030-01-16T03:00:00Z');
+      const c = await notification({ patient: P1, channel: 'email' });
+      onResolve = repoint(c);
+      assert.equal(await run(c, P1), 'deferred');
+      n = await row(c);
+      assert.equal(n['status'], 'queued');
+      assert.equal(provider.calls.length, 0);
+      clockNow = new Date();
     });
 
     test("a patient merged while the job waited: the job follows the survivor and sends to the survivor's contacts (on_merged = resolve)", async () => {

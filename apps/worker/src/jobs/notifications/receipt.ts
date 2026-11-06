@@ -59,20 +59,23 @@ export async function recordReceipt(
   deps: ReceiptDeps,
   ctx: { db: KernelDb; orgId: string; log: Logger },
   body: Buffer,
+  source?: string,
 ): Promise<ReceiptResult> {
   const r = parseReceipt(body);
   if (r === undefined) {
     ctx.log.warn('receipt dropped', { reason: 'invalid_payload' });
     return 'invalid';
   }
+  // The vendor source is the channel for e-mail and SMS, so ids from different vendors cannot collide.
+  const channels = source === 'email' || source === 'sms' ? [source] : ['email', 'sms', 'push'];
   const known = await ctx.db.withScope(
     systemScope(ctx.orgId),
     async (tx: Tx) =>
       (
         await tx.query(
           `SELECT id, patient_id FROM notifications.notification
-          WHERE provider_message_id = $1 AND channel IN ('email', 'sms', 'push') AND status = 'sent' LIMIT 2`,
-          [r.providerMessageId],
+          WHERE provider_message_id = $1 AND channel = ANY($2::text[]) AND status IN ('sending', 'sent') LIMIT 2`,
+          [r.providerMessageId, channels],
         )
       ).rows,
   );
@@ -96,7 +99,7 @@ export async function recordReceipt(
 
 export function createReceiptHandler(deps: ReceiptDeps = {}): InboundHandlerFn {
   return async (msg, ctx) => {
-    await recordReceipt(deps, ctx, msg.body);
+    await recordReceipt(deps, ctx, msg.body, msg.source);
   };
 }
 

@@ -93,6 +93,7 @@ export async function runSendMessage(
   }
   const row = claim.row;
   const scope = scopeFor(deps, scopeIds);
+  const ctx: Ctx = { patientId: scopeIds };
   const channel = String(row['channel']) as DeliveryChannel;
 
   // 2. resolve
@@ -105,14 +106,14 @@ export async function runSendMessage(
   });
 
   if (decision.kind === 'suppress') {
-    await finish(deps, scope, notificationId, {
+    await finish(deps, ctx, notificationId, {
       status: 'suppressed',
       suppress_reason: decision.reason,
     });
     return 'suppressed';
   }
   if (channel === 'in_app') {
-    await finish(deps, scope, notificationId, {
+    await finish(deps, ctx, notificationId, {
       status: 'sent',
       language: decision.language,
       sent_at: now(),
@@ -122,15 +123,17 @@ export async function runSendMessage(
   if (decision.quietHours !== undefined) {
     const end = quietHoursEnd(decision.quietHours, now());
     if (end !== undefined) {
-      await deps.db.withScope(scope, async (tx) => {
-        await tx.query(
+      await writeOutcome(deps, ctx, async (tx, pid) => {
+        const u = await tx.query(
           `UPDATE notifications.notification SET status = 'queued', send_after = $2, attempts = attempts - 1 WHERE id = $1::uuid`,
           [notificationId, end],
         );
-        await deps.queue.enqueue(tx, queueName(scopeIds), jobPayload(notificationId, scopeIds), {
-          runAt: end,
-          jobKey: notificationId,
-        });
+        if ((u.rowCount ?? 0) > 0)
+          await deps.queue.enqueue(tx, queueName(pid), jobPayload(notificationId, pid), {
+            runAt: end,
+            jobKey: notificationId,
+          });
+        return u.rowCount ?? 0;
       });
       return 'deferred';
     }
@@ -155,7 +158,7 @@ export async function runSendMessage(
     return { main, ics, extra };
   });
   if (rendered.main === undefined) {
-    await finish(deps, scope, notificationId, {
+    await finish(deps, ctx, notificationId, {
       status: 'suppressed',
       suppress_reason: 'no_template',
     });
@@ -192,7 +195,7 @@ export async function runSendMessage(
   } catch (e) {
     return fail(
       deps,
-      scope,
+      ctx,
       notificationId,
       e instanceof RenderError ? `render_${e.rule}` : 'render_failed',
       attempt,
@@ -201,12 +204,12 @@ export async function runSendMessage(
   }
   const scanned = `${out.subject ?? ''}\n${out.body}\n${icsBody ?? ''}`;
   if (findForbidden(scanned, rendered.extra).length > 0)
-    return fail(deps, scope, notificationId, 'phi_guard', attempt, true);
+    return fail(deps, ctx, notificationId, 'phi_guard', attempt, true);
 
   // 4. send (no database transaction is open)
   const address = decision.address;
   if (address === undefined) {
-    await finish(deps, scope, notificationId, {
+    await finish(deps, ctx, notificationId, {
       status: 'suppressed',
       suppress_reason: 'no_address',
     });
@@ -243,7 +246,7 @@ export async function runSendMessage(
       id: notificationId,
       idempotencyToken: `n-${notificationId}`,
     });
-    await finish(deps, scope, notificationId, {
+    await finish(deps, ctx, notificationId, {
       status: 'sent',
       sent_at: now(),
       language: decision.language,
@@ -253,9 +256,9 @@ export async function runSendMessage(
     return 'sent';
   } catch (err) {
     if (err instanceof VendorRejectedError)
-      return fail(deps, scope, notificationId, 'vendor_rejected', attempt, true);
+      return fail(deps, ctx, notificationId, 'vendor_rejected', attempt, true);
     if (err instanceof VendorUnavailableError) {
-      await fail(deps, scope, notificationId, `vendor_${err.reason}`, attempt, false);
+      await fail(deps, ctx, notificationId, `vendor_${err.reason}`, attempt, false);
       throw err; // the queue retries with back-off; the last attempt has published delivery_failed
     }
     throw err;
@@ -323,37 +326,59 @@ type Patch = Partial<{
   language: string;
 }>;
 
-async function finish(
+interface Ctx {
+  /** Scope patient; follows the survivor if a merge re-points the row while a vendor call is in flight. */
+  patientId: string | undefined;
+}
+
+/**
+ * Runs a write that must hit the notification row and returns its row count. A merge may re-point a `sending` row to the
+ * survivor during the vendor call, so a 0-row result under the captured scope is retried under the survivor's scope.
+ */
+async function writeOutcome(
   deps: SendDeps,
-  scope: ReturnType<typeof scopeFor>,
-  id: string,
-  p: Patch,
+  ctx: Ctx,
+  fn: (tx: Tx, patientId: string | undefined) => Promise<number>,
 ): Promise<void> {
+  let n = await deps.db.withScope(scopeFor(deps, ctx.patientId), (tx) => fn(tx, ctx.patientId));
+  if (n === 0 && ctx.patientId !== undefined && deps.survivorOf !== undefined) {
+    const survivor = (await deps.survivorOf(ctx.patientId))?.toLowerCase();
+    if (survivor !== undefined && survivor !== ctx.patientId.toLowerCase()) {
+      ctx.patientId = survivor;
+      n = await deps.db.withScope(scopeFor(deps, survivor), (tx) => fn(tx, survivor));
+    }
+  }
+  if (n === 0) throw new Error('notifications.send_message: outcome not recorded (row not found)');
+}
+
+async function finish(deps: SendDeps, ctx: Ctx, id: string, p: Patch): Promise<void> {
   const cols = Object.keys(p);
   const sets = cols.map((c, i) => `${c} = $${i + 2}`).join(', ');
-  await deps.db.withScope(scope, async (tx) => {
-    await tx.query(`UPDATE notifications.notification SET ${sets} WHERE id = $1::uuid`, [
+  await writeOutcome(deps, ctx, async (tx) => {
+    const u = await tx.query(`UPDATE notifications.notification SET ${sets} WHERE id = $1::uuid`, [
       id,
       ...cols.map((c) => (p as Row)[c]),
     ]);
+    return u.rowCount ?? 0;
   });
 }
 
 async function fail(
   deps: SendDeps,
-  scope: ReturnType<typeof scopeFor>,
+  ctx: Ctx,
   id: string,
   errorClass: string,
   attempt: Attempt,
   final: boolean,
 ): Promise<'failed'> {
-  await deps.db.withScope(scope, async (tx) => {
-    await tx.query(
+  await writeOutcome(deps, ctx, async (tx) => {
+    const u = await tx.query(
       `UPDATE notifications.notification SET status = 'failed', error_class = $2 WHERE id = $1::uuid`,
       [id, errorClass.slice(0, 60)],
     );
-    if (final || attempt.number >= attempt.max)
+    if ((u.rowCount ?? 0) > 0 && (final || attempt.number >= attempt.max))
       await deps.queue.publish(tx, 'notifications.delivery_failed', { notificationId: id });
+    return u.rowCount ?? 0;
   });
   deps.log.warn('notification failed', { notificationId: id, errorClass });
   return 'failed';

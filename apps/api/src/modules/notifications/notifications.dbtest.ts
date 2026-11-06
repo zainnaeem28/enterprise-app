@@ -690,7 +690,7 @@ describe('notifications on PostgreSQL 17 (BE-06, API side)', () => {
     });
 
     test('cancel by dedupe-key prefix cancels queued rows of that resource only; sent rows are final', async () => {
-      for (const res of ['res-c1', 'res-c2'])
+      for (const res of ['res-c1', 'res-c2', 'res-c10'])
         await api.withScope(patient(P2, PP1), (tx) =>
           service.send(tx, {
             templateKey: 'appointment_reminder_4h',
@@ -727,6 +727,15 @@ describe('notifications on PostgreSQL 17 (BE-06, API side)', () => {
           )
         ).map((r) => r['status']),
         ['queued'],
+      );
+      assert.deepEqual(
+        (
+          await q(
+            `SELECT DISTINCT status FROM notifications.notification WHERE dedupe_key LIKE 'reminder:res-c10:%'`,
+          )
+        ).map((r) => r['status']),
+        ['queued'],
+        'BE06-F3: res-c1 does not cancel res-c10',
       );
       await assert.rejects(
         worker.withScope(system(), (tx) =>

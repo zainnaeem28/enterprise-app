@@ -57,7 +57,7 @@ export function isTimeZone(v: string): boolean {
 }
 
 export interface ValueOptions {
-  /** When set, a link must be https on one of these hosts (the deployment's portal origins). */
+  /** A link must be https on one of these hosts (the deployment's portal origins); unset accepts no link. */
   allowedLinkHosts?: readonly string[];
 }
 
@@ -97,11 +97,8 @@ export function normaliseValue(
         return undefined;
       }
       if (u.protocol !== 'https:' || u.username !== '' || u.password !== '') return undefined;
-      if (
-        opts.allowedLinkHosts !== undefined &&
-        !opts.allowedLinkHosts.includes(u.hostname.toLowerCase())
-      )
-        return undefined;
+      // Fail closed: without configured portal hosts no link is acceptable.
+      if (!opts.allowedLinkHosts?.includes(u.hostname.toLowerCase())) return undefined;
       return u.toString();
     }
     case 'code':
