@@ -1,0 +1,322 @@
+openapi: 3.1.0
+info:
+  title: calendar-sync module contract
+  version: 1.0.0-r1
+  description: Routes owned by the calendar-sync module. Transcribed from ARCHITECTURE draft 8.1 sections 29-31. Later tickets edit only this file.
+paths:
+  /api/v1/calendar-link:
+    delete:
+      operationId: deleteCalendarLink
+      tags:
+        - calendar-sync
+      summary: DELETE /api/v1/calendar-link
+      description: 'staff.: OAuth with minimal scopes (events on one calendar, free/busy read)'
+      x-access:
+        staff:
+          permission: calendar.link.own
+          resolver: own
+          realm: google
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/calendar-link
+          catalogueRow: 29.3#78
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: common.yaml#/components/parameters/ClientRelease
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+    get:
+      operationId: getCalendarLink
+      tags:
+        - calendar-sync
+      summary: GET /api/v1/calendar-link
+      description: 'staff.: OAuth with minimal scopes (events on one calendar, free/busy read)'
+      x-access:
+        staff:
+          permission: calendar.link.own
+          resolver: own
+          realm: google
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/calendar-link
+          catalogueRow: 29.3#78
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: common.yaml#/components/parameters/ClientRelease
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/OpaqueObject
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/calendar-link/callback:
+    get:
+      operationId: getCalendarLinkCallback
+      tags:
+        - calendar-sync
+      summary: GET /api/v1/calendar-link/callback
+      description: 'staff.: OAuth with minimal scopes (events on one calendar, free/busy read)'
+      x-access:
+        staff:
+          permission: calendar.link.own
+          resolver: own
+          realm: google
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/calendar-link/callback
+          catalogueRow: 29.3#78
+      security:
+        - sessionCookie: []
+      x-error-codes:
+        '400':
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '302':
+          description: Success (302)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            Location:
+              $ref: common.yaml#/components/headers/Location
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/calendar-link/start:
+    post:
+      operationId: postCalendarLinkStart
+      tags:
+        - calendar-sync
+      summary: POST /api/v1/calendar-link/start
+      description: 'staff.: OAuth with minimal scopes (events on one calendar, free/busy read)'
+      x-access:
+        staff:
+          permission: calendar.link.own
+          resolver: own
+          realm: google
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/calendar-link/start
+          catalogueRow: 29.3#78
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: common.yaml#/components/parameters/ClientRelease
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/OpaqueObject
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+components:
+  schemas: {}
+  securitySchemes:
+    sessionCookie:
+      $ref: common.yaml#/components/securitySchemes/sessionCookie
+tags:
+  - name: calendar-sync
+    description: Module calendar-sync
+servers:
+  - url: https://my.{domain}
+    description: Patient portal host (my.)
+    variables:
+      domain:
+        default: example.invalid
+  - url: https://staff.{domain}
+    description: Staff and admin portal host (staff.)
+    variables:
+      domain:
+        default: example.invalid
+  - url: https://integrations.{domain}
+    description: Integrations host (integrations.)
+    variables:
+      domain:
+        default: example.invalid

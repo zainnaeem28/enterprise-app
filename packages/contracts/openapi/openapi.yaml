@@ -1,0 +1,512 @@
+openapi: 3.1.0
+info:
+  title: Enterprise EHR platform API (R1)
+  version: 1.0.0-r1
+  description: Release 1 route catalogue, transcribed from docs/ARCHITECTURE.md draft 8.1 sections 28-31. After review this file set is the source of truth (ADR-018, CN-01); the document catalogue is the design record.
+jsonSchemaDialect: https://spec.openapis.org/oas/3.1/dialect/base
+servers:
+  - url: https://my.{domain}
+    description: Patient portal host (my.)
+    variables:
+      domain:
+        default: example.invalid
+  - url: https://staff.{domain}
+    description: Staff and admin portal host (staff.)
+    variables:
+      domain:
+        default: example.invalid
+  - url: https://integrations.{domain}
+    description: Integrations host (integrations.)
+    variables:
+      domain:
+        default: example.invalid
+tags:
+  - name: audit
+    description: Module audit (audit.yaml)
+  - name: calendar-sync
+    description: Module calendar-sync (calendar-sync.yaml)
+  - name: clinical
+    description: Module clinical (clinical.yaml)
+  - name: documents
+    description: Module documents (documents.yaml)
+  - name: identity
+    description: Module identity (identity.yaml)
+  - name: integration-core
+    description: Module integration-core (integration-core.yaml)
+  - name: messaging
+    description: Module messaging (messaging.yaml)
+  - name: notifications
+    description: Module notifications (notifications.yaml)
+  - name: organisation
+    description: Module organisation (organisation.yaml)
+  - name: patient
+    description: Module patient (patient.yaml)
+  - name: privacy
+    description: Module privacy (privacy.yaml)
+  - name: reporting
+    description: Module reporting (reporting.yaml)
+  - name: scheduling
+    description: Module scheduling (scheduling.yaml)
+  - name: telehealth
+    description: Module telehealth (telehealth.yaml)
+x-source:
+  document: docs/ARCHITECTURE.md
+  revision: Draft 8.1
+  sha256: 1e7fe57ed94d4412b836e2d0d7be201685fba18d7d94c07baad432ee1808bbae
+x-reserved-routes:
+  - host: integrations
+    method: POST
+    path: /partner/v1/*
+    reason: 'Row 29.5 "POST /partner/v1/*": R3, designed with R2/R3 (22.17). A wildcard is not an OpenAPI path and the catalogue defines no operation; it is counted in the route-count check as reserved, not transcribed.'
+x-limits:
+  jsonBodyBytes: 1048576
+  noteAutosavePatchBodyBytes: 262144
+  webhookBodyBytes: 262144
+  headerBytes: 16384
+  requestTimeoutSeconds: 15
+  source: ARCHITECTURE 31.2 (CN-12)
+x-catalogue-interpretations:
+  - id: I-01
+    where: 29.1-29.5 first cells using shorthand
+    text: Rows that write '…/x', list several paths in one cell or leave a path implicit are expanded by the explicit table scripts/contracts/route-expansions.mjs, keyed by the exact cell text. Every expansion is a literal reading; the table is the line-by-line transcription for review.
+  - id: I-02
+    where: 29.3 and 29.2 document-upload rows
+    text: "'POST /patients/{patientId}/document-uploads, …/complete' (29.3, 'As 29.2') is read as POST /document-uploads/{documentId}/complete, the path 29.2 gives."
+  - id: I-03
+    where: 29.3 video-session row
+    text: "'GET /appointments/{id}/video-session, POST …/admit, …/join, …/end' is read as sub-paths of /video-session (admit, join, end), consistent with the patient routes 29.2 gives (/video-session/join)."
+  - id: I-04
+    where: 29.4 rows using 'GET/POST/PATCH /admin/x'
+    text: PATCH on a collection path is transcribed literally (no identifier) and flagged x-catalogue-gap. The Solution Architect should confirm whether /{id} was meant.
+  - id: I-05
+    where: 29.3 and 29.4 blocked-times and roster rows
+    text: DELETE on the collection path (/blocked-times, /roster) is transcribed literally and flagged x-catalogue-gap; the catalogue names no identifier.
+  - id: I-06
+    where: 29.4 dagger (†)
+    text: † applies to the code span it follows (per route), which is how the rows read; for a row with one dagger after the last item only that item is marked elevationRequired.
+  - id: I-07
+    where: Idem / If-Match columns
+    text: "Idempotency-Key is required on POST routes of a row marked Idem (28.3 says 'portal POST'). If-Match is required on every PATCH route (28.2, CN-07: PATCH on an existing resource), whatever the row marks, and on PUT and DELETE routes of a row marked If-Match, and on these state-changing POSTs of such rows: appointments cancel, reschedule, check-in, no-show; questionnaire-responses submit; notes sign; encounters complete; documents confirm. 'If-Match on PUT' applies to PUT only. Per-host differences are kept in x-access; the parameter is then optional with a description."
+  - id: I-08
+    where: Routes on both my. and staff.
+    text: One operation carries both hosts in x-access when method and normalised path coincide (OpenAPI cannot hold two operations on one path). The path parameter name of the first host is used ({reservationId} for appointments); the document's own spelling is kept in x-access.<host>.pathAs. Where the two hosts return different bodies the response is a oneOf.
+  - id: I-09
+    where: Success statuses
+    text: Where a row states a status (201, 202, 302) it is used; where it does not, the success status is 200 and the shape is OpaqueObject unless fields are named. The document gives no 204.
+  - id: I-10
+    where: Bodies not enumerated
+    text: 'Fields are named only where draft 8.1 names them. Everything else is common.yaml OpaqueObject (x-schema-status: shape-not-specified-in-draft-8.1). The owning module ticket completes its shapes in its own module file as a reviewed contract change.'
+  - id: I-11
+    where: List responses
+    text: GET collections and the rows marked Paged return {items, nextCursor} per 28.2; items are OpaqueObject unless fields are named.
+  - id: I-12
+    where: CSRF
+    text: auth.csrf_failed and csrfToken exist, but draft 8.1 does not name the header that carries the token, so no header is declared.
+  - id: I-13
+    where: Common errors
+    text: The common statuses of section 29 (400, 401, 403, 404, 409 patient.merged, 412, 429, 503) are on every route they apply to; 428 and 412 on If-Match routes; 413 on routes with a body; 504 kernel.timeout; 400 kernel.client_release_unsupported on portal routes outside the 28.6 exempt list; 400 kernel.idempotency_key_required and 409 kernel.idempotency_conflict on Idem routes. Module codes come from the row notes.
+  - id: I-14
+    where: 29.5 POST /partner/v1/*
+    text: Reserved for R2/R3 (22.17); a wildcard is not an OpenAPI path and the catalogue defines no operation. Listed in x-reserved-routes and counted by the route-count check.
+  - id: I-15
+    where: Module ownership
+    text: The catalogue does not assign routes to modules; the split follows the permission prefix, the table owning the data (22.x) and the module that exposes the function. Webhooks are in integration-core (they all enter through integration_core.receive_inbound, 29.5); /api/v1/auth and admin auth are identity; GET /services, /locations, /clinicians (C0 directory, 22.5.1) are organisation; check-in-qr and /admin/clinicians/* roster and templates are scheduling.
+paths:
+  /api/v1/admin/alert-settings:
+    $ref: ./notifications.yaml#/paths/~1api~1v1~1admin~1alert-settings
+  /api/v1/admin/audit-events/search:
+    $ref: ./audit.yaml#/paths/~1api~1v1~1admin~1audit-events~1search
+  /api/v1/admin/audit-exports:
+    $ref: ./audit.yaml#/paths/~1api~1v1~1admin~1audit-exports
+  /api/v1/admin/audit-exports/{id}:
+    $ref: ./audit.yaml#/paths/~1api~1v1~1admin~1audit-exports~1{id}
+  /api/v1/admin/audit-exports/{id}/download-url:
+    $ref: ./audit.yaml#/paths/~1api~1v1~1admin~1audit-exports~1{id}~1download-url
+  /api/v1/admin/auth/elevation/options:
+    $ref: ./identity.yaml#/paths/~1api~1v1~1admin~1auth~1elevation~1options
+  /api/v1/admin/auth/elevation/verify:
+    $ref: ./identity.yaml#/paths/~1api~1v1~1admin~1auth~1elevation~1verify
+  /api/v1/admin/auth/enrolment/options:
+    $ref: ./identity.yaml#/paths/~1api~1v1~1admin~1auth~1enrolment~1options
+  /api/v1/admin/auth/enrolment/verify:
+    $ref: ./identity.yaml#/paths/~1api~1v1~1admin~1auth~1enrolment~1verify
+  /api/v1/admin/auth/sign-in/options:
+    $ref: ./identity.yaml#/paths/~1api~1v1~1admin~1auth~1sign-in~1options
+  /api/v1/admin/auth/sign-in/verify:
+    $ref: ./identity.yaml#/paths/~1api~1v1~1admin~1auth~1sign-in~1verify
+  /api/v1/admin/banners:
+    $ref: ./organisation.yaml#/paths/~1api~1v1~1admin~1banners
+  /api/v1/admin/booking-policies:
+    $ref: ./organisation.yaml#/paths/~1api~1v1~1admin~1booking-policies
+  /api/v1/admin/btg-grants:
+    $ref: ./audit.yaml#/paths/~1api~1v1~1admin~1btg-grants
+  /api/v1/admin/btg-grants/{id}/review:
+    $ref: ./audit.yaml#/paths/~1api~1v1~1admin~1btg-grants~1{id}~1review
+  /api/v1/admin/clinicians/{id}/availability-templates:
+    $ref: ./scheduling.yaml#/paths/~1api~1v1~1admin~1clinicians~1{id}~1availability-templates
+  /api/v1/admin/clinicians/{id}/availability-templates/{templateId}:
+    $ref: ./scheduling.yaml#/paths/~1api~1v1~1admin~1clinicians~1{id}~1availability-templates~1{templateId}
+  /api/v1/admin/clinicians/{id}/blocked-times:
+    $ref: ./scheduling.yaml#/paths/~1api~1v1~1admin~1clinicians~1{id}~1blocked-times
+  /api/v1/admin/consent-templates:
+    $ref: ./organisation.yaml#/paths/~1api~1v1~1admin~1consent-templates
+  /api/v1/admin/consent-templates/{id}/publish:
+    $ref: ./organisation.yaml#/paths/~1api~1v1~1admin~1consent-templates~1{id}~1publish
+  /api/v1/admin/consents:
+    $ref: ./patient.yaml#/paths/~1api~1v1~1admin~1consents
+  /api/v1/admin/dead-letters:
+    $ref: ./integration-core.yaml#/paths/~1api~1v1~1admin~1dead-letters
+  /api/v1/admin/dead-letters/{id}/retry:
+    $ref: ./integration-core.yaml#/paths/~1api~1v1~1admin~1dead-letters~1{id}~1retry
+  /api/v1/admin/enrolment-tokens:
+    $ref: ./identity.yaml#/paths/~1api~1v1~1admin~1enrolment-tokens
+  /api/v1/admin/enrolment-tokens/{id}/approve:
+    $ref: ./identity.yaml#/paths/~1api~1v1~1admin~1enrolment-tokens~1{id}~1approve
+  /api/v1/admin/feature-flags:
+    $ref: ./organisation.yaml#/paths/~1api~1v1~1admin~1feature-flags
+  /api/v1/admin/holidays:
+    $ref: ./organisation.yaml#/paths/~1api~1v1~1admin~1holidays
+  /api/v1/admin/incidents:
+    $ref: ./privacy.yaml#/paths/~1api~1v1~1admin~1incidents
+  /api/v1/admin/integrations:
+    $ref: ./integration-core.yaml#/paths/~1api~1v1~1admin~1integrations
+  /api/v1/admin/integrations/{id}:
+    $ref: ./integration-core.yaml#/paths/~1api~1v1~1admin~1integrations~1{id}
+  /api/v1/admin/integrations/{id}/inbound-secret-requests:
+    $ref: ./integration-core.yaml#/paths/~1api~1v1~1admin~1integrations~1{id}~1inbound-secret-requests
+  /api/v1/admin/integrations/{id}/inbound-secret-requests/{requestId}/approve:
+    $ref: ./integration-core.yaml#/paths/~1api~1v1~1admin~1integrations~1{id}~1inbound-secret-requests~1{requestId}~1approve
+  /api/v1/admin/integrations/{id}/secrets/{name}:
+    $ref: ./integration-core.yaml#/paths/~1api~1v1~1admin~1integrations~1{id}~1secrets~1{name}
+  /api/v1/admin/integrations/{id}/test:
+    $ref: ./integration-core.yaml#/paths/~1api~1v1~1admin~1integrations~1{id}~1test
+  /api/v1/admin/locations:
+    $ref: ./organisation.yaml#/paths/~1api~1v1~1admin~1locations
+  /api/v1/admin/locations/{id}/roster:
+    $ref: ./scheduling.yaml#/paths/~1api~1v1~1admin~1locations~1{id}~1roster
+  /api/v1/admin/message-templates:
+    $ref: ./notifications.yaml#/paths/~1api~1v1~1admin~1message-templates
+  /api/v1/admin/message-templates/{id}/publish:
+    $ref: ./notifications.yaml#/paths/~1api~1v1~1admin~1message-templates~1{id}~1publish
+  /api/v1/admin/message-templates/{id}/render-check:
+    $ref: ./notifications.yaml#/paths/~1api~1v1~1admin~1message-templates~1{id}~1render-check
+  /api/v1/admin/opening-hours:
+    $ref: ./organisation.yaml#/paths/~1api~1v1~1admin~1opening-hours
+  /api/v1/admin/operating-states:
+    $ref: ./organisation.yaml#/paths/~1api~1v1~1admin~1operating-states
+  /api/v1/admin/operations/summary:
+    $ref: ./integration-core.yaml#/paths/~1api~1v1~1admin~1operations~1summary
+  /api/v1/admin/patient-labels:
+    $ref: ./patient.yaml#/paths/~1api~1v1~1admin~1patient-labels
+  /api/v1/admin/person-links:
+    $ref: ./identity.yaml#/paths/~1api~1v1~1admin~1person-links
+  /api/v1/admin/person-links/{id}/approve:
+    $ref: ./identity.yaml#/paths/~1api~1v1~1admin~1person-links~1{id}~1approve
+  /api/v1/admin/principals:
+    $ref: ./identity.yaml#/paths/~1api~1v1~1admin~1principals
+  /api/v1/admin/principals/{id}/kill-switch:
+    $ref: ./identity.yaml#/paths/~1api~1v1~1admin~1principals~1{id}~1kill-switch
+  /api/v1/admin/privacy-requests:
+    $ref: ./privacy.yaml#/paths/~1api~1v1~1admin~1privacy-requests
+  /api/v1/admin/privacy-requests/{id}/decide:
+    $ref: ./privacy.yaml#/paths/~1api~1v1~1admin~1privacy-requests~1{id}~1decide
+  /api/v1/admin/privacy-requests/{id}/verify-identity:
+    $ref: ./privacy.yaml#/paths/~1api~1v1~1admin~1privacy-requests~1{id}~1verify-identity
+  /api/v1/admin/questionnaire-templates:
+    $ref: ./organisation.yaml#/paths/~1api~1v1~1admin~1questionnaire-templates
+  /api/v1/admin/questionnaire-templates/{id}/publish:
+    $ref: ./organisation.yaml#/paths/~1api~1v1~1admin~1questionnaire-templates~1{id}~1publish
+  /api/v1/admin/reports/ops:
+    $ref: ./reporting.yaml#/paths/~1api~1v1~1admin~1reports~1ops
+  /api/v1/admin/role-change-requests:
+    $ref: ./identity.yaml#/paths/~1api~1v1~1admin~1role-change-requests
+  /api/v1/admin/role-change-requests/{id}/approve:
+    $ref: ./identity.yaml#/paths/~1api~1v1~1admin~1role-change-requests~1{id}~1approve
+  /api/v1/admin/role-change-requests/{id}/cancel:
+    $ref: ./identity.yaml#/paths/~1api~1v1~1admin~1role-change-requests~1{id}~1cancel
+  /api/v1/admin/role-change-requests/{id}/reject:
+    $ref: ./identity.yaml#/paths/~1api~1v1~1admin~1role-change-requests~1{id}~1reject
+  /api/v1/admin/roles:
+    $ref: ./identity.yaml#/paths/~1api~1v1~1admin~1roles
+  /api/v1/admin/rooms:
+    $ref: ./organisation.yaml#/paths/~1api~1v1~1admin~1rooms
+  /api/v1/admin/services:
+    $ref: ./organisation.yaml#/paths/~1api~1v1~1admin~1services
+  /api/v1/admin/settings:
+    $ref: ./organisation.yaml#/paths/~1api~1v1~1admin~1settings
+  /api/v1/admin/staff-profiles/{principalId}:
+    $ref: ./identity.yaml#/paths/~1api~1v1~1admin~1staff-profiles~1{principalId}
+  /api/v1/admin/staff-support:
+    $ref: ./identity.yaml#/paths/~1api~1v1~1admin~1staff-support
+  /api/v1/admin/staff-support/{id}:
+    $ref: ./identity.yaml#/paths/~1api~1v1~1admin~1staff-support~1{id}
+  /api/v1/admin/vital-ranges:
+    $ref: ./clinical.yaml#/paths/~1api~1v1~1admin~1vital-ranges
+  /api/v1/admin/vital-ranges/{id}/retire:
+    $ref: ./clinical.yaml#/paths/~1api~1v1~1admin~1vital-ranges~1{id}~1retire
+  /api/v1/alerts:
+    $ref: ./notifications.yaml#/paths/~1api~1v1~1alerts
+  /api/v1/alerts/{id}/acknowledge:
+    $ref: ./notifications.yaml#/paths/~1api~1v1~1alerts~1{id}~1acknowledge
+  /api/v1/alerts/open-ids:
+    $ref: ./notifications.yaml#/paths/~1api~1v1~1alerts~1open-ids
+  /api/v1/alerts/stream:
+    $ref: ./notifications.yaml#/paths/~1api~1v1~1alerts~1stream
+  /api/v1/appointments/{id}/assignment:
+    $ref: ./scheduling.yaml#/paths/~1api~1v1~1appointments~1{id}~1assignment
+  /api/v1/appointments/{id}/check-in:
+    $ref: ./scheduling.yaml#/paths/~1api~1v1~1appointments~1{id}~1check-in
+  /api/v1/appointments/{id}/no-show:
+    $ref: ./scheduling.yaml#/paths/~1api~1v1~1appointments~1{id}~1no-show
+  /api/v1/appointments/{id}/video-session/admit:
+    $ref: ./telehealth.yaml#/paths/~1api~1v1~1appointments~1{id}~1video-session~1admit
+  /api/v1/appointments/{id}/video-session/end:
+    $ref: ./telehealth.yaml#/paths/~1api~1v1~1appointments~1{id}~1video-session~1end
+  /api/v1/appointments/{reservationId}:
+    $ref: ./scheduling.yaml#/paths/~1api~1v1~1appointments~1{reservationId}
+  /api/v1/appointments/{reservationId}/calendar.ics:
+    $ref: ./scheduling.yaml#/paths/~1api~1v1~1appointments~1{reservationId}~1calendar.ics
+  /api/v1/appointments/{reservationId}/cancel:
+    $ref: ./scheduling.yaml#/paths/~1api~1v1~1appointments~1{reservationId}~1cancel
+  /api/v1/appointments/{reservationId}/confirm:
+    $ref: ./scheduling.yaml#/paths/~1api~1v1~1appointments~1{reservationId}~1confirm
+  /api/v1/appointments/{reservationId}/previsit:
+    $ref: ./scheduling.yaml#/paths/~1api~1v1~1appointments~1{reservationId}~1previsit
+  /api/v1/appointments/{reservationId}/reschedule:
+    $ref: ./scheduling.yaml#/paths/~1api~1v1~1appointments~1{reservationId}~1reschedule
+  /api/v1/appointments/{reservationId}/video-session:
+    $ref: ./telehealth.yaml#/paths/~1api~1v1~1appointments~1{reservationId}~1video-session
+  /api/v1/appointments/{reservationId}/video-session/device-check:
+    $ref: ./telehealth.yaml#/paths/~1api~1v1~1appointments~1{reservationId}~1video-session~1device-check
+  /api/v1/appointments/{reservationId}/video-session/join:
+    $ref: ./telehealth.yaml#/paths/~1api~1v1~1appointments~1{reservationId}~1video-session~1join
+  /api/v1/appointments/{reservationId}/video-session/location:
+    $ref: ./telehealth.yaml#/paths/~1api~1v1~1appointments~1{reservationId}~1video-session~1location
+  /api/v1/auth/callback:
+    $ref: ./identity.yaml#/paths/~1api~1v1~1auth~1callback
+  /api/v1/auth/reauth:
+    $ref: ./identity.yaml#/paths/~1api~1v1~1auth~1reauth
+  /api/v1/auth/session:
+    $ref: ./identity.yaml#/paths/~1api~1v1~1auth~1session
+  /api/v1/auth/session/extend:
+    $ref: ./identity.yaml#/paths/~1api~1v1~1auth~1session~1extend
+  /api/v1/auth/sign-in:
+    $ref: ./identity.yaml#/paths/~1api~1v1~1auth~1sign-in
+  /api/v1/auth/sign-out:
+    $ref: ./identity.yaml#/paths/~1api~1v1~1auth~1sign-out
+  /api/v1/availability/search:
+    $ref: ./scheduling.yaml#/paths/~1api~1v1~1availability~1search
+  /api/v1/calendar-link:
+    $ref: ./calendar-sync.yaml#/paths/~1api~1v1~1calendar-link
+  /api/v1/calendar-link/callback:
+    $ref: ./calendar-sync.yaml#/paths/~1api~1v1~1calendar-link~1callback
+  /api/v1/calendar-link/start:
+    $ref: ./calendar-sync.yaml#/paths/~1api~1v1~1calendar-link~1start
+  /api/v1/check-ins:
+    $ref: ./scheduling.yaml#/paths/~1api~1v1~1check-ins
+  /api/v1/check-ins/{id}/triage:
+    $ref: ./clinical.yaml#/paths/~1api~1v1~1check-ins~1{id}~1triage
+  /api/v1/check-ins/{id}/vitals:
+    $ref: ./clinical.yaml#/paths/~1api~1v1~1check-ins~1{id}~1vitals
+  /api/v1/clinicians:
+    $ref: ./organisation.yaml#/paths/~1api~1v1~1clinicians
+  /api/v1/clinicians/{id}/availability-templates:
+    $ref: ./scheduling.yaml#/paths/~1api~1v1~1clinicians~1{id}~1availability-templates
+  /api/v1/clinicians/{id}/availability-templates/{templateId}:
+    $ref: ./scheduling.yaml#/paths/~1api~1v1~1clinicians~1{id}~1availability-templates~1{templateId}
+  /api/v1/clinicians/{id}/blocked-times:
+    $ref: ./scheduling.yaml#/paths/~1api~1v1~1clinicians~1{id}~1blocked-times
+  /api/v1/consents/{consentId}/sign:
+    $ref: ./patient.yaml#/paths/~1api~1v1~1consents~1{consentId}~1sign
+  /api/v1/deletion-requests/{id}/decide:
+    $ref: ./documents.yaml#/paths/~1api~1v1~1deletion-requests~1{id}~1decide
+  /api/v1/document-uploads/{documentId}/complete:
+    $ref: ./documents.yaml#/paths/~1api~1v1~1document-uploads~1{documentId}~1complete
+  /api/v1/documents/{documentId}/download-url:
+    $ref: ./documents.yaml#/paths/~1api~1v1~1documents~1{documentId}~1download-url
+  /api/v1/documents/{id}/classification:
+    $ref: ./documents.yaml#/paths/~1api~1v1~1documents~1{id}~1classification
+  /api/v1/documents/{id}/confirm:
+    $ref: ./documents.yaml#/paths/~1api~1v1~1documents~1{id}~1confirm
+  /api/v1/documents/{id}/deletion-requests:
+    $ref: ./documents.yaml#/paths/~1api~1v1~1documents~1{id}~1deletion-requests
+  /api/v1/documents/{id}/legal-holds:
+    $ref: ./documents.yaml#/paths/~1api~1v1~1documents~1{id}~1legal-holds
+  /api/v1/duplicate-flags:
+    $ref: ./patient.yaml#/paths/~1api~1v1~1duplicate-flags
+  /api/v1/encounters:
+    $ref: ./clinical.yaml#/paths/~1api~1v1~1encounters
+  /api/v1/encounters/{id}/complete:
+    $ref: ./clinical.yaml#/paths/~1api~1v1~1encounters~1{id}~1complete
+  /api/v1/encounters/{id}/notes:
+    $ref: ./clinical.yaml#/paths/~1api~1v1~1encounters~1{id}~1notes
+  /api/v1/holds:
+    $ref: ./scheduling.yaml#/paths/~1api~1v1~1holds
+  /api/v1/insurance-coverages/{id}/eligibility:
+    $ref: ./patient.yaml#/paths/~1api~1v1~1insurance-coverages~1{id}~1eligibility
+  /api/v1/locations:
+    $ref: ./organisation.yaml#/paths/~1api~1v1~1locations
+  /api/v1/locations/{id}/roster:
+    $ref: ./scheduling.yaml#/paths/~1api~1v1~1locations~1{id}~1roster
+  /api/v1/locations/{locationId}/arrivals:
+    $ref: ./scheduling.yaml#/paths/~1api~1v1~1locations~1{locationId}~1arrivals
+  /api/v1/locations/{locationId}/check-in-qr:
+    $ref: ./scheduling.yaml#/paths/~1api~1v1~1locations~1{locationId}~1check-in-qr
+  /api/v1/locations/{locationId}/queue:
+    $ref: ./scheduling.yaml#/paths/~1api~1v1~1locations~1{locationId}~1queue
+  /api/v1/locations/{locationId}/referral-inbox:
+    $ref: ./clinical.yaml#/paths/~1api~1v1~1locations~1{locationId}~1referral-inbox
+  /api/v1/me:
+    $ref: ./identity.yaml#/paths/~1api~1v1~1me
+  /api/v1/notes/{id}:
+    $ref: ./clinical.yaml#/paths/~1api~1v1~1notes~1{id}
+  /api/v1/notes/{id}/addenda:
+    $ref: ./clinical.yaml#/paths/~1api~1v1~1notes~1{id}~1addenda
+  /api/v1/notes/{id}/cosign:
+    $ref: ./clinical.yaml#/paths/~1api~1v1~1notes~1{id}~1cosign
+  /api/v1/notes/{id}/sign:
+    $ref: ./clinical.yaml#/paths/~1api~1v1~1notes~1{id}~1sign
+  /api/v1/notices:
+    $ref: ./notifications.yaml#/paths/~1api~1v1~1notices
+  /api/v1/notices/{id}/read:
+    $ref: ./notifications.yaml#/paths/~1api~1v1~1notices~1{id}~1read
+  /api/v1/patient-merges:
+    $ref: ./patient.yaml#/paths/~1api~1v1~1patient-merges
+  /api/v1/patient-merges/{id}:
+    $ref: ./patient.yaml#/paths/~1api~1v1~1patient-merges~1{id}
+  /api/v1/patient-merges/{id}/approve:
+    $ref: ./patient.yaml#/paths/~1api~1v1~1patient-merges~1{id}~1approve
+  /api/v1/patient-merges/{id}/reject:
+    $ref: ./patient.yaml#/paths/~1api~1v1~1patient-merges~1{id}~1reject
+  /api/v1/patients:
+    $ref: ./patient.yaml#/paths/~1api~1v1~1patients
+  /api/v1/patients/{patientId}:
+    $ref: ./patient.yaml#/paths/~1api~1v1~1patients~1{patientId}
+  /api/v1/patients/{patientId}/allergies:
+    $ref: ./clinical.yaml#/paths/~1api~1v1~1patients~1{patientId}~1allergies
+  /api/v1/patients/{patientId}/allergies/{id}:
+    $ref: ./clinical.yaml#/paths/~1api~1v1~1patients~1{patientId}~1allergies~1{id}
+  /api/v1/patients/{patientId}/appointments:
+    $ref: ./patient.yaml#/paths/~1api~1v1~1patients~1{patientId}~1appointments
+  /api/v1/patients/{patientId}/attach:
+    $ref: ./patient.yaml#/paths/~1api~1v1~1patients~1{patientId}~1attach
+  /api/v1/patients/{patientId}/banner:
+    $ref: ./patient.yaml#/paths/~1api~1v1~1patients~1{patientId}~1banner
+  /api/v1/patients/{patientId}/break-glass:
+    $ref: ./audit.yaml#/paths/~1api~1v1~1patients~1{patientId}~1break-glass
+  /api/v1/patients/{patientId}/care-team:
+    $ref: ./patient.yaml#/paths/~1api~1v1~1patients~1{patientId}~1care-team
+  /api/v1/patients/{patientId}/care-team/{memberId}:
+    $ref: ./patient.yaml#/paths/~1api~1v1~1patients~1{patientId}~1care-team~1{memberId}
+  /api/v1/patients/{patientId}/chart-summary:
+    $ref: ./clinical.yaml#/paths/~1api~1v1~1patients~1{patientId}~1chart-summary
+  /api/v1/patients/{patientId}/communication-preferences:
+    $ref: ./patient.yaml#/paths/~1api~1v1~1patients~1{patientId}~1communication-preferences
+  /api/v1/patients/{patientId}/consents:
+    $ref: ./patient.yaml#/paths/~1api~1v1~1patients~1{patientId}~1consents
+  /api/v1/patients/{patientId}/contacts:
+    $ref: ./patient.yaml#/paths/~1api~1v1~1patients~1{patientId}~1contacts
+  /api/v1/patients/{patientId}/contacts/{id}:
+    $ref: ./patient.yaml#/paths/~1api~1v1~1patients~1{patientId}~1contacts~1{id}
+  /api/v1/patients/{patientId}/document-uploads:
+    $ref: ./documents.yaml#/paths/~1api~1v1~1patients~1{patientId}~1document-uploads
+  /api/v1/patients/{patientId}/documents:
+    $ref: ./documents.yaml#/paths/~1api~1v1~1patients~1{patientId}~1documents
+  /api/v1/patients/{patientId}/immunisations:
+    $ref: ./clinical.yaml#/paths/~1api~1v1~1patients~1{patientId}~1immunisations
+  /api/v1/patients/{patientId}/immunisations/{id}:
+    $ref: ./clinical.yaml#/paths/~1api~1v1~1patients~1{patientId}~1immunisations~1{id}
+  /api/v1/patients/{patientId}/insurance-coverages:
+    $ref: ./patient.yaml#/paths/~1api~1v1~1patients~1{patientId}~1insurance-coverages
+  /api/v1/patients/{patientId}/insurance-coverages/{id}:
+    $ref: ./patient.yaml#/paths/~1api~1v1~1patients~1{patientId}~1insurance-coverages~1{id}
+  /api/v1/patients/{patientId}/medications:
+    $ref: ./clinical.yaml#/paths/~1api~1v1~1patients~1{patientId}~1medications
+  /api/v1/patients/{patientId}/medications/{id}:
+    $ref: ./clinical.yaml#/paths/~1api~1v1~1patients~1{patientId}~1medications~1{id}
+  /api/v1/patients/{patientId}/privacy-requests:
+    $ref: ./privacy.yaml#/paths/~1api~1v1~1patients~1{patientId}~1privacy-requests
+  /api/v1/patients/{patientId}/problems:
+    $ref: ./clinical.yaml#/paths/~1api~1v1~1patients~1{patientId}~1problems
+  /api/v1/patients/{patientId}/problems/{id}:
+    $ref: ./clinical.yaml#/paths/~1api~1v1~1patients~1{patientId}~1problems~1{id}
+  /api/v1/patients/{patientId}/profile:
+    $ref: ./patient.yaml#/paths/~1api~1v1~1patients~1{patientId}~1profile
+  /api/v1/patients/{patientId}/proxies:
+    $ref: ./identity.yaml#/paths/~1api~1v1~1patients~1{patientId}~1proxies
+  /api/v1/patients/{patientId}/proxies/{grantId}:
+    $ref: ./identity.yaml#/paths/~1api~1v1~1patients~1{patientId}~1proxies~1{grantId}
+  /api/v1/patients/{patientId}/proxy-requests:
+    $ref: ./identity.yaml#/paths/~1api~1v1~1patients~1{patientId}~1proxy-requests
+  /api/v1/patients/{patientId}/questionnaire-responses:
+    $ref: ./clinical.yaml#/paths/~1api~1v1~1patients~1{patientId}~1questionnaire-responses
+  /api/v1/patients/{patientId}/referrals:
+    $ref: ./clinical.yaml#/paths/~1api~1v1~1patients~1{patientId}~1referrals
+  /api/v1/patients/{patientId}/threads:
+    $ref: ./messaging.yaml#/paths/~1api~1v1~1patients~1{patientId}~1threads
+  /api/v1/patients/match:
+    $ref: ./patient.yaml#/paths/~1api~1v1~1patients~1match
+  /api/v1/patients/search:
+    $ref: ./patient.yaml#/paths/~1api~1v1~1patients~1search
+  /api/v1/patients/self-registration:
+    $ref: ./patient.yaml#/paths/~1api~1v1~1patients~1self-registration
+  /api/v1/privacy-requests:
+    $ref: ./privacy.yaml#/paths/~1api~1v1~1privacy-requests
+  /api/v1/privacy-requests/{id}:
+    $ref: ./privacy.yaml#/paths/~1api~1v1~1privacy-requests~1{id}
+  /api/v1/privacy-requests/{id}/export/download-url:
+    $ref: ./privacy.yaml#/paths/~1api~1v1~1privacy-requests~1{id}~1export~1download-url
+  /api/v1/questionnaire-responses/{responseId}:
+    $ref: ./clinical.yaml#/paths/~1api~1v1~1questionnaire-responses~1{responseId}
+  /api/v1/questionnaire-responses/{responseId}/submit:
+    $ref: ./clinical.yaml#/paths/~1api~1v1~1questionnaire-responses~1{responseId}~1submit
+  /api/v1/queue-entries/{id}/stage:
+    $ref: ./scheduling.yaml#/paths/~1api~1v1~1queue-entries~1{id}~1stage
+  /api/v1/referrals/{id}:
+    $ref: ./clinical.yaml#/paths/~1api~1v1~1referrals~1{id}
+  /api/v1/referrals/{id}/accept:
+    $ref: ./clinical.yaml#/paths/~1api~1v1~1referrals~1{id}~1accept
+  /api/v1/referrals/{id}/decline:
+    $ref: ./clinical.yaml#/paths/~1api~1v1~1referrals~1{id}~1decline
+  /api/v1/referrals/{id}/send:
+    $ref: ./clinical.yaml#/paths/~1api~1v1~1referrals~1{id}~1send
+  /api/v1/services:
+    $ref: ./organisation.yaml#/paths/~1api~1v1~1services
+  /api/v1/tasks:
+    $ref: ./messaging.yaml#/paths/~1api~1v1~1tasks
+  /api/v1/tasks/{id}:
+    $ref: ./messaging.yaml#/paths/~1api~1v1~1tasks~1{id}
+  /api/v1/terminology/search:
+    $ref: ./clinical.yaml#/paths/~1api~1v1~1terminology~1search
+  /api/v1/threads:
+    $ref: ./messaging.yaml#/paths/~1api~1v1~1threads
+  /api/v1/threads/{id}/messages:
+    $ref: ./messaging.yaml#/paths/~1api~1v1~1threads~1{id}~1messages
+  /api/v1/waitlist:
+    $ref: ./scheduling.yaml#/paths/~1api~1v1~1waitlist
+  /api/v1/waitlist-entries:
+    $ref: ./scheduling.yaml#/paths/~1api~1v1~1waitlist-entries
+  /api/v1/waitlist-entries/{id}:
+    $ref: ./scheduling.yaml#/paths/~1api~1v1~1waitlist-entries~1{id}
+  /api/v1/waitlist-offers/{offerId}/accept:
+    $ref: ./scheduling.yaml#/paths/~1api~1v1~1waitlist-offers~1{offerId}~1accept
+  /api/v1/waitlist-offers/{offerId}/decline:
+    $ref: ./scheduling.yaml#/paths/~1api~1v1~1waitlist-offers~1{offerId}~1decline
+  /public/v1/clinicians:
+    $ref: ./organisation.yaml#/paths/~1public~1v1~1clinicians
+  /public/v1/clinicians/{id}/next-available:
+    $ref: ./scheduling.yaml#/paths/~1public~1v1~1clinicians~1{id}~1next-available
+  /public/v1/locations:
+    $ref: ./organisation.yaml#/paths/~1public~1v1~1locations
+  /public/v1/services:
+    $ref: ./organisation.yaml#/paths/~1public~1v1~1services
+  /webhooks/google/calendar:
+    $ref: ./integration-core.yaml#/paths/~1webhooks~1google~1calendar
+  /webhooks/messaging/{vendor}:
+    $ref: ./integration-core.yaml#/paths/~1webhooks~1messaging~1{vendor}
+  /webhooks/video/{vendor}:
+    $ref: ./integration-core.yaml#/paths/~1webhooks~1video~1{vendor}
+components:
+  securitySchemes:
+    sessionCookie:
+      $ref: common.yaml#/components/securitySchemes/sessionCookie

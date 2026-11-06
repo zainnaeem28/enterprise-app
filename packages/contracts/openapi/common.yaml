@@ -1,0 +1,467 @@
+openapi: 3.1.0
+info:
+  title: Shared contract parts
+  version: 1.0.0-r1
+  description: Headers, error envelope, pagination and shared schemas (ARCHITECTURE 28.2-28.6, 30). Owned by F-08; module files reference it and never redefine it.
+paths: {}
+components:
+  parameters:
+    ClientRelease:
+      name: X-Client-Release
+      in: header
+      required: true
+      description: r<releaseNumber>.<gitSha12>, for example r142.3f9a1c2b7d10, sent by every portal bundle on every /api/* call (28.6). Missing, malformed or releaseNumber < min_client_release is refused with 400 kernel.client_release_unsupported before any session lookup.
+      schema:
+        type: string
+        pattern: ^r[1-9][0-9]*\.[0-9a-f]{12}$
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: 'UUID v4 or v7. Required on every portal POST marked "Idem" (28.3). Missing: 400 kernel.idempotency_key_required. Same key and request hash replays the stored response; same key with a different hash: 409 kernel.idempotency_conflict.'
+      schema:
+        type: string
+        format: uuid
+    IdempotencyKeyOptional:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: As IdempotencyKey, but the route is marked "Idem" on only some of its hosts; x-access states which.
+      schema:
+        type: string
+        format: uuid
+    IfMatch:
+      name: If-Match
+      in: header
+      required: true
+      description: 'The ETag (row version) of the resource as last read (CN-07, 28.2). Missing: 428 kernel.precondition_required. Stale: 412 kernel.precondition_failed with the current ETag.'
+      schema:
+        type: string
+    IfMatchOptional:
+      name: If-Match
+      in: header
+      required: false
+      description: As IfMatch, but the route requires it on only some of its hosts; x-access states which.
+      schema:
+        type: string
+    Limit:
+      name: limit
+      in: query
+      required: false
+      description: Page size, 1-100, default 25 (28.2).
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 25
+    Cursor:
+      name: cursor
+      in: query
+      required: false
+      description: Opaque cursor from nextCursor; HMAC-signed, so a forged or altered cursor is refused (28.2, CN-08).
+      schema:
+        type: string
+  headers:
+    XRequestId:
+      description: Correlation ID carried on every response (CN-13).
+      schema:
+        type: string
+    ETag:
+      description: Quoted row_version of a mutable resource (28.2).
+      schema:
+        type: string
+    CacheNoStore:
+      description: no-store on every /api/* response (CN-10).
+      schema:
+        type: string
+        const: no-store
+    CachePublic:
+      description: max-age=60 on /public/v1/* only (28.2).
+      schema:
+        type: string
+        const: max-age=60
+    RetryAfter:
+      description: Seconds to wait after 429 kernel.rate_limited.
+      schema:
+        type: integer
+    IdempotentReplay:
+      description: true when a stored response, or for bodies over 64 KB a re-read, is replayed (28.3).
+      schema:
+        type: string
+        const: 'true'
+    XSessionIdleExpiresAt:
+      description: Idle expiry of the session on every response (26.2).
+      schema:
+        type: string
+        format: date-time
+    Location:
+      description: Redirect target.
+      schema:
+        type: string
+  schemas:
+    OpaqueObject:
+      type: object
+      additionalProperties: true
+      description: A JSON object whose members ARCHITECTURE draft 8.1 does not enumerate for this route. The owning module ticket completes the shape in its own module file as a reviewed contract change; nothing is invented here.
+      x-schema-status: shape-not-specified-in-draft-8.1
+    FieldError:
+      type: object
+      required:
+        - path
+        - code
+      properties:
+        path:
+          type: string
+          description: JSON pointer of the offending field
+        code:
+          type: string
+      additionalProperties: false
+      description: Field paths and reason codes, never values (28.4).
+    Problem:
+      type: object
+      required:
+        - type
+        - title
+        - status
+        - code
+        - requestId
+        - retryable
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        code:
+          type: string
+          pattern: ^[a-z_]+\.[a-z_]+$
+          description: A section 30 error code; each module file lists its own in <Module>ErrorCode and CoreErrorCode lists kernel.* and auth.*.
+        requestId:
+          type: string
+        retryable:
+          type: boolean
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldError'
+        alternatives:
+          type: array
+          items:
+            type: string
+            format: date-time
+          description: scheduling.slot_taken, scheduling.hold_expired only (section 30)
+        survivorId:
+          type: string
+          format: uuid
+          description: patient.merged only, and only if readable (9.2)
+        missingConsentTemplates:
+          type: array
+          items:
+            type: string
+          description: clinical.consents_missing only
+        btgAvailable:
+          type: boolean
+          description: clinical.not_assigned only
+        retryAfterSeconds:
+          type: integer
+          description: kernel.rate_limited only
+      additionalProperties: false
+      description: application/problem+json error envelope (CN-03, 28.4). Contains no PHI. Extension members are allowed only where section 30 lists them.
+    CoreErrorCode:
+      type: string
+      enum:
+        - auth.unauthenticated
+        - auth.session_expired
+        - auth.reauth_required
+        - auth.forbidden
+        - auth.csrf_failed
+        - kernel.validation_failed
+        - kernel.client_release_unsupported
+        - kernel.not_found
+        - kernel.idempotency_key_required
+        - kernel.idempotency_conflict
+        - kernel.precondition_failed
+        - kernel.precondition_required
+        - kernel.rate_limited
+        - kernel.payload_too_large
+        - kernel.unavailable
+        - kernel.timeout
+      x-registry:
+        - code: auth.unauthenticated
+          http: '401'
+          retryable: no
+        - code: auth.session_expired
+          http: '401'
+          retryable: no
+        - code: auth.reauth_required
+          http: '401'
+          retryable: no
+        - code: auth.forbidden
+          http: '403'
+          retryable: no
+        - code: auth.csrf_failed
+          http: '403'
+          retryable: no
+        - code: kernel.validation_failed
+          http: '400'
+          retryable: no
+        - code: kernel.client_release_unsupported
+          http: '400'
+          retryable: no
+        - code: kernel.not_found
+          http: '404'
+          retryable: no
+        - code: kernel.idempotency_key_required
+          http: '400'
+          retryable: no
+        - code: kernel.idempotency_conflict
+          http: '409'
+          retryable: no
+        - code: kernel.precondition_failed
+          http: '412'
+          retryable: no
+        - code: kernel.precondition_required
+          http: '428'
+          retryable: no
+        - code: kernel.rate_limited
+          http: '429'
+          retryable: yes
+        - code: kernel.payload_too_large
+          http: '413'
+          retryable: no
+        - code: kernel.unavailable
+          http: '503'
+          retryable: yes
+        - code: kernel.timeout
+          http: '504'
+          retryable: yes
+      description: Section 30 error codes with the kernel and auth prefixes.
+    PatientBanner:
+      type: object
+      required:
+        - patientId
+        - displayName
+        - dateOfBirth
+        - mrn
+      properties:
+        patientId:
+          type: string
+          format: uuid
+        displayName:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+        mrn:
+          type: string
+        photoUrl:
+          type: string
+          format: uri
+          description: 60-second signed URL
+        allergies:
+          oneOf:
+            - type: object
+              required:
+                - state
+                - items
+                - moreCount
+                - uncodedCount
+                - lastChangedAt
+              properties:
+                state:
+                  type: string
+                  enum:
+                    - recorded
+                    - none_recorded
+                  description: none_recorded must be shown as "No allergies recorded", never "No known allergies" (BQ-11).
+                items:
+                  type: array
+                  maxItems: 10
+                  items:
+                    type: object
+                    required:
+                      - allergyId
+                      - display
+                      - category
+                      - severity
+                      - coded
+                    properties:
+                      allergyId:
+                        type: string
+                        format: uuid
+                      display:
+                        type: string
+                      category:
+                        type: string
+                      severity:
+                        type: string
+                      coded:
+                        type: boolean
+                moreCount:
+                  type: integer
+                uncodedCount:
+                  type: integer
+                lastChangedAt:
+                  type:
+                    - string
+                    - 'null'
+                  format: date-time
+            - type: 'null'
+          description: null when the caller passes neither the clinical.chart.read guard nor the clinical.chart.read_previsit guard for the patient (28.2).
+      description: Patient banner on every staff response that returns patient-scoped clinical or pre-visit data (BR-34, 28.2, draft 8 AL-01). Patient-portal responses carry none.
+  responses:
+    Error400:
+      description: Validation failed, idempotency key missing, or unsupported client release
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/XRequestId'
+        Cache-Control:
+          $ref: '#/components/headers/CacheNoStore'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Error401:
+      description: Not authenticated, or sign-in failed
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/XRequestId'
+        Cache-Control:
+          $ref: '#/components/headers/CacheNoStore'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Error403:
+      description: Forbidden
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/XRequestId'
+        Cache-Control:
+          $ref: '#/components/headers/CacheNoStore'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Error404:
+      description: Not found, including every out-of-scope resource (CN-04)
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/XRequestId'
+        Cache-Control:
+          $ref: '#/components/headers/CacheNoStore'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Error409:
+      description: Conflict
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/XRequestId'
+        Cache-Control:
+          $ref: '#/components/headers/CacheNoStore'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Error412:
+      description: Precondition failed; the current ETag is returned
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/XRequestId'
+        Cache-Control:
+          $ref: '#/components/headers/CacheNoStore'
+        ETag:
+          $ref: '#/components/headers/ETag'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Error413:
+      description: Payload too large
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/XRequestId'
+        Cache-Control:
+          $ref: '#/components/headers/CacheNoStore'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Error422:
+      description: Business rule refused; the module codes are listed per route
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/XRequestId'
+        Cache-Control:
+          $ref: '#/components/headers/CacheNoStore'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Error502:
+      description: Vendor rejected the request
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/XRequestId'
+        Cache-Control:
+          $ref: '#/components/headers/CacheNoStore'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Error428:
+      description: If-Match required
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/XRequestId'
+        Cache-Control:
+          $ref: '#/components/headers/CacheNoStore'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Error429:
+      description: Rate limited; Retry-After is returned
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/XRequestId'
+        Cache-Control:
+          $ref: '#/components/headers/CacheNoStore'
+        Retry-After:
+          $ref: '#/components/headers/RetryAfter'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Error503:
+      description: Unavailable
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/XRequestId'
+        Cache-Control:
+          $ref: '#/components/headers/CacheNoStore'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Error504:
+      description: Timeout; the server may have committed (34.3)
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/XRequestId'
+        Cache-Control:
+          $ref: '#/components/headers/CacheNoStore'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-sid
+      description: Opaque server session cookie. The CSRF token comes from GET /api/v1/auth/session (csrfToken); the header name that carries it is not stated in draft 8.1.

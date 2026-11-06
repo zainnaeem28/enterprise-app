@@ -1,0 +1,1099 @@
+openapi: 3.1.0
+info:
+  title: integration-core module contract
+  version: 1.0.0-r1
+  description: Routes owned by the integration-core module. Transcribed from ARCHITECTURE draft 8.1 sections 29-31. Later tickets edit only this file.
+paths:
+  /api/v1/admin/dead-letters:
+    get:
+      operationId: getAdminDeadLetters
+      tags:
+        - integration-core
+      summary: GET /api/v1/admin/dead-letters
+      description: 'staff.: Operations dashboard (BR-33, NFR-21)'
+      x-access:
+        staff:
+          permission: integration.ops.read / .dead_letter.retry
+          realm: admin_pool
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/admin/dead-letters
+          catalogueRow: 29.4#132
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: common.yaml#/components/parameters/ClientRelease
+        - $ref: common.yaml#/components/parameters/Limit
+        - $ref: common.yaml#/components/parameters/Cursor
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetAdminDeadLettersResponse'
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/admin/dead-letters/{id}/retry:
+    post:
+      operationId: postAdminDeadLettersByIdRetry
+      tags:
+        - integration-core
+      summary: POST /api/v1/admin/dead-letters/{id}/retry
+      description: 'staff.: Operations dashboard (BR-33, NFR-21)'
+      x-access:
+        staff:
+          permission: integration.ops.read / .dead_letter.retry
+          realm: admin_pool
+          idempotencyKey: false
+          ifMatch: false
+          elevationRequired: true
+          pathAs: /api/v1/admin/dead-letters/{id}/retry
+          catalogueRow: 29.4#132
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/OpaqueObject
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/admin/integrations:
+    get:
+      operationId: getAdminIntegrations
+      tags:
+        - integration-core
+      summary: GET /api/v1/admin/integrations
+      description: 'staff.: Settings only'
+      x-access:
+        staff:
+          permission: integration.connection.read / .manage
+          realm: admin_pool
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/admin/integrations
+          catalogueRow: 29.4#128
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: common.yaml#/components/parameters/ClientRelease
+        - $ref: common.yaml#/components/parameters/Limit
+        - $ref: common.yaml#/components/parameters/Cursor
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetAdminIntegrationsResponse'
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/admin/integrations/{id}:
+    patch:
+      operationId: patchAdminIntegrationsById
+      tags:
+        - integration-core
+      summary: PATCH /api/v1/admin/integrations/{id}
+      description: 'staff.: Settings only'
+      x-access:
+        staff:
+          permission: integration.connection.read / .manage
+          realm: admin_pool
+          idempotencyKey: false
+          ifMatch: true
+          elevationRequired: true
+          pathAs: /api/v1/admin/integrations/{id}
+          catalogueRow: 29.4#128
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+        - $ref: common.yaml#/components/parameters/IfMatch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: common.yaml#/components/schemas/OpaqueObject
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '412':
+          - kernel.precondition_failed
+        '413':
+          - kernel.payload_too_large
+        '428':
+          - kernel.precondition_required
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            ETag:
+              $ref: common.yaml#/components/headers/ETag
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/OpaqueObject
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '412':
+          $ref: common.yaml#/components/responses/Error412
+          description: 'Codes: kernel.precondition_failed.'
+        '413':
+          $ref: common.yaml#/components/responses/Error413
+          description: 'Codes: kernel.payload_too_large.'
+        '428':
+          $ref: common.yaml#/components/responses/Error428
+          description: 'Codes: kernel.precondition_required.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/admin/integrations/{id}/inbound-secret-requests:
+    post:
+      operationId: postAdminIntegrationsByIdInboundSecretRequests
+      tags:
+        - integration-core
+      summary: POST /api/v1/admin/integrations/{id}/inbound-secret-requests
+      description: 'staff.: 25.9'
+      x-access:
+        staff:
+          permission: integration.secret.write / .approve
+          realm: admin_pool
+          idempotencyKey: false
+          ifMatch: false
+          elevationRequired: true
+          pathAs: /api/v1/admin/integrations/{id}/inbound-secret-requests
+          catalogueRow: 29.4#130
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: common.yaml#/components/schemas/OpaqueObject
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '413':
+          - kernel.payload_too_large
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/OpaqueObject
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '413':
+          $ref: common.yaml#/components/responses/Error413
+          description: 'Codes: kernel.payload_too_large.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/admin/integrations/{id}/inbound-secret-requests/{requestId}/approve:
+    post:
+      operationId: postAdminIntegrationsByIdInboundSecretRequestsByRequestIdApprove
+      tags:
+        - integration-core
+      summary: POST /api/v1/admin/integrations/{id}/inbound-secret-requests/{requestId}/approve
+      description: 'staff.: 25.9'
+      x-access:
+        staff:
+          permission: integration.secret.write / .approve
+          realm: admin_pool
+          idempotencyKey: false
+          ifMatch: false
+          elevationRequired: true
+          pathAs: /api/v1/admin/integrations/{id}/inbound-secret-requests/{requestId}/approve
+          catalogueRow: 29.4#130
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/OpaqueObject
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/admin/integrations/{id}/secrets/{name}:
+    put:
+      operationId: putAdminIntegrationsByIdSecretsByName
+      tags:
+        - integration-core
+      summary: PUT /api/v1/admin/integrations/{id}/secrets/{name}
+      description: 'staff.: `outbound` only; body `{value}`; response `{versionId}`; value never echoed'
+      x-access:
+        staff:
+          permission: integration.secret.write
+          realm: admin_pool
+          idempotencyKey: false
+          ifMatch: false
+          elevationRequired: true
+          pathAs: /api/v1/admin/integrations/{id}/secrets/{name}
+          catalogueRow: 29.4#129
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: common.yaml#/components/parameters/ClientRelease
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutAdminIntegrationsByIdSecretsByNameRequest'
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '413':
+          - kernel.payload_too_large
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutAdminIntegrationsByIdSecretsByNameResponse'
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '413':
+          $ref: common.yaml#/components/responses/Error413
+          description: 'Codes: kernel.payload_too_large.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/admin/integrations/{id}/test:
+    post:
+      operationId: postAdminIntegrationsByIdTest
+      tags:
+        - integration-core
+      summary: POST /api/v1/admin/integrations/{id}/test
+      description: 'staff.: `{health, checkedAt}`'
+      x-access:
+        staff:
+          permission: integration.connection.manage
+          realm: admin_pool
+          idempotencyKey: false
+          ifMatch: false
+          elevationRequired: true
+          pathAs: /api/v1/admin/integrations/{id}/test
+          catalogueRow: 29.4#131
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostAdminIntegrationsByIdTestResponse'
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/admin/operations/summary:
+    get:
+      operationId: getAdminOperationsSummary
+      tags:
+        - integration-core
+      summary: GET /api/v1/admin/operations/summary
+      description: 'staff.: Operations dashboard (BR-33, NFR-21)'
+      x-access:
+        staff:
+          permission: integration.ops.read / .dead_letter.retry
+          realm: admin_pool
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/admin/operations/summary
+          catalogueRow: 29.4#132
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: common.yaml#/components/parameters/ClientRelease
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: common.yaml#/components/schemas/OpaqueObject
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /webhooks/google/calendar:
+    post:
+      operationId: postWebhooksGoogleCalendar
+      tags:
+        - integration-core
+      summary: POST /webhooks/google/calendar
+      description: 'integrations.: `200` after recording; triggers incremental sync'
+      x-access:
+        integrations:
+          caller: Google push
+          authentication: Channel token, verified **without a table read** (draft 6, TDR-05; rule below)
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /webhooks/google/calendar
+          catalogueRow: 29.5#143
+      x-max-body-bytes: 262144
+      security: []
+      x-authentication: Channel token, verified **without a table read** (draft 6, TDR-05; rule below)
+      x-error-codes:
+        '400':
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '413':
+          - kernel.payload_too_large
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '413':
+          $ref: common.yaml#/components/responses/Error413
+          description: 'Codes: kernel.payload_too_large.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /webhooks/messaging/{vendor}:
+    post:
+      operationId: postWebhooksMessagingByVendor
+      tags:
+        - integration-core
+      summary: POST /webhooks/messaging/{vendor}
+      description: 'integrations.: Delivery receipts'
+      x-access:
+        integrations:
+          caller: email and SMS vendors
+          authentication: vendor signature + timestamp (for example SNS message signature)
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /webhooks/messaging/{vendor}
+          catalogueRow: 29.5#145
+      x-max-body-bytes: 262144
+      security: []
+      x-authentication: vendor signature + timestamp (for example SNS message signature)
+      parameters:
+        - name: vendor
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: common.yaml#/components/schemas/OpaqueObject
+      x-error-codes:
+        '400':
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '413':
+          - kernel.payload_too_large
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '413':
+          $ref: common.yaml#/components/responses/Error413
+          description: 'Codes: kernel.payload_too_large.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /webhooks/video/{vendor}:
+    post:
+      operationId: postWebhooksVideoByVendor
+      tags:
+        - integration-core
+      summary: POST /webhooks/video/{vendor}
+      description: 'integrations.: Meeting and attendee events'
+      x-access:
+        integrations:
+          caller: video vendor
+          authentication: vendor signature + timestamp
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /webhooks/video/{vendor}
+          catalogueRow: 29.5#144
+      x-max-body-bytes: 262144
+      security: []
+      x-authentication: vendor signature + timestamp
+      parameters:
+        - name: vendor
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: common.yaml#/components/schemas/OpaqueObject
+      x-error-codes:
+        '400':
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '413':
+          - kernel.payload_too_large
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '413':
+          $ref: common.yaml#/components/responses/Error413
+          description: 'Codes: kernel.payload_too_large.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+components:
+  schemas:
+    GetAdminDeadLettersResponse:
+      type: object
+      required:
+        - items
+        - nextCursor
+      properties:
+        items:
+          type: array
+          items:
+            $ref: common.yaml#/components/schemas/OpaqueObject
+        nextCursor:
+          oneOf:
+            - type: string
+            - type: 'null'
+    GetAdminIntegrationsResponse:
+      type: object
+      required:
+        - items
+        - nextCursor
+      properties:
+        items:
+          type: array
+          items:
+            $ref: common.yaml#/components/schemas/OpaqueObject
+        nextCursor:
+          oneOf:
+            - type: string
+            - type: 'null'
+    IntegrationCoreErrorCode:
+      type: string
+      enum:
+        - integration.vendor_rejected
+        - integration.vendor_unavailable
+      x-registry:
+        - code: integration.vendor_rejected
+          http: 502/503
+          retryable: second yes
+        - code: integration.vendor_unavailable
+          http: 502/503
+          retryable: second yes
+      description: Section 30 error codes with the integration-core prefix.
+    PostAdminIntegrationsByIdTestResponse:
+      type: object
+      properties:
+        health:
+          type: string
+        checkedAt:
+          type: string
+          format: date-time
+      required:
+        - health
+        - checkedAt
+    PutAdminIntegrationsByIdSecretsByNameRequest:
+      type: object
+      properties:
+        value:
+          type: string
+      required:
+        - value
+    PutAdminIntegrationsByIdSecretsByNameResponse:
+      type: object
+      properties:
+        versionId:
+          type: string
+      required:
+        - versionId
+  securitySchemes:
+    sessionCookie:
+      $ref: common.yaml#/components/securitySchemes/sessionCookie
+tags:
+  - name: integration-core
+    description: Module integration-core
+servers:
+  - url: https://my.{domain}
+    description: Patient portal host (my.)
+    variables:
+      domain:
+        default: example.invalid
+  - url: https://staff.{domain}
+    description: Staff and admin portal host (staff.)
+    variables:
+      domain:
+        default: example.invalid
+  - url: https://integrations.{domain}
+    description: Integrations host (integrations.)
+    variables:
+      domain:
+        default: example.invalid
