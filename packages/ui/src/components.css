@@ -208,6 +208,9 @@ html {
   font-weight: 600;
 }
 .ehr-input {
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
   min-height: var(--target);
   padding: var(--sp-2) var(--sp-3);
   font: inherit;
