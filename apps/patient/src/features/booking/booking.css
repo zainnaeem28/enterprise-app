@@ -1,0 +1,63 @@
+.booking-summary {
+  margin: 1rem 0;
+}
+.booking-row {
+  display: grid;
+  grid-template-columns: 8rem 1fr;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+}
+.booking-row dt {
+  font-weight: 600;
+}
+.booking-row dd {
+  margin: 0;
+}
+.booking-line {
+  display: block;
+  margin: 0;
+}
+.booking-timer {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.booking-choices,
+.booking-mode {
+  border: 0;
+  padding: 0;
+  margin: 1rem 0;
+}
+.booking-choice {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  min-height: 44px;
+}
+.booking-choice input {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+.booking-selection {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid currentColor;
+}
+.booking-alternatives {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.booking-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+.booking-list > li {
+  margin-bottom: 1rem;
+}
+@media (max-width: 40rem) {
+  .booking-row {
+    grid-template-columns: 1fr;
+  }
+}
