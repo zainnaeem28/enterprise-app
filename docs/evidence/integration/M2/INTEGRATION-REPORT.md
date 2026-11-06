@@ -29,3 +29,21 @@ All four are outside INT-01 allowed paths; correction tickets via Orchestrator.
 Auth-slice journey (browser -> same-origin API -> OIDC conformance IdP -> session -> scoped read -> audit event), screenshots, container build, other CI jobs (sast, secrets, deps, contract, a11y, e2e). Not attempted while integration-db is red. Real Google Workspace sign-in remains BLOCKED (C-10).
 
 State: executed partially; not verified, not reviewed, not human-approved, not deployed.
+
+
+---
+# Round 2 (candidate a3732c5; F1-F4 fixes and FE-02 lockfile re-review all independently reviewed)
+Local, Node v24.22.2, pnpm 12.16.1, PostgreSQL 17.11 (provided ehr-test-db), clean frozen install. Raw: raw/r2/, reports/integration-db-r2/.
+| Check | Result |
+|---|---|
+| pnpm lint | PASS |
+| pnpm format:check | FAIL: scripts/ci/run-unit.mjs not prettier-formatted (INT01-F5) |
+| pnpm typecheck on clean tree | PASS (F4 resolved) |
+| pnpm build | PASS |
+| run-unit.mjs | PASS: 437 tests, 7 JUnit reports, 0 skipped/failed (F3 resolved) |
+| integration-db.sh (N-1 skipped, no release tag) | FAIL: db-foundation 29/1 fail, kernel 23/0, api 228/1 fail, worker 72/0 |
+F1 and F2 verified resolved (M-3/M-4 pass, directory-view asserts pass).
+## New findings
+- INT01-F5: `pnpm format:check` fails on scripts/ci/run-unit.mjs (introduced by the F3-R1 fix); CI lint-types/format job would fail.
+- INT01-F6 (blocking): catalog checks M-5-patient-guard and M-5-anonymous fail. M-5-patient-guard: identity.patient_link, identity.proxy_grant, notifications.notification, notifications.delivery_receipt, notifications.in_app_read have patient_id but neither the merge write guard nor an exemption. M-5-anonymous: six identity sign-in policies (person_signin_insert, principal_signin_select/insert/update, session_lookup, session_signin_insert) can match audience anonymous but are not in the ARCHITECTURE 21.3 list in db/tools. Needs BE-04/BE-06 owners and db/tools owner to agree guard/exemption and anonymous lists (security review of anonymous policies). The api organisation dbtest repeats the same failure.
+Still not done: auth-slice journey, screenshots, other CI jobs (not attempted while red). Real Google Workspace sign-in BLOCKED (C-10). Reviews: none started; cumulative rounds 0.
