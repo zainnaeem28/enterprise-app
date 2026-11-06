@@ -73,11 +73,17 @@ describe('the allowlist (BD-10)', () => {
     assert.equal(normaliseValue('datetime', '2030-01-15T14:30:00Z'), '2030-01-15T14:30:00.000Z');
     assert.equal(normaliseValue('datetime', '2030-02-31T14:30:00Z'), undefined);
     assert.equal(normaliseValue('datetime', 'next tuesday'), undefined);
+    const hosts = { allowedLinkHosts: ['portal.example.test'] };
     assert.equal(
-      normaliseValue('url', 'https://portal.example.test/a?b=c'),
+      normaliseValue('url', 'https://portal.example.test/a?b=c', hosts),
       'https://portal.example.test/a?b=c',
     );
-    assert.equal(normaliseValue('url', 'http://portal.example.test/'), undefined);
+    assert.equal(
+      normaliseValue('url', 'https://portal.example.test/a?b=c'),
+      undefined,
+      'BE06-F4: no configured hosts, no link',
+    );
+    assert.equal(normaliseValue('url', 'http://portal.example.test/', hosts), undefined);
     assert.equal(normaliseValue('url', 'https://user:pw@portal.example.test/'), undefined);
     assert.equal(normaliseValue('url', 'javascript:alert(1)'), undefined);
     assert.equal(
