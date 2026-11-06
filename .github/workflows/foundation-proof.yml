@@ -1,0 +1,150 @@
+# THROWAWAY (HEAAA-81 / F-07 evidence run). Lives only on a ci/HEAAA-81-* ref; NOT for merge. No deploy, no secrets,
+# no cloud credentials; contents: read only.
+name: foundation-proof
+on:
+  push:
+    branches: ['ci/HEAAA-81-*']
+permissions: {}
+defaults:
+  run:
+    shell: bash
+jobs:
+  foundation-proof:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    services:
+      postgres:
+        image: postgres:17@sha256:748a18a54d3842d43bc156f0840d78029b8d349e0feca98c12b9c4ce3404a6b3
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: postgres
+        ports:
+          - 127.0.0.1:55432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    env:
+      CI: 'true'
+      CI_TOOLS_DIR: ${{ github.workspace }}/.ci-tools
+      EHR_TEST_ADMIN_URL: postgres://postgres@127.0.0.1:55432/postgres
+      JOURNEY_ORG_ID: 00000000-0000-7000-8000-0000000000a1
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Record candidate and tool versions
+        run: |
+          mkdir -p reports/foundation
+          {
+            echo "candidate_commit=$(git rev-parse HEAD)"
+            echo "lockfile_sha256=$(sha256sum pnpm-lock.yaml)"
+            echo "node=$(node -v)"
+            echo "docker=$(docker --version)"
+            echo "runner=$ImageOS $ImageVersion"
+            echo "dockerfile_api_sha256=$(sha256sum docker/Dockerfile.api)"
+            echo "dockerfile_worker_sha256=$(sha256sum docker/Dockerfile.worker)"
+            echo "node_modules_present_before_install=$(find . -name node_modules -type d -prune | wc -l)"
+          } | tee reports/foundation/00-versions.txt
+      - name: Clean frozen install
+        run: |
+          corepack enable
+          echo "pnpm=$(pnpm -v)" | tee -a reports/foundation/00-versions.txt
+          test "$(find . -name node_modules -type d -prune | wc -l)" = 0
+          pnpm install --frozen-lockfile 2>&1 | tee reports/foundation/01-install.txt
+      - name: Production build of every app
+        run: |
+          pnpm build 2>&1 | tee reports/foundation/02-build.txt
+          for a in api worker staff patient site cms; do
+            echo "== apps/$a"; ls apps/$a/dist 2>&1 | head -5
+          done | tee reports/foundation/02-build-outputs.txt
+          test -s apps/staff/dist/index.html
+          test -s apps/api/dist/src/main.js
+          test -s apps/worker/dist/main.js
+      - name: Build container images (repository root context)
+        run: |
+          docker build -f docker/Dockerfile.api -t ehr-api:ci . 2>&1 | tee reports/foundation/03-docker-build-api.txt
+          docker build -f docker/Dockerfile.worker -t ehr-worker:ci . 2>&1 | tee reports/foundation/03-docker-build-worker.txt
+          for i in api worker; do
+            docker image inspect ehr-$i:ci --format '{{.Id}} user={{.Config.User}} healthcheck={{json .Config.Healthcheck}} size={{.Size}}'
+          done | tee reports/foundation/03-images.txt
+      - name: Container scan (Trivy config + image, same flags as scripts/ci/container-scan.sh)
+        run: |
+          scripts/ci/install-tools.sh trivy
+          export PATH="$CI_TOOLS_DIR/bin:$PATH" TRIVY_SKIP_VERSION_CHECK=true TRIVY_DISABLE_TELEMETRY=true
+          mkdir -p reports/foundation/trivy
+          trivy --version | tee reports/foundation/trivy/tool-version.txt
+          trivy config --config trivy/trivy.yaml --ignorefile trivy/.trivyignore --format json --output reports/foundation/trivy/config.json .
+          node scripts/ci/check-trivy-config.mjs reports/foundation/trivy/config.json | tee reports/foundation/trivy/config-result.txt
+          for i in api worker; do
+            trivy image --config trivy/trivy.yaml --ignorefile trivy/.trivyignore --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 \
+              --format json --output reports/foundation/trivy/image-$i.json ehr-$i:ci
+            trivy image --config trivy/trivy.yaml --ignorefile trivy/.trivyignore --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL \
+              --format table --output reports/foundation/trivy/image-$i-all-severities.txt ehr-$i:ci
+            echo "image $i: no HIGH/CRITICAL finding with a fix (exit 0)" | tee -a reports/foundation/trivy/image-result.txt
+          done
+      - name: Migrate a database for the API
+        run: scripts/ci/migration-check/prepare-db.sh ehr 2>&1 | tee reports/foundation/04-migrate.txt
+      - name: Image smoke (real entry point, read-only root filesystem)
+        run: |
+          docker run -d --name api-real --network host --read-only --tmpfs /tmp -e EHR_ENV=ci -e EHR_DEPLOYABLE=api \
+            -e EHR_DATABASE_URL=postgres://app_api@127.0.0.1:55432/ehr -e EHR_MIN_CLIENT_RELEASE=1 -e EHR_PORT=3001 ehr-api:ci
+          for _ in $(seq 1 30); do
+            [ "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3001/readyz)" = 200 ] && break; sleep 1
+          done
+          { echo "readyz=$(curl -s -w ' http=%{http_code}' http://127.0.0.1:3001/readyz)"
+            echo "healthz=$(curl -s -w ' http=%{http_code}' http://127.0.0.1:3001/healthz)"
+            echo "whoami=$(docker exec api-real node -e 'console.log(process.getuid())')"; } | tee reports/foundation/05-image-smoke.txt
+          docker logs api-real > reports/foundation/05-api-real.log 2>&1
+          docker rm -f api-real
+          grep -q 'readyz={"status":"ready"} http=200' reports/foundation/05-image-smoke.txt
+          # worker image: starts, connects, boots, stops on SIGTERM
+          docker run -d --name worker-real --network host --read-only --tmpfs /tmp -e EHR_ENV=ci -e EHR_DEPLOYABLE=worker \
+            -e EHR_DATABASE_URL=postgres://app_worker@127.0.0.1:55432/ehr ehr-worker:ci
+          sleep 8
+          docker logs worker-real > reports/foundation/05-worker.log 2>&1 || true
+          echo "worker_running=$(docker inspect -f '{{.State.Running}}' worker-real)" | tee -a reports/foundation/05-image-smoke.txt
+          docker rm -f worker-real
+      - name: Install Chromium for Playwright
+        run: pnpm --filter @ehr/staff exec playwright install --with-deps chromium
+      - name: Journey - browser shell, same-origin API, PostgreSQL with scope setter and RLS, rendered result
+        env:
+          NODE_PATH: ${{ github.workspace }}/apps/staff/node_modules
+          JOURNEY_SHOT: ${{ github.workspace }}/reports/foundation/journey.png
+          JOURNEY_REPORT_DIR: ${{ github.workspace }}/reports/foundation/journey
+        run: |
+          docker run -d --name api-journey --network host --read-only --tmpfs /tmp -v "$PWD/docs/evidence/foundation/journey:/app/journey:ro" \
+            -e EHR_ENV=ci -e EHR_DEPLOYABLE=api -e EHR_DATABASE_URL=postgres://app_api@127.0.0.1:55432/ehr \
+            -e EHR_MIN_CLIENT_RELEASE=1 -e EHR_PORT=3000 -e JOURNEY_ORG_ID="$JOURNEY_ORG_ID" ehr-api:ci node /app/journey/api-with-scoped-limiter.mjs
+          for _ in $(seq 1 30); do
+            [ "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/readyz)" = 200 ] && break; sleep 1
+          done
+          pnpm --filter @ehr/staff exec playwright --version | tee reports/foundation/06-playwright-version.txt
+          set +e
+          pnpm --filter @ehr/staff exec playwright test -c ../../docs/evidence/foundation/journey/playwright.config.ts 2>&1 | tee reports/foundation/06-journey.txt
+          rc=${PIPESTATUS[0]}
+          docker logs api-journey > reports/foundation/06-api-journey.log 2>&1
+          echo "playwright_exit=$rc" | tee -a reports/foundation/06-journey.txt
+          [ "$rc" = 0 ] || exit 1
+          docker run --rm --network host -v "$PWD/docs/evidence/foundation/journey:/app/journey:ro" -e EHR_DATABASE_URL=postgres://app_api@127.0.0.1:55432/ehr \
+            -e JOURNEY_ORG_ID="$JOURNEY_ORG_ID" ehr-api:ci node /app/journey/rls-check.mjs 2>&1 | tee reports/foundation/07-rls-check.txt
+          ! grep -q '"pass":false' reports/foundation/07-rls-check.txt
+          docker rm -f api-journey
+      - name: Cleanup and confirm nothing was deployed
+        if: ${{ always() }}
+        run: |
+          docker rm -f api-journey api-real worker-real 2>/dev/null || true
+          echo "deploy jobs in this workflow: 0; credentials used: GITHUB_TOKEN contents:read only" | tee reports/foundation/08-no-deploy.txt
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: foundation-proof-reports
+          path: reports/foundation
+          if-no-files-found: error
+          retention-days: 30
