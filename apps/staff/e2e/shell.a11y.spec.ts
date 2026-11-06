@@ -1,9 +1,9 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 
-// Contract mock of GET /api/v1/me (no real API is running in this check); labelled as such in the report.
+// Contract mock of GET /api/v1/auth/session (no real API is running in this check); labelled as such in the report.
 const mockMe = (page: import('@playwright/test').Page, status: number, body: unknown) =>
-  page.route('**/api/v1/me', async (route) => {
+  page.route('**/api/v1/auth/session', async (route) => {
     expect(route.request().headers()['x-client-release']).toMatch(/^r[1-9][0-9]*\.[0-9a-f]{12}$/);
     await route.fulfill({
       status,

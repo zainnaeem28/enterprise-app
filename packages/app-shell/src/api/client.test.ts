@@ -9,10 +9,10 @@ describe('createApiClient', () => {
   it('sends X-Client-Release on a relative same-origin URL', async () => {
     const fetch = vi.fn(async (request: Request) => json(200, { url: request.url }));
     const api = createApiClient({ clientRelease: RELEASE, baseUrl: 'http://portal.test', fetch });
-    await api.GET('/api/v1/me', { params: { header: api.header } });
+    await api.GET('/api/v1/auth/session', { params: { header: api.header } });
     const req = fetch.mock.calls[0]![0];
     expect(req.headers.get('X-Client-Release')).toBe(RELEASE);
-    expect(new URL(req.url).pathname).toBe('/api/v1/me');
+    expect(new URL(req.url).pathname).toBe('/api/v1/auth/session');
     expect(req.credentials).toBe('same-origin');
   });
 
@@ -26,7 +26,7 @@ describe('createApiClient', () => {
       fetch,
       onReleaseRefused,
     });
-    const { response } = await api.GET('/api/v1/me', { params: { header: api.header } });
+    const { response } = await api.GET('/api/v1/auth/session', { params: { header: api.header } });
     expect(response.status).toBe(400);
     expect(onReleaseRefused).toHaveBeenCalledWith({ requestId: 'r-1' });
   });
@@ -44,8 +44,8 @@ describe('createApiClient', () => {
       fetch,
       onReleaseRefused,
     });
-    await api.GET('/api/v1/me', { params: { header: api.header } });
-    await api.GET('/api/v1/me', { params: { header: api.header } });
+    await api.GET('/api/v1/auth/session', { params: { header: api.header } });
+    await api.GET('/api/v1/auth/session', { params: { header: api.header } });
     expect(onReleaseRefused).not.toHaveBeenCalled();
   });
 

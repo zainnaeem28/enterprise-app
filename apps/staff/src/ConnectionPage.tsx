@@ -5,12 +5,12 @@ import type { createApiClient } from '@ehr/app-shell';
 type Api = ReturnType<typeof createApiClient>;
 type State =
   | { kind: 'loading' }
-  | { kind: 'signed-in'; principalId: string }
+  | { kind: 'signed-in' }
   | { kind: 'signed-out' }
   | { kind: 'error'; message: string; requestId?: string };
 
 /**
- * Proves the same-origin typed path: `getMe` (GET /api/v1/me) is called through the client
+ * Proves the same-origin typed path: `getAuthSession` (GET /api/v1/auth/session, ruling healthz-class-ruling rev a7c6c37e) is called on load and on "Check again" only (never on a timer), through the client
  * generated from the F-08 contract. `/healthz` is outside the generated catalogue (28.6 exempt).
  */
 export function ConnectionPage({ api }: { api: Api }) {
@@ -19,16 +19,13 @@ export function ConnectionPage({ api }: { api: Api }) {
   const load = useCallback(async () => {
     setState({ kind: 'loading' });
     try {
-      const { data, error, response } = await api.GET('/api/v1/me', {
+      const { data, error, response } = await api.GET('/api/v1/auth/session', {
         params: { header: api.header },
       });
       if (response.status === 401) return setState({ kind: 'signed-out' });
       if (data !== undefined) {
-        const id = (data as { principalId?: unknown }).principalId;
-        return setState({
-          kind: 'signed-in',
-          principalId: typeof id === 'string' ? id : 'unknown',
-        });
+        // The body carries csrfToken: never shown, stored or logged.
+        return setState({ kind: 'signed-in' });
       }
       const e = error as { title?: unknown; requestId?: unknown } | undefined;
       setState({
