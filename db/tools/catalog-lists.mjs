@@ -59,25 +59,29 @@ export const ownerRightsViews = [
 ];
 /** Views reporting_ro may read (C0/C1 only, M-4). */
 export const reportingViews = [];
-/**
- * Tables with a patient_id column that are exempt from the merge write guard (SHARED-BOUNDARIES 9.2).
- * Permanent: audit.event, audit.btg_grant (append-only history, ARCHITECTURE 22.2).
- * INTERIM (INT01-F6): the five tables below are guarded tables in the design (ARCHITECTURE 22.4/22.13, merge
- * participants), not exempt. `patient.guard_open_patient` and the `patient.patient` root do not exist until the
- * patient module ticket (BE-08), so no trigger can be attached yet. They are listed so M-5 stays green without
- * weakening the check for any other table. BE-08 MUST attach the trigger to each and delete these five entries in
- * the same change; catalog check M-5-interim-exempt fails if one is still listed after it has the trigger.
- */
-export const interimGuardExempt = [
-  'identity.patient_link',
-  'identity.proxy_grant',
-  'notifications.notification',
-  'notifications.delivery_receipt',
-  'notifications.in_app_read',
+/** INT01-F6 interim exemptions: emptied by BE-08 (all five tables now carry the guard). */
+export const interimGuardExempt = [];
+/** Tables with a patient_id column that are exempt from the merge write guard (SHARED-BOUNDARIES 9.2). */
+export const patientGuardExempt = [
+  'audit.event',
+  'audit.btg_grant',
+  // BE-08: derived, definer-written; the derivation must work for merged IDs too (SHARED-BOUNDARIES 6.6).
+  'patient.staff_scope',
 ];
-export const patientGuardExempt = ['audit.event', 'audit.btg_grant', ...interimGuardExempt];
 /** SECURITY DEFINER functions of SHARED-BOUNDARIES 6.2 and ARCHITECTURE 21.6 (schema.name). Empty: none exist yet. */
-export const definerInventory = ['integration_core.receive_inbound'];
+export const definerInventory = [
+  'integration_core.receive_inbound',
+  // BE-08 (patient): owners patient_scope_owner (writes) and patient_match_owner (reads); all fix search_path.
+  'patient.guard_open_patient',
+  'patient.lock_patients',
+  'patient.ensure_care_relationship',
+  'patient.end_care_relationship',
+  'patient.verify_staff_scope',
+  'patient.register',
+  'patient.attach',
+  'patient.match_candidates',
+  'patient.identity_label',
+];
 
 /** Policies that can match audience `anonymous` (ARCHITECTURE 21.3 list, kernel rows only so far). */
 export const anonymousPolicies = [

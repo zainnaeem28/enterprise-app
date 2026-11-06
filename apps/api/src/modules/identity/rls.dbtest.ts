@@ -29,6 +29,34 @@ before(async () => {
         `INSERT INTO organisation.jurisdiction (code, organisation_id, name) VALUES ('NY', $1, 'New York')`,
         [ORG],
       );
+      // Patient rows the identity fixtures point at: patient.guard_open_patient (BE-08, migration 0701) refuses writes for a patient that does not exist.
+      let mrn = 8000000;
+      for (const pid of [
+        PX,
+        id(699),
+        id(501),
+        id(502),
+        id(503),
+        id(511),
+        id(521),
+        id(522),
+        id(601),
+        id(602),
+        id(611),
+        id(612),
+        id(621),
+        id(622),
+        id(631),
+      ])
+        await sa.query(
+          `INSERT INTO patient.patient (id, organisation_id, mrn, given_name, family_name, date_of_birth, state_code, created_via) VALUES ($1, $2, $3, 'Fixture', 'Patient', '1980-01-01', 'NY', 'front_desk')`,
+          [pid, ORG, `MRN-${mrn++}`],
+        );
+      // The guard reads the patient root as its owner under row-level security, so this superuser session carries an organisation and an audience too.
+      await sa.query(
+        `SELECT set_config('app.org_id', $1, false), set_config('app.audience', 'system', false)`,
+        [ORG],
+      );
       await sa.query(
         `INSERT INTO organisation.location (id, organisation_id, name, kind, time_zone, state_code, active) VALUES ($1, $2, 'Main', 'clinic', 'America/New_York', 'NY', true)`,
         [L1, ORG],

@@ -143,6 +143,28 @@ describe('notifications on PostgreSQL 17 (BE-06, API side)', () => {
     await w.end();
     adminDb = new pg.Client({ connectionString: urlFor(new URL(adminUrl).username) });
     await adminDb.connect();
+    // Patient rows the notifications fixtures point at: patient.guard_open_patient (BE-08, migration 0701) refuses writes for a patient that does not exist.
+    await adminDb.query(
+      `INSERT INTO organisation.jurisdiction (code, organisation_id, name) VALUES ('NY', $1, 'New York') ON CONFLICT DO NOTHING`,
+      [ORG],
+    );
+    let mrn = 8000000;
+    for (const pid of [
+      P1,
+      P2,
+      P3,
+      '00000000-0000-7000-8000-0000000000e8',
+      '00000000-0000-7000-8000-0000000000e9',
+    ])
+      await adminDb.query(
+        `INSERT INTO patient.patient (id, organisation_id, mrn, given_name, family_name, date_of_birth, state_code, created_via) VALUES ($1, $2, $3, 'Fixture', 'Patient', '1980-01-01', 'NY', 'front_desk')`,
+        [pid, ORG, `MRN-${mrn++}`],
+      );
+    // The guard reads the patient root as its owner under row-level security, so this superuser session carries an organisation and an audience too.
+    await adminDb.query(
+      `SELECT set_config('app.org_id', $1, false), set_config('app.audience', 'system', false)`,
+      [ORG],
+    );
     apool = new pg.Pool({ connectionString: urlFor('app_api'), max: 6 });
     wpool = new pg.Pool({ connectionString: urlFor('app_worker'), max: 4 });
     api = new KernelDb(apool);
