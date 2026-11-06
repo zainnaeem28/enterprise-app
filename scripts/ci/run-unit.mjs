@@ -28,7 +28,14 @@ const run = (label, cmd, args, extraEnv = {}) => {
 
 // Build prerequisite: workspace packages import @ehr/kernel and @ehr/contracts through their dist/,
 // which a clean checkout does not have. Build them first (same order as the root typecheck script).
-run('build prerequisites', 'pnpm', ['--filter', '@ehr/kernel', '--filter', '@ehr/contracts', 'run', 'build']);
+run('build prerequisites', 'pnpm', [
+  '--filter',
+  '@ehr/kernel',
+  '--filter',
+  '@ehr/contracts',
+  'run',
+  'build',
+]);
 
 // Root boundary test (F-01): a failing and a passing fixture. Wrapped into a JUnit record here.
 const boundaryOk = run('boundary', 'pnpm', ['run', 'test:boundary']);
