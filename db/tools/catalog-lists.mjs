@@ -59,8 +59,23 @@ export const ownerRightsViews = [
 ];
 /** Views reporting_ro may read (C0/C1 only, M-4). */
 export const reportingViews = [];
-/** Tables with a patient_id column that are exempt from the merge write guard (SHARED-BOUNDARIES 9.2). */
-export const patientGuardExempt = ['audit.event', 'audit.btg_grant'];
+/**
+ * Tables with a patient_id column that are exempt from the merge write guard (SHARED-BOUNDARIES 9.2).
+ * Permanent: audit.event, audit.btg_grant (append-only history, ARCHITECTURE 22.2).
+ * INTERIM (INT01-F6): the five tables below are guarded tables in the design (ARCHITECTURE 22.4/22.13, merge
+ * participants), not exempt. `patient.guard_open_patient` and the `patient.patient` root do not exist until the
+ * patient module ticket (BE-08), so no trigger can be attached yet. They are listed so M-5 stays green without
+ * weakening the check for any other table. BE-08 MUST attach the trigger to each and delete these five entries in
+ * the same change; catalog check M-5-interim-exempt fails if one is still listed after it has the trigger.
+ */
+export const interimGuardExempt = [
+  'identity.patient_link',
+  'identity.proxy_grant',
+  'notifications.notification',
+  'notifications.delivery_receipt',
+  'notifications.in_app_read',
+];
+export const patientGuardExempt = ['audit.event', 'audit.btg_grant', ...interimGuardExempt];
 /** SECURITY DEFINER functions of SHARED-BOUNDARIES 6.2 and ARCHITECTURE 21.6 (schema.name). Empty: none exist yet. */
 export const definerInventory = ['integration_core.receive_inbound'];
 
@@ -70,6 +85,19 @@ export const anonymousPolicies = [
   'kernel.rate_counter.rate_counter_org',
   // BE-02 (INT-N1): a verified webhook has no session; the policy is TO integration_receiver_owner only.
   'integration_core.inbound_message.inbound_message_receive',
+  // BE-04 (INT01-F6): ARCHITECTURE 21.3 items (1) and (2). Each is an app_api policy gated on audience = 'anonymous'
+  // and matches nothing until the API sets app.session_token_hash / app.auth_subject (after its own verification, 26.1).
+  // (1) the one session lookup per request, by token hash
+  'identity.session.session_lookup',
+  // (2) T-SIGNIN on session: insert of the new token hash for the verified principal, realms patient_pool/google only
+  'identity.session.session_signin_insert',
+  // (2) T-SIGNIN on person: INSERT only, and only once app.auth_subject is set
+  'identity.person.person_signin_insert',
+  // (2) T-SIGNIN on principal: own row by auth_realm + subject (or unbound google email); insert limited to
+  //     patient_pool/google (SEC01-F-07); update limited to binding the subject and last_sign_in_at (column grant)
+  'identity.principal.principal_signin_select',
+  'identity.principal.principal_signin_insert',
+  'identity.principal.principal_signin_update',
 ];
 /**
  * Policies that can match audience `public`: must be exactly the T-DIRECTORY policies. Accepted exception,

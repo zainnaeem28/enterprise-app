@@ -117,6 +117,14 @@ export const checks = {
             AND NOT EXISTS (SELECT 1 FROM pg_trigger t JOIN pg_proc p ON p.oid = t.tgfoid
                             WHERE t.tgrelid = c.oid AND NOT t.tgisinternal AND p.proname = 'guard_open_patient')`,
   },
+  'M-5-interim-exempt': {
+    title:
+      'a table on the interim patient-guard exemption list (INT01-F6) does not already have the guard (remove it from the list)',
+    sql: `SELECT c.oid::regclass::text AS "table" FROM pg_class c
+          WHERE c.oid::regclass::text = ANY (${q(L.interimGuardExempt)})
+            AND EXISTS (SELECT 1 FROM pg_trigger t JOIN pg_proc p ON p.oid = t.tgfoid
+                        WHERE t.tgrelid = c.oid AND NOT t.tgisinternal AND p.proname = 'guard_open_patient')`,
+  },
   'M-5-definer': {
     title:
       'every SECURITY DEFINER function is in the inventory, has a fixed search_path and a NOLOGIN owner',

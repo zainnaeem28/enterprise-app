@@ -75,3 +75,10 @@ Not provable on a single PostgreSQL 17 container; to be proven on RDS for Postgr
 parameter support; `rds_superuser` (not superuser) running `db/roles` and the membership grants; that the RDS master
 user owns nothing and appears in no application connection string; TC-AU-04 steps 1-4 rerun on `ENV-INT/staging`;
 concurrency, lock-wait and `READ COMMITTED` re-read behaviour (not covered by the spike either).
+
+## M-5 lists (INT01-F6)
+
+`db/tools/catalog-lists.mjs` is the single list used by the catalog check, the dbtests and this note.
+
+- **`anonymousPolicies`** (ARCHITECTURE 21.3 items 1, 2 and the kernel rows): the identity entries are `session_lookup` (item 1) and, for T-SIGNIN (item 2), `person_signin_insert`, `principal_signin_select/insert/update` and `session_signin_insert`. All are `TO app_api`, gated on audience `anonymous`, and match nothing until the API has set `app.session_token_hash` or `app.auth_subject` after its own verification. Insert is limited to realms `patient_pool` and `google`; the principal UPDATE is limited by column grant to `subject` and `last_sign_in_at`.
+- **`interimGuardExempt`**: `identity.patient_link`, `identity.proxy_grant`, `notifications.notification`, `notifications.delivery_receipt`, `notifications.in_app_read`. They are guarded tables in the design, but `patient.guard_open_patient` and the `patient.patient` root arrive with BE-08, so no trigger can exist yet. BE-08 attaches the trigger and removes the entries; check `M-5-interim-exempt` fails if an entry stays after the trigger exists. Permanent exemptions stay `audit.event` and `audit.btg_grant`.

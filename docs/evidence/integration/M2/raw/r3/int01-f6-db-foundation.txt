@@ -1,0 +1,47 @@
+▶ migrations from empty on PostgreSQL 17
+  ✔ a second run applies nothing (96.511443ms)
+  ✔ catalog checks M-1..M-5 and the role checks all pass (99.99002ms)
+  ✔ role-level settings are stored and visible to a new session (24.819215ms)
+  ✔ the runner tracker is not reachable by application roles (5.409873ms)
+✔ migrations from empty on PostgreSQL 17 (864.245694ms)
+▶ spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics)
+  ✔ FORCE RLS: the table owner cannot insert, and its UPDATE changes 0 rows (SBR-17) (14.623212ms)
+  ✔ a missing setting returns 0 rows on every kernel table (fail closed) (18.056535ms)
+  ✔ setting: admin_pool staff reads and writes its organisation; WITH CHECK refuses everything else (27.00669ms)
+  ✔ audience anonymous reads only pre_auth settings and nothing in idempotency_key (11.141609ms)
+  ✔ app_api cannot act as audience system; app_worker can, within its job scope (24.830548ms)
+  ✔ idempotency_key: a principal sees only its own keys; updates bump row_version (16.671406ms)
+  ✔ reporting_ro is refused on the kernel tables (M-4) (5.039788ms)
+  ✔ role switching: app_api reaches only identity_signin_ro, which holds no table right (13.879987ms)
+  ✔ app_owner holds SET but not INHERIT on directory_ro: it can switch but gains no rights (5.045108ms)
+  ✔ function ownership transfer needs SET membership and CREATE on the schema (21.2 point 1) (7.149967ms)
+  ✔ SELECT ... FOR KEY SHARE needs UPDATE rights: a SELECT-only role is refused (13.466141ms)
+  ✔ an owner-rights view returns 0 rows under FORCE; a security_invoker view returns the caller rows (M-4) (101.056442ms)
+  ✔ negative control: the catalog checks fail on a table without FORCE and on a policy TO PUBLIC (85.89516ms)
+✔ spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics) (352.501009ms)
+▶ R-timeouts negative control (F03-R1-02)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 0s (97.811162ms)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 0ms (88.487625ms)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 0000ms (84.972729ms)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 61s (89.121965ms)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 120s (86.453056ms)
+✔ R-timeouts negative control (F03-R1-02) (447.366793ms)
+▶ TC-AU-04 (ARCHITECTURE 21.5, SAR-10; step 2 per SA-TC-06)
+  ✔ step 1: transaction_timeout unset (0) -> refused PA001, no row (6.830969ms)
+  ✔ step 2 (SA-TC-06): B + 1 s -> refused PA001, no row (6.059552ms)
+  ✔ step 3: app_owner -> privilege error 42501 raised before the trigger, no row (6.258374ms)
+  ✔ step 4 (positive control): at or below the bound -> accepted and written (5.68594ms)
+  ✔ production shape: the role-level 60 s of app_api and app_worker is accepted, 120 s is refused (21.11269ms)
+✔ TC-AU-04 (ARCHITECTURE 21.5, SAR-10; step 2 per SA-TC-06) (62.009657ms)
+▶ the runner against a real database
+  ✔ applies 0001 and 0003, then rejects 0002 as out of order and leaves the schema untouched (22.10402ms)
+  ✔ a migration that fails at run time rolls back with its tracker row (3.240711ms)
+✔ the runner against a real database (101.559615ms)
+ℹ tests 29
+ℹ suites 5
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1920.157514
