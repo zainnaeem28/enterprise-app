@@ -1,0 +1,11 @@
+1. staff app served same-origin: index.html has root mount (418 bytes)
+2. anonymous GET /api/v1/auth/session -> 401
+3. GET /api/v1/auth/sign-in -> 302, redirect to IdP authorise endpoint; pre-auth cookie true
+4. local OIDC conformance IdP authorised (PKCE S256), redirects to /api/v1/auth/callback
+5. callback -> 302 location=/; __Host-sid set=true; pre-auth cookie cleared=true
+   cookie attributes: Max-Age=43200; Path=/; Secure; HttpOnly; SameSite=Strict
+6. scoped read GET /api/v1/auth/session with session -> 200 {"principalId":"01a1af78-2158-7ee4-81d3-c04bc7d710ea","realm":"google","audience":"staff","displayName":"Integration User","csrfToken":"d4IkoWim5NidO5lYOu6tpyZS1sSLS2oo9nzwa8cSlDQ","idleExpiresAt":"2026-11-06T06:22:26.790Z","roles":[],"permissions":[],"patients":[]}
+7. db: session audience=staff, principal int01.user@example.com status=active; only the token hash is stored
+8. worker job written=1; audit.event rows=1 action=sign_in audience=staff realm=google
+9. forged session cookie -> 401
+RESULT PASS

@@ -47,3 +47,22 @@ F1 and F2 verified resolved (M-3/M-4 pass, directory-view asserts pass).
 - INT01-F5: `pnpm format:check` fails on scripts/ci/run-unit.mjs (introduced by the F3-R1 fix); CI lint-types/format job would fail.
 - INT01-F6 (blocking): catalog checks M-5-patient-guard and M-5-anonymous fail. M-5-patient-guard: identity.patient_link, identity.proxy_grant, notifications.notification, notifications.delivery_receipt, notifications.in_app_read have patient_id but neither the merge write guard nor an exemption. M-5-anonymous: six identity sign-in policies (person_signin_insert, principal_signin_select/insert/update, session_lookup, session_signin_insert) can match audience anonymous but are not in the ARCHITECTURE 21.3 list in db/tools. Needs BE-04/BE-06 owners and db/tools owner to agree guard/exemption and anonymous lists (security review of anonymous policies). The api organisation dbtest repeats the same failure.
 Still not done: auth-slice journey, screenshots, other CI jobs (not attempted while red). Real Google Workspace sign-in BLOCKED (C-10). Reviews: none started; cumulative rounds 0.
+
+---
+# Round 3 (candidate = branch head after INT01-F5 7d2639d and INT01-F6 66bde02; both independently reviewed PASS)
+Local, Node v24.22.2, pnpm 12.16.1, PostgreSQL 17.11 (provided ehr-test-db, not CI), frozen-lockfile install. Raw: raw/r4/, reports/integration-db/, journey/out/journey.log.
+| Check | Result |
+|---|---|
+| pnpm lint | PASS |
+| pnpm format:check | PASS (F5 resolved) |
+| pnpm build | PASS |
+| pnpm typecheck after `git clean -fdXq packages apps` | PASS |
+| scripts/ci/run-unit.mjs | PASS: 437 tests, 7 reports, 0 skipped/failed |
+| scripts/ci/migration-check/integration-db.sh (INTEGRATION_SKIP_N_MINUS_1=true) | PASS: db-foundation, kernel 23, api 228, worker 72; 352 tests, 0 failed/skipped (F6 resolved) |
+| Auth-slice journey (journey/journey.mjs) | PASS: same-origin proxy serves the built staff app and forwards /api; anonymous session read 401; sign-in redirect to local OIDC conformance IdP (PKCE S256); callback sets `__Host-sid` (Secure, HttpOnly, SameSite=Strict); scoped read GET /api/v1/auth/session 200 (staff audience, roles/permissions/patients empty); only the token hash stored; worker job writes exactly one `sign_in` audit.event; forged cookie 401 |
+Limitations (stated, not hidden):
+- **Screenshots: NOT captured.** Playwright chromium downloads but cannot start (missing system libraries libglib/nss/etc.; no root, no apt source). The journey ran over HTTP against the real built staff bundle, API, IdP, database and worker, not in a browser. The BUILD_REVIEW screenshot package needs a runner with browser libraries (the CI e2e-smoke/a11y-smoke jobs) or a host fix.
+- Real Google Workspace sign-in remains BLOCKED (C-10); the IdP is the local conformance IdP.
+- N-1 upgrade path not run (no release tag). Other CI jobs (SAST, SBOM, container scan, contract, a11y/e2e smoke, bundle budget) not run locally.
+- Journey uses a test harness (identity testkit) to create the isolated database; the staff UI has no sign-in button yet (session check page only), so the sign-in start was requested directly.
+State: executed; findings F1-F6 resolved and independently reviewed; INT-01 itself not yet QA-reviewed; not human-approved; not deployed. Cumulative review rounds for INT-01: 0 (QA review pending).
