@@ -7,10 +7,10 @@
 #   - no secrets other than the read-only GITHUB_TOKEN and no cloud credentials, so nothing here can
 #     reach a cloud account, including from forks.
 #
-# Jobs that need application code are NOT in this file and are NOT passing: integration-db,
-# migration-check, contract (Schemathesis), a11y-smoke, e2e-smoke and bundle-budget are pending in
-# F-09 (HEAAA-79). Container image scanning has nothing to scan until a Dockerfile exists; the job
-# says so explicitly instead of reporting an image pass.
+# integration-db, migration-check, contract (Schemathesis), a11y-smoke, e2e-smoke and bundle-budget
+# (F-09, HEAAA-79) run on the application code; each ends with a seeded-violation control that must FAIL
+# the gate. Container image scanning has nothing to scan until a Dockerfile exists; the job says so
+# explicitly instead of reporting an image pass.
 name: ci
 
 on:
@@ -278,12 +278,342 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+  # PostgreSQL 17 service container; migrations from empty and from the previous release tag; the database-backed suites
+  # of every workspace; the previous release's suites against the candidate schema (N-1). DEVOPS-PLAN 4.2, 5.1, 5.2.
+  integration-db:
+    name: integration-db
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    services:
+      postgres:
+        # PostgreSQL 17 (SHARED-BOUNDARIES 4.1), pinned by the multi-arch index digest of postgres:17 (Docker Hub, 2026-11-06).
+        image: postgres:17@sha256:748a18a54d3842d43bc156f0840d78029b8d349e0feca98c12b9c4ce3404a6b3
+        env:
+          # Trust authentication: throwaway container on the runner, loopback only, synthetic data (docker/compose.ci.yml).
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: postgres
+        ports:
+          - 127.0.0.1:55432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    env:
+      EHR_TEST_ADMIN_URL: postgres://postgres@127.0.0.1:55432/postgres
+      REQUIRE_PREVIOUS_RELEASE_TAG: ${{ vars.REQUIRE_PREVIOUS_RELEASE_TAG || 'false' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Install (frozen lockfile)
+        run: corepack enable && pnpm install --frozen-lockfile
+      - name: Build
+        run: pnpm build
+      - name: Database suites, upgrade path and N-1
+        run: scripts/ci/migration-check/integration-db.sh
+      - name: Seeded-violation control (each seeded defect must fail the job)
+        run: scripts/ci/migration-check/seed.sh integration-db
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: integration-db-reports
+          path: reports
+          if-no-files-found: error
+          retention-days: 30
+
+  # DEVOPS-PLAN 5.2: every migration rule, on a database migrated from empty and from the previous release tag.
+  migration-check:
+    name: migration-check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    services:
+      postgres:
+        # PostgreSQL 17 (SHARED-BOUNDARIES 4.1), pinned by the multi-arch index digest of postgres:17 (Docker Hub, 2026-11-06).
+        image: postgres:17@sha256:748a18a54d3842d43bc156f0840d78029b8d349e0feca98c12b9c4ce3404a6b3
+        env:
+          # Trust authentication: throwaway container on the runner, loopback only, synthetic data (docker/compose.ci.yml).
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: postgres
+        ports:
+          - 127.0.0.1:55432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    env:
+      EHR_TEST_ADMIN_URL: postgres://postgres@127.0.0.1:55432/postgres
+      REQUIRE_PREVIOUS_RELEASE_TAG: ${{ vars.REQUIRE_PREVIOUS_RELEASE_TAG || 'false' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Install (frozen lockfile)
+        run: corepack enable && pnpm install --frozen-lockfile
+      - name: Build
+        run: pnpm build
+      - name: Migration rules
+        run: scripts/ci/migration-check/migration-check.sh
+      - name: Seeded-violation control (each seeded defect must fail the job)
+        run: scripts/ci/migration-check/seed.sh migration-check
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: migration-check-reports
+          path: reports
+          if-no-files-found: error
+          retention-days: 30
+
+  # DEVOPS-PLAN 5.1 AL-07 / TC-API-09: Schemathesis against the API container on PostgreSQL 17.
+  contract:
+    name: contract
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    services:
+      postgres:
+        # PostgreSQL 17 (SHARED-BOUNDARIES 4.1), pinned by the multi-arch index digest of postgres:17 (Docker Hub, 2026-11-06).
+        image: postgres:17@sha256:748a18a54d3842d43bc156f0840d78029b8d349e0feca98c12b9c4ce3404a6b3
+        env:
+          # Trust authentication: throwaway container on the runner, loopback only, synthetic data (docker/compose.ci.yml).
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: postgres
+        ports:
+          - 127.0.0.1:55432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    env:
+      EHR_TEST_ADMIN_URL: postgres://postgres@127.0.0.1:55432/postgres
+      REQUIRE_PREVIOUS_RELEASE_TAG: ${{ vars.REQUIRE_PREVIOUS_RELEASE_TAG || 'false' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Install (frozen lockfile)
+        run: corepack enable && pnpm install --frozen-lockfile
+      - name: Build
+        run: pnpm build
+      - name: Install Schemathesis (pinned version, runner only)
+        run: |
+          python3 -m venv "$RUNNER_TEMP/schemathesis-venv"
+          "$RUNNER_TEMP/schemathesis-venv/bin/pip" install --quiet "schemathesis==4.33.1"
+          echo "$RUNNER_TEMP/schemathesis-venv/bin" >> "$GITHUB_PATH"
+      - name: Migrate a database for the API
+        run: scripts/ci/migration-check/prepare-db.sh ehr
+      - name: Start the API container
+        run: tests/e2e/smoke/api-container.sh start ehr
+      - name: Schemathesis
+        run: tests/e2e/smoke/contract/run.sh
+      - name: Stop the API container
+        if: ${{ always() }}
+        run: tests/e2e/smoke/api-container.sh stop
+      - name: Seeded-violation control (each seeded defect must fail the job)
+        run: tests/e2e/smoke/seed.sh contract
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: contract-reports
+          path: reports
+          if-no-files-found: error
+          retention-days: 30
+
+  # DEVOPS-PLAN 5.1: axe-core on the built staff shell (serious or critical violations block).
+  a11y-smoke:
+    name: a11y-smoke
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Install (frozen lockfile)
+        run: corepack enable && pnpm install --frozen-lockfile
+      - name: Build
+        run: pnpm build
+      - name: Install Chromium for Playwright
+        run: pnpm --filter @ehr/staff exec playwright install --with-deps chromium
+      - name: Accessibility smoke
+        env:
+          SMOKE_PROJECT: a11y
+          NODE_PATH: ${{ github.workspace }}/apps/staff/node_modules
+        run: |
+          pnpm --filter @ehr/staff exec playwright --version
+          pnpm --filter @ehr/staff exec playwright test -c ../../tests/e2e/smoke/playwright.config.ts --project=a11y
+      - name: Empty-suite guard
+        run: node tests/e2e/smoke/check-report.mjs reports/smoke/a11y-report.json 8
+      - name: Seeded-violation control (each seeded defect must fail the job)
+        run: tests/e2e/smoke/seed.sh a11y-smoke
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: a11y-smoke-reports
+          path: reports
+          if-no-files-found: error
+          retention-days: 30
+
+  # DEVOPS-PLAN 5.1 AL-07: Playwright PR subset on the built shell, through the same-origin proxy to the API container.
+  e2e-smoke:
+    name: e2e-smoke
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    services:
+      postgres:
+        # PostgreSQL 17 (SHARED-BOUNDARIES 4.1), pinned by the multi-arch index digest of postgres:17 (Docker Hub, 2026-11-06).
+        image: postgres:17@sha256:748a18a54d3842d43bc156f0840d78029b8d349e0feca98c12b9c4ce3404a6b3
+        env:
+          # Trust authentication: throwaway container on the runner, loopback only, synthetic data (docker/compose.ci.yml).
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: postgres
+        ports:
+          - 127.0.0.1:55432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    env:
+      EHR_TEST_ADMIN_URL: postgres://postgres@127.0.0.1:55432/postgres
+      REQUIRE_PREVIOUS_RELEASE_TAG: ${{ vars.REQUIRE_PREVIOUS_RELEASE_TAG || 'false' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Install (frozen lockfile)
+        run: corepack enable && pnpm install --frozen-lockfile
+      - name: Build
+        run: pnpm build
+      - name: Install Chromium for Playwright
+        run: pnpm --filter @ehr/staff exec playwright install --with-deps chromium
+      - name: Migrate a database for the API
+        run: scripts/ci/migration-check/prepare-db.sh ehr
+      - name: Start the API container
+        run: tests/e2e/smoke/api-container.sh start ehr
+      - name: End-to-end smoke
+        env:
+          SMOKE_PROJECT: e2e
+          NODE_PATH: ${{ github.workspace }}/apps/staff/node_modules
+        run: |
+          pnpm --filter @ehr/staff exec playwright --version
+          pnpm --filter @ehr/staff exec playwright test -c ../../tests/e2e/smoke/playwright.config.ts --project=e2e
+      - name: Stop the API container
+        if: ${{ always() }}
+        run: tests/e2e/smoke/api-container.sh stop
+      - name: Empty-suite guard
+        run: node tests/e2e/smoke/check-report.mjs reports/smoke/e2e-report.json 6
+      - name: Seeded-violation control (each seeded defect must fail the job)
+        env:
+          API_ORIGIN: http://127.0.0.1:3000
+        run: tests/e2e/smoke/seed.sh e2e-smoke
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: e2e-smoke-reports
+          path: reports
+          if-no-files-found: error
+          retention-days: 30
+
+  # DEVOPS-PLAN 5.1: Lighthouse CI against the NFR-7 budget (LCP < 2.5 s on simulated 4G) plus the script-weight ceiling.
+  bundle-budget:
+    name: bundle-budget
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Install (frozen lockfile)
+        run: corepack enable && pnpm install --frozen-lockfile
+      - name: Build
+        run: pnpm build
+      - name: Install Chromium for Playwright (Lighthouse uses it)
+        run: pnpm --filter @ehr/staff exec playwright install --with-deps chromium
+      - name: Gzip ceiling of the built shell
+        run: |
+          mkdir -p reports/bundle-budget
+          node tests/e2e/smoke/bundle-gzip.mjs 2>&1 | tee reports/bundle-budget/gzip.txt
+      - name: Lighthouse CI (pinned version, runner only)
+        env:
+          LHCI_VERSION: 0.16.0
+        run: |
+          CHROME_PATH="$(pnpm --filter @ehr/staff exec node -e "console.log(require('@playwright/test').chromium.executablePath())")"
+          export CHROME_PATH
+          echo "chrome: $CHROME_PATH" | tee reports/bundle-budget/chrome.txt
+          pnpm dlx "@lhci/cli@$LHCI_VERSION" autorun --config=lighthouserc.cjs 2>&1 | tee reports/bundle-budget/lhci.txt
+      - name: Empty-run guard
+        run: node tests/e2e/smoke/check-lighthouse.mjs reports/bundle-budget/lhci 3
+      - name: Seeded-violation control (each seeded defect must fail the job)
+        env:
+          LHCI_VERSION: 0.16.0
+        run: |
+          CHROME_PATH="$(pnpm --filter @ehr/staff exec node -e "console.log(require('@playwright/test').chromium.executablePath())")"
+          export CHROME_PATH
+          tests/e2e/smoke/seed.sh bundle-budget
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: bundle-budget-reports
+          path: reports
+          if-no-files-found: error
+          retention-days: 30
+
   # Single required check for the branch ruleset (when the plan can enforce one). A skipped or
   # cancelled job is a failure here.
   ci-status:
     name: ci-status
     if: ${{ always() }}
-    needs: [workflow-hygiene, lint-types, unit, build, sast, secrets, deps, container-scan, sbom]
+    needs:
+      [
+        workflow-hygiene,
+        lint-types,
+        unit,
+        build,
+        sast,
+        secrets,
+        deps,
+        container-scan,
+        sbom,
+        integration-db,
+        migration-check,
+        contract,
+        a11y-smoke,
+        e2e-smoke,
+        bundle-budget,
+      ]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
