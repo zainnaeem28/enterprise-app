@@ -155,6 +155,24 @@ describe('PP-10..PP-14 book a visit', () => {
   });
 });
 
+describe('hold idempotency keys', () => {
+  it('picks A, B, A: the second pick of A is a new request with a new key', async () => {
+    const m = await toTimeStep({ 'POST /api/v1/holds': () => hold() });
+    const pick = async (re: RegExp) => {
+      const slots = await screen.findAllByRole('button', { name: re });
+      fireEvent.click(slots[0]!);
+    };
+    await pick(/10:00 AM/);
+    await waitFor(() => expect(posts(m.seen, '/api/v1/holds')).toHaveLength(1));
+    await pick(/11:00 AM/);
+    await waitFor(() => expect(posts(m.seen, '/api/v1/holds')).toHaveLength(2));
+    await pick(/10:00 AM/);
+    await waitFor(() => expect(posts(m.seen, '/api/v1/holds')).toHaveLength(3));
+    const keys = posts(m.seen, '/api/v1/holds').map((h) => h.headers.get('Idempotency-Key'));
+    expect(new Set(keys).size).toBe(3);
+  });
+});
+
 describe('slot taken and hold expiry (X-01, X-02)', () => {
   const taken = () =>
     json(409, {

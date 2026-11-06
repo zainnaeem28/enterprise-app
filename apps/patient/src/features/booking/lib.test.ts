@@ -95,6 +95,14 @@ describe('routes and answers', () => {
     expect(f).toMatchObject({ status: 409, code: 'scheduling.slot_taken', requestId: 'r1' });
     expect(f.alternatives).toEqual(['2031-06-10T15:00:00.000Z']);
   });
+  it('reads alternatives from the documented top-level array too, without duplicates', () => {
+    const f = failureOf(new Response(null, { status: 409 }), {
+      code: 'scheduling.hold_expired',
+      alternatives: ['2031-06-10T15:00:00.000Z', 'nope', 7],
+      errors: [{ path: '/alternatives/0', code: '2031-06-10T15:00:00.000Z' }],
+    });
+    expect(f.alternatives).toEqual(['2031-06-10T15:00:00.000Z']);
+  });
   it('rejects a malformed appointment instead of rendering it', () => {
     expect(parseAppointment({ id: 'a' })).toBeUndefined();
     expect(parseAppointment(null)).toBeUndefined();

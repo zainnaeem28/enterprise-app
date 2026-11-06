@@ -37,11 +37,18 @@ const asRecord = (v: unknown): Record<string, unknown> =>
 export function failureOf(response: Response | undefined, body: unknown): Failure {
   const b = asRecord(body);
   const errors = Array.isArray(b['errors']) ? b['errors'] : [];
-  const alternatives = errors
+  const fromErrors = errors
     .map(asRecord)
     .filter((e) => typeof e['path'] === 'string' && e['path'].startsWith('/alternatives/'))
     .map((e) => e['code'])
     .filter((c): c is string => typeof c === 'string' && !Number.isNaN(Date.parse(c)));
+  // common.yaml documents a top-level `alternatives` array; the server currently uses errors[].
+  const topLevel = Array.isArray(b['alternatives'])
+    ? b['alternatives'].filter(
+        (c): c is string => typeof c === 'string' && !Number.isNaN(Date.parse(c)),
+      )
+    : [];
+  const alternatives = [...new Set([...topLevel, ...fromErrors])];
   const retry = Number(response?.headers.get('Retry-After'));
   return {
     ok: false,

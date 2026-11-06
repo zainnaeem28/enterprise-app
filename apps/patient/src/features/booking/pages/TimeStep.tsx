@@ -155,6 +155,8 @@ export function TimeStep({
     );
     setHolding(false);
     if (r.ok) {
+      // The hold succeeded, so a later pick of this time is a new request and needs a new key.
+      holdKeys.current.delete(id);
       setPending({
         slot,
         hold: r.data,
