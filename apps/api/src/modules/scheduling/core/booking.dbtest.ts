@@ -557,10 +557,16 @@ describe('who sees what (6.5, TC-BK-11, TC-BK-18)', () => {
     assert.equal(await t.as(b.scope, (tx) => t.svc.get(tx, ha.reservationId)), undefined);
     assert.equal((await t.as(b.scope, (tx) => tx.query(`SELECT 1 FROM scheduling.slot_reservation`))).rows.length, 0);
     // ... but B's booking transaction sees A's occupancy (times only): that is what makes the invariant work
-    const occ = await t.as(b.scope, (tx) => tx.query(`SELECT * FROM scheduling.slot_occupancy WHERE id = $1`, [ha.reservationId]));
+    const occ = await t.as(b.scope, (tx) =>
+      tx.query(`SELECT id, organisation_id, location_id, clinician_principal_id, room_id, period, status, expires_at, overbook FROM scheduling.slot_occupancy WHERE id = $1`, [ha.reservationId]),
+    );
     assert.equal(occ.rows.length, 1);
     const cols = Object.keys(occ.rows[0] as object);
-    for (const bad of ['patient_id', 'service_id', 'reason', 'booked_by_principal_id', 'mode']) assert.ok(!cols.includes(bad), `occupancy exposes ${bad}`);
+    for (const bad of ['patient_id', 'service_id', 'reason', 'booked_by_principal_id', 'mode', 'created_by']) assert.ok(!cols.includes(bad), `occupancy exposes ${bad}`);
+    // SEC03-F09: the booking principal, the job and the session key are not readable by any patient or staff session, however asked
+    for (const col of ['created_by', 'created_by_job', 'session_key'])
+      await rejectsSql(t.as(b.scope, (tx) => tx.query(`SELECT ${col} FROM scheduling.slot_occupancy`)), '42501', `${col} readable`);
+    await rejectsSql(t.as(b.scope, (tx) => tx.query(`SELECT * FROM scheduling.slot_occupancy`)), '42501', 'SELECT * on the twin');
     // a public or anonymous transaction sees no occupancy at all
     for (const audience of ['public', 'anonymous'] as const)
       assert.equal((await t.as({ audience, orgId: ORG }, (tx) => tx.query(`SELECT 1 FROM scheduling.slot_occupancy`).catch((e) => ({ rows: [], code: e.code })))).rows.length, 0);

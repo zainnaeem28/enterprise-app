@@ -156,11 +156,18 @@ describe('spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role 
     key,
     preAuth,
   ];
-  const insertSetting = (c, row) =>
-    c.query(
-      "INSERT INTO kernel.setting (id, organisation_id, key, value, value_schema, pre_auth) VALUES ($1, $2, $3, '1', 'int', $4)",
-      row,
-    );
+  // N-3 (migration 0953): app_api holds no INSERT on pre_auth, so a false value is left to the default; a true value
+  // names the column and is refused (column grant for app_api, policy for everyone else).
+  const insertSetting = (c, [id, org, key, preAuth]) =>
+    preAuth
+      ? c.query(
+          "INSERT INTO kernel.setting (id, organisation_id, key, value, value_schema, pre_auth) VALUES ($1, $2, $3, '1', 'int', true)",
+          [id, org, key],
+        )
+      : c.query(
+          "INSERT INTO kernel.setting (id, organisation_id, key, value, value_schema) VALUES ($1, $2, $3, '1', 'int')",
+          [id, org, key],
+        );
 
   test('FORCE RLS: the table owner cannot insert, and its UPDATE changes 0 rows (SBR-17)', async () => {
     await as('app_owner', { 'app.org_id': ORG, 'app.audience': 'system' }, async (c) => {
@@ -440,6 +447,98 @@ describe('spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role 
       await a.query('DROP SCHEMA f03_neg CASCADE');
       await a.end();
     }
+  });
+});
+
+describe('SEC03-F13 / F09 catalog negative controls', () => {
+  const status = (r, id) => r.find((x) => x.id === id).status;
+  const withAdmin = async (fn) => {
+    const a = await connect(adminUrl.replace(/\/[^/]*$/, `/${dbName}`), 'test-sec03-neg');
+    try {
+      return await fn(a);
+    } finally {
+      await a.end();
+    }
+  };
+  test('the positive baseline: the four new checks pass on the migrated database', async () => {
+    await withAdmin(async (a) => {
+      const r = await runChecks(a);
+      for (const id of [
+        'M-5-patient-guard',
+        'M-5-setting-grants',
+        'M-5-hidden-columns',
+        'M-5-policy-tautology',
+      ])
+        assert.equal(status(r, id), 'pass', JSON.stringify(r.find((x) => x.id === id).violations));
+    });
+  });
+  test('M-5-policy-tautology fails on a policy comparing a column with itself (F01)', async () => {
+    await withAdmin(async (a) => {
+      await a.query('CREATE SCHEMA f13_neg');
+      await a.query('CREATE TABLE f13_neg.t (patient_id uuid)');
+      await a.query(
+        'CREATE POLICY p ON f13_neg.t FOR SELECT TO app_api USING (EXISTS (SELECT 1 FROM f13_neg.t s WHERE (s.patient_id = s.patient_id)))',
+      );
+      try {
+        assert.equal(status(await runChecks(a), 'M-5-policy-tautology'), 'fail');
+      } finally {
+        await a.query('DROP SCHEMA f13_neg CASCADE');
+      }
+    });
+  });
+  test('M-5-patient-guard fails when the guard trigger is disabled, AFTER, or INSERT-only', async () => {
+    await withAdmin(async (a) => {
+      const t = 'patient.patient_contact';
+      await a.query(`ALTER TABLE ${t} DISABLE TRIGGER patient_contact_guard_open`);
+      try {
+        assert.equal(status(await runChecks(a), 'M-5-patient-guard'), 'fail', 'disabled');
+      } finally {
+        await a.query(`ALTER TABLE ${t} ENABLE TRIGGER patient_contact_guard_open`);
+      }
+      for (const [name, def] of [
+        ['AFTER', 'AFTER INSERT OR UPDATE'],
+        ['INSERT-only', 'BEFORE INSERT'],
+      ]) {
+        await a.query(`DROP TRIGGER patient_contact_guard_open ON ${t}`);
+        await a.query(
+          `CREATE TRIGGER patient_contact_guard_open ${def} ON ${t} FOR EACH ROW EXECUTE FUNCTION patient.guard_open_patient()`,
+        );
+        try {
+          assert.equal(status(await runChecks(a), 'M-5-patient-guard'), 'fail', name);
+        } finally {
+          await a.query(`DROP TRIGGER patient_contact_guard_open ON ${t}`);
+          await a.query(
+            `CREATE TRIGGER patient_contact_guard_open BEFORE INSERT OR UPDATE ON ${t} FOR EACH ROW EXECUTE FUNCTION patient.guard_open_patient()`,
+          );
+        }
+      }
+      assert.equal(status(await runChecks(a), 'M-5-patient-guard'), 'pass', 'restored');
+    });
+  });
+  test('M-5-setting-grants fails when app_api can write pre_auth or UPDATE every column (N-3)', async () => {
+    await withAdmin(async (a) => {
+      for (const grant of ['INSERT (pre_auth)', 'UPDATE (pre_auth)', 'UPDATE']) {
+        await a.query(`GRANT ${grant} ON kernel.setting TO app_api`);
+        try {
+          assert.equal(status(await runChecks(a), 'M-5-setting-grants'), 'fail', grant);
+        } finally {
+          await a.query(`REVOKE ${grant} ON kernel.setting FROM app_api`);
+          await a.query('GRANT UPDATE (value) ON kernel.setting TO app_api');
+        }
+      }
+      assert.equal(status(await runChecks(a), 'M-5-setting-grants'), 'pass', 'restored');
+    });
+  });
+  test('M-5-hidden-columns fails when an application role can read occupancy created_by (F09)', async () => {
+    await withAdmin(async (a) => {
+      await a.query('GRANT SELECT (created_by) ON scheduling.slot_occupancy TO app_api');
+      try {
+        assert.equal(status(await runChecks(a), 'M-5-hidden-columns'), 'fail');
+      } finally {
+        await a.query('REVOKE SELECT (created_by) ON scheduling.slot_occupancy FROM app_api');
+      }
+      assert.equal(status(await runChecks(a), 'M-5-hidden-columns'), 'pass', 'restored');
+    });
   });
 });
 
