@@ -172,11 +172,11 @@ export function createAuthController(d: AuthControllerDeps): Type<unknown> {
 
     @Post('session/extend')
     @Route({ permission: PUBLIC, resolver: 'session', realm: 'none' })
-    async extend(@ReqParam() req: Req, @ResParam() res: Res): Promise<{ idleExpiresAt: string }> {
+    async extend(@ReqParam() req: Req, @ResParam() res: Res): Promise<void> {
       const ctx = requireAuthContext(req);
       const idle = await d.sessions.extend(ctx.session);
       res.setHeader('X-Session-Idle-Expires-At', idle.toISOString());
-      return { idleExpiresAt: idle.toISOString() };
+      res.status(200).json({ idleExpiresAt: idle.toISOString() });
     }
 
     @Post('sign-out')

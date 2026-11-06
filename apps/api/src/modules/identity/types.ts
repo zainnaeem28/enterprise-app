@@ -53,7 +53,7 @@ export class PermissionGrants {
     const g = this.byKey.get(key);
     if (g === undefined) return false;
     if (g.all) return true;
-    return locationId !== undefined && g.locations.has(locationId);
+    return locationId === undefined ? g.locations.size > 0 : g.locations.has(locationId);
   }
 
   needsElevation(key: string): boolean {

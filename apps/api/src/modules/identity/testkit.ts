@@ -53,6 +53,8 @@ export type Client = {
   end(): Promise<void>;
 };
 
+/** Patients the fake `patient.staff_sees` lets staff reach (the patient module's staff_scope does not exist yet, BE-08). */
+export const staffVisible = new Set<string>();
 export const clock = { t: Date.now() };
 export const now = (): Date => new Date(clock.t);
 
@@ -138,6 +140,7 @@ export async function setup(opts: KitOptions): Promise<Kit> {
       google: new GoogleRealmAdapter({ endpoints: idp.endpoints, clientId: idp.clientId, clientSecret: 'x'.repeat(24), redirectUri, workspaceDomain: WORKSPACE }),
       patient_pool: new OidcPatientAdapter({ endpoints: idp.endpoints, clientId: idp.clientId, redirectUri: `https://${PATIENT_HOST}/api/v1/auth/callback` }),
     },
+    patientInScope: (_tx, _ctx, patientId) => Promise.resolve(staffVisible.has(patientId)),
     now,
   });
 
@@ -321,7 +324,7 @@ export async function seedSession(
       realm === 'patient_pool' ? 'patient' : 'staff',
       start,
       createHash('sha256').update(csrf).digest(),
-      new Date(start.getTime() + (o.idleMin ?? 15) * 60_000),
+      new Date(Math.min(start.getTime() + (o.idleMin ?? 15) * 60_000, start.getTime() + (o.absoluteHours ?? 12) * 3_600_000)),
       new Date(start.getTime() + (o.absoluteHours ?? 12) * 3_600_000),
     ],
   );
