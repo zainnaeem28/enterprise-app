@@ -21,6 +21,10 @@ RUN find . -name node_modules -type d -prune -exec rm -rf {} + \
 FROM ${NODE_IMAGE}
 ENV NODE_ENV=production
 WORKDIR /app
+# The runtime needs only the node binary. npm and corepack (bundled in the base image, with their own dependencies) are
+# removed: Trivy flagged HIGH findings with fixes in npm's brace-expansion and undici (CI run 42145137492), and nothing
+# at run time installs packages.
+RUN rm -rf /usr/local/lib/node_modules /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
 COPY --from=build --chown=node:node /out/ /app/
 USER node
 # The worker has no HTTP surface. Liveness is process liveness only (PID 1 exists); queue health is observed through
