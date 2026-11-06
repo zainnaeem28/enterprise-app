@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Secret-reference lint (DEVOPS-PLAN 5.2, DPR-13, M-1): the RDS master user must not appear in any application
-// connection string, task definition or secret reference. Scans tracked configuration files only.
+// connection string, task definition or secret reference. Scans tracked and new (untracked, not ignored) configuration files.
 //   lint-config-secrets.mjs [repoRoot]
 // Flags, in a tracked configuration file (yml, yaml, json, tf, tfvars, env, toml, properties, Dockerfile*, infra/**):
 //   - a postgres URL whose user is a master/admin name (postgres, rdsadmin, master, admin, root, superuser);
@@ -13,7 +13,11 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 const root = resolve(process.argv[2] ?? join(import.meta.dirname, '../../..'));
-const files = execFileSync('git', ['-C', root, 'ls-files', '-z'], { encoding: 'utf8' })
+const files = execFileSync(
+  'git',
+  ['-C', root, 'ls-files', '-z', '--cached', '--others', '--exclude-standard'],
+  { encoding: 'utf8' },
+)
   .split('\0')
   .filter(Boolean);
 const configLike = (f) =>
