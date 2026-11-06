@@ -52,6 +52,8 @@ describe('non-blocking bar', () => {
       store.setForms([{ name: 'Visit note', saveDraft: async () => false }]);
     });
     fireEvent.click(screen.getByRole('button', { name: s.reload }));
+    const names = screen.getAllByRole('button').map((b) => b.textContent);
+    expect(names.slice(-3)).toEqual([s.saveAndReload, s.stay, s.reloadAnyway]);
     fireEvent.click(screen.getByRole('button', { name: s.saveAndReload }));
     await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent(s.saveFailed));
     expect(reload).not.toHaveBeenCalled();
@@ -67,6 +69,24 @@ describe('non-blocking bar', () => {
 });
 
 describe('blocking dialog', () => {
+  it('pulls focus back when it escapes the dialog (backdrop click)', async () => {
+    const { store } = setup();
+    render(<ReleasePrompts store={store} />);
+    act(() => store.refuse('req-8'));
+    const reloadBtn = screen.getByRole('button', { name: s.reload });
+    expect(reloadBtn).toHaveFocus();
+    await act(async () => {
+      reloadBtn.blur();
+      await Promise.resolve();
+    });
+    expect(reloadBtn).toHaveFocus();
+    const outside = document.createElement('button');
+    document.body.appendChild(outside);
+    act(() => outside.focus());
+    expect(reloadBtn).toHaveFocus();
+    outside.remove();
+  });
+
   it('opens on refusal with the exact text, request id and no auto reload', () => {
     const { store, reload } = setup();
     render(<ReleasePrompts store={store} />);

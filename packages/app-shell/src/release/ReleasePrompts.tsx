@@ -45,9 +45,6 @@ export function ReleasePrompts({ store }: { store: ReleaseStore }) {
           initialFocus="[data-default]"
           actions={
             <>
-              <Button data-default onClick={() => setConfirming(false)}>
-                {s.stay}
-              </Button>
               {saveable && (
                 <Button
                   variant="primary"
@@ -56,6 +53,9 @@ export function ReleasePrompts({ store }: { store: ReleaseStore }) {
                   {s.saveAndReload}
                 </Button>
               )}
+              <Button data-default onClick={() => setConfirming(false)}>
+                {s.stay}
+              </Button>
               <Button onClick={() => store.reload()}>{s.reloadAnyway}</Button>
             </>
           }

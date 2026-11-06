@@ -37,9 +37,27 @@ export function AlertDialog({ title, children, actions, initialFocus }: AlertDia
         first.focus();
       }
     };
+    // Pointer focus loss (backdrop click) or focus moving behind the dialog: bring it back.
+    let last: HTMLElement | null = target;
+    const onFocusIn = (e: FocusEvent) => {
+      if (root.contains(e.target as Node)) last = e.target as HTMLElement;
+      else (last ?? root.querySelector<HTMLElement>('button'))?.focus();
+    };
+    const onFocusOut = (e: FocusEvent) => {
+      const next = e.relatedTarget as Node | null;
+      if (next === null || !root.contains(next)) {
+        queueMicrotask(() => {
+          if (!root.contains(document.activeElement)) last?.focus();
+        });
+      }
+    };
     root.addEventListener('keydown', onKey);
+    root.addEventListener('focusout', onFocusOut);
+    document.addEventListener('focusin', onFocusIn);
     return () => {
       root.removeEventListener('keydown', onKey);
+      root.removeEventListener('focusout', onFocusOut);
+      document.removeEventListener('focusin', onFocusIn);
       previous?.focus?.();
     };
   }, [initialFocus]);
