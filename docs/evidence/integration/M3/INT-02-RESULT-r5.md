@@ -1,6 +1,6 @@
 # INT-02 round 4, round 2 (r5) — combined candidate e091365
 
-Candidate e091365 = 6091a38 (c0d8f61 + fixes A/B/C) + fix D af7c76a (HEAAA-203) + fix E 1993ca4 (HEAAA-204), merged one at a time with `--no-merge-ff`, no conflicts (merge commits only, no content of my own). Backend Reviewer PASS on D and E: HEAAA-206. Node v24.22.2, PostgreSQL 17 (`EHR_TEST_ADMIN_URL`), synthetic data, no credentials in artifacts. Raw output: `raw/r5/` (candidate-commit.txt holds the tested HEAD of the pre-evidence tree). This is round 2 of 3 of the fresh budget (human confirmation 571c2b28); round 1 was HEAAA-202 (F01/F02, now fixed).
+Candidate e091365 = 6091a38 (c0d8f61 + fixes A/B/C) + fix D af7c76a (HEAAA-203) + fix E 1993ca4 (HEAAA-204), merged one at a time with `--no-ff`, no conflicts (merge commits only, no content of my own). Backend Reviewer PASS on D and E: HEAAA-206. Node v24.22.2, PostgreSQL 17 (`EHR_TEST_ADMIN_URL`), synthetic data, no credentials in artifacts. Raw output: `raw/r5/` (candidate-commit.txt holds the tested HEAD of the pre-evidence tree). This is round 2 of 3 of the fresh budget (human confirmation 571c2b28); round 1 was HEAAA-202 (F01/F02, now fixed).
 
 | Check | Result |
 | --- | --- |
