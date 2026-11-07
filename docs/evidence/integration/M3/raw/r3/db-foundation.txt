@@ -1,0 +1,62 @@
+▶ migrations from empty on PostgreSQL 17
+  ✔ a second run applies nothing (123.582865ms)
+  ✔ catalog checks M-1..M-5 and the role checks all pass (201.521123ms)
+  ✔ role-level settings are stored and visible to a new session (23.789584ms)
+  ✔ the runner tracker is not reachable by application roles (5.343458ms)
+✔ migrations from empty on PostgreSQL 17 (1663.117766ms)
+▶ spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics)
+  ✔ FORCE RLS: the table owner cannot insert, and its UPDATE changes 0 rows (SBR-17) (14.550535ms)
+  ✔ a missing setting returns 0 rows on every kernel table (fail closed) (23.187623ms)
+  ✔ setting: admin_pool staff reads and writes its organisation; WITH CHECK refuses everything else (28.673709ms)
+  ✔ audience anonymous reads only pre_auth settings and nothing in idempotency_key (9.69816ms)
+  ✔ app_api cannot act as audience system; app_worker can, within its job scope (28.512997ms)
+  ✔ idempotency_key: a principal sees only its own keys; updates bump row_version (21.977603ms)
+  ✔ reporting_ro is refused on the kernel tables (M-4) (5.056208ms)
+  ✔ role switching: app_api reaches only identity_signin_ro, which holds no table right (14.103407ms)
+  ✔ app_owner holds SET but not INHERIT on directory_ro: it can switch but gains no rights (4.696553ms)
+  ✔ function ownership transfer needs SET membership and CREATE on the schema (21.2 point 1) (7.928629ms)
+  ✔ SELECT ... FOR KEY SHARE needs UPDATE rights: a SELECT-only role is refused (12.92203ms)
+  ✔ an owner-rights view returns 0 rows under FORCE; a security_invoker view returns the caller rows (M-4) (214.605006ms)
+  ✔ negative control: the catalog checks fail on a table without FORCE and on a policy TO PUBLIC (214.323448ms)
+✔ spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics) (609.083773ms)
+▶ SEC03-F13 / F09 catalog negative controls
+  ✔ the positive baseline: the four new checks pass on the migrated database (199.576624ms)
+  ✔ M-5-policy-tautology fails on a policy comparing a column with itself (F01) (224.194692ms)
+  ✔ M-5-patient-guard fails when the guard trigger is disabled, AFTER, or INSERT-only (637.725893ms)
+  ✔ M-5-setting-grants fails when app_api can write pre_auth or UPDATE every column (N-3) (613.805133ms)
+  ✔ M-5-hidden-columns fails when an application role can read occupancy created_by (F09) (328.23302ms)
+✔ SEC03-F13 / F09 catalog negative controls (2004.070286ms)
+▶ R-timeouts negative control (F03-R1-02)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 0s (192.058155ms)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 0ms (190.596423ms)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 0000ms (211.997202ms)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 61s (190.377962ms)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 120s (198.041564ms)
+✔ R-timeouts negative control (F03-R1-02) (983.592483ms)
+▶ TC-AU-04 (ARCHITECTURE 21.5, SAR-10; step 2 per SA-TC-06)
+  ✔ step 1: transaction_timeout unset (0) -> refused PA001, no row (6.054132ms)
+  ✔ step 2 (SA-TC-06): B + 1 s -> refused PA001, no row (5.161025ms)
+  ✔ step 3: app_owner -> privilege error 42501 raised before the trigger, no row (4.203769ms)
+  ✔ step 4 (positive control): at or below the bound -> accepted and written (4.9182ms)
+  ✔ production shape: the role-level 60 s of app_api and app_worker is accepted, 120 s is refused (18.476963ms)
+✔ TC-AU-04 (ARCHITECTURE 21.5, SAR-10; step 2 per SA-TC-06) (52.268015ms)
+▶ the runner against a real database
+  ✔ applies 0001 and 0003, then rejects 0002 as out of order and leaves the schema untouched (22.599149ms)
+  ✔ a migration that fails at run time rolls back with its tracker row (3.936998ms)
+✔ the runner against a real database (97.071695ms)
+▶ the single merge write guard (T1-T4 of the HEAAA-190 ruling)
+  ✔ T1: a write naming a merged patient is refused with PM001 on every guarded table (91.745909ms)
+  ✔ T1: an open patient passes the guard (any later refusal is another check) on every guarded table (54.190584ms)
+  ✔ T1: a write naming a patient of another organisation is refused (42501 or PM008) (51.026095ms)
+  ✔ T2: app_owner holds no EXECUTE on the guard, the five refused functions are gone, all 15 tables carry the trigger (68.241081ms)
+  ✔ T3: a merge holding the root lock makes a concurrent reservation write wait; after the commit it gets PM001 (518.877471ms)
+  ✔ T4: a file that leaves the guard granted to app_owner is rolled back by the runner post-check, with its tracker row (98.440744ms)
+✔ the single merge write guard (T1-T4 of the HEAAA-190 ruling) (935.39189ms)
+ℹ tests 40
+ℹ suites 7
+ℹ pass 40
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6447.594464

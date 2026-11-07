@@ -1,0 +1,489 @@
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+(node:1257405) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+▶ slot search = template - bookings - busy - blocked time (TC-DR-01, TC-BK-03, RA-R1-23)
+  ✖ each of the four subtractions removes exactly its slot; removing the leave brings the slot back (118.783164ms)
+  ✖ the answer carries only what a patient may see: start, end, clinician, location, mode (never a room, patient, count, note or kind) (68.722573ms)
+  ✖ the service decides the grid (60 minutes -> 09:00, 10:00, 11:00); mode and service restrictions of a rule apply (29.738897ms)
+  ✖ a template change takes effect in the next search (RA-R1-23): replace, then retire (27.654696ms)
+  ✖ validity window: not before valid_from, not after valid_to (42.355924ms)
+  ✖ who is offered: eligible and listed clinicians only to a patient; staff also see unlisted but active ones; a location filter applies (59.91263ms)
+  ✖ daylight saving (TC-BK-10): the template is local wall-clock time, the slot instant moves (29.456457ms)
+  ✖ range limits and input validation (29.2): 31 days, from < to, ids, zones, unknown service (106.255676ms)
+  ✖ who may search: a patient session and a staff member with the permission; a doctor without it, an admin session, and no session are refused (19.320546ms)
+✖ slot search = template - bookings - busy - blocked time (TC-DR-01, TC-BK-03, RA-R1-23) (2047.42536ms)
+▶ stale busy data is never used silently (RA-R1-04, X-03, G2 setting calendar_stale_minutes)
+  ✖ older than the threshold: still excluded (last known) and flagged; fresh or absent: not flagged; the threshold is a setting (29.395152ms)
+  ✖ a missing setting fails closed (503), it never falls back to a number in code (26.399411ms)
+✖ stale busy data is never used silently (RA-R1-04, X-03, G2 setting calendar_stale_minutes) (56.167432ms)
+▶ the availability port of the booking core (hold validation, alternatives)
+  ✖ a hold is accepted on the grid inside the template and refused with scheduling.outside_hours everywhere else (83.932545ms)
+  ✖ a taken slot is 409 scheduling.slot_taken with alternatives from the same search (TC-BK-04) (25.320206ms)
+  ✖ alternatives and search stay consistent after a booking: the search never offers the held slot (23.360157ms)
+✖ the availability port of the booking core (hold validation, alternatives) (133.138283ms)
+▶ overbookable sessions (BR-02, RA-R1-03 for the overbookable case)
+  ✖ staff with includeOverbook see occupied slots of an overbookable session up to the cap; patients never do; cap 0 means no overbooking (26.586912ms)
+✖ overbookable sessions (BR-02, RA-R1-03 for the overbookable case) (26.95265ms)
+▶ lead time (booking policy) applies to patients, not to staff searches
+  ✖ a patient does not see slots inside the lead time; staff do (25.21129ms)
+✖ lead time (booking policy) applies to patients, not to staff searches (25.490164ms)
+▶ leave versus booking, concurrently (TC-DR-02, 25.2): never both
+  ✖ a hold that starts while a leave is being saved waits for it, then finds the leave: outside hours, no appointment (429.218527ms)
+  ✖ a leave that starts while a hold is being booked waits for it, then counts it: 409 and nothing saved (25.033547ms)
+  ✖ 20 rounds of a hold racing a leave over the same slot: either the leave is refused with the appointment counted, or the hold is refused as outside hours (58.365807ms)
+✖ leave versus booking, concurrently (TC-DR-02, 25.2): never both (513.003204ms)
+▶ search latency on a synthetic volume set (NFR-8: informational only, not a measurement of the ci volume set)
+  ✖ 40 doctors, 7 rules each, 14-day range, with bookings and busy blocks: timings are printed, not asserted (952.734489ms)
+✖ search latency on a synthetic volume set (NFR-8: informational only, not a measurement of the ci volume set) (953.119812ms)
+ℹ tests 20
+ℹ suites 7
+ℹ pass 0
+ℹ fail 20
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4141.31371
+
+✖ failing tests:
+
+test at dist/src/modules/scheduling/availability/search.dbtest.js:95:5
+✖ each of the four subtractions removes exactly its slot; removing the leave brings the slot back (118.783164ms)
+  AssertionError [ERR_ASSERTION]: {"type":"https://errors.invalid/auth/forbidden","title":"Forbidden","status":403,"code":"auth.forbidden","requestId":"cc265b4f-e4fe-4231-8865-db2c3b351f09","retryable":false}
+  
+  403 !== 200
+  
+      at search (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.dbtest.js:73:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.dbtest.js:99:33)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 403,
+    expected: 200,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at dist/src/modules/scheduling/availability/search.dbtest.js:121:5
+✖ the answer carries only what a patient may see: start, end, clinician, location, mode (never a room, patient, count, note or kind) (68.722573ms)
+  AssertionError [ERR_ASSERTION]: {"type":"https://errors.invalid/auth/forbidden","title":"Forbidden","status":403,"code":"auth.forbidden","requestId":"508a8867-1457-4e11-b5aa-e68901182142","retryable":false}
+  
+  403 !== 200
+  
+      at search (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.dbtest.js:73:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.dbtest.js:125:19)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 403,
+    expected: 200,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at dist/src/modules/scheduling/availability/search.dbtest.js:138:5
+✖ the service decides the grid (60 minutes -> 09:00, 10:00, 11:00); mode and service restrictions of a rule apply (29.738897ms)
+  AssertionError [ERR_ASSERTION]: {"type":"https://errors.invalid/auth/forbidden","title":"Forbidden","status":403,"code":"auth.forbidden","requestId":"512e02de-d8ea-4dfe-8673-c1e70b1d4b04","retryable":false}
+  
+  403 !== 200
+  
+      at search (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.dbtest.js:73:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.dbtest.js:141:33)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 403,
+    expected: 200,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at dist/src/modules/scheduling/availability/search.dbtest.js:157:5
+✖ a template change takes effect in the next search (RA-R1-23): replace, then retire (27.654696ms)
+  AssertionError [ERR_ASSERTION]: {"type":"https://errors.invalid/auth/forbidden","title":"Forbidden","status":403,"code":"auth.forbidden","requestId":"7e5a3f9a-0cb2-48bd-8ac2-815b85d2aa2f","retryable":false}
+  
+  403 !== 200
+  
+      at search (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.dbtest.js:73:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.dbtest.js:161:23)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 403,
+    expected: 200,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at dist/src/modules/scheduling/availability/search.dbtest.js:167:5
+✖ validity window: not before valid_from, not after valid_to (42.355924ms)
+  AssertionError [ERR_ASSERTION]: {"type":"https://errors.invalid/auth/forbidden","title":"Forbidden","status":403,"code":"auth.forbidden","requestId":"86700eff-9ddf-49e2-824c-14380a6e5f08","retryable":false}
+  
+  403 !== 200
+  
+      at search (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.dbtest.js:73:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.dbtest.js:173:23)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 403,
+    expected: 200,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at dist/src/modules/scheduling/availability/search.dbtest.js:180:5
+✖ who is offered: eligible and listed clinicians only to a patient; staff also see unlisted but active ones; a location filter applies (59.91263ms)
+  AssertionError [ERR_ASSERTION]: {"type":"https://errors.invalid/auth/forbidden","title":"Forbidden","status":403,"code":"auth.forbidden","requestId":"5006d51f-f8b7-464b-8782-6a4cf4be373c","retryable":false}
+  
+  403 !== 200
+  
+      at search (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.dbtest.js:73:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.dbtest.js:189:30)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 403,
+    expected: 200,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at dist/src/modules/scheduling/availability/search.dbtest.js:206:5
+✖ daylight saving (TC-BK-10): the template is local wall-clock time, the slot instant moves (29.456457ms)
+  AssertionError [ERR_ASSERTION]: {"type":"https://errors.invalid/auth/forbidden","title":"Forbidden","status":403,"code":"auth.forbidden","requestId":"59bf1e13-0618-4101-bd28-7e4b5c60295b","retryable":false}
+  
+  403 !== 200
+  
+      at search (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.dbtest.js:73:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.dbtest.js:217:27)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 403,
+    expected: 200,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at dist/src/modules/scheduling/availability/search.dbtest.js:232:5
+✖ range limits and input validation (29.2): 31 days, from < to, ids, zones, unknown service (106.255676ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  403 !== 200
+  
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.dbtest.js:281:16)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 403,
+    expected: 200,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at dist/src/modules/scheduling/availability/search.dbtest.js:296:5
+✖ who may search: a patient session and a staff member with the permission; a doctor without it, an admin session, and no session are refused (19.320546ms)
+  AssertionError [ERR_ASSERTION]: front-desk lead inherits the front desk permission
+  
+  403 !== 200
+  
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.dbtest.js:308:16)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 403,
+    expected: 200,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at dist/src/modules/scheduling/availability/search.dbtest.js:315:5
+✖ older than the threshold: still excluded (last known) and flagged; fresh or absent: not flagged; the threshold is a setting (29.395152ms)
+  AssertionError [ERR_ASSERTION]: {"type":"https://errors.invalid/auth/forbidden","title":"Forbidden","status":403,"code":"auth.forbidden","requestId":"a1ede92f-465c-4896-883b-8ff8c2151ee1","retryable":false}
+  
+  403 !== 200
+  
+      at search (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.dbtest.js:73:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.dbtest.js:322:28)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 403,
+    expected: 200,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at dist/src/modules/scheduling/availability/search.dbtest.js:349:5
+✖ a missing setting fails closed (503), it never falls back to a number in code (26.399411ms)
+  AssertionError [ERR_ASSERTION]: {"type":"https://errors.invalid/auth/forbidden","title":"Forbidden","status":403,"code":"auth.forbidden","requestId":"4a1deb3e-d134-491c-88eb-bcc84c49fdf1","retryable":false}
+  
+  403 !== 503
+  
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.dbtest.js:365:20)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 403,
+    expected: 503,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at dist/src/modules/scheduling/availability/search.dbtest.js:374:5
+✖ a hold is accepted on the grid inside the template and refused with scheduling.outside_hours everywhere else (83.932545ms)
+  AssertionError [ERR_ASSERTION]: on a Google busy block: expected OutsideHoursError, got error: permission denied for table slot_occupancy
+      at Object.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.dbtest.js:31:12)
+      at expectedException (node:assert:578:17)
+      at expectsError (node:assert:703:21)
+      at strict.rejects (node:assert:769:3)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.dbtest.js:391:13)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at dist/src/modules/scheduling/availability/search.dbtest.js:407:5
+✖ a taken slot is 409 scheduling.slot_taken with alternatives from the same search (TC-BK-04) (25.320206ms)
+  error: permission denied for table slot_occupancy
+      at /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/node_modules/.pnpm/pg@8.23.1/node_modules/pg/lib/client.js:694:17
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async AvailabilitySearch.conflicts (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.js:221:21)
+      at async AvailabilitySearch.resolve (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.js:112:22)
+      at async SchedulingCoreService.hold (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/core/service.js:217:27)
+      at async KernelDb.once (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/packages/kernel/dist/scope/with-scope.js:114:28)
+      at async KernelDb.run (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/packages/kernel/dist/scope/with-scope.js:92:24)
+      at async TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.dbtest.js:413:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    length: 102,
+    severity: 'ERROR',
+    code: '42501',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'aclchk.c',
+    line: '2843',
+    routine: 'aclcheck_error'
+  }
+
+test at dist/src/modules/scheduling/availability/search.dbtest.js:429:5
+✖ alternatives and search stay consistent after a booking: the search never offers the held slot (23.360157ms)
+  error: permission denied for table slot_occupancy
+      at /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/node_modules/.pnpm/pg@8.23.1/node_modules/pg/lib/client.js:694:17
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async AvailabilitySearch.conflicts (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.js:221:21)
+      at async AvailabilitySearch.resolve (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.js:112:22)
+      at async SchedulingCoreService.hold (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/core/service.js:217:27)
+      at async KernelDb.once (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/packages/kernel/dist/scope/with-scope.js:114:28)
+      at async KernelDb.run (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/packages/kernel/dist/scope/with-scope.js:92:24)
+      at async TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.dbtest.js:434:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    length: 102,
+    severity: 'ERROR',
+    code: '42501',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'aclchk.c',
+    line: '2843',
+    routine: 'aclcheck_error'
+  }
+
+test at dist/src/modules/scheduling/availability/search.dbtest.js:439:5
+✖ staff with includeOverbook see occupied slots of an overbookable session up to the cap; patients never do; cap 0 means no overbooking (26.586912ms)
+  error: permission denied for table slot_occupancy
+      at /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/node_modules/.pnpm/pg@8.23.1/node_modules/pg/lib/client.js:694:17
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async AvailabilitySearch.conflicts (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.js:221:21)
+      at async AvailabilitySearch.resolve (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.js:112:22)
+      at async SchedulingCoreService.hold (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/core/service.js:217:27)
+      at async KernelDb.once (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/packages/kernel/dist/scope/with-scope.js:114:28)
+      at async KernelDb.run (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/packages/kernel/dist/scope/with-scope.js:92:24)
+      at async TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.dbtest.js:445:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Promise.all (index 0) {
+    length: 102,
+    severity: 'ERROR',
+    code: '42501',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'aclchk.c',
+    line: '2843',
+    routine: 'aclcheck_error'
+  }
+
+test at dist/src/modules/scheduling/availability/search.dbtest.js:475:5
+✖ a patient does not see slots inside the lead time; staff do (25.21129ms)
+  AssertionError [ERR_ASSERTION]: {"type":"https://errors.invalid/auth/forbidden","title":"Forbidden","status":403,"code":"auth.forbidden","requestId":"da4b11e9-2393-4680-b940-886c45f43da8","retryable":false}
+  
+  403 !== 200
+  
+      at search (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.dbtest.js:73:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.dbtest.js:480:27)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 403,
+    expected: 200,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at dist/src/modules/scheduling/availability/search.dbtest.js:495:5
+✖ a hold that starts while a leave is being saved waits for it, then finds the leave: outside hours, no appointment (429.218527ms)
+  AssertionError [ERR_ASSERTION]: error: permission denied for table slot_occupancy
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.dbtest.js:519:16)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at dist/src/modules/scheduling/availability/search.dbtest.js:522:5
+✖ a leave that starts while a hold is being booked waits for it, then counts it: 409 and nothing saved (25.033547ms)
+  error: permission denied for table slot_occupancy
+      at /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/node_modules/.pnpm/pg@8.23.1/node_modules/pg/lib/client.js:694:17
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async AvailabilitySearch.conflicts (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.js:221:21)
+      at async AvailabilitySearch.resolve (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.js:112:22)
+      at async SchedulingCoreService.hold (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/core/service.js:217:27)
+      at async file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.dbtest.js:530:23
+      at async KernelDb.once (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/packages/kernel/dist/scope/with-scope.js:114:28)
+      at async KernelDb.run (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/packages/kernel/dist/scope/with-scope.js:92:24) {
+    length: 102,
+    severity: 'ERROR',
+    code: '42501',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'aclchk.c',
+    line: '2843',
+    routine: 'aclcheck_error'
+  }
+
+test at dist/src/modules/scheduling/availability/search.dbtest.js:556:5
+✖ 20 rounds of a hold racing a leave over the same slot: either the leave is refused with the appointment counted, or the hold is refused as outside hours (58.365807ms)
+  AssertionError [ERR_ASSERTION]: round 0: the hold lost to the leave and says outside hours, got error: permission denied for table slot_occupancy
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.dbtest.js:586:24)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at dist/src/modules/scheduling/availability/search.dbtest.js:596:5
+✖ 40 doctors, 7 rules each, 14-day range, with bookings and busy blocks: timings are printed, not asserted (952.734489ms)
+  error: permission denied for table slot_occupancy
+      at /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/node_modules/.pnpm/pg@8.23.1/node_modules/pg/lib/client.js:694:17
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async AvailabilitySearch.conflicts (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.js:221:21)
+      at async AvailabilitySearch.collect (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.js:287:22)
+      at async AvailabilitySearch.search (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.js:61:19)
+      at async KernelDb.once (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/packages/kernel/dist/scope/with-scope.js:114:28)
+      at async KernelDb.run (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/packages/kernel/dist/scope/with-scope.js:92:24)
+      at async TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/availability/search.dbtest.js:615:23)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Promise.all (index 0) {
+    length: 102,
+    severity: 'ERROR',
+    code: '42501',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'aclchk.c',
+    line: '2843',
+    routine: 'aclcheck_error'
+  }
