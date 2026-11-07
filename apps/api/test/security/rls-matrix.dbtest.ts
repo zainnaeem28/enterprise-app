@@ -26,14 +26,8 @@ import {
 } from '../../src/modules/scheduling/core/testkit.js';
 import type { SchedKit } from '../../src/modules/scheduling/core/testkit.js';
 
-/** Findings other than F01 whose negative cases are written here but cannot pass on the candidate. Key = tag used in the case title. */
-const OPEN_FINDINGS: Record<string, string> = {
-  'SEC03-F02': 'scheduling.set_status is not bound to the caller reservation (BE-11)',
-  'SEC03-F04':
-    'patient.ensure_care_relationship lets a patient or clinic add a relationship for another patient (BE-08)',
-  'SEC03-F08':
-    'patient.identity_label cannot succeed and does not check the referencing record (BE-08)',
-};
+/** Findings whose negative cases cannot yet pass on the candidate (a todo marker). Empty: SEC03-F02, F04 and F08 pass. */
+const OPEN_FINDINGS: Record<string, string> = {};
 const openCase = (tag: string): { todo?: string } =>
   tag in OPEN_FINDINGS ? { todo: `${tag}: ${OPEN_FINDINGS[tag]}` } : {};
 
