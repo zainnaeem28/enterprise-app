@@ -275,6 +275,37 @@ export async function enrol(
   return sessionOf(ver, principalId);
 }
 
+/** Registers a second key from the enrolment session (BE05-R3-S01); the token was spent with the first key. */
+export async function enrolSecond(
+  k: AdminKit,
+  s: AdminSession,
+  key: SoftKey,
+  o: { aaguid?: string; be?: boolean; bs?: boolean; uv?: boolean } = {},
+): Promise<Resp> {
+  const opt = await post(
+    k,
+    '/auth/enrolment/second-key/options',
+    {},
+    { cookie: s.cookie, csrf: s.csrf },
+  );
+  if (opt.status !== 200) return opt;
+  const j = opt.json() as { challengeId: string; publicKey: { challenge: string } };
+  const attestation = key.create(j.publicKey, {
+    origin: ORIGIN,
+    rpId: STAFF_HOST,
+    aaguid: o.aaguid ?? AAGUID_OK,
+    ...(o.be === undefined ? {} : { be: o.be }),
+    ...(o.bs === undefined ? {} : { bs: o.bs }),
+    ...(o.uv === undefined ? {} : { uv: o.uv }),
+  });
+  return post(
+    k,
+    '/auth/enrolment/second-key/verify',
+    { challengeId: j.challengeId, attestation },
+    { cookie: s.cookie, csrf: s.csrf },
+  );
+}
+
 export async function signInOptions(k: AdminKit, handle: string, ip?: string): Promise<Resp> {
   return post(k, '/auth/sign-in/options', { handle }, ip === undefined ? {} : { ip });
 }
@@ -324,8 +355,8 @@ export async function elevatedAdmin(
   const key = new SoftKey();
   const key2 = new SoftKey();
   const token = await seedToken(k, s.principalId);
-  await enrol(k, handle, s.principalId, token, key);
-  await enrol(k, handle, s.principalId, token, key2);
+  const enrolSession = await enrol(k, handle, s.principalId, token, key);
+  await enrolSecond(k, enrolSession, key2);
   const signed = await signIn(k, handle, s.principalId, key);
   const { resp, session } = await elevate(k, signed, key);
   if (resp.status !== 200) throw new Error(`elevate ${resp.status} ${resp.body}`);

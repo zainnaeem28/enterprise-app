@@ -124,6 +124,20 @@ export function createAdminController(d: AdminControllerDeps): Type<unknown> {
       return sessionBody(g);
     }
 
+    @Post('auth/enrolment/second-key/options')
+    @HttpCode(200)
+    @Route({ permission: PUBLIC, resolver: 'session', realm: 'admin_pool' })
+    async secondKeyOptions(@ReqParam() req: Req): Promise<unknown> {
+      return d.ceremonies.secondKeyOptions(requireAuthContext(req));
+    }
+
+    @Post('auth/enrolment/second-key/verify')
+    @HttpCode(200)
+    @Route({ permission: PUBLIC, resolver: 'session', realm: 'admin_pool' })
+    async secondKeyVerify(@ReqParam() req: Req): Promise<unknown> {
+      return d.ceremonies.secondKeyVerify(requireAuthContext(req), req.body);
+    }
+
     // --- elevation (C1): an admin session, no permission of its own ----------------------------------------------------------
 
     @Post('auth/elevation/options')

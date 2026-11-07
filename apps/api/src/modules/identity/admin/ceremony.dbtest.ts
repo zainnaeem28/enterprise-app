@@ -8,6 +8,7 @@ import {
   adminSetup,
   elevate,
   enrol,
+  enrolSecond,
   ORIGIN,
   post,
   queuedJobs,
@@ -139,20 +140,63 @@ describe('enrolment (26.3, B2-3)', () => {
     const used = await post(k, '/auth/enrolment/options', { handle: h, token: usedToken });
     assert.equal(used.status, 401);
     assert.equal(REQUEST_CODE(used), 'identity.enrolment_failed');
-    // Spend a real token with two keys; the third use is refused.
+    // BE05-R3-S01: the token is spent with the first key; the second key comes from the enrolment session.
     const token = await seedToken(k, s.principalId);
-    await enrol(k, h, s.principalId, token, new SoftKey());
-    await enrol(k, h, s.principalId, token, new SoftKey());
+    const first = await enrol(k, h, s.principalId, token, new SoftKey());
     const row = await k.q(
       `SELECT status, used_at FROM identity.enrolment_token WHERE principal_id = $1 AND status = 'used'`,
       [s.principalId],
     );
-    assert.equal(row.length, 2, 'the seeded used token and the one the two keys spent');
-    const third = await post(k, '/auth/enrolment/options', { handle: h, token });
-    assert.equal(third.status, 401);
+    assert.equal(row.length, 2, 'the seeded used token and the one the first key spent');
+    const replay = await post(k, '/auth/enrolment/options', { handle: h, token });
+    assert.equal(replay.status, 401, 'a token replayed after the first key is refused');
+    assert.equal(REQUEST_CODE(replay), 'identity.enrolment_failed');
+    const second = await enrolSecond(k, first, new SoftKey());
+    assert.equal(second.status, 200);
+    const third = await enrolSecond(k, first, new SoftKey());
+    assert.equal(third.status, 401, 'no third key');
+    const n = await k.q(`SELECT 1 FROM identity.admin_credential WHERE principal_id = $1`, [
+      s.principalId,
+    ]);
+    assert.equal(n.length, 2);
   });
 
-  test('concurrent verifies on one token register at most two credentials (BE05-R1-F04)', async () => {
+  test('a holder of the token cannot add a key from a fresh client, with or without a session (BE05-R3-S01)', async () => {
+    const h = handleOf('enrol-hostile');
+    const s = await seedAdmin(k, h);
+    const token = await seedToken(k, s.principalId);
+    const o = await post(k, '/auth/enrolment/options', { handle: h, token });
+    assert.equal(o.status, 200, 'options before the first key');
+    const key = new SoftKey();
+    await enrol(k, h, s.principalId, token, key);
+    // the stale options from before: verify with the token after the first key
+    const j = o.json() as { challengeId: string; publicKey: { challenge: string } };
+    const late = await post(k, '/auth/enrolment/verify', {
+      challengeId: j.challengeId,
+      handle: h,
+      token,
+      attestation: new SoftKey().create(j.publicKey, {
+        origin: ORIGIN,
+        rpId: STAFF_HOST,
+        aaguid: AAGUID_OK,
+      }),
+    });
+    assert.equal(late.status, 401);
+    const fresh = await post(k, '/auth/enrolment/options', { handle: h, token });
+    assert.equal(fresh.status, 401);
+    const anon = await post(k, '/auth/enrolment/second-key/options', {});
+    assert.notEqual(anon.status, 200);
+    // a later sign-in session (no amr enrol) cannot register a key either
+    const signed = await signIn(k, h, s.principalId, key);
+    const viaSignIn = await enrolSecond(k, signed, new SoftKey());
+    assert.equal(viaSignIn.status, 401);
+    const n = await k.q(`SELECT 1 FROM identity.admin_credential WHERE principal_id = $1`, [
+      s.principalId,
+    ]);
+    assert.equal(n.length, 1, 'still exactly one key');
+  });
+
+  test('concurrent verifies on one token register exactly one credential (BE05-R3-S01)', async () => {
     const h = handleOf('enrol-race');
     const s = await seedAdmin(k, h);
     const token = await seedToken(k, s.principalId);
@@ -179,8 +223,8 @@ describe('enrolment (26.3, B2-3)', () => {
     const n = await k.q(`SELECT 1 FROM identity.admin_credential WHERE principal_id = $1`, [
       s.principalId,
     ]);
-    assert.equal(n.length, 2, 'exactly two keys');
-    assert.equal(results.filter((r) => r.status === 200).length, 2);
+    assert.equal(n.length, 1, 'exactly one key');
+    assert.equal(results.filter((r) => r.status === 200).length, 1);
     assert.ok(results.filter((r) => r.status !== 200).every((r) => r.status === 401));
   });
 
@@ -534,8 +578,8 @@ describe('elevation (26.3, C1)', () => {
     const key = new SoftKey();
     const key2 = new SoftKey();
     const token = await seedToken(k, s.principalId);
-    await enrol(k, h, s.principalId, token, key);
-    await enrol(k, h, s.principalId, token, key2);
+    const enrolSession = await enrol(k, h, s.principalId, token, key);
+    await enrolSecond(k, enrolSession, key2);
     const signed = await signIn(k, h, s.principalId, key);
     const denied = await getAdmin(k, '/principals', signed.cookie);
     assert.equal(denied.status, 200, 'identity.principal.read is not an elevation permission');
@@ -598,8 +642,8 @@ describe('elevation (26.3, C1)', () => {
     const s = await seedAdmin(k, h, ['org_admin']);
     const key = new SoftKey();
     const token = await seedToken(k, s.principalId);
-    await enrol(k, h, s.principalId, token, key);
-    await enrol(k, h, s.principalId, token, new SoftKey());
+    const enrolSession = await enrol(k, h, s.principalId, token, key);
+    await enrolSecond(k, enrolSession, new SoftKey());
     const { resp, session } = await elevate(k, await signIn(k, h, s.principalId, key), key);
     assert.equal(resp.status, 200);
     const probe = () =>
@@ -637,8 +681,8 @@ describe('elevation (26.3, C1)', () => {
     const s = await seedAdmin(k, h, ['org_admin']);
     const key = new SoftKey();
     const token = await seedToken(k, s.principalId);
-    await enrol(k, h, s.principalId, token, key);
-    await enrol(k, h, s.principalId, token, new SoftKey());
+    const enrolSession = await enrol(k, h, s.principalId, token, key);
+    await enrolSecond(k, enrolSession, new SoftKey());
     const one = await signIn(k, h, s.principalId, key);
     const two = await signIn(k, h, s.principalId, key);
     const o1 = (

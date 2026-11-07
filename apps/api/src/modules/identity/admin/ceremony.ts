@@ -401,17 +401,13 @@ export class AdminCeremonies {
       return { ok: false, principalId: claim.principalId };
 
     await tx.setAuthIdentity({ realm: 'admin_pool', subject: b.handle });
-    // BE05-R1-F04: serialise concurrent enrolments on one token, so the two-key limit holds under concurrency.
-    await tx.query(`SELECT 1 FROM identity.enrolment_token WHERE id = $1 FOR UPDATE`, [tok.id]);
-    const registered = Number(
-      (
-        await tx.query(
-          `SELECT count(*) AS n FROM identity.admin_credential WHERE enrolment_token_id = $1`,
-          [tok.id],
-        )
-      ).rows[0]?.['n'] ?? 0,
+    // BE05-R3-S01: the token is single-use. The row is locked and re-checked as still approved, so of two concurrent
+    // verifies exactly one proceeds; the token is spent with the first key (the second key needs the enrolment session).
+    const live = await tx.query(
+      `SELECT 1 FROM identity.enrolment_token WHERE id = $1 AND status = 'approved' AND used_at IS NULL FOR UPDATE`,
+      [tok.id],
     );
-    if (registered >= 2) return { ok: false, principalId: claim.principalId };
+    if (live.rows.length !== 1) return { ok: false, principalId: claim.principalId };
     const ins = await tx.query(
       `INSERT INTO identity.admin_credential (id, organisation_id, principal_id, public_key, sign_count, aaguid, transports,
          backup_eligible, user_verified_at_enrol, enrolment_token_id)
@@ -428,12 +424,10 @@ export class AdminCeremonies {
       ],
     );
     if ((ins.rowCount ?? 0) !== 1) return { ok: false, principalId: claim.principalId };
-    // Two keys (B2-8): the token is spent with the second registration; the first leaves it usable for the second key.
-    if (registered + 1 >= 2)
-      await tx.query(
-        `UPDATE identity.enrolment_token SET status = 'used', used_at = $2 WHERE id = $1`,
-        [tok.id, now],
-      );
+    await tx.query(
+      `UPDATE identity.enrolment_token SET status = 'used', used_at = $2 WHERE id = $1`,
+      [tok.id, now],
+    );
 
     const pr = (
       await tx.query(
@@ -469,6 +463,139 @@ export class AdminCeremonies {
       { jobKey: `credential_enrolled:${grant.sessionId}` },
     );
     return { ok: true, grant };
+  }
+
+  /**
+   * POST /admin/auth/enrolment/second-key/options (BE05-R3-S01, B2-8): the second key, from the session the enrolment created
+   * (amr 'enrol') while the principal holds exactly one live key that came from that enrolment. No token is involved.
+   */
+  async secondKeyOptions(ctx: AuthContext): Promise<OptionsResponse> {
+    const now = this.now();
+    const out = await this.d.db.withScope(ctx.scope, async (tx) => {
+      await setLocal(tx, 'app.session_id', ctx.session.id);
+      const first = await this.secondKeyBase(tx, ctx);
+      if (first === undefined) return undefined;
+      const ch = await insertChallenge(tx, {
+        orgId: this.d.orgId,
+        purpose: 'enrol',
+        principalId: ctx.session.principalId,
+        sessionId: ctx.session.id,
+        now,
+      });
+      return {
+        challengeId: ch.id,
+        publicKey: await this.d.port.registrationOptions({
+          challenge: ch.challenge,
+          handle: first.handle,
+          userId: userHandleOf(ctx.session.principalId),
+          exclude: first.exclude,
+        }),
+      };
+    });
+    if (out === undefined) throw new EnrolmentFailedError();
+    return out;
+  }
+
+  /** POST /admin/auth/enrolment/second-key/verify {challengeId, attestation}: registers the second key. */
+  async secondKeyVerify(ctx: AuthContext, input: unknown): Promise<{ enrolled: true }> {
+    const body = (typeof input === 'object' && input !== null ? input : {}) as Record<
+      string,
+      unknown
+    >;
+    const attestation = parseAttestation(body['attestation']);
+    const challengeId = body['challengeId'];
+    if (attestation === undefined || !isUuid(challengeId)) throw new EnrolmentFailedError();
+    const now = this.now();
+    const scope: ScopeSettings = { ...ctx.scope, webauthnChallengeId: challengeId };
+    const verdict = await this.d.db.withScope(scope, async (tx): Promise<Verdict<object>> => {
+      await setLocal(tx, 'app.session_id', ctx.session.id);
+      const consumed = await consumeChallenge(tx, challengeId, 'enrol', now);
+      if (consumed === undefined || consumed.principalId !== ctx.session.principalId) return FAIL;
+      // One enrolment at a time per principal, so the two-key limit holds under concurrency.
+      await tx.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [
+        `admin_second_key:${ctx.session.principalId}`,
+      ]);
+      const first = await this.secondKeyBase(tx, ctx);
+      if (first === undefined) return FAIL;
+      const v = await this.d.port.verifyAttestation({
+        response: attestation,
+        challenge: consumed.challenge,
+      });
+      if (!v.ok) return FAIL;
+      const k = v.key;
+      if (
+        !this.d.allowedAaguids.has(k.aaguid.toLowerCase()) ||
+        k.backupEligible ||
+        k.backedUp ||
+        !k.userVerified
+      )
+        return FAIL;
+      const ins = await tx.query(
+        `INSERT INTO identity.admin_credential (id, organisation_id, principal_id, public_key, sign_count, aaguid, transports,
+           backup_eligible, user_verified_at_enrol, enrolment_token_id)
+         VALUES ($1, $2, $3, $4, 0, $5, $6, false, true, $7)
+         ON CONFLICT (id) DO NOTHING`,
+        [
+          k.credentialId,
+          this.d.orgId,
+          ctx.session.principalId,
+          k.publicKey,
+          k.aaguid.toLowerCase(),
+          k.transports,
+          first.tokenId,
+        ],
+      );
+      if ((ins.rowCount ?? 0) !== 1) return FAIL;
+      await this.d.queue.enqueue(
+        tx,
+        'identity.admin_event',
+        {
+          kind: 'credential_enrolled',
+          principalId: ctx.session.principalId,
+          sessionId: ctx.session.id,
+        },
+        { jobKey: `credential_enrolled:${ctx.session.id}:${challengeId}` },
+      );
+      return { ok: true };
+    });
+    if (!verdict.ok) throw new EnrolmentFailedError();
+    return { enrolled: true };
+  }
+
+  /** The session must carry amr 'enrol' and the principal hold exactly one credential (never revoked) from one token. */
+  private async secondKeyBase(
+    tx: Tx,
+    ctx: AuthContext,
+  ): Promise<
+    { tokenId: string; handle: string; exclude: { id: Buffer; transports: string[] }[] } | undefined
+  > {
+    const amr = (
+      await tx.query(`SELECT amr FROM identity.session WHERE id = $1 AND revoked_at IS NULL`, [
+        ctx.session.id,
+      ])
+    ).rows[0]?.['amr'] as string[] | undefined;
+    if (amr === undefined || !amr.includes('enrol')) return undefined;
+    const creds = (
+      await tx.query(
+        `SELECT id, transports, enrolment_token_id, revoked_at FROM identity.admin_credential WHERE principal_id = $1`,
+        [ctx.session.principalId],
+      )
+    ).rows;
+    if (creds.length !== 1 || creds[0]?.['revoked_at'] !== null) return undefined;
+    const handle = (
+      await tx.query(`SELECT subject FROM identity.principal WHERE id = $1`, [
+        ctx.session.principalId,
+      ])
+    ).rows[0]?.['subject'] as string | undefined;
+    if (handle === undefined) return undefined;
+    return {
+      tokenId: creds[0]['enrolment_token_id'] as string,
+      handle,
+      exclude: creds.map((c) => ({
+        id: c['id'] as Buffer,
+        transports: (c['transports'] as string[] | null) ?? [],
+      })),
+    };
   }
 
   /** The enrolment token by the hash of the presented token (21.3 item 4), if approved and unexpired. */

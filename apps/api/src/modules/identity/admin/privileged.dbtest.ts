@@ -9,6 +9,7 @@ import {
   elevate,
   elevatedAdmin,
   enrol,
+  enrolSecond,
   getAdmin,
   now,
   ORG,
@@ -598,8 +599,7 @@ describe('role changes need a second approver (C4, 25.8)', () => {
     const key2 = new SoftKey();
     const { seedToken } = await import('./testkit.js');
     const t = await seedToken(k, s.principalId);
-    await enrol(k, h, s.principalId, t, key);
-    await enrol(k, h, s.principalId, t, key2);
+    await enrolSecond(k, await enrol(k, h, s.principalId, t, key), key2);
     const signed = await signIn(k, h, s.principalId, key);
     const r = await post(
       k,
@@ -618,8 +618,7 @@ describe('role changes need a second approver (C4, 25.8)', () => {
         bare.principalId,
       ])
     )[0]!.subject;
-    await enrol(k, bh, bare.principalId, bt, bkey);
-    await enrol(k, bh, bare.principalId, bt, bkey2);
+    await enrolSecond(k, await enrol(k, bh, bare.principalId, bt, bkey), bkey2);
     const bs = await signIn(k, bh, bare.principalId, bkey);
     const forbidden = await post(
       k,
