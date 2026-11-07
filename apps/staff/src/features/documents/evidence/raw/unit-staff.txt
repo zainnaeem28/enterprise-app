@@ -1,0 +1,17 @@
+
+ RUN  v5.1.0 /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-105-sdlc-ticket-fe-06-shared-documents-ui-upload-with-scan-state-classification-list-and-viewer/apps/staff
+
+ ✓ src/App.test.tsx > staff shell > marks the identity as placeholder and has a skip link and main landmark 190ms
+ ✓ src/App.test.tsx > staff shell > opens the blocking dialog when the page call is refused for its release 23ms
+ ✓ src/features/documents/DocumentsPage.test.tsx > DocumentsPage > shows upload, list and the confirm control to a classifier 244ms
+ ✓ src/features/documents/DocumentsPage.test.tsx > DocumentsPage > shows a read-only list to a reader: no upload, no confirm 30ms
+ ✓ src/features/documents/DocumentsPage.test.tsx > DocumentsPage > makes no call without documents.read 4ms
+ ✓ src/a11y.test.tsx > axe smoke on the shell (jsdom) > shell with the non-blocking release bar 242ms
+ ✓ src/a11y.test.tsx > axe smoke on the shell (jsdom) > shell with the blocking release dialog 51ms
+
+ Test Files  3 passed (3)
+      Tests  7 passed (7)
+   Start at  21:42:13
+   Duration  1.55s (environment 55%, tests 19%, setup 11%, import 7%, transform 7%)
+
+exit 0
