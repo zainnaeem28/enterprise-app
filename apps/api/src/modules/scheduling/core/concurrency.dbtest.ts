@@ -7,6 +7,7 @@ import { randomUUID } from 'node:crypto';
 import { after, before, describe, test } from 'node:test';
 import { ParticipantRegistries } from '@ehr/kernel';
 import type { MergeParticipant, ScopeSettings } from '@ehr/kernel';
+import { registerAllParticipants } from '../../../composition.js';
 import { registerIdentityParticipants } from '../../identity/index.js';
 import { registerNotificationsParticipants } from '../../notifications/index.js';
 import { A1, ORG, SVC, SVC2, ROOM1, setupScheduling, slotStart } from './testkit.js';
@@ -659,14 +660,17 @@ describe('merge participant (22.16, 38.2 items 1 and 11)', () => {
         ];
       },
     };
+    // Every module's participant, as at the composition root: a merge with a patient-data table that has no participant fails before it writes.
     const regs = new ParticipantRegistries();
-    registerIdentityParticipants(regs);
-    registerNotificationsParticipants(regs);
+    registerAllParticipants(regs);
     regs.registerMergeParticipant(blocker);
-    regs.registerMergeParticipant(schedulingMergeParticipant);
 
     const merge = t.run(requestId, { registries: regs });
-    await enteredP; // the merge now holds both roots FOR UPDATE
+    // a merge that ends before it reaches the blocker is a failed test, not a hang
+    await Promise.race([
+      enteredP,
+      merge.then((r) => assert.fail(`the merge ended before the blocker: ${JSON.stringify(r)}`)),
+    ]); // the merge now holds both roots FOR UPDATE
     let settled = false;
     const confirm = t
       .as(scD, (tx) => t.svc.confirm(tx, meta, h.reservationId))

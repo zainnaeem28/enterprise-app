@@ -353,8 +353,16 @@ describe(
       };
       const rid = await approved(S, D);
       const alerts = m.failures.length;
-      // The role-level bound of the worker (60 s in production) is lowered for this test; a fresh pool picks it up at connect time.
-      await m.k.sa.query(`ALTER ROLE app_worker SET transaction_timeout = '700ms'`);
+      // The bound of the worker (60 s in production) is lowered for this throwaway database only: a role-wide ALTER ROLE is
+      // cluster-wide and would cut the sessions of every other test database running at the same time.
+      // A fresh pool picks it up at connect time.
+      const dbName = (
+        (await q<{ d: string }>(`SELECT current_database() AS d`))[0] as { d: string }
+      ).d;
+      const dbIdent = `"${dbName.replace(/"/g, '""')}"`;
+      await m.k.sa.query(
+        `ALTER ROLE app_worker IN DATABASE ${dbIdent} SET transaction_timeout = '700ms'`,
+      );
       // One pool per attempt, as a queue runner replaces a worker whose session the server ended.
       const attempt = async <T>(fn: (db: KernelDb) => Promise<T>): Promise<T> => {
         const pool = new pg.Pool({ connectionString: m.k.urlFor('app_worker'), max: 2 });
@@ -389,7 +397,9 @@ describe(
         assert.deepEqual(res, { status: 'failed', code: 'patient.merge_failed' });
         assert.equal(m.failures.length, alerts + 1);
       } finally {
-        await m.k.sa.query(`ALTER ROLE app_worker SET transaction_timeout = '60s'`);
+        await m.k.sa.query(
+          `ALTER ROLE app_worker IN DATABASE ${dbIdent} RESET transaction_timeout`,
+        );
       }
       assert.equal(await status(D), 'active');
       assert.equal(
