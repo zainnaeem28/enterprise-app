@@ -1054,7 +1054,9 @@ describe('the database rules under the flow (1300-1302)', () => {
       'scheduling.expire_offer',
       'scheduling.no_show_sweep',
       'scheduling.offer_waitlist',
+      'scheduling.on_reservation_cancelled',
       'scheduling.on_reservation_confirmed',
+      'scheduling.on_reservation_rescheduled',
       'scheduling.on_slot_freed',
       'scheduling.send_previsit',
     ]);

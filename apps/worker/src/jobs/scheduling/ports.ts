@@ -45,6 +45,12 @@ export type OfferOutcome =
 
 export type LapseOutcome = 'expired' | 'not_due' | 'already_decided' | 'gone';
 export type SendPrevisitOutcome = 'sent' | 'duplicate' | 'skipped' | 'gone';
+export type NoticeOutcome = 'sent' | 'duplicate' | 'skipped' | 'gone';
+export interface NoticeResult {
+  outcome: NoticeOutcome;
+  /** Configured reminder offsets that have no template (reported, never sent). */
+  ignoredOffsets: number[];
+}
 
 export interface SchedulingFlowPort {
   freedSlot(tx: Tx, occupancyId: string): Promise<FreedSlot | undefined>;
@@ -63,6 +69,21 @@ export interface SchedulingFlowPort {
   autoNoShow(tx: Tx, meta: FlowMeta, c: NoShowCandidate): Promise<'marked' | 'skipped'>;
   sendPrevisit(tx: Tx, meta: FlowMeta, reservationId: string): Promise<SendPrevisitOutcome>;
   previsitDueAt(tx: Tx, reservationId: string): Promise<Date | 'skip' | 'gone'>;
+  noticeConfirmed(tx: Tx, meta: FlowMeta, reservationId: string): Promise<NoticeResult>;
+  noticeCancelled(
+    tx: Tx,
+    meta: FlowMeta,
+    reservationId: string,
+    wasConfirmed: boolean,
+    recipient: string,
+  ): Promise<NoticeResult>;
+  noticeRescheduled(
+    tx: Tx,
+    meta: FlowMeta,
+    reservationId: string,
+    newReservationId: string,
+    recipient: string,
+  ): Promise<NoticeResult>;
 }
 
 export interface SchedulingJobDeps {

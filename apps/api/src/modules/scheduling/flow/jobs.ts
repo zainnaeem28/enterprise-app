@@ -61,6 +61,23 @@ export const SCHEDULING_FLOW_JOBS: readonly JobType[] = [
     jobScope: 'patients',
     jobClass: 'job',
   },
+  // Event handler for the cancel/reschedule notices (INT02-R11-N1).
+  {
+    name: 'scheduling.on_reservation_cancelled',
+    maxAttempts: 5,
+    onMerged: 'resolve',
+    carriesPatientIds: true,
+    jobScope: 'patients',
+    jobClass: 'handler',
+  },
+  {
+    name: 'scheduling.on_reservation_rescheduled',
+    maxAttempts: 5,
+    onMerged: 'resolve',
+    carriesPatientIds: true,
+    jobScope: 'patients',
+    jobClass: 'handler',
+  },
 ];
 
 /** graphile-worker crontab (33.1): the no-show sweep every 5 minutes. */
@@ -73,8 +90,10 @@ export const SCHEDULING_FLOW_EVENTS = [
   'scheduling.waitlist_offered',
 ] as const;
 
-/** Registers this module as the handler of the two events it consumes. Call once per registry, before `publish` is used. */
+/** Registers this module as the handler of the events it consumes. Call once per registry, before `publish` is used. */
 export function registerSchedulingFlowHandlers(registry: JobRegistry): void {
   registry.registerHandler('scheduling.slot_freed', 'scheduling');
   registry.registerHandler('scheduling.reservation_confirmed', 'scheduling');
+  registry.registerHandler('scheduling.reservation_cancelled', 'scheduling');
+  registry.registerHandler('scheduling.reservation_rescheduled', 'scheduling');
 }

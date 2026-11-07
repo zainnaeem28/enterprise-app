@@ -82,6 +82,16 @@ export interface WorkerJobs {
     deps: FlowKit['jobs'],
     payload: Record<string, unknown>,
   ): Promise<'scheduled' | 'skipped' | 'gone'>;
+  runOnReservationCancelled(
+    deps: FlowKit['jobs'],
+    payload: Record<string, unknown>,
+    jobRef?: string,
+  ): Promise<'sent' | 'duplicate' | 'skipped' | 'gone'>;
+  runOnReservationRescheduled(
+    deps: FlowKit['jobs'],
+    payload: Record<string, unknown>,
+    jobRef?: string,
+  ): Promise<'sent' | 'duplicate' | 'skipped' | 'gone'>;
   runSendPrevisit(
     deps: FlowKit['jobs'],
     payload: Record<string, unknown>,
@@ -359,10 +369,8 @@ export async function setupFlow(
   };
   await worker.withScope(workerScope, (tx) => org.applySettingDefaults(tx, undefined));
 
-  // The templates the flow sends: a published version of each (the render check is the notifications module's own test).
-  for (const t of r1TemplatesForLanguages(['en']).filter(
-    (x) => !opts.noTemplates && (x.key === 'waitlist_offer' || x.key === 'previsit_request'),
-  )) {
+  // The templates the flow sends (the whole R1 set, INT02-R11-N1): a published version of each (the render check is the notifications module's own test).
+  for (const t of r1TemplatesForLanguages(['en']).filter(() => !opts.noTemplates)) {
     const tid = uuidv7();
     await k.sa.query(
       `INSERT INTO notifications.template (id, organisation_id, key, channel, language, version, subject, body, variables, status)
