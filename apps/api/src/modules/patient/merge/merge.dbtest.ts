@@ -8,9 +8,18 @@ import { after, before, describe, test } from 'node:test';
 import { ParticipantRegistries } from '@ehr/kernel';
 import type { MergeParticipant, ScopeSettings } from '@ehr/kernel';
 import { registerIdentityParticipants } from '../../identity/index.js';
-import { registerNotificationsParticipants } from '../../notifications/index.js';
-import { PATIENT_HOST, patientAccount, seedPrincipal } from '../testkit.js';
-import { A1, A2, B1, ORG, call, saWrite, setupMerge, writeHeaders } from './testkit.js';
+import { PATIENT_HOST, confirmedBooking, patientAccount, seedPrincipal } from '../testkit.js';
+import {
+  A1,
+  A2,
+  B1,
+  ORG,
+  call,
+  registerCombinedParticipants,
+  saWrite,
+  setupMerge,
+  writeHeaders,
+} from './testkit.js';
 import type { MergeKit, SeededSession } from './testkit.js';
 
 let m: MergeKit;
@@ -537,8 +546,7 @@ describe('the execute job and the conflict rules (22.16, 38.2 items 2 and 11; TC
     await contact(D);
     await notification(D, 'queued', 'tc6');
     const regs = new ParticipantRegistries();
-    registerIdentityParticipants(regs);
-    registerNotificationsParticipants(regs);
+    registerCombinedParticipants(regs);
     const faulty: MergeParticipant = {
       module: 'faulty',
       tables: ['faulty.item'],
@@ -613,8 +621,7 @@ describe('the execute job and the conflict rules (22.16, 38.2 items 2 and 11; TC
     const D = await patient();
     await contact(D);
     const regs = new ParticipantRegistries();
-    registerIdentityParticipants(regs);
-    registerNotificationsParticipants(regs);
+    registerCombinedParticipants(regs);
     regs.registerMergeParticipant({
       module: 'liar',
       tables: ['liar.item'],
@@ -896,6 +903,7 @@ describe('writes after the merge (TC-MG-07) and chains (TC-MG-12, TC-MG-13)', ()
     for (const p of [A, B, C]) assert.deepEqual(await scopeOf(p), [A1, B1].sort());
     assert.equal((await get(m.deskB1, `/api/v1/patients/${A}`)).status, 200);
     // the merged patient is booked at a new location A2 for the survivor: the merged history is visible there
+    await confirmedBooking(m.k, C, A2); // SEC-03 F04: a booking relationship starts from a confirmed appointment (stale fixture, INT02-F08)
     const acct = await patientAccount(m.k, C);
     await m.k.db.withScope(
       {
