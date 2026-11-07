@@ -18,7 +18,7 @@ import { patientsScope, systemScope } from './scope.js';
 export type OfferJobOutcome =
   | { outcome: 'offered'; offerId: string; tried: number }
   | { outcome: 'nothing_to_offer' }
-  | { outcome: 'no_candidate'; tried: number }
+  | { outcome: 'no_candidate'; tried: number; skipped: Record<string, number> }
   | { outcome: 'slot_gone'; tried: number };
 
 export async function runOfferWaitlist(
@@ -44,6 +44,7 @@ export async function runOfferWaitlist(
   if (read === undefined) return { outcome: 'nothing_to_offer' };
 
   let tried = 0;
+  const skipped: Record<string, number> = {};
   for (const cand of read.candidates) {
     tried++;
     const r = await deps.db.withScope(patientsScope(deps.orgId, [cand.patientId]), (tx) =>
@@ -56,6 +57,14 @@ export async function runOfferWaitlist(
     );
     if (r.outcome === 'offered') return { outcome: 'offered', offerId: r.offerId, tried };
     if (r.outcome === 'slot_gone') return { outcome: 'slot_gone', tried };
+    skipped[r.reason] = (skipped[r.reason] ?? 0) + 1;
   }
-  return { outcome: 'no_candidate', tried };
+  // A job that tried candidates and offered to none is not a quiet success (INT02-R9-B1): the reasons are logged (no patient data).
+  if (tried > 0)
+    deps.log.warn('scheduling.offer_waitlist: every candidate was skipped, no offer made', {
+      occupancyId: occ,
+      tried,
+      skipped,
+    });
+  return { outcome: 'no_candidate', tried, skipped };
 }

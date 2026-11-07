@@ -54,6 +54,7 @@ import { flowPort } from './port.js';
 import { SchedulingFlowService } from './service.js';
 import { uuidv7 } from '../core/ids.js';
 import type { PrevisitPort } from './types.js';
+import { AvailabilitySearch } from '../availability/search.js';
 
 export { ORG, adminUrl, call, id, pg, saWrite, seedPrincipal, seedSession, writeHeaders };
 export type { Client, Kit, SeededSession };
@@ -165,6 +166,8 @@ export interface FlowKit {
   bare(n: number): Promise<PatientKit>;
   staffScope(locations?: string[], role?: string): Promise<ScopeSettings>;
   workerScope: ScopeSettings;
+  /** `on` = the booking core's availability port is the real search (default: the stub). */
+  realAvailability: { on: boolean };
   as<T>(scope: ScopeSettings, fn: (tx: Tx) => Promise<T>): Promise<T>;
   asWorker<T>(scope: ScopeSettings, fn: (tx: Tx) => Promise<T>): Promise<T>;
   /** Allows the waitlist for a service (booking policy row). */
@@ -284,13 +287,22 @@ export async function setupFlow(name: string): Promise<FlowKit> {
   await syncTaskTypes(wc, k.registry);
   await wc.end();
 
+  // INT02-R9-B1: `real.on` routes `resolve` to the real availability search (the template/roster/principal reads), so a test can
+  // run the offer job as app_worker in patients scope against the real rules; off, resolve stays the stub of the other flow tests.
+  const real = { on: false };
+  const realSearch = new AvailabilitySearch({ organisation: org });
   const availability: AvailabilityPort = {
-    resolve: (_tx, q) =>
-      Promise.resolve(
-        overbook.has(q.clinicianId)
-          ? { ok: true as const, overbook: { sessionKey: overbook.get(q.clinicianId) as string } }
-          : { ok: true as const },
-      ),
+    resolve: (tx, q) =>
+      real.on
+        ? realSearch.resolve(tx, q)
+        : Promise.resolve(
+            overbook.has(q.clinicianId)
+              ? {
+                  ok: true as const,
+                  overbook: { sessionKey: overbook.get(q.clinicianId) as string },
+                }
+              : { ok: true as const },
+          ),
     alternatives: (tx, q) => nearbyFreeStarts(tx, q),
   };
   const apiQueue = new Queue(k.registry, 'api');
@@ -454,6 +466,7 @@ export async function setupFlow(name: string): Promise<FlowKit> {
     previsit,
     clock,
     workerScope,
+    realAvailability: real,
     async doctor() {
       const p = await seedPrincipal(k, 'google', { name: `Doctor ${doctors.length + 1}` });
       doctors.push(p);
