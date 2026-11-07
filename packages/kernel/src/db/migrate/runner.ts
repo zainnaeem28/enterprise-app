@@ -54,6 +54,28 @@ async function readApplied(db: SqlClient): Promise<AppliedMigration[]> {
   }));
 }
 
+/**
+ * ARCHITECTURE 21.2 point 5 (A-3): before a file commits, the session is back on its login role and the temporary
+ * merge-guard grant to app_owner is gone (the owner's own implicit privilege, before migration 0704 moves the function, is not a grant). Either failure rolls the file back.
+ */
+export async function assertOwnerStepsClosed(db: SqlClient): Promise<void> {
+  const r = await db.query(
+    `SELECT current_user::text AS cu, session_user::text AS su,
+       EXISTS (SELECT 1 FROM pg_proc p CROSS JOIN LATERAL aclexplode(p.proacl) a
+               JOIN pg_roles r ON r.oid = a.grantee
+               WHERE p.oid = to_regprocedure('patient.guard_open_patient()') AND r.rolname = 'app_owner' AND a.grantee <> p.proowner) AS granted`,
+  );
+  const row = r.rows[0] ?? {};
+  if (row['cu'] !== row['su'])
+    throw new Error(
+      `owner step left the session on role ${String(row['cu'])}, not ${String(row['su'])}`,
+    );
+  if (row['granted'] === true)
+    throw new Error(
+      'app_owner still holds EXECUTE on patient.guard_open_patient() (owner step not revoked)',
+    );
+}
+
 async function apply(db: SqlClient, f: MigrationFile, opts: MigrateOptions): Promise<void> {
   const lock = Math.trunc(opts.lockTimeoutMs ?? 5_000);
   const stmt = Math.trunc(opts.statementTimeoutMs ?? 60_000);
@@ -80,6 +102,7 @@ async function apply(db: SqlClient, f: MigrationFile, opts: MigrateOptions): Pro
   try {
     await db.query(`SET LOCAL lock_timeout = ${lock}; SET LOCAL statement_timeout = ${stmt}`);
     await db.query(f.sql);
+    await assertOwnerStepsClosed(db);
     await record();
     await db.query('COMMIT');
   } catch (e) {

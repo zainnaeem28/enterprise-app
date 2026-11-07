@@ -99,3 +99,19 @@ test('the runner fails a directory that contains DML before it touches the datab
   });
   assert.equal(db.sql.length, 0, 'no statement was sent');
 });
+
+test('the owner-step post-check fails a file that leaves the grant or the role behind (A-3)', async () => {
+  const { assertOwnerStepsClosed } = await import('./runner.js');
+  const client = (row: Record<string, unknown>): SqlClient => ({
+    query: async () => ({ rows: [row] }),
+  });
+  await assertOwnerStepsClosed(client({ cu: 'app_owner', su: 'app_owner', granted: false }));
+  await assert.rejects(
+    assertOwnerStepsClosed(client({ cu: 'patient_scope_owner', su: 'app_owner', granted: false })),
+    /left the session/,
+  );
+  await assert.rejects(
+    assertOwnerStepsClosed(client({ cu: 'app_owner', su: 'app_owner', granted: true })),
+    /still holds EXECUTE/,
+  );
+});
