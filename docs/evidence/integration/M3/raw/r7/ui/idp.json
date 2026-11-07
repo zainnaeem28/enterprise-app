@@ -1,0 +1,1 @@
+{"issuer":"http://127.0.0.1:9099","authorizationEndpoint":"http://127.0.0.1:9099/authorize","tokenEndpoint":"http://127.0.0.1:9099/token","jwksUri":"http://127.0.0.1:9099/jwks","clientId":"test-client"}

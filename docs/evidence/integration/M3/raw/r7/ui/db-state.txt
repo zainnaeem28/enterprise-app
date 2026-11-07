@@ -1,0 +1,3 @@
+select status, mode, booked_via from scheduling.slot_reservation ERR column "status" does not exist
+select status, lower(period) s from scheduling.slot_occupancy [{"status":"confirmed","s":"2026-11-07T14:00:00.000Z"}]
+select count(*) n from audit.event [{"n":"4"}]

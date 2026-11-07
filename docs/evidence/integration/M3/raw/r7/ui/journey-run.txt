@@ -1,0 +1,38 @@
+PASS  landing
+      cookies: __Host-sid secure=true httpOnly=true
+      landed: http://127.0.0.1:4174/account
+PASS  sign-in
+      services: 1
+PASS  service-listing
+      places: Choose a place | Synthetic Clinic
+      doctors: Any available doctor | Dr. Synthetic
+PASS  place-and-clinician-listing
+      slot buttons: 112
+PASS  availability-search
+      timer: Held for 10:01
+PASS  hold
+PASS  review
+PASS  confirm
+      appointments listed: 1
+PASS  my-appointments
+--- API calls seen by the browser ---
+GET /api/v1/auth/sign-in?returnTo=%2Faccount -> 302
+GET /api/v1/auth/sign-in?returnTo=%2Faccount -> 302
+GET /api/v1/auth/callback?code=2e80cc09ff6069dca4bbc76bd734a6b8&state=OozghCvEtqOQhcJe29xgrpZ61jM-y0p0 -> 302
+GET /api/v1/auth/session -> 200
+GET /api/v1/me -> 404
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/services -> 200
+GET /api/v1/locations -> 200
+GET /api/v1/clinicians?serviceId=00000000-0000-7000-8000-000000000301 -> 200
+GET /api/v1/clinicians?serviceId=00000000-0000-7000-8000-000000000301&locationId=00000000-0000-7000-8000-000000000101 -> 200
+POST /api/v1/availability/search -> 200
+POST /api/v1/holds -> 201
+GET /api/v1/clinicians?serviceId=00000000-0000-7000-8000-000000000301&locationId=00000000-0000-7000-8000-000000000101 -> 200
+POST /api/v1/appointments/01a1b61d-c7aa-7a3f-9e4a-9933e2d8c264/confirm -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/locations -> 200
+GET /api/v1/services -> 200
+GET /api/v1/patients/00000000-0000-7000-8000-000000000601/appointments?status=confirmed&from=2026-11-07T13%3A06%3A07.981Z -> 200

@@ -1,0 +1,4 @@
+auth/session 400
+services 400
+locations 400
+clinicians 400
