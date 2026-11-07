@@ -208,7 +208,11 @@ export interface FlowKit {
   close(): Promise<void>;
 }
 
-export async function setupFlow(name: string): Promise<FlowKit> {
+/** `opts.noTemplates`: leave `notifications.template` empty, as a freshly migrated database is (INT02-R10-B1). */
+export async function setupFlow(
+  name: string,
+  opts: { noTemplates?: boolean } = {},
+): Promise<FlowKit> {
   const holder: { k?: Kit; core?: SchedulingCoreService; flow?: SchedulingFlowService } = {};
   const lazyDb = {
     withScope: (...a: Parameters<KernelDb['withScope']>) => (holder.k as Kit).db.withScope(...a),
@@ -357,7 +361,7 @@ export async function setupFlow(name: string): Promise<FlowKit> {
 
   // The templates the flow sends: a published version of each (the render check is the notifications module's own test).
   for (const t of r1TemplatesForLanguages(['en']).filter(
-    (x) => x.key === 'waitlist_offer' || x.key === 'previsit_request',
+    (x) => !opts.noTemplates && (x.key === 'waitlist_offer' || x.key === 'previsit_request'),
   )) {
     const tid = uuidv7();
     await k.sa.query(

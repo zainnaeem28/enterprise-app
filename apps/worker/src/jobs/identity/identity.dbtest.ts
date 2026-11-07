@@ -4,7 +4,7 @@
 // Missing configuration FAILS; nothing skips. Synthetic data only.
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { randomUUID } from 'node:crypto';
+import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { after, before, describe, test } from 'node:test';
@@ -213,10 +213,8 @@ describe('identity.purge_sessions', () => {
       [
         sid,
         ORG,
-        Buffer.from(randomUUID().replaceAll('-', ''), 'hex')
-          .subarray(0, 16)
-          .toString('hex')
-          .padEnd(64, '0') && Buffer.alloc(32, Math.floor(Math.random() * 255)),
+        // 32 bytes unique per session (sha-256 of the session id): a random single-byte fill collided (INT02-R10-N1).
+        createHash('sha256').update(sid).digest(),
         pid,
         personId,
         h(30 * HOUR),

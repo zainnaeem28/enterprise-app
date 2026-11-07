@@ -121,7 +121,9 @@ export async function setup(opts: KitOptions): Promise<Kit> {
   const q: Kit['q'] = <T>(sql: string, params?: unknown[]) =>
     sa.query(sql, params).then((r) => r.rows as T[]);
   const apiPool = new pg.Pool({ connectionString: urlFor('app_api'), max: 8 });
+  apiPool.on('error', () => undefined); // DROP DATABASE ... FORCE at teardown ends idle clients (57P01)
   const workerPool = new pg.Pool({ connectionString: urlFor('app_worker'), max: 4 });
+  workerPool.on('error', () => undefined); // DROP DATABASE ... FORCE at teardown ends idle clients (57P01)
   const db = new KernelDb(apiPool as never);
   const wdb = new KernelDb(workerPool as never);
 

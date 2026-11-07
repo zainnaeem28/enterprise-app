@@ -192,7 +192,9 @@ describe('platform layer against PostgreSQL 17', () => {
 
   test('PgRateLimiter is exact across instances under concurrency, and stores only keyed hashes', async () => {
     const poolA = new pg.Pool({ connectionString: urlFor('app_api'), max: 10 });
+    poolA.on('error', () => undefined); // DROP DATABASE ... FORCE at teardown ends idle clients (57P01)
     const poolB = new pg.Pool({ connectionString: urlFor('app_api'), max: 10 });
+    poolB.on('error', () => undefined); // DROP DATABASE ... FORCE at teardown ends idle clients (57P01)
     try {
       const secret = 'test-secret-0123456789';
       const a = new PgRateLimiter(new KernelDb(poolA), ORG, secret);
@@ -230,6 +232,7 @@ describe('platform layer against PostgreSQL 17', () => {
 
   test("the rate limiter cannot write another organisation's counters (RLS) and an anonymous scope has no other table access", async () => {
     const pool = new pg.Pool({ connectionString: urlFor('app_api'), max: 2 });
+    pool.on('error', () => undefined); // DROP DATABASE ... FORCE at teardown ends idle clients (57P01)
     try {
       const db = new KernelDb(pool);
       await assert.rejects(

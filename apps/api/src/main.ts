@@ -3,6 +3,7 @@ import { createServer } from 'node:http';
 import { ConfigError, createLogger, describeDatabase, KernelDb, loadConfig } from '@ehr/kernel';
 import type { PoolLike } from '@ehr/kernel';
 import { buildComposition, registerAllParticipants } from './composition.js';
+import { provisionR1Templates } from './modules/notifications/index.js';
 import { loadIdentityEnv } from './identity-env.js';
 import { createApp } from './platform/app.js';
 import { loadPlatformConfig } from './platform/config.js';
@@ -27,8 +28,22 @@ async function main(): Promise<void> {
   }
   registerAllParticipants();
   const readiness = await pgReadiness(kernelCfg);
+  const db = new KernelDb(readiness.pool as PoolLike);
+  // Idempotent: publishes any R1 template key that has no published version (INT02-R10-B1); never overwrites an existing one.
+  const provisioned = await provisionR1Templates(
+    db,
+    identityEnv.orgId,
+    (process.env['EHR_TEMPLATE_LANGUAGES'] ?? 'en')
+      .split(',')
+      .map((l) => l.trim())
+      .filter(Boolean),
+  );
+  logger.info('notification templates provisioned', {
+    provisioned: provisioned.provisioned.length,
+    present: provisioned.present.length,
+  });
   const composition = buildComposition({
-    db: new KernelDb(readiness.pool as PoolLike),
+    db,
     logger,
     identity: identityEnv,
   });

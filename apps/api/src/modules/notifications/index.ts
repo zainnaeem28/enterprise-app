@@ -43,6 +43,9 @@ export {
   notificationsMergeParticipant,
   registerNotificationsParticipants,
 } from './merge.js';
+export { provisionR1Templates } from './provision.js';
+export type { ProvisionResult } from './provision.js';
+export { R1_TEMPLATE_KEYS } from './r1-templates.js';
 export { NOTIFICATIONS_EVENTS, NOTIFICATIONS_JOBS } from './jobs.js';
 export {
   NotificationsError,

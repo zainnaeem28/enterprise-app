@@ -166,7 +166,9 @@ describe('notifications on PostgreSQL 17 (BE-06, API side)', () => {
       [ORG],
     );
     apool = new pg.Pool({ connectionString: urlFor('app_api'), max: 6 });
+    apool.on('error', () => undefined); // DROP DATABASE ... FORCE at teardown ends idle clients (57P01)
     wpool = new pg.Pool({ connectionString: urlFor('app_worker'), max: 4 });
+    wpool.on('error', () => undefined); // DROP DATABASE ... FORCE at teardown ends idle clients (57P01)
     api = new KernelDb(apool);
     worker = new KernelDb(wpool);
   });

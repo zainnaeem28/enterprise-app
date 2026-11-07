@@ -148,7 +148,9 @@ describe('integration-core on PostgreSQL 17 (BE-02, worker side)', () => {
     admin = new pg.Client({ connectionString: urlFor(new URL(adminUrl).username) });
     await admin.connect();
     wpool = new pg.Pool({ connectionString: urlFor('app_worker'), max: 6 });
+    wpool.on('error', () => undefined); // DROP DATABASE ... FORCE at teardown ends idle clients (57P01)
     apool = new pg.Pool({ connectionString: urlFor('app_api'), max: 4 });
+    apool.on('error', () => undefined); // DROP DATABASE ... FORCE at teardown ends idle clients (57P01)
     db = new KernelDb(wpool);
     apiDb = new KernelDb(apool);
     for (const [kind, vendor] of [
