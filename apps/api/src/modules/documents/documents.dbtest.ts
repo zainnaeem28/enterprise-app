@@ -654,15 +654,18 @@ describe('documents (BE-10) on PostgreSQL 17', () => {
     ).json();
     const durl = String(dl['url']);
     const ct = { contentType: 'application/pdf' };
-    assert.equal(t.presigner.verify('GET', durl, ct, now), true);
+    // The download URL is minted at the service's clock, after `now` was read for the upload URL; the 60-second bound is checked
+    // against a reading taken once the URL exists, so a second boundary crossed in between (a slow or loaded run) cannot move it.
+    const gnow = new Date();
+    assert.equal(t.presigner.verify('GET', durl, ct, gnow), true);
     assert.equal(
-      t.presigner.verify('GET', durl, ct, new Date(now.getTime() + 61_000)),
+      t.presigner.verify('GET', durl, ct, new Date(gnow.getTime() + 61_000)),
       false,
       'a download URL lives 60 seconds',
     );
     const { key } = keyOfUrl(durl);
     assert.equal(
-      t.presigner.verify('GET', durl.replace(key, 'c/' + 'a'.repeat(32)), ct, now),
+      t.presigner.verify('GET', durl.replace(key, 'c/' + 'a'.repeat(32)), ct, gnow),
       false,
       'not another file',
     );
@@ -1642,7 +1645,9 @@ describe('documents (BE-10) on PostgreSQL 17', () => {
     const u = await t.uploadAs(session, patientId, PDF);
     const url = String(u.ticket['uploadUrl']);
     assert.ok(
-      !url.includes(u.documentId) && !url.includes(patientId) && !/Given|Family|1980/.test(url),
+      !url.includes(u.documentId) &&
+        !url.includes(patientId) &&
+        !/Given|Family|1980-?05-?17/.test(url), // the date of birth, not a bare year: random hex contains "1980" in about 1 URL in 700
     );
   });
 });
