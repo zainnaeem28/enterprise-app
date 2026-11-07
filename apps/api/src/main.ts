@@ -1,7 +1,8 @@
 // API process entry. Configuration comes from the environment; a bad variable stops the start with its NAME.
 import { createServer } from 'node:http';
-import { ConfigError, createLogger, describeDatabase, loadConfig } from '@ehr/kernel';
-import { registerAllParticipants } from './composition.js';
+import { ConfigError, createLogger, describeDatabase, KernelDb, loadConfig } from '@ehr/kernel';
+import type { PoolLike } from '@ehr/kernel';
+import { buildControllers, registerAllParticipants } from './composition.js';
 import { createApp } from './platform/app.js';
 import { loadPlatformConfig } from './platform/config.js';
 import { Lifecycle } from './platform/health.js';
@@ -24,7 +25,12 @@ async function main(): Promise<void> {
   }
   registerAllParticipants();
   const readiness = await pgReadiness(kernelCfg);
-  const app = await createApp({ config: platformCfg, logger, readiness: readiness.probe });
+  const app = await createApp({
+    config: platformCfg,
+    logger,
+    readiness: readiness.probe,
+    controllers: buildControllers({ db: new KernelDb(readiness.pool as PoolLike) }),
+  });
   await app.init();
   // 16 KB header limit (31.2); a larger header is refused by Node with 431 before any application code runs.
   const server = createServer(

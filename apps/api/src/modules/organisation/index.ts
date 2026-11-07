@@ -18,3 +18,5 @@ export {
   OrganisationValidationError,
   SettingNotConfiguredError,
 } from './errors.js';
+export { createCatalogueControllers } from './catalogue.controller.js';
+export type { CatalogueControllerDeps } from './catalogue.controller.js';
