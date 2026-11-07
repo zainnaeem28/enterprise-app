@@ -55,6 +55,9 @@ const bodyOf = (req: Req): Record<string, unknown> => {
   return b as Record<string, unknown>;
 };
 
+/** The properties of `PostWaitlistEntriesRequest` (additionalProperties: false). */
+const WAITLIST_ENTRY_FIELDS = ['patientId', 'serviceId', 'locationId', 'clinicianId', 'from', 'to'];
+
 const pathId = (req: Req, segment: string): string | undefined => {
   const m = new RegExp(`/${segment}/([0-9a-f-]{36})(?:/|$)`, 'i').exec(req.path);
   return m?.[1] !== undefined && isUuid(m[1]) ? m[1].toLowerCase() : undefined;
@@ -360,6 +363,8 @@ export function createFlowControllers(d: FlowControllerDeps): Type<unknown>[] {
     async createEntry(@ReqParam() req: Req, @ResParam() res: Res): Promise<void> {
       await idempotent(req, res, 'POST /waitlist-entries', [], req.body, async (tx) => {
         const b = bodyOf(req);
+        const unknown = Object.keys(b).filter((k) => !WAITLIST_ENTRY_FIELDS.includes(k));
+        if (unknown.length > 0) throw new SchedulingValidationError(unknown);
         const e = await d.flow.waitlist.createEntry(tx, metaOf(req), {
           patientId: b['patientId'] as string,
           serviceId: b['serviceId'] as string,

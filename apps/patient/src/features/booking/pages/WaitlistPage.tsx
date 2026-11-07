@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { Banner, Button } from '@ehr/ui';
-import { newKey } from '../api.js';
+import { newKey, waitlistWindow } from '../api.js';
 import type { Failure } from '../api.js';
 import { useBooking, useHeadingFocus, usePageTitle } from '../context.js';
 import { isRefusal, Problem, Refusal } from '../components/Problem.js';
@@ -26,7 +26,7 @@ export function WaitlistPage() {
       {
         patientId,
         serviceId: draft.serviceId,
-        mode: draft.mode,
+        ...waitlistWindow(),
         ...(draft.locationId ? { locationId: draft.locationId } : {}),
         ...(draft.clinicianId ? { clinicianId: draft.clinicianId } : {}),
       },

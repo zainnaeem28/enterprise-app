@@ -4910,9 +4910,55 @@ export interface components {
       items: components['schemas']['OpaqueObject'][];
       nextCursor: string | null;
     };
+    WaitlistEntry: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      patientId: string;
+      /** @description Present on the staff list only. */
+      patientName?: string | null;
+      /** Format: uuid */
+      serviceId: string;
+      /** Format: uuid */
+      locationId: string | null;
+      /** Format: uuid */
+      clinicianId: string | null;
+      /** Format: date-time */
+      from: string;
+      /** Format: date-time */
+      to: string;
+      /** @enum {string} */
+      status: 'active' | 'offered' | 'fulfilled' | 'cancelled' | 'expired';
+      /** @enum {string|null} */
+      cancelReason: 'patient' | 'staff' | 'merged_duplicate' | null;
+      /** Format: date-time */
+      positionAt: string;
+      openOffer: {
+        /** Format: uuid */
+        id: string;
+        /** Format: date-time */
+        expiresAt: string;
+      } | null;
+      version: number;
+    };
     GetWaitlistResponse: {
-      items: components['schemas']['OpaqueObject'][];
+      items: components['schemas']['WaitlistEntry'][];
       nextCursor: string | null;
+    };
+    /** @description Join the waitlist. The acceptable window is the half-open interval [from, to): an offered slot must start at or after `from` and before `to`. `from` and `to` are RFC 3339 date-times that carry an offset (Z or +hh:mm); `to` must be after `from`, no more than 366 days later, and in the future. Omitting `locationId` or `clinicianId` (or sending null) means any place or any doctor. Unknown properties are refused (kernel.validation_failed with the property in details.fields). */
+    PostWaitlistEntriesRequest: {
+      /** Format: uuid */
+      patientId: string;
+      /** Format: uuid */
+      serviceId: string;
+      /** Format: uuid */
+      locationId?: string | null;
+      /** Format: uuid */
+      clinicianId?: string | null;
+      /** Format: date-time */
+      from: string;
+      /** Format: date-time */
+      to: string;
     };
     GetPublicV1CliniciansResponse: {
       items: {
@@ -16903,21 +16949,23 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['OpaqueObject'];
+        'application/json': components['schemas']['PostWaitlistEntriesRequest'];
       };
     };
     responses: {
-      /** @description Success (200) */
-      200: {
+      /** @description Success (201) */
+      201: {
         headers: {
           'X-Request-Id': components['headers']['XRequestId'];
           'Cache-Control': components['headers']['CacheNoStore'];
           'X-Session-Idle-Expires-At': components['headers']['XSessionIdleExpiresAt'];
           'Idempotent-Replay': components['headers']['IdempotentReplay'];
+          /** @description /api/v1/waitlist-entries/{id} of the new entry. */
+          Location?: string;
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['OpaqueObject'];
+          'application/json': components['schemas']['WaitlistEntry'];
         };
       };
       /** @description Codes: kernel.client_release_unsupported, kernel.idempotency_key_required, kernel.validation_failed. */

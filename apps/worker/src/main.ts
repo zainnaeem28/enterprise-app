@@ -1,6 +1,6 @@
 // Worker process entry. A bad variable stops the start with its NAME (never its value).
 import { ConfigError, createLogger, describeDatabase, loadConfig } from '@ehr/kernel';
-import { buildWorkerRegistry } from './job-registry.js';
+import { composeWorker } from './compose.js';
 import { createPool, startWorker } from './runner.js';
 
 async function main(): Promise<void> {
@@ -16,7 +16,18 @@ async function main(): Promise<void> {
     throw e;
   }
   const pool = await createPool(cfg);
-  const worker = await startWorker({ cfg, pool, log, registry: buildWorkerRegistry() });
+  const env = process.env;
+  const { tasks, registry } = await composeWorker({
+    cfg,
+    pool,
+    log,
+    ...(env['EHR_PATIENT_HOST'] ? { patientHost: env['EHR_PATIENT_HOST'] } : {}),
+    ...(env['EHR_CHECKIN_QR_KEY'] ? { qrKey: env['EHR_CHECKIN_QR_KEY'] } : {}),
+    ...(env['EHR_CALENDAR_WEBHOOK_URL']
+      ? { calendarWebhookUrl: env['EHR_CALENDAR_WEBHOOK_URL'] }
+      : {}),
+  });
+  const worker = await startWorker({ cfg, pool, log, registry, tasks });
   log.info('worker booted', { database: describeDatabase(cfg) });
   const stop = (): void => {
     void worker.stop().then(

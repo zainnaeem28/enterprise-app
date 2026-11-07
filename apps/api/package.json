@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "pnpm run build && node --test --test-reporter=spec --test-reporter-destination=stdout --test-reporter=junit --test-reporter-destination=\"${JUNIT_DIR:-.junit}/api.xml\" \"dist/test/**/*.test.js\"",
+    "test": "pnpm run build && node --test --test-reporter=spec --test-reporter-destination=stdout --test-reporter=junit --test-reporter-destination=\"${JUNIT_DIR:-.junit}/api.xml\" \"dist/test/**/*.test.js\" \"dist/src/**/*.test.js\"",
     "check:routes": "pnpm --filter @ehr/contracts run openapi:check-routes"
   },
   "dependencies": {

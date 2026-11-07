@@ -45,7 +45,7 @@ The feature is also exercised through its own harness (`e2e/harness`).
    `policy={{ cutoffHours }}` to `BookingRoutes`. **Open item for the Architect:** a patient-readable policy field.
 3. There is no read for a waitlist offer, so PP-19 knows only the offer id and, if the notification link carries it, `expires`. **Open item
    for the Architect:** an offer read `{startsAt, expiresAt, ...}`. The countdown there uses the device clock (no server time available).
-4. `POST /waitlist-entries` body is sent as `{patientId, serviceId, locationId?, clinicianId?, mode}` (opaque in the contract).
+4. `POST /waitlist-entries` body is sent as `{patientId, serviceId, locationId?, clinicianId?, from, to}` (PostWaitlistEntriesRequest; window [from, to) = now to now+90 days).
 5. `GET /patients/{id}/appointments?status=confirmed&from=now` returns `{items}` of `AppointmentView` (as `apps/api` scheduling core).
 6. There is no release route for a hold, so choosing a second time leaves the first hold to expire; if the same patient's active hold overlaps
    the new time the API may answer `scheduling.overlapping_appointment` (shown in plain language). To confirm against the real API.
