@@ -1,0 +1,75 @@
+== A. sign-in (fresh database, NO manual task-type sync) and booking
+PASS  landing
+      cookies: __Host-sid secure=true httpOnly=true landed: http://127.0.0.1:4174/account
+PASS  sign-in
+PASS  service, place, clinician, availability
+PASS  hold
+PASS  review
+PASS  confirm
+PASS  my appointments
+== B. appointment detail and change time
+      appointment id seen in URL: 01a1b62a-0c35-7f5f-bd44-dc2fe8f73f5f calls: GET /api/v1/appointments/01a1b62a-0c35-7f5f-bd44-dc2fe8f73f5f -> 200
+PASS  detail
+PASS  change: choose a different time
+      calls: GET /api/v1/clinicians?serviceId=00000000-0000-7000-8000-000000000301&locationId=00000000-0000-7000-8000-000000000101 -> 200 | POST /api/v1/appointments/01a1b62a-0c35-7f5f-bd44-dc2fe8f73f5f/reschedule -> 200 | page: Skip to main content Patient portal Placeholder identity Your appointment was changed ℹ We will remind you before your visit. Visit General appointment When Wed, Nov 11, 9:30 AM EST Type In person Whe
+PASS  change: confirm the new time
+      listed: 1 | Skip to main content Patient portal Placeholder identity Your appointments Book an appointment General appointment Wed, Nov 11, 9:30 AM EST ✓ Confirmed In person View details Updated at 1:19 PM. Refresh
+PASS  appointments after change (still one confirmed)
+== C. cancel
+      page: Skip to main content Patient portal Placeholder identity Cancel this appointment? Visit General appointment When Wed, Nov 11, 9:30 AM EST Type In person Where Synthetic Clinic Cancellation policy. You can cancel or change this appointment online until the clinic's cut-off time before it starts. Afte
+PASS  cancel page shows policy text
+      calls: POST /api/v1/appointments/01a1b62a-0f7e-7ffa-bafc-62bdd0e8d136/cancel -> 200 | page: Skip to main content Patient portal Placeholder identity Your appointment was cancelled ℹ The time was released. You can book another visit at any time. Book an appointment Back to appointments
+PASS  cancel confirmed
+      page: Skip to main content Patient portal Placeholder identity Your appointments Book an appointment No appointments yet. Book your first visit. Book an appointment
+PASS  appointments after cancel
+== D. waitlist join (patient)
+PASS  reach the waitlist page
+      calls: POST /api/v1/waitlist-entries -> 422 |     body: {"type":"https://errors.invalid/kernel/validation_failed","title":"The request is not valid","status":422,"code":"kernel.validation_failed","requestId":"620993e9-f8cc-4f95-8a6f-fa8fcaaf3f10","retryable":false,"errors":[{"path":"/from","code":"kernel.invalid_value"},{"path":"/to","code":"kernel.invalid_value"}]} req: {"patientId":"00000000-0000-7000-8000-000000000601","serviceId":"00000000-0000-7000-8000-000000000302","mode":"in_person","locationId":"00000000-0000-7000-8000-000000000101"} | page: Skip to main content Patient portal Placeholder identity Join the waitlist We will offer you a time if one opens up for this visit. Visit Waitlist visit Type In person Where Synthetic Clinic Something went wrong on our side. Your work is safe. Retry 
+FAIL  join: waitlist-entries did not succeed
+      url: http://127.0.0.1:4174/waitlist/join body: Skip to main content Patient portal Placeholder identity Join the waitlist We will offer you a time if one opens up for this visit. Visit Waitlist visit Type In person Where Synthetic Clinic Something went wrong on our side. Your work is safe. Retry Reference code: 620993e9-f8cc-4f95-8a6f-fa8fcaaf3f10 Join the waitlist Back to times
+--- API calls seen by the browser ---
+GET /api/v1/auth/sign-in?returnTo=%2Faccount -> 302
+GET /api/v1/auth/sign-in?returnTo=%2Faccount -> 302
+GET /api/v1/auth/callback?code=530679328c5669585be335d68e614811&state=L4oGO5C_6xhTb48JYdTqZe6YzCjhWUYa -> 302
+GET /api/v1/auth/session -> 200
+GET /api/v1/me -> 404
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/services -> 200
+GET /api/v1/locations -> 200
+GET /api/v1/clinicians?serviceId=00000000-0000-7000-8000-000000000301 -> 200
+GET /api/v1/clinicians?serviceId=00000000-0000-7000-8000-000000000301&locationId=00000000-0000-7000-8000-000000000101 -> 200
+POST /api/v1/holds -> 201
+GET /api/v1/clinicians?serviceId=00000000-0000-7000-8000-000000000301&locationId=00000000-0000-7000-8000-000000000101 -> 200
+POST /api/v1/appointments/01a1b62a-0c35-7f5f-bd44-dc2fe8f73f5f/confirm -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/services -> 200
+GET /api/v1/locations -> 200
+GET /api/v1/patients/00000000-0000-7000-8000-000000000601/appointments?status=confirmed&from=2026-11-07T13%3A19%3A31.861Z -> 200
+GET /api/v1/appointments/01a1b62a-0c35-7f5f-bd44-dc2fe8f73f5f -> 200
+GET /api/v1/appointments/01a1b62a-0c35-7f5f-bd44-dc2fe8f73f5f -> 200
+POST /api/v1/holds -> 201
+GET /api/v1/clinicians?serviceId=00000000-0000-7000-8000-000000000301&locationId=00000000-0000-7000-8000-000000000101 -> 200
+POST /api/v1/appointments/01a1b62a-0c35-7f5f-bd44-dc2fe8f73f5f/reschedule -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/services -> 200
+GET /api/v1/locations -> 200
+GET /api/v1/patients/00000000-0000-7000-8000-000000000601/appointments?status=confirmed&from=2026-11-07T13%3A19%3A33.429Z -> 200
+GET /api/v1/appointments/01a1b62a-0f7e-7ffa-bafc-62bdd0e8d136 -> 200
+GET /api/v1/appointments/01a1b62a-0f7e-7ffa-bafc-62bdd0e8d136 -> 200
+POST /api/v1/appointments/01a1b62a-0f7e-7ffa-bafc-62bdd0e8d136/cancel -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/locations -> 200
+GET /api/v1/services -> 200
+GET /api/v1/patients/00000000-0000-7000-8000-000000000601/appointments?status=confirmed&from=2026-11-07T13%3A19%3A35.352Z -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/locations -> 200
+GET /api/v1/services -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/clinicians?serviceId=00000000-0000-7000-8000-000000000302 -> 200
+GET /api/v1/clinicians?serviceId=00000000-0000-7000-8000-000000000302&locationId=00000000-0000-7000-8000-000000000101 -> 200
+POST /api/v1/waitlist-entries -> 422
+    body: {"type":"https://errors.invalid/kernel/validation_failed","title":"The request is not valid","status":422,"code":"kernel.validation_failed","requestId":"620993e9-f8cc-4f95-8a6f-fa8fcaaf3f10","retryable":false,"errors":[{"path":"/from","code":"kernel.invalid_value"},{"path":"/to","code":"kernel.invalid_value"}]} req: {"patientId":"00000000-0000-7000-8000-000000000601","serviceId":"00000000-0000-7000-8000-000000000302","mode":"in_person","locationId":"00000000-0000-7000-8000-000000000101"}
