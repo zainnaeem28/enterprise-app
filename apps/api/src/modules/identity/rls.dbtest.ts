@@ -115,6 +115,12 @@ const TABLES = [
   'proxy_grant',
   'push_subscription',
   'staff_support',
+  // BE-05 (B2 admin realm)
+  'admin_credential',
+  'elevation_grant',
+  'enrolment_token',
+  'role_change_request',
+  'webauthn_challenge',
 ];
 
 describe('catalog (M-1, M-2, M-3, M-5, 21.3 lists)', () => {
@@ -147,6 +153,7 @@ describe('catalog (M-1, M-2, M-3, M-5, 21.3 lists)', () => {
       'app_api',
       'app_worker',
       'directory_ro',
+      'identity_signin_ro', // the admin claim read (BE-05)
       'patient_scope_owner',
     ]);
   });
@@ -159,12 +166,24 @@ describe('catalog (M-1, M-2, M-3, M-5, 21.3 lists)', () => {
     assert.deepEqual(
       rows.map((r) => r.id),
       [
+        // BE-05 (B2 admin realm sign-in, elevation and enrolment; the same list is in db/tools/catalog-lists.mjs)
+        'admin_credential.admin_credential_signin_claim',
+        'admin_credential.admin_credential_signin_insert',
+        'admin_credential.admin_credential_signin_select',
+        'admin_credential.admin_credential_signin_update',
+        'enrolment_token.enrolment_token_lookup',
+        'enrolment_token.enrolment_token_signin_update',
         'person.person_signin_insert',
+        'principal.principal_signin_claim',
         'principal.principal_signin_insert',
         'principal.principal_signin_select',
         'principal.principal_signin_update',
         'session.session_lookup',
         'session.session_signin_insert',
+        'session.session_signin_insert_admin',
+        'webauthn_challenge.webauthn_challenge_anon_insert',
+        'webauthn_challenge.webauthn_challenge_anon_select',
+        'webauthn_challenge.webauthn_challenge_anon_update',
       ],
     );
   });
@@ -201,12 +220,19 @@ describe('catalog (M-1, M-2, M-3, M-5, 21.3 lists)', () => {
       'revoked_at',
       'token_hash',
     ]);
-    assert.deepEqual(await cols('app_api', 'identity.principal'), ['last_sign_in_at', 'subject']);
+    // status and disabled_reason: the kill switch and deprovisioning (BE-05); a trigger refuses them to an anonymous transaction.
+    assert.deepEqual(await cols('app_api', 'identity.principal'), [
+      'disabled_reason',
+      'last_sign_in_at',
+      'status',
+      'subject',
+    ]);
     assert.deepEqual(await cols('app_worker', 'identity.principal'), []);
     assert.deepEqual(await cols('app_api', 'identity.person'), []);
     assert.deepEqual(await cols('app_api', 'identity.role'), []);
     assert.deepEqual(await cols('app_api', 'identity.role_permission'), []);
-    assert.deepEqual(await cols('app_api', 'identity.role_assignment'), []);
+    // revoked_at: a role removal and the kill switch (BE-05)
+    assert.deepEqual(await cols('app_api', 'identity.role_assignment'), ['revoked_at']);
     assert.deepEqual(await cols('app_api', 'identity.proxy_grant'), [
       'revoke_reason',
       'revoked_at',
@@ -630,11 +656,9 @@ describe('triggers (21.5, 22.4)', () => {
     const g = await seedPrincipal(k, 'google', { email: 'ra@example.com' });
     const adm = await seedPrincipal(k, 'admin_pool');
     const pat = await seedPrincipal(k, 'patient_pool');
+    // Every assignment cites a real approved role-change request (BE-05); assignRole builds one.
     const ins = (principal: string, role: string, loc: string | null) =>
-      k.sa.query(
-        `INSERT INTO identity.role_assignment (id, organisation_id, principal_id, role_id, location_id, granted_via_request_id) SELECT $1, $2, $3, r.id, $4, $5 FROM identity.role r WHERE r.key = $6`,
-        [uuidv7(), ORG, principal, loc, uuidv7(), role],
-      );
+      assignRole(k, principal, role, loc ?? undefined);
     await rejects(
       ins(g.principalId, 'org_admin', null),
       'PS001',
