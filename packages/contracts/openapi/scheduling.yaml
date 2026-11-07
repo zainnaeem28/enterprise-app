@@ -3474,7 +3474,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: common.yaml#/components/schemas/OpaqueObject
+              $ref: '#/components/schemas/PostWaitlistEntriesRequest'
       x-error-codes:
         '400':
           - kernel.client_release_unsupported
@@ -3500,8 +3500,8 @@ paths:
         '504':
           - kernel.timeout
       responses:
-        '200':
-          description: Success (200)
+        '201':
+          description: Success (201)
           headers:
             X-Request-Id:
               $ref: common.yaml#/components/headers/XRequestId
@@ -3511,10 +3511,14 @@ paths:
               $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
             Idempotent-Replay:
               $ref: common.yaml#/components/headers/IdempotentReplay
+            Location:
+              description: /api/v1/waitlist-entries/{id} of the new entry.
+              schema:
+                type: string
           content:
             application/json:
               schema:
-                $ref: common.yaml#/components/schemas/OpaqueObject
+                $ref: '#/components/schemas/WaitlistEntry'
         '400':
           $ref: common.yaml#/components/responses/Error400
           description: 'Codes: kernel.client_release_unsupported, kernel.idempotency_key_required, kernel.validation_failed.'
@@ -3973,7 +3977,7 @@ components:
         items:
           type: array
           items:
-            $ref: common.yaml#/components/schemas/OpaqueObject
+            $ref: '#/components/schemas/WaitlistEntry'
         nextCursor:
           oneOf:
             - type: string
@@ -4106,6 +4110,99 @@ components:
       required:
         - reservationId
         - expiresAt
+    PostWaitlistEntriesRequest:
+      type: object
+      description: >-
+        Join the waitlist. The acceptable window is the half-open interval [from, to): an offered slot must start at or after `from`
+        and before `to`. `from` and `to` are RFC 3339 date-times that carry an offset (Z or +hh:mm); `to` must be after `from`, no more
+        than 366 days later, and in the future. Omitting `locationId` or `clinicianId` (or sending null) means any place or any doctor.
+        Unknown properties are refused (kernel.validation_failed with the property in details.fields).
+      properties:
+        patientId:
+          type: string
+          format: uuid
+        serviceId:
+          type: string
+          format: uuid
+        locationId:
+          type: [string, 'null']
+          format: uuid
+        clinicianId:
+          type: [string, 'null']
+          format: uuid
+        from:
+          type: string
+          format: date-time
+        to:
+          type: string
+          format: date-time
+      required:
+        - patientId
+        - serviceId
+        - from
+        - to
+      additionalProperties: false
+    WaitlistEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        patientId:
+          type: string
+          format: uuid
+        patientName:
+          type: [string, 'null']
+          description: Present on the staff list only.
+        serviceId:
+          type: string
+          format: uuid
+        locationId:
+          type: [string, 'null']
+          format: uuid
+        clinicianId:
+          type: [string, 'null']
+          format: uuid
+        from:
+          type: string
+          format: date-time
+        to:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [active, offered, fulfilled, cancelled, expired]
+        cancelReason:
+          type: [string, 'null']
+          enum: [patient, staff, merged_duplicate, null]
+        positionAt:
+          type: string
+          format: date-time
+        openOffer:
+          type: [object, 'null']
+          properties:
+            id:
+              type: string
+              format: uuid
+            expiresAt:
+              type: string
+              format: date-time
+          required: [id, expiresAt]
+        version:
+          type: integer
+      required:
+        - id
+        - patientId
+        - serviceId
+        - locationId
+        - clinicianId
+        - from
+        - to
+        - status
+        - cancelReason
+        - positionAt
+        - openOffer
+        - version
     PutAppointmentsByIdAssignmentRequest:
       type: object
       properties:

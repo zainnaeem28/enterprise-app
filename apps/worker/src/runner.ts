@@ -82,6 +82,14 @@ export function workerLogger(log: Logger): WorkerLogger {
   });
 }
 
+/** Registered job types that have no handler in the task table. Such a job is accepted by the API and then fails in the library as an unsupported task (R8-N2). */
+export function unhandledJobTypes(registry: JobRegistry, tasks: TaskTable): string[] {
+  return registry
+    .list()
+    .map((t) => t.name)
+    .filter((n) => tasks[n] === undefined);
+}
+
 export async function startWorker(opts: {
   cfg: KernelConfig;
   pool: PoolLike;
@@ -103,6 +111,17 @@ export async function startWorker(opts: {
   }
   const taskList: TaskTable = {};
   for (const [name, t] of Object.entries(opts.tasks ?? {})) taskList[name] = wrapTask(name, t, log);
+  if (opts.registry !== undefined) {
+    const missing = unhandledJobTypes(opts.registry, taskList);
+    if (missing.length > 0)
+      log.warn(
+        'registered job types without a task handler: queued jobs of these types will fail',
+        {
+          count: missing.length,
+          jobTypes: missing,
+        },
+      );
+  }
   const runner = await run({
     pgPool: pool as never,
     schema: cfg.queueSchema,
