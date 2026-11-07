@@ -111,9 +111,12 @@ const VIEWS = [
 ];
 /** Agreed directory-view / public-policy list: docs/evidence/integration/M2/DIRECTORY-VIEWS-AND-PUBLIC-POLICIES.md (INT01-F2). */
 const IDENTITY_DIRECTORY_VIEWS = ['public_clinician'];
+/** ARCHITECTURE 22.5.1 / 21.3 (TDR-14): the ninth C0 view, over scheduling.availability_template (migration 1103, BE-12). */
+const SCHEDULING_DIRECTORY_VIEWS = ['public_clinician_location'];
 const IDENTITY_PUBLIC_POLICIES = [
   'identity.principal.principal_directory',
   'identity.staff_profile.staff_profile_directory',
+  'scheduling.availability_template.availability_template_directory',
 ];
 const TABLES = [
   'organisation',
@@ -922,7 +925,7 @@ describe('organisation module on PostgreSQL 17 (BE-03)', () => {
   });
 
   describe('directory views and the directory_ro role (22.5.1, 21.2, 38.2 item 17)', () => {
-    test('seven organisation views exist (plus identity.public_clinician owned by directory_ro), owner-rights (no security_invoker), nothing else owned by it', async () => {
+    test('seven organisation views exist (plus identity.public_clinician and scheduling.public_clinician_location owned by directory_ro), owner-rights (no security_invoker), nothing else owned by it', async () => {
       const v = await q<{ relname: string; owner: string; reloptions: string[] | null }>(
         `SELECT c.relname, pg_get_userbyid(c.relowner) AS owner, c.reloptions FROM pg_class c
           WHERE c.relnamespace = 'organisation'::regnamespace AND c.relkind = 'v' ORDER BY 1`,
@@ -943,6 +946,7 @@ describe('organisation module on PostgreSQL 17 (BE-03)', () => {
         [
           ...VIEWS.map((x) => `organisation.${x}`),
           ...IDENTITY_DIRECTORY_VIEWS.map((x) => `identity.${x}`),
+          ...SCHEDULING_DIRECTORY_VIEWS.map((x) => `scheduling.${x}`),
         ].sort(),
       );
       assert.deepEqual(
@@ -1208,7 +1212,7 @@ describe('organisation module on PostgreSQL 17 (BE-03)', () => {
       }
     });
 
-    test('M-5: the policies that can match audience public are exactly the seven organisation T-DIRECTORY policies, the two identity ones and the recorded kernel exception', async () => {
+    test('M-5: the policies that can match audience public are exactly the seven organisation T-DIRECTORY policies, the two identity ones, the scheduling one and the recorded kernel exception', async () => {
       const matching = await publicMatchingPolicies();
       const org7 = matching.filter((x) => x.startsWith('organisation.')).sort();
       assert.deepEqual(
