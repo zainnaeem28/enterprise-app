@@ -15,7 +15,9 @@ function setup(opts: {
   audience?: string;
   idleInMs?: number;
   signOutStatus?: number;
+  rolesReadEmpty?: boolean;
 }) {
+  let sessionReads = 0;
   const seen: Seen[] = [];
   const assign = vi.fn();
   const runtime = createShellRuntime({
@@ -26,6 +28,9 @@ function setup(opts: {
       const path = new URL(r.url).pathname;
       seen.push({ method: r.method, path });
       if (path.endsWith('/auth/session') && r.method === 'GET') {
+        sessionReads += 1;
+        if (opts.rolesReadEmpty === true && sessionReads === 2)
+          return new Response(null, { status: 204 });
         if ((opts.status ?? 200) !== 200)
           return new Response(JSON.stringify({ code: 'auth.unauthenticated' }), { status: 401 });
         const idle = new Date(Date.now() + (opts.idleInMs ?? 30 * 60_000)).toISOString();
@@ -130,13 +135,43 @@ describe('session gate and role navigation', () => {
       within(wide)
         .getAllByRole('link')
         .map((a) => a.textContent),
-    ).toEqual(['Schedule', 'Patients', 'Tasks & messages', 'Notes to sign', 'Alerts']);
+    ).toEqual(['Alerts', 'Schedule', 'Patients', 'Tasks & messages', 'Notes to sign']);
+    // Phone bar is Alerts · Schedule · Patients · More (UI-UX 3.2)
+    const phone = within(nav).getAllByRole('list')[1]!;
+    expect(
+      within(phone)
+        .getAllByRole('link')
+        .slice(0, 3)
+        .map((a) => a.textContent),
+    ).toEqual(['Alerts', 'Schedule', 'Patients']);
+    expect(within(phone).getByText('More')).toBeInTheDocument();
     await waitFor(() => expect(window.location.pathname).toBe('/schedule'));
     expect(screen.getByRole('heading', { name: 'Schedule' })).toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: 'Schedule' })[0]).toHaveAttribute(
       'aria-current',
       'page',
     );
+  });
+  it('shows a retryable error, not "contact IT", when the roles read returns no data', async () => {
+    const { runtime, assign } = setup({ roles: ['doctor'], rolesReadEmpty: true });
+    render(<StaffApp runtime={runtime} assign={assign} />);
+    expect(await screen.findByRole('button', { name: /try again|retry/i })).toBeInTheDocument();
+    expect(screen.queryByText(/No staff screens/i)).not.toBeInTheDocument();
+  });
+  it('shows the Help link on public pages, loading and the signed-in shell', async () => {
+    at('/sign-in');
+    const a = render(<StaffApp runtime={setup({}).runtime} assign={vi.fn()} />);
+    expect(screen.getByRole('link', { name: 'Help' })).toHaveAttribute('href', '/help');
+    a.unmount();
+    at('/signed-out');
+    const b = render(<StaffApp runtime={setup({}).runtime} assign={vi.fn()} />);
+    expect(screen.getByRole('link', { name: 'Help' })).toBeInTheDocument();
+    b.unmount();
+    at('/');
+    const { runtime, assign } = setup({ roles: ['doctor'] });
+    render(<StaffApp runtime={runtime} assign={assign} />);
+    await screen.findByRole('navigation', { name: 'Staff portal' });
+    expect(screen.getByRole('link', { name: 'Help' })).toBeInTheDocument();
   });
   it('shows the Pre-consultation navigation to front desk, not the Doctor one', async () => {
     const { runtime, assign } = setup({ roles: ['front_desk'] });

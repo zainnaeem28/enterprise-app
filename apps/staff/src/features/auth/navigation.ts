@@ -21,11 +21,11 @@ const preconsult: readonly NavItem[] = [
 
 // Phone order is Alerts · Schedule · Patients · More (UI-UX 3.2); desktop order follows the map.
 const doctor: readonly NavItem[] = [
+  { id: 'alerts', label: 'Alerts', path: '/alerts' },
   { id: 'schedule', label: 'Schedule', path: '/schedule' },
   { id: 'patients', label: 'Patients', path: '/patients' },
   { id: 'tasks', label: 'Tasks & messages', path: '/tasks' },
   { id: 'notes', label: 'Notes to sign', path: '/notes-to-sign' },
-  { id: 'alerts', label: 'Alerts', path: '/alerts' },
 ];
 
 export const surfaces: Record<Surface, readonly NavItem[]> = { preconsult, doctor };

@@ -22,6 +22,24 @@ import { useLocation } from './router.js';
 
 const PRODUCT = 'Clinic';
 
+/** The same Help link, in the same place (end of the page), on every screen (UI-UX 3.2, WCAG 3.2.6). */
+function HelpFooter() {
+  return (
+    <footer className="ehr-help">
+      <a href="/help">{s.helpLink}</a>
+    </footer>
+  );
+}
+
+function HelpPage() {
+  return (
+    <section aria-labelledby="help-title" className="ehr-auth">
+      <h1 id="help-title">{s.helpTitle}</h1>
+      <p>{s.helpBody}</p>
+    </section>
+  );
+}
+
 function PublicShell({ children }: { children: React.ReactNode }) {
   return (
     <>
@@ -32,6 +50,7 @@ function PublicShell({ children }: { children: React.ReactNode }) {
       <main id="main" className="ehr-main" tabIndex={-1}>
         {children}
       </main>
+      <HelpFooter />
     </>
   );
 }
@@ -61,6 +80,12 @@ export function StaffApp({
     return (
       <PublicShell>
         <SignedOutPage />
+      </PublicShell>
+    );
+  if (loc.path === '/help')
+    return (
+      <PublicShell>
+        <HelpPage />
       </PublicShell>
     );
   if (loc.path === '/sign-in') {
@@ -114,7 +139,8 @@ function Gate({
   const { session } = state;
   const realm = realmKind(session);
   const items = realm === 'staff' ? navigationFor(session.roleKeys) : [];
-  const first = items[0];
+  const first = items.find((i) => i.id === 'schedule') ?? items[0];
+  const firstItem = items[0];
   const current = items.find((i) => i.path === path);
 
   return (
@@ -140,18 +166,19 @@ function Gate({
           <Banner tone="info">
             <p>{s.adminSession}</p>
           </Banner>
-        ) : first === undefined ? (
+        ) : firstItem === undefined ? (
           <Banner tone="info">
             <p>{s.noNavigation}</p>
           </Banner>
         ) : path === '/' ? (
-          <Home first={first.path} navigate={navigate} />
+          <Home first={(first ?? firstItem).path} navigate={navigate} />
         ) : current !== undefined ? (
           <NotAvailable label={current.label} />
         ) : (
-          <NotFoundPage homeHref={first.path} />
+          <NotFoundPage homeHref={first?.path ?? '/'} />
         )}
       </main>
+      <HelpFooter />
     </>
   );
 }

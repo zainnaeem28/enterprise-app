@@ -112,17 +112,18 @@ test('a doctor sees the Doctor navigation; front desk sees Pre-consultation', as
   await page.waitForURL('**/schedule');
   const nav = page.getByRole('navigation', { name: 'Staff portal' });
   if (info.project.name === 'phone') {
-    await expect(nav.getByRole('link', { name: 'Schedule' })).toBeVisible();
+    for (const n of ['Alerts', 'Schedule', 'Patients'])
+      await expect(nav.getByRole('link', { name: n }).last()).toBeVisible();
     await expect(nav.getByText('More')).toBeVisible();
     await nav.getByText('More').click();
-    await expect(nav.getByRole('link', { name: 'Alerts' }).last()).toBeVisible();
+    await expect(nav.getByRole('link', { name: 'Notes to sign' }).last()).toBeVisible();
   } else {
     await expect(nav.getByRole('link')).toHaveText([
+      'Alerts',
       'Schedule',
       'Patients',
       'Tasks & messages',
       'Notes to sign',
-      'Alerts',
     ]);
   }
   await axe(page);

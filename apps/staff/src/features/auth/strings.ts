@@ -25,4 +25,7 @@ export const authStrings = {
   more: 'More',
   moreNav: 'More screens',
   helpLink: 'Help',
+  helpTitle: 'Help',
+  helpBody:
+    'If you cannot sign in or a screen is missing, contact your clinic IT contact. Do not send patient details by email or message.',
 } as const;

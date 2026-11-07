@@ -8,11 +8,11 @@ describe('role navigation follows UI-UX 3.2', () => {
   it('doctor roles get the Doctor map', () => {
     for (const r of ['doctor', 'trainee_doctor', 'assistant'])
       expect(labels([r])).toEqual([
+        'Alerts',
         'Schedule',
         'Patients',
         'Tasks & messages',
         'Notes to sign',
-        'Alerts',
       ]);
   });
   it('front-desk, triage and coordination roles get the Pre-consultation map', () => {

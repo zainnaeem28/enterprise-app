@@ -36,13 +36,15 @@ export function useStaffSession(runtime: Pick<ShellRuntime, 'api' | 'loadSession
         const { data } = await runtime.api.GET('/api/v1/auth/session', {
           params: { header: runtime.api.header },
         });
+        // A missing body is a failed read, not "no roles": show the retryable error instead of "contact IT".
+        if (data === undefined) return done({ kind: 'error' });
         done({
           kind: 'signed-in',
           session: {
             displayName: info.displayName,
             audience: info.audience,
             realm: info.realm,
-            roleKeys: data?.roles.map((r) => r.key) ?? [],
+            roleKeys: data.roles.map((r) => r.key),
           },
         });
       } catch {

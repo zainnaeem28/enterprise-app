@@ -165,12 +165,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 1221,
+                  "duration": 1245,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-07T21:56:44.536Z",
+                  "startTime": "2026-11-07T22:01:05.022Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -199,12 +199,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 601,
+                  "duration": 577,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-07T21:56:45.835Z",
+                  "startTime": "2026-11-07T22:01:06.338Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -233,12 +233,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 1297,
+                  "duration": 1404,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-07T21:56:46.447Z",
+                  "startTime": "2026-11-07T22:01:06.926Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -267,12 +267,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 3277,
+                  "duration": 3793,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-07T21:56:47.757Z",
+                  "startTime": "2026-11-07T22:01:08.346Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -282,7 +282,7 @@
           ],
           "id": "d748ac400d08b85935ef-3e1062be597b66b4a229",
           "file": "auth.spec.ts",
-          "line": 142,
+          "line": 143,
           "column": 1
         },
         {
@@ -301,12 +301,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 2993,
+                  "duration": 3304,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-07T21:56:51.055Z",
+                  "startTime": "2026-11-07T22:01:12.174Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -316,7 +316,7 @@
           ],
           "id": "d748ac400d08b85935ef-a3ca58823baab54f764a",
           "file": "auth.spec.ts",
-          "line": 165,
+          "line": 166,
           "column": 1
         },
         {
@@ -335,12 +335,12 @@
                   "workerIndex": 1,
                   "parallelIndex": 1,
                   "status": "passed",
-                  "duration": 1153,
+                  "duration": 1176,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-07T21:56:44.537Z",
+                  "startTime": "2026-11-07T22:01:05.041Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -369,12 +369,12 @@
                   "workerIndex": 1,
                   "parallelIndex": 1,
                   "status": "passed",
-                  "duration": 582,
+                  "duration": 570,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-07T21:56:45.771Z",
+                  "startTime": "2026-11-07T22:01:06.297Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -403,12 +403,12 @@
                   "workerIndex": 1,
                   "parallelIndex": 1,
                   "status": "passed",
-                  "duration": 1349,
+                  "duration": 1481,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-07T21:56:46.363Z",
+                  "startTime": "2026-11-07T22:01:06.881Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -437,12 +437,12 @@
                   "workerIndex": 1,
                   "parallelIndex": 1,
                   "status": "passed",
-                  "duration": 3216,
+                  "duration": 3709,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-07T21:56:47.722Z",
+                  "startTime": "2026-11-07T22:01:08.373Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -452,7 +452,7 @@
           ],
           "id": "d748ac400d08b85935ef-59b299b71fe0a903ede1",
           "file": "auth.spec.ts",
-          "line": 142,
+          "line": 143,
           "column": 1
         },
         {
@@ -471,12 +471,12 @@
                   "workerIndex": 1,
                   "parallelIndex": 1,
                   "status": "passed",
-                  "duration": 3009,
+                  "duration": 3277,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-07T21:56:50.947Z",
+                  "startTime": "2026-11-07T22:01:12.100Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -486,7 +486,7 @@
           ],
           "id": "d748ac400d08b85935ef-3a22ed9e84b2dd561e76",
           "file": "auth.spec.ts",
-          "line": 165,
+          "line": 166,
           "column": 1
         }
       ]
@@ -494,8 +494,8 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-11-07T21:56:43.647Z",
-    "duration": 10480.642,
+    "startTime": "2026-11-07T22:01:04.129Z",
+    "duration": 11416.542,
     "expected": 10,
     "skipped": 0,
     "unexpected": 0,
