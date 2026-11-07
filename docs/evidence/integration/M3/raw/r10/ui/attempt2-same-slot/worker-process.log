@@ -1,0 +1,60 @@
+{"count":34,"level":"info","time":"2026-11-07T15:02:50.221Z","msg":"task types synced"}
+{"level":"info","time":"2026-11-07T15:02:50.227Z","msg":"Failed to read crontab file '/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-233-int-02-r9-integrator-re-run-on-candidate-e7f06fb-round-3-of-3-fresh-budget/crontab'; cron is disabled"}
+{"tasks":34,"level":"info","time":"2026-11-07T15:02:50.230Z","msg":"worker started"}
+{"database":"[redacted]","level":"info","time":"2026-11-07T15:02:50.230Z","msg":"worker booted"}
+{"level":"info","time":"2026-11-07T15:02:50.234Z","msg":"Worker connected and looking for jobs... (task names: 'identity.record_sign_in', 'identity.apply_reference_data', 'identity.purge_sessions', 'patient.verify_staff_scope', 'patient.purge_match_checks', 'audit.anchor', 'audit.verify_anchors', 'audit.export', 'scheduling.on_slot_freed', 'scheduling.offer_waitlist', 'scheduling.expire_offer', 'scheduling.no_show_sweep', 'scheduling.on_reservation_confirmed', 'scheduling.send_previsit', 'telehealth.on_reservation_confirmed', 'telehealth.create_meeting', 'telehealth.end_stale', 'calendar_sync.on_reservation_confirmed', 'calendar_sync.on_reservation_cancelled', 'calendar_sync.on_reservation_rescheduled', 'calendar_sync.push_busy', 'calendar_sync.delete_busy', 'calendar_sync.incremental_sync', 'calendar_sync.full_resync', 'calendar_sync.renew_watch', 'calendar_sync.unlink_cleanup', 'notifications.send_message', 'notifications.send_staff_message', 'documents.await_scan', 'documents.ocr_suggest', 'documents.retention_sweep', 'integration_core.dispatch_inbound', 'integration_core.health_check', 'integration_core.apply_inbound_secret')"}
+{"job":"1","jobType":"identity.record_sign_in","attempt":1,"level":"info","time":"2026-11-07T15:02:55.021Z","msg":"job started"}
+{"job":"1","jobType":"identity.record_sign_in","attempt":1,"level":"info","time":"2026-11-07T15:02:55.043Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-07T15:02:55.043Z","msg":"Completed task 1 (identity.record_sign_in, 22.35ms) with success"}
+{"job":"2","jobType":"scheduling.on_reservation_confirmed","attempt":1,"level":"info","time":"2026-11-07T15:02:56.457Z","msg":"job started"}
+{"job":"2","jobType":"scheduling.on_reservation_confirmed","attempt":1,"level":"info","time":"2026-11-07T15:02:56.470Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-07T15:02:56.470Z","msg":"Completed task 2 (scheduling.on_reservation_confirmed, 12.50ms) with success"}
+{"job":"4","jobType":"scheduling.on_slot_freed","attempt":1,"level":"info","time":"2026-11-07T15:02:58.141Z","msg":"job started"}
+{"job":"4","jobType":"scheduling.on_slot_freed","attempt":1,"level":"info","time":"2026-11-07T15:02:58.146Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-07T15:02:58.146Z","msg":"Completed task 4 (scheduling.on_slot_freed, 5.34ms) with success"}
+{"job":"5","jobType":"scheduling.offer_waitlist","attempt":1,"level":"info","time":"2026-11-07T15:02:58.148Z","msg":"job started"}
+{"job":"5","jobType":"scheduling.offer_waitlist","attempt":1,"level":"info","time":"2026-11-07T15:02:58.157Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-07T15:02:58.157Z","msg":"Completed task 5 (scheduling.offer_waitlist, 9.21ms) with success"}
+{"job":"6","jobType":"scheduling.on_slot_freed","attempt":1,"level":"info","time":"2026-11-07T15:02:58.586Z","msg":"job started"}
+{"job":"6","jobType":"scheduling.on_slot_freed","attempt":1,"level":"info","time":"2026-11-07T15:02:58.590Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-07T15:02:58.590Z","msg":"Completed task 6 (scheduling.on_slot_freed, 3.99ms) with success"}
+{"job":"7","jobType":"scheduling.offer_waitlist","attempt":1,"level":"info","time":"2026-11-07T15:02:58.591Z","msg":"job started"}
+{"job":"7","jobType":"scheduling.offer_waitlist","attempt":1,"level":"info","time":"2026-11-07T15:02:58.597Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-07T15:02:58.597Z","msg":"Completed task 7 (scheduling.offer_waitlist, 5.86ms) with success"}
+{"job":"8","jobType":"scheduling.on_reservation_confirmed","attempt":1,"level":"info","time":"2026-11-07T15:03:17.782Z","msg":"job started"}
+{"job":"8","jobType":"scheduling.on_reservation_confirmed","attempt":1,"level":"info","time":"2026-11-07T15:03:17.786Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-07T15:03:17.786Z","msg":"Completed task 8 (scheduling.on_reservation_confirmed, 3.84ms) with success"}
+{"job":"10","jobType":"scheduling.on_slot_freed","attempt":1,"level":"info","time":"2026-11-07T15:03:18.161Z","msg":"job started"}
+{"job":"10","jobType":"scheduling.on_slot_freed","attempt":1,"level":"info","time":"2026-11-07T15:03:18.165Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-07T15:03:18.165Z","msg":"Completed task 10 (scheduling.on_slot_freed, 3.43ms) with success"}
+{"job":"11","jobType":"scheduling.offer_waitlist","attempt":1,"level":"info","time":"2026-11-07T15:03:18.166Z","msg":"job started"}
+{"job":"11","jobType":"scheduling.offer_waitlist","attempt":1,"level":"info","time":"2026-11-07T15:03:18.220Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-07T15:03:18.220Z","msg":"Completed task 11 (scheduling.offer_waitlist, 54.69ms) with success"}
+{"job":"12","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-07T15:03:18.222Z","msg":"job started"}
+{"job":"13","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-07T15:03:18.224Z","msg":"job started"}
+{"job":"14","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-07T15:03:18.231Z","msg":"job started"}
+{"job":"15","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-07T15:03:18.235Z","msg":"job started"}
+{"job":"12","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-07T15:03:18.236Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-07T15:03:18.236Z","msg":"Completed task 12 (notifications.send_message, 14.41ms) with success"}
+{"job":"13","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-07T15:03:18.240Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-07T15:03:18.240Z","msg":"Completed task 13 (notifications.send_message, 16.62ms) with success"}
+{"job":"14","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-07T15:03:18.244Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-07T15:03:18.244Z","msg":"Completed task 14 (notifications.send_message, 12.79ms) with success"}
+{"job":"15","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-07T15:03:18.247Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-07T15:03:18.247Z","msg":"Completed task 15 (notifications.send_message, 11.67ms) with success"}
+{"job":"17","jobType":"scheduling.on_slot_freed","attempt":1,"level":"info","time":"2026-11-07T15:03:20.858Z","msg":"job started"}
+{"job":"17","jobType":"scheduling.on_slot_freed","attempt":1,"level":"info","time":"2026-11-07T15:03:20.862Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-07T15:03:20.862Z","msg":"Completed task 17 (scheduling.on_slot_freed, 4.05ms) with success"}
+{"job":"18","jobType":"scheduling.offer_waitlist","attempt":1,"level":"info","time":"2026-11-07T15:03:20.862Z","msg":"job started"}
+{"job":"18","jobType":"scheduling.offer_waitlist","attempt":1,"level":"info","time":"2026-11-07T15:03:20.872Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-07T15:03:20.872Z","msg":"Completed task 18 (scheduling.offer_waitlist, 10.03ms) with success"}
+{"job":"19","jobType":"scheduling.on_reservation_confirmed","attempt":1,"level":"info","time":"2026-11-07T15:03:22.941Z","msg":"job started"}
+{"job":"19","jobType":"scheduling.on_reservation_confirmed","attempt":1,"level":"info","time":"2026-11-07T15:03:22.950Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-07T15:03:22.950Z","msg":"Completed task 19 (scheduling.on_reservation_confirmed, 9.45ms) with success"}
+{"job":"21","jobType":"scheduling.on_slot_freed","attempt":1,"level":"info","time":"2026-11-07T15:03:23.212Z","msg":"job started"}
+{"job":"21","jobType":"scheduling.on_slot_freed","attempt":1,"level":"info","time":"2026-11-07T15:03:23.218Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-07T15:03:23.218Z","msg":"Completed task 21 (scheduling.on_slot_freed, 6.19ms) with success"}
+{"job":"22","jobType":"scheduling.offer_waitlist","attempt":1,"level":"info","time":"2026-11-07T15:03:23.219Z","msg":"job started"}
+{"job":"22","jobType":"scheduling.offer_waitlist","attempt":1,"level":"info","time":"2026-11-07T15:03:23.228Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-07T15:03:23.228Z","msg":"Completed task 22 (scheduling.offer_waitlist, 9.01ms) with success"}
+{"level":"info","time":"2026-11-07T15:04:44.092Z","msg":"worker stopped"}

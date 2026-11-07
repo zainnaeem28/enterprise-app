@@ -1,0 +1,21 @@
+freedSlot {
+  occupancyId: '01a1b66d-4b4e-7b85-a507-43ed7015cc27',
+  organisationId: '00000000-0000-7000-8000-0000000000a1',
+  locationId: '00000000-0000-7000-8000-000000000101',
+  clinicianId: '00000000-0000-7000-8000-000000000511',
+  roomId: null,
+  serviceId: '00000000-0000-7000-8000-000000000302',
+  mode: 'in_person',
+  startsAt: '2026-11-10T15:00:00.000Z',
+  endsAt: '2026-11-10T15:30:00.000Z'
+}
+candidates [
+  {
+    entryId: '01a1b66d-4562-7f0c-bbe1-8a5e826be44b',
+    patientId: '00000000-0000-7000-8000-000000000601',
+    serviceId: '00000000-0000-7000-8000-000000000302'
+  }
+]
+offerToCandidate -> { outcome: 'skipped', reason: 'scheduling.outside_hours' }
+patients-scope {"scheduling.availability_template":2,"scheduling.template_rule":14,"organisation.service_clinician":2,"organisation.service_location":2,"organisation.location":1,"identity.principal":0}
+org-scope {"scheduling.availability_template":2,"scheduling.template_rule":14,"organisation.service_clinician":2,"organisation.service_location":2,"organisation.location":1,"identity.principal":3}

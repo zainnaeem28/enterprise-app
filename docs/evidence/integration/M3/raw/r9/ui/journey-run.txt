@@ -1,0 +1,109 @@
+== A. sign-in (fresh database, NO manual task-type sync) and booking
+PASS  landing
+      cookies: __Host-sid secure=true httpOnly=true landed: http://127.0.0.1:4174/account
+PASS  sign-in
+PASS  service, place, clinician, availability
+PASS  hold
+PASS  review
+PASS  confirm
+      downloaded appointment.ics, 304 bytes, BEGIN:VEVENT=true, DTSTART=true
+PASS  add to calendar (ICS download from the booked page)
+PASS  my appointments
+== B. appointment detail and change time
+      appointment id seen in URL: 01a1b66c-f707-7a70-bb80-993e8fb42502 calls: GET /api/v1/appointments/01a1b66c-f707-7a70-bb80-993e8fb42502 -> 200
+PASS  detail
+PASS  change: choose a different time
+      calls: GET /api/v1/clinicians?serviceId=00000000-0000-7000-8000-000000000301&locationId=00000000-0000-7000-8000-000000000101 -> 200 | POST /api/v1/appointments/01a1b66c-f707-7a70-bb80-993e8fb42502/reschedule -> 200 | page: Skip to main content Patient portal Placeholder identity Your appointment was changed ℹ We will remind you before your visit. Visit General appointment When Wed, Nov 11, 10:30 AM EST Type In person Wh
+PASS  change: confirm the new time
+      listed: 1 | Skip to main content Patient portal Placeholder identity Your appointments Book an appointment General appointment Wed, Nov 11, 10:30 AM EST ✓ Confirmed In person View details Updated at 2:32 PM. Refresh
+PASS  appointments after change (still one confirmed)
+== C. cancel
+      page: Skip to main content Patient portal Placeholder identity Cancel this appointment? Visit General appointment When Wed, Nov 11, 10:30 AM EST Type In person Where Synthetic Clinic Cancellation policy. You can cancel or change this appointment online until the clinic's cut-off time before it starts. Aft
+PASS  cancel page shows policy text
+      calls: POST /api/v1/appointments/01a1b66c-faab-786f-9dc3-d71e8126badc/cancel -> 200 | page: Skip to main content Patient portal Placeholder identity Your appointment was cancelled ℹ The time was released. You can book another visit at any time. Book an appointment Back to appointments
+PASS  cancel confirmed
+      page: Skip to main content Patient portal Placeholder identity Your appointments Book an appointment No appointments yet. Book your first visit. Book an appointment
+PASS  appointments after cancel
+== D. waitlist join (patient)
+PASS  reach the waitlist page
+      calls: POST /api/v1/waitlist-entries -> 201 | page: Skip to main content Patient portal Placeholder identity You are on the waitlist ℹ If a time opens up we will send you an offer. You will have a short time to accept it. You can still book any other time that is open. Back to appointments
+PASS  join
+== E. waitlist offer: freed slot -> worker offers -> accept (offer link opened in the UI)
+PASS  SQL fixture: availability for the waitlist service clinician (disclosed)
+      entries: [{"status":"active","count":1}]
+PASS  book the waitlist service slot days ahead (UI)
+PASS  cancel it in the UI (frees the slot)
+      offers: []
+FAIL  worker turns the freed slot into an offer (poll DB up to 60 s): no waitlist_offer row 60 s after the cancel
+      url: http://127.0.0.1:4174/appointments/01a1b66d-4b4e-7b85-a507-43ed7015cc27/cancel body: Skip to main content Patient portal Placeholder identity Your appointment was cancelled ℹ The time was released. You can book another visit at any time. Book an appointment Back to appointments
+SKIP  accept the offer in the UI (earlier step of this journey failed)
+== state after the journeys (SQL read-only)
+STATE slot_occupancy: [{"status":"cancelled_patient","count":2},{"status":"rescheduled","count":1}]
+STATE waitlist_entry: [{"status":"active","count":1}]
+STATE waitlist_offer: []
+STATE notifications: []
+STATE audit events by realm/action (worker rows = written by a worker job): [{"realm":"patient_pool","action":"create","count":4},{"realm":"patient_pool","action":"sign_in","count":1},{"realm":"patient_pool","action":"update","count":6},{"realm":"worker","action":"config_change","count":1}]
+STATE audit events written by a job (job_id not null): [{"job":"1","count":1},{"job":"identity.apply_reference_data","count":1}]
+STATE queued jobs not yet processed: [{"identifier":"scheduling.send_previsit","attempts":0,"in_future":true,"last_error":""},{"identifier":"scheduling.send_previsit","attempts":0,"in_future":true,"last_error":""}]
+--- API calls seen by the browser ---
+GET /api/v1/auth/sign-in?returnTo=%2Faccount -> 302
+GET /api/v1/auth/sign-in?returnTo=%2Faccount -> 302
+GET /api/v1/auth/callback?code=3ec31e9fa7f52889abc1c6e0a8c85da1&state=wtxoWkSPgBWGFQ_0DqD1fTXTuhL20wLy -> 302
+GET /api/v1/auth/session -> 200
+GET /api/v1/me -> 404
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/locations -> 200
+GET /api/v1/services -> 200
+GET /api/v1/clinicians?serviceId=00000000-0000-7000-8000-000000000301 -> 200
+GET /api/v1/clinicians?serviceId=00000000-0000-7000-8000-000000000301&locationId=00000000-0000-7000-8000-000000000101 -> 200
+POST /api/v1/holds -> 201
+GET /api/v1/clinicians?serviceId=00000000-0000-7000-8000-000000000301&locationId=00000000-0000-7000-8000-000000000101 -> 200
+POST /api/v1/appointments/01a1b66c-f707-7a70-bb80-993e8fb42502/confirm -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/locations -> 200
+GET /api/v1/services -> 200
+GET /api/v1/patients/00000000-0000-7000-8000-000000000601/appointments?status=confirmed&from=2026-11-07T14%3A32%3A37.416Z -> 200
+GET /api/v1/appointments/01a1b66c-f707-7a70-bb80-993e8fb42502 -> 200
+GET /api/v1/appointments/01a1b66c-f707-7a70-bb80-993e8fb42502 -> 200
+POST /api/v1/holds -> 201
+GET /api/v1/clinicians?serviceId=00000000-0000-7000-8000-000000000301&locationId=00000000-0000-7000-8000-000000000101 -> 200
+POST /api/v1/appointments/01a1b66c-f707-7a70-bb80-993e8fb42502/reschedule -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/locations -> 200
+GET /api/v1/services -> 200
+GET /api/v1/patients/00000000-0000-7000-8000-000000000601/appointments?status=confirmed&from=2026-11-07T14%3A32%3A39.050Z -> 200
+GET /api/v1/appointments/01a1b66c-faab-786f-9dc3-d71e8126badc -> 200
+GET /api/v1/appointments/01a1b66c-faab-786f-9dc3-d71e8126badc -> 200
+POST /api/v1/appointments/01a1b66c-faab-786f-9dc3-d71e8126badc/cancel -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/services -> 200
+GET /api/v1/locations -> 200
+GET /api/v1/patients/00000000-0000-7000-8000-000000000601/appointments?status=confirmed&from=2026-11-07T14%3A32%3A41.019Z -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/locations -> 200
+GET /api/v1/services -> 200
+GET /api/v1/clinicians?serviceId=00000000-0000-7000-8000-000000000302 -> 200
+GET /api/v1/clinicians?serviceId=00000000-0000-7000-8000-000000000302&locationId=00000000-0000-7000-8000-000000000101 -> 200
+POST /api/v1/waitlist-entries -> 201
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/locations -> 200
+GET /api/v1/services -> 200
+GET /api/v1/clinicians?serviceId=00000000-0000-7000-8000-000000000302 -> 200
+GET /api/v1/clinicians?serviceId=00000000-0000-7000-8000-000000000302&locationId=00000000-0000-7000-8000-000000000101 -> 200
+POST /api/v1/holds -> 201
+GET /api/v1/clinicians?serviceId=00000000-0000-7000-8000-000000000302&locationId=00000000-0000-7000-8000-000000000101 -> 200
+POST /api/v1/appointments/01a1b66d-4b4e-7b85-a507-43ed7015cc27/confirm -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/locations -> 200
+GET /api/v1/services -> 200
+GET /api/v1/patients/00000000-0000-7000-8000-000000000601/appointments?status=confirmed&from=2026-11-07T14%3A32%3A58.791Z -> 200
+GET /api/v1/appointments/01a1b66d-4b4e-7b85-a507-43ed7015cc27 -> 200
+GET /api/v1/appointments/01a1b66d-4b4e-7b85-a507-43ed7015cc27 -> 200
+POST /api/v1/appointments/01a1b66d-4b4e-7b85-a507-43ed7015cc27/cancel -> 200

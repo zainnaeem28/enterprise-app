@@ -1,0 +1,37 @@
+freedSlot {
+  occupancyId: '01a1b686-7086-704e-b5da-2ba83caffa17',
+  organisationId: '00000000-0000-7000-8000-0000000000a1',
+  locationId: '00000000-0000-7000-8000-000000000101',
+  clinicianId: '00000000-0000-7000-8000-000000000511',
+  roomId: null,
+  serviceId: '00000000-0000-7000-8000-000000000302',
+  mode: 'in_person',
+  startsAt: '2026-11-10T15:30:00.000Z',
+  endsAt: '2026-11-10T16:00:00.000Z'
+}
+candidates [
+  {
+    entryId: '01a1b685-7917-746c-bda7-52f0d8706fd9',
+    patientId: '00000000-0000-7000-8000-000000000601',
+    serviceId: '00000000-0000-7000-8000-000000000302'
+  }
+]
+offerToCandidate -> {
+  name: 'NotificationsValidationError',
+  code: 'kernel.validation_failed',
+  message: 'kernel.validation_failed',
+  errors: undefined,
+  detail: undefined,
+  stack: [
+    'NotificationsValidationError: kernel.validation_failed',
+    '    at NotificationService.send (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-233-int-02-r9-integrator-re-run-on-candidate-e7f06fb-round-3-of-3-fresh-budget/apps/api/dist/src/modules/notifications/send.js:36:19)',
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)',
+    '    at async WaitlistService.offerToCandidate (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-233-int-02-r9-integrator-re-run-on-candidate-e7f06fb-round-3-of-3-fresh-budget/apps/api/dist/src/modules/scheduling/flow/waitlist.js:370:13)',
+    '    at async file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-233-int-02-r9-integrator-re-run-on-candidate-e7f06fb-round-3-of-3-fresh-budget/docs/evidence/integration/M3/raw/r10/ui/r10-offer-diagnosis.mjs:30:104',
+    '    at async KernelDb.once (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-233-int-02-r9-integrator-re-run-on-candidate-e7f06fb-round-3-of-3-fresh-budget/packages/kernel/dist/scope/with-scope.js:114:28)',
+    '    at async KernelDb.run (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-233-int-02-r9-integrator-re-run-on-candidate-e7f06fb-round-3-of-3-fresh-budget/packages/kernel/dist/scope/with-scope.js:92:24)',
+    '    at async file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-233-int-02-r9-integrator-re-run-on-candidate-e7f06fb-round-3-of-3-fresh-budget/docs/evidence/integration/M3/raw/r10/ui/r10-offer-diagnosis.mjs:30:17'
+  ]
+}
+patients-scope {"scheduling.availability_template":2,"scheduling.template_rule":14,"organisation.service_clinician":2,"organisation.service_location":2,"organisation.location":1,"identity.principal":2}
+org-scope {"scheduling.availability_template":2,"scheduling.template_rule":14,"organisation.service_clinician":2,"organisation.service_location":2,"organisation.location":1,"identity.principal":3}
