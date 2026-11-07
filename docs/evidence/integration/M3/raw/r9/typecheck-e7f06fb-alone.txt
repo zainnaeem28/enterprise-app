@@ -1,0 +1,39 @@
+$ pnpm --filter @ehr/kernel --filter @ehr/contracts run build && pnpm -r run typecheck
+Scope: 2 of 11 workspace projects
+packages/kernel build$ tsc -p tsconfig.json
+packages/contracts build$ tsc -p tsconfig.json
+packages/contracts build: Done
+packages/kernel build: Done
+Scope: 10 of 11 workspace projects
+apps/site typecheck$ tsc -p tsconfig.json --noEmit
+packages/contracts typecheck$ tsc -p tsconfig.json --noEmit
+apps/cms typecheck$ tsc -p tsconfig.json --noEmit
+packages/kernel typecheck$ tsc -p tsconfig.json --noEmit
+apps/cms typecheck: Done
+packages/ui typecheck$ tsc -p tsconfig.json --noEmit
+apps/site typecheck: Done
+packages/contracts typecheck: Done
+packages/kernel typecheck: Done
+apps/api typecheck$ tsc -p tsconfig.json --noEmit
+apps/worker typecheck$ tsc -p tsconfig.json --noEmit
+packages/ui typecheck: Done
+packages/app-shell typecheck$ tsc -p tsconfig.json --noEmit
+apps/worker typecheck: Done
+apps/api typecheck: Done
+packages/app-shell typecheck: Done
+apps/patient typecheck$ tsc -p tsconfig.json --noEmit
+apps/staff typecheck$ tsc -p tsconfig.json --noEmit
+apps/staff typecheck: Done
+apps/patient typecheck: src/features/booking/api.ts(266,13): error TS2322: Type 'WaitlistRequest' is not assignable to type '{ patientId: string; serviceId: string; locationId?: string | null | undefined; clinicianId?: string | null | undefined; from: string; to: string; } & {}'.
+apps/patient typecheck:   Type 'WaitlistRequest' is missing the following properties from type '{ patientId: string; serviceId: string; locationId?: string | null | undefined; clinicianId?: string | null | undefined; from: string; to: string; }': from, to
+apps/patient typecheck: Failed
+[ELIFECYCLE] Command failed with exit code 2.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in /paperclip/instances/default/
+  │ projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-
+  │ 47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-233-int-02-r9-
+  │ integrator-re-run-on-candidate-e7f06fb-round-3-of-3-fresh-budget/apps/
+  │ patient
+
+[ELIFECYCLE] Command failed with exit code 1.
