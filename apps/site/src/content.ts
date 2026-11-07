@@ -23,7 +23,8 @@ export const placeholderContent: ContentSource = {
   },
   about: {
     // PM-drafted first-release copy (HEAAA-275): plain words, no claims. Brand-supplied copy (C-16/C-19) replaces it.
-    intro: 'We are a medical practice. You can see our services, locations, hours and doctors on this site.',
+    intro:
+      'We are a medical practice. You can see our services, locations, hours and doctors on this site.',
     booking:
       'You can book an appointment online. Choose a service, a doctor and a location, then sign in or create an account to finish. If you need to reach us, use the Contact page.',
   },

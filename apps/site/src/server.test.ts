@@ -160,7 +160,15 @@ describe('SEO (TC-BS-05)', () => {
     expect(titles.size).toBe(6);
   });
   it('structured data parses as JSON on every page that has it', async () => {
-    for (const p of ['/', '/about', '/services', '/doctors', `/doctors/${D}`, '/locations', '/contact']) {
+    for (const p of [
+      '/',
+      '/about',
+      '/services',
+      '/doctors',
+      `/doctors/${D}`,
+      '/locations',
+      '/contact',
+    ]) {
       const h = await (await get(p)).text();
       const blocks = [...h.matchAll(/<script type="application\/ld\+json">([^<]*)<\/script>/g)].map(
         (m) => m[1] ?? '',
