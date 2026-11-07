@@ -1,0 +1,32 @@
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+▶ documents (BE-10) on PostgreSQL 17
+  ✔ the job types are the same on both sides, each declares on_merged where it carries a patient, and the queue knows them (3.13638ms)
+  ✔ TC-DOC-01: nobody opens an upload until it is scanned clean; then staff classify and confirm it (435.905591ms)
+  ✔ an upload request is idempotent: the same key is the same document and one row (52.094942ms)
+  ✔ TC-DOC-02: an infected file is quarantined, never served, and operations are told (stub verdict, NOT a real scanner) (149.480858ms)
+  ✔ TC-DOC-03: oversize, mismatched-type and double-extension uploads are refused with safe errors (463.48876ms)
+  ✔ uploads per day follow the setting (31.1) (67.416555ms)
+  ✔ TC-DOC-04: a deletion request under legal hold is refused with the reason recorded (264.172933ms)
+  ✔ TC-DOC-05: URLs are bound to one object, one method, one size and one moment; one patient cannot read another's file (164.996726ms)
+  ✔ TC-DOC-07: deletion is allowed only after the retention period and with no hold, through a request that is decided (689.353891ms)
+  ✔ TC-DOC-08: with the scanner down the file stays unavailable, the failure is visible, nothing bypasses it (stub outage, NOT the real service) (144.344311ms)
+  ✔ a scan that never finishes: the version shows an error after 30 minutes, operations are alerted, and the job keeps trying (136.513165ms)
+  ✔ 38.2 item 11: a document scanning at merge time is re-pointed and served after the retried scan (228.300677ms)
+  ✔ merge participant: documents, versions and pending requests move; holds and decided requests are kept; counts add up (398.065776ms)
+  ✔ database rules: who may take which step, what a version row may hold (80.605132ms)
+  ✔ RLS: own documents only, released classes for patients, no proxy, no other location, holds are staff-only (374.935999ms)
+  ✔ concurrency: a hold and a deletion decision racing never leave a held document deleted (1542.544128ms)
+  ✔ concurrency: completing one upload from many requests queues one scan job (385.078715ms)
+  ✔ the scan-tag adapter maps tags to verdicts, never calls an unknown tag clean, and a scanner outage is an error (127.512891ms)
+  ✔ OCR suggestion: staff-visible only, never decides; a missing, failing or late vendor is handled (463.96074ms)
+  ✔ the export part lists metadata only: no object key, no URL; holds and requests included (168.739191ms)
+  ✔ no PHI in object keys, URLs, audit rows or logs; a hold's reason lives only in its own row (71.745534ms)
+✔ documents (BE-10) on PostgreSQL 17 (8015.498366ms)
+ℹ tests 21
+ℹ suites 1
+ℹ pass 21
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8375.576287
