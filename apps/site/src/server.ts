@@ -11,7 +11,7 @@ import type { SiteConfig } from './config.js';
 import { placeholderContent } from './content.js';
 import type { ContentSource } from './content.js';
 import { createDirectoryClient } from './directory.js';
-import type { DirectoryClient } from './directory.js';
+import type { DirectoryClient, Freshness } from './directory.js';
 import { directoryOrNull, route } from './render.js';
 import { robotsTxt, sitemapXml } from './seo.js';
 
@@ -51,8 +51,9 @@ function securityHeaders(config: SiteConfig, res: ServerResponse): void {
 }
 
 // Pages vary by nothing in the request (no cookie, no header), so one cached copy is right for everyone and an unlisted
-// clinician disappears within the TTL (PB-4). `Vary` is deliberately absent. Degraded pages are never stored.
-const PAGE_CACHE = 'public, max-age=60, stale-while-revalidate=30';
+// clinician disappears within the TTL (PB-4). `Vary` is deliberately absent. Degraded pages and pages built from the
+// directory's stale fallback are never stored (no-store). stale-if-error is bounded by the origin header (<= 300 s).
+export const PAGE_CACHE = 'public, max-age=60, stale-while-revalidate=30, stale-if-error=300';
 
 export interface SiteDeps {
   config: SiteConfig;
@@ -88,12 +89,13 @@ export function createSite(deps: SiteDeps): Server {
     if (path === '/robots.txt')
       return send(200, 'text/plain; charset=utf-8', robotsTxt(config.siteOrigin), PAGE_CACHE);
     if (path === '/sitemap.xml') {
-      const dir = await directoryOrNull(client);
+      const fresh: Freshness = { stale: false };
+      const dir = await directoryOrNull(client, fresh);
       return send(
         dir === null ? 503 : 200,
         'application/xml; charset=utf-8',
         sitemapXml(config.siteOrigin, dir),
-        dir === null ? 'no-store' : PAGE_CACHE,
+        dir === null || fresh.stale ? 'no-store' : PAGE_CACHE,
       );
     }
     if (path.startsWith('/assets/')) {

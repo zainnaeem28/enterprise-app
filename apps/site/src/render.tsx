@@ -4,7 +4,7 @@ import type { Template } from './analytics.js';
 import type { SiteConfig } from './config.js';
 import type { ContentSource } from './content.js';
 import { UUID_RE, loadDirectory } from './directory.js';
-import type { Directory, DirectoryClient, NextSlot } from './directory.js';
+import type { Directory, DirectoryClient, Freshness, NextSlot } from './directory.js';
 import { Layout } from './components/Layout.js';
 import { bookUrl } from './handoff.js';
 import {
@@ -54,9 +54,12 @@ export interface RenderDeps {
 
 const LEGAL = ['privacy', 'terms', 'cookies', 'accessibility'] as const;
 
-async function readDirectory(client: DirectoryClient): Promise<Directory | null> {
+async function readDirectory(
+  client: DirectoryClient,
+  fresh?: Freshness,
+): Promise<Directory | null> {
   try {
-    return await loadDirectory(client);
+    return await loadDirectory(client, fresh);
   } catch {
     return null;
   }
@@ -67,10 +70,11 @@ export const directoryOrNull = readDirectory;
 async function slotsFor(
   client: DirectoryClient,
   pairs: { key: string; clinicianId: string; serviceId: string }[],
+  fresh: Freshness,
 ): Promise<Map<string, NextSlot>> {
   const out = await Promise.all(
     pairs.map(
-      async (p) => [p.key, await client.nextAvailable(p.clinicianId, p.serviceId)] as const,
+      async (p) => [p.key, await client.nextAvailable(p.clinicianId, p.serviceId, fresh)] as const,
     ),
   );
   return new Map(out);
@@ -78,7 +82,8 @@ async function slotsFor(
 
 export async function route(path: string, deps: RenderDeps): Promise<Rendered> {
   const { config, client, content } = deps;
-  const dir = await readDirectory(client);
+  const fresh: Freshness = { stale: false };
+  const dir = await readDirectory(client, fresh);
   const ctx: Ctx = { patientOrigin: config.patientOrigin, content, dir };
   const o = config.siteOrigin;
   const desc = 'Find a service, choose a doctor and a location, and start your booking.';
@@ -121,6 +126,7 @@ export async function route(path: string, deps: RenderDeps): Promise<Rendered> {
                 ? []
                 : [{ key: d.id, clinicianId: d.id, serviceId: d.serviceIds[0] }],
             ),
+            fresh,
           );
     spec = {
       status: 200,
@@ -154,6 +160,7 @@ export async function route(path: string, deps: RenderDeps): Promise<Rendered> {
       const slots = await slotsFor(
         client,
         doctor.serviceIds.map((sid) => ({ key: sid, clinicianId: doctor.id, serviceId: sid })),
+        fresh,
       );
       spec = {
         status: 200,
@@ -221,7 +228,8 @@ export async function route(path: string, deps: RenderDeps): Promise<Rendered> {
 
   return {
     status: spec.status,
-    cacheable: spec.status === 200 && (dir !== null || spec.template === 'legal'),
+    // Built from the stale fallback means no-store: the CDN must not keep an unlisted clinician past the TTL (PB-4).
+    cacheable: spec.status === 200 && (spec.template === 'legal' || (dir !== null && !fresh.stale)),
     html: document(spec, config),
   };
 }

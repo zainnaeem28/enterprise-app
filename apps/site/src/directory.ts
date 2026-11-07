@@ -1,7 +1,8 @@
 // Server-side client of `GET /public/v1/services|locations|clinicians[/{id}/next-available]` (ARCHITECTURE 29.5).
 // The site server is the only caller (SHARED-BOUNDARIES 5.1): the browser never reaches `integrations.`. Answers carry no PHI.
 // Every answer is validated, a malformed row is dropped, and answers are cached for 60 s (the API's own `max-age`), so
-// "next available" is at most about a minute old. A failed refresh serves the last answer for up to ten minutes.
+// "next available" is at most about a minute old. A failed refresh serves the last answer for up to ten minutes (staleMs <= 600 s: a larger bound reopens PB-4);
+// the caller learns of it through `Freshness` and must not let a CDN store what it built from that answer.
 export interface Service {
   id: string;
   name: string;
@@ -32,11 +33,19 @@ export class DirectoryUnavailable extends Error {
   }
 }
 
+/** Per-request record: `stale` turns true when any answer the request used came from the stale fallback. */
+export interface Freshness {
+  stale: boolean;
+}
+
 export interface DirectoryClient {
-  services(q?: { locationId?: string }): Promise<Service[]>;
-  locations(): Promise<Location[]>;
-  clinicians(q?: { serviceId?: string; locationId?: string }): Promise<Clinician[]>;
-  nextAvailable(clinicianId: string, serviceId: string): Promise<NextSlot>;
+  services(q?: { locationId?: string }, fresh?: Freshness): Promise<Service[]>;
+  locations(fresh?: Freshness): Promise<Location[]>;
+  clinicians(
+    q?: { serviceId?: string; locationId?: string },
+    fresh?: Freshness,
+  ): Promise<Clinician[]>;
+  nextAvailable(clinicianId: string, serviceId: string, fresh?: Freshness): Promise<NextSlot>;
 }
 
 export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -137,17 +146,27 @@ export function createDirectoryClient(o: DirectoryOptions): DirectoryClient {
   const timeout = o.timeoutMs ?? 3_000;
   const now = o.now ?? Date.now;
   const cache = new Map<string, { at: number; body: unknown }>();
-  const inflight = new Map<string, Promise<unknown>>();
+  const inflight = new Map<string, Promise<{ body: unknown; stale: boolean }>>();
 
   async function get(
     path: string,
     query: Record<string, string | undefined> = {},
+    fresh?: Freshness,
   ): Promise<unknown> {
+    const r = await fetchOrCache(path, query);
+    if (r.stale && fresh !== undefined) fresh.stale = true;
+    return r.body;
+  }
+
+  async function fetchOrCache(
+    path: string,
+    query: Record<string, string | undefined>,
+  ): Promise<{ body: unknown; stale: boolean }> {
     const u = new URL(path, o.baseUrl);
     for (const [k, v] of Object.entries(query)) if (v !== undefined) u.searchParams.set(k, v);
     const key = u.pathname + u.search;
     const hit = cache.get(key);
-    if (hit !== undefined && now() - hit.at < ttl) return hit.body;
+    if (hit !== undefined && now() - hit.at < ttl) return { body: hit.body, stale: false };
     const running = inflight.get(key);
     if (running !== undefined) return running;
     const p = (async () => {
@@ -159,14 +178,14 @@ export function createDirectoryClient(o: DirectoryOptions): DirectoryClient {
         });
         if (res.status === 404) {
           cache.set(key, { at: now(), body: { notFound: true } });
-          return { notFound: true };
+          return { body: { notFound: true }, stale: false };
         }
         if (!res.ok) throw new DirectoryUnavailable(`status_${res.status}`);
         const body: unknown = await res.json();
         cache.set(key, { at: now(), body });
-        return body;
+        return { body, stale: false };
       } catch (e) {
-        if (hit !== undefined && now() - hit.at < stale) return hit.body;
+        if (hit !== undefined && now() - hit.at < stale) return { body: hit.body, stale: true };
         throw e instanceof DirectoryUnavailable ? e : new DirectoryUnavailable('network');
       } finally {
         inflight.delete(key);
@@ -182,24 +201,33 @@ export function createDirectoryClient(o: DirectoryOptions): DirectoryClient {
       .filter((x): x is T => x !== null);
 
   return {
-    async services(q = {}) {
-      return parseAll(await get('/public/v1/services', { locationId: q.locationId }), parseService);
-    },
-    async locations() {
-      return parseAll(await get('/public/v1/locations'), parseLocation);
-    },
-    async clinicians(q = {}) {
+    async services(q = {}, fresh) {
       return parseAll(
-        await get('/public/v1/clinicians', { serviceId: q.serviceId, locationId: q.locationId }),
+        await get('/public/v1/services', { locationId: q.locationId }, fresh),
+        parseService,
+      );
+    },
+    async locations(fresh) {
+      return parseAll(await get('/public/v1/locations', {}, fresh), parseLocation);
+    },
+    async clinicians(q = {}, fresh) {
+      return parseAll(
+        await get(
+          '/public/v1/clinicians',
+          { serviceId: q.serviceId, locationId: q.locationId },
+          fresh,
+        ),
         parseClinician,
       );
     },
-    async nextAvailable(clinicianId, serviceId) {
+    async nextAvailable(clinicianId, serviceId, fresh) {
       if (!UUID_RE.test(clinicianId) || !UUID_RE.test(serviceId)) return { state: 'unknown' };
       try {
-        const body = await get(`/public/v1/clinicians/${clinicianId}/next-available`, {
-          serviceId,
-        });
+        const body = await get(
+          `/public/v1/clinicians/${clinicianId}/next-available`,
+          { serviceId },
+          fresh,
+        );
         if (isRecord(body) && body['notFound'] === true) return { state: 'none' };
         return parseNextSlot(body);
       } catch {
@@ -222,21 +250,21 @@ export interface Directory {
 
 const MAX_FANOUT = 24;
 
-export async function loadDirectory(c: DirectoryClient): Promise<Directory> {
+export async function loadDirectory(c: DirectoryClient, fresh?: Freshness): Promise<Directory> {
   const [services, locations, clinicians] = await Promise.all([
-    c.services(),
-    c.locations(),
-    c.clinicians(),
+    c.services({}, fresh),
+    c.locations(fresh),
+    c.clinicians({}, fresh),
   ]);
   const byService = await Promise.all(
     services
       .slice(0, MAX_FANOUT)
-      .map(async (s) => [s.id, await c.clinicians({ serviceId: s.id })] as const),
+      .map(async (s) => [s.id, await c.clinicians({ serviceId: s.id }, fresh)] as const),
   );
   const byLocation = await Promise.all(
     locations
       .slice(0, MAX_FANOUT)
-      .map(async (l) => [l.id, await c.clinicians({ locationId: l.id })] as const),
+      .map(async (l) => [l.id, await c.clinicians({ locationId: l.id }, fresh)] as const),
   );
   const doctors = clinicians.map<Doctor>((d) => ({
     ...d,

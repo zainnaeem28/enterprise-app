@@ -90,10 +90,13 @@ describe('client cache and failure handling', () => {
       fetchFn: f as unknown as typeof fetch,
       now: () => t,
     });
-    expect(await c.clinicians()).toHaveLength(1);
+    const fresh = { stale: false };
+    expect(await c.clinicians({}, fresh)).toHaveLength(1);
+    expect(fresh.stale).toBe(false);
     fail = true;
     t = 120_000;
-    expect(await c.clinicians()).toHaveLength(1);
+    expect(await c.clinicians({}, fresh)).toHaveLength(1);
+    expect(fresh.stale).toBe(true);
     t = 700_000;
     await expect(c.clinicians()).rejects.toBeInstanceOf(DirectoryUnavailable);
   });
