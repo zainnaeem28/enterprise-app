@@ -574,3 +574,51 @@ describe('states', () => {
     expect((await screen.findAllByRole('button', { name: /10:00 AM/ })).length).toBeGreaterThan(0);
   });
 });
+
+describe('brand-site hand-off (/book?serviceId&clinicianId)', () => {
+  beforeEach(() =>
+    window.history.replaceState(null, '', '/book?serviceId=' + SERVICE + '&clinicianId=' + DOCTOR),
+  );
+
+  it('pre-checks the service and the doctor, then clears the ids from the address bar', async () => {
+    mount('/book?serviceId=' + SERVICE + '&clinicianId=' + DOCTOR);
+    expect(await screen.findByRole('radio', { name: /General visit/ })).toBeChecked();
+    await waitFor(() => expect(window.location.search).toBe(''));
+    expect(window.location.pathname).toBe('/book');
+    click('Continue');
+    await screen.findByRole('heading', { name: 'Where and with whom?' });
+    await waitFor(() => expect(screen.getByLabelText('Doctor')).toHaveValue(DOCTOR));
+  });
+
+  it('service only: doctor defaults to any', async () => {
+    window.history.replaceState(null, '', '/book?serviceId=' + SERVICE);
+    mount('/book?serviceId=' + SERVICE);
+    expect(await screen.findByRole('radio', { name: /General visit/ })).toBeChecked();
+    click('Continue');
+    await screen.findByLabelText('Doctor');
+    expect(screen.getByLabelText('Doctor')).toHaveValue('');
+  });
+
+  it.each([
+    ['unknown service', '?serviceId=99999999-9999-4999-8999-999999999999&clinicianId=' + DOCTOR],
+    ['malformed service', '?serviceId=nope'],
+    ['doctor without service', '?clinicianId=' + DOCTOR],
+  ])('%s: nothing pre-selected, no error, no id on the page', async (_n, qs) => {
+    window.history.replaceState(null, '', '/book' + qs);
+    mount('/book' + qs);
+    expect(await screen.findByRole('radio', { name: /General visit/ })).not.toBeChecked();
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(document.body.textContent).not.toContain('99999999');
+    expect(document.title).not.toMatch(/[0-9a-f]{8}-/);
+  });
+
+  it('doctor who does not offer the service is dropped', async () => {
+    mount('/book?serviceId=' + SERVICE + '&clinicianId=' + DOCTOR, {
+      'GET /api/v1/clinicians': () => json(200, { items: [] }),
+    });
+    expect(await screen.findByRole('radio', { name: /General visit/ })).toBeChecked();
+    click('Continue');
+    await screen.findByLabelText('Doctor');
+    expect(screen.getByLabelText('Doctor')).toHaveValue('');
+  });
+});
