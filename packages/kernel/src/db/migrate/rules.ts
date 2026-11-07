@@ -106,7 +106,7 @@ function destructive(n: string): string | null {
 const OWNER_ROLES = new Set(['patient_scope_owner', 'scheduling_booking_owner']);
 const GUARD_GRANT = 'GRANT EXECUTE ON FUNCTION PATIENT.GUARD_OPEN_PATIENT() TO APP_OWNER';
 const GUARD_REVOKE = 'REVOKE EXECUTE ON FUNCTION PATIENT.GUARD_OPEN_PATIENT() FROM APP_OWNER';
-const DROP_FUNCTION = /^DROP FUNCTION [A-Z_][A-Z0-9_]*\.[A-Z_][A-Z0-9_]*\([A-Z0-9_ ,.\[\]]*\)$/;
+const DROP_FUNCTION = /^DROP FUNCTION [A-Z_][A-Z0-9_]*\.[A-Z_][A-Z0-9_]*\([A-Z0-9_ ,.[\]]*\)$/;
 
 /**
  * Owner steps (ARCHITECTURE 21.2 point 5, amendment A-3): `SET LOCAL ROLE <owner>; ...; RESET ROLE;` around a closed
