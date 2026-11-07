@@ -3,6 +3,7 @@ import { AppBar, SkipLink } from '@ehr/ui';
 import { SITE_NAME } from '../seo.js';
 
 const NAV = [
+  { href: '/about', label: 'About' },
   { href: '/services', label: 'Services' },
   { href: '/doctors', label: 'Find a doctor' },
   { href: '/locations', label: 'Locations' },
@@ -10,6 +11,7 @@ const NAV = [
 ] as const;
 
 const FOOTER = [
+  { href: '/about', label: 'About' },
   { href: '/legal/privacy', label: 'Privacy' },
   { href: '/legal/terms', label: 'Terms' },
   { href: '/legal/cookies', label: 'Cookies' },

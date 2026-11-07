@@ -7,6 +7,7 @@ import { Layout } from './components/Layout.js';
 import { placeholderContent } from './content.js';
 import type { Directory } from './directory.js';
 import {
+  AboutPage,
   ContactPage,
   DoctorPage,
   DoctorsPage,
@@ -51,6 +52,8 @@ const slots = new Map([
 
 const pages: Record<string, () => React.ReactNode> = {
   home: () => <HomePage ctx={ctx(dir)} />,
+  about: () => <AboutPage ctx={ctx(dir)} />,
+  'about, directory down': () => <AboutPage ctx={ctx(null)} />,
   services: () => <ServicesPage ctx={ctx(dir)} />,
   doctors: () => <DoctorsPage ctx={ctx(dir)} slots={slots} />,
   doctor: () => <DoctorPage ctx={ctx(dir)} doctor={dir.doctors[0]!} slots={slots} />,

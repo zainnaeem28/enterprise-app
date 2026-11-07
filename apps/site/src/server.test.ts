@@ -118,6 +118,14 @@ describe('pages (TC-BS-01)', () => {
       expect(h).toContain('href="tel:+15550100"');
     }
   });
+  it('about page has the approved sections, the emergency line and no Resources/Prescriptions links (HEAAA-275)', async () => {
+    const h = await (await get('/about')).text();
+    expect(h).toContain('<h1>About ');
+    expect(h).toContain('How booking works');
+    expect(h).toContain('If this is an emergency, call 911.');
+    expect(h).toContain('<a href="/about" aria-current="page">About</a>');
+    expect(h).not.toMatch(/resources|prescriptions/i);
+  });
   it('an unknown doctor is a 404 with noindex; a malformed id too', async () => {
     for (const p of [
       '/doctors/44444444-4444-4444-8444-444444444444',
@@ -141,7 +149,7 @@ describe('pages (TC-BS-01)', () => {
 describe('SEO (TC-BS-05)', () => {
   it('every page has a distinct title, description and canonical', async () => {
     const titles = new Set<string>();
-    for (const p of ['/', '/services', '/doctors', '/locations', '/contact']) {
+    for (const p of ['/', '/about', '/services', '/doctors', '/locations', '/contact']) {
       const h = await (await get(p)).text();
       const title = /<title>([^<]+)<\/title>/.exec(h)?.[1];
       expect(title).toBeTruthy();
@@ -149,10 +157,10 @@ describe('SEO (TC-BS-05)', () => {
       expect(h).toMatch(/<meta name="description" content="[^"]+"/);
       expect(h).toContain(`<link rel="canonical" href="https://www.example.org${p}"`);
     }
-    expect(titles.size).toBe(5);
+    expect(titles.size).toBe(6);
   });
   it('structured data parses as JSON on every page that has it', async () => {
-    for (const p of ['/', '/services', '/doctors', `/doctors/${D}`, '/locations', '/contact']) {
+    for (const p of ['/', '/about', '/services', '/doctors', `/doctors/${D}`, '/locations', '/contact']) {
       const h = await (await get(p)).text();
       const blocks = [...h.matchAll(/<script type="application\/ld\+json">([^<]*)<\/script>/g)].map(
         (m) => m[1] ?? '',
@@ -228,6 +236,7 @@ describe('cache headers for stale-fallback data (FE-15 C3, PB-4)', () => {
     apiUp = true;
     for (const p of [
       '/',
+      '/about',
       '/services',
       '/doctors',
       `/doctors/${D}`,

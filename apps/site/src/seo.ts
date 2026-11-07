@@ -84,6 +84,7 @@ export function breadcrumbLd(origin: string, trail: { name: string; path: string
 
 export const STATIC_PATHS = [
   '/',
+  '/about',
   '/services',
   '/doctors',
   '/locations',

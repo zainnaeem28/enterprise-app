@@ -8,6 +8,7 @@ import type { Directory, DirectoryClient, Freshness, NextSlot } from './director
 import { Layout } from './components/Layout.js';
 import { bookUrl } from './handoff.js';
 import {
+  AboutPage,
   ContactPage,
   DoctorPage,
   DoctorsPage,
@@ -98,6 +99,22 @@ export async function route(path: string, deps: RenderDeps): Promise<Rendered> {
       path,
       body: <HomePage ctx={ctx} />,
       jsonLd: [organisationLd(o)],
+    };
+  } else if (path === '/about') {
+    spec = {
+      status: 200,
+      template: 'about',
+      title: `About – ${SITE_NAME}`,
+      description: 'Who we are, what we offer and how to book an appointment.',
+      path,
+      body: <AboutPage ctx={ctx} />,
+      jsonLd: [
+        organisationLd(o),
+        breadcrumbLd(o, [
+          { name: 'Home', path: '/' },
+          { name: 'About', path },
+        ]),
+      ],
     };
   } else if (path === '/services') {
     spec = {

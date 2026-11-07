@@ -8,6 +8,7 @@ export interface LegalPage {
 }
 export interface ContentSource {
   home: { heading: string; intro: string };
+  about: { intro: string; booking: string };
   contact: { intro: string; email: string | null; phone: string | null; hours: string | null };
   legal: Record<'privacy' | 'terms' | 'cookies' | 'accessibility', LegalPage>;
 }
@@ -19,6 +20,12 @@ export const placeholderContent: ContentSource = {
     heading: 'Care that is easy to find and easy to book',
     intro:
       'Find a service, choose a doctor and a location, and start your booking in a few steps. You sign in or create an account when you book, not before.',
+  },
+  about: {
+    // PM-drafted first-release copy (HEAAA-275): plain words, no claims. Brand-supplied copy (C-16/C-19) replaces it.
+    intro: 'We are a medical practice. You can see our services, locations, hours and doctors on this site.',
+    booking:
+      'You can book an appointment online. Choose a service, a doctor and a location, then sign in or create an account to finish. If you need to reach us, use the Contact page.',
   },
   contact: {
     intro:

@@ -6,6 +6,7 @@ import { IDS } from './ids.mjs';
 // Runs against the BUILT site server with a CONTRACT MOCK of the public directory (e2./ids.mjs). The real API is not exercised.
 const PAGES = [
   '/',
+  '/about',
   '/services',
   '/doctors',
   `/doctors/${IDS.doctor}`,

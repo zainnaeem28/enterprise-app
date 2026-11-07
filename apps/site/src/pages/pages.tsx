@@ -1,6 +1,7 @@
 import { EmptyState, StatusChip } from '@ehr/ui';
 import type { ContentSource, LegalPage } from '../content.js';
 import type { Directory, Doctor, Location, NextSlot } from '../directory.js';
+import { SITE_NAME } from '../seo.js';
 import {
   BookLink,
   DirectoryUnavailableNotice,
@@ -45,6 +46,42 @@ export function HomePage({ ctx }: { ctx: Ctx }) {
         <p>
           <a href="/services">All services</a> · <a href="/doctors">Find a doctor</a> ·{' '}
           <a href="/locations">Locations</a>
+        </p>
+      </Section>
+    </>
+  );
+}
+
+export function AboutPage({ ctx }: { ctx: Ctx }) {
+  const { content, dir } = ctx;
+  return (
+    <>
+      <h1>About {SITE_NAME}</h1>
+      <p className="site-lead">{content.about.intro}</p>
+      <Section title="What we offer">
+        {dir === null ? (
+          <DirectoryUnavailableNotice />
+        ) : dir.services.length === 0 ? (
+          <EmptyState message="No services are listed yet." />
+        ) : (
+          <ul className="site-cards">
+            {dir.services.map((s) => (
+              <li key={s.id} className="site-card">
+                {s.name}
+              </li>
+            ))}
+          </ul>
+        )}
+        <p>
+          <a href="/services">All services</a> · <a href="/doctors">Find a doctor</a> ·{' '}
+          <a href="/locations">Locations</a>
+        </p>
+      </Section>
+      <Section title="How booking works">
+        <p>{content.about.booking}</p>
+        <p>
+          <BookLink patientOrigin={ctx.patientOrigin} label="Book appointment" />{' '}
+          <a href="/contact">Contact</a>
         </p>
       </Section>
     </>

@@ -2,6 +2,7 @@
 // Only the template of the page is reported ("doctor-profile", never a doctor, service or location name, ID or URL).
 export const TEMPLATES = [
   'home',
+  'about',
   'services',
   'doctors',
   'doctor-profile',

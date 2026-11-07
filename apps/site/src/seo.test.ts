@@ -38,6 +38,7 @@ describe('seo (TC-BS-05)', () => {
       locations: [],
       doctors: [{ id: D, name: 'Dr A', serviceIds: [], locationIds: [] }],
     });
+    expect(xml).toContain('<loc>https://www.example.org/about</loc>');
     expect(xml).toContain('<loc>https://www.example.org/doctors</loc>');
     expect(xml).toContain(`<loc>https://www.example.org/doctors/${D}</loc>`);
     expect(robotsTxt('https://www.example.org')).toContain(
