@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { json } from '../../app/test-helpers.js';
@@ -423,6 +425,38 @@ describe('PP-17 cancel (block-only policy, no fee)', () => {
   });
 });
 
+/** Checks a body against PostWaitlistEntriesRequest in packages/contracts/openapi/scheduling.yaml (read from the file, so drift fails here). */
+function expectWaitlistContract(body: Record<string, unknown>) {
+  const yaml = readFileSync(
+    resolve(process.cwd(), '../../packages/contracts/openapi/scheduling.yaml'),
+    'utf8',
+  );
+  const start = yaml.indexOf('\n    PostWaitlistEntriesRequest:\n');
+  expect(start).toBeGreaterThan(-1);
+  const rest = yaml.slice(start + 1);
+  const block = rest.slice(
+    0,
+    rest.search(/\n {4}\S/) === -1 ? undefined : rest.search(/\n {4}\S/) + 1,
+  );
+  const props = [...block.matchAll(/^ {8}(\w+):$/gm)].map((m) => m[1] as string);
+  const required = [
+    ...(/required:\n((?: {8}- \w+\n?)+)/.exec(block)?.[1] ?? '').matchAll(/- (\w+)/g),
+  ].map((m) => m[1] as string);
+  expect(block).toContain('additionalProperties: false');
+  expect(props).toEqual(expect.arrayContaining(['from', 'to']));
+  for (const k of Object.keys(body)) expect(props, `unknown property ${k}`).toContain(k);
+  for (const k of required) expect(body, `missing ${k}`).toHaveProperty(k);
+  const offset = /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d+)?(Z|[+-]\d\d:\d\d)$/;
+  const from = String(body.from);
+  const to = String(body.to);
+  expect(from).toMatch(offset);
+  expect(to).toMatch(offset);
+  const days = (Date.parse(to) - Date.parse(from)) / 86_400_000;
+  expect(days).toBeGreaterThan(0);
+  expect(days).toBeLessThanOrEqual(366);
+  expect(Date.parse(to)).toBeGreaterThan(Date.now());
+}
+
 describe('PP-18 waitlist, PP-19 offer', () => {
   const toWaitlist = async (routes: Parameters<typeof mount>[1]) => {
     const m = await toTimeStep(routes);
@@ -439,12 +473,10 @@ describe('PP-18 waitlist, PP-19 offer', () => {
     await screen.findByRole('heading', { name: 'Join the waitlist' });
     click('Join the waitlist');
     await screen.findByRole('heading', { name: 'You are on the waitlist' });
-    expect(posts(m.seen, '/api/v1/waitlist-entries')[0]?.body).toEqual({
-      patientId: PATIENT,
-      serviceId: SERVICE,
-      mode: 'in_person',
-      locationId: PLACE,
-    });
+    const body = posts(m.seen, '/api/v1/waitlist-entries')[0]?.body as Record<string, unknown>;
+    expect(body).toMatchObject({ patientId: PATIENT, serviceId: SERVICE, locationId: PLACE });
+    expect(body).not.toHaveProperty('mode');
+    expectWaitlistContract(body);
   });
 
   it('says so when the clinic has the waitlist off', async () => {

@@ -94,8 +94,20 @@ export type WaitlistRequest = {
   serviceId: string;
   locationId?: string;
   clinicianId?: string;
-  mode: VisitMode;
+  /** Acceptable window, half-open [from, to): RFC 3339 with offset, `to` after `from`, at most 366 days, in the future. */
+  from: string;
+  to: string;
 };
+
+/** How far ahead a waitlist request looks (days). The contract allows at most 366. */
+export const WAITLIST_WINDOW_DAYS = 90;
+
+export function waitlistWindow(now: Date = new Date()): { from: string; to: string } {
+  return {
+    from: now.toISOString(),
+    to: new Date(now.getTime() + WAITLIST_WINDOW_DAYS * 86_400_000).toISOString(),
+  };
+}
 
 export type BookingApi = ReturnType<typeof createBookingApi>;
 
