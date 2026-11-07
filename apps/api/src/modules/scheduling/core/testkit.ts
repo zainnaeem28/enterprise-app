@@ -11,17 +11,31 @@ import { registerNotificationsParticipants } from '../../notifications/index.js'
 import {
   createMergeControllers,
   executeMerge,
+  loadPatientTestkit,
   MERGE_JOBS,
   MergeService,
   mergeResolvers,
-} from '../../patient/merge/index.js';
-import type { ExecuteDeps, ExecuteResult } from '../../patient/merge/index.js';
-import {
+} from '../../patient/index.js';
+import type {
+  Client,
+  ExecuteDeps,
+  ExecuteResult,
+  Kit,
+  SeededSession,
+} from '../../patient/index.js';
+import { createSchedulingControllers, schedulingResolvers } from './controller.js';
+import { SCHEDULING_CORE_JOBS } from './jobs.js';
+import { registerSchedulingParticipants } from './merge.js';
+import { nearbyFreeStarts, SchedulingCoreService } from './service.js';
+import type { AvailabilityPort } from './types.js';
+
+const {
   ORG,
   adminUrl,
   assignRole,
   call,
   id,
+  patientAccount,
   pg,
   registerViaApi,
   saWrite,
@@ -31,15 +45,8 @@ import {
   staffMember,
   standardFixtures,
   writeHeaders,
-} from '../../patient/testkit.js';
-import type { Client, Kit, SeededSession } from '../../patient/testkit.js';
-import { createSchedulingControllers, schedulingResolvers } from './controller.js';
-import { SCHEDULING_CORE_JOBS } from './jobs.js';
-import { registerSchedulingParticipants } from './merge.js';
-import { nearbyFreeStarts, SchedulingCoreService } from './service.js';
-import type { AvailabilityPort } from './types.js';
-
-export { ORG, adminUrl, call, id, pg, saWrite, writeHeaders };
+} = await loadPatientTestkit();
+export { ORG, adminUrl, call, id, patientAccount, pg, saWrite, writeHeaders };
 export type { Client, Kit, SeededSession };
 
 export const A1 = id(101);

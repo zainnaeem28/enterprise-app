@@ -43,7 +43,16 @@ const etag = (version: number): string => `W/"${version}"`;
 const body = (a: AppointmentView): Record<string, unknown> => ({ ...a, patientId: a.patientId });
 
 const STATUSES: readonly string[] = [
-  'held', 'confirmed', 'checked_in', 'in_consultation', 'completed', 'cancelled_patient', 'cancelled_clinic', 'rescheduled', 'no_show', 'expired',
+  'held',
+  'confirmed',
+  'checked_in',
+  'in_consultation',
+  'completed',
+  'cancelled_patient',
+  'cancelled_clinic',
+  'rescheduled',
+  'no_show',
+  'expired',
 ];
 
 /** Resolvers (27.1): each returns the resource's patient and location when the caller's own RLS shows it, `undefined` otherwise (404). */
@@ -95,7 +104,13 @@ export function createSchedulingControllers(d: SchedulingControllerDeps): Type<u
     } catch {
       throw new ApiError(400, 'kernel.idempotency_key_required');
     }
-    const hash = requestHash({ method: req.method, routeTemplate: template, pathParams, query: {}, body: reqBody });
+    const hash = requestHash({
+      method: req.method,
+      routeTemplate: template,
+      pathParams,
+      query: {},
+      body: reqBody,
+    });
     const out = await d.db.withScope(
       requireAuthContext(req).scope,
       async (tx) => {
@@ -148,16 +163,31 @@ export function createSchedulingControllers(d: SchedulingControllerDeps): Type<u
 
     @Post('appointments/:id/confirm')
     @Route({ permission: 'proxy', resolver: 'reservation' })
-    async confirm(@Param('id') id: string, @ReqParam() req: Req, @ResParam() res: Res): Promise<void> {
-      await idempotent(req, res, 'POST /appointments/{id}/confirm', [id.toLowerCase()], req.body, async (tx) => ({
-        status: 200,
-        body: body(await d.scheduling.confirm(tx, metaOf(req), id)),
-      }));
+    async confirm(
+      @Param('id') id: string,
+      @ReqParam() req: Req,
+      @ResParam() res: Res,
+    ): Promise<void> {
+      await idempotent(
+        req,
+        res,
+        'POST /appointments/{id}/confirm',
+        [id.toLowerCase()],
+        req.body,
+        async (tx) => ({
+          status: 200,
+          body: body(await d.scheduling.confirm(tx, metaOf(req), id)),
+        }),
+      );
     }
 
     @Get('patients/:patientId/appointments')
     @Route({ permission: 'proxy', resolver: 'booking-patient' })
-    async list(@Param('patientId') patientId: string, @ReqParam() req: Req, @ResParam() res: Res): Promise<void> {
+    async list(
+      @Param('patientId') patientId: string,
+      @ReqParam() req: Req,
+      @ResParam() res: Res,
+    ): Promise<void> {
       const status = req.query['status'];
       if (status !== undefined && (typeof status !== 'string' || !STATUSES.includes(status)))
         throw new SchedulingValidationError(['status']);
@@ -182,30 +212,52 @@ export function createSchedulingControllers(d: SchedulingControllerDeps): Type<u
 
     @Post('appointments/:id/cancel')
     @Route({ permission: 'proxy', resolver: 'reservation' })
-    async cancel(@Param('id') id: string, @ReqParam() req: Req, @ResParam() res: Res): Promise<void> {
+    async cancel(
+      @Param('id') id: string,
+      @ReqParam() req: Req,
+      @ResParam() res: Res,
+    ): Promise<void> {
       const expectedVersion = ifMatchVersion(req);
-      await idempotent(req, res, 'POST /appointments/{id}/cancel', [id.toLowerCase()], req.body, async (tx) => {
-        const b = (req.body ?? {}) as Record<string, unknown>;
-        const a = await d.scheduling.cancel(tx, metaOf(req), id, {
-          reason: (b['reason'] as string | null | undefined) ?? null,
-          acceptFee: b['acceptFee'] === true,
-          ...(expectedVersion === undefined ? {} : { expectedVersion }),
-        });
-        return { status: 200, body: body(a) };
-      });
+      await idempotent(
+        req,
+        res,
+        'POST /appointments/{id}/cancel',
+        [id.toLowerCase()],
+        req.body,
+        async (tx) => {
+          const b = (req.body ?? {}) as Record<string, unknown>;
+          const a = await d.scheduling.cancel(tx, metaOf(req), id, {
+            reason: (b['reason'] as string | null | undefined) ?? null,
+            acceptFee: b['acceptFee'] === true,
+            ...(expectedVersion === undefined ? {} : { expectedVersion }),
+          });
+          return { status: 200, body: body(a) };
+        },
+      );
     }
 
     @Post('appointments/:id/reschedule')
     @Route({ permission: 'proxy', resolver: 'reservation' })
-    async reschedule(@Param('id') id: string, @ReqParam() req: Req, @ResParam() res: Res): Promise<void> {
+    async reschedule(
+      @Param('id') id: string,
+      @ReqParam() req: Req,
+      @ResParam() res: Res,
+    ): Promise<void> {
       const expectedVersion = ifMatchVersion(req);
-      await idempotent(req, res, 'POST /appointments/{id}/reschedule', [id.toLowerCase()], req.body, async (tx) => {
-        const b = (req.body ?? {}) as Record<string, unknown>;
-        const a = await d.scheduling.reschedule(tx, metaOf(req), id, b['newHoldId'] as string, {
-          ...(expectedVersion === undefined ? {} : { expectedVersion }),
-        });
-        return { status: 200, body: body(a) };
-      });
+      await idempotent(
+        req,
+        res,
+        'POST /appointments/{id}/reschedule',
+        [id.toLowerCase()],
+        req.body,
+        async (tx) => {
+          const b = (req.body ?? {}) as Record<string, unknown>;
+          const a = await d.scheduling.reschedule(tx, metaOf(req), id, b['newHoldId'] as string, {
+            ...(expectedVersion === undefined ? {} : { expectedVersion }),
+          });
+          return { status: 200, body: body(a) };
+        },
+      );
     }
   }
 

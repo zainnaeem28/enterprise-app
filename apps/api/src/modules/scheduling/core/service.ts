@@ -58,7 +58,13 @@ export interface SchedulingCoreDeps {
 }
 
 /** The statuses that occupy the doctor's and the room's time (the exclusion constraints' predicate, 0900). */
-export const ACTIVE_STATUSES = ['held', 'confirmed', 'checked_in', 'in_consultation', 'completed'] as const;
+export const ACTIVE_STATUSES = [
+  'held',
+  'confirmed',
+  'checked_in',
+  'in_consultation',
+  'completed',
+] as const;
 
 const iso = (v: unknown): string => (v instanceof Date ? v.toISOString() : String(v));
 const isoOrNull = (v: unknown): string | null => (v === null || v === undefined ? null : iso(v));
@@ -68,7 +74,8 @@ const toView = (r: Row): AppointmentView => ({
   patientId: String(r['patient_id']),
   serviceId: String(r['service_id']),
   locationId: String(r['location_id']),
-  locationTimeZone: r['time_zone'] === null || r['time_zone'] === undefined ? '' : String(r['time_zone']),
+  locationTimeZone:
+    r['time_zone'] === null || r['time_zone'] === undefined ? '' : String(r['time_zone']),
   clinicianId: String(r['clinician_principal_id']),
   roomId: r['room_id'] === null ? null : String(r['room_id']),
   mode: r['mode'] as VisitMode,
@@ -130,7 +137,8 @@ export class SchedulingCoreService {
   }
 
   private onBehalf(input: HoldInput): string {
-    if (!isUuid(input.onBehalfOfPrincipalId)) throw new SchedulingValidationError(['onBehalfOfPrincipalId']);
+    if (!isUuid(input.onBehalfOfPrincipalId))
+      throw new SchedulingValidationError(['onBehalfOfPrincipalId']);
     return input.onBehalfOfPrincipalId.toLowerCase();
   }
 
@@ -177,7 +185,8 @@ export class SchedulingCoreService {
     if (aud === 'staff') bookedVia = 'staff';
     else if (aud === 'patient')
       bookedVia = (tx.scope.proxyPatientIds ?? []).some(
-        (p) => typeof input.patientId === 'string' && p.toLowerCase() === input.patientId.toLowerCase(),
+        (p) =>
+          typeof input.patientId === 'string' && p.toLowerCase() === input.patientId.toLowerCase(),
       )
         ? 'proxy'
         : 'patient';
@@ -201,11 +210,15 @@ export class SchedulingCoreService {
         )
       ).rows[0] as Row | undefined;
       if (svc === undefined) throw new SchedulingValidationError(['serviceId']);
-      if (svc['mode'] !== 'either' && svc['mode'] !== v.mode) throw new SchedulingValidationError(['mode']);
+      if (svc['mode'] !== 'either' && svc['mode'] !== v.mode)
+        throw new SchedulingValidationError(['mode']);
       const loc = (
-        await tx.query(`SELECT active FROM organisation.location WHERE id = $1::uuid`, [v.locationId])
+        await tx.query(`SELECT active FROM organisation.location WHERE id = $1::uuid`, [
+          v.locationId,
+        ])
       ).rows[0] as Row | undefined;
-      if (loc === undefined || loc['active'] !== true) throw new SchedulingValidationError(['locationId']);
+      if (loc === undefined || loc['active'] !== true)
+        throw new SchedulingValidationError(['locationId']);
       // A room is assigned by the clinic: the booker of a patient session never chooses one.
       if (v.roomId !== null) {
         if (aud === 'patient') throw new SchedulingValidationError(['roomId']);
@@ -270,7 +283,8 @@ export class SchedulingCoreService {
       if (overlap.rows.length > 0) {
         // When the very slot asked for is already someone's (the same patient racing themselves for one slot, TC-BK-13), the honest
         // answer is "taken, here are others"; the overlap answer is for different slots that collide in the patient's own diary.
-        if (await this.slotBusy(tx, q)) throw new SlotTakenError(await this.safeAlternatives(tx, q));
+        if (await this.slotBusy(tx, q))
+          throw new SlotTakenError(await this.safeAlternatives(tx, q));
         throw new OverlappingAppointmentError();
       }
 
@@ -390,15 +404,21 @@ export class SchedulingCoreService {
       const cur = await this.reread(tx, reservationId);
       if (cur.status === 'confirmed') {
         const booker = (
-          await tx.query(`SELECT booked_by_principal_id FROM scheduling.slot_reservation WHERE id = $1::uuid`, [reservationId])
+          await tx.query(
+            `SELECT booked_by_principal_id FROM scheduling.slot_reservation WHERE id = $1::uuid`,
+            [reservationId],
+          )
         ).rows[0] as Row | undefined;
-        if (booker !== undefined && String(booker['booked_by_principal_id']) === principal) return cur;
+        if (booker !== undefined && String(booker['booked_by_principal_id']) === principal)
+          return cur;
         throw new InvalidTransitionError();
       }
       if (cur.status !== 'held') throw new InvalidTransitionError();
 
       const res = (
-        await tx.query(`SELECT scheduling.set_status($1::uuid, 'held', 'confirmed') AS result`, [reservationId])
+        await tx.query(`SELECT scheduling.set_status($1::uuid, 'held', 'confirmed') AS result`, [
+          reservationId,
+        ])
       ).rows[0] as Row;
       if (res['result'] === 'hold_expired') {
         throw new HoldExpiredError(await this.safeAlternativesFor(tx, cur));
@@ -443,14 +463,17 @@ export class SchedulingCoreService {
     const staff = tx.scope.audience === 'staff';
     const reason = o.reason === undefined || o.reason === null ? null : String(o.reason).trim();
     if (reason !== null && reason.length > 500) throw new SchedulingValidationError(['reason']);
-    if (staff && (reason === null || reason.length === 0)) throw new SchedulingValidationError(['reason']);
+    if (staff && (reason === null || reason.length === 0))
+      throw new SchedulingValidationError(['reason']);
     const first = await this.get(tx, reservationId);
     if (first === undefined) throw new ReservationNotFoundError();
-    if (o.expectedVersion !== undefined && o.expectedVersion !== first.version) throw new PreconditionFailedError();
+    if (o.expectedVersion !== undefined && o.expectedVersion !== first.version)
+      throw new PreconditionFailedError();
     try {
       await tx.lockPatients([first.patientId], 'key_share');
       const cur = await this.reread(tx, reservationId);
-      if (o.expectedVersion !== undefined && o.expectedVersion !== cur.version) throw new PreconditionFailedError();
+      if (o.expectedVersion !== undefined && o.expectedVersion !== cur.version)
+        throw new PreconditionFailedError();
       if (cur.status !== 'held' && cur.status !== 'confirmed') throw new InvalidTransitionError();
 
       const policy = await this.deps.organisation.bookingPolicy(tx, cur.serviceId, cur.locationId);
@@ -468,7 +491,11 @@ export class SchedulingCoreService {
         [reservationId, reason, late],
       );
       const to = staff ? 'cancelled_clinic' : 'cancelled_patient';
-      await tx.query(`SELECT scheduling.set_status($1::uuid, $2, $3)`, [reservationId, cur.status, to]);
+      await tx.query(`SELECT scheduling.set_status($1::uuid, $2, $3)`, [
+        reservationId,
+        cur.status,
+        to,
+      ]);
       await this.deps.audit.record(tx, {
         requestId: meta.requestId,
         action: 'update',
@@ -476,7 +503,11 @@ export class SchedulingCoreService {
         resourceId: reservationId,
         patientId: cur.patientId,
         locationId: cur.locationId,
-        change: { status: to, lateChange: late, feeAccepted: late && !staff && o.acceptFee === true },
+        change: {
+          status: to,
+          lateChange: late,
+          feeAccepted: late && !staff && o.acceptFee === true,
+        },
         ip: meta.ip ?? null,
         userAgent: meta.userAgent ?? null,
       });
@@ -507,13 +538,15 @@ export class SchedulingCoreService {
     const new0 = await this.get(tx, newHoldId);
     if (old0 === undefined || new0 === undefined) throw new ReservationNotFoundError();
     if (old0.patientId !== new0.patientId) throw new SchedulingValidationError(['newHoldId']);
-    if (o.expectedVersion !== undefined && o.expectedVersion !== old0.version) throw new PreconditionFailedError();
+    if (o.expectedVersion !== undefined && o.expectedVersion !== old0.version)
+      throw new PreconditionFailedError();
     const staff = tx.scope.audience === 'staff';
     try {
       await tx.lockPatients([old0.patientId], 'no_key_update');
       const old = await this.reread(tx, reservationId);
       const hold = await this.reread(tx, newHoldId);
-      if (o.expectedVersion !== undefined && o.expectedVersion !== old.version) throw new PreconditionFailedError();
+      if (o.expectedVersion !== undefined && o.expectedVersion !== old.version)
+        throw new PreconditionFailedError();
       if (old.status !== 'confirmed' || hold.status !== 'held') throw new InvalidTransitionError();
       if (old.serviceId !== hold.serviceId) throw new SchedulingValidationError(['newHoldId']);
       const linked = await tx.query(
@@ -524,7 +557,8 @@ export class SchedulingCoreService {
 
       // The cut-off applies to the old appointment (25.1).
       const policy = await this.deps.organisation.bookingPolicy(tx, old.serviceId, old.locationId);
-      const late = new Date(old.startsAt).getTime() - this.now().getTime() < policy.cutoffHours * 3_600_000;
+      const late =
+        new Date(old.startsAt).getTime() - this.now().getTime() < policy.cutoffHours * 3_600_000;
       if (late && !staff) {
         if (policy.lateChange === 'block') throw new CutoffPassedError();
         // `fee` is stored only (D-3); a reschedule carries no acceptFee in the catalogue, so a fee policy refuses until it does.
@@ -532,15 +566,20 @@ export class SchedulingCoreService {
       }
 
       const confirmed = (
-        await tx.query(`SELECT scheduling.set_status($1::uuid, 'held', 'confirmed') AS result`, [newHoldId])
+        await tx.query(`SELECT scheduling.set_status($1::uuid, 'held', 'confirmed') AS result`, [
+          newHoldId,
+        ])
       ).rows[0] as Row;
-      if (confirmed['result'] === 'hold_expired') throw new HoldExpiredError(await this.safeAlternativesFor(tx, hold));
+      if (confirmed['result'] === 'hold_expired')
+        throw new HoldExpiredError(await this.safeAlternativesFor(tx, hold));
       // Reschedule writes no field of the old reservation, only its occupancy status (N-2).
-      await tx.query(`SELECT scheduling.set_status($1::uuid, 'confirmed', 'rescheduled')`, [reservationId]);
-      await tx.query(`UPDATE scheduling.slot_reservation SET rescheduled_from_id = $2::uuid WHERE id = $1::uuid`, [
-        newHoldId,
+      await tx.query(`SELECT scheduling.set_status($1::uuid, 'confirmed', 'rescheduled')`, [
         reservationId,
       ]);
+      await tx.query(
+        `UPDATE scheduling.slot_reservation SET rescheduled_from_id = $2::uuid WHERE id = $1::uuid`,
+        [newHoldId, reservationId],
+      );
       await tx.callScopeOwner(
         scopeOwnerFn('ensure_care_relationship'),
         [meta.requestId ?? randomUUID(), hold.patientId, hold.locationId, 'booking'],
@@ -575,7 +614,8 @@ export class SchedulingCoreService {
   async sweepExpired(tx: Tx, limit = 500): Promise<string[]> {
     const r = await tx.query(`SELECT scheduling.expire_holds($1::int) AS id`, [limit]);
     const ids = r.rows.map((x) => String((x as Row)['id']));
-    for (const id of ids) await this.deps.queue?.publish(tx, 'scheduling.slot_freed', { occupancyId: id });
+    for (const id of ids)
+      await this.deps.queue?.publish(tx, 'scheduling.slot_freed', { occupancyId: id });
     return ids;
   }
 
@@ -593,7 +633,13 @@ export class SchedulingCoreService {
         WHERE o.status = ANY($4::text[]) AND NOT o.overbook AND o.period && tstzrange($1::timestamptz, $2::timestamptz, '[)')
           AND (o.clinician_principal_id = $3::uuid OR ($5::uuid IS NOT NULL AND o.room_id = $5::uuid))
           AND NOT (o.status = 'held' AND o.expires_at < now()) LIMIT 1`,
-      [q.startsAt.toISOString(), q.endsAt.toISOString(), q.clinicianId, [...ACTIVE_STATUSES], q.roomId],
+      [
+        q.startsAt.toISOString(),
+        q.endsAt.toISOString(),
+        q.clinicianId,
+        [...ACTIVE_STATUSES],
+        q.roomId,
+      ],
     );
     return r.rows.length > 0;
   }

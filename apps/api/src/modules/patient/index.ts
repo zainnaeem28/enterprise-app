@@ -56,3 +56,20 @@ export type {
   RegisterInput,
   RequestMeta,
 } from './types.js';
+export {
+  AlreadyMergedError,
+  MergeExecutionError,
+  MergeNotDecidableError,
+  MergePendingError,
+  MergeSelfApprovalError,
+  MergeService,
+  createMergeControllers,
+  executeMerge,
+  MERGE_JOBS,
+  mergeResolvers,
+} from './merge/index.js';
+export type { ExecuteDeps, ExecuteResult } from './merge/index.js';
+// Test harness: type-only exports plus a lazy loader, so importing this index never runs the harness (it needs a test database).
+export type { Client, Kit, SeededSession } from './testkit.js';
+export const loadPatientTestkit = (): Promise<typeof import('./testkit.js')> =>
+  import('./testkit.js');

@@ -535,7 +535,11 @@ export const standardFixtures = async ({ sa }: { sa: Client }): Promise<void> =>
  * one directly (reservation and its occupancy twin in one transaction, a doctor of its own so that no slot ever collides), the way
  * the booking service leaves the database after a confirm. Returns the reservation ID.
  */
-export async function confirmedBooking(k: Kit, patientId: string, locationId: string): Promise<string> {
+export async function confirmedBooking(
+  k: Kit,
+  patientId: string,
+  locationId: string,
+): Promise<string> {
   const doctor = await seedPrincipal(k, 'google', { name: 'Seeded doctor' });
   const rid = uuidv7();
   const svc = id(399);

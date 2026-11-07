@@ -3,3 +3,5 @@ docs/
 node_modules/
 dist/
 eslint/fixtures/
+# Raw Playwright run report kept byte-identical as evidence (generated; formatting it would alter evidence)
+apps/patient/src/features/booking/evidence/playwright-report.json
