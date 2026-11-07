@@ -1,0 +1,27 @@
+Scope: all 11 workspace projects
+? Verifying lockfile against supply-chain policies (401 entries)...
+Packages are hard linked from the content-addressable store to the virtual store.
+  Content-addressable store is at: /paperclip/.pnpm-store/v11
+  Virtual store is at:             node_modules/.pnpm
+Update available! 12.16.1 → 12.18.0.
+Changelog: https://pnpm.io/v/12.18.0
+To update, run: curl -fsSL https://get.pnpm.io/install.sh | sh -
+✓ Lockfile passes supply-chain policies (401 entries in 1.4s)
+Lockfile is up to date, resolution step is skipped
+Packages: +376
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 376, reused 376, downloaded 0, added 376, done
+
+devDependencies:
++ @eslint/js 10.0.1
++ @types/node 24.19.2
++ eslint 10.14.0
++ eslint-config-prettier 10.1.8
++ globals 17.14.0
++ pg 8.23.1
++ prettier 3.9.10
++ typescript 5.9.3
++ typescript-eslint 8.72.1
+
+Done in 1.5s using pnpm v12.16.1
+0

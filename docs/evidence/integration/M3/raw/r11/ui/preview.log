@@ -1,0 +1,6 @@
+error when starting preview server:
+Error: Port 4174 is already in use
+    at httpServerStart (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-243-int-02-r11-integrator-re-run-on-candidate-daa90a0-round-2-of-3-fresh-budget/node_modules/.pnpm/vite@8.3.5_@types+node@24.19.2_yaml@2.8.1/node_modules/vite/dist/node/chunks/node.js:14661:10)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async preview (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-243-int-02-r11-integrator-re-run-on-candidate-daa90a0-round-2-of-3-fresh-budget/node_modules/.pnpm/vite@8.3.5_@types+node@24.19.2_yaml@2.8.1/node_modules/vite/dist/node/chunks/node.js:35859:2)
+    at async CAC.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-243-int-02-r11-integrator-re-run-on-candidate-daa90a0-round-2-of-3-fresh-budget/node_modules/.pnpm/vite@8.3.5_@types+node@24.19.2_yaml@2.8.1/node_modules/vite/dist/node/cli.js:821:18)

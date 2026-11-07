@@ -1,0 +1,3 @@
+templates after setup, BEFORE API boot (negative control: must be zero): {"rows":0,"published":0,"keys":0}
+templates after API boot (provisioned by main.ts): {"rows":34,"published":34,"keys":8}
+templates after SECOND API boot (idempotence): {"rows":34,"published":34,"keys":8}
