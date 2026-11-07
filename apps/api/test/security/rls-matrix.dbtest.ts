@@ -26,14 +26,8 @@ import {
 } from '../../src/modules/scheduling/core/testkit.js';
 import type { SchedKit } from '../../src/modules/scheduling/core/testkit.js';
 
-/** Findings other than F01 whose negative cases are written here but cannot pass on the candidate. Key = tag used in the case title. */
-const OPEN_FINDINGS: Record<string, string> = {
-  'SEC03-F02': 'scheduling.set_status is not bound to the caller reservation (BE-11)',
-  'SEC03-F04':
-    'patient.ensure_care_relationship lets a patient or clinic add a relationship for another patient (BE-08)',
-  'SEC03-F08':
-    'patient.identity_label cannot succeed and does not check the referencing record (BE-08)',
-};
+/** Findings whose negative cases cannot yet pass on the candidate (a todo marker). Empty: SEC03-F02, F04 and F08 pass. */
+const OPEN_FINDINGS: Record<string, string> = {};
 const openCase = (tag: string): { todo?: string } =>
   tag in OPEN_FINDINGS ? { todo: `${tag}: ${OPEN_FINDINGS[tag]}` } : {};
 
@@ -1279,7 +1273,7 @@ describe('TC-AZ-07: each definer function refuses the callers that must not hold
   );
 
   test(
-    'SEC03-F08 patient.identity_label (TC-AZ-08 steps 1 and 3): refused without the patient_label key, the compliance realm or a referencing record',
+    "SEC03-F08 patient.identity_label (TC-AZ-08 steps 1 and 3): refused without the patient_label key or the compliance realm (the referencing-record check is the API layer's, O-5: patient/identity-label.dbtest.ts)",
     openCase('SEC03-F08'),
     async () => {
       const accepted: string[] = [];
@@ -1319,23 +1313,6 @@ describe('TC-AZ-07: each definer function refuses the callers that must not hold
         } finally {
           await c.close();
         }
-      }
-      // With the key and a reference that does not exist, the database must refuse as well (the reference is not visible).
-      const c = await new Caller(t, 'app_api', {
-        audience: 'staff',
-        realm: 'admin_pool',
-        orgId: ORG,
-        principalId: staffPrincipalA.principalId as string,
-        phiAccess: 'limited',
-        complianceScopes: ['patient_label'],
-      }).open();
-      try {
-        const r = await c.run(
-          `SELECT patient.identity_label('${uid()}', '${A}', 'audit.event', '${uid()}')`,
-        );
-        if (!('error' in r)) accepted.push('key held, referencing record does not exist');
-      } finally {
-        await c.close();
       }
       assert.deepEqual(accepted, [], `identity_label answered: ${accepted.join('; ')}`);
     },

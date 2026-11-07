@@ -320,7 +320,7 @@ CREATE FUNCTION patient.identity_label(p_request_id uuid, p_patient uuid, p_ref_
   AS $$
 DECLARE
   v_org uuid := kernel.uuid1('app.org_id');
-  p patient.patient;
+  p RECORD;
   v_final uuid;
 BEGIN
   IF v_org IS NULL OR kernel.setting('app.audience') <> 'staff' OR kernel.setting('app.realm') <> 'admin_pool'
@@ -332,7 +332,9 @@ BEGIN
      OR p_ref_type NOT IN ('audit.event', 'privacy.request', 'patient.consent', 'privacy.incident') THEN
     RAISE EXCEPTION 'patient.label_reference_required' USING ERRCODE = '22023';
   END IF;
-  SELECT * INTO p FROM patient.patient x WHERE x.id = p_patient AND x.organisation_id = v_org;
+  -- Named columns, not *: patient_match_owner holds SELECT on the identity columns only (0702), so * is 42501 (INT02-R4-F02).
+  SELECT x.id, x.given_name, x.family_name, x.date_of_birth, x.mrn, x.status, x.merged_into INTO p
+    FROM patient.patient x WHERE x.id = p_patient AND x.organisation_id = v_org;
   IF NOT FOUND THEN
     RAISE EXCEPTION 'patient not found' USING ERRCODE = 'PM008';
   END IF;
