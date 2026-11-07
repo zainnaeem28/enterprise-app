@@ -6,8 +6,7 @@ import { randomUUID } from 'node:crypto';
 import { JobRegistry, KernelDb, ParticipantRegistries, Queue, syncTaskTypes } from '@ehr/kernel';
 import type { ScopeSettings, Tx } from '@ehr/kernel';
 import { OrganisationService } from '../../organisation/index.js';
-import { registerIdentityParticipants } from '../../identity/index.js';
-import { registerNotificationsParticipants } from '../../notifications/index.js';
+import { registerAllParticipants } from '../../../composition.js';
 import {
   createMergeControllers,
   executeMerge,
@@ -25,7 +24,6 @@ import type {
 } from '../../patient/index.js';
 import { createSchedulingControllers, schedulingResolvers } from './controller.js';
 import { SCHEDULING_CORE_JOBS } from './jobs.js';
-import { registerSchedulingParticipants } from './merge.js';
 import { nearbyFreeStarts, SchedulingCoreService } from './service.js';
 import type { AvailabilityPort } from './types.js';
 
@@ -204,9 +202,7 @@ export async function setupScheduling(name: string): Promise<SchedKit> {
   await worker.withScope(workerScope, (tx) => org.applySettingDefaults(tx, undefined));
 
   const regs = new ParticipantRegistries();
-  registerIdentityParticipants(regs);
-  registerNotificationsParticipants(regs);
-  registerSchedulingParticipants(regs);
+  registerAllParticipants(regs);
 
   const lead = await (async () => {
     const p = await seedPrincipal(k, 'google', {

@@ -7,11 +7,17 @@
 //
 // No unique constraint can collide: a dedupe key never contains a patient ID (22.13). The receipts of a kept notification
 // that arrive AFTER the merge attach to the survivor (the receipt handler resolves it), so nothing ever writes a row for a
-// merged ID. The staff-alert tables (BE-07) are added to this participant by that ticket.
+// merged ID. The staff-alert tables (BE-07) are contributed by alerts/merge.ts and wired in here.
 import { defaultRegistries } from '@ehr/kernel';
 import type { ExportContributor, MergeParticipant, ParticipantRegistries, Tx } from '@ehr/kernel';
 import { NotificationsScopeError, NotificationsValidationError } from './errors.js';
 import { isUuid } from './ids.js';
+import {
+  ALERT_CONFLICT_RULES,
+  ALERT_MERGE_TABLES,
+  alertExportContributor,
+  repointAlertRows,
+} from './alerts/merge.js';
 
 type MergeCounts = Awaited<ReturnType<MergeParticipant['repointPatient']>>[number];
 type ConflictRule = MergeParticipant['conflictRules'][number];
@@ -20,6 +26,7 @@ export const NOTIFICATIONS_MERGE_TABLES = [
   'notifications.notification',
   'notifications.delivery_receipt',
   'notifications.in_app_read',
+  ...ALERT_MERGE_TABLES,
 ] as const;
 
 export const NOTIFICATIONS_CONFLICT_RULES: readonly ConflictRule[] = [
@@ -27,6 +34,7 @@ export const NOTIFICATIONS_CONFLICT_RULES: readonly ConflictRule[] = [
     table: 'notifications.notification',
     rule: 'UQ (dedupe_key) cannot collide, because dedupe keys never contain a patient ID (22.13). R: queued, sending, failed (a retry still updates them). K: sent, suppressed, cancelled',
   },
+  ...ALERT_CONFLICT_RULES,
 ];
 
 const R_STATES = ['queued', 'sending', 'failed'];
@@ -111,6 +119,7 @@ export const notificationsMergeParticipant: MergeParticipant = {
     );
     if (left !== 0)
       throw new Error('notifications.repointPatient: an R row is left on the merged patient');
+    counts.push(...(await repointAlertRows(tx, mergedId, survivorId)));
     for (const c of counts)
       if (c.found !== c.repointed + c.resolved + c.kept)
         throw new Error(`notifications.repointPatient: counts do not add up for ${c.table}`);
@@ -149,6 +158,7 @@ export const notificationsExportContributor: ExportContributor = {
       notifications: notifications.rows,
       deliveryReceipts: receipts.rows,
       inAppReads: reads.rows,
+      ...((await alertExportContributor.exportPart(tx, patientIds, requestId)) as object),
     };
   },
 };

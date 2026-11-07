@@ -8,7 +8,6 @@ import { randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { Queue, createLogger, syncTaskTypes } from '@ehr/kernel';
 import type { JobType, ScopeSettings } from '@ehr/kernel';
-import { registerTelehealthParticipants } from './merge.js';
 import { TELEHEALTH_JOBS, registerTelehealthHandlers } from './jobs.js';
 import { TelehealthJobService } from './job-service.js';
 import { telehealthPort } from './port.js';
@@ -200,7 +199,6 @@ export async function setupTelehealth(name: string): Promise<TelehealthKit> {
     queue: apiQueue,
   });
   const jobService = new TelehealthJobService({ audit: k.audit });
-  registerTelehealthParticipants(f.regs);
 
   const jobs: TelehealthKit['jobs'] = {
     db: f.worker,

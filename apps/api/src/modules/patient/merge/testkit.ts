@@ -4,8 +4,7 @@
 import { randomUUID } from 'node:crypto';
 import { JobRegistry, ParticipantRegistries, Queue, syncTaskTypes } from '@ehr/kernel';
 import type { KernelDb } from '@ehr/kernel';
-import { registerIdentityParticipants } from '../../identity/index.js';
-import { registerNotificationsParticipants } from '../../notifications/index.js';
+import { registerAllParticipants } from '../../../composition.js';
 import {
   ORG,
   adminUrl,
@@ -78,82 +77,9 @@ export const person = (n: number) => ({
   email: `person${n}@example.test`,
 });
 
-/**
- * The executor refuses a merge (before anything is written) unless a participant lists every table with a patient_id (22.16). The
- * database of this suite carries the tables of the combined revision (INT02-F08); the patient module may not import the modules above
- * it, so these stand-ins list those tables and report nothing found. The completeness check itself is unchanged and still asserted by
- * merge.dbtest.ts (an unregistered module fails the merge); the real participants are tested in their own modules.
- */
-export const STAND_IN_TABLES: Readonly<Record<string, readonly string[]>> = {
-  scheduling: [
-    'scheduling.slot_reservation',
-    'scheduling.check_in',
-    'scheduling.queue_entry',
-    'scheduling.waitlist_entry',
-    'scheduling.waitlist_offer',
-  ],
-  telehealth: [
-    'telehealth.video_session',
-    'telehealth.participant',
-    'telehealth.join_token',
-    'telehealth.location_confirmation',
-  ],
-  documents: [
-    'documents.document',
-    'documents.document_version',
-    'documents.deletion_request',
-    'documents.legal_hold',
-  ],
-};
-
-const ALERT_TABLES = ['notifications.staff_alert', 'notifications.staff_alert_event'] as const;
-const reportNone = (tables: readonly string[]) =>
-  tables.map((table) => ({ table, found: 0, repointed: 0, resolved: 0, kept: 0, deleted: [] }));
-
-/**
- * Identity, notifications and the stand-ins of the combined revision. OPEN (INT02-F08): the real notifications participant still
- * lists only the BE-06 tables; the alert contribution (notifications/alerts/merge.ts: ALERT_MERGE_TABLES, repointAlertRows) was to be
- * wired into it "at integration" and is not, so on the combined revision every production merge fails with
- * patient.merge_participant_missing. That file is outside this ticket's paths (requested from the Orchestrator). Until it is wired
- * this wrapper adds the two alert tables, reporting nothing found, so the concurrency suite can exercise the locking; remove it with
- * the real wiring. The executor's completeness check is untouched.
- */
+/** The real participants of every module, as wired at the composition root (apps/api/src/composition.ts). */
 export function registerCombinedParticipants(regs: ParticipantRegistries): void {
-  registerIdentityParticipants(regs);
-  const own = new ParticipantRegistries();
-  registerNotificationsParticipants(own);
-  for (const real of own.mergeParticipants())
-    regs.registerMergeParticipant({
-      ...real,
-      tables: [...real.tables, ...ALERT_TABLES.filter((t) => !real.tables.includes(t))],
-      repointPatient: async (tx, merged, survivor, requestId) => {
-        const done = await real.repointPatient(tx, merged, survivor, requestId);
-        const have = new Set(done.map((c) => c.table));
-        return [...done, ...reportNone(ALERT_TABLES.filter((t) => !have.has(t)))];
-      },
-    });
-  for (const e of own.exportContributors()) regs.registerExportContributor(e);
-  registerStandInParticipants(regs);
-}
-
-export function registerStandInParticipants(regs: ParticipantRegistries): void {
-  for (const [module, tables] of Object.entries(STAND_IN_TABLES))
-    regs.registerMergeParticipant({
-      module,
-      tables,
-      conflictRules: [],
-      repointPatient: () =>
-        Promise.resolve(
-          tables.map((table) => ({
-            table,
-            found: 0,
-            repointed: 0,
-            resolved: 0,
-            kept: 0,
-            deleted: [],
-          })),
-        ),
-    });
+  registerAllParticipants(regs);
 }
 
 export async function setupMerge(name: string): Promise<MergeKit> {

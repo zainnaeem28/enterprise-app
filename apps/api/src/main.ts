@@ -1,6 +1,7 @@
 // API process entry. Configuration comes from the environment; a bad variable stops the start with its NAME.
 import { createServer } from 'node:http';
 import { ConfigError, createLogger, describeDatabase, loadConfig } from '@ehr/kernel';
+import { registerAllParticipants } from './composition.js';
 import { createApp } from './platform/app.js';
 import { loadPlatformConfig } from './platform/config.js';
 import { Lifecycle } from './platform/health.js';
@@ -21,6 +22,7 @@ async function main(): Promise<void> {
     }
     throw e;
   }
+  registerAllParticipants();
   const readiness = await pgReadiness(kernelCfg);
   const app = await createApp({ config: platformCfg, logger, readiness: readiness.probe });
   await app.init();

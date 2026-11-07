@@ -7,6 +7,7 @@ import { randomUUID } from 'node:crypto';
 import { after, before, describe, test } from 'node:test';
 import { ParticipantRegistries } from '@ehr/kernel';
 import type { MergeParticipant, ScopeSettings } from '@ehr/kernel';
+import { registerAllParticipants } from '../../../composition.js';
 import { registerIdentityParticipants } from '../../identity/index.js';
 import { PATIENT_HOST, confirmedBooking, patientAccount, seedPrincipal } from '../testkit.js';
 import {
@@ -742,6 +743,58 @@ describe('the execute job and the conflict rules (22.16, 38.2 items 2 and 11; TC
         [rid],
       ),
       fail,
+    );
+  });
+  test('INT-02 fix B: the composition root registers every module; all participants run, report counts for all their tables, and the alert rows are re-pointed', async () => {
+    const S = await patient();
+    const D = await patient();
+    const target = (await seedPrincipal(m.k, 'patient_pool')).principalId;
+    const alert = (st: 'open' | 'closed') =>
+      w(
+        `INSERT INTO notifications.staff_alert (id, organisation_id, type, severity, patient_id, resource_type, resource_id, target_kind, target_principal_ids, status)
+         VALUES (gen_random_uuid(), $1, 'red_flag', 'high', $2, 'note', gen_random_uuid(), 'principal', ARRAY[$3]::uuid[], $4)`,
+        [ORG, D, target, st],
+      );
+    await alert('open');
+    await alert('open');
+    await alert('closed');
+    const regs = new ParticipantRegistries();
+    registerAllParticipants(regs);
+    assert.deepEqual(
+      regs
+        .mergeParticipants()
+        .map((p) => p.module)
+        .sort(),
+      ['documents', 'identity', 'notifications', 'scheduling', 'telehealth'],
+    );
+    const r = await m.request(m.lead, S, D);
+    const rid = r.json()['id'] as string;
+    await m.approve(m.mr, rid);
+    const res = await m.run(rid, { registries: regs, notParticipants: undefined });
+    assert.equal(res.status, 'completed', JSON.stringify([res, m.failures.at(-1)]));
+    const c = (res as { counts: Record<string, Record<string, number>> }).counts;
+    const expected = [
+      'patient.patient_contact',
+      'patient.insurance_coverage',
+      'patient.consent',
+      'patient.communication_preference',
+      'patient.care_team_member',
+      'patient.duplicate_flag',
+      ...regs.mergeParticipants().flatMap((p) => [...p.tables]),
+    ];
+    for (const t of expected) assert.ok(c[t], `${t} reports counts`);
+    assert.deepEqual(c['notifications.staff_alert'], {
+      found: 3,
+      repointed: 2,
+      resolved: 0,
+      kept: 1,
+    });
+    assert.equal(
+      await n(
+        `SELECT count(*) AS n FROM notifications.staff_alert WHERE patient_id = $1 AND status = 'open'`,
+        [S],
+      ),
+      2,
     );
   });
 });

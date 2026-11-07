@@ -15,13 +15,8 @@ import {
 } from '@ehr/kernel';
 import type { ScopeSettings, Tx } from '@ehr/kernel';
 import { OrganisationService } from '../../organisation/index.js';
-import { registerDocumentsParticipants } from '../../documents/index.js';
-import { registerIdentityParticipants } from '../../identity/index.js';
-import {
-  NOTIFICATIONS_JOBS,
-  NotificationService,
-  registerNotificationsParticipants,
-} from '../../notifications/index.js';
+import { registerAllParticipants } from '../../../composition.js';
+import { NOTIFICATIONS_JOBS, NotificationService } from '../../notifications/index.js';
 import { r1TemplatesForLanguages } from '../../notifications/r1-templates.js';
 import {
   createMergeControllers,
@@ -29,7 +24,6 @@ import {
   MERGE_JOBS,
   MergeService,
   mergeResolvers,
-  NOT_PARTICIPANT_TABLES,
 } from '../../patient/merge/index.js';
 import type { ExecuteDeps, ExecuteResult } from '../../patient/merge/index.js';
 import {
@@ -56,7 +50,6 @@ import { nearbyFreeStarts, SchedulingCoreService } from '../core/service.js';
 import type { AvailabilityPort } from '../core/types.js';
 import { createFlowControllers, flowResolvers } from './controller.js';
 import { registerSchedulingFlowHandlers, SCHEDULING_FLOW_JOBS } from './jobs.js';
-import { registerSchedulingFlowParticipants } from './merge.js';
 import { flowPort } from './port.js';
 import { SchedulingFlowService } from './service.js';
 import { uuidv7 } from '../core/ids.js';
@@ -380,10 +373,7 @@ export async function setupFlow(name: string): Promise<FlowKit> {
   }
 
   const regs = new ParticipantRegistries();
-  registerIdentityParticipants(regs);
-  registerNotificationsParticipants(regs);
-  registerDocumentsParticipants(regs);
-  registerSchedulingFlowParticipants(regs);
+  registerAllParticipants(regs);
 
   const lead = await (async () => {
     const p = await seedPrincipal(k, 'google', {
@@ -607,14 +597,6 @@ export async function setupFlow(name: string): Promise<FlowKit> {
             db: worker,
             orgId: ORG,
             registries: regs,
-            // The staff-alert tables of BE-07 carry a patient_id and their merge participant is added to the notifications participant at
-            // integration (their README, "must call these functions"); until then they are listed here so this suite's merges are about
-            // this ticket's tables. Not a claim about alerts.
-            notParticipants: {
-              ...NOT_PARTICIPANT_TABLES,
-              'notifications.staff_alert': 'BE-07 participant is wired at integration',
-              'notifications.staff_alert_event': 'BE-07 participant is wired at integration',
-            },
             ...over,
           },
           { requestId, jobId: `test:${++seq}`, attempt: 1, maxAttempts: 1 },
