@@ -1,0 +1,47 @@
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+(node:1260213) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+▶ slot search = template - bookings - busy - blocked time (TC-DR-01, TC-BK-03, RA-R1-23)
+  ✔ each of the four subtractions removes exactly its slot; removing the leave brings the slot back (250.218813ms)
+  ✔ the answer carries only what a patient may see: start, end, clinician, location, mode (never a room, patient, count, note or kind) (50.346138ms)
+  ✔ the service decides the grid (60 minutes -> 09:00, 10:00, 11:00); mode and service restrictions of a rule apply (169.694293ms)
+  ✔ a template change takes effect in the next search (RA-R1-23): replace, then retire (88.409536ms)
+  ✔ validity window: not before valid_from, not after valid_to (130.476326ms)
+  ✔ who is offered: eligible and listed clinicians only to a patient; staff also see unlisted but active ones; a location filter applies (153.486277ms)
+  ✔ daylight saving (TC-BK-10): the template is local wall-clock time, the slot instant moves (204.583745ms)
+  ✔ range limits and input validation (29.2): 31 days, from < to, ids, zones, unknown service (168.097576ms)
+  ✔ who may search: a patient session and a staff member with the permission; a doctor without it, an admin session, and no session are refused (44.823503ms)
+✔ slot search = template - bookings - busy - blocked time (TC-DR-01, TC-BK-03, RA-R1-23) (3027.778474ms)
+▶ stale busy data is never used silently (RA-R1-04, X-03, G2 setting calendar_stale_minutes)
+  ✔ older than the threshold: still excluded (last known) and flagged; fresh or absent: not flagged; the threshold is a setting (266.651169ms)
+  ✔ a missing setting fails closed (503), it never falls back to a number in code (46.831111ms)
+✔ stale busy data is never used silently (RA-R1-04, X-03, G2 setting calendar_stale_minutes) (313.886329ms)
+▶ the availability port of the booking core (hold validation, alternatives)
+  ✔ a hold is accepted on the grid inside the template and refused with scheduling.outside_hours everywhere else (161.704519ms)
+  ✔ a taken slot is 409 scheduling.slot_taken with alternatives from the same search (TC-BK-04) (110.809551ms)
+  ✔ alternatives and search stay consistent after a booking: the search never offers the held slot (58.772521ms)
+✔ the availability port of the booking core (hold validation, alternatives) (331.640415ms)
+▶ overbookable sessions (BR-02, RA-R1-03 for the overbookable case)
+  ✔ staff with includeOverbook see occupied slots of an overbookable session up to the cap; patients never do; cap 0 means no overbooking (206.620877ms)
+✔ overbookable sessions (BR-02, RA-R1-03 for the overbookable case) (206.836742ms)
+▶ lead time (booking policy) applies to patients, not to staff searches
+  ✔ a patient does not see slots inside the lead time; staff do (51.918569ms)
+✔ lead time (booking policy) applies to patients, not to staff searches (52.115238ms)
+▶ leave versus booking, concurrently (TC-DR-02, 25.2): never both
+  ✔ a hold that starts while a leave is being saved waits for it, then finds the leave: outside hours, no appointment (440.85328ms)
+  ✔ a leave that starts while a hold is being booked waits for it, then counts it: 409 and nothing saved (443.04326ms)
+# leave/hold race: hold won 9, leave won 11
+  ✔ 20 rounds of a hold racing a leave over the same slot: either the leave is refused with the appointment counted, or the hold is refused as outside hours (1017.222313ms)
+✔ leave versus booking, concurrently (TC-DR-02, 25.2): never both (1901.48447ms)
+# search latency (informational): 40 doctors, 2000 slots returned (cap 2000), n=25, p50=601 ms, p95=614 ms, max=621 ms
+▶ search latency on a synthetic volume set (NFR-8: informational only, not a measurement of the ci volume set)
+  ✔ 40 doctors, 7 rules each, 14-day range, with bookings and busy blocks: timings are printed, not asserted (15513.226373ms)
+✔ search latency on a synthetic volume set (NFR-8: informational only, not a measurement of the ci volume set) (15513.431928ms)
+ℹ tests 20
+ℹ suites 7
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 21737.986413

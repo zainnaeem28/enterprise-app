@@ -1,0 +1,349 @@
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+▶ templates (29.3): own, validated, versioned, retired not deleted
+  ✔ a doctor creates, lists, replaces (If-Match) and retires their own template (256.521228ms)
+  ✔ the same Idempotency-Key creates one template (75.293504ms)
+  ✔ validation: weekday, times, overlap inside a template, overlap with another template, place, rooms, services (293.300298ms)
+  ✔ a doctor works only at a location they hold; the admin realm is not bound to a location (47.451445ms)
+✔ templates (29.3): own, validated, versioned, retired not deleted (4824.308609ms)
+▶ own-only (TC-DR-03, 38.2 item 12): another doctor is refused with 403, audited, and nothing changes
+  ✔ GET, POST, PUT, DELETE of another doctor's templates and blocked time (193.734125ms)
+  ✔ the service refuses it too, and the row-level-security policy is the third line (52.943802ms)
+  ✔ a role without the permission is refused by the guard (front desk cannot manage templates) (37.700658ms)
+✔ own-only (TC-DR-03, 38.2 item 12): another doctor is refused with 403, audited, and nothing changes (284.805927ms)
+▶ leave and blocked time show the affected appointments before saving (TC-DR-02)
+  ✔ without acknowledgement: 409 with counts only; dryRun reports and saves nothing; acknowledged saves and cancels nothing (272.935992ms)
+  ✔ a free period saves at once with zero conflicts; lapsed holds and cancelled visits do not count (85.168635ms)
+  ✔ validation: periods, kind, note length, flags (138.905927ms)
+✔ leave and blocked time show the affected appointments before saving (TC-DR-02) (497.435419ms)
+▶ roster (29.3, 29.4): a front-desk lead edits their own locations' doctor duties only
+  ✔ add, list and delete at the lead's location; one holder per duty and time (96.831331ms)
+  ✔ another location is refused (403, audited); the lead cannot set compliance on call; an ineligible principal is 422 (108.586209ms)
+  ✔ the admin realm sets compliance on call; the policy refuses the lead at the database even if the API did not (36.080747ms)
+✔ roster (29.3, 29.4): a front-desk lead edits their own locations' doctor duties only (241.864555ms)
+▶ admin routes (29.4): any clinician, every duty, realm admin_pool
+  ✔ an org_admin session manages another doctor's templates and blocked time and sets compliance on call; staff-realm paths and the admin prefix do not mix (87.544814ms)
+✔ admin routes (29.4): any clinician, every duty, realm admin_pool (87.743516ms)
+▶ constraints in the database (22.8, SBR-01)
+  ✔ a rule's copied doctor must be its template's doctor (composite foreign key) (4.715047ms)
+  ✔ check constraints: weekday, start before end, valid range, empty or open-ended periods (4.061932ms)
+  ✔ roster exclusion: one holder per duty, place and time; back-to-back is fine (2.343147ms)
+  ✔ a template keeps its doctor and a retired template stays retired (triggers) (16.107728ms)
+  ✔ busy_block: no application role writes it here (calendar-sync, BE-14, owns the writer); app roles read it (7.715068ms)
+✔ constraints in the database (22.8, SBR-01) (38.807204ms)
+▶ the clinician directory view (22.5.1)
+  ✔ a patient sees (clinician, location) pairs with an active template that has not ended; nothing else (33.311833ms)
+✔ the clinician directory view (22.5.1) (33.493363ms)
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+(node:1260415) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+▶ slot search = template - bookings - busy - blocked time (TC-DR-01, TC-BK-03, RA-R1-23)
+  ✔ each of the four subtractions removes exactly its slot; removing the leave brings the slot back (405.577092ms)
+  ✔ the answer carries only what a patient may see: start, end, clinician, location, mode (never a room, patient, count, note or kind) (76.285254ms)
+  ✔ the service decides the grid (60 minutes -> 09:00, 10:00, 11:00); mode and service restrictions of a rule apply (306.509525ms)
+  ✔ a template change takes effect in the next search (RA-R1-23): replace, then retire (194.306319ms)
+  ✔ validity window: not before valid_from, not after valid_to (210.899076ms)
+  ✔ who is offered: eligible and listed clinicians only to a patient; staff also see unlisted but active ones; a location filter applies (329.156424ms)
+  ✔ daylight saving (TC-BK-10): the template is local wall-clock time, the slot instant moves (272.722571ms)
+  ✔ range limits and input validation (29.2): 31 days, from < to, ids, zones, unknown service (187.174705ms)
+  ✔ who may search: a patient session and a staff member with the permission; a doctor without it, an admin session, and no session are refused (64.582524ms)
+✔ slot search = template - bookings - busy - blocked time (TC-DR-01, TC-BK-03, RA-R1-23) (5956.934726ms)
+▶ stale busy data is never used silently (RA-R1-04, X-03, G2 setting calendar_stale_minutes)
+  ✔ older than the threshold: still excluded (last known) and flagged; fresh or absent: not flagged; the threshold is a setting (298.304197ms)
+  ✔ a missing setting fails closed (503), it never falls back to a number in code (75.649642ms)
+✔ stale busy data is never used silently (RA-R1-04, X-03, G2 setting calendar_stale_minutes) (374.285281ms)
+▶ the availability port of the booking core (hold validation, alternatives)
+  ✔ a hold is accepted on the grid inside the template and refused with scheduling.outside_hours everywhere else (246.473363ms)
+  ✔ a taken slot is 409 scheduling.slot_taken with alternatives from the same search (TC-BK-04) (207.182942ms)
+  ✔ alternatives and search stay consistent after a booking: the search never offers the held slot (105.715553ms)
+✔ the availability port of the booking core (hold validation, alternatives) (559.955464ms)
+▶ overbookable sessions (BR-02, RA-R1-03 for the overbookable case)
+  ✔ staff with includeOverbook see occupied slots of an overbookable session up to the cap; patients never do; cap 0 means no overbooking (598.450692ms)
+✔ overbookable sessions (BR-02, RA-R1-03 for the overbookable case) (598.669252ms)
+▶ lead time (booking policy) applies to patients, not to staff searches
+  ✔ a patient does not see slots inside the lead time; staff do (185.90877ms)
+✔ lead time (booking policy) applies to patients, not to staff searches (186.111771ms)
+▶ leave versus booking, concurrently (TC-DR-02, 25.2): never both
+  ✔ a hold that starts while a leave is being saved waits for it, then finds the leave: outside hours, no appointment (507.264614ms)
+  ✔ a leave that starts while a hold is being booked waits for it, then counts it: 409 and nothing saved (521.787528ms)
+# leave/hold race: hold won 8, leave won 12
+  ✔ 20 rounds of a hold racing a leave over the same slot: either the leave is refused with the appointment counted, or the hold is refused as outside hours (1854.823026ms)
+✔ leave versus booking, concurrently (TC-DR-02, 25.2): never both (2884.248962ms)
+# search latency (informational): 40 doctors, 2000 slots returned (cap 2000), n=25, p50=1624 ms, p95=3494 ms, max=4018 ms
+▶ search latency on a synthetic volume set (NFR-8: informational only, not a measurement of the ci volume set)
+  ✔ 40 doctors, 7 rules each, 14-day range, with bookings and busy blocks: timings are printed, not asserted (45678.95507ms)
+✔ search latency on a synthetic volume set (NFR-8: informational only, not a measurement of the ci volume set) (45679.165334ms)
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+▶ F02: scheduling.set_status acts only on the caller's own reservation (TC-BK-11, TC-AZ-07)
+  ✔ P1c: patient B cannot cancel patient A's appointment, though B can read its occupancy row and id (128.223039ms)
+  ✔ P1d: staff of another location cannot cancel another clinic's appointment (55.534344ms)
+  ✔ a proxy of another patient and a patients-scope job for another patient are refused the same way (63.033366ms)
+  ✔ own-reservation flows are unchanged: the patient, a proxy of the patient, the staff of the location and the organisation job (197.559454ms)
+  ✔ a stale hold of somebody else is still expired by the next booking of that doctor (SAR-09) (46.805083ms)
+✔ F02: scheduling.set_status acts only on the caller's own reservation (TC-BK-11, TC-AZ-07) (4613.548505ms)
+▶ F03: scheduling.occupy does not trust the caller's overbook flag and cap
+  ✔ P2: with no stored policy that allows overbooking, a made-up session and cap 100 end refused (23P01) (47.411512ms)
+  ✔ with a stored cap of 1 at the location, the arguments cannot raise it: a second row under another invented key is refused (6.647954ms)
+✔ F03: scheduling.occupy does not trust the caller's overbook flag and cap (54.448957ms)
+▶ F04: patient.ensure_care_relationship needs a real event (BR-32, D-7, SBR-02)
+  ✔ P4: patient A cannot add clinic B as a referral; the staff of B still see nothing (33.126685ms)
+  ✔ a booking relationship needs a confirmed appointment of that patient at that location (98.217071ms)
+  ✔ staff accept a referral at their own location only (78.876217ms)
+✔ F04: patient.ensure_care_relationship needs a real event (BR-32, D-7, SBR-02) (210.657852ms)
+▶ F05: the scheduling merge guard holds for a writer that skipped patient.lock_patients (SBR-12, TC-MG-09)
+  ✔ P3: a reservation written while a merge is uncommitted ends PM001 and leaves no row on the merged patient (527.34663ms)
+✔ F05: the scheduling merge guard holds for a writer that skipped patient.lock_patients (SBR-12, TC-MG-09) (527.561524ms)
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+▶ constraints in the database (22.8, SBR-01)
+  ✔ two active rows for one doctor with overlapping times are refused (23P01); back-to-back and other doctors are fine (109.670814ms)
+  ✔ the same for a room: another doctor in the same room and time is refused; a video visit (no room) is not (36.743502ms)
+  ✔ overbook rows are excluded from the constraints (69.960306ms)
+  ✔ period shape and hold expiry shape are checks (22.518707ms)
+  ✔ the deferred twin: an occupancy row without its reservation fails at commit; so does a reservation without occupancy (82.479798ms)
+  ✔ a reservation cannot point at an occupancy row of another doctor (the twin must agree) (14.728499ms)
+  ✔ an application role cannot write the occupancy table; only the two definer functions can (8.714794ms)
+✔ constraints in the database (22.8, SBR-01) (3567.259205ms)
+▶ hold, confirm, release (25.1, 23.1; TC-BK-01, 04, 08)
+  ✔ hold -> confirm: held with an expiry, then confirmed with none; audit rows exist; a care relationship is created (TC-BK-01) (86.659893ms)
+  ✔ confirm is idempotent by state for the booker; another principal gets 409 (89.080847ms)
+  ✔ a confirm after the hold expired is 409 hold_expired with alternatives, and nothing is confirmed (TC-BK-08) (28.726587ms)
+  ✔ a taken slot is 409 slot_taken with up to five alternatives from a fresh search (TC-BK-04) (80.974975ms)
+  ✔ a lapsed hold never causes a false "taken": the inserting transaction expires it first (doctor) (33.567101ms)
+  ✔ ...and for a room (SAR-09): a live hold refuses a different doctor; a stale hold on the room is expired by the inserting transaction (542.719489ms)
+  ✔ the holder can release a hold (held -> cancelled_patient), free of any cut-off (30.959518ms)
+  ✔ the sweep frees lapsed holds (and only them); it is cleanup, not correctness (66.471167ms)
+  ✔ validation: a bad body is 422 with field names; a past start is refused; a video visit needs the patient state (13.776543ms)
+  ✔ a patient cannot book for a patient outside their scope; a merged patient is 409 patient.merged (32.55424ms)
+✔ hold, confirm, release (25.1, 23.1; TC-BK-01, 04, 08) (1006.471279ms)
+▶ BR-04, overlap, licensing (25.1 steps 3-4)
+  ✔ at most max_future_per_patient (3) future appointments per service; the fourth is 422 (TC-BK-07) (175.106379ms)
+  ✔ a patient cannot hold two overlapping times, whatever the service or doctor (BQ-9) (94.882513ms)
+  ✔ a lapsed hold of the same patient does not block a new hold (it is stale, not active) (83.613617ms)
+  ✔ video: the patient state must be an operating state and the clinician licensed there (TL-1); flag mode lets it through flagged (98.525079ms)
+✔ BR-04, overlap, licensing (25.1 steps 3-4) (452.578092ms)
+▶ cancel and reschedule (25.1, 23.1; TC-BK-05, 06; 38.2 item 2)
+  ✔ a cancel before the cut-off commits cancel_reason and late_change=false (patient), and the slot is free again (109.286684ms)
+  ✔ a patient cancel inside the cut-off is 422 cutoff_passed (D-3 default: block), nothing changes, nothing is charged (TC-BK-05) (31.838728ms)
+  ✔ a clinic cancel inside the cut-off needs a reason, is never blocked, and stores late_change=true with cancelled_clinic (100.171037ms)
+  ✔ late_change = fee: refused without acceptFee, accepted with it (stored, never charged) (95.364228ms)
+  ✔ If-Match: a stale version is 412 (83.164594ms)
+  ✔ after cancelled_* or no_show a reservation update is refused for every role, including the owner of the data and the superuser (N-2) (184.609251ms)
+  ✔ occupancy transitions outside the table of 23.1 are refused, and each audience has its own subset (36.075458ms)
+  ✔ reschedule: the new hold is confirmed, the old one is rescheduled, and the link is stored, in one transaction (TC-BK-06) (163.381807ms)
+  ✔ reschedule inside the cut-off is blocked on the old appointment; an expired new hold changes nothing (201.365206ms)
+  ✔ a reschedule hold must belong to the same patient and the same service (103.661929ms)
+✔ cancel and reschedule (25.1, 23.1; TC-BK-05, 06; 38.2 item 2) (1109.954843ms)
+▶ who sees what (6.5, TC-BK-11, TC-BK-18)
+  ✔ a patient sees only their own reservations; the occupancy table carries no patient, service or free text (82.431989ms)
+  ✔ staff book only at their own locations and only for patients their locations care for (TC-BK-11) (123.617036ms)
+  ✔ a proxy books as proxy (D-7); the answer records who booked (12.944601ms)
+✔ who sees what (6.5, TC-BK-11, TC-BK-18) (219.322062ms)
+▶ the HTTP routes (29.2; TC-BK-01, 09)
+  ✔ hold -> confirm -> read -> cancel through the guard, CSRF and idempotency, with the registry error codes (588.082195ms)
+  ✔ a taken slot over HTTP is 409 scheduling.slot_taken with alternatives in the error list (TC-BK-04) (95.092717ms)
+  ✔ the body cannot choose the room, the booker or an overbook session; a staff session cannot use the patient route (realm) (95.202092ms)
+✔ the HTTP routes (29.2; TC-BK-01, 09) (778.720721ms)
+
+Interrupted while running:
+
+⚠ dist/src/modules/scheduling/core/concurrency.dbtest.js (dist/src/modules/scheduling/core/concurrency.dbtest.js:1:1)
+⚠ dist/src/modules/scheduling/flow/flow.dbtest.js (dist/src/modules/scheduling/flow/flow.dbtest.js:1:1)
+⚠ dist/src/modules/scheduling/flow/waitlist.dbtest.js (dist/src/modules/scheduling/flow/waitlist.dbtest.js:1:1)
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+▶ RA-R1-03: parallel booking of one slot (TC-BK-13, 14, 15)
+  ✔ TC-BK-13: 100 parallel bookings of one non-overbookable slot by ONE patient account: exactly one appointment exists, the 99 others get "taken" with alternatives (3083.780255ms)
+  ✔ 100 parallel CONFIRMATIONS of one held slot: one transition, every other call is the same answer by state (981.05909ms)
+(node:1260571) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+  ✔ TC-BK-14: 100 DIFFERENT patients: exactly one wins; no patient sees another reservation (3391.065996ms)
+  ✔ TC-BK-15 (SA-F-10): an overbookable session with a cap of 2 under 100 parallel bookings: exactly 2 succeed, never more (1905.1619ms)
+  ✔ BE11-F01 regression: 20 rounds of 100 different patients on fresh slots: every round has exactly one winner and never a deadlock (40P01) (24911.651123ms)
+  ✔ an overbook cap of 0 (the default) refuses every overbook row (57.879635ms)
+✔ RA-R1-03: parallel booking of one slot (TC-BK-13, 14, 15) (37701.935794ms)
+▶ stale holds under a race (TC-BK-16, 17, SAR-09, SBR-01 (a), (b))
+  ✔ TC-BK-16: A holds, the hold lapses, B and C race for the slot: exactly one wins and the loser is told the truth (633.595604ms)
+  ✔ TC-BK-17: the same race for a ROOM (two different doctors, one room) (1800.435985ms)
+✔ stale holds under a race (TC-BK-16, 17, SAR-09, SBR-01 (a), (b)) (2434.579857ms)
+▶ 38.2 item 15: one patient, overlapping times (TDR-07, BQ-9)
+  ✔ two concurrent holds for one patient on different services and doctors with overlapping times: exactly one succeeds, the other is 422 overlapping_appointment (415.988539ms)
+  ✔ ...and with one of the two holds made by the waitlist offer job (25.6): the same rule, the same answer (282.069271ms)
+✔ 38.2 item 15: one patient, overlapping times (TDR-07, BQ-9) (698.378904ms)
+▶ merge participant (22.16, 38.2 items 1 and 11)
+  ✖ item 11: R reservations (held, confirmed) move to the survivor, the K one stays; found = re-pointed + resolved + kept; no appointment is cancelled (505.725045ms)
+  ✖ the participant is registered through the registry with its rules, and the privacy export part returns the survivor's reservations (425.151865ms)
+  ✖ 38.2 item 1, confirm first: a confirm that holds the patient root commits first, the merge waits for it, then counts and re-points the confirmed reservation (463.410911ms)
+✖ dist/src/modules/scheduling/core/concurrency.dbtest.js (573499.848462ms)
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+▶ check-in at the desk (25.5, TC-PC-01)
+  ✔ moves the visit to checked in, writes the check-in and the queue entry together, audited, and the patient is in the queue (703.602486ms)
+  ✔ repeating it changes nothing and returns the same result (191.516634ms)
+  ✔ not allowed: another day, a video visit, a cancelled or held or finished visit, another location (422 scheduling.check_in_not_allowed) (1802.734799ms)
+  ✔ the staff route: guard, If-Match, idempotency, the registry codes (29.3) (491.341715ms)
+✔ check-in at the desk (25.5, TC-PC-01) (9454.457242ms)
+▶ check-in by QR (25.5, 22.8 note, TC-PC-02)
+  ✔ the staff screen shows today's token; the patient checks in with it; a wrong, stale or other-day token and another patient's visit fail (1212.00697ms)
+  ✔ the QR path belongs to the patient audience and the desk path to staff: the other combinations are refused (191.544606ms)
+  ✔ a desk check-in and a QR check-in at the same moment: one check-in row, both callers get an answer, never two (878.234415ms)
+  ✔ a cancel and a check-in at the same moment: whichever wins, the database never holds a check-in of a cancelled visit (1434.473392ms)
+✔ check-in by QR (25.5, 22.8 note, TC-PC-02) (3716.856292ms)
+▶ pre-visit status (AC-09, F-PC-02, TC-PC-03)
+  ✔ three booleans: the required consents, the questionnaire and the insurance; the desk sees flags, never content (1485.63999ms)
+✔ pre-visit status (AC-09, F-PC-02, TC-PC-03) (1485.870372ms)
+▶ arrivals board and queue (29.3, TC-PC-05, TC-PC-06)
+  ✔ four patients arrive: every one is in the queue, first in first out, with category and wait time; nobody is dropped (PM-confirm-2: category order not asserted) (1893.658403ms)
+  ✔ the arrivals board lists the day with who has arrived, the queue stage and the flags; a desk sees its own location only (1198.447315ms)
+  ✔ two staff move the same queue entry with the same ETag: the second gets 412 and nothing is overwritten (TC-PC-06, CN-07); a stale or missing If-Match, a bad stage (1415.534522ms)
+  ✔ assignment: the doctor and room of the queue entry; a room or doctor already booked for that time is 409 scheduling.slot_taken (1497.320642ms)
+✔ arrivals board and queue (29.3, TC-PC-05, TC-PC-06) (6005.374268ms)
+▶ no-show (29.3, 33.1, TC-PC-09)
+  ✔ staff mark it only after the grace period (15 min, video 10); never a checked-in visit; audited (1276.35913ms)
+  ✔ the sweep flags for staff where automatic no-show is not allowed (the default), once, and the arrivals board shows it (1107.18263ms)
+  ✔ the sweep marks no-show only at a location whose setting allows it, only after the grace (video 10, in person 15), never a visit that arrived (610.857404ms)
+✔ no-show (29.3, 33.1, TC-PC-09) (2994.851543ms)
+▶ the database rules under the flow (1300-1302)
+  ✔ every flow table forces row-level security, and every policy names its roles (78.282202ms)
+  ✔ a check-in belongs to its reservation: wrong patient, wrong place, a visit that is not checked in; the application roles cannot write what the policies do not allow (603.331751ms)
+  ✔ queue entries: the place and the arrival time never change; waitlist entries and offers: the transition tables and K states (126.442777ms)
+  ✔ the job lists of the API and the worker are the same, and every job that carries patient IDs declares on_merged (0.351209ms)
+✔ the database rules under the flow (1300-1302) (808.73833ms)
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+▶ a freed slot becomes one offer at a time, in line order (25.6; TC-BK-19)
+  ✔ PAT-01 is offered first, through scheduling.hold, for the offer time (30 min); the offer lapses cleanly and PAT-02 is offered next, PAT-01 is not offered again (900.152264ms)
+  ✔ the offer time is the stored setting: 15 minutes for a slot within 24 hours (TC-BK-21), and a changed setting applies to the next offer (1012.155516ms)
+  ✔ the hold rules apply to each candidate: an overlapping appointment, no portal account, a window, a doctor, a service or a place that does not fit; a cancelled entry is skipped (701.43611ms)
+✔ a freed slot becomes one offer at a time, in line order (25.6; TC-BK-19) (9919.317655ms)
+▶ accept and decline (29.2; TC-BK-20)
+  ✔ accepting confirms the held slot: care relationship, entry fulfilled, confirmation event; the same accept again, or by a stranger, changes nothing (504.459392ms)
+  ✔ declining releases the hold and the next entry gets the slot; declining twice is the same answer; accepting a declined offer is "no longer available" (397.546401ms)
+  ✔ ten acceptances at once (the patient on several devices): one booking, one set of side effects, everyone gets the accepted offer (TC-BK-20) (414.180246ms)
+  ✔ a second patient trying to book the held slot at the same moment as the first one accepts: only the first is booked, the other sees slot_taken (294.648578ms)
+  ✔ two offer jobs for the same freed slot at once: exactly one offer; accept against decline: exactly one wins and the slot and the offer agree (395.872459ms)
+  ✔ accept against the lapse job after the time: the acceptance is refused, the offer is expired, nothing is confirmed (217.99915ms)
+✔ accept and decline (29.2; TC-BK-20) (2225.519112ms)
+▶ waitlist entries (29.2, 29.3)
+  ✔ create and cancel over HTTP: disabled for a service without the policy, validation, own patient only, staff list; cancelling an entry with an open offer declines it (678.742504ms)
+✔ waitlist entries (29.2, 29.3) (679.541293ms)
+▶ pre-visit send (33.1): the invitation is scheduled at start minus the setting, sent once, and skips a cancelled booking
+  ✔ scheduled by the confirmation event, PHI-free, deduplicated; a booking cancelled before the time is skipped (292.181216ms)
+✔ pre-visit send (33.1): the invitation is scheduled at start minus the setting, sent once, and skips a cancelled booking (292.388315ms)
+▶ merge participant and export part for the flow tables (22.16, 38.2 item 11; TC-BK-22)
+  ✔ the module registers once for every scheduling table with a patient: both participants together are refused (0.387928ms)
+  ✖ counts add up for every table; R rows move, K rows stay; the conflict rule keeps the earlier entry; an open offer resolves on the survivor and is never duplicated (620.803118ms)
+  ✖ TC-BK-22: a waitlisted patient is merged into another; the slot frees; the offer job resolves to the survivor and offers once (196.697435ms)
+  ✔ the privacy export part carries the module's rows for the patient: check-ins, queue entries, waitlist entries and offers (identifiers, states, times) (103.950571ms)
+✖ merge participant and export part for the flow tables (22.16, 38.2 item 11; TC-BK-22) (922.248721ms)
+ℹ tests 137
+ℹ suites 38
+ℹ pass 131
+ℹ fail 5
+ℹ cancelled 1
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 579978.843189
+
+✖ failing tests:
+
+test at dist/src/modules/scheduling/core/concurrency.dbtest.js:286:5
+✖ item 11: R reservations (held, confirmed) move to the survivor, the K one stays; found = re-pointed + resolved + kept; no appointment is cancelled (505.725045ms)
+  AssertionError [ERR_ASSERTION]: {"status":"failed","code":"patient.merge_participant_missing"}
+  + actual - expected
+  
+  + 'failed'
+  - 'completed'
+  
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/core/concurrency.dbtest.js:290:16)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'failed',
+    expected: 'completed',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at dist/src/modules/scheduling/core/concurrency.dbtest.js:316:5
+✖ the participant is registered through the registry with its rules, and the privacy export part returns the survivor's reservations (425.151865ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + '23ad1c44-da78-4b06-bba0-29b6734f9aa1'
+  - '49685e66-b6cf-495d-b608-13d7b815d375'
+  
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/core/concurrency.dbtest.js:339:16)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '23ad1c44-da78-4b06-bba0-29b6734f9aa1',
+    expected: '49685e66-b6cf-495d-b608-13d7b815d375',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at dist/src/modules/scheduling/core/concurrency.dbtest.js:352:5
+✖ 38.2 item 1, confirm first: a confirm that holds the patient root commits first, the merge waits for it, then counts and re-points the confirmed reservation (463.410911ms)
+  AssertionError [ERR_ASSERTION]: {"status":"failed","code":"patient.merge_participant_missing"}
+  + actual - expected
+  
+  + 'failed'
+  - 'completed'
+  
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/core/concurrency.dbtest.js:379:16)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'failed',
+    expected: 'completed',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at dist/src/modules/scheduling/core/concurrency.dbtest.js:1:1
+✖ dist/src/modules/scheduling/core/concurrency.dbtest.js (573499.848462ms)
+  'Promise resolution is still pending but the event loop has already resolved'
+
+test at dist/src/modules/scheduling/flow/waitlist.dbtest.js:590:5
+✖ counts add up for every table; R rows move, K rows stay; the conflict rule keeps the earlier entry; an open offer resolves on the survivor and is never duplicated (620.803118ms)
+  AssertionError [ERR_ASSERTION]: {"status":"failed","code":"patient.merge_participant_missing"}
+  + actual - expected
+  
+  + 'failed'
+  - 'completed'
+  
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/flow/waitlist.dbtest.js:650:16)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'failed',
+    expected: 'completed',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at dist/src/modules/scheduling/flow/waitlist.dbtest.js:740:5
+✖ TC-BK-22: a waitlisted patient is merged into another; the slot frees; the offer job resolves to the survivor and offers once (196.697435ms)
+  AssertionError [ERR_ASSERTION]: {"status":"failed","code":"patient.merge_participant_missing"}
+  + actual - expected
+  
+  + 'failed'
+  - 'completed'
+  
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/scheduling/flow/waitlist.dbtest.js:745:16)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'failed',
+    expected: 'completed',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

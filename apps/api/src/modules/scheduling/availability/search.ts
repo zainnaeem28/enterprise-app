@@ -292,7 +292,7 @@ export class AvailabilitySearch implements AvailabilityPort {
   ): Promise<{
     booked: Map<string, Interval[]>;
     roomBooked: Map<string, Interval[]>;
-    sessions: Map<string, number>;
+    overbookStarts: Map<string, number[]>;
     busy: Map<string, Interval[]>;
     lastSync: Map<string, number>;
     blocked: Map<string, Interval[]>;
@@ -305,10 +305,10 @@ export class AvailabilitySearch implements AvailabilityPort {
     };
     const booked = new Map<string, Interval[]>();
     const roomBooked = new Map<string, Interval[]>();
-    const sessions = new Map<string, number>();
+    const overbookStarts = new Map<string, number[]>();
     // A lapsed hold no longer occupies anything (the inserting transaction expires it, 25.1): it is not read here either.
     const occ = await tx.query(
-      `SELECT clinician_principal_id AS clinician_id, room_id, lower(period) AS s, upper(period) AS e, overbook, session_key
+      `SELECT clinician_principal_id AS clinician_id, room_id, lower(period) AS s, upper(period) AS e, overbook
          FROM scheduling.slot_occupancy
         WHERE status = ANY($1::text[]) AND NOT (status = 'held' AND expires_at < now()) AND period && $2::tstzrange
           AND (clinician_principal_id = ANY($3::uuid[]) OR room_id = ANY($4::uuid[]))`,
@@ -322,19 +322,22 @@ export class AvailabilitySearch implements AvailabilityPort {
       if (r['room_id'] !== null && r['overbook'] !== true)
         push(roomBooked, String(r['room_id']), i);
     }
-    // Session counts are over the whole session, not only this range: the cap is per session.
+    // The cap is per session. `session_key` is a hidden column (SEC-03 F09, 0951), so a session is read as the rule window of the day:
+    // the starts of the overbook rows are collected here and counted per window below. The cap itself is enforced by scheduling.occupy.
     const ob = await tx.query(
-      `SELECT clinician_principal_id AS clinician_id, session_key, count(*)::int AS n
+      `SELECT clinician_principal_id AS clinician_id, lower(period) AS s
          FROM scheduling.slot_occupancy
         WHERE overbook AND status = ANY($1::text[]) AND NOT (status = 'held' AND expires_at < now())
-          AND clinician_principal_id = ANY($2::uuid[]) AND session_key IS NOT NULL
-          AND lower(period) >= $3::timestamptz - interval '2 days' AND lower(period) < $4::timestamptz + interval '2 days'
-        GROUP BY 1, 2`,
+          AND clinician_principal_id = ANY($2::uuid[])
+          AND lower(period) >= $3::timestamptz - interval '2 days' AND lower(period) < $4::timestamptz + interval '2 days'`,
       [[...ACTIVE], [...clinicians], new Date(from).toISOString(), new Date(to).toISOString()],
     );
     for (const x of ob.rows) {
       const r = x as Row;
-      sessions.set(`${String(r['clinician_id'])}|${String(r['session_key'])}`, Number(r['n']));
+      const cid = String(r['clinician_id']);
+      const l = overbookStarts.get(cid);
+      if (l === undefined) overbookStarts.set(cid, [ms(r['s'])]);
+      else l.push(ms(r['s']));
     }
 
     const busy = new Map<string, Interval[]>();
@@ -365,7 +368,7 @@ export class AvailabilitySearch implements AvailabilityPort {
       const r = x as Row;
       push(blocked, String(r['clinician_id']), { start: ms(r['s']), end: ms(r['e']) });
     }
-    return { booked, roomBooked, sessions, busy, lastSync, blocked };
+    return { booked, roomBooked, overbookStarts, busy, lastSync, blocked };
   }
 
   // ===== the search proper ================================================================================================
@@ -458,7 +461,8 @@ export class AvailabilitySearch implements AvailabilityPort {
           c.includeOverbook &&
           w.overbookable &&
           pol.cap > 0 &&
-          (data.sessions.get(`${w.clinicianId}|${w.ruleId}:${w.localDate}`) ?? 0) < pol.cap
+          (data.overbookStarts.get(w.clinicianId) ?? []).filter((t) => t >= w.start && t < w.end)
+            .length < pol.cap
         ) {
           out.set(key, {
             start: s,

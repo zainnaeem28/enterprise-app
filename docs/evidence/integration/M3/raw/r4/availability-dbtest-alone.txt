@@ -1,0 +1,43 @@
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+▶ templates (29.3): own, validated, versioned, retired not deleted
+  ✔ a doctor creates, lists, replaces (If-Match) and retires their own template (169.372519ms)
+  ✔ the same Idempotency-Key creates one template (56.819786ms)
+  ✔ validation: weekday, times, overlap inside a template, overlap with another template, place, rooms, services (119.904619ms)
+  ✔ a doctor works only at a location they hold; the admin realm is not bound to a location (40.736104ms)
+✔ templates (29.3): own, validated, versioned, retired not deleted (1893.308115ms)
+▶ own-only (TC-DR-03, 38.2 item 12): another doctor is refused with 403, audited, and nothing changes
+  ✔ GET, POST, PUT, DELETE of another doctor's templates and blocked time (88.236691ms)
+  ✔ the service refuses it too, and the row-level-security policy is the third line (29.986632ms)
+  ✔ a role without the permission is refused by the guard (front desk cannot manage templates) (16.851162ms)
+✔ own-only (TC-DR-03, 38.2 item 12): another doctor is refused with 403, audited, and nothing changes (135.563904ms)
+▶ leave and blocked time show the affected appointments before saving (TC-DR-02)
+  ✔ without acknowledgement: 409 with counts only; dryRun reports and saves nothing; acknowledged saves and cancels nothing (111.989464ms)
+  ✔ a free period saves at once with zero conflicts; lapsed holds and cancelled visits do not count (48.200741ms)
+  ✔ validation: periods, kind, note length, flags (79.844995ms)
+✔ leave and blocked time show the affected appointments before saving (TC-DR-02) (240.516424ms)
+▶ roster (29.3, 29.4): a front-desk lead edits their own locations' doctor duties only
+  ✔ add, list and delete at the lead's location; one holder per duty and time (63.90969ms)
+  ✔ another location is refused (403, audited); the lead cannot set compliance on call; an ineligible principal is 422 (70.350879ms)
+  ✔ the admin realm sets compliance on call; the policy refuses the lead at the database even if the API did not (17.127982ms)
+✔ roster (29.3, 29.4): a front-desk lead edits their own locations' doctor duties only (151.691809ms)
+▶ admin routes (29.4): any clinician, every duty, realm admin_pool
+  ✔ an org_admin session manages another doctor's templates and blocked time and sets compliance on call; staff-realm paths and the admin prefix do not mix (54.548214ms)
+✔ admin routes (29.4): any clinician, every duty, realm admin_pool (54.707412ms)
+▶ constraints in the database (22.8, SBR-01)
+  ✔ a rule's copied doctor must be its template's doctor (composite foreign key) (3.935755ms)
+  ✔ check constraints: weekday, start before end, valid range, empty or open-ended periods (2.940578ms)
+  ✔ roster exclusion: one holder per duty, place and time; back-to-back is fine (2.044988ms)
+  ✔ a template keeps its doctor and a retired template stays retired (triggers) (6.464881ms)
+  ✔ busy_block: no application role writes it here (calendar-sync, BE-14, owns the writer); app roles read it (7.524541ms)
+✔ constraints in the database (22.8, SBR-01) (25.958702ms)
+▶ the clinician directory view (22.5.1)
+  ✔ a patient sees (clinician, location) pairs with an active template that has not ended; nothing else (27.913591ms)
+✔ the clinician directory view (22.5.1) (28.090464ms)
+ℹ tests 20
+ℹ suites 7
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2894.16513
