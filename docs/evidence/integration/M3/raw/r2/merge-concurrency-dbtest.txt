@@ -1,0 +1,44 @@
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+▶ a merge against writers that hold the patients (25.2, 38.2 item 1; TC-MG-09 on patient rows)
+  ✖ writer first: a transaction writing rows for BOTH patients commits first, the merge waits for it, then counts and re-points both rows (374.210271ms)
+
+Interrupted while running:
+
+⚠ apps/api/dist/src/modules/patient/merge/concurrency.dbtest.js (apps/api/dist/src/modules/patient/merge/concurrency.dbtest.js:1:1)
+✖ apps/api/dist/src/modules/patient/merge/concurrency.dbtest.js (399970.949611ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 1
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 399977.255904
+
+✖ failing tests:
+
+test at apps/api/dist/src/modules/patient/merge/concurrency.dbtest.js:79:5
+✖ writer first: a transaction writing rows for BOTH patients commits first, the merge waits for it, then counts and re-points both rows (374.210271ms)
+  AssertionError [ERR_ASSERTION]: {"status":"failed","code":"patient.merge_participant_missing"}
+  + actual - expected
+  
+  + 'failed'
+  - 'completed'
+  
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/patient/merge/concurrency.dbtest.js:95:16)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'failed',
+    expected: 'completed',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at apps/api/dist/src/modules/patient/merge/concurrency.dbtest.js:1:1
+✖ apps/api/dist/src/modules/patient/merge/concurrency.dbtest.js (399970.949611ms)
+  'Promise resolution is still pending but the event loop has already resolved'

@@ -1,0 +1,474 @@
+== suite db-foundation (1 file(s), /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b)
+▶ migrations from empty on PostgreSQL 17
+  ✔ a second run applies nothing (127.048766ms)
+  ✔ catalog checks M-1..M-5 and the role checks all pass (192.55932ms)
+  ✔ role-level settings are stored and visible to a new session (20.269971ms)
+  ✔ the runner tracker is not reachable by application roles (4.682365ms)
+✔ migrations from empty on PostgreSQL 17 (1511.974324ms)
+▶ spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics)
+  ✔ FORCE RLS: the table owner cannot insert, and its UPDATE changes 0 rows (SBR-17) (11.724818ms)
+  ✔ a missing setting returns 0 rows on every kernel table (fail closed) (16.824817ms)
+  ✔ setting: admin_pool staff reads and writes its organisation; WITH CHECK refuses everything else (28.768496ms)
+  ✔ audience anonymous reads only pre_auth settings and nothing in idempotency_key (8.352581ms)
+  ✔ app_api cannot act as audience system; app_worker can, within its job scope (19.742122ms)
+  ✔ idempotency_key: a principal sees only its own keys; updates bump row_version (13.507483ms)
+  ✔ reporting_ro is refused on the kernel tables (M-4) (3.835717ms)
+  ✔ role switching: app_api reaches only identity_signin_ro, which holds no table right (10.417426ms)
+  ✔ app_owner holds SET but not INHERIT on directory_ro: it can switch but gains no rights (4.644615ms)
+  ✔ function ownership transfer needs SET membership and CREATE on the schema (21.2 point 1) (8.068819ms)
+  ✔ SELECT ... FOR KEY SHARE needs UPDATE rights: a SELECT-only role is refused (15.010634ms)
+  ✔ an owner-rights view returns 0 rows under FORCE; a security_invoker view returns the caller rows (M-4) (309.183134ms)
+  ✔ negative control: the catalog checks fail on a table without FORCE and on a policy TO PUBLIC (204.580824ms)
+✔ spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics) (663.067857ms)
+▶ SEC03-F13 / F09 catalog negative controls
+  ✔ the positive baseline: the four new checks pass on the migrated database (195.151713ms)
+  ✔ M-5-policy-tautology fails on a policy comparing a column with itself (F01) (199.054656ms)
+  ✔ M-5-patient-guard fails when the guard trigger is disabled, AFTER, or INSERT-only (609.078501ms)
+  ✔ M-5-setting-grants fails when app_api can write pre_auth or UPDATE every column (N-3) (623.28183ms)
+  ✔ M-5-hidden-columns fails when an application role can read occupancy created_by (F09) (371.758411ms)
+✔ SEC03-F13 / F09 catalog negative controls (1998.870562ms)
+▶ R-timeouts negative control (F03-R1-02)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 0s (199.370438ms)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 0ms (188.39759ms)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 0000ms (184.77271ms)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 61s (190.476882ms)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 120s (187.909093ms)
+✔ R-timeouts negative control (F03-R1-02) (951.432261ms)
+▶ TC-AU-04 (ARCHITECTURE 21.5, SAR-10; step 2 per SA-TC-06)
+  ✔ step 1: transaction_timeout unset (0) -> refused PA001, no row (9.963684ms)
+  ✔ step 2 (SA-TC-06): B + 1 s -> refused PA001, no row (7.578329ms)
+  ✔ step 3: app_owner -> privilege error 42501 raised before the trigger, no row (5.263245ms)
+  ✔ step 4 (positive control): at or below the bound -> accepted and written (5.496593ms)
+  ✔ production shape: the role-level 60 s of app_api and app_worker is accepted, 120 s is refused (21.817786ms)
+✔ TC-AU-04 (ARCHITECTURE 21.5, SAR-10; step 2 per SA-TC-06) (67.899746ms)
+▶ the runner against a real database
+  ✔ applies 0001 and 0003, then rejects 0002 as out of order and leaves the schema untouched (22.549157ms)
+  ✔ a migration that fails at run time rolls back with its tracker row (4.766914ms)
+✔ the runner against a real database (104.525735ms)
+▶ the single merge write guard (T1-T4 of the HEAAA-190 ruling)
+  ✔ T1: a write naming a merged patient is refused with PM001 on every guarded table (92.899122ms)
+  ✔ T1: an open patient passes the guard (any later refusal is another check) on every guarded table (55.732498ms)
+  ✔ T1: a write naming a patient of another organisation is refused (42501 or PM008) (64.182663ms)
+  ✔ T2: app_owner holds no EXECUTE on the guard, the five refused functions are gone, all 15 tables carry the trigger (66.26511ms)
+  ✔ T3: a merge holding the root lock makes a concurrent reservation write wait; after the commit it gets PM001 (520.452707ms)
+  ✔ T4: a file that leaves the guard granted to app_owner is rolled back by the runner post-check, with its tracker row (108.477721ms)
+✔ the single merge write guard (T1-T4 of the HEAAA-190 ruling) (954.381394ms)
+ℹ tests 40
+ℹ suites 7
+ℹ pass 40
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6353.43364
+== suite kernel (2 file(s), /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b)
+bootstrap 0001_roles.sql
+applying 0001_kernel_schema_and_helpers.sql
+applying 0002_kernel_tables.sql
+applying 0003_kernel_rls_and_grants.sql
+applying 0100_queue_schema.sql
+applying 0200_audit_event.sql
+applying 0201_audit_anchor.sql
+applying 0202_audit_btg_and_export.sql
+applying 0203_audit_rls_and_grants.sql
+applying 0300_organisation_schema_and_tables.sql
+applying 0301_organisation_rls_and_grants.sql
+applying 0302_organisation_directory_views.sql
+applying 0400_integration_core_tables.sql
+applying 0401_integration_core_rls_and_grants.sql
+applying 0402_integration_core_receive_inbound.sql
+applying 0500_identity_schema_and_tables.sql
+applying 0501_identity_triggers.sql
+applying 0502_identity_rls_and_grants.sql
+applying 0503_identity_public_clinician.sql
+applying 0600_notifications_schema_and_tables.sql
+applying 0601_notifications_rls_and_grants.sql
+applying 0602_notifications_receipt_lookup_index.sql
+applying 0700_patient_schema_and_tables.sql
+applying 0701_patient_triggers_and_guards.sql
+applying 0702_patient_rls_and_grants.sql
+applying 0703_patient_scope_functions.sql
+applying 0704_patient_matching_registration.sql
+applying 0705_patient_staff_policy_qualify.sql
+applying 0800_patient_merge_tables.sql
+applying 0801_patient_merge_triggers.sql
+applying 0802_patient_merge_rls_and_grants.sql
+applying 0803_patient_merge_functions.sql
+applying 0900_scheduling_schema_and_tables.sql
+applying 0901_scheduling_triggers.sql
+applying 0902_scheduling_rls_and_grants.sql
+applying 0903_scheduling_booking_functions.sql
+applying 0904_sec03_bind_definer_functions_to_caller.sql
+applying 0951_sec03_occupancy_column_grants.sql
+applying 0953_sec03_setting_column_grants.sql
+applying 1000_documents_schema_and_tables.sql
+applying 1001_documents_triggers.sql
+applying 1002_documents_rls_and_grants.sql
+applying 1003_documents_guard_owner.sql
+applying 1100_availability_tables.sql
+applying 1101_availability_triggers.sql
+applying 1102_availability_rls_and_grants.sql
+applying 1103_availability_directory_view.sql
+applying 1200_staff_alert_tables.sql
+applying 1201_staff_alert_rls_and_grants.sql
+applying 1300_flow_tables.sql
+applying 1301_flow_triggers.sql
+applying 1302_flow_rls_and_grants.sql
+applying 1303_flow_notification_insert_grant.sql
+applying 1400_calendar_sync_tables.sql
+applying 1401_calendar_sync_triggers.sql
+applying 1402_calendar_sync_rls_and_grants.sql
+applying 1403_scheduling_replace_busy_blocks.sql
+applying 1500_telehealth_tables.sql
+applying 1501_telehealth_triggers.sql
+applying 1502_telehealth_rls_and_grants.sql
+applying 1600_merge_guard_single.sql
+applying 1601_drop_merge_guard_copies.sql
+applying 1602_revoke_guard_drop_usage.sql
+{"applied":["0001_kernel_schema_and_helpers.sql","0002_kernel_tables.sql","0003_kernel_rls_and_grants.sql","0100_queue_schema.sql","0200_audit_event.sql","0201_audit_anchor.sql","0202_audit_btg_and_export.sql","0203_audit_rls_and_grants.sql","0300_organisation_schema_and_tables.sql","0301_organisation_rls_and_grants.sql","0302_organisation_directory_views.sql","0400_integration_core_tables.sql","0401_integration_core_rls_and_grants.sql","0402_integration_core_receive_inbound.sql","0500_identity_schema_and_tables.sql","0501_identity_triggers.sql","0502_identity_rls_and_grants.sql","0503_identity_public_clinician.sql","0600_notifications_schema_and_tables.sql","0601_notifications_rls_and_grants.sql","0602_notifications_receipt_lookup_index.sql","0700_patient_schema_and_tables.sql","0701_patient_triggers_and_guards.sql","0702_patient_rls_and_grants.sql","0703_patient_scope_functions.sql","0704_patient_matching_registration.sql","0705_patient_staff_policy_qualify.sql","0800_patient_merge_tables.sql","0801_patient_merge_triggers.sql","0802_patient_merge_rls_and_grants.sql","0803_patient_merge_functions.sql","0900_scheduling_schema_and_tables.sql","0901_scheduling_triggers.sql","0902_scheduling_rls_and_grants.sql","0903_scheduling_booking_functions.sql","0904_sec03_bind_definer_functions_to_caller.sql","0951_sec03_occupancy_column_grants.sql","0953_sec03_setting_column_grants.sql","1000_documents_schema_and_tables.sql","1001_documents_triggers.sql","1002_documents_rls_and_grants.sql","1003_documents_guard_owner.sql","1100_availability_tables.sql","1101_availability_triggers.sql","1102_availability_rls_and_grants.sql","1103_availability_directory_view.sql","1200_staff_alert_tables.sql","1201_staff_alert_rls_and_grants.sql","1300_flow_tables.sql","1301_flow_triggers.sql","1302_flow_rls_and_grants.sql","1303_flow_notification_insert_grant.sql","1400_calendar_sync_tables.sql","1401_calendar_sync_triggers.sql","1402_calendar_sync_rls_and_grants.sql","1403_scheduling_replace_busy_blocks.sql","1500_telehealth_tables.sql","1501_telehealth_triggers.sql","1502_telehealth_rls_and_grants.sql","1600_merge_guard_single.sql","1601_drop_merge_guard_copies.sql","1602_revoke_guard_drop_usage.sql"],"pending":["0001_kernel_schema_and_helpers.sql","0002_kernel_tables.sql","0003_kernel_rls_and_grants.sql","0100_queue_schema.sql","0200_audit_event.sql","0201_audit_anchor.sql","0202_audit_btg_and_export.sql","0203_audit_rls_and_grants.sql","0300_organisation_schema_and_tables.sql","0301_organisation_rls_and_grants.sql","0302_organisation_directory_views.sql","0400_integration_core_tables.sql","0401_integration_core_rls_and_grants.sql","0402_integration_core_receive_inbound.sql","0500_identity_schema_and_tables.sql","0501_identity_triggers.sql","0502_identity_rls_and_grants.sql","0503_identity_public_clinician.sql","0600_notifications_schema_and_tables.sql","0601_notifications_rls_and_grants.sql","0602_notifications_receipt_lookup_index.sql","0700_patient_schema_and_tables.sql","0701_patient_triggers_and_guards.sql","0702_patient_rls_and_grants.sql","0703_patient_scope_functions.sql","0704_patient_matching_registration.sql","0705_patient_staff_policy_qualify.sql","0800_patient_merge_tables.sql","0801_patient_merge_triggers.sql","0802_patient_merge_rls_and_grants.sql","0803_patient_merge_functions.sql","0900_scheduling_schema_and_tables.sql","0901_scheduling_triggers.sql","0902_scheduling_rls_and_grants.sql","0903_scheduling_booking_functions.sql","0904_sec03_bind_definer_functions_to_caller.sql","0951_sec03_occupancy_column_grants.sql","0953_sec03_setting_column_grants.sql","1000_documents_schema_and_tables.sql","1001_documents_triggers.sql","1002_documents_rls_and_grants.sql","1003_documents_guard_owner.sql","1100_availability_tables.sql","1101_availability_triggers.sql","1102_availability_rls_and_grants.sql","1103_availability_directory_view.sql","1200_staff_alert_tables.sql","1201_staff_alert_rls_and_grants.sql","1300_flow_tables.sql","1301_flow_triggers.sql","1302_flow_rls_and_grants.sql","1303_flow_notification_insert_grant.sql","1400_calendar_sync_tables.sql","1401_calendar_sync_triggers.sql","1402_calendar_sync_rls_and_grants.sql","1403_scheduling_replace_busy_blocks.sql","1500_telehealth_tables.sql","1501_telehealth_triggers.sql","1502_telehealth_rls_and_grants.sql","1600_merge_guard_single.sql","1601_drop_merge_guard_copies.sql","1602_revoke_guard_drop_usage.sql"]}
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+▶ queue on FORCEd tables
+  ✔ (a) enqueue commits with the business change and rolls back with it (32.473628ms)
+[worker(worker-772f124dd93e93b794)] INFO: Completed task 2 (f04.probe, 0.11ms) with success
+[worker(worker-772f124dd93e93b794)] INFO: Completed task 3 (f04.probe, 0.03ms) with success
+  ✔ (b) app_worker dequeues under FORCE; the table owner and app_api cannot read (52.067742ms)
+  ✔ (c) max attempts are carried on the job (19.008044ms)
+  ✔ (d) dead jobs are visible (attempts >= max_attempts) (19.05364ms)
+  ✔ app_api is refused DELETE and the views (BR-F04-2 evidence of the actual grants) (3.966422ms)
+[worker(worker-bb69c30bdc659a1e52)] ERROR: Failed task 6 (f04.probe, 0.11ms, attempt 1 of 3) with error 'synthetic failure':
+  Error: synthetic failure
+      at f04.probe (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/packages/kernel/dist/queue/queue.dbtest.js:201:27)
+      at doNext (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/node_modules/.pnpm/graphile-worker@0.18.0_supports-color@10.2.2_typescript@5.9.3/node_modules/graphile-worker/dist/worker.js:191:32)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+  ✔ (c) back-off: a failing job is rescheduled later with attempts incremented (32.299832ms)
+  ✔ publish fans out one job per registered handler in the caller transaction (31.645765ms)
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+  ✔ install is repeatable after the ownership handover and keeps the hardening (56.987292ms)
+  ✔ A-1 app_api: direct SELECT/INSERT/UPDATE/DELETE on every queue table, view and sequence are refused (14.997539ms)
+  ✔ A-1 app_api: library functions are refused (add_job, get_job, reschedule_jobs, permanently_fail_jobs, force_unlock_workers) (7.758256ms)
+  ✔ A-1 refused identifiers: unknown, system, data_repair, malformed; nothing is stored (12.857313ms)
+  ✔ A-1 the task_type CHECK refuses api_enqueue for system and data_repair (5.067267ms)
+  ✔ A-1 each argument bound is refused at limit + 1 and accepted at the limit (23.369477ms)
+  ✔ A-1 max_attempts comes from task_type; a job key from task A cannot replace task B's job (19.417934ms)
+  ✔ A-1 replace mode: same task and key replaces the unstarted job (20.656366ms)
+  ✔ A-1 hostile search_path and temp-schema shadowing have no effect (25.570326ms)
+  ✔ A-1 enqueue commits and rolls back with the caller transaction (21.49554ms)
+  ✔ A-1 a type missing from task_type fails closed and rolls the caller back (6.864078ms)
+[worker(worker-ac3742a84abc7ce744)] INFO: Completed task 13 (f04.probe, 0.07ms) with success
+[worker(worker-ac3742a84abc7ce744)] INFO: Completed task 10 (beta.on_created, 0.08ms) with success
+[worker(worker-ac3742a84abc7ce744)] INFO: Completed task 9 (alpha.on_created, 0.05ms) with success
+[worker(worker-ac3742a84abc7ce744)] INFO: Completed task 11 (f04.probe, 0.01ms) with success
+[worker(worker-ac3742a84abc7ce744)] INFO: Completed task 12 (f04.probe, 0.01ms) with success
+[worker(worker-ac3742a84abc7ce744)] INFO: Completed task 16 (f04.probe, 0.02ms) with success
+[worker(worker-ac3742a84abc7ce744)] INFO: Completed task 21 (f04.probe, 0.01ms) with success
+[worker(worker-ac3742a84abc7ce744)] INFO: Completed task 24 (ops.repair, 0.04ms) with success
+[worker(worker-ac3742a84abc7ce744)] INFO: Completed task 15 (f04.probe, 0.01ms) with success
+  ✔ A-1 app_worker: direct add_job in the same namespace and the dequeue cycle still work (33.587028ms)
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+  ✔ A-1 install revoked every app_api right in queue and a repeat install keeps it (73.463425ms)
+✔ queue on FORCEd tables (2556.6269ms)
+bootstrap 0001_roles.sql
+applying 0001_kernel_schema_and_helpers.sql
+applying 0002_kernel_tables.sql
+applying 0003_kernel_rls_and_grants.sql
+applying 0100_queue_schema.sql
+applying 0200_audit_event.sql
+applying 0201_audit_anchor.sql
+applying 0202_audit_btg_and_export.sql
+applying 0203_audit_rls_and_grants.sql
+applying 0300_organisation_schema_and_tables.sql
+applying 0301_organisation_rls_and_grants.sql
+applying 0302_organisation_directory_views.sql
+applying 0400_integration_core_tables.sql
+applying 0401_integration_core_rls_and_grants.sql
+applying 0402_integration_core_receive_inbound.sql
+applying 0500_identity_schema_and_tables.sql
+applying 0501_identity_triggers.sql
+applying 0502_identity_rls_and_grants.sql
+applying 0503_identity_public_clinician.sql
+applying 0600_notifications_schema_and_tables.sql
+applying 0601_notifications_rls_and_grants.sql
+applying 0602_notifications_receipt_lookup_index.sql
+applying 0700_patient_schema_and_tables.sql
+applying 0701_patient_triggers_and_guards.sql
+applying 0702_patient_rls_and_grants.sql
+applying 0703_patient_scope_functions.sql
+applying 0704_patient_matching_registration.sql
+applying 0705_patient_staff_policy_qualify.sql
+applying 0800_patient_merge_tables.sql
+applying 0801_patient_merge_triggers.sql
+applying 0802_patient_merge_rls_and_grants.sql
+applying 0803_patient_merge_functions.sql
+applying 0900_scheduling_schema_and_tables.sql
+applying 0901_scheduling_triggers.sql
+applying 0902_scheduling_rls_and_grants.sql
+applying 0903_scheduling_booking_functions.sql
+applying 0904_sec03_bind_definer_functions_to_caller.sql
+applying 0951_sec03_occupancy_column_grants.sql
+applying 0953_sec03_setting_column_grants.sql
+applying 1000_documents_schema_and_tables.sql
+applying 1001_documents_triggers.sql
+applying 1002_documents_rls_and_grants.sql
+applying 1003_documents_guard_owner.sql
+applying 1100_availability_tables.sql
+applying 1101_availability_triggers.sql
+applying 1102_availability_rls_and_grants.sql
+applying 1103_availability_directory_view.sql
+applying 1200_staff_alert_tables.sql
+applying 1201_staff_alert_rls_and_grants.sql
+applying 1300_flow_tables.sql
+applying 1301_flow_triggers.sql
+applying 1302_flow_rls_and_grants.sql
+applying 1303_flow_notification_insert_grant.sql
+applying 1400_calendar_sync_tables.sql
+applying 1401_calendar_sync_triggers.sql
+applying 1402_calendar_sync_rls_and_grants.sql
+applying 1403_scheduling_replace_busy_blocks.sql
+applying 1500_telehealth_tables.sql
+applying 1501_telehealth_triggers.sql
+applying 1502_telehealth_rls_and_grants.sql
+applying 1600_merge_guard_single.sql
+applying 1601_drop_merge_guard_copies.sql
+applying 1602_revoke_guard_drop_usage.sql
+{"applied":["0001_kernel_schema_and_helpers.sql","0002_kernel_tables.sql","0003_kernel_rls_and_grants.sql","0100_queue_schema.sql","0200_audit_event.sql","0201_audit_anchor.sql","0202_audit_btg_and_export.sql","0203_audit_rls_and_grants.sql","0300_organisation_schema_and_tables.sql","0301_organisation_rls_and_grants.sql","0302_organisation_directory_views.sql","0400_integration_core_tables.sql","0401_integration_core_rls_and_grants.sql","0402_integration_core_receive_inbound.sql","0500_identity_schema_and_tables.sql","0501_identity_triggers.sql","0502_identity_rls_and_grants.sql","0503_identity_public_clinician.sql","0600_notifications_schema_and_tables.sql","0601_notifications_rls_and_grants.sql","0602_notifications_receipt_lookup_index.sql","0700_patient_schema_and_tables.sql","0701_patient_triggers_and_guards.sql","0702_patient_rls_and_grants.sql","0703_patient_scope_functions.sql","0704_patient_matching_registration.sql","0705_patient_staff_policy_qualify.sql","0800_patient_merge_tables.sql","0801_patient_merge_triggers.sql","0802_patient_merge_rls_and_grants.sql","0803_patient_merge_functions.sql","0900_scheduling_schema_and_tables.sql","0901_scheduling_triggers.sql","0902_scheduling_rls_and_grants.sql","0903_scheduling_booking_functions.sql","0904_sec03_bind_definer_functions_to_caller.sql","0951_sec03_occupancy_column_grants.sql","0953_sec03_setting_column_grants.sql","1000_documents_schema_and_tables.sql","1001_documents_triggers.sql","1002_documents_rls_and_grants.sql","1003_documents_guard_owner.sql","1100_availability_tables.sql","1101_availability_triggers.sql","1102_availability_rls_and_grants.sql","1103_availability_directory_view.sql","1200_staff_alert_tables.sql","1201_staff_alert_rls_and_grants.sql","1300_flow_tables.sql","1301_flow_triggers.sql","1302_flow_rls_and_grants.sql","1303_flow_notification_insert_grant.sql","1400_calendar_sync_tables.sql","1401_calendar_sync_triggers.sql","1402_calendar_sync_rls_and_grants.sql","1403_scheduling_replace_busy_blocks.sql","1500_telehealth_tables.sql","1501_telehealth_triggers.sql","1502_telehealth_rls_and_grants.sql","1600_merge_guard_single.sql","1601_drop_merge_guard_copies.sql","1602_revoke_guard_drop_usage.sql"],"pending":["0001_kernel_schema_and_helpers.sql","0002_kernel_tables.sql","0003_kernel_rls_and_grants.sql","0100_queue_schema.sql","0200_audit_event.sql","0201_audit_anchor.sql","0202_audit_btg_and_export.sql","0203_audit_rls_and_grants.sql","0300_organisation_schema_and_tables.sql","0301_organisation_rls_and_grants.sql","0302_organisation_directory_views.sql","0400_integration_core_tables.sql","0401_integration_core_rls_and_grants.sql","0402_integration_core_receive_inbound.sql","0500_identity_schema_and_tables.sql","0501_identity_triggers.sql","0502_identity_rls_and_grants.sql","0503_identity_public_clinician.sql","0600_notifications_schema_and_tables.sql","0601_notifications_rls_and_grants.sql","0602_notifications_receipt_lookup_index.sql","0700_patient_schema_and_tables.sql","0701_patient_triggers_and_guards.sql","0702_patient_rls_and_grants.sql","0703_patient_scope_functions.sql","0704_patient_matching_registration.sql","0705_patient_staff_policy_qualify.sql","0800_patient_merge_tables.sql","0801_patient_merge_triggers.sql","0802_patient_merge_rls_and_grants.sql","0803_patient_merge_functions.sql","0900_scheduling_schema_and_tables.sql","0901_scheduling_triggers.sql","0902_scheduling_rls_and_grants.sql","0903_scheduling_booking_functions.sql","0904_sec03_bind_definer_functions_to_caller.sql","0951_sec03_occupancy_column_grants.sql","0953_sec03_setting_column_grants.sql","1000_documents_schema_and_tables.sql","1001_documents_triggers.sql","1002_documents_rls_and_grants.sql","1003_documents_guard_owner.sql","1100_availability_tables.sql","1101_availability_triggers.sql","1102_availability_rls_and_grants.sql","1103_availability_directory_view.sql","1200_staff_alert_tables.sql","1201_staff_alert_rls_and_grants.sql","1300_flow_tables.sql","1301_flow_triggers.sql","1302_flow_rls_and_grants.sql","1303_flow_notification_insert_grant.sql","1400_calendar_sync_tables.sql","1401_calendar_sync_triggers.sql","1402_calendar_sync_rls_and_grants.sql","1403_scheduling_replace_busy_blocks.sql","1500_telehealth_tables.sql","1501_telehealth_triggers.sql","1502_telehealth_rls_and_grants.sql","1600_merge_guard_single.sql","1601_drop_merge_guard_copies.sql","1602_revoke_guard_drop_usage.sql"]}
+▶ withScope and idempotency on PostgreSQL
+  ✔ RLS under withScope: an organisation sees only its rows; a handle without scope sees none (15.282554ms)
+  ✔ settings do not leak past the transaction (transaction-local) (1.747799ms)
+  ✔ concurrent duplicate keys give one write and one replay; a different body gives a conflict (162.740932ms)
+✔ withScope and idempotency on PostgreSQL (2070.679623ms)
+ℹ tests 23
+ℹ suites 2
+ℹ pass 23
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2665.158131
+== suite api (26 file(s), /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b)
+bootstrap 0001_roles.sql
+applying 0001_kernel_schema_and_helpers.sql
+applying 0002_kernel_tables.sql
+applying 0003_kernel_rls_and_grants.sql
+applying 0100_queue_schema.sql
+applying 0200_audit_event.sql
+applying 0201_audit_anchor.sql
+applying 0202_audit_btg_and_export.sql
+applying 0203_audit_rls_and_grants.sql
+applying 0300_organisation_schema_and_tables.sql
+applying 0301_organisation_rls_and_grants.sql
+applying 0302_organisation_directory_views.sql
+applying 0400_integration_core_tables.sql
+applying 0401_integration_core_rls_and_grants.sql
+applying 0402_integration_core_receive_inbound.sql
+applying 0500_identity_schema_and_tables.sql
+applying 0501_identity_triggers.sql
+applying 0502_identity_rls_and_grants.sql
+applying 0503_identity_public_clinician.sql
+applying 0600_notifications_schema_and_tables.sql
+applying 0601_notifications_rls_and_grants.sql
+applying 0602_notifications_receipt_lookup_index.sql
+applying 0700_patient_schema_and_tables.sql
+applying 0701_patient_triggers_and_guards.sql
+applying 0702_patient_rls_and_grants.sql
+applying 0703_patient_scope_functions.sql
+applying 0704_patient_matching_registration.sql
+applying 0705_patient_staff_policy_qualify.sql
+applying 0800_patient_merge_tables.sql
+applying 0801_patient_merge_triggers.sql
+applying 0802_patient_merge_rls_and_grants.sql
+applying 0803_patient_merge_functions.sql
+applying 0900_scheduling_schema_and_tables.sql
+applying 0901_scheduling_triggers.sql
+applying 0902_scheduling_rls_and_grants.sql
+applying 0903_scheduling_booking_functions.sql
+applying 0904_sec03_bind_definer_functions_to_caller.sql
+applying 0951_sec03_occupancy_column_grants.sql
+applying 0953_sec03_setting_column_grants.sql
+applying 1000_documents_schema_and_tables.sql
+applying 1001_documents_triggers.sql
+applying 1002_documents_rls_and_grants.sql
+applying 1003_documents_guard_owner.sql
+applying 1100_availability_tables.sql
+applying 1101_availability_triggers.sql
+applying 1102_availability_rls_and_grants.sql
+applying 1103_availability_directory_view.sql
+applying 1200_staff_alert_tables.sql
+applying 1201_staff_alert_rls_and_grants.sql
+applying 1300_flow_tables.sql
+applying 1301_flow_triggers.sql
+applying 1302_flow_rls_and_grants.sql
+applying 1303_flow_notification_insert_grant.sql
+applying 1400_calendar_sync_tables.sql
+applying 1401_calendar_sync_triggers.sql
+applying 1402_calendar_sync_rls_and_grants.sql
+applying 1403_scheduling_replace_busy_blocks.sql
+applying 1500_telehealth_tables.sql
+applying 1501_telehealth_triggers.sql
+applying 1502_telehealth_rls_and_grants.sql
+applying 1600_merge_guard_single.sql
+applying 1601_drop_merge_guard_copies.sql
+applying 1602_revoke_guard_drop_usage.sql
+{"applied":["0001_kernel_schema_and_helpers.sql","0002_kernel_tables.sql","0003_kernel_rls_and_grants.sql","0100_queue_schema.sql","0200_audit_event.sql","0201_audit_anchor.sql","0202_audit_btg_and_export.sql","0203_audit_rls_and_grants.sql","0300_organisation_schema_and_tables.sql","0301_organisation_rls_and_grants.sql","0302_organisation_directory_views.sql","0400_integration_core_tables.sql","0401_integration_core_rls_and_grants.sql","0402_integration_core_receive_inbound.sql","0500_identity_schema_and_tables.sql","0501_identity_triggers.sql","0502_identity_rls_and_grants.sql","0503_identity_public_clinician.sql","0600_notifications_schema_and_tables.sql","0601_notifications_rls_and_grants.sql","0602_notifications_receipt_lookup_index.sql","0700_patient_schema_and_tables.sql","0701_patient_triggers_and_guards.sql","0702_patient_rls_and_grants.sql","0703_patient_scope_functions.sql","0704_patient_matching_registration.sql","0705_patient_staff_policy_qualify.sql","0800_patient_merge_tables.sql","0801_patient_merge_triggers.sql","0802_patient_merge_rls_and_grants.sql","0803_patient_merge_functions.sql","0900_scheduling_schema_and_tables.sql","0901_scheduling_triggers.sql","0902_scheduling_rls_and_grants.sql","0903_scheduling_booking_functions.sql","0904_sec03_bind_definer_functions_to_caller.sql","0951_sec03_occupancy_column_grants.sql","0953_sec03_setting_column_grants.sql","1000_documents_schema_and_tables.sql","1001_documents_triggers.sql","1002_documents_rls_and_grants.sql","1003_documents_guard_owner.sql","1100_availability_tables.sql","1101_availability_triggers.sql","1102_availability_rls_and_grants.sql","1103_availability_directory_view.sql","1200_staff_alert_tables.sql","1201_staff_alert_rls_and_grants.sql","1300_flow_tables.sql","1301_flow_triggers.sql","1302_flow_rls_and_grants.sql","1303_flow_notification_insert_grant.sql","1400_calendar_sync_tables.sql","1401_calendar_sync_triggers.sql","1402_calendar_sync_rls_and_grants.sql","1403_scheduling_replace_busy_blocks.sql","1500_telehealth_tables.sql","1501_telehealth_triggers.sql","1502_telehealth_rls_and_grants.sql","1600_merge_guard_single.sql","1601_drop_merge_guard_copies.sql","1602_revoke_guard_drop_usage.sql"],"pending":["0001_kernel_schema_and_helpers.sql","0002_kernel_tables.sql","0003_kernel_rls_and_grants.sql","0100_queue_schema.sql","0200_audit_event.sql","0201_audit_anchor.sql","0202_audit_btg_and_export.sql","0203_audit_rls_and_grants.sql","0300_organisation_schema_and_tables.sql","0301_organisation_rls_and_grants.sql","0302_organisation_directory_views.sql","0400_integration_core_tables.sql","0401_integration_core_rls_and_grants.sql","0402_integration_core_receive_inbound.sql","0500_identity_schema_and_tables.sql","0501_identity_triggers.sql","0502_identity_rls_and_grants.sql","0503_identity_public_clinician.sql","0600_notifications_schema_and_tables.sql","0601_notifications_rls_and_grants.sql","0602_notifications_receipt_lookup_index.sql","0700_patient_schema_and_tables.sql","0701_patient_triggers_and_guards.sql","0702_patient_rls_and_grants.sql","0703_patient_scope_functions.sql","0704_patient_matching_registration.sql","0705_patient_staff_policy_qualify.sql","0800_patient_merge_tables.sql","0801_patient_merge_triggers.sql","0802_patient_merge_rls_and_grants.sql","0803_patient_merge_functions.sql","0900_scheduling_schema_and_tables.sql","0901_scheduling_triggers.sql","0902_scheduling_rls_and_grants.sql","0903_scheduling_booking_functions.sql","0904_sec03_bind_definer_functions_to_caller.sql","0951_sec03_occupancy_column_grants.sql","0953_sec03_setting_column_grants.sql","1000_documents_schema_and_tables.sql","1001_documents_triggers.sql","1002_documents_rls_and_grants.sql","1003_documents_guard_owner.sql","1100_availability_tables.sql","1101_availability_triggers.sql","1102_availability_rls_and_grants.sql","1103_availability_directory_view.sql","1200_staff_alert_tables.sql","1201_staff_alert_rls_and_grants.sql","1300_flow_tables.sql","1301_flow_triggers.sql","1302_flow_rls_and_grants.sql","1303_flow_notification_insert_grant.sql","1400_calendar_sync_tables.sql","1401_calendar_sync_triggers.sql","1402_calendar_sync_rls_and_grants.sql","1403_scheduling_replace_busy_blocks.sql","1500_telehealth_tables.sql","1501_telehealth_triggers.sql","1502_telehealth_rls_and_grants.sql","1600_merge_guard_single.sql","1601_drop_merge_guard_copies.sql","1602_revoke_guard_drop_usage.sql"]}
+▶ audit module on PostgreSQL 17 (BE-01)
+  ▶ TC-AU-01: record() writes the envelope in the caller transaction
+    ✔ actor, realm, audience and organisation come from the scope, not from the caller (84.021886ms)
+    ✔ rolls back with the caller: a failed business transaction leaves no audit row (6.211474ms)
+    ✔ print, search, export, download and update actions are all accepted; the closed list refuses others (11.987772ms)
+    ✔ envelope rules: reason required for export and BTG, request or job id required, secrets only as version ids (11.882344ms)
+    ✔ RLS: another organisation, the anonymous audience and a missing scope cannot write (63.64851ms)
+    ✔ concurrent writers do not wait on each other: 40 records over 6 connections all commit (117.283863ms)
+  ✔ TC-AU-01: record() writes the envelope in the caller transaction (296.246021ms)
+  ▶ TC-AU-02: an audit failure rolls the business change back
+    ✔ with injection: the change and the read both fail and nothing persists; without: both commit (8.526266ms)
+  ✔ TC-AU-02: an audit failure rolls the business change back (8.809289ms)
+  ▶ TC-AU-03: the denial path
+    ✔ a denial is written in a separate transaction with its reason (70.956121ms)
+    ✔ the business transaction can roll back first and the denial row still persists (3.673272ms)
+    ✔ if the denial write fails: no throw (fail closed), logged by class, operations alert hook called (10.575743ms)
+    ✔ an envelope that is itself invalid is reported the same way: never thrown to the denial path (0.402936ms)
+  ✔ TC-AU-03: the denial path (86.034561ms)
+  ▶ TC-AU-04 (corrected per SA-TC-06): unbounded transactions are refused
+    ✔ step 1: transaction_timeout unset (0) -> PA001, no row (14.178102ms)
+    ✔ step 2: above the bound (61 s, and 120 s) -> PA001, no row (79.847804ms)
+    ✔ step 3: app_owner -> privilege error 42501 (no INSERT grant), raised before the trigger (8.729268ms)
+    ✔ step 4 (positive control): at or below the bound -> written; the role-level 60 s of app_api works as set (95.69684ms)
+  ✔ TC-AU-04 (corrected per SA-TC-06): unbounded transactions are refused (198.818612ms)
+  ▶ TC-AU-05: nobody can UPDATE or DELETE an audit row
+    ✔ app_api cannot UPDATE or DELETE audit.event (privilege error 42501) (14.158013ms)
+    ✔ app_worker cannot UPDATE or DELETE audit.event (privilege error 42501) (14.735148ms)
+    ✔ app_owner cannot UPDATE or DELETE audit.event (privilege error 42501) (69.444675ms)
+    ✔ audit_archiver cannot UPDATE or DELETE audit.event (privilege error 42501) (16.266811ms)
+    ✔ reporting_ro cannot UPDATE or DELETE audit.event (privilege error 42501) (11.928982ms)
+    ✔ app_api cannot UPDATE or DELETE audit.anchor (privilege error 42501) (72.827943ms)
+    ✔ app_worker cannot UPDATE or DELETE audit.anchor (privilege error 42501) (20.770751ms)
+    ✔ app_owner cannot UPDATE or DELETE audit.anchor (privilege error 42501) (69.908425ms)
+    ✔ audit_archiver cannot UPDATE or DELETE audit.anchor (privilege error 42501) (14.437939ms)
+    ✔ reporting_ro cannot UPDATE or DELETE audit.anchor (privilege error 42501) (12.72202ms)
+    ✔ even a superuser is refused by the trigger: UPDATE, DELETE, TRUNCATE on the table and on a partition (193.043807ms)
+    ✔ no role has INSERT/UPDATE/DELETE/TRUNCATE on any partition; app_owner has no privilege at all on the audit tables (3.291375ms)
+    ✔ the BTG grant is never deleted and its fixed columns never change (trigger, whoever asks) (92.653159ms)
+  ✔ TC-AU-05: nobody can UPDATE or DELETE an audit row (607.138662ms)
+  ▶ BTG: grants, activeBtgGrants, review
+    ✔ openBtg writes the grant, the btg_open audit row (with reason and grant id) and publishes audit.btg_opened (9.321068ms)
+    ✔ a reason shorter than 10 characters is refused; a trainee-style scope without a person is refused (2.205589ms)
+    ✔ a principal cannot open a grant for someone else (policy WITH CHECK) (1.336828ms)
+    ✔ activeBtgGrants: the holder sees its active grants; others see none; expired and revoked are excluded (67.097281ms)
+    ✔ review: self-review refused (403 audit.self_review) in the service and by the database trigger (4.670473ms)
+    ✔ review: a staff principal without the btg_grants slice cannot review or see the grant (1.569444ms)
+    ✔ review: the compliance reviewer records the outcome once; a second review is an invalid transition (9.382433ms)
+  ✔ BTG: grants, activeBtgGrants, review (96.03271ms)
+  ▶ TC-AU-06: the compliance viewer
+    ✔ shows who, what, when, from where; no PHI columns; audits the query itself; 31-day cap; slice-only (25.559716ms)
+  ✔ TC-AU-06: the compliance viewer (25.735536ms)
+  ▶ TC-AU-07: export request is size limited, queued, audited
+    ✔ over the limit -> 422 audit.export_too_large; within -> job row, export audit row with reason, chunk 0 enqueued (65.723133ms)
+    ✔ a principal without the audit_events slice cannot create an export job; the time range is required (2.416353ms)
+  ✔ TC-AU-07: export request is size limited, queued, audited (68.329263ms)
+  ▶ disclosuresFor and the schema as seen by the pipeline
+    ✔ disclosuresFor pages by (occurred_at, event_id) for a system scope and refuses bad input (37.496974ms)
+    ✔ the audit tables are partitioned by month and the default partition exists (1.718294ms)
+  ✔ disclosuresFor and the schema as seen by the pipeline (39.410113ms)
+✔ audit module on PostgreSQL 17 (BE-01) (3713.637566ms)
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+▶ the doctor's calendar link and the OAuth callback (SA-DP-06)
+  ✔ status of a doctor who has not linked; a front-desk user and an anonymous caller are refused (131.304881ms)
+  ✔ start: a pending link and the Google consent URL with state, PKCE S256 and the two minimal scopes (69.035658ms)
+  ✔ callback with a bad, foreign, expired or tampered state is 400: nothing is exchanged and nothing is stored (72.785534ms)
+  ✔ the doctor declines at Google (?error): redirect "denied", nothing exchanged (11.875412ms)
+  ✔ a rejected code or a missing refresh token: redirect "error", nothing stored, the link stays pending (34.00926ms)
+  ✔ the secret store is down: 503, no reference, no audit row, the link is not activated (18.1588ms)
+  ✔ a valid callback: token stored ONLY as an outbound reference, link active, first listing and watch enqueued, audit by version ID (59.908562ms)
+  ✔ canary: no token, code or state value is in any log, response, job payload, audit row, table or error (94.92313ms)
+  ✔ a replay of the same callback writes no second secret version (idempotent store token) (97.308034ms)
+  ✔ a state signed by the PREVIOUS key is accepted (rotation); a state signed by an unknown key is not (49.473996ms)
+  ✔ unlink: the link is removed, a cleanup job is queued, a second unlink is 404, and another doctor cannot touch the link (38.61425ms)
+✔ the doctor's calendar link and the OAuth callback (SA-DP-06) (4022.584678ms)
+▶ Busy events from bookings (TC-CAL-01, TC-CAL-02, BR-07, BR-23)
+  ✔ a confirmed visit becomes ONE event titled "Busy": no patient, reason, service or diagnosis (TC-CAL-01/02) (60.297312ms)
+  ✔ a repeat push is idempotent: the same deterministic ID, one event, no duplicate (34.3) (35.721563ms)
+  ✔ a cancelled visit removes the event; a repeat delete calls Google no second time; a never-created one is skipped (27.098904ms)
+  ✔ reschedule: the old Busy event is deleted and the new booking gets one (94.919422ms)
+  ✔ a doctor with no active link: nothing is pushed and nothing is lost (22.012301ms)
+  ✔ a permanent refusal by Google (403 not rate-limited) is recorded `failed` and ends the job; an outage is retried (62.947224ms)
+  ✔ backfill: a new link pushes the bookings that already exist, once (28.311388ms)
+✔ Busy events from bookings (TC-CAL-01, TC-CAL-02, BR-07, BR-23) (336.701695ms)
+▶ a Google meeting becomes unavailable time (TC-CAL-03) and the full listing
+  ✔ a new link owes a listing: the timer calls nothing at Google and enqueues one keyed resync (50.244801ms)
+  ✔ full listing: meetings become busy blocks through replace_busy_blocks; cancelled, free, declined and our own events do not; titles never arrive (46.127737ms)
+  ✔ the busy interval is what slot search subtracts: an all-day event blocks the local day in the calendar zone (2.289226ms)
+  ✔ pagination: every page is read, outside a transaction, and the token comes from the last page (66.342425ms)
+  ✔ incremental: a changed event moves, a deleted one goes, an untouched one stays; synced_at moves for every kept block (27.141495ms)
+  ✔ Google is down during a listing: the old blocks stay, last_synced_at does not move, the job fails for the queue to retry (TC-CAL-04 data half) (73.875338ms)
+✔ a Google meeting becomes unavailable time (TC-CAL-03) and the full listing (271.605478ms)
+▶ the `410 Gone` sync-token rule and the null-token rule (QA-AL-01, SAR-IDF-03; TC-CAL-05 step 8)
+  ✔ Google rejects the stored token S1 with 410: S1 is discarded, its hash kept, ONE keyed resync enqueued, no busy block changes (7.648419ms)
+  ✔ a null token means a full listing is owed, never "wait": a repeated push or timer run calls nothing at Google and starts no second resync (60.761153ms)
+  ✔ the resync lists everything and replaces the set once: exactly one block for E, none lost or duplicated; a new token and last_synced_at are stored (13.432032ms)
+  ✔ a resync that went dead is enqueued again by the next timer run, and recovers the link without manual action (96.723888ms)
+  ✔ a failing listing leaves the old blocks and last_synced_at (the stale warning shows) and fails for retry; exhausted jobs are the next timer run's (87.106824ms)
+  ✔ a new link needs no 410: the callback enqueues the first listing (marker initial) and it fills the busy blocks (102.482052ms)
+  ✔ two resyncs racing for one link: exactly one writes, the other is superseded; the set is whole and unduplicated (33.400137ms)
+  ✔ the timer sweep: a null token owes a resync, a token gets an incremental job, revoked and pending links are left alone (113.437276ms)
+✔ the `410 Gone` sync-token rule and the null-token rule (QA-AL-01, SAR-IDF-03; TC-CAL-05 step 8) (530.871976ms)
+▶ the Google push route (ARCHITECTURE 29.5; TC-CAL-05 steps 1-7)
+  ✔ the worker's channel token and the API verifier's token function are the same bytes (0.416983ms)
+  ✔ the API role cannot read watch_channel at all: a push is verified without a table read (TDR-05) (29.284174ms)
+  ✔ 1, 2, 7: a wrong HMAC, a token for another channel, an expired token, a bogus resource state: 401/400, nothing recorded, no job (10.286991ms)
+  ✔ 3: a valid token (message 5): 200, one stored message, one dispatch job; the handler checks the channel and starts ONE incremental sync that adds exactly one block (62.738613ms)
+  ✔ 4: the same message number again is a duplicate: 200, no second stored message, no second job, no second fetch (4.737539ms)
+  ✔ 5: a LOWER message number has a new key, so one more idempotent sync may run; the data does not change (71.047371ms)
+  ✔ 6: a validly signed token for a channel with no active watch_channel row: 200, the worker ignores it, no sync, no change (16.778851ms)
+  ✔ a message the API stored for a real channel but the WRONG resource ID (a forged store, DF-3), and the `sync` handshake, start no sync (80.339047ms)
+  ✔ key rotation: a token signed with the PREVIOUS key version is accepted until the daily renewal replaces it (4.72765ms)
+  ✔ a burst of pushes is one sync: the incremental job is keyed by doctor (119.45151ms)
+✔ the Google push route (ARCHITECTURE 29.5; TC-CAL-05 steps 1-7) (479.427304ms)
+▶ watch channels (calendar_sync.renew_watch, ARCHITECTURE 29.5)
+  ✔ registers a channel with the HMAC token under the CURRENT key version; nothing about the token is stored (116.439278ms)
+  ✔ a renewal registers the new channel BEFORE it stops the old one, then drops the old row (81.414744ms)
+  ✔ the daily sweep renews only what needs it: no channel, under 36 h left, or an older key version; expired rows are dropped (120.710653ms)
+  ✔ a link that is not active gets no channel; a revoked grant at Google breaks the link visibly (59.083254ms)
+✔ watch channels (calendar_sync.renew_watch, ARCHITECTURE 29.5) (378.173948ms)
+▶ a revoked grant is visible, not silent (TC-CAL-06, BR-33)
+  ✔ the doctor revokes the app at Google: the next sync marks the link token_revoked, raises ONE link_broken event, frees no slot (84.175463ms)
+  ✔ a push for a booking on a revoked grant records the failure and breaks nothing else (73.910856ms)
+  ✔ the doctor links again: the link recovers and the first listing runs (104.851237ms)
+✔ a revoked grant is visible, not silent (TC-CAL-06, BR-33) (299.046584ms)
+▶ unlink cleanup (departure D3)
+  ✔ clears busy blocks, channels and Busy events of an unlinked doctor, and does nothing when the doctor linked again (117.673244ms)
+✔ unlink cleanup (departure D3) (117.968318ms)
+▶ scheduling.replace_busy_blocks: the one writer of busy_block (departure D1)
+  ✔ replaces the doctor's google blocks with exactly the given set: insert, keep and refresh, delete; another doctor's rows are untouched (22.585045ms)
+  ✔ bad arguments are refused (22023): mismatched or duplicate or short hashes, open, empty or inclusive-end periods, too long a block (47.479784ms)
+  ✔ only an organisation-wide system job may call it; no API role can (42501) (7.703634ms)
+  ✔ no application role can write busy_block directly (16.614924ms)
+  ✔ concurrent replacements for one doctor serialise: the result is one whole set, never a mix (20 rounds) (145.35988ms)
+✔ scheduling.replace_busy_blocks: the one writer of busy_block (departure D1) (248.915566ms)
+▶ row-level security, grants and triggers of calendar_sync (SA-DP-06 database half)
+  ✔ a doctor sees, changes and deletes only their own link; the sync token is not readable by the API role (35.408786ms)
+  ✔ a new link starts pending, names only its own secret, and cannot become active without a stored token reference (PS001) (29.541397ms)
+  ✔ no API role has any right on watch_channel or event_map; the worker cannot create or delete a link (28.344502ms)
+  ✔ the doctor's write of an outbound secret reference is limited to their own name, class outbound, and the google_calendar connection (32.203131ms)
+  ✔ event_map and busy-event state: a mapping keeps its identity, and its occupancy is real (25.158293ms)
+✔ row-level security, grants and triggers of calendar_sync (SA-DP-06 database half) (193.746366ms)
+▶ job types and events (ARCHITECTURE 33.1)
+  ✔ the API list and the worker list are the same, and the crontab matches 33.1 (0.518603ms)
+  ✔ payloads are IDs only: a UUID-shaped or `initial` marker passes; a 64-character hex token hash would be refused (0.639661ms)
+  ✔ the three booking events reach calendar-sync and no other module's job is touched (10.468401ms)
+✔ job types and events (ARCHITECTURE 33.1) (11.875059ms)
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+▶ documents (BE-10) on PostgreSQL 17
+  ✔ the job types are the same on both sides, each declares on_merged where it carries a patient, and the queue knows them (4.470708ms)
+  ✔ TC-DOC-01: nobody opens an upload until it is scanned clean; then staff classify and confirm it (1018.297867ms)
+  ✔ an upload request is idempotent: the same key is the same document and one row (186.696769ms)
+  ✔ TC-DOC-02: an infected file is quarantined, never served, and operations are told (stub verdict, NOT a real scanner) (430.730937ms)
+  ✔ TC-DOC-03: oversize, mismatched-type and double-extension uploads are refused with safe errors (1079.804149ms)
+  ✔ uploads per day follow the setting (31.1) (126.502059ms)
+  ✔ TC-DOC-04: a deletion request under legal hold is refused with the reason recorded (429.389309ms)
+  ✖ TC-DOC-05: URLs are bound to one object, one method, one size and one moment; one patient cannot read another's file (180.910643ms)
+  ✔ TC-DOC-07: deletion is allowed only after the retention period and with no hold, through a request that is decided (1775.0604ms)
+  ✔ TC-DOC-08: with the scanner down the file stays unavailable, the failure is visible, nothing bypasses it (stub outage, NOT the real service) (486.47082ms)
+  ✔ a scan that never finishes: the version shows an error after 30 minutes, operations are alerted, and the job keeps trying (504.257582ms)
+  ✔ 38.2 item 11: a document scanning at merge time is re-pointed and served after the retried scan (592.340357ms)
+  ✔ merge participant: documents, versions and pending requests move; holds and decided requests are kept; counts add up (1121.192174ms)
+  ✔ database rules: who may take which step, what a version row may hold (193.389306ms)

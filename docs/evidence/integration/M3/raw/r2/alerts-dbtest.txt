@@ -1,0 +1,422 @@
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+▶ staff alerts and the alert stream on PostgreSQL 17 (BE-07)
+  ▶ migration rules (22.13, ADR-022)
+    ✖ T-STAFF fails closed until BE-08: a patient-bound alert is invisible to staff, an alert without a patient is not (14.745096ms)
+    ✔ install the T-STAFF stand-in (patient.staff_scope arrives with BE-08): the test replaces ONE function (4.042516ms)
+    ✖ ADR-022: admin-realm alert types never carry a patient ID, in the service and in the table (4.446051ms)
+    ✔ state rules: closed is final, status moves forward only, targets are only added, one event of each kind (20.151921ms)
+    ✔ every new table has FORCE ROW LEVEL SECURITY and no policy matches anonymous or public (5.976625ms)
+  ✖ migration rules (22.13, ADR-022) (50.444017ms)
+  ▶ escalatesAt and escalationLevel (TC-PC-16 steps 1-2, AL-02)
+    ✖ null rule: no configured time -> null in list, open-ids, stream and no job; configured -> equal in all three places (3.353493ms)
+    ✖ the clinical setting red_flag_escalation_minutes is the fallback for red_flag; the alert-setting row wins; other types have none (5.496653ms)
+    ✔ settings are validated and admin-realm only (12.768187ms)
+  ✖ escalatesAt and escalationLevel (TC-PC-16 steps 1-2, AL-02) (22.063477ms)
+  ▶ acknowledge (TC-PC-16 steps 3-4)
+    ✔ two simultaneous acknowledgements both get 200 with exactly one acknowledged event; escalatesAt null after (86.222146ms)
+    ✔ the same Idempotency-Key replays the first answer; a reused key for another alert conflicts; the key is required (56.549742ms)
+    ✔ a principal who is not a target gets 404 kernel.not_found, with no side effect (24.869823ms)
+    ✔ an admin-realm principal (compliance) reads and acknowledges an alert of a compliance type in its own scope; no patient anywhere (9.523118ms)
+  ✔ acknowledge (TC-PC-16 steps 3-4) (177.618721ms)
+  ▶ escalation job (32.4, TC-PC-16 step 5)
+    ✖ the job does nothing after an acknowledge (no escalated event, no status change, nothing published) (2.902876ms)
+    ✖ an unacknowledged alert escalates once: level 1, status escalated, escalate_at cleared, one event, event published; a repeat does nothing (2.902376ms)
+    ✔ acknowledge racing the escalation job: one consistent outcome, one event of each kind (105.744556ms)
+    ✖ an alert without a patient escalates in an org scope; the job refuses a staff scope and a bad level (11.801232ms)
+  ✖ escalation job (32.4, TC-PC-16 step 5) (123.875995ms)
+  ▶ targets (ADR-022) and row-level security
+    ✖ role and permission targets are resolved to principals at creation, de-duplicated; unresolvable targets are refused (3.010769ms)
+    ✔ a rolled-back alert leaves no row, no event, no job and sends no notification (312.07639ms)
+    ✔ the NOTIFY payload is IDs only, below 8,000 bytes, and broadcast beyond 100 targets (69.295348ms)
+    ✖ RLS: the creator of a red flag reads it back in her own transaction but never in a tray; a non-target reads nothing; staff cannot forge other types (5.237907ms)
+    ✔ the anonymous and patient audiences read and write nothing (5.577686ms)
+  ✖ targets (ADR-022) and row-level security (395.650319ms)
+  ▶ the alert stream (38.2 item 6, ARCHITECTURE 32)
+    ✔ an outdated, malformed or missing clientRelease is refused with a plain 400 before any event; a current one connects (16.955694ms)
+    ✖ replay on reconnect in seq order after Last-Event-ID; live alerts through the real LISTEN/NOTIFY; alert_closed to the other target (2.338337ms)
+    ✖ event data is the closed field list: no PHI, no free text (SEC-01 ST-2); the patient ID never appears (7.291992ms)
+    ✔ resync instead of a replay when more than 200 alerts were missed (928.931289ms)
+    ✔ more than 3 streams per session: the oldest is closed with event: closed; the 10 per principal limit holds (93.784504ms)
+    ✔ kill switch: session_revoked closes the principal's streams at once with a final event: closed (12.132454ms)
+    ✔ ST-3: with the LISTEN connection dropped (fault injection) a revoked session's stream still closes within the bound; the stream then catches up (629.80198ms)
+    ✔ an alert raised while the LISTEN connection is down reaches an open stream after the hub reconnects (a lost NOTIFY delays an alert, never loses it) (518.556044ms)
+    ✔ an idle-expired session's stream closes at the next session check (338.973637ms)
+    ✔ a draining instance closes every stream with event: closed (9.944519ms)
+  ✖ the alert stream (38.2 item 6, ARCHITECTURE 32) (2559.565973ms)
+  ▶ merge and export contribution (22.16)
+    ✖ R states re-point, closed is kept, counts add up, events are kept; only a patients-scope job naming the IDs may run it (11.508253ms)
+  ✖ merge and export contribution (22.16) (11.959379ms)
+✖ staff alerts and the alert stream on PostgreSQL 17 (BE-07) (5058.874037ms)
+ℹ tests 32
+ℹ suites 8
+ℹ pass 20
+ℹ fail 12
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5413.8295
+
+✖ failing tests:
+
+test at apps/api/dist/src/modules/notifications/alerts/alerts.dbtest.js:262:9
+✖ T-STAFF fails closed until BE-08: a patient-bound alert is invisible to staff, an alert without a patient is not (14.745096ms)
+  error: patient not found
+      at /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/node_modules/.pnpm/pg@8.23.1/node_modules/pg/lib/client.js:694:17
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async AlertService.raise (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/notifications/alerts/service.js:74:26)
+      at async KernelDb.once (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/packages/kernel/dist/scope/with-scope.js:114:28)
+      at async KernelDb.run (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/packages/kernel/dist/scope/with-scope.js:92:24)
+      at async TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/notifications/alerts/alerts.dbtest.js:263:33)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async Promise.all (index 0) {
+    length: 144,
+    severity: 'ERROR',
+    code: 'PM008',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: 'PL/pgSQL function patient.guard_open_patient() line 19 at RAISE',
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'pl_exec.c',
+    line: '3897',
+    routine: 'exec_stmt_raise'
+  }
+
+test at apps/api/dist/src/modules/notifications/alerts/alerts.dbtest.js:293:9
+✖ ADR-022: admin-realm alert types never carry a patient ID, in the service and in the table (4.446051ms)
+  AssertionError [ERR_ASSERTION]: btg_opened
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/notifications/alerts/alerts.dbtest.js:311:17)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: error: patient not found
+        at /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/node_modules/.pnpm/pg@8.23.1/node_modules/pg/lib/client.js:694:17
+        at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        at async KernelDb.once (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/packages/kernel/dist/scope/with-scope.js:114:28)
+        at async KernelDb.run (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/packages/kernel/dist/scope/with-scope.js:92:24)
+        at async waitForActual (node:assert:646:5)
+        at async strict.rejects (node:assert:769:25)
+        at async TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/notifications/alerts/alerts.dbtest.js:311:17)
+        at async Test.run (node:internal/test_runner/test:1409:7)
+        at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7),
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at apps/api/dist/src/modules/notifications/alerts/alerts.dbtest.js:365:9
+✖ null rule: no configured time -> null in list, open-ids, stream and no job; configured -> equal in all three places (3.353493ms)
+  error: patient not found
+      at /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/node_modules/.pnpm/pg@8.23.1/node_modules/pg/lib/client.js:694:17
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async AlertService.raise (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/notifications/alerts/service.js:74:26)
+      at async KernelDb.once (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/packages/kernel/dist/scope/with-scope.js:114:28)
+      at async KernelDb.run (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/packages/kernel/dist/scope/with-scope.js:92:24)
+      at async TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/notifications/alerts/alerts.dbtest.js:367:26)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    length: 144,
+    severity: 'ERROR',
+    code: 'PM008',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: 'PL/pgSQL function patient.guard_open_patient() line 19 at RAISE',
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'pl_exec.c',
+    line: '3897',
+    routine: 'exec_stmt_raise'
+  }
+
+test at apps/api/dist/src/modules/notifications/alerts/alerts.dbtest.js:460:9
+✖ the clinical setting red_flag_escalation_minutes is the fallback for red_flag; the alert-setting row wins; other types have none (5.496653ms)
+  error: patient not found
+      at /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/node_modules/.pnpm/pg@8.23.1/node_modules/pg/lib/client.js:694:17
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async AlertService.raise (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/notifications/alerts/service.js:74:26)
+      at async KernelDb.once (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/packages/kernel/dist/scope/with-scope.js:114:28)
+      at async KernelDb.run (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/packages/kernel/dist/scope/with-scope.js:92:24)
+      at async TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/notifications/alerts/alerts.dbtest.js:464:23)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    length: 144,
+    severity: 'ERROR',
+    code: 'PM008',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: 'PL/pgSQL function patient.guard_open_patient() line 19 at RAISE',
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'pl_exec.c',
+    line: '3897',
+    routine: 'exec_stmt_raise'
+  }
+
+test at apps/api/dist/src/modules/notifications/alerts/alerts.dbtest.js:674:9
+✖ the job does nothing after an acknowledge (no escalated event, no status change, nothing published) (2.902876ms)
+  error: patient not found
+      at /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/node_modules/.pnpm/pg@8.23.1/node_modules/pg/lib/client.js:694:17
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async AlertService.raise (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/notifications/alerts/service.js:74:26)
+      at async KernelDb.once (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/packages/kernel/dist/scope/with-scope.js:114:28)
+      at async KernelDb.run (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/packages/kernel/dist/scope/with-scope.js:92:24)
+      at async TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/notifications/alerts/alerts.dbtest.js:675:23)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    length: 144,
+    severity: 'ERROR',
+    code: 'PM008',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: 'PL/pgSQL function patient.guard_open_patient() line 19 at RAISE',
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'pl_exec.c',
+    line: '3897',
+    routine: 'exec_stmt_raise'
+  }
+
+test at apps/api/dist/src/modules/notifications/alerts/alerts.dbtest.js:686:9
+✖ an unacknowledged alert escalates once: level 1, status escalated, escalate_at cleared, one event, event published; a repeat does nothing (2.902376ms)
+  error: patient not found
+      at /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/node_modules/.pnpm/pg@8.23.1/node_modules/pg/lib/client.js:694:17
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async AlertService.raise (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/notifications/alerts/service.js:74:26)
+      at async KernelDb.once (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/packages/kernel/dist/scope/with-scope.js:114:28)
+      at async KernelDb.run (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/packages/kernel/dist/scope/with-scope.js:92:24)
+      at async TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/notifications/alerts/alerts.dbtest.js:687:23)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    length: 144,
+    severity: 'ERROR',
+    code: 'PM008',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: 'PL/pgSQL function patient.guard_open_patient() line 19 at RAISE',
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'pl_exec.c',
+    line: '3897',
+    routine: 'exec_stmt_raise'
+  }
+
+test at apps/api/dist/src/modules/notifications/alerts/alerts.dbtest.js:752:9
+✖ an alert without a patient escalates in an org scope; the job refuses a staff scope and a bad level (11.801232ms)
+  error: patient not found
+      at /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/node_modules/.pnpm/pg@8.23.1/node_modules/pg/lib/client.js:694:17
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async AlertService.raise (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/notifications/alerts/service.js:74:26)
+      at async KernelDb.once (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/packages/kernel/dist/scope/with-scope.js:114:28)
+      at async KernelDb.run (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/packages/kernel/dist/scope/with-scope.js:92:24)
+      at async TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/notifications/alerts/alerts.dbtest.js:759:23)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    length: 144,
+    severity: 'ERROR',
+    code: 'PM008',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: 'PL/pgSQL function patient.guard_open_patient() line 19 at RAISE',
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'pl_exec.c',
+    line: '3897',
+    routine: 'exec_stmt_raise'
+  }
+
+test at apps/api/dist/src/modules/notifications/alerts/alerts.dbtest.js:771:9
+✖ role and permission targets are resolved to principals at creation, de-duplicated; unresolvable targets are refused (3.010769ms)
+  error: patient not found
+      at /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/node_modules/.pnpm/pg@8.23.1/node_modules/pg/lib/client.js:694:17
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async AlertService.raise (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/notifications/alerts/service.js:74:26)
+      at async KernelDb.once (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/packages/kernel/dist/scope/with-scope.js:114:28)
+      at async KernelDb.run (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/packages/kernel/dist/scope/with-scope.js:92:24)
+      at async TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/notifications/alerts/alerts.dbtest.js:777:23)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    length: 144,
+    severity: 'ERROR',
+    code: 'PM008',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: 'PL/pgSQL function patient.guard_open_patient() line 19 at RAISE',
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'pl_exec.c',
+    line: '3897',
+    routine: 'exec_stmt_raise'
+  }
+
+test at apps/api/dist/src/modules/notifications/alerts/alerts.dbtest.js:866:9
+✖ RLS: the creator of a red flag reads it back in her own transaction but never in a tray; a non-target reads nothing; staff cannot forge other types (5.237907ms)
+  error: patient not found
+      at /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/node_modules/.pnpm/pg@8.23.1/node_modules/pg/lib/client.js:694:17
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async AlertService.raise (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/notifications/alerts/service.js:74:26)
+      at async KernelDb.once (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/packages/kernel/dist/scope/with-scope.js:114:28)
+      at async KernelDb.run (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/packages/kernel/dist/scope/with-scope.js:92:24)
+      at async TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/notifications/alerts/alerts.dbtest.js:867:23)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    length: 144,
+    severity: 'ERROR',
+    code: 'PM008',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: 'PL/pgSQL function patient.guard_open_patient() line 19 at RAISE',
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'pl_exec.c',
+    line: '3897',
+    routine: 'exec_stmt_raise'
+  }
+
+test at apps/api/dist/src/modules/notifications/alerts/alerts.dbtest.js:954:9
+✖ replay on reconnect in seq order after Last-Event-ID; live alerts through the real LISTEN/NOTIFY; alert_closed to the other target (2.338337ms)
+  error: patient not found
+      at /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/node_modules/.pnpm/pg@8.23.1/node_modules/pg/lib/client.js:694:17
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async AlertService.raise (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/notifications/alerts/service.js:74:26)
+      at async KernelDb.once (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/packages/kernel/dist/scope/with-scope.js:114:28)
+      at async KernelDb.run (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/packages/kernel/dist/scope/with-scope.js:92:24)
+      at async TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/notifications/alerts/alerts.dbtest.js:963:24)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    length: 144,
+    severity: 'ERROR',
+    code: 'PM008',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: 'PL/pgSQL function patient.guard_open_patient() line 19 at RAISE',
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'pl_exec.c',
+    line: '3897',
+    routine: 'exec_stmt_raise'
+  }
+
+test at apps/api/dist/src/modules/notifications/alerts/alerts.dbtest.js:1007:9
+✖ event data is the closed field list: no PHI, no free text (SEC-01 ST-2); the patient ID never appears (7.291992ms)
+  error: patient not found
+      at /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/node_modules/.pnpm/pg@8.23.1/node_modules/pg/lib/client.js:694:17
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async AlertService.raise (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/notifications/alerts/service.js:74:26)
+      at async KernelDb.once (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/packages/kernel/dist/scope/with-scope.js:114:28)
+      at async KernelDb.run (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/packages/kernel/dist/scope/with-scope.js:92:24)
+      at async TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/notifications/alerts/alerts.dbtest.js:1008:23)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    length: 144,
+    severity: 'ERROR',
+    code: 'PM008',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: 'PL/pgSQL function patient.guard_open_patient() line 19 at RAISE',
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'pl_exec.c',
+    line: '3897',
+    routine: 'exec_stmt_raise'
+  }
+
+test at apps/api/dist/src/modules/notifications/alerts/alerts.dbtest.js:1165:9
+✖ R states re-point, closed is kept, counts add up, events are kept; only a patients-scope job naming the IDs may run it (11.508253ms)
+  error: patient not found
+      at /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/node_modules/.pnpm/pg@8.23.1/node_modules/pg/lib/client.js:694:17
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async AlertService.raise (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/notifications/alerts/service.js:74:26)
+      at async KernelDb.once (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/packages/kernel/dist/scope/with-scope.js:114:28)
+      at async KernelDb.run (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/packages/kernel/dist/scope/with-scope.js:92:24)
+      at async TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/apps/api/dist/src/modules/notifications/alerts/alerts.dbtest.js:1166:26)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    length: 144,
+    severity: 'ERROR',
+    code: 'PM008',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: 'PL/pgSQL function patient.guard_open_patient() line 19 at RAISE',
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'pl_exec.c',
+    line: '3897',
+    routine: 'exec_stmt_raise'
+  }
