@@ -17,9 +17,12 @@ type State =
 export function LandingPage({
   runtime,
   onSignIn,
+  go,
 }: {
   runtime: PatientRuntime;
   onSignIn: () => void;
+  /** In-app navigation (History API) to the booking screens. */
+  go: (to: string) => void;
 }) {
   const [state, setState] = useState<State>({ kind: 'loading' });
 
@@ -72,6 +75,28 @@ export function LandingPage({
       <p>Signed in as {state.session.displayName}.</p>
       {!state.linked && (
         <p>Your account is not linked to a patient record yet. The clinic can link it for you.</p>
+      )}
+      {state.linked && (
+        <nav aria-label="Appointments">
+          <ul>
+            {[
+              ['/book', 'Book an appointment'],
+              ['/appointments', 'My appointments'],
+            ].map(([to, label]) => (
+              <li key={to}>
+                <a
+                  href={to}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    go(to ?? '/');
+                  }}
+                >
+                  {label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
       )}
       <Button onClick={() => void runtime.session.signOut()}>Sign out</Button>
     </section>

@@ -78,6 +78,45 @@ describe('landing after the callback', () => {
     expect(calls).toEqual(['GET /api/v1/auth/session', 'GET /api/v1/me']);
   });
 
+  const booking: Respond = (r) => {
+    const path = new URL(r.url).pathname;
+    if (path === '/api/v1/auth/session')
+      return json(200, { ...SESSION, patients: [{ patientId: 'p1', relation: 'self' }] });
+    if (path.endsWith('/appointments')) return json(200, { items: [] });
+    if (path === '/api/v1/services' || path === '/api/v1/locations')
+      return json(200, { items: [] });
+    return happy(r);
+  };
+
+  it('links the landing page to the booking journey and mounts BookingRoutes on /book', async () => {
+    window.history.replaceState(null, '', '/account');
+    mount(booking);
+    expect(await screen.findByRole('link', { name: 'My appointments' })).toHaveAttribute(
+      'href',
+      '/appointments',
+    );
+    fireEvent.click(screen.getByRole('link', { name: 'Book an appointment' }));
+    expect(window.location.pathname).toBe('/book');
+    await waitFor(() => expect(document.title).toBe('Patient portal - Book: service'));
+    expect(screen.queryByRole('heading', { name: 'You are signed in' })).toBeNull();
+  });
+
+  it('mounts the booking routes when opened directly', async () => {
+    window.history.replaceState(null, '', '/appointments');
+    mount(booking);
+    await waitFor(() => expect(document.title).toBe('Patient portal - Appointments'));
+    expect(screen.queryByRole('button', { name: 'Sign in' })).toBeNull();
+  });
+
+  it('offers no booking links when no patient is linked', async () => {
+    window.history.replaceState(null, '', '/account');
+    mount((r) =>
+      new URL(r.url).pathname === '/api/v1/me' ? json(200, { patients: [] }) : happy(r),
+    );
+    await screen.findByText(/not linked to a patient record/);
+    expect(screen.queryByRole('link', { name: 'Book an appointment' })).toBeNull();
+  });
+
   it('shows a neutral state when no patient is linked and does not self-register', async () => {
     window.history.replaceState(null, '', '/account');
     const { calls } = mount((r) =>

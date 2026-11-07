@@ -11,6 +11,7 @@ import { ProblemPage } from '../features/auth/ProblemPage.js';
 import { isProblemCode } from '../features/auth/problems.js';
 import type { Problem } from '../features/auth/problems.js';
 import { checkedReturnTo, DEFAULT_RETURN_TO } from '../features/auth/returnTo.js';
+import { BookingRoutes, isBookingPath } from '../features/booking/index.js';
 import { probeSignIn, signInUrl } from '../features/auth/signIn.js';
 
 export function App({
@@ -64,7 +65,15 @@ export function App({
     );
   } else if (location.path === DEFAULT_RETURN_TO) {
     page = (
-      <LandingPage runtime={runtime} onSignIn={() => toContinue('sign-in', DEFAULT_RETURN_TO)} />
+      <LandingPage
+        runtime={runtime}
+        onSignIn={() => toContinue('sign-in', DEFAULT_RETURN_TO)}
+        go={go}
+      />
+    );
+  } else if (isBookingPath(location.path)) {
+    page = (
+      <BookingRoutes runtime={runtime} path={location.path} params={location.params} go={go} />
     );
   } else if (location.path === '/problem') {
     const code = location.params.get('code');

@@ -16,21 +16,11 @@ Screens PP-10..PP-19 (UI-UX 4 J-04 and J-05, 7.2). Everything is under `apps/pat
 | PP-18 Waitlist join                               | `pages/WaitlistPage.tsx`                                                     | `/waitlist/join`                     |
 | PP-19 Waitlist offer                              | `pages/OfferPage.tsx`                                                        | `/waitlist/offers/:id[?expires=ISO]` |
 
-## Mounting (needs an edit outside this ticket's allowed paths)
+## Mounting
 
-The ticket may write only `apps/patient/src/features/booking/**`, so `apps/patient/src/app/App.tsx` is not changed here.
-The app needs this wiring (a request to the Orchestrator, not an edit made here):
-
-```tsx
-import { BookingRoutes, isBookingPath } from '../features/booking/index.js';
-// in App(), before the existing `else` branches:
-} else if (isBookingPath(location.path)) {
-  page = <BookingRoutes runtime={runtime} path={location.path} params={location.params} go={go} />;
-}
-```
-
-and a link from the landing page to `/appointments` and `/book`. Until then the feature is exercised through its own harness
-(`e2e/harness`), which mounts `BookingRoutes` with the real shell runtime and routing.
+`apps/patient/src/app/App.tsx` mounts `BookingRoutes` for every `isBookingPath` path, and the signed-in landing page
+(`features/auth/LandingPage.tsx`) links to `/book` and `/appointments` when a patient is linked (INT02-R5-B1, HEAAA-209).
+The feature is also exercised through its own harness (`e2e/harness`).
 
 ## How it follows the design
 
