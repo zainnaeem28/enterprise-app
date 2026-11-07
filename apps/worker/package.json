@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "sync-task-types": "node dist/sync-task-types-cli.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "pnpm run build && node --test --test-reporter=spec --test-reporter-destination=stdout --test-reporter=junit --test-reporter-destination=\"${JUNIT_DIR:-.junit}/worker.xml\" \"dist/**/*.test.js\""
   },

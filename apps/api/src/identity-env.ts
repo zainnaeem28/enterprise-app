@@ -32,7 +32,8 @@ export interface IdentityEnv {
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const HOST = /^[a-z0-9]([a-z0-9.-]*[a-z0-9])?(:\d{1,5})?$/;
+// A bare host name: the request `Host` is compared after its port is stripped (`hostOf`), so a configured port could never match.
+const HOST = /^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$/;
 
 export function loadIdentityEnv(env: Readonly<Record<string, string | undefined>>): IdentityEnv {
   const problems: string[] = [];
@@ -64,7 +65,7 @@ export function loadIdentityEnv(env: Readonly<Record<string, string | undefined>
   };
   const host = (name: string): string => {
     const v = str(name).toLowerCase();
-    if (v !== '' && !HOST.test(v)) problems.push(`${name} must be a host name`);
+    if (v !== '' && !HOST.test(v)) problems.push(`${name} must be a host name without a port`);
     return v;
   };
   const endpoints = (prefix: string, dflt: OidcEndpoints | undefined): OidcEndpoints => {

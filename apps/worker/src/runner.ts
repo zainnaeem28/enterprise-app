@@ -3,7 +3,8 @@
 // modules that own the job types (33); this layer owns none.
 import { Logger as WorkerLogger, run } from 'graphile-worker';
 import type { Runner, Task } from 'graphile-worker';
-import type { KernelConfig, Logger } from '@ehr/kernel';
+import { syncTaskTypes } from '@ehr/kernel';
+import type { JobRegistry, KernelConfig, Logger } from '@ehr/kernel';
 
 // `pg` has no type declarations in this workspace; the pool is passed through to the library.
 const PG: string = 'pg';
@@ -86,6 +87,8 @@ export async function startWorker(opts: {
   pool: PoolLike;
   log: Logger;
   tasks?: TaskTable;
+  /** Job types written to `queue_api.task_type` at start (21.8), so a freshly migrated database accepts API enqueues. */
+  registry?: JobRegistry;
   concurrency?: number;
 }): Promise<WorkerHandle> {
   const { cfg, pool, log } = opts;
@@ -94,6 +97,10 @@ export async function startWorker(opts: {
   const row = probe.rows[0] as { q: boolean };
   if (!row.q)
     throw new Error(`queue schema ${cfg.queueSchema} does not exist (run the queue install)`);
+  if (opts.registry !== undefined) {
+    const synced = await syncTaskTypes(pool, opts.registry);
+    log.info('task types synced', { count: synced });
+  }
   const taskList: TaskTable = {};
   for (const [name, t] of Object.entries(opts.tasks ?? {})) taskList[name] = wrapTask(name, t, log);
   const runner = await run({

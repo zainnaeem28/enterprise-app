@@ -7,6 +7,7 @@ import { after, before, describe, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { installQueue } from '@ehr/kernel/dist/queue/install.js';
 import { createLogger, JobRegistry, loadConfig, Queue, syncTaskTypes } from '@ehr/kernel';
+import { buildWorkerRegistry, WORKER_JOBS } from './job-registry.js';
 import { createPool, startWorker } from './runner.js';
 
 const PG: string = 'pg';
@@ -190,6 +191,78 @@ describe('worker boots against PostgreSQL 17 and runs a queued job', () => {
       );
     } finally {
       await pool.end();
+    }
+  });
+  test('worker start syncs queue_api.task_type for the full worker job list: a fresh database accepts API enqueues (INT02-R7-B1)', async () => {
+    const fresh = `${dbName}_sync`;
+    const admin = new pg.Client({
+      connectionString: urlFor(new URL(adminUrl).username, 'postgres'),
+    });
+    await admin.connect();
+    await admin.query(`CREATE DATABASE ${fresh}`);
+    await admin.end();
+    const env = {
+      PATH: process.env.PATH,
+      EHR_DB_ADMIN_URL: urlFor(new URL(adminUrl).username, fresh),
+      EHR_DB_MIGRATE_URL: urlFor('app_owner', fresh),
+    };
+    for (const cmd of ['bootstrap', 'migrate'])
+      execFileSync(process.execPath, [`${root}db/tools/migrate.mjs`, cmd], {
+        env,
+        stdio: 'inherit',
+      });
+    await installQueue(urlFor('app_owner', fresh));
+    const c = loadConfig({
+      EHR_ENV: 'ci',
+      EHR_DEPLOYABLE: 'worker',
+      EHR_DATABASE_URL: urlFor('app_worker', fresh),
+      EHR_ORGANISATION_ID: ORG,
+    });
+    const registry = buildWorkerRegistry();
+    const api = new pg.Client({ connectionString: urlFor('app_api', fresh) });
+    await api.connect();
+    const enqueue = async (): Promise<void> => {
+      await api.query('BEGIN');
+      try {
+        await new Queue(registry, 'api').enqueue(
+          {
+            query: (sql: string, p?: unknown[]) => api.query(sql, p),
+            scope: { audience: 'staff', orgId: ORG },
+          } as never,
+          'identity.record_sign_in',
+          { id: '00000000-0000-7000-8000-0000000000b2' },
+          { jobKey: 'sync' },
+        );
+        await api.query('COMMIT');
+      } catch (e) {
+        await api.query('ROLLBACK');
+        throw e;
+      }
+    };
+    try {
+      await assert.rejects(enqueue(), /task type not allowed/);
+      const pool = await createPool(c);
+      const worker = await startWorker({
+        cfg: c,
+        pool,
+        log: createLogger({ sink: () => undefined }),
+        registry,
+      });
+      await worker.stop();
+      await enqueue();
+      const w = new pg.Client({ connectionString: urlFor('app_worker', fresh) });
+      await w.connect();
+      const n = await w.query('SELECT count(*)::int AS n FROM queue_api.task_type');
+      await w.end();
+      assert.equal(n.rows[0].n, WORKER_JOBS.length);
+    } finally {
+      await api.end();
+      const a2 = new pg.Client({
+        connectionString: urlFor(new URL(adminUrl).username, 'postgres'),
+      });
+      await a2.connect();
+      await a2.query(`DROP DATABASE IF EXISTS ${fresh} WITH (FORCE)`);
+      await a2.end();
     }
   });
 });
