@@ -1079,7 +1079,7 @@ describe('TC-AZ-07: each definer function refuses the callers that must not hold
   );
 
   test(
-    'SEC03-F08 patient.identity_label (TC-AZ-08 steps 1 and 3): refused without the patient_label key, the compliance realm or a referencing record',
+    "SEC03-F08 patient.identity_label (TC-AZ-08 steps 1 and 3): refused without the patient_label key or the compliance realm (the referencing-record check is the API layer's, O-5: patient/identity-label.dbtest.ts)",
     openCase('SEC03-F08'),
     async () => {
       const accepted: string[] = [];
@@ -1119,23 +1119,6 @@ describe('TC-AZ-07: each definer function refuses the callers that must not hold
         } finally {
           await c.close();
         }
-      }
-      // With the key and a reference that does not exist, the database must refuse as well (the reference is not visible).
-      const c = await new Caller(t, 'app_api', {
-        audience: 'staff',
-        realm: 'admin_pool',
-        orgId: ORG,
-        principalId: staffPrincipalA.principalId as string,
-        phiAccess: 'limited',
-        complianceScopes: ['patient_label'],
-      }).open();
-      try {
-        const r = await c.run(
-          `SELECT patient.identity_label('${uid()}', '${A}', 'audit.event', '${uid()}')`,
-        );
-        if (!('error' in r)) accepted.push('key held, referencing record does not exist');
-      } finally {
-        await c.close();
       }
       assert.deepEqual(accepted, [], `identity_label answered: ${accepted.join('; ')}`);
     },

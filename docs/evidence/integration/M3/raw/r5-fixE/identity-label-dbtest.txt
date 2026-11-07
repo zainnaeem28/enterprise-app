@@ -1,0 +1,16 @@
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+▶ POST /admin/patient-labels (TC-AZ-08 step 3, O-5)
+  ✔ a visible referencing record of the same patient: 200 with the label and exactly one audit row naming the reference (O5-2, O5-5) (35.347955ms)
+  ✔ a referencing record that does not exist: 404 and the database function is never reached (no label audit row) (18.648895ms)
+  ✔ a referencing record that exists but belongs to another patient: 404 (O5-1) and no label audit row (19.1358ms)
+  ✔ without the patient_label key or outside the admin realm: refused, no label audit row (28.884035ms)
+  ✔ a malformed body is 422 and rate limiting applies per principal (labelLimitPerHour = 3 in this harness): the 4th call is 429 (44.689063ms)
+✔ POST /admin/patient-labels (TC-AZ-08 step 3, O-5) (1896.610074ms)
+ℹ tests 5
+ℹ suites 1
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2285.337658
