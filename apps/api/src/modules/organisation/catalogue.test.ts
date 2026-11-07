@@ -3,14 +3,38 @@
 // views are not proved here (see organisation.dbtest.ts).
 import assert from 'node:assert/strict';
 import { after, before, describe, test } from 'node:test';
+import { createLogger } from '@ehr/kernel';
 import type { KernelDb, ScopeSettings, Tx } from '@ehr/kernel';
 import { MIN_RELEASE, R, start } from '../../../test/platform/harness.js';
 import type { Running } from '../../../test/platform/harness.js';
 import { ApiError } from '../../platform/errors.js';
 import type { GuardPolicy } from '../../platform/guard.js';
-import { buildControllers } from '../../composition.js';
+import { buildComposition } from '../../composition.js';
+import { loadIdentityEnv } from '../../identity-env.js';
 import { createCatalogueControllers } from './catalogue.controller.js';
 
+const K = 'k'.repeat(40);
+const FAKE_ENV = {
+  EHR_ORGANISATION_ID: '00000000-0000-7000-8000-0000000000a1',
+  EHR_STAFF_HOST: 'staff.example.test',
+  EHR_PATIENT_HOST: 'my.example.test',
+  EHR_ALLOWED_ORIGINS: 'https://staff.example.test,https://my.example.test',
+  EHR_OIDC_STATE_KEY: K,
+  EHR_CSRF_KEY: K,
+  EHR_RATE_KEY: K,
+  EHR_MATCH_CHECK_KEY: K,
+  EHR_CHECKIN_QR_KEY: K,
+  EHR_STAFF_OIDC_CLIENT_ID: 'staff',
+  EHR_STAFF_OIDC_CLIENT_SECRET: K,
+  EHR_STAFF_OIDC_REDIRECT_URI: 'https://staff.example.test/api/v1/auth/callback',
+  EHR_STAFF_WORKSPACE_DOMAIN: 'example.com',
+  EHR_PATIENT_OIDC_ISSUER: 'https://idp.example.test',
+  EHR_PATIENT_OIDC_AUTHORIZATION_ENDPOINT: 'https://idp.example.test/authorize',
+  EHR_PATIENT_OIDC_TOKEN_ENDPOINT: 'https://idp.example.test/token',
+  EHR_PATIENT_OIDC_JWKS_URI: 'https://idp.example.test/jwks',
+  EHR_PATIENT_OIDC_CLIENT_ID: 'patient',
+  EHR_PATIENT_OIDC_REDIRECT_URI: 'https://my.example.test/api/v1/auth/callback',
+};
 const ORG = '00000000-0000-4000-8000-0000000000a1';
 const L1 = '00000000-0000-4000-8000-000000000011';
 const scopes: ScopeSettings[] = [];
@@ -100,8 +124,13 @@ describe('GET /api/v1/services | /locations', () => {
 });
 
 describe('composition root', () => {
-  test('buildControllers mounts both catalogue routes, deny-by-default under the default policy', async () => {
-    const t = await start({ controllers: buildControllers({ db }) });
+  test('buildComposition mounts both catalogue routes, refused without a session under the identity policy', async () => {
+    const c = buildComposition({
+      db: db as unknown as KernelDb,
+      logger: createLogger({ sink: () => undefined }),
+      identity: loadIdentityEnv(FAKE_ENV),
+    });
+    const t = await start({ controllers: c.controllers, policy: c.policy });
     try {
       for (const p of ['/api/v1/services', '/api/v1/locations']) {
         const r = await fetch(`${t.base}${p}`, { headers: { 'x-client-release': R(MIN_RELEASE) } });

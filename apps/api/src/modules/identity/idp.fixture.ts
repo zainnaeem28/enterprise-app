@@ -74,7 +74,7 @@ export class LocalIdp {
     };
   }
 
-  async start(): Promise<void> {
+  async start(port = 0): Promise<void> {
     this.server = createServer((req, res) => {
       const url = new URL(req.url ?? '/', 'http://localhost');
       if (url.pathname === '/authorize') return this.authorize(url, res);
@@ -83,7 +83,7 @@ export class LocalIdp {
       res.statusCode = 404;
       res.end();
     });
-    await new Promise<void>((r) => this.server.listen(0, '127.0.0.1', r));
+    await new Promise<void>((r) => this.server.listen(port, '127.0.0.1', r));
     this.base = `http://127.0.0.1:${(this.server.address() as AddressInfo).port}`;
   }
 

@@ -2,7 +2,8 @@
 import { createServer } from 'node:http';
 import { ConfigError, createLogger, describeDatabase, KernelDb, loadConfig } from '@ehr/kernel';
 import type { PoolLike } from '@ehr/kernel';
-import { buildControllers, registerAllParticipants } from './composition.js';
+import { buildComposition, registerAllParticipants } from './composition.js';
+import { loadIdentityEnv } from './identity-env.js';
 import { createApp } from './platform/app.js';
 import { loadPlatformConfig } from './platform/config.js';
 import { Lifecycle } from './platform/health.js';
@@ -12,10 +13,11 @@ import { StreamRegistry } from './platform/stream.js';
 
 async function main(): Promise<void> {
   const logger = createLogger({ sink: (l) => process.stdout.write(`${l}\n`), level: 'info' });
-  let kernelCfg, platformCfg;
+  let kernelCfg, platformCfg, identityEnv;
   try {
     kernelCfg = loadConfig({ ...process.env, EHR_DEPLOYABLE: 'api' });
     platformCfg = loadPlatformConfig(process.env);
+    identityEnv = loadIdentityEnv(process.env);
   } catch (e) {
     if (e instanceof ConfigError) {
       for (const p of e.problems) logger.error(`invalid configuration: ${p}`);
@@ -25,11 +27,17 @@ async function main(): Promise<void> {
   }
   registerAllParticipants();
   const readiness = await pgReadiness(kernelCfg);
+  const composition = buildComposition({
+    db: new KernelDb(readiness.pool as PoolLike),
+    logger,
+    identity: identityEnv,
+  });
   const app = await createApp({
     config: platformCfg,
     logger,
     readiness: readiness.probe,
-    controllers: buildControllers({ db: new KernelDb(readiness.pool as PoolLike) }),
+    policy: composition.policy,
+    controllers: composition.controllers,
   });
   await app.init();
   // 16 KB header limit (31.2); a larger header is refused by Node with 431 before any application code runs.
