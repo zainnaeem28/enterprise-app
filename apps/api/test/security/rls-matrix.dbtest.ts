@@ -108,6 +108,53 @@ const sa = (sql: string, p: unknown[] = []): Promise<void> => saWrite(t.k, sql, 
 const saRows = async <T = Row>(sql: string, p: unknown[] = []): Promise<T[]> =>
   (await t.k.sa.query(sql, p)).rows as T[];
 const uid = (): string => randomUUID();
+/** An appointment in a given state, written directly the way the booking service leaves the database: occupancy and reservation in one transaction. */
+const seedVisit = async (
+  pid: string,
+  doctorId: string,
+  status: string,
+  mode: 'in_person' | 'video',
+  startDays: number,
+): Promise<string> => {
+  const rid = uid();
+  const start = slotStart(startDays);
+  const end = new Date(start.getTime() + 30 * 60_000);
+  await t.k.sa.query('BEGIN');
+  try {
+    await t.k.sa.query(
+      `SELECT set_config('app.org_id', $1, true), set_config('app.audience', 'system', true)`,
+      [ORG],
+    );
+    await t.k.sa.query(
+      `INSERT INTO scheduling.slot_occupancy (id, organisation_id, location_id, clinician_principal_id, period, status)
+            VALUES ($1,$2,$3,$4,tstzrange($5::timestamptz,$6::timestamptz,'[)'),$7)`,
+      [rid, ORG, A1, doctorId, start.toISOString(), end.toISOString(), status],
+    );
+    await t.k.sa.query(
+      `INSERT INTO scheduling.slot_reservation (id, organisation_id, patient_id, service_id, location_id, clinician_principal_id, mode, booked_by_principal_id, booked_via)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$6,'staff')`,
+      [rid, ORG, pid, SVC, A1, doctorId, mode],
+    );
+    await t.k.sa.query('COMMIT');
+  } catch (e) {
+    await t.k.sa.query('ROLLBACK');
+    throw e;
+  }
+  return rid;
+};
+const saStaffWrite = async (principalId: string, sql: string, p: unknown[] = []): Promise<void> => {
+  await t.k.sa.query(
+    `SELECT set_config('app.org_id', $1, false), set_config('app.audience', 'staff', false), set_config('app.realm', 'google', false), set_config('app.principal_id', $2, false)`,
+    [ORG, principalId],
+  );
+  try {
+    await t.k.sa.query(sql, p);
+  } finally {
+    await t.k.sa.query(
+      `SELECT set_config('app.org_id', '', false), set_config('app.audience', '', false), set_config('app.realm', '', false), set_config('app.principal_id', '', false)`,
+    );
+  }
+};
 
 before(async () => {
   t = await setupScheduling('rlsm');
@@ -227,6 +274,112 @@ before(async () => {
     reservation[tag] =
       (h as unknown as { id?: string; reservationId?: string }).id ??
       (h as unknown as { reservationId: string }).reservationId;
+  }
+
+  // INT02-R4-F01: the M3 tables (documents, staff alerts, check-in/queue/waitlist, telehealth) for patient A and patient B, so that no
+  // matrix cell is vacuous. Written by the superuser; one row per table per patient, keyed to the hold made above.
+  for (const [tag, pid, account] of [
+    ['A', A, linkA],
+    ['B', B, linkB],
+  ] as const) {
+    // Two visits of their own (the holds above stay as the set_status tests expect them): one checked in, one by video.
+    const visitDoc = await t.doctor();
+    const resId = await seedVisit(
+      pid,
+      visitDoc.principalId,
+      'checked_in',
+      'in_person',
+      40 + (tag === 'A' ? 0 : 1),
+    );
+    const videoId = await seedVisit(
+      pid,
+      visitDoc.principalId,
+      'confirmed',
+      'video',
+      50 + (tag === 'A' ? 0 : 1),
+    );
+    const docId = uid();
+    await sa(
+      `INSERT INTO documents.document (id, organisation_id, patient_id, classification, status, uploaded_by, upload_channel)
+            VALUES ($1,$2,$3,'insurance_card','awaiting_upload',$4,'staff')`,
+      [docId, ORG, pid, doc.principalId],
+    );
+    await sa(
+      `INSERT INTO documents.document_version (document_id, version, organisation_id, patient_id, object_key, bucket, size_bytes, content_type, declared_content_type)
+            VALUES ($1,1,$2,$3,$4,'quarantine',1024,'application/pdf','application/pdf')`,
+      [docId, ORG, pid, `q/${randomUUID().replaceAll('-', '')}`],
+    );
+    // The hold trigger accepts a placement only from a Google-realm staff caller, so the fixture writes it under those settings.
+    await saStaffWrite(
+      doc.principalId,
+      `INSERT INTO documents.legal_hold (id, organisation_id, document_id, patient_id, action, reason, by_person_id)
+            VALUES ($1,$2,$3,$4,'placed','Legal hold for the matrix, synthetic',$5)`,
+      [uid(), ORG, docId, pid, doc.personId],
+    );
+    await sa(
+      `INSERT INTO documents.deletion_request (id, organisation_id, document_id, patient_id, requested_by)
+            VALUES ($1,$2,$3,$4,$5)`,
+      [uid(), ORG, docId, pid, account.principalId],
+    );
+    const alertId = uid();
+    await sa(
+      `INSERT INTO notifications.staff_alert (id, organisation_id, type, severity, patient_id, resource_type, resource_id, target_kind, target_principal_ids)
+            VALUES ($1,$2,'red_flag','high',$3,'questionnaire_response',$4,'principal',ARRAY[$5]::uuid[])`,
+      [alertId, ORG, pid, uid(), doc.principalId],
+    );
+    await sa(
+      `INSERT INTO notifications.staff_alert_event (id, organisation_id, alert_id, patient_id, kind) VALUES ($1,$2,$3,$4,'created')`,
+      [uid(), ORG, alertId, pid],
+    );
+    await sa(
+      `INSERT INTO scheduling.check_in (id, organisation_id, patient_id, location_id, method, by_principal_id, previsit_status)
+            VALUES ($1,$2,$3,$4,'desk',$5,'{"questionnaire":true,"consents":true,"insurance":true}')`,
+      [resId, ORG, pid, A1, doc.principalId],
+    );
+    await sa(
+      `INSERT INTO scheduling.queue_entry (id, organisation_id, patient_id, location_id, stage) VALUES ($1,$2,$3,$4,'waiting')`,
+      [resId, ORG, pid, A1],
+    );
+    const wlId = uid();
+    await sa(
+      `INSERT INTO scheduling.waitlist_entry (id, organisation_id, patient_id, service_id, "window")
+            VALUES ($1,$2,$3,$4,tstzrange(now() + interval '10 days', now() + interval '11 days'))`,
+      [wlId, ORG, pid, SVC],
+    );
+    await sa(
+      `INSERT INTO scheduling.waitlist_offer (id, organisation_id, waitlist_entry_id, patient_id, occupancy_id, expires_at)
+            VALUES ($1,$2,$3,$4,$5,now() + interval '1 day')`,
+      [uid(), ORG, wlId, pid, resId],
+    );
+    const sessId = uid();
+    await sa(
+      `INSERT INTO telehealth.video_session (id, organisation_id, reservation_id, patient_id, clinician_principal_id) VALUES ($1,$2,$3,$4,$5)`,
+      [sessId, ORG, videoId, pid, visitDoc.principalId],
+    );
+    const partId = uid();
+    await sa(
+      `INSERT INTO telehealth.participant (id, organisation_id, session_id, patient_id, role, principal_id) VALUES ($1,$2,$3,$4,'patient',$5)`,
+      [partId, ORG, sessId, pid, account.principalId],
+    );
+    // A join token needs an admitted participant of a session with a meeting: the session gets its meeting, the participant is admitted.
+    await sa(
+      `UPDATE telehealth.video_session SET vendor = 'fakevendor', vendor_meeting_id = $2 WHERE id = $1`,
+      [sessId, `meeting-${tag}`],
+    );
+    await sa(
+      `UPDATE telehealth.participant SET admission = 'admitted', admitted_at = now(), admitted_by = $2 WHERE id = $1`,
+      [partId, visitDoc.principalId],
+    );
+    await sa(
+      `INSERT INTO telehealth.join_token (id, organisation_id, session_id, participant_id, patient_id, principal_id, expires_at)
+            VALUES ($1,$2,$3,$4,$5,$6,now() + interval '10 minutes')`,
+      [uid(), ORG, sessId, partId, pid, account.principalId],
+    );
+    await sa(
+      `INSERT INTO telehealth.location_confirmation (id, organisation_id, reservation_id, patient_id, principal_id, stated_state, result)
+            VALUES ($1,$2,$3,$4,$5,'NY','allowed')`,
+      [uid(), ORG, videoId, pid, account.principalId],
+    );
   }
 
   // The tables under test: every table with row-level security, from the catalogue (not from a list in this file).
@@ -588,6 +741,19 @@ describe('AN-1 behavioural row-visibility matrix: one row per table with RLS, ru
       'notifications.delivery_receipt',
       'patient.patient',
       'patient.staff_scope',
+      // INT02-R4-F01: the M3 tables, now seeded for both patients
+      'documents.document',
+      'documents.document_version',
+      'documents.legal_hold',
+      'documents.deletion_request',
+      'scheduling.check_in',
+      'scheduling.queue_entry',
+      'scheduling.waitlist_entry',
+      'scheduling.waitlist_offer',
+      'telehealth.video_session',
+      'telehealth.participant',
+      'telehealth.join_token',
+      'telehealth.location_confirmation',
     ];
     const cA = await new Caller(t, 'app_api', staff([A1])).open();
     const cB = await new Caller(t, 'app_api', staff([B1])).open();
@@ -606,6 +772,34 @@ describe('AN-1 behavioural row-visibility matrix: one row per table with RLS, ru
       await cB.close();
     }
     assert.deepEqual(missing, []);
+  });
+
+  test('positive control: a patients-scope worker job reads the staff alert and its events of its own patient only (staff reach alerts through staff_scope_allows_patient, which is a stub returning false on this candidate)', async () => {
+    const seen: string[] = [];
+    for (const [tag, own, other] of [
+      ['A', A, B],
+      ['B', B, A],
+    ] as const) {
+      const c = await new Caller(t, 'app_worker', {
+        audience: 'system',
+        realm: 'worker',
+        orgId: ORG,
+        jobScope: 'patients',
+        jobPatientIds: [own],
+      }).open();
+      try {
+        for (const q of ['notifications.staff_alert', 'notifications.staff_alert_event']) {
+          const sql = `SELECT count(*)::int AS n FROM ${q} WHERE patient_id = $1`;
+          if ((await c.count(sql, [own])) !== 1)
+            seen.push(`${q}: job for ${tag} cannot read ${tag}`);
+          if ((await c.count(sql, [other])) !== 0)
+            seen.push(`${q}: job for ${tag} reads the other patient`);
+        }
+      } finally {
+        await c.close();
+      }
+    }
+    assert.deepEqual(seen, []);
   });
 
   after(() => {

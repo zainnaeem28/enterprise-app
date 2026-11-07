@@ -1,0 +1,101 @@
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+▶ AN-1 behavioural row-visibility matrix: one row per table with RLS, run as every audience and realm
+  ✔ the catalogue has the expected shape and every patient table holds a row for patient A and for patient B (no vacuous cell) (25.953984ms)
+  ✔ as staff of location A1: no row of a patient outside its scope is visible in any table (247.666592ms)
+  ✔ as staff of location A2 (second location, same organisation): no row of a patient outside its scope is visible in any table (270.470496ms)
+  ✔ as staff of location B1 (second clinic): no row of a patient outside its scope is visible in any table (267.534075ms)
+  ✔ as staff of A1 and B1: no row of a patient outside its scope is visible in any table (247.390064ms)
+  ✔ as staff with no location: no row of a patient outside its scope is visible in any table (234.352757ms)
+  ✔ as staff of another organisation: no row of a patient outside its scope is visible in any table (288.478701ms)
+  ✔ as patient A (own account): no row of a patient outside its scope is visible in any table (231.546632ms)
+  ✔ as patient B_other without a link (second patient at B1): no row of a patient outside its scope is visible in any table (254.83862ms)
+  ✔ as patient B (second patient): no row of a patient outside its scope is visible in any table (255.7761ms)
+  ✔ as patient without any link: no row of a patient outside its scope is visible in any table (229.496714ms)
+  ✔ as proxy of patient B: no row of a patient outside its scope is visible in any table (239.920587ms)
+  ✔ as admin_pool, no break-glass, no slice: no row of a patient outside its scope is visible in any table (221.590759ms)
+  ✔ as admin_pool, phi_access limited, patient_label slice: no row of a patient outside its scope is visible in any table (231.418652ms)
+  ✔ as partner: no row of a patient outside its scope is visible in any table (215.58595ms)
+  ✔ as public: no row of a patient outside its scope is visible in any table (292.401963ms)
+  ✔ as anonymous: no row of a patient outside its scope is visible in any table (239.120284ms)
+  ✔ as audience unset (webhook transaction): no row of a patient outside its scope is visible in any table (224.932078ms)
+  ✔ as staff without an organisation: no row of a patient outside its scope is visible in any table (237.629307ms)
+  ✔ as worker, system, patients-scope job for B: no row of a patient outside its scope is visible in any table (165.557055ms)
+  ✔ as worker, system, patients-scope job for A: no row of a patient outside its scope is visible in any table (157.969496ms)
+  ✔ positive control: staff of A1 reads its own patients in each T-STAFF table, staff of B1 reads its own (the matrix is not passing because nothing is readable) (134.710148ms)
+  ✔ positive control: a patients-scope worker job reads the staff alert and its events of its own patient only (staff reach alerts through staff_scope_allows_patient, which is a stub returning false on this candidate) (21.227055ms)
+✔ AN-1 behavioural row-visibility matrix: one row per table with RLS, run as every audience and realm (6933.60685ms)
+▶ direct-SQL writes as staff of the second clinic change nothing of patient A (F01 statements)
+  ✔ staff of B1: withdraw a consent of patient A touches 0 rows (11.275249ms)
+  ✔ staff of B1: update insurance of patient A touches 0 rows (10.776673ms)
+  ✔ staff of B1: delete a contact of patient A touches 0 rows (8.952901ms)
+  ✔ staff of B1: update a contact of patient A touches 0 rows (9.434876ms)
+  ✔ staff of B1: update a care-team member of patient A touches 0 rows (8.392009ms)
+  ✔ staff of B1: update a duplicate flag of patient A touches 0 rows (10.44995ms)
+  ✔ staff of B1: cancel a notification of patient A touches 0 rows (10.351735ms)
+  ✔ staff of B1: inserts a care-team member, a consent and a contact for patient A are refused (16.508099ms)
+  ✔ the same kind of statement as staff of A1 does reach patient A (the statements are valid) (17.586062ms)
+✔ direct-SQL writes as staff of the second clinic change nothing of patient A (F01 statements) (104.461232ms)
+▶ TC-AZ-05: direct DB connection as the reporting role and as the public and limited audiences
+  ✔ reporting_ro is refused on every patient-keyed table and on the patient root, merge and booking tables (16.205291ms)
+  ✔ reporting_ro cannot read the PHI views either (any view or materialized view in patient, scheduling, notifications, identity) (6.556194ms)
+  ✔ audience public returns nothing from any patient-keyed table (66.340515ms)
+  ✔ audience limited returns nothing from any patient-keyed table (55.81918ms)
+✔ TC-AZ-05: direct DB connection as the reporting role and as the public and limited audiences (145.371084ms)
+▶ TC-AZ-06: SET ROLE to each function-owner role and select every patient-keyed table
+  ✔ every table has FORCE ROW LEVEL SECURITY, so an owner role is subject to its policies (0.731944ms)
+  ✔ as patient_scope_owner: nothing of the patient tables beyond what its role-targeted policies and column grants allow (30.04911ms)
+  ✔ as patient_match_owner: nothing of the patient tables beyond what its role-targeted policies and column grants allow (25.273588ms)
+  ✔ as scheduling_booking_owner: nothing of the patient tables beyond what its role-targeted policies and column grants allow (21.628158ms)
+  ✔ as integration_receiver_owner: nothing of the patient tables beyond what its role-targeted policies and column grants allow (15.476464ms)
+  ✔ as queue_owner: nothing of the patient tables beyond what its role-targeted policies and column grants allow (12.532568ms)
+  ✔ as identity_signin_ro: nothing of the patient tables beyond what its role-targeted policies and column grants allow (15.454493ms)
+  ✔ as directory_ro: nothing of the patient tables beyond what its role-targeted policies and column grants allow (23.05255ms)
+✔ TC-AZ-06: SET ROLE to each function-owner role and select every patient-keyed table (144.858813ms)
+▶ TC-AZ-07: each definer function refuses the callers that must not hold it
+  ✔ patient.request_merge is refused to every caller that does not hold it (53.907614ms)
+  ✔ patient.get_merge_request is refused to every caller that does not hold it (46.470737ms)
+  ✔ patient.decide_merge is refused to every caller that does not hold it (55.149112ms)
+  ✔ patient.load_merge_job is refused to every caller that does not hold it (43.709486ms)
+  ✔ patient.begin_merge is refused to every caller that does not hold it (43.410394ms)
+  ✔ patient.complete_merge is refused to every caller that does not hold it (45.633345ms)
+  ✔ patient.fail_merge is refused to every caller that does not hold it (42.243875ms)
+  ✔ patient.verify_staff_scope is refused to every caller that does not hold it (44.79863ms)
+  ✔ patient.lock_patients is refused to every caller that does not hold it (19.990515ms)
+  ✔ patient.end_care_relationship is refused to every caller that does not hold it (51.796071ms)
+  ✔ patient.attach is refused to every caller that does not hold it (56.912271ms)
+  ✔ patient.register is refused to every caller that does not hold it (46.747838ms)
+  ✔ patient.match_candidates is refused to every caller that does not hold it (52.844759ms)
+  ✔ patient.identity_label is refused to every caller that does not hold it (75.948765ms)
+  ✔ scheduling.expire_holds is refused to every caller that does not hold it (41.584878ms)
+  ✔ scheduling.set_status is refused to every caller that does not hold it (24.476583ms)
+  ✔ scheduling.occupy is refused to every caller that does not hold it (26.30803ms)
+  ✔ SEC03-F02 scheduling.set_status: another patient and another clinic cannot move the reservation of patient A (20.507004ms) # SEC03-F02: scheduling.set_status is not bound to the caller reservation (BE-11)
+  ✔ SEC03-F04 patient.ensure_care_relationship: patient A (for a clinic of their choice), patient B and staff of B1 cannot add a relationship for patient A (32.206639ms) # SEC03-F04: patient.ensure_care_relationship lets a patient or clinic add a relationship for another patient (BE-08)
+  ✔ SEC03-F08 patient.identity_label (TC-AZ-08 steps 1 and 3): refused without the patient_label key, the compliance realm or a referencing record (25.351334ms) # SEC03-F08: patient.identity_label cannot succeed and does not check the referencing record (BE-08)
+  ⚠ SEC03-F08 patient.identity_label succeeds for the compliance caller with the key and a visible referencing record (TC-AZ-08 step 3 positive) (8.86204ms) # SEC03-F08: patient.identity_label cannot succeed and does not check the referencing record (BE-08)
+✔ TC-AZ-07: each definer function refuses the callers that must not hold it (860.799811ms)
+ℹ tests 65
+ℹ suites 5
+ℹ pass 61
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 4
+ℹ duration_ms 8600.91578
+
+✖ failing tests:
+
+test at dist/test/security/rls-matrix.dbtest.js:1112:5
+⚠ SEC03-F08 patient.identity_label succeeds for the compliance caller with the key and a visible referencing record (TC-AZ-08 step 3 positive) (8.86204ms) # SEC03-F08: patient.identity_label cannot succeed and does not check the referencing record (BE-08)
+  AssertionError [ERR_ASSERTION]: identity_label failed: 42501 permission denied for table patient
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-203-int-02-fix-d-int02-r4-f01-rls-matrix-no-vacuous-cell-fails-14-m3-tables-unseeded-for-patients-a-b/apps/api/dist/test/security/rls-matrix.dbtest.js:1124:20)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
