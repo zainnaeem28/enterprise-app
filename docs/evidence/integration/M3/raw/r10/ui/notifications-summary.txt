@@ -1,0 +1,2 @@
+SELECT template_key, channel, status, co [{"template_key":"waitlist_offer","channel":"email","status":"suppressed","count":2},{"template_key":"waitlist_offer","channel":"in_app","status":"sent","count":2},{"template_key":"waitlist_offer","channel":"push","status":"suppressed","count":2},{"template_key":"waitlist_offer","channel":"sms","status":"suppressed","count":2}]
+SELECT count(*)::int AS failed_or_error_ [{"failed_or_error_jobs":0}]
