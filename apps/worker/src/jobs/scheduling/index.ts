@@ -10,7 +10,12 @@ import { runNoShowSweep } from './no-show-sweep.js';
 import { runOfferWaitlist } from './offer-waitlist.js';
 import { runOnSlotFreed } from './on-slot-freed.js';
 import type { SchedulingJobDeps } from './ports.js';
-import { runOnReservationConfirmed, runSendPrevisit } from './send-previsit.js';
+import {
+  runOnReservationCancelled,
+  runOnReservationConfirmed,
+  runOnReservationRescheduled,
+  runSendPrevisit,
+} from './send-previsit.js';
 
 export { SCHEDULING_FLOW_CRONTAB, SCHEDULING_FLOW_JOBS } from './jobs.js';
 export { runOfferWaitlist } from './offer-waitlist.js';
@@ -19,11 +24,18 @@ export { runExpireOffer, runLapse } from './expire-offer.js';
 export { runNoShowSweep } from './no-show-sweep.js';
 export type { SweepResult } from './no-show-sweep.js';
 export { runOnSlotFreed } from './on-slot-freed.js';
-export { runOnReservationConfirmed, runSendPrevisit } from './send-previsit.js';
+export {
+  runOnReservationCancelled,
+  runOnReservationConfirmed,
+  runOnReservationRescheduled,
+  runSendPrevisit,
+} from './send-previsit.js';
 export type {
   FlowMeta,
   FreedSlot,
   LapseOutcome,
+  NoticeOutcome,
+  NoticeResult,
   NoShowCandidate,
   OfferCandidate,
   OfferOutcome,
@@ -59,8 +71,26 @@ export function createSchedulingFlowTasks(deps: SchedulingJobDeps): Record<strin
     'scheduling.no_show_sweep': async (_payload, helpers) => {
       await runNoShowSweep(deps, `scheduling.no_show_sweep:${helpers.job.id}`);
     },
-    'scheduling.on_reservation_confirmed': async (payload) => {
-      await runOnReservationConfirmed(deps, payload as Record<string, unknown>);
+    'scheduling.on_reservation_confirmed': async (payload, helpers) => {
+      await runOnReservationConfirmed(
+        deps,
+        payload as Record<string, unknown>,
+        `scheduling.on_reservation_confirmed:${helpers.job.id}`,
+      );
+    },
+    'scheduling.on_reservation_cancelled': async (payload, helpers) => {
+      await runOnReservationCancelled(
+        deps,
+        payload as Record<string, unknown>,
+        `scheduling.on_reservation_cancelled:${helpers.job.id}`,
+      );
+    },
+    'scheduling.on_reservation_rescheduled': async (payload, helpers) => {
+      await runOnReservationRescheduled(
+        deps,
+        payload as Record<string, unknown>,
+        `scheduling.on_reservation_rescheduled:${helpers.job.id}`,
+      );
     },
     'scheduling.send_previsit': async (payload, helpers) => {
       await runSendPrevisit(

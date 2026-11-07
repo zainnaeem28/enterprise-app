@@ -26,6 +26,7 @@ import {
 import { CheckInNotAllowedError, GraceNotElapsedError } from './errors.js';
 import { clock, graceMinutes, iso, isoOrNull, localDate, record } from './common.js';
 import type { FlowDeps, Row } from './common.js';
+import { NoticeService } from './notices.js';
 import { PrevisitService } from './previsit.js';
 import { qrToken, qrTokenMatches } from './qr.js';
 import { WaitlistService } from './waitlist.js';
@@ -78,9 +79,11 @@ const toQueueView = (r: Row, now: Date): QueueEntryView => ({
 export class SchedulingFlowService {
   readonly waitlist: WaitlistService;
   readonly previsit: PrevisitService;
+  readonly notices: NoticeService;
 
   constructor(private readonly deps: FlowDeps) {
     this.previsit = new PrevisitService(deps);
+    this.notices = new NoticeService(deps);
     this.waitlist = new WaitlistService(deps);
   }
 

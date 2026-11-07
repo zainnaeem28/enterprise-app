@@ -15,6 +15,9 @@ export function flowPort(s: SchedulingFlowService): {
   autoNoShow: SchedulingFlowService['autoNoShow'];
   sendPrevisit: SchedulingFlowService['previsit']['send'];
   previsitDueAt: SchedulingFlowService['previsit']['dueAt'];
+  noticeConfirmed: SchedulingFlowService['notices']['confirmed'];
+  noticeCancelled: SchedulingFlowService['notices']['cancelled'];
+  noticeRescheduled: SchedulingFlowService['notices']['rescheduled'];
 } {
   return {
     freedSlot: (tx, id) => s.waitlist.freedSlot(tx, id),
@@ -28,5 +31,8 @@ export function flowPort(s: SchedulingFlowService): {
     autoNoShow: (tx, meta, c) => s.autoNoShow(tx, meta, c),
     sendPrevisit: (tx, meta, id) => s.previsit.send(tx, meta, id),
     previsitDueAt: (tx, id) => s.previsit.dueAt(tx, id),
+    noticeConfirmed: (tx, meta, id) => s.notices.confirmed(tx, meta, id),
+    noticeCancelled: (tx, meta, id, was, to) => s.notices.cancelled(tx, meta, id, was, to),
+    noticeRescheduled: (tx, meta, id, nid, to) => s.notices.rescheduled(tx, meta, id, nid, to),
   };
 }

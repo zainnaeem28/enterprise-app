@@ -514,6 +514,7 @@ export class SchedulingCoreService {
       await this.deps.queue?.publish(tx, 'scheduling.reservation_cancelled', {
         reservationId,
         patientId: cur.patientId,
+        wasConfirmed: cur.status === 'confirmed',
       });
       await this.deps.queue?.publish(tx, 'scheduling.slot_freed', { occupancyId: reservationId });
       return await this.reread(tx, reservationId);

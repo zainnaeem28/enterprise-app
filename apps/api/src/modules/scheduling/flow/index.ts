@@ -13,6 +13,8 @@ export { WaitlistService } from './waitlist.js';
 export type { LapseOutcome, OfferOutcome } from './waitlist.js';
 export { PrevisitService } from './previsit.js';
 export type { SendPrevisitOutcome } from './previsit.js';
+export { NoticeService } from './notices.js';
+export type { NoticeOutcome, NoticeResult } from './notices.js';
 export type { FlowDeps } from './common.js';
 export { createFlowControllers, flowResolvers } from './controller.js';
 export type { FlowControllerDeps } from './controller.js';

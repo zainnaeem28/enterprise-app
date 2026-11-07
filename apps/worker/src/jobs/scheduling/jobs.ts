@@ -51,6 +51,22 @@ export const SCHEDULING_FLOW_JOBS: readonly JobType[] = [
     jobScope: 'patients',
     jobClass: 'job',
   },
+  {
+    name: 'scheduling.on_reservation_cancelled',
+    maxAttempts: 5,
+    onMerged: 'resolve',
+    carriesPatientIds: true,
+    jobScope: 'patients',
+    jobClass: 'handler',
+  },
+  {
+    name: 'scheduling.on_reservation_rescheduled',
+    maxAttempts: 5,
+    onMerged: 'resolve',
+    carriesPatientIds: true,
+    jobScope: 'patients',
+    jobClass: 'handler',
+  },
 ];
 
 /** graphile-worker crontab: the no-show sweep every 5 minutes (33.1). */
