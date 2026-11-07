@@ -9,8 +9,17 @@ Executed 2026-11-07 on the Integrator host (uid 1000, Debian, no apt):
 1. Browser binary (needs network to cdn.playwright.dev, no root):
    `PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers pnpm exec playwright install chromium`
    (installed chromium-1248 + headless shell; Playwright 1.64.1 from the repo lockfile).
-2. System libraries (glib, nss, X11, gbm, ... ) extracted from Debian `.deb` files into a user directory, no install:
-   `fetchlibs.py` (this folder, from the FE-04 run) downloads the packages and their missing dependencies from deb.debian.org and unpacks them under `/tmp/fe04-libs`. It needs `/tmp/fe04-debs/Packages.xz` (the Debian `Packages` index) first. A prepared copy exists at `/tmp/fe04-libs` on this host.
+2. System libraries (glib, nss, X11, gbm, ... ) extracted from Debian `.deb` files into a user directory, no install. Host is Debian 13 (trixie); suite `trixie`, mirror `https://deb.debian.org/debian/`. Exact command (re-executed 2026-11-07 into an empty directory; it reproduced the original run: 68 packages, index identical):
+   ```
+   FETCHLIBS_DEBS=/tmp/fe04-debs FETCHLIBS_LIBS=/tmp/fe04-libs \
+   python3 -I docs/evidence/integration/M3/fetchlibs.py \
+     libxcomposite1 libpango-1.0-0 libxdamage1 libcups2t64 libasound2t64 libnss3 \
+     libgbm1 libxkbcommon0 libxrandr2 libcairo2 libatk-bridge2.0-0t64 libxfixes3
+   ```
+   The script itself downloads `dists/trixie/Release` and `main/binary-amd64/Packages.xz` (no manual step), resolves dependencies, skips what dpkg already has, and writes `MANIFEST.txt` (name, version, SHA256) into `FETCHLIBS_DEBS`. Paths, suite and mirror are set by env (`FETCHLIBS_DEBS`, `FETCHLIBS_LIBS`, `FETCHLIBS_SUITE`, `FETCHLIBS_BASE`).
+   - Package list provenance: the original FE-04 argument list was not recorded. The 12 packages above are the leaf set (nothing else in the fetched set depends on them) reconstructed from the 68 packages that run unpacked; their dependency closure is exactly that set. Browser needs on a different host may differ because already-installed packages are skipped.
+   - Index: `trixie` is a moving suite. The run used `Packages.xz` SHA256 `7778d3e3f303b7ddb8ce0fe7c8d57473a076c6bf2e8f241f75421d2396352498` (e.g. libnss3 2:3.110-1+deb13u4); it was still current on 2026-11-07. Later runs may fetch newer versions; compare against `MANIFEST.txt`.
+   - Integrity (F-RUN-2): `Packages.xz` is checked against the SHA256 in the suite `Release` file, and each `.deb` against the SHA256 in `Packages`; a mismatch aborts before unpacking. Residual risk, accepted for a throwaway test host only: the `Release` file is fetched over HTTPS but its GPG signature (`InRelease`) is not verified (no `gpgv` on the runner), so trust rests on TLS to deb.debian.org. Do not use this for production images; use apt or a pinned snapshot there.
 3. Run with:
    ```
    export PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers
