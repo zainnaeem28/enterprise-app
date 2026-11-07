@@ -45,7 +45,8 @@ export interface DocumentRecord {
   contentType: string | null;
   sizeBytes: number | null;
   onLegalHold: boolean;
-  version: number;
+  /** Row version, known only after a classify/confirm response (ETag); the list response carries none. */
+  version?: number;
 }
 
 const rec = (v: unknown): Record<string, unknown> =>
@@ -75,7 +76,7 @@ export function parseDocument(raw: unknown, fallbackVersion?: number): DocumentR
     contentType: typeof d['contentType'] === 'string' ? d['contentType'] : null,
     sizeBytes: typeof d['sizeBytes'] === 'number' ? d['sizeBytes'] : null,
     onLegalHold: d['onLegalHold'] === true,
-    version: version ?? 0,
+    ...(version === undefined ? {} : { version }),
   };
 }
 

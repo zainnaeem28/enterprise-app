@@ -40,7 +40,12 @@ const UNREADABLE = (r: Response): Failure => ({
 });
 
 export const newKey = (): string => crypto.randomUUID();
-const etag = (version: number): string => `W/"${version}"`;
+/**
+ * The contract requires If-Match but no response lists a version (FE06-F01), so an unknown version sends no
+ * header (the server answers 428, shown to the user) rather than a made-up value that would answer 412.
+ */
+const matchHeader = (version: number | undefined): { 'If-Match': string } =>
+  (version === undefined ? {} : { 'If-Match': `W/"${version}"` }) as { 'If-Match': string };
 
 /** Every call the documents screens make, over the shell's typed client (CSRF and release headers added by the shell). */
 export function createDocumentsApi(api: Api) {
@@ -135,23 +140,23 @@ export function createDocumentsApi(api: Api) {
 
     classify: (
       id: string,
-      version: number,
+      version: number | undefined,
       classification: Classification,
     ): Promise<Outcome<DocumentRecord>> =>
       guard(
         () =>
           api.PUT('/api/v1/documents/{id}/classification', {
-            params: { header: { ...header, 'If-Match': etag(version) }, path: { id } },
+            params: { header: { ...header, ...matchHeader(version) }, path: { id } },
             body: { classification },
           }),
         (d, r) => parseDocument(d, versionOf(r)),
       ),
 
-    confirm: (id: string, version: number): Promise<Outcome<DocumentRecord>> =>
+    confirm: (id: string, version: number | undefined): Promise<Outcome<DocumentRecord>> =>
       guard(
         () =>
           api.POST('/api/v1/documents/{id}/confirm', {
-            params: { header: { ...header, 'If-Match': etag(version) }, path: { id } },
+            params: { header: { ...header, ...matchHeader(version) }, path: { id } },
           }),
         (d, r) => parseDocument(d, versionOf(r)),
       ),

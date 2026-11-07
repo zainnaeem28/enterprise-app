@@ -59,6 +59,7 @@ export function errorText(f: Failure, s: DocumentStrings): string {
       return e.rateLimited;
     default:
   }
+  if (f.status === 428) return e.versionUnknown;
   if (f.status === 412 || f.status === 409) return e.stale;
   if (f.status === 0) return e.network;
   return e.generic + suffix;

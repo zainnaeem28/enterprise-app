@@ -23,7 +23,6 @@ const doc = (over: Record<string, unknown> = {}) => ({
   contentType: 'application/pdf',
   sizeBytes: 123_456,
   onLegalHold: false,
-  version: 2,
   ...over,
 });
 
@@ -67,7 +66,7 @@ async function mockApi(page: Page, docs: Record<string, unknown>[]): Promise<Moc
         expiresAt: new Date(Date.now() + 300_000).toISOString(),
       });
     if (path.endsWith('/complete')) {
-      mock.docs = [doc({ status: 'scanning', suggestedClassification: null, version: 1 })];
+      mock.docs = [doc({ status: 'scanning', suggestedClassification: null })];
       return reply(route, 202, { status: 'scanning' });
     }
     if (path.endsWith('/download-url'))
@@ -76,13 +75,11 @@ async function mockApi(page: Page, docs: Record<string, unknown>[]): Promise<Moc
         expiresAt: new Date(Date.now() + 60_000).toISOString(),
       });
     if (req.method() === 'PUT' && path.endsWith('/classification')) {
-      mock.docs = [
-        doc({ classification: JSON.parse(req.postData() ?? '{}').classification, version: 3 }),
-      ];
+      mock.docs = [doc({ classification: JSON.parse(req.postData() ?? '{}').classification })];
       return reply(route, 200, mock.docs[0], { etag: 'W/"3"' });
     }
     if (path.endsWith('/confirm')) {
-      mock.docs = [doc({ status: 'confirmed', confirmedAt: new Date().toISOString(), version: 4 })];
+      mock.docs = [doc({ status: 'confirmed', confirmedAt: new Date().toISOString() })];
       return reply(route, 200, mock.docs[0], { etag: 'W/"4"' });
     }
     return reply(route, 404, { code: 'kernel.not_found' });

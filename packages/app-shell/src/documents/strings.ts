@@ -60,6 +60,8 @@ export const documentStrings = {
     forbidden: 'You do not have permission to do that.',
     stale:
       'Someone else changed this document. The list has been refreshed; check it and try again.',
+    versionUnknown:
+      'This document cannot be confirmed yet: its current version is not available from the server. Refresh and try again; if it persists, report it.',
     rateLimited: 'Too many requests. Wait a moment and try again.',
     network: 'The connection failed. Check your connection and try again.',
     generic: 'Something went wrong. Try again.',

@@ -30,7 +30,6 @@ const doc = (over: Record<string, unknown> = {}) => ({
   contentType: 'application/pdf',
   sizeBytes: 2048,
   onLegalHold: false,
-  version: 2,
   ...over,
 });
 
@@ -327,7 +326,7 @@ describe('classification confirm (staff)', () => {
     fireEvent.click(screen.getByRole('button', { name: /^confirm classification/i }));
     expect(await screen.findByText('Confirmed')).toBeInTheDocument();
     const put = seen.find((s) => s.method === 'PUT');
-    expect(put?.headers.get('If-Match')).toBe('W/"2"');
+    expect(put?.headers.has('If-Match')).toBe(false);
     expect(put?.body).toEqual({ classification: 'insurance_card' });
     const confirm = seen.find((s) => s.path.endsWith('/confirm'));
     expect(confirm?.headers.get('If-Match')).toBe('W/"3"');
@@ -351,6 +350,21 @@ describe('classification confirm (staff)', () => {
     expect(await screen.findByText(/someone else changed/i)).toBeInTheDocument();
     expect(seen.some((s) => s.method === 'PUT')).toBe(false);
     await waitFor(() => expect(lists).toBeGreaterThan(1));
+  });
+
+  it('never invents a version: a contract-shaped list (no version) sends no If-Match and a 428 is explained', async () => {
+    const { seen } = setup(
+      (s) => {
+        if (isList(s)) return list([doc()]);
+        if (s.path.endsWith('/confirm')) return json(428, { code: 'kernel.precondition_required' });
+        return undefined;
+      },
+      { classify: true },
+    );
+    fireEvent.click(await screen.findByRole('button', { name: /^confirm classification/i }));
+    expect(await screen.findByText(/version is not available/i)).toBeInTheDocument();
+    const confirm = seen.find((s) => s.path.endsWith('/confirm'));
+    expect(confirm?.headers.has('If-Match')).toBe(false);
   });
 
   it('offers no confirm control without the classify permission', async () => {

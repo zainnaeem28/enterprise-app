@@ -20,7 +20,6 @@ const doc = {
   contentType: 'application/pdf',
   sizeBytes: 1024,
   onLegalHold: false,
-  version: 1,
 };
 
 function mount(permissions: string[]) {
