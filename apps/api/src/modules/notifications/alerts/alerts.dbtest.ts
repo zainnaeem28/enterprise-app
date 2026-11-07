@@ -225,6 +225,21 @@ describe('staff alerts and the alert stream on PostgreSQL 17 (BE-07)', () => {
         );
       },
     });
+    // The M-5 patient guard refuses an alert for a patient who is not registered in the organisation (PM008): register the
+    // synthetic patients the tests raise alerts for, as the patient testkit does (system settings for the merge write guard).
+    await k.sa.query(
+      `SELECT set_config('app.org_id', $1, false), set_config('app.audience', 'system', false)`,
+      [ORG],
+    );
+    for (const [n, pid] of [P1, P2, M1, M2].entries())
+      await k.sa.query(
+        `INSERT INTO patient.patient (id, organisation_id, mrn, given_name, family_name, date_of_birth, state_code, created_via)
+         VALUES ($1, $2, $3, 'Pat', 'Ient', '1975-01-01', 'NY', 'front_desk')`,
+        [pid, ORG, `MRN-${String(9_100_000 + n)}`],
+      );
+    await k.sa.query(
+      `SELECT set_config('app.org_id', '', false), set_config('app.audience', '', false)`,
+    );
     // Job types: ours, plus the handler of `alert_unacknowledged` that the owning module (clinical) will register.
     for (const j of ALERT_JOBS) k.registry.defineJob(j);
     k.registry.defineJob({
@@ -363,6 +378,25 @@ describe('staff alerts and the alert stream on PostgreSQL 17 (BE-07)', () => {
         [P1],
       );
       assert.equal(r[0]?.ok, true);
+    });
+
+    test('M-5 patient guard: an alert for an unregistered patient is still refused (PM008) and leaves no row', async () => {
+      const ghost = id(7999);
+      await assert.rejects(
+        raiseSys({
+          type: 'red_flag',
+          severity: 'critical',
+          targets: { kind: 'principal', principalIds: [dr1.principalId] },
+          resourceType: 'triage_assessment',
+          resourceId: RES,
+          patientId: ghost,
+        }),
+        (e: { code?: string }) => e.code === 'PM008',
+      );
+      assert.equal(
+        (await q(`SELECT 1 FROM notifications.staff_alert WHERE patient_id = $1`, [ghost])).length,
+        0,
+      );
     });
 
     test('ADR-022: admin-realm alert types never carry a patient ID, in the service and in the table', async () => {
@@ -850,11 +884,24 @@ describe('staff alerts and the alert stream on PostgreSQL 17 (BE-07)', () => {
 
   // --------------------------------------------------------------------------------------------------------------
   describe('escalation job (32.4, TC-PC-16 step 5)', () => {
-    const due = (alertId: string) =>
-      q(
-        `UPDATE notifications.staff_alert SET escalate_at = now() - interval '1 second' WHERE id = $1 AND status = 'open'`,
-        [alertId],
-      );
+    // The patient guard also runs on UPDATE of a patient-bound alert, so the fixture write carries the settings of a system job.
+    const due = async (alertId: string) => {
+      await k.sa.query('BEGIN');
+      try {
+        await k.sa.query(
+          `SELECT set_config('app.org_id', $1, true), set_config('app.audience', 'system', true)`,
+          [ORG],
+        );
+        await k.sa.query(
+          `UPDATE notifications.staff_alert SET escalate_at = now() - interval '1 second' WHERE id = $1 AND status = 'open'`,
+          [alertId],
+        );
+        await k.sa.query('COMMIT');
+      } catch (e) {
+        await k.sa.query('ROLLBACK');
+        throw e;
+      }
+    };
     const run = (alertId: string) =>
       k.wdb.withScope(patientsJob([P1]), (tx) =>
         escalateAlert(tx, workerQueue, { alertId, level: 1 }),
