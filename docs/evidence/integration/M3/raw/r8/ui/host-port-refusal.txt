@@ -1,0 +1,2 @@
+{"level":"error","time":"2026-11-07T13:20:35.759Z","msg":"invalid configuration: EHR_PATIENT_HOST must be a host name without a port"}
+exit=1

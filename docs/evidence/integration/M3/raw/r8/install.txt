@@ -1,0 +1,10 @@
+! Corepack is about to download https://registry.npmjs.org/pnpm/-/pnpm-12.16.1.tgz
+Downloading the pnpm 12.16.1 binary for linux-x64...
+Scope: all 11 workspace projects
+? Verifying lockfile against supply-chain policies (401 entries)...
+Update available! 12.16.1 → 12.18.0.
+Changelog: https://pnpm.io/v/12.18.0
+To update, run: curl -fsSL https://get.pnpm.io/install.sh | sh -
+✓ Lockfile passes supply-chain policies (401 entries in 1.1s)
+Lockfile is up to date, resolution step is skipped
+Done in 1.2s using pnpm v12.16.1

@@ -1,0 +1,13 @@
+▶ host variables (INT02-R7-N1)
+  ✔ bare host names are accepted (1.015142ms)
+  ✔ EHR_STAFF_HOST with a port is refused by name (hostOf strips the port, so it could never match) (0.440917ms)
+  ✔ EHR_PATIENT_HOST with a port is refused by name (hostOf strips the port, so it could never match) (0.135864ms)
+✔ host variables (INT02-R7-N1) (2.52408ms)
+ℹ tests 3
+ℹ suites 1
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 206.278512

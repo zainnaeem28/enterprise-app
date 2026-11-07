@@ -1,0 +1,6 @@
+{"count":34,"level":"info","time":"2026-11-07T13:19:25.273Z","msg":"task types synced"}
+{"level":"info","time":"2026-11-07T13:19:25.278Z","msg":"Failed to read crontab file '/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/crontab'; cron is disabled"}
+{"tasks":0,"level":"info","time":"2026-11-07T13:19:25.281Z","msg":"worker started"}
+{"database":"[redacted]","level":"info","time":"2026-11-07T13:19:25.281Z","msg":"worker booted"}
+{"level":"info","time":"2026-11-07T13:19:25.284Z","msg":"Worker connected and looking for jobs... (task names: '')"}
+{"level":"info","time":"2026-11-07T13:20:50.468Z","msg":"worker stopped"}

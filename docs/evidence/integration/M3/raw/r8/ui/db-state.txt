@@ -1,0 +1,5 @@
+task_type rows now: [{"n":34}]
+slot_reservation by booked_via: [{"booked_via":"patient","n":2}]
+slot_occupancy by status: [{"status":"cancelled_patient","n":1},{"status":"rescheduled","n":1}]
+waitlist entries: [{"n":0}]
+audit events by action: [{"action":"config_change","n":1},{"action":"create","n":2},{"action":"update","n":4}]
