@@ -58,6 +58,7 @@ export type Client = {
   ): Promise<{ rows: Record<string, unknown>[]; rowCount: number | null }>;
   connect(): Promise<void>;
   end(): Promise<void>;
+  on(event: 'error', listener: (e: Error) => void): unknown;
 };
 
 export const clock = { t: Date.now() };
@@ -126,6 +127,12 @@ export async function setup(opts: KitOptions): Promise<Kit> {
     sa.query(sql, params).then((r) => r.rows as T[]);
   const apiPool = new pg.Pool({ connectionString: urlFor('app_api'), max: 8 });
   const workerPool = new pg.Pool({ connectionString: urlFor('app_worker'), max: 4 });
+  // An idle client that the server ends (the DROP DATABASE ... WITH (FORCE) of close, a terminated backend) must not become an
+  // uncaught exception of the test process.
+  const ignoreIdle = (): void => undefined;
+  apiPool.on('error', ignoreIdle);
+  workerPool.on('error', ignoreIdle);
+  sa.on('error', ignoreIdle);
   const db = new KernelDb(apiPool as never);
   const wdb = new KernelDb(workerPool as never);
 
