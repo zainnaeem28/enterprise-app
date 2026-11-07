@@ -3,6 +3,7 @@ import { splitStatements, type Statement } from './sql-scan.js';
 export type RuleId =
   | 'DML' // SBR-17, ARCHITECTURE 21.7 point 1
   | 'RUNNER_OWNED' // transaction control, role switching: the runner owns them
+  | 'OWNER_STEP' // ARCHITECTURE 21.2 point 5 (A-3): the closed list of owner steps
   | 'ROLE_DDL' // roles are created by db/roles, not by migrations
   | 'CLASS_HEADER' // DEVOPS-PLAN 8.1: every file declares expand or contract
   | 'EXPAND_DESTRUCTIVE' // DEVOPS-PLAN 8.1 rule 1
@@ -102,6 +103,74 @@ function destructive(n: string): string | null {
   return null;
 }
 
+const OWNER_ROLES = new Set(['patient_scope_owner', 'scheduling_booking_owner']);
+const GUARD_GRANT = 'GRANT EXECUTE ON FUNCTION PATIENT.GUARD_OPEN_PATIENT() TO APP_OWNER';
+const GUARD_REVOKE = 'REVOKE EXECUTE ON FUNCTION PATIENT.GUARD_OPEN_PATIENT() FROM APP_OWNER';
+const DROP_FUNCTION = /^DROP FUNCTION [A-Z_][A-Z0-9_]*\.[A-Z_][A-Z0-9_]*\([A-Z0-9_ ,.\[\]]*\)$/;
+
+/**
+ * Owner steps (ARCHITECTURE 21.2 point 5, amendment A-3): `SET LOCAL ROLE <owner>; ...; RESET ROLE;` around a closed
+ * list of statements. Returns the indexes of the statements that are a valid part of a step (exempt from RUNNER_OWNED)
+ * and the findings for every malformed or unlisted use.
+ */
+function ownerSteps(
+  statements: readonly Statement[],
+  header: MigrationHeader,
+): { ok: Set<number>; findings: { i: number; message: string }[] } {
+  const ok = new Set<number>();
+  const findings: { i: number; message: string }[] = [];
+  const bad = (i: number, message: string): void => void findings.push({ i, message });
+  let role: string | null = null;
+  let openedAt = -1;
+  let lastGrant = -1;
+  let lastRevoke = -1;
+  let lastTrigger = -1;
+  statements.forEach((s, i) => {
+    const n = norm(s);
+    if (/^CREATE (?:CONSTRAINT )?TRIGGER\b/.test(n)) lastTrigger = i;
+    const set = /^SET LOCAL ROLE ([A-Z_][A-Z0-9_]*)$/.exec(n);
+    if (set) {
+      const r = set[1]!.toLowerCase();
+      if (!OWNER_ROLES.has(r)) return; // stays RUNNER_OWNED
+      if (header.transaction === 'none')
+        return bad(i, 'An owner step needs a single-transaction file.');
+      if (role !== null) return bad(i, 'Owner steps do not nest.');
+      role = r;
+      openedAt = i;
+      ok.add(i);
+      return;
+    }
+    if (n === 'RESET ROLE') {
+      if (role === null) return; // stays RUNNER_OWNED
+      role = null;
+      ok.add(i);
+      return;
+    }
+    if (role === null) return;
+    if (n === GUARD_GRANT || n === GUARD_REVOKE) {
+      if (role !== 'patient_scope_owner')
+        return bad(i, 'The merge guard grant and revoke run as patient_scope_owner only.');
+      if (n === GUARD_GRANT) lastGrant = i;
+      else lastRevoke = i;
+      ok.add(i);
+    } else if (DROP_FUNCTION.test(n)) {
+      if (header.class !== 'contract')
+        return bad(i, 'DROP FUNCTION in an owner step is accepted in a contract file only.');
+      ok.add(i);
+    } else {
+      bad(i, 'This statement is not on the closed owner-step list (ARCHITECTURE 21.2 point 5).');
+    }
+  });
+  if (role !== null)
+    bad(openedAt, 'A file never ends inside an owner step: RESET ROLE is missing.');
+  if (lastGrant >= 0 && (lastRevoke < lastGrant || lastRevoke < lastTrigger))
+    bad(
+      lastGrant,
+      'A file that grants the merge guard revokes it in a later step, after its last CREATE TRIGGER.',
+    );
+  return { ok, findings };
+}
+
 export interface CheckOptions {
   /** Skip the expand/contract rules (used only for the DML ban tool run on raw SQL). */
   readonly structureOnly?: boolean;
@@ -115,6 +184,9 @@ export function checkMigration(sql: string, opts: CheckOptions = {}): Finding[] 
   const add = (rule: RuleId, i: number, s: Statement, message: string): void => {
     out.push({ rule, statement: i + 1, message, excerpt: excerpt(s) });
   };
+
+  const steps = ownerSteps(statements, header);
+  for (const f of steps.findings) add('OWNER_STEP', f.i, statements[f.i]!, f.message);
 
   const created = new Set<string>();
   for (const s of statements) {
@@ -134,7 +206,7 @@ export function checkMigration(sql: string, opts: CheckOptions = {}): Finding[] 
         s,
         `Migrations are DDL only (SBR-17): ${dml}. Reference data and repairs are worker jobs.`,
       );
-    if (RUNNER_OWNED.test(n))
+    if (RUNNER_OWNED.test(n) && !steps.ok.has(i))
       add(
         'RUNNER_OWNED',
         i,
@@ -169,7 +241,12 @@ export function checkMigration(sql: string, opts: CheckOptions = {}): Finding[] 
       });
     }
     statements.forEach((s, i) => {
-      if (destructive(norm(s)) === null && !dmlFinding(s) && !RUNNER_OWNED.test(norm(s))) {
+      if (
+        destructive(norm(s)) === null &&
+        !dmlFinding(s) &&
+        !RUNNER_OWNED.test(norm(s)) &&
+        !steps.ok.has(i)
+      ) {
         add(
           'CONTRACT_MIXED',
           i,

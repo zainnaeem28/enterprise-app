@@ -718,3 +718,279 @@ describe('the runner against a real database', () => {
     );
   });
 });
+
+// INT02-F02 (HEAAA-186), ruling HEAAA-190, ARCHITECTURE 21.2 point 5 and 21.6 (A-3): one merge write guard for every module.
+describe('the single merge write guard (T1-T4 of the HEAAA-190 ruling)', () => {
+  const MERGED = '00000000-0000-7000-8000-0000000000c1';
+  const OPEN = '00000000-0000-7000-8000-0000000000c2';
+  const RACE = '00000000-0000-7000-8000-0000000000c3';
+  const RACE_TARGET = '00000000-0000-7000-8000-0000000000c4';
+  const ROW = '00000000-0000-7000-8000-0000000000d1';
+  const guarded = [
+    'scheduling.slot_reservation',
+    'documents.document',
+    'documents.document_version',
+    'documents.legal_hold',
+    'documents.deletion_request',
+    'scheduling.check_in',
+    'scheduling.queue_entry',
+    'scheduling.waitlist_entry',
+    'scheduling.waitlist_offer',
+    'telehealth.video_session',
+    'telehealth.participant',
+    'telehealth.join_token',
+    'telehealth.location_confirmation',
+    'notifications.staff_alert',
+    'notifications.staff_alert_event',
+  ];
+  const insertPatient = (c, id, org, extra = '') =>
+    c.query(
+      `INSERT INTO patient.patient (id, organisation_id, mrn, given_name, family_name, date_of_birth, state_code, created_via${extra ? ', status, merged_into' : ''})
+       VALUES ($1, $2, $3, 'Guard', 'Test', '1980-01-01', 'NY', 'front_desk'${extra})`,
+      [id, org, `MRN-${id.slice(-7).replace(/\D/g, '1').padStart(7, '1')}`],
+    );
+  let adm;
+  let db3;
+  const adminName = () => new URL(adminUrl).username;
+  before(async () => {
+    adm = await connect(urlFor(adminName(), dbName), 'test-guard-admin');
+    await adm.query(
+      "INSERT INTO organisation.jurisdiction (code, organisation_id, name) VALUES ('NY', $1, 'New York') ON CONFLICT DO NOTHING",
+      [ORG],
+    );
+  });
+  after(async () => {
+    await adm
+      ?.query('DELETE FROM patient.patient WHERE id = ANY($1)', [[RACE, RACE_TARGET]])
+      .catch(() => undefined);
+    await adm?.end();
+    if (db3) await admin?.query(`DROP DATABASE IF EXISTS ${db3} WITH (FORCE)`);
+  });
+
+  /** Inside one rolled-back transaction as the superuser: a context for the guard, a merged patient and an open one. */
+  async function inGuardTxn(fn, { org = ORG, audience = 'system' } = {}) {
+    const c = await connect(urlFor(adminName(), dbName), 'test-guard-txn');
+    try {
+      await c.query('BEGIN');
+      await c.query('SELECT set_config($1, $2, true), set_config($3, $4, true)', [
+        'app.org_id',
+        ORG,
+        'app.audience',
+        audience,
+      ]);
+      // A bare row must reach the merge guard: switch off the other row triggers that run before it (the guard itself stays).
+      for (const t of guarded) {
+        const others = await c.query(
+          `SELECT t.tgname FROM pg_trigger t WHERE t.tgrelid = $1::regclass AND NOT t.tgisinternal
+             AND t.tgfoid <> 'patient.guard_open_patient()'::regprocedure`,
+          [t],
+        );
+        for (const r of others.rows)
+          await c.query(`ALTER TABLE ${t} DISABLE TRIGGER "${r.tgname}"`);
+      }
+      await insertPatient(c, OPEN, ORG);
+      await insertPatient(c, MERGED, ORG, `, 'merged', '${OPEN}'`);
+      await c.query('SELECT set_config($1, $2, true)', ['app.org_id', org]);
+      return await fn(c);
+    } finally {
+      await c.query('ROLLBACK').catch(() => undefined);
+      await c.end();
+    }
+  }
+  const hasId = new Map();
+  const attempt = async (c, table, patient, org = ORG) => {
+    if (!hasId.has(table)) {
+      const [schema, name] = table.split('.');
+      const r = await adm.query(
+        "SELECT 1 FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2 AND column_name = 'id'",
+        [schema, name],
+      );
+      hasId.set(table, r.rowCount > 0);
+    }
+    const withId = hasId.get(table);
+    await c.query('SAVEPOINT s');
+    try {
+      await c.query(
+        withId
+          ? `INSERT INTO ${table} (id, organisation_id, patient_id) VALUES ($1, $2, $3)`
+          : `INSERT INTO ${table} (organisation_id, patient_id) VALUES ($1, $2)`,
+        withId ? [ROW, org, patient] : [org, patient],
+      );
+      return 'inserted';
+    } catch (e) {
+      return e.code;
+    } finally {
+      await c.query('ROLLBACK TO SAVEPOINT s');
+    }
+  };
+
+  test('T1: a write naming a merged patient is refused with PM001 on every guarded table', async () => {
+    await inGuardTxn(async (c) => {
+      for (const t of guarded) assert.equal(await attempt(c, t, MERGED), 'PM001', t);
+    });
+  });
+
+  test('T1: an open patient passes the guard (any later refusal is another check) on every guarded table', async () => {
+    await inGuardTxn(async (c) => {
+      for (const t of guarded) {
+        const code = await attempt(c, t, OPEN);
+        assert.ok(!['PM001', 'PM008'].includes(code), `${t}: ${code}`);
+      }
+    });
+  });
+
+  test('T1: a write naming a patient of another organisation is refused (42501 or PM008)', async () => {
+    await inGuardTxn(
+      async (c) => {
+        for (const t of guarded) {
+          const code = await attempt(c, t, OPEN, ORG);
+          assert.ok(['42501', 'PM008'].includes(code), `${t}: ${code}`);
+        }
+      },
+      { org: ORG2 },
+    );
+  });
+
+  test('T2: app_owner holds no EXECUTE on the guard, the five refused functions are gone, all 15 tables carry the trigger', async () => {
+    const acl = await adm.query(
+      `SELECT count(*)::int AS n FROM pg_proc p CROSS JOIN LATERAL aclexplode(p.proacl) a JOIN pg_roles r ON r.oid = a.grantee
+       WHERE p.oid = 'patient.guard_open_patient()'::regprocedure AND r.rolname = 'app_owner'`,
+    );
+    assert.equal(acl.rows[0].n, 0);
+    for (const t of [
+      'documents.guard_open_patient',
+      'telehealth.guard_open_patient',
+      'scheduling.flow_guard_open_patient',
+      'scheduling.guard_open_patient',
+      'scheduling.guard_open_patient_at_commit',
+    ]) {
+      const f = await adm.query(
+        "SELECT count(*)::int AS n FROM pg_proc WHERE oid::regproc::text = $1 OR (pronamespace::regnamespace::text || '.' || proname) = $1",
+        [t],
+      );
+      assert.equal(f.rows[0].n, 0, `${t} must not exist`);
+    }
+    const trig = await adm.query(
+      `SELECT c.oid::regclass::text AS tbl FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+       WHERE NOT t.tgisinternal AND t.tgfoid = 'patient.guard_open_patient()'::regprocedure AND t.tgenabled = 'O'
+         AND (t.tgtype & 1) = 1 AND (t.tgtype & 2) = 2 AND (t.tgtype & 4) = 4 AND (t.tgtype & 16) = 16`,
+    );
+    const have = new Set(trig.rows.map((r) => r.tbl));
+    for (const t of guarded) assert.ok(have.has(t), `${t} lacks the trigger`);
+    const defs = await adm.query(
+      `SELECT count(*)::int AS n FROM pg_proc WHERE prosecdef AND pronamespace::regnamespace::text IN ('scheduling','documents','telehealth') AND proname LIKE '%guard_open_patient%'`,
+    );
+    assert.equal(defs.rows[0].n, 0);
+    const { definerInventory } = await import('./catalog-lists.mjs');
+    assert.equal(definerInventory.length, 23, 'definerInventory has the 23 entries of A-3');
+  });
+
+  test('T3: a merge holding the root lock makes a concurrent reservation write wait; after the commit it gets PM001', async () => {
+    await adm.query('SELECT set_config($1, $2, false), set_config($3, $4, false)', [
+      'app.org_id',
+      ORG,
+      'app.audience',
+      'system',
+    ]);
+    await insertPatient(adm, RACE_TARGET, ORG);
+    await insertPatient(adm, RACE, ORG);
+    const merge = await connect(urlFor(adminName(), dbName), 'test-merge');
+    const writer = await connect(urlFor(adminName(), dbName), 'test-writer');
+    try {
+      for (const c of [merge, writer])
+        await c.query('SELECT set_config($1, $2, false), set_config($3, $4, false)', [
+          'app.org_id',
+          ORG,
+          'app.audience',
+          'system',
+        ]);
+      await merge.query('BEGIN');
+      await merge.query('SELECT 1 FROM patient.patient WHERE id = $1 FOR UPDATE', [RACE]);
+      await writer.query('BEGIN');
+      let settled = false;
+      const write = writer
+        .query(
+          'INSERT INTO scheduling.slot_reservation (id, organisation_id, patient_id) VALUES ($1, $2, $3)',
+          [ROW, ORG, RACE],
+        )
+        .then(
+          () => 'inserted',
+          (e) => e.code,
+        )
+        .finally(() => {
+          settled = true;
+        });
+      await new Promise((r) => setTimeout(r, 500));
+      assert.equal(settled, false, 'the writer must wait on the root lock');
+      await merge.query(
+        "UPDATE patient.patient SET status = 'merged', merged_into = $2 WHERE id = $1",
+        [RACE, RACE_TARGET],
+      );
+      await merge.query('COMMIT');
+      assert.equal(await write, 'PM001');
+    } finally {
+      await writer.query('ROLLBACK').catch(() => undefined);
+      await merge.query('ROLLBACK').catch(() => undefined);
+      await writer.end();
+      await merge.end();
+    }
+  });
+
+  test('T4: a file that leaves the guard granted to app_owner is rolled back by the runner post-check, with its tracker row', async () => {
+    db3 = `${dbName}_ownerstep`;
+    await admin.query(`CREATE DATABASE ${db3}`);
+    run('bootstrap', db3);
+    const a = await connect(urlFor(adminName(), db3), 'test-ownerstep-admin');
+    const dir = mkdtempSync(join(tmpdir(), 'f02-ownerstep-'));
+    const owner = await connect(urlFor('app_owner', db3), 'test-ownerstep-owner');
+    try {
+      await a.query('CREATE SCHEMA patient');
+      await a.query('GRANT USAGE ON SCHEMA patient TO app_owner, patient_scope_owner');
+      await a.query(
+        `CREATE FUNCTION patient.guard_open_patient() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END $$`,
+      );
+      await a.query('ALTER FUNCTION patient.guard_open_patient() OWNER TO patient_scope_owner');
+      await a.query('GRANT EXECUTE ON FUNCTION patient.guard_open_patient() TO app_owner');
+      writeFileSync(
+        join(dir, '0001_marker.sql'),
+        '-- migration-class: expand\nCREATE SCHEMA marker_one;\n',
+      );
+      await assert.rejects(migrate(owner, { dir }), /still holds EXECUTE/);
+      assert.equal(
+        (await owner.query("SELECT to_regnamespace('marker_one') AS s")).rows[0].s,
+        null,
+        'the file was rolled back',
+      );
+      assert.equal(
+        (await owner.query('SELECT count(*)::int AS n FROM migration.schema_migration')).rows[0].n,
+        0,
+      );
+      await a.query('REVOKE EXECUTE ON FUNCTION patient.guard_open_patient() FROM app_owner');
+      assert.deepEqual((await migrate(owner, { dir })).applied, ['0001_marker.sql']);
+      // The owner step itself: grant, a trigger that needs it, revoke; the revoke leaves the trigger firing.
+      writeFileSync(
+        join(dir, '0002_attach.sql'),
+        `-- migration-class: expand
+CREATE TABLE marker_one.t (id uuid PRIMARY KEY, organisation_id uuid, patient_id uuid);
+SET LOCAL ROLE patient_scope_owner;
+GRANT EXECUTE ON FUNCTION patient.guard_open_patient() TO app_owner;
+RESET ROLE;
+CREATE TRIGGER t_guard_open BEFORE INSERT OR UPDATE ON marker_one.t FOR EACH ROW EXECUTE FUNCTION patient.guard_open_patient();
+SET LOCAL ROLE patient_scope_owner;
+REVOKE EXECUTE ON FUNCTION patient.guard_open_patient() FROM app_owner;
+RESET ROLE;
+`,
+      );
+      assert.deepEqual((await migrate(owner, { dir })).applied, ['0002_attach.sql']);
+      const left = await a.query(
+        `SELECT count(*)::int AS n FROM pg_proc p CROSS JOIN LATERAL aclexplode(p.proacl) x JOIN pg_roles r ON r.oid = x.grantee
+         WHERE p.oid = 'patient.guard_open_patient()'::regprocedure AND r.rolname = 'app_owner'`,
+      );
+      assert.equal(left.rows[0].n, 0);
+    } finally {
+      await owner.end();
+      await a.end();
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});

@@ -56,6 +56,8 @@ export const ownerRightsViews = [
   'organisation.public_holiday',
   'organisation.public_banner',
   'identity.public_clinician',
+  // ARCHITECTURE 22.5.1 (TDR-14), the ninth C0 directory view; migration 1103, owner directory_ro (HEAAA-186 triage item 1).
+  'scheduling.public_clinician_location',
 ];
 /** Views reporting_ro may read (C0/C1 only, M-4). */
 export const reportingViews = [];
@@ -83,6 +85,23 @@ export const definerInventory = [
   'patient.identity_label',
   // HEAAA-181 F09 (0951): the twin check reads the hidden occupancy columns, so it runs as the twin's owner.
   'scheduling.check_twin',
+  // HEAAA-179 ruling (d18f0aa3, ARCHITECTURE amendment A-2 / SHARED-BOUNDARIES SB-A1, 6.2 and ARCHITECTURE 21.6): the merge and
+  // scheduling functions accepted as definers (conditions DF-1..DF-13), and the queue enqueue function of the queue install.
+  'queue_api.enqueue',
+  'patient.request_merge',
+  'patient.get_merge_request',
+  'patient.decide_merge',
+  'patient.load_merge_job',
+  'patient.begin_merge',
+  'patient.complete_merge',
+  'patient.fail_merge',
+  'scheduling.occupy',
+  'scheduling.set_status',
+  'scheduling.expire_holds',
+  // ARCHITECTURE amendment A-3 / SHARED-BOUNDARIES SB-A2 (HEAAA-190): BE-14 (migration 1403) is accepted. check_twin is above.
+  // The refused module copies of the merge guard (documents/telehealth.guard_open_patient, scheduling.flow_guard_open_patient,
+  // scheduling.guard_open_patient and ..._at_commit) are dropped by migrations 1600/1601 and must not be listed.
+  'scheduling.replace_busy_blocks',
 ];
 
 /** Policies that can match audience `anonymous` (ARCHITECTURE 21.3 list, kernel rows only so far). */
@@ -122,16 +141,15 @@ export const publicPolicies = [
   'organisation.banner.banner_directory',
   'identity.principal.principal_directory',
   'identity.staff_profile.staff_profile_directory',
+  // ARCHITECTURE 22.5.1: the T-DIRECTORY policy of the ninth C0 view (migration 1103; TO directory_ro, audience public/patient).
+  'scheduling.availability_template.availability_template_directory',
 ];
 
 /**
- * SEC03-F13 item 1: the functions that may serve as the merge write guard. patient.guard_open_patient is the original;
- * scheduling.guard_open_patient is the copy on slot_reservation (0901, until the owner grant of D1 lets the original be used).
+ * SEC03-F13 item 1: the functions that may serve as the merge write guard. Only patient.guard_open_patient (A-2/A-3: one
+ * function for every module; the scheduling copy is removed by migration 1600/1601).
  */
-export const patientGuardFunctions = [
-  'patient.guard_open_patient',
-  'scheduling.guard_open_patient',
-];
+export const patientGuardFunctions = ['patient.guard_open_patient'];
 
 /**
  * SEC03-F13 item 3 (ARCHITECTURE 21.2, N-3): the exact column lists the application roles hold on kernel.setting.

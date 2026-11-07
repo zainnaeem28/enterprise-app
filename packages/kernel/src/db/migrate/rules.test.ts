@@ -138,3 +138,102 @@ test('contract file needs an approval reference and only destructive statements'
     ),
   );
 });
+
+// Owner steps (ARCHITECTURE 21.2 point 5, amendment A-3).
+const GRANT = 'GRANT EXECUTE ON FUNCTION patient.guard_open_patient() TO app_owner;';
+const REVOKE = 'REVOKE EXECUTE ON FUNCTION patient.guard_open_patient() FROM app_owner;';
+const step = (role: string, body: string): string =>
+  `SET LOCAL ROLE ${role};\n${body}\nRESET ROLE;`;
+const attach =
+  `${step('patient_scope_owner', GRANT)}\n` +
+  'CREATE TRIGGER t_guard_open BEFORE INSERT OR UPDATE ON t FOR EACH ROW EXECUTE FUNCTION patient.guard_open_patient();\n' +
+  `${step('patient_scope_owner', REVOKE)}`;
+const contract = (body: string): string =>
+  `-- migration-class: contract\n-- contract-approval: HEAAA-190\n${body}`;
+
+test('owner step: the guard grant, the trigger and the revoke are accepted in an expand file', () => {
+  assert.deepEqual(rules(expand(attach)), []);
+  assert.deepEqual(rules(expand(attach.toLowerCase())), []);
+});
+
+test('owner step: DROP FUNCTION is accepted in a contract file only', () => {
+  const drop = step('scheduling_booking_owner', 'DROP FUNCTION scheduling.guard_open_patient();');
+  assert.deepEqual(rules(contract(drop)), []);
+  assert.ok(rules(expand(drop)).includes('OWNER_STEP'));
+});
+
+for (const [name, sql, rule] of [
+  ['another role', step('app_api', GRANT), 'RUNNER_OWNED'],
+  ['a role the list does not name', step('patient_match_owner', GRANT), 'RUNNER_OWNED'],
+  [
+    'SET ROLE without LOCAL',
+    `SET ROLE patient_scope_owner;\n${GRANT}\nRESET ROLE;`,
+    'RUNNER_OWNED',
+  ],
+  [
+    'SET SESSION AUTHORIZATION',
+    step('patient_scope_owner', 'SET SESSION AUTHORIZATION app_api;'),
+    'RUNNER_OWNED',
+  ],
+  [
+    'a guard grant as scheduling_booking_owner',
+    step('scheduling_booking_owner', GRANT),
+    'OWNER_STEP',
+  ],
+  [
+    'a grant of another function',
+    step('patient_scope_owner', 'GRANT EXECUTE ON FUNCTION patient.register() TO app_owner;'),
+    'OWNER_STEP',
+  ],
+  [
+    'a grant to another role',
+    step(
+      'patient_scope_owner',
+      'GRANT EXECUTE ON FUNCTION patient.guard_open_patient() TO app_api;',
+    ),
+    'OWNER_STEP',
+  ],
+  [
+    'a table statement',
+    step('patient_scope_owner', 'ALTER TABLE patient.patient DISABLE ROW LEVEL SECURITY;'),
+    'OWNER_STEP',
+  ],
+  ['a statement outside a step after RESET ROLE alone', 'RESET ROLE;', 'RUNNER_OWNED'],
+  [
+    'a nested step',
+    'SET LOCAL ROLE patient_scope_owner;\nSET LOCAL ROLE scheduling_booking_owner;\nRESET ROLE;',
+    'OWNER_STEP',
+  ],
+  ['an unterminated step', `SET LOCAL ROLE patient_scope_owner;\n${REVOKE}`, 'OWNER_STEP'],
+  [
+    'a grant without its revoke',
+    `${step('patient_scope_owner', GRANT)}\nCREATE TRIGGER x BEFORE INSERT ON t FOR EACH ROW EXECUTE FUNCTION patient.guard_open_patient();`,
+    'OWNER_STEP',
+  ],
+  [
+    'a revoke before the last CREATE TRIGGER',
+    `${step('patient_scope_owner', GRANT)}\n${step('patient_scope_owner', REVOKE)}\nCREATE TRIGGER x BEFORE INSERT ON t FOR EACH ROW EXECUTE FUNCTION patient.guard_open_patient();`,
+    'OWNER_STEP',
+  ],
+] as const) {
+  test(`owner step refuses ${name}`, () => {
+    assert.ok(rules(expand(sql)).includes(rule), name);
+  });
+}
+
+for (const [name, drop] of [
+  ['CASCADE', 'DROP FUNCTION scheduling.guard_open_patient() CASCADE;'],
+  ['IF EXISTS', 'DROP FUNCTION IF EXISTS scheduling.guard_open_patient();'],
+  ['an unqualified name', 'DROP FUNCTION guard_open_patient();'],
+  ['DROP TABLE', 'DROP TABLE scheduling.slot_reservation;'],
+] as const) {
+  test(`owner step: a contract DROP FUNCTION step refuses ${name}`, () => {
+    assert.ok(rules(contract(step('scheduling_booking_owner', drop))).includes('OWNER_STEP'), name);
+  });
+}
+
+test('owner step needs a single-transaction file', () => {
+  assert.ok(
+    rules(`-- migration-class: expand\n-- transaction: none\n${attach}`).includes('OWNER_STEP'),
+  );
+});
