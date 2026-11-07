@@ -1,0 +1,183 @@
+bootstrap 0001_roles.sql
+applying 0001_kernel_schema_and_helpers.sql
+applying 0002_kernel_tables.sql
+applying 0003_kernel_rls_and_grants.sql
+applying 0100_queue_schema.sql
+applying 0200_audit_event.sql
+applying 0201_audit_anchor.sql
+applying 0202_audit_btg_and_export.sql
+applying 0203_audit_rls_and_grants.sql
+applying 0300_organisation_schema_and_tables.sql
+applying 0301_organisation_rls_and_grants.sql
+applying 0302_organisation_directory_views.sql
+applying 0400_integration_core_tables.sql
+applying 0401_integration_core_rls_and_grants.sql
+applying 0402_integration_core_receive_inbound.sql
+applying 0500_identity_schema_and_tables.sql
+applying 0501_identity_triggers.sql
+applying 0502_identity_rls_and_grants.sql
+applying 0503_identity_public_clinician.sql
+applying 0600_notifications_schema_and_tables.sql
+applying 0601_notifications_rls_and_grants.sql
+applying 0602_notifications_receipt_lookup_index.sql
+applying 0700_patient_schema_and_tables.sql
+applying 0701_patient_triggers_and_guards.sql
+applying 0702_patient_rls_and_grants.sql
+applying 0703_patient_scope_functions.sql
+applying 0704_patient_matching_registration.sql
+applying 0705_patient_staff_policy_qualify.sql
+applying 0800_patient_merge_tables.sql
+applying 0801_patient_merge_triggers.sql
+applying 0802_patient_merge_rls_and_grants.sql
+applying 0803_patient_merge_functions.sql
+applying 0900_scheduling_schema_and_tables.sql
+applying 0901_scheduling_triggers.sql
+applying 0902_scheduling_rls_and_grants.sql
+applying 0903_scheduling_booking_functions.sql
+applying 0904_sec03_bind_definer_functions_to_caller.sql
+applying 0951_sec03_occupancy_column_grants.sql
+applying 0953_sec03_setting_column_grants.sql
+applying 1000_documents_schema_and_tables.sql
+applying 1001_documents_triggers.sql
+applying 1002_documents_rls_and_grants.sql
+applying 1003_documents_guard_owner.sql
+applying 1100_availability_tables.sql
+applying 1101_availability_triggers.sql
+applying 1102_availability_rls_and_grants.sql
+applying 1103_availability_directory_view.sql
+applying 1200_staff_alert_tables.sql
+applying 1201_staff_alert_rls_and_grants.sql
+applying 1300_flow_tables.sql
+applying 1301_flow_triggers.sql
+applying 1302_flow_rls_and_grants.sql
+applying 1303_flow_notification_insert_grant.sql
+applying 1400_calendar_sync_tables.sql
+applying 1401_calendar_sync_triggers.sql
+applying 1402_calendar_sync_rls_and_grants.sql
+applying 1403_scheduling_replace_busy_blocks.sql
+applying 1500_telehealth_tables.sql
+applying 1501_telehealth_triggers.sql
+applying 1502_telehealth_rls_and_grants.sql
+applying 1600_merge_guard_single.sql
+applying 1601_drop_merge_guard_copies.sql
+applying 1602_revoke_guard_drop_usage.sql
+{"applied":["0001_kernel_schema_and_helpers.sql","0002_kernel_tables.sql","0003_kernel_rls_and_grants.sql","0100_queue_schema.sql","0200_audit_event.sql","0201_audit_anchor.sql","0202_audit_btg_and_export.sql","0203_audit_rls_and_grants.sql","0300_organisation_schema_and_tables.sql","0301_organisation_rls_and_grants.sql","0302_organisation_directory_views.sql","0400_integration_core_tables.sql","0401_integration_core_rls_and_grants.sql","0402_integration_core_receive_inbound.sql","0500_identity_schema_and_tables.sql","0501_identity_triggers.sql","0502_identity_rls_and_grants.sql","0503_identity_public_clinician.sql","0600_notifications_schema_and_tables.sql","0601_notifications_rls_and_grants.sql","0602_notifications_receipt_lookup_index.sql","0700_patient_schema_and_tables.sql","0701_patient_triggers_and_guards.sql","0702_patient_rls_and_grants.sql","0703_patient_scope_functions.sql","0704_patient_matching_registration.sql","0705_patient_staff_policy_qualify.sql","0800_patient_merge_tables.sql","0801_patient_merge_triggers.sql","0802_patient_merge_rls_and_grants.sql","0803_patient_merge_functions.sql","0900_scheduling_schema_and_tables.sql","0901_scheduling_triggers.sql","0902_scheduling_rls_and_grants.sql","0903_scheduling_booking_functions.sql","0904_sec03_bind_definer_functions_to_caller.sql","0951_sec03_occupancy_column_grants.sql","0953_sec03_setting_column_grants.sql","1000_documents_schema_and_tables.sql","1001_documents_triggers.sql","1002_documents_rls_and_grants.sql","1003_documents_guard_owner.sql","1100_availability_tables.sql","1101_availability_triggers.sql","1102_availability_rls_and_grants.sql","1103_availability_directory_view.sql","1200_staff_alert_tables.sql","1201_staff_alert_rls_and_grants.sql","1300_flow_tables.sql","1301_flow_triggers.sql","1302_flow_rls_and_grants.sql","1303_flow_notification_insert_grant.sql","1400_calendar_sync_tables.sql","1401_calendar_sync_triggers.sql","1402_calendar_sync_rls_and_grants.sql","1403_scheduling_replace_busy_blocks.sql","1500_telehealth_tables.sql","1501_telehealth_triggers.sql","1502_telehealth_rls_and_grants.sql","1600_merge_guard_single.sql","1601_drop_merge_guard_copies.sql","1602_revoke_guard_drop_usage.sql"],"pending":["0001_kernel_schema_and_helpers.sql","0002_kernel_tables.sql","0003_kernel_rls_and_grants.sql","0100_queue_schema.sql","0200_audit_event.sql","0201_audit_anchor.sql","0202_audit_btg_and_export.sql","0203_audit_rls_and_grants.sql","0300_organisation_schema_and_tables.sql","0301_organisation_rls_and_grants.sql","0302_organisation_directory_views.sql","0400_integration_core_tables.sql","0401_integration_core_rls_and_grants.sql","0402_integration_core_receive_inbound.sql","0500_identity_schema_and_tables.sql","0501_identity_triggers.sql","0502_identity_rls_and_grants.sql","0503_identity_public_clinician.sql","0600_notifications_schema_and_tables.sql","0601_notifications_rls_and_grants.sql","0602_notifications_receipt_lookup_index.sql","0700_patient_schema_and_tables.sql","0701_patient_triggers_and_guards.sql","0702_patient_rls_and_grants.sql","0703_patient_scope_functions.sql","0704_patient_matching_registration.sql","0705_patient_staff_policy_qualify.sql","0800_patient_merge_tables.sql","0801_patient_merge_triggers.sql","0802_patient_merge_rls_and_grants.sql","0803_patient_merge_functions.sql","0900_scheduling_schema_and_tables.sql","0901_scheduling_triggers.sql","0902_scheduling_rls_and_grants.sql","0903_scheduling_booking_functions.sql","0904_sec03_bind_definer_functions_to_caller.sql","0951_sec03_occupancy_column_grants.sql","0953_sec03_setting_column_grants.sql","1000_documents_schema_and_tables.sql","1001_documents_triggers.sql","1002_documents_rls_and_grants.sql","1003_documents_guard_owner.sql","1100_availability_tables.sql","1101_availability_triggers.sql","1102_availability_rls_and_grants.sql","1103_availability_directory_view.sql","1200_staff_alert_tables.sql","1201_staff_alert_rls_and_grants.sql","1300_flow_tables.sql","1301_flow_triggers.sql","1302_flow_rls_and_grants.sql","1303_flow_notification_insert_grant.sql","1400_calendar_sync_tables.sql","1401_calendar_sync_triggers.sql","1402_calendar_sync_rls_and_grants.sql","1403_scheduling_replace_busy_blocks.sql","1500_telehealth_tables.sql","1501_telehealth_triggers.sql","1502_telehealth_rls_and_grants.sql","1600_merge_guard_single.sql","1601_drop_merge_guard_copies.sql","1602_revoke_guard_drop_usage.sql"]}
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+▶ queue on FORCEd tables
+  ✔ (a) enqueue commits with the business change and rolls back with it (33.792175ms)
+[worker(worker-651f51a47c00df09d8)] INFO: Completed task 2 (f04.probe, 0.10ms) with success
+[worker(worker-651f51a47c00df09d8)] INFO: Completed task 3 (f04.probe, 0.03ms) with success
+  ✔ (b) app_worker dequeues under FORCE; the table owner and app_api cannot read (40.472081ms)
+  ✔ (c) max attempts are carried on the job (36.766277ms)
+  ✔ (d) dead jobs are visible (attempts >= max_attempts) (22.298776ms)
+  ✔ app_api is refused DELETE and the views (BR-F04-2 evidence of the actual grants) (5.065295ms)
+[worker(worker-ab95223eeb81d59ab4)] ERROR: Failed task 6 (f04.probe, 0.15ms, attempt 1 of 3) with error 'synthetic failure':
+  Error: synthetic failure
+      at f04.probe (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/packages/kernel/dist/queue/queue.dbtest.js:201:27)
+      at doNext (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-124-sdlc-ticket-int-02-integrate-m3-booking-slice-patient-merge-scheduling-calendar-telehealth-documents-patient-b/node_modules/.pnpm/graphile-worker@0.18.0_supports-color@10.2.2_typescript@5.9.3/node_modules/graphile-worker/dist/worker.js:191:32)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+  ✔ (c) back-off: a failing job is rescheduled later with attempts incremented (34.003542ms)
+  ✔ publish fans out one job per registered handler in the caller transaction (29.367292ms)
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+  ✔ install is repeatable after the ownership handover and keeps the hardening (55.297973ms)
+  ✔ A-1 app_api: direct SELECT/INSERT/UPDATE/DELETE on every queue table, view and sequence are refused (15.074861ms)
+  ✔ A-1 app_api: library functions are refused (add_job, get_job, reschedule_jobs, permanently_fail_jobs, force_unlock_workers) (7.017801ms)
+  ✔ A-1 refused identifiers: unknown, system, data_repair, malformed; nothing is stored (15.377878ms)
+  ✔ A-1 the task_type CHECK refuses api_enqueue for system and data_repair (5.587977ms)
+  ✔ A-1 each argument bound is refused at limit + 1 and accepted at the limit (25.331107ms)
+  ✔ A-1 max_attempts comes from task_type; a job key from task A cannot replace task B's job (23.198065ms)
+  ✔ A-1 replace mode: same task and key replaces the unstarted job (17.967959ms)
+  ✔ A-1 hostile search_path and temp-schema shadowing have no effect (25.243582ms)
+  ✔ A-1 enqueue commits and rolls back with the caller transaction (21.489237ms)
+  ✔ A-1 a type missing from task_type fails closed and rolls the caller back (7.23627ms)
+[worker(worker-5fa71a5b00e3e22caa)] INFO: Completed task 13 (f04.probe, 0.12ms) with success
+[worker(worker-5fa71a5b00e3e22caa)] INFO: Completed task 10 (beta.on_created, 0.14ms) with success
+[worker(worker-5fa71a5b00e3e22caa)] INFO: Completed task 9 (alpha.on_created, 0.04ms) with success
+[worker(worker-5fa71a5b00e3e22caa)] INFO: Completed task 11 (f04.probe, 0.01ms) with success
+[worker(worker-5fa71a5b00e3e22caa)] INFO: Completed task 12 (f04.probe, 0.01ms) with success
+[worker(worker-5fa71a5b00e3e22caa)] INFO: Completed task 16 (f04.probe, 0.02ms) with success
+[worker(worker-5fa71a5b00e3e22caa)] INFO: Completed task 21 (f04.probe, 0.01ms) with success
+[worker(worker-5fa71a5b00e3e22caa)] INFO: Completed task 24 (ops.repair, 0.04ms) with success
+[worker(worker-5fa71a5b00e3e22caa)] INFO: Completed task 15 (f04.probe, 0.01ms) with success
+  ✔ A-1 app_worker: direct add_job in the same namespace and the dequeue cycle still work (42.748012ms)
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+  ✔ A-1 install revoked every app_api right in queue and a repeat install keeps it (71.221797ms)
+✔ queue on FORCEd tables (2842.525985ms)
+bootstrap 0001_roles.sql
+applying 0001_kernel_schema_and_helpers.sql
+applying 0002_kernel_tables.sql
+applying 0003_kernel_rls_and_grants.sql
+applying 0100_queue_schema.sql
+applying 0200_audit_event.sql
+applying 0201_audit_anchor.sql
+applying 0202_audit_btg_and_export.sql
+applying 0203_audit_rls_and_grants.sql
+applying 0300_organisation_schema_and_tables.sql
+applying 0301_organisation_rls_and_grants.sql
+applying 0302_organisation_directory_views.sql
+applying 0400_integration_core_tables.sql
+applying 0401_integration_core_rls_and_grants.sql
+applying 0402_integration_core_receive_inbound.sql
+applying 0500_identity_schema_and_tables.sql
+applying 0501_identity_triggers.sql
+applying 0502_identity_rls_and_grants.sql
+applying 0503_identity_public_clinician.sql
+applying 0600_notifications_schema_and_tables.sql
+applying 0601_notifications_rls_and_grants.sql
+applying 0602_notifications_receipt_lookup_index.sql
+applying 0700_patient_schema_and_tables.sql
+applying 0701_patient_triggers_and_guards.sql
+applying 0702_patient_rls_and_grants.sql
+applying 0703_patient_scope_functions.sql
+applying 0704_patient_matching_registration.sql
+applying 0705_patient_staff_policy_qualify.sql
+applying 0800_patient_merge_tables.sql
+applying 0801_patient_merge_triggers.sql
+applying 0802_patient_merge_rls_and_grants.sql
+applying 0803_patient_merge_functions.sql
+applying 0900_scheduling_schema_and_tables.sql
+applying 0901_scheduling_triggers.sql
+applying 0902_scheduling_rls_and_grants.sql
+applying 0903_scheduling_booking_functions.sql
+applying 0904_sec03_bind_definer_functions_to_caller.sql
+applying 0951_sec03_occupancy_column_grants.sql
+applying 0953_sec03_setting_column_grants.sql
+applying 1000_documents_schema_and_tables.sql
+applying 1001_documents_triggers.sql
+applying 1002_documents_rls_and_grants.sql
+applying 1003_documents_guard_owner.sql
+applying 1100_availability_tables.sql
+applying 1101_availability_triggers.sql
+applying 1102_availability_rls_and_grants.sql
+applying 1103_availability_directory_view.sql
+applying 1200_staff_alert_tables.sql
+applying 1201_staff_alert_rls_and_grants.sql
+applying 1300_flow_tables.sql
+applying 1301_flow_triggers.sql
+applying 1302_flow_rls_and_grants.sql
+applying 1303_flow_notification_insert_grant.sql
+applying 1400_calendar_sync_tables.sql
+applying 1401_calendar_sync_triggers.sql
+applying 1402_calendar_sync_rls_and_grants.sql
+applying 1403_scheduling_replace_busy_blocks.sql
+applying 1500_telehealth_tables.sql
+applying 1501_telehealth_triggers.sql
+applying 1502_telehealth_rls_and_grants.sql
+applying 1600_merge_guard_single.sql
+applying 1601_drop_merge_guard_copies.sql
+applying 1602_revoke_guard_drop_usage.sql
+{"applied":["0001_kernel_schema_and_helpers.sql","0002_kernel_tables.sql","0003_kernel_rls_and_grants.sql","0100_queue_schema.sql","0200_audit_event.sql","0201_audit_anchor.sql","0202_audit_btg_and_export.sql","0203_audit_rls_and_grants.sql","0300_organisation_schema_and_tables.sql","0301_organisation_rls_and_grants.sql","0302_organisation_directory_views.sql","0400_integration_core_tables.sql","0401_integration_core_rls_and_grants.sql","0402_integration_core_receive_inbound.sql","0500_identity_schema_and_tables.sql","0501_identity_triggers.sql","0502_identity_rls_and_grants.sql","0503_identity_public_clinician.sql","0600_notifications_schema_and_tables.sql","0601_notifications_rls_and_grants.sql","0602_notifications_receipt_lookup_index.sql","0700_patient_schema_and_tables.sql","0701_patient_triggers_and_guards.sql","0702_patient_rls_and_grants.sql","0703_patient_scope_functions.sql","0704_patient_matching_registration.sql","0705_patient_staff_policy_qualify.sql","0800_patient_merge_tables.sql","0801_patient_merge_triggers.sql","0802_patient_merge_rls_and_grants.sql","0803_patient_merge_functions.sql","0900_scheduling_schema_and_tables.sql","0901_scheduling_triggers.sql","0902_scheduling_rls_and_grants.sql","0903_scheduling_booking_functions.sql","0904_sec03_bind_definer_functions_to_caller.sql","0951_sec03_occupancy_column_grants.sql","0953_sec03_setting_column_grants.sql","1000_documents_schema_and_tables.sql","1001_documents_triggers.sql","1002_documents_rls_and_grants.sql","1003_documents_guard_owner.sql","1100_availability_tables.sql","1101_availability_triggers.sql","1102_availability_rls_and_grants.sql","1103_availability_directory_view.sql","1200_staff_alert_tables.sql","1201_staff_alert_rls_and_grants.sql","1300_flow_tables.sql","1301_flow_triggers.sql","1302_flow_rls_and_grants.sql","1303_flow_notification_insert_grant.sql","1400_calendar_sync_tables.sql","1401_calendar_sync_triggers.sql","1402_calendar_sync_rls_and_grants.sql","1403_scheduling_replace_busy_blocks.sql","1500_telehealth_tables.sql","1501_telehealth_triggers.sql","1502_telehealth_rls_and_grants.sql","1600_merge_guard_single.sql","1601_drop_merge_guard_copies.sql","1602_revoke_guard_drop_usage.sql"],"pending":["0001_kernel_schema_and_helpers.sql","0002_kernel_tables.sql","0003_kernel_rls_and_grants.sql","0100_queue_schema.sql","0200_audit_event.sql","0201_audit_anchor.sql","0202_audit_btg_and_export.sql","0203_audit_rls_and_grants.sql","0300_organisation_schema_and_tables.sql","0301_organisation_rls_and_grants.sql","0302_organisation_directory_views.sql","0400_integration_core_tables.sql","0401_integration_core_rls_and_grants.sql","0402_integration_core_receive_inbound.sql","0500_identity_schema_and_tables.sql","0501_identity_triggers.sql","0502_identity_rls_and_grants.sql","0503_identity_public_clinician.sql","0600_notifications_schema_and_tables.sql","0601_notifications_rls_and_grants.sql","0602_notifications_receipt_lookup_index.sql","0700_patient_schema_and_tables.sql","0701_patient_triggers_and_guards.sql","0702_patient_rls_and_grants.sql","0703_patient_scope_functions.sql","0704_patient_matching_registration.sql","0705_patient_staff_policy_qualify.sql","0800_patient_merge_tables.sql","0801_patient_merge_triggers.sql","0802_patient_merge_rls_and_grants.sql","0803_patient_merge_functions.sql","0900_scheduling_schema_and_tables.sql","0901_scheduling_triggers.sql","0902_scheduling_rls_and_grants.sql","0903_scheduling_booking_functions.sql","0904_sec03_bind_definer_functions_to_caller.sql","0951_sec03_occupancy_column_grants.sql","0953_sec03_setting_column_grants.sql","1000_documents_schema_and_tables.sql","1001_documents_triggers.sql","1002_documents_rls_and_grants.sql","1003_documents_guard_owner.sql","1100_availability_tables.sql","1101_availability_triggers.sql","1102_availability_rls_and_grants.sql","1103_availability_directory_view.sql","1200_staff_alert_tables.sql","1201_staff_alert_rls_and_grants.sql","1300_flow_tables.sql","1301_flow_triggers.sql","1302_flow_rls_and_grants.sql","1303_flow_notification_insert_grant.sql","1400_calendar_sync_tables.sql","1401_calendar_sync_triggers.sql","1402_calendar_sync_rls_and_grants.sql","1403_scheduling_replace_busy_blocks.sql","1500_telehealth_tables.sql","1501_telehealth_triggers.sql","1502_telehealth_rls_and_grants.sql","1600_merge_guard_single.sql","1601_drop_merge_guard_copies.sql","1602_revoke_guard_drop_usage.sql"]}
+▶ withScope and idempotency on PostgreSQL
+  ✔ RLS under withScope: an organisation sees only its rows; a handle without scope sees none (15.218951ms)
+  ✔ settings do not leak past the transaction (transaction-local) (2.163019ms)
+  ✔ concurrent duplicate keys give one write and one replay; a different body gives a conflict (164.224238ms)
+✔ withScope and idempotency on PostgreSQL (2380.456404ms)
+ℹ tests 23
+ℹ suites 2
+ℹ pass 23
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2976.064025
