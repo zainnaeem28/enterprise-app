@@ -14,7 +14,7 @@ import {
   createLogger,
   syncTaskTypes,
 } from '@ehr/kernel';
-import type { Logger, ScopeSettings, Tx } from '@ehr/kernel';
+import type { Logger, MergeParticipant, ScopeSettings, Tx } from '@ehr/kernel';
 import { registerIdentityParticipants } from '../identity/index.js';
 import { registerNotificationsParticipants } from '../notifications/index.js';
 import { OrganisationService } from '../organisation/index.js';
@@ -23,6 +23,7 @@ import {
   executeMerge,
   MERGE_JOBS,
   MergeService,
+  NOT_PARTICIPANT_TABLES,
   mergeResolvers,
 } from '../patient/merge/index.js';
 import type { ExecuteDeps, ExecuteResult } from '../patient/merge/index.js';
@@ -364,25 +365,44 @@ export async function setupDocuments(name: string): Promise<DocKit> {
   const regs = new ParticipantRegistries();
   registerIdentityParticipants(regs);
   registerNotificationsParticipants(regs);
-  // The merge executor refuses to run unless a participant lists every table with a patient_id. The booking tables exist in this
-  // database (migrations 0900-0903) but hold no rows here, so their participant is a stand-in that reports nothing found: the real one
-  // is scheduling's, and documents may not import it (BD-02: scheduling is above documents).
-  regs.registerMergeParticipant({
-    module: 'scheduling',
-    tables: ['scheduling.slot_reservation'],
+  // The merge executor refuses to run unless a participant lists every table with a patient_id. The booking and telehealth tables exist
+  // in this database (migrations 0900-1500) but hold no rows here, so their participants are stand-ins that report nothing found: the
+  // real ones are scheduling's and telehealth's, and documents may not import them (BD-02: they are above documents). The list is the
+  // tables of the combined revision (INT02-F03): the flow tables of BE-13 and the telehealth tables of BE-15 joined the database after
+  // this suite was first written, and the executor refuses the merge before anything is written while one has no participant.
+  const standIn = (module: string, tables: readonly string[]): MergeParticipant => ({
+    module,
+    tables,
     conflictRules: [],
     repointPatient: () =>
-      Promise.resolve([
-        {
-          table: 'scheduling.slot_reservation',
+      Promise.resolve(
+        tables.map((table) => ({
+          table,
           found: 0,
           repointed: 0,
           resolved: 0,
           kept: 0,
           deleted: [],
-        },
-      ]),
+        })),
+      ),
   });
+  regs.registerMergeParticipant(
+    standIn('scheduling', [
+      'scheduling.slot_reservation',
+      'scheduling.check_in',
+      'scheduling.queue_entry',
+      'scheduling.waitlist_entry',
+      'scheduling.waitlist_offer',
+    ]),
+  );
+  regs.registerMergeParticipant(
+    standIn('telehealth', [
+      'telehealth.video_session',
+      'telehealth.participant',
+      'telehealth.join_token',
+      'telehealth.location_confirmation',
+    ]),
+  );
   registerDocumentsParticipants(regs);
 
   const lead = await (async () => {
@@ -544,7 +564,20 @@ export async function setupDocuments(name: string): Promise<DocKit> {
       });
       if (a.status !== 200) throw new Error(`approve failed ${a.status} ${a.body}`);
       const result = await executeMerge(
-        { db: wdb, orgId: ORG, registries: regs, ...over },
+        {
+          db: wdb,
+          orgId: ORG,
+          registries: regs,
+          // The staff-alert tables (BE-07) carry a patient_id and their participant is to be added to the notifications participant at
+          // integration (notifications/alerts/merge.ts, "must call these functions"); it is not yet on the combined revision. Listed
+          // here, as the scheduling flow suite does, so this suite's merges are about documents. Not a claim about alerts.
+          notParticipants: {
+            ...NOT_PARTICIPANT_TABLES,
+            'notifications.staff_alert': 'BE-07 participant is wired at integration',
+            'notifications.staff_alert_event': 'BE-07 participant is wired at integration',
+          },
+          ...over,
+        },
         { requestId, jobId: `test:${++seq}`, attempt: 1, maxAttempts: 1 },
       );
       return { requestId, result };
