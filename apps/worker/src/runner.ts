@@ -118,7 +118,7 @@ export async function startWorker(opts: {
         'registered job types without a task handler: queued jobs of these types will fail',
         {
           count: missing.length,
-          jobTypes: missing,
+          jobType: missing.join(','), // a string under an allowlisted key: other keys are redacted by the logger
         },
       );
   }
