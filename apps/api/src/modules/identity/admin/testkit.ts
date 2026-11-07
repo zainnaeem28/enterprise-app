@@ -26,6 +26,7 @@ import {
 } from '../testkit.js';
 import type { Kit, Resp, Seeded } from '../testkit.js';
 import { cookieValue } from '../testkit.js';
+import { SimpleWebAuthnPort } from './webauthn.js';
 import { createIdentityAdmin } from './index.js';
 import type { IdentityAdmin } from './index.js';
 import { IDENTITY_ADMIN_JOBS } from './jobs.js';
@@ -71,10 +72,17 @@ export async function adminSetup(name: string): Promise<AdminKit> {
     audit: kit.audit,
     sessions: kit.identity.sessions,
     logger,
+    port: new SimpleWebAuthnPort(
+      { rpId: STAFF_HOST, rpName: 'EHR admin', expectedOrigins: [ORIGIN] },
+      { mode: 'self_for_tests' },
+    ),
     config: {
       orgId: ORG,
       ceremony: { rpId: STAFF_HOST, rpName: 'EHR admin', expectedOrigins: [ORIGIN] },
-      attestation: { mode: 'self_for_tests' },
+      attestation: {
+        mode: 'chain',
+        rootCertificatesPem: ['unused: the test port below replaces the library port'],
+      },
       allowedAaguids: [AAGUID_OK],
       decoyKey: DECOY_KEY,
       rateKey: RATE_KEY,

@@ -4,7 +4,7 @@ import { createHash, generateKeyPairSync, randomBytes, sign } from 'node:crypto'
 import type { KeyObject } from 'node:crypto';
 
 // --- the smallest CBOR encoder that the fixture needs (unsigned/negative ints, byte/text strings, maps) ---------------
-type Cbor = number | string | Uint8Array | Map<Cbor, Cbor>;
+type Cbor = number | string | Uint8Array | Cbor[] | Map<Cbor, Cbor>;
 function head(major: number, n: number): Buffer {
   if (n < 24) return Buffer.from([(major << 5) | n]);
   if (n < 256) return Buffer.from([(major << 5) | 24, n]);
@@ -16,6 +16,7 @@ function cbor(v: Cbor): Buffer {
     const b = Buffer.from(v);
     return Buffer.concat([head(3, b.length), b]);
   }
+  if (Array.isArray(v)) return Buffer.concat([head(4, v.length), ...v.map(cbor)]);
   if (v instanceof Map) {
     const parts: Buffer[] = [head(5, v.size)];
     for (const [k, x] of v) parts.push(cbor(k), cbor(x));
@@ -41,6 +42,8 @@ export interface CeremonyOpts {
   challenge?: string;
   /** Attestation only. */
   aaguid?: string;
+  /** Attestation only: sign with this attestation key and send its certificate chain (packed, x5c) instead of self-attesting. */
+  attestation?: { x5c: readonly Buffer[]; key: KeyObject };
 }
 
 const uuidBytes = (u: string): Buffer => Buffer.from(u.replace(/-/g, ''), 'hex');
@@ -145,7 +148,11 @@ export class SoftKey {
       o.challenge ?? options.challenge,
       o.origin,
     );
-    const sig = sign('sha256', Buffer.concat([authData, sha(clientDataJSON)]), this.priv);
+    const sig = sign(
+      'sha256',
+      Buffer.concat([authData, sha(clientDataJSON)]),
+      o.attestation?.key ?? this.priv,
+    );
     const attestationObject = cbor(
       new Map<Cbor, Cbor>([
         ['fmt', 'packed'],
@@ -154,6 +161,9 @@ export class SoftKey {
           new Map<Cbor, Cbor>([
             ['alg', -7],
             ['sig', sig],
+            ...(o.attestation === undefined
+              ? []
+              : ([['x5c', [...o.attestation.x5c]]] as [Cbor, Cbor][])),
           ]),
         ],
         ['authData', authData],

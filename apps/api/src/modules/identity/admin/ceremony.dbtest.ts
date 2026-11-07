@@ -152,6 +152,38 @@ describe('enrolment (26.3, B2-3)', () => {
     assert.equal(third.status, 401);
   });
 
+  test('concurrent verifies on one token register at most two credentials (BE05-R1-F04)', async () => {
+    const h = handleOf('enrol-race');
+    const s = await seedAdmin(k, h);
+    const token = await seedToken(k, s.principalId);
+    const opts = [];
+    for (let i = 0; i < 4; i++) {
+      const o = await post(k, '/auth/enrolment/options', { handle: h, token });
+      assert.equal(o.status, 200);
+      opts.push(o.json() as { challengeId: string; publicKey: { challenge: string } });
+    }
+    const results = await Promise.all(
+      opts.map((j) =>
+        post(k, '/auth/enrolment/verify', {
+          challengeId: j.challengeId,
+          handle: h,
+          token,
+          attestation: new SoftKey().create(j.publicKey, {
+            origin: ORIGIN,
+            rpId: STAFF_HOST,
+            aaguid: AAGUID_OK,
+          }),
+        }),
+      ),
+    );
+    const n = await k.q(`SELECT 1 FROM identity.admin_credential WHERE principal_id = $1`, [
+      s.principalId,
+    ]);
+    assert.equal(n.length, 2, 'exactly two keys');
+    assert.equal(results.filter((r) => r.status === 200).length, 2);
+    assert.ok(results.filter((r) => r.status !== 200).every((r) => r.status === 401));
+  });
+
   test('an AAGUID that is not on the list, a BE or BS credential and a missing UV flag are refused', async () => {
     const cases: [string, { aaguid?: string; be?: boolean; bs?: boolean; uv?: boolean }][] = [
       ['aaguid', { aaguid: '11111111-2222-3333-4444-555555555555' }],

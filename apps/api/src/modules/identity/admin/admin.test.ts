@@ -1,6 +1,11 @@
 // Unit tests of the admin-realm pieces that need no database: handle format (B2-6), the decoy list (SEC01-F-01), base64url
 // strictness, the shape checks in front of the WebAuthn library, the attestation policy, and the request hash.
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { createPrivateKey } from 'node:crypto';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, test } from 'node:test';
 import { b64urlDecode, b64urlEncode } from './b64.js';
 import { decoyAllowCredentials, DECOY_ID_BYTES } from './decoy.js';
@@ -158,6 +163,118 @@ describe('ceremony configuration fails closed', () => {
     const ok = await self.verifyAttestation({ response: att, challenge });
     assert.equal(ok.ok, true);
     if (ok.ok) assert.equal(ok.key.hasChain, false);
+  });
+});
+
+describe('attestation chain (BE05-R1-F07)', () => {
+  const params = {
+    rpId: 'staff.example.test',
+    rpName: 'EHR staff',
+    expectedOrigins: ['https://staff.example.test'],
+  };
+  const AAGUID = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
+
+  // Throw-away roots made at run time with the openssl CLI: nothing secret is committed.
+  function pki(): {
+    dir: string;
+    rootPem: string;
+    leafDer: Buffer;
+    leafKey: ReturnType<typeof createPrivateKey>;
+  } {
+    const dir = mkdtempSync(join(tmpdir(), 'be05-pki-'));
+    const sh = (...args: string[]): void => {
+      execFileSync('openssl', args, { cwd: dir, stdio: 'pipe' });
+    };
+    sh('ecparam', '-name', 'prime256v1', '-genkey', '-noout', '-out', 'root.key');
+    sh(
+      'req',
+      '-x509',
+      '-new',
+      '-key',
+      'root.key',
+      '-sha256',
+      '-days',
+      '30',
+      '-subj',
+      '/C=ZZ/O=Test Root/CN=Test Root',
+      '-addext',
+      'basicConstraints=critical,CA:TRUE',
+      '-addext',
+      'keyUsage=critical,keyCertSign',
+      '-out',
+      'root.pem',
+    );
+    sh('ecparam', '-name', 'prime256v1', '-genkey', '-noout', '-out', 'leaf.key');
+    sh(
+      'req',
+      '-new',
+      '-key',
+      'leaf.key',
+      '-subj',
+      '/C=ZZ/O=Test Vendor/OU=Authenticator Attestation/CN=Test Authenticator',
+      '-out',
+      'leaf.csr',
+    );
+    sh(
+      'x509',
+      '-req',
+      '-in',
+      'leaf.csr',
+      '-CA',
+      'root.pem',
+      '-CAkey',
+      'root.key',
+      '-CAcreateserial',
+      '-days',
+      '30',
+      '-sha256',
+      '-out',
+      'leaf.pem',
+    );
+    sh('x509', '-in', 'leaf.pem', '-outform', 'DER', '-out', 'leaf.der');
+    sh('pkcs8', '-topk8', '-nocrypt', '-in', 'leaf.key', '-out', 'leaf.p8');
+    return {
+      dir,
+      rootPem: readFileSync(join(dir, 'root.pem'), 'utf8'),
+      leafDer: readFileSync(join(dir, 'leaf.der')),
+      leafKey: createPrivateKey(readFileSync(join(dir, 'leaf.p8'))),
+    };
+  }
+
+  test('a packed attestation whose chain validates to a configured root is accepted; another root refuses it', async () => {
+    const good = pki();
+    const other = pki();
+    try {
+      const key = new SoftKey();
+      const challenge = Buffer.alloc(32, 7);
+      const att = key.create(
+        { challenge: b64urlEncode(challenge) },
+        {
+          origin: 'https://staff.example.test',
+          rpId: 'staff.example.test',
+          aaguid: AAGUID,
+          attestation: { x5c: [good.leafDer], key: good.leafKey },
+        },
+      );
+      const ok = await new SimpleWebAuthnPort(params, {
+        mode: 'chain',
+        rootCertificatesPem: [good.rootPem],
+      }).verifyAttestation({ response: att, challenge });
+      assert.equal(ok.ok, true);
+      if (ok.ok) {
+        assert.equal(ok.key.hasChain, true);
+        assert.equal(ok.key.fmt, 'packed');
+        assert.equal(ok.key.aaguid.toLowerCase(), AAGUID);
+      }
+      const wrongRoot = await new SimpleWebAuthnPort(params, {
+        mode: 'chain',
+        rootCertificatesPem: [other.rootPem],
+      }).verifyAttestation({ response: att, challenge });
+      assert.deepEqual(wrongRoot, { ok: false });
+    } finally {
+      rmSync(good.dir, { recursive: true, force: true });
+      rmSync(other.dir, { recursive: true, force: true });
+    }
   });
 });
 

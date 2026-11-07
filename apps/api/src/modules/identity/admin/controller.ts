@@ -153,12 +153,13 @@ export function createAdminController(d: AdminControllerDeps): Type<unknown> {
     @Get('principals')
     @Route({ permission: 'identity.principal.read', resolver: 'none', realm: 'admin_pool' })
     async listPrincipals(@ReqParam() req: Req): Promise<unknown> {
-      const items = await d.service.listPrincipals(
+      return d.service.listPrincipals(
         requireAuthContext(req),
         req.query['realm'],
         req.query['q'],
+        req.query['limit'],
+        req.query['cursor'],
       );
-      return { items, nextCursor: null };
     }
 
     @Post('principals')

@@ -100,7 +100,7 @@ describe('enrolment tokens: request and approve are two persons (26.3, P-4)', ()
     );
     const again = await post(k, `/enrolment-tokens/${id}/approve`, {}, as(b));
     assert.equal(again.status, 409);
-    assert.equal(code(again), 'identity.request_not_pending');
+    assert.equal(code(again), 'identity.request_expired');
     assert.ok(
       (await auditOf('create', id)).length === 1 && (await auditOf('update', id)).length === 1,
     );
@@ -263,7 +263,7 @@ describe('role changes need a second approver (C4, 25.8)', () => {
     // a decided request is final
     const twice = await post(k, `/role-change-requests/${id}/approve`, {}, as(b));
     assert.equal(twice.status, 409);
-    assert.equal(code(twice), 'identity.request_not_pending');
+    assert.equal(code(twice), 'identity.request_expired');
     // adding a role does not end the subject's session
     assert.equal((await getAdmin(k, '/roles', c.session.cookie)).status, 200);
   });
@@ -477,6 +477,89 @@ describe('role changes need a second approver (C4, 25.8)', () => {
       as(a),
     );
     assert.equal(lonely.status, 422);
+  });
+
+  test('approval re-checks the subject and the locations at apply time (BE05-R1-F05)', async () => {
+    const a = await elevatedAdmin(k, handleOf('ap-a'), ['org_admin']);
+    const b = await elevatedAdmin(k, handleOf('ap-b'), ['org_admin']);
+    const statusOf = async (id: string): Promise<unknown> =>
+      (await k.q(`SELECT status FROM identity.role_change_request WHERE id = $1`, [id]))[0]![
+        'status'
+      ];
+    // 1. the subject is disabled between the request and the approval
+    const x = await seedAdmin(k, handleOf('ap-x'));
+    const r1 = await post(
+      k,
+      '/role-change-requests',
+      { subjectPrincipalId: x.principalId, add: [{ roleKey: 'compliance_officer' }], remove: [] },
+      as(a),
+    );
+    assert.equal(r1.status, 200, r1.body);
+    const id1 = String(r1.json()['id']);
+    const kill = await post(
+      k,
+      `/principals/${x.principalId}/kill-switch`,
+      { reason: 'device lost' },
+      as(b),
+    );
+    assert.equal(kill.status, 200, kill.body);
+    const late = await post(k, `/role-change-requests/${id1}/approve`, {}, as(b));
+    assert.equal(late.status, 422);
+    assert.equal(code(late), 'kernel.validation_failed');
+    assert.equal(await statusOf(id1), 'requested', 'rolled back as a whole');
+    assert.equal(
+      (
+        await k.q(
+          `SELECT 1 FROM identity.role_assignment WHERE principal_id = $1 AND revoked_at IS NULL`,
+          [x.principalId],
+        )
+      ).length,
+      0,
+      'no role went to the disabled principal',
+    );
+    assert.equal((await post(k, `/role-change-requests/${id1}/reject`, {}, as(b))).status, 200);
+    // 2. a location that does not exist cannot be applied: a clean refusal, not a foreign-key error
+    const { seedPrincipal } = await import('../testkit.js');
+    const g = await seedPrincipal(k, 'google', { email: `ap${seq}@example.com` });
+    const r2 = await post(
+      k,
+      '/role-change-requests',
+      {
+        subjectPrincipalId: g.principalId,
+        add: [{ roleKey: 'front_desk', locationId: '00000000-0000-4000-8000-0000000000e1' }],
+        remove: [],
+      },
+      as(a),
+    );
+    assert.equal(r2.status, 200, r2.body);
+    const id2 = String(r2.json()['id']);
+    const bad = await post(k, `/role-change-requests/${id2}/approve`, {}, as(b));
+    assert.equal(bad.status, 422, bad.body);
+    assert.equal(code(bad), 'kernel.validation_failed');
+    assert.equal(await statusOf(id2), 'requested');
+  });
+
+  test('GET /admin/principals pages with a cursor and never truncates silently (BE05-R1-F06)', async () => {
+    const a = await elevatedAdmin(k, handleOf('pg-a'), ['org_admin']);
+    const prefix = handleOf('pgq');
+    for (let i = 0; i < 5; i++) await seedAdmin(k, `${prefix}-${i}`);
+    const seen: string[] = [];
+    let cursor: string | null = null;
+    for (let pages = 0; pages < 10; pages++) {
+      const q = `/principals?q=${prefix}&limit=2${cursor === null ? '' : `&cursor=${cursor}`}`;
+      const r = await getAdmin(k, q, a.session.cookie);
+      assert.equal(r.status, 200, r.body);
+      const j = r.json() as { items: { handle: string }[]; nextCursor: string | null };
+      assert.ok(j.items.length <= 2);
+      seen.push(...j.items.map((i) => i.handle));
+      cursor = j.nextCursor;
+      if (cursor === null) break;
+    }
+    assert.equal(cursor, null);
+    assert.equal(new Set(seen).size, 5);
+    assert.equal(seen.length, 5);
+    assert.equal((await getAdmin(k, '/principals?limit=0', a.session.cookie)).status, 422);
+    assert.equal((await getAdmin(k, '/principals?cursor=zzz', a.session.cookie)).status, 422);
   });
 
   test('database: self-approval, a decision by someone else’s name and approval by the subject are refused below the API', async () => {

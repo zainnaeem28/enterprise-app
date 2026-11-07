@@ -17,7 +17,8 @@ import type { AttestationPolicy, CeremonyParams, WebAuthnPort } from './webauthn
 export interface IdentityAdminConfig {
   orgId: string;
   ceremony: CeremonyParams;
-  attestation: AttestationPolicy;
+  /** Configuration can only select `chain`: the test-only `self_for_tests` policy is reachable by injecting a `port`, never by config. */
+  attestation: Extract<AttestationPolicy, { mode: 'chain' }>;
   /** Lower-case AAGUIDs Cybersecurity approved (B2-3, OPEN-3). */
   allowedAaguids: readonly string[];
   /** `<env>/app/admin-decoy-key`, `<env>/app/rate-key`, `<env>/app/csrf-key`: three separate secrets. */

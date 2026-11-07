@@ -171,40 +171,81 @@ export class AdminService {
         });
       });
     } catch (e) {
-      if ((e as { code?: string }).code === '23505')
-        throw new AdminConflictError('identity.principal_exists');
+      if ((e as { code?: string }).code === '23505') throw new IdentityValidationError(['handle']); // duplicate: registered kernel.validation_failed (BE05-R1-F03)
       throw e;
     }
     return { principalId, realm: realm as string };
   }
 
-  /** GET /admin/principals?realm&q: metadata only (C5), 50 rows. */
+  /** GET /admin/principals?realm&q&limit&cursor: metadata only (C5), keyset-paged on (created_at, id). */
   async listPrincipals(
     ctx: AuthContext,
     realm: unknown,
     q: unknown,
-  ): Promise<Record<string, unknown>[]> {
+    limit?: unknown,
+    cursor?: unknown,
+  ): Promise<{ items: Record<string, unknown>[]; nextCursor: string | null }> {
     const realmFilter =
       typeof realm === 'string' && ['admin_pool', 'google'].includes(realm) ? realm : null;
     const prefix = typeof q === 'string' ? q.trim().toLowerCase().slice(0, 64) : '';
+    let size = 50;
+    if (limit !== undefined) {
+      const n = typeof limit === 'string' && /^\d{1,4}$/.test(limit) ? Number(limit) : NaN;
+      if (!(n >= 1 && n <= 100)) throw new IdentityValidationError(['limit']);
+      size = n;
+    }
+    let after: { at: string; id: string } | null = null;
+    if (cursor !== undefined && cursor !== '') {
+      try {
+        const c = JSON.parse(Buffer.from(String(cursor), 'base64url').toString('utf8')) as {
+          at?: unknown;
+          id?: unknown;
+        };
+        if (typeof c.at !== 'string' || Number.isNaN(Date.parse(c.at)) || !isUuid(c.id))
+          throw new Error('bad cursor');
+        after = { at: c.at, id: c.id as string };
+      } catch {
+        throw new IdentityValidationError(['cursor']);
+      }
+    }
     return this.d.db.withScope(
       ctx.scope,
       async (tx) => {
         const r = await tx.query(
-          `SELECT p.id, p.realm, p.subject, p.email, p.status, pe.display_name
+          `SELECT p.id, p.realm, p.subject, p.email, p.status, pe.display_name, p.created_at,
+                  to_char(p.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS created_key
              FROM identity.principal p JOIN identity.person pe ON pe.id = p.person_id
             WHERE p.realm IN ('admin_pool', 'google') AND ($1::text IS NULL OR p.realm = $1)
               AND ($2 = '' OR lower(coalesce(p.subject, '')) LIKE $2 || '%' OR lower(coalesce(p.email, '')) LIKE $2 || '%')
-            ORDER BY p.created_at, p.id LIMIT 50`,
-          [realmFilter, prefix.replace(/[%_\\]/g, '')],
+              AND ($3::timestamptz IS NULL OR (p.created_at, p.id) > ($3::timestamptz, $4::uuid))
+            ORDER BY p.created_at, p.id LIMIT $5`,
+          [
+            realmFilter,
+            prefix.replace(/[%_\\]/g, ''),
+            after?.at ?? null,
+            after?.id ?? null,
+            size + 1,
+          ],
         );
-        return r.rows.map((x) => ({
-          principalId: x['id'],
-          realm: x['realm'],
-          ...(x['realm'] === 'admin_pool' ? { handle: x['subject'] } : { email: x['email'] }),
-          status: x['status'],
-          displayName: x['display_name'],
-        }));
+        const page = r.rows.slice(0, size);
+        const last = page[page.length - 1];
+        const nextCursor =
+          r.rows.length > size && last !== undefined
+            ? Buffer.from(
+                JSON.stringify({ at: last['created_key'], id: last['id'] }),
+                'utf8',
+              ).toString('base64url')
+            : null;
+        return {
+          items: page.map((x) => ({
+            principalId: x['id'],
+            realm: x['realm'],
+            ...(x['realm'] === 'admin_pool' ? { handle: x['subject'] } : { email: x['email'] }),
+            status: x['status'],
+            displayName: x['display_name'],
+          })),
+          nextCursor,
+        };
       },
       { idempotent: true },
     );
@@ -252,7 +293,7 @@ export class AdminService {
       ).rows[0];
       if (p === undefined) throw new AdminNotFoundError();
       if (p['realm'] !== 'admin_pool' || p['status'] !== 'active')
-        throw new AdminUnprocessableError('identity.principal_not_enrollable');
+        throw new IdentityValidationError(['principalId']);
       const minutes = await intSetting(
         tx,
         ENROLMENT_TOKEN_MINUTES.key,
@@ -296,7 +337,7 @@ export class AdminService {
     type R =
       | { token: string; expiresAt: Date }
       | { refuse: 'identity.self_approval' | 'identity.approver_is_subject' }
-      | { conflict: 'identity.request_expired' | 'identity.request_not_pending' };
+      | { conflict: 'identity.request_expired' | 'identity.request_expired' };
     const out: R = await this.d.db.withScope(ctx.scope, async (tx): Promise<R> => {
       const t = (
         await tx.query(
@@ -311,7 +352,7 @@ export class AdminService {
         return { refuse: 'identity.self_approval' as const };
       if (t['subject_person'] === ctx.session.personId)
         return { refuse: 'identity.approver_is_subject' as const };
-      if (t['status'] !== 'requested') return { conflict: 'identity.request_not_pending' as const };
+      if (t['status'] !== 'requested') return { conflict: 'identity.request_expired' as const };
       if ((t['expires_at'] as Date).getTime() <= now.getTime()) {
         await tx.query(`UPDATE identity.enrolment_token SET status = 'expired' WHERE id = $1`, [
           id,
@@ -392,9 +433,9 @@ export class AdminService {
       }
       // SEC01-F-08: a principal that has not signed in yet (no subject) can hold no role.
       if (add.length > 0 && subject['subject'] === null)
-        throw new AdminUnprocessableError('identity.principal_not_enrollable');
+        throw new IdentityValidationError(['principalId']);
       if (add.length > 0 && subject['status'] !== 'active')
-        throw new AdminUnprocessableError('identity.principal_not_enrollable');
+        throw new IdentityValidationError(['principalId']);
       const before = await this.currentRoles(tx, subjectId);
       for (const x of remove)
         if (!before.some((b) => sameRef(b, x))) throw new IdentityValidationError(['remove']);
@@ -468,7 +509,7 @@ export class AdminService {
     type R =
       | { view: RoleChangeView }
       | { refuse: 'identity.self_approval' | 'identity.approver_is_subject' | 'auth.forbidden' }
-      | { conflict: 'identity.request_expired' | 'identity.request_not_pending' };
+      | { conflict: 'identity.request_expired' | 'identity.request_expired' };
     const out: R = await this.d.db.withScope(ctx.scope, async (tx): Promise<R> => {
       const row = (
         await tx.query(
@@ -501,7 +542,7 @@ export class AdminService {
         if (row['subject_person'] === ctx.session.personId)
           return { refuse: 'identity.approver_is_subject' };
       }
-      if (row['status'] !== 'requested') return { conflict: 'identity.request_not_pending' };
+      if (row['status'] !== 'requested') return { conflict: 'identity.request_expired' };
       if ((row['expires_at'] as Date).getTime() <= now.getTime()) {
         await tx.query(`UPDATE identity.role_change_request SET status = 'expired' WHERE id = $1`, [
           id,
@@ -541,6 +582,26 @@ export class AdminService {
       );
       let after = before;
       if (decision === 'approve') {
+        // BE05-R1-F05: re-validate at apply time. The subject may have been disabled (kill switch) or a location removed
+        // since the request was made. Throwing rolls the whole transaction back: the request stays pending and can be rejected.
+        if (add.length > 0) {
+          const st = (
+            await tx.query(`SELECT status FROM identity.principal WHERE id = $1`, [subjectId])
+          ).rows[0];
+          if (st === undefined || st['status'] !== 'active')
+            throw new IdentityValidationError(['principalId']);
+          const locs = [
+            ...new Set(add.flatMap((x) => (x.locationId === undefined ? [] : [x.locationId]))),
+          ];
+          if (locs.length > 0) {
+            const found = await tx.query(
+              `SELECT id FROM organisation.location WHERE id = ANY($1::uuid[])`,
+              [locs],
+            );
+            if (found.rows.length !== locs.length)
+              throw new IdentityValidationError(['locationId']);
+          }
+        }
         after = await this.applyChange(tx, ctx, id, subjectId, add, remove, now);
         await tx.query(`UPDATE identity.role_change_request SET status = 'applied' WHERE id = $1`, [
           id,

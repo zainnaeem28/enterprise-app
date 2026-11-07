@@ -42,9 +42,7 @@ export class AdminNotFoundError extends IdentityError {
 
 /** 409 for a request that is no longer pending or has expired. */
 export class AdminConflictError extends IdentityError {
-  constructor(
-    code: 'identity.request_expired' | 'identity.request_not_pending' | 'identity.principal_exists',
-  ) {
+  constructor(code: 'identity.request_expired') {
     super(code, 409);
     this.name = 'AdminConflictError';
   }
@@ -52,12 +50,7 @@ export class AdminConflictError extends IdentityError {
 
 /** 422 with a specific registry code (role realm mismatch, privileged role in the staff realm...). */
 export class AdminUnprocessableError extends IdentityError {
-  constructor(
-    code:
-      | 'identity.role_realm_mismatch'
-      | 'identity.privileged_role_in_staff_realm'
-      | 'identity.principal_not_enrollable',
-  ) {
+  constructor(code: 'identity.role_realm_mismatch' | 'identity.privileged_role_in_staff_realm') {
     super(code, 422);
     this.name = 'AdminUnprocessableError';
   }

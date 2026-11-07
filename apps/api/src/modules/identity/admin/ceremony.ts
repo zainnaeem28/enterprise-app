@@ -401,6 +401,8 @@ export class AdminCeremonies {
       return { ok: false, principalId: claim.principalId };
 
     await tx.setAuthIdentity({ realm: 'admin_pool', subject: b.handle });
+    // BE05-R1-F04: serialise concurrent enrolments on one token, so the two-key limit holds under concurrency.
+    await tx.query(`SELECT 1 FROM identity.enrolment_token WHERE id = $1 FOR UPDATE`, [tok.id]);
     const registered = Number(
       (
         await tx.query(
