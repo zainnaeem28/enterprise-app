@@ -1,0 +1,13 @@
+$ prettier --check .
+Checking formatting...
+[warn] apps/patient/src/features/booking/evidence/test-results/.last-run.json
+[warn] apps/patient/src/features/booking/evidence/test-results/booking-PP-10-PP-14-book-a-13299-nd-with-axe-on-every-screen-desktop/error-context.md
+[warn] apps/patient/src/features/booking/evidence/test-results/booking-PP-10-PP-14-book-a-13299-nd-with-axe-on-every-screen-phone/error-context.md
+[warn] apps/patient/src/features/booking/evidence/test-results/booking-PP-10-PP-14-bookin-3e949--an-alternative-can-be-held-desktop/error-context.md
+[warn] apps/patient/src/features/booking/evidence/test-results/booking-PP-10-PP-14-bookin-3e949--an-alternative-can-be-held-phone/error-context.md
+[warn] apps/patient/src/features/booking/evidence/test-results/booking-PP-15-PP-19-appoin-bf4a6-cel-with-policy-text-no-fee-desktop/error-context.md
+[warn] apps/patient/src/features/booking/evidence/test-results/booking-PP-15-PP-19-appoin-bf4a6-cel-with-policy-text-no-fee-phone/error-context.md
+[warn] apps/patient/src/features/booking/evidence/test-results/booking-PP-15-PP-19-change-7eb6c-d-waitlist-screens-pass-axe-desktop/error-context.md
+[warn] apps/patient/src/features/booking/evidence/test-results/booking-PP-15-PP-19-change-7eb6c-d-waitlist-screens-pass-axe-phone/error-context.md
+[warn] Code style issues found in 9 files. Run Prettier with --write to fix.
+[ELIFECYCLE] Command failed with exit code 1.

@@ -1,0 +1,12 @@
+landing title: Patient portal
+body: Skip to main content Patient portal Placeholder identity Patient portal Sign in to see your visits and messages, or create an account. Sign in Create account
+sign-in controls: 1
+url after: http://127.0.0.1:4174/continue?intent=sign-in&returnTo=%2Faccount
+body: Skip to main content Patient portal Placeholder identity Sign in You will go to our secure sign-in page. Checking your email or phone and setting up a passkey happen there. Continue to secure sign-in Back
+/book url: http://127.0.0.1:4174/book
+body: Skip to main content Patient portal Placeholder identity We can't find this, or it isn't available to you. Go to your home page
+--- API calls seen by the browser ---
+GET /api/v1/auth/session -> 404
+GET /api/v1/auth/session -> 404
+GET /api/v1/services -> 401
+GET /api/v1/locations -> 401

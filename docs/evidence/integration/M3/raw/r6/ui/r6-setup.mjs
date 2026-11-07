@@ -1,0 +1,12 @@
+import { execFileSync } from 'node:child_process';
+import { createRequire } from 'node:module';
+const pg = createRequire(process.argv[2] + '/package.json')('pg');
+const root = process.argv[2];
+const admin = new URL(process.env.EHR_TEST_ADMIN_URL);
+const db = 'ehr_int02_r6_ui';
+const url = (u) => { const x = new URL(admin); x.username = u; x.password = ''; x.pathname = '/' + db; return x.toString(); };
+const c = new pg.Client({ connectionString: process.env.EHR_TEST_ADMIN_URL }); await c.connect();
+await c.query(`DROP DATABASE IF EXISTS ${db}`); await c.query(`CREATE DATABASE ${db}`); await c.end();
+const env = { PATH: process.env.PATH, EHR_DB_ADMIN_URL: url(admin.username), EHR_DB_MIGRATE_URL: url('app_owner') };
+for (const cmd of ['bootstrap', 'migrate']) execFileSync(process.execPath, [`${root}/db/tools/migrate.mjs`, cmd], { env, stdio: 'inherit' });
+console.log('API_URL=' + url('app_api'));

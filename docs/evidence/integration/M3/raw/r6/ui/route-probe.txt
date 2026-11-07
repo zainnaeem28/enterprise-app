@@ -1,0 +1,8 @@
+GET /readyz -> 200 {"status":"ready"}
+GET /api/v1/auth/session -> 404 {"type":"https://errors.invalid/kernel/not_found","title":"Not found","status":404,"code":"kernel.not_found","requestId":"df2da577-adc8-403e-b0d3-401ad203906d",
+GET /api/v1/services -> 401 {"type":"https://errors.invalid/auth/unauthenticated","title":"Sign-in required","status":401,"code":"auth.unauthenticated","requestId":"26483fe9-f94c-4a0c-acd3
+GET /api/v1/locations -> 401 {"type":"https://errors.invalid/auth/unauthenticated","title":"Sign-in required","status":401,"code":"auth.unauthenticated","requestId":"5bb7cfbe-5d1c-4b28-a5e4
+GET /api/v1/clinicians -> 404 {"type":"https://errors.invalid/kernel/not_found","title":"Not found","status":404,"code":"kernel.not_found","requestId":"0e6fb5f2-dcbc-4314-962d-457ccbe5e073",
+GET /api/v1/auth/sign-in -> 404 {"type":"https://errors.invalid/kernel/not_found","title":"Not found","status":404,"code":"kernel.not_found","requestId":"1962c05f-df24-4f5b-be46-bf7dfb625861",
+POST availability/search 404 {"type":"https://errors.invalid/kernel/not_found","title":"Not found","status":404,"code":"kernel.not_found","requestId":"b9027d0a-ef7d-46a8-a34a-b141266c6599",
+POST holds 404 {"type":"https://errors.invalid/kernel/not_found","title":"Not found","status":404,"code":"kernel.not_found","requestId":"6675b865-e26a-4218-90bc-dd04cd2167b9",

@@ -1,0 +1,21 @@
+import { createRequire } from 'node:module';
+const [root, out] = process.argv.slice(2);
+const { chromium } = createRequire(root + '/apps/patient/package.json')('@playwright/test');
+const b = await chromium.launch({ args: ['--no-sandbox'] });
+const p = await b.newPage({ viewport: { width: 1280, height: 800 } });
+const calls = [];
+p.on('response', (r) => { const u = new URL(r.url()); if (u.pathname.startsWith('/api/')) calls.push(`${r.request().method()} ${u.pathname}${u.search} -> ${r.status()}`); });
+const log = [];
+await p.goto('http://127.0.0.1:4174/'); await p.waitForLoadState('networkidle');
+await p.screenshot({ path: out + '/01-landing.png', fullPage: true });
+log.push('landing title: ' + await p.title(), 'body: ' + (await p.innerText('body')).replace(/\s+/g, ' ').slice(0, 300));
+const btn = p.getByRole('button', { name: /sign in/i }).or(p.getByRole('link', { name: /sign in/i }));
+log.push('sign-in controls: ' + await btn.count());
+if (await btn.count()) { await btn.first().click().catch((e) => log.push('click err ' + e.message.slice(0, 100))); await p.waitForLoadState('networkidle').catch(() => {}); await p.waitForTimeout(1500); }
+await p.screenshot({ path: out + '/02-after-sign-in.png', fullPage: true });
+log.push('url after: ' + p.url(), 'body: ' + (await p.innerText('body')).replace(/\s+/g, ' ').slice(0, 300));
+await p.goto('http://127.0.0.1:4174/book'); await p.waitForTimeout(2000);
+await p.screenshot({ path: out + '/03-book-direct.png', fullPage: true });
+log.push('/book url: ' + p.url(), 'body: ' + (await p.innerText('body')).replace(/\s+/g, ' ').slice(0, 300));
+console.log(log.join('\n') + '\n--- API calls seen by the browser ---\n' + calls.join('\n'));
+await b.close();
