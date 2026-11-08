@@ -1,0 +1,15 @@
+
+ RUN  v5.1.0 /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-131-sdlc-ticket-fe-12-staff-tasks-and-secure-messages/apps/staff
+
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+
+ Test Files  12 passed (12)
+      Tests  160 passed (160)
+   Start at  23:47:07
+   Duration  8.22s (tests 46%, environment 35%, transform 7%, setup 6%, import 5%)
+
+Environment  jsdom was created 12 times · 7.91s total, 35% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
