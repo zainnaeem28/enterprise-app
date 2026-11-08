@@ -1,0 +1,12 @@
+
+Running 6 tests using 2 workers
+
+  ✓  1 [phone] › src/features/documents/e2e/documents.spec.ts:101:1 › staff upload shows progress, then scanning; the file cannot be opened until clean; classification is confirmed (5.1s)
+  ✓  2 [desktop] › src/features/documents/e2e/documents.spec.ts:101:1 › staff upload shows progress, then scanning; the file cannot be opened until clean; classification is confirmed (5.4s)
+  ✓  3 [phone] › src/features/documents/e2e/documents.spec.ts:142:1 › a quarantined file shows its reason and cannot be opened (1.0s)
+  ✓  4 [desktop] › src/features/documents/e2e/documents.spec.ts:142:1 › a quarantined file shows its reason and cannot be opened (1.1s)
+  ✓  5 [phone] › src/features/documents/e2e/documents.spec.ts:152:1 › a reader sees the list without upload or confirm controls (877ms)
+  ✓  6 [desktop] › src/features/documents/e2e/documents.spec.ts:152:1 › a reader sees the list without upload or confirm controls (803ms)
+
+  6 passed (8.3s)
+exit 0

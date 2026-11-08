@@ -1,0 +1,115 @@
+
+ RUN  v5.1.0 /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-105-sdlc-ticket-fe-06-shared-documents-ui-upload-with-scan-state-classification-list-and-viewer/packages/app-shell
+
+stderr | src/release/ReleasePrompts.test.tsx > non-blocking bar > announces politely, reloads at once without unsaved input
+The current testing environment is not configured to support act(...)
+
+stderr | src/release/ReleasePrompts.test.tsx > non-blocking bar > with unsaved input asks first, naming forms and never content
+The current testing environment is not configured to support act(...)
+
+stderr | src/release/ReleasePrompts.test.tsx > non-blocking bar > with unsaved input asks first, naming forms and never content
+The current testing environment is not configured to support act(...)
+
+stderr | src/release/ReleasePrompts.test.tsx > non-blocking bar > offers save-and-reload only where a draft route exists, and stays on failure
+The current testing environment is not configured to support act(...)
+
+stderr | src/release/ReleasePrompts.test.tsx > non-blocking bar > offers save-and-reload only where a draft route exists, and stays on failure
+The current testing environment is not configured to support act(...)
+
+stderr | src/release/ReleasePrompts.test.tsx > non-blocking bar > remind me later hides the bar
+The current testing environment is not configured to support act(...)
+
+stderr | src/release/ReleasePrompts.test.tsx > blocking dialog > pulls focus back when it escapes the dialog (backdrop click)
+The current testing environment is not configured to support act(...)
+
+stderr | src/release/ReleasePrompts.test.tsx > blocking dialog > opens on refusal with the exact text, request id and no auto reload
+The current testing environment is not configured to support act(...)
+
+ ✓ src/release/ReleasePrompts.test.tsx > non-blocking bar > announces politely, reloads at once without unsaved input 127ms
+ ✓ src/release/ReleasePrompts.test.tsx > non-blocking bar > with unsaved input asks first, naming forms and never content 29ms
+ ✓ src/release/ReleasePrompts.test.tsx > non-blocking bar > offers save-and-reload only where a draft route exists, and stays on failure 41ms
+ ✓ src/release/ReleasePrompts.test.tsx > non-blocking bar > remind me later hides the bar 9ms
+ ✓ src/release/ReleasePrompts.test.tsx > blocking dialog > pulls focus back when it escapes the dialog (backdrop click) 16ms
+stderr | src/release/ReleasePrompts.test.tsx > blocking dialog > keep-open shows the red bar and closes the dialog
+The current testing environment is not configured to support act(...)
+
+stderr | src/release/ReleasePrompts.test.tsx > blocking dialog > shows the paused-alerts bar so a refused stream never looks like no alerts
+The current testing environment is not configured to support act(...)
+
+ ✓ src/release/ReleasePrompts.test.tsx > blocking dialog > opens on refusal with the exact text, request id and no auto reload 34ms
+ ✓ src/release/ReleasePrompts.test.tsx > blocking dialog > keep-open shows the red bar and closes the dialog 14ms
+ ✓ src/release/ReleasePrompts.test.tsx > blocking dialog > shows the paused-alerts bar so a refused stream never looks like no alerts 3ms
+ ✓ src/session/SessionPrompts.test.tsx > warning dialog > opens at 13 minutes as an alertdialog with focus and a 2:00 countdown 117ms
+ ✓ src/session/SessionPrompts.test.tsx > warning dialog > counts down visibly but announces the time only once 15ms
+ ✓ src/session/SessionPrompts.test.tsx > warning dialog > Stay signed in is the only thing that calls extend 16ms
+ ✓ src/session/SessionPrompts.test.tsx > warning dialog > Escape also stays signed in, so a screen-reader user is not trapped 10ms
+ ✓ src/session/SessionPrompts.test.tsx > warning dialog > shows an alert when extending fails and keeps the dialog 56ms
+ ✓ src/documents/documents.test.tsx > list and viewer > opens a clean file through a short-lived URL and never offers Open before clean 203ms
+ ✓ src/documents/documents.test.tsx > list and viewer > shows the link when the browser blocks the pop-up, and the server refusal when not available 48ms
+ ✓ src/documents/documents.test.tsx > list and viewer > shows a quarantined file with its reason and no way to open it 11ms
+ ✓ src/documents/documents.test.tsx > list and viewer > shows empty, load failure with retry, and permission states 17ms
+ ✓ src/session/SessionPrompts.test.tsx > warning dialog > has no axe violations (jsdom: contrast and target size run in the browser suite) 55ms
+ ✓ src/session/SessionPrompts.test.tsx > session ended and held-back sign-out > shows the 401 dialog and sends the user to sign-in 8ms
+ ✓ src/session/SessionPrompts.test.tsx > session ended and held-back sign-out > warns when a draft could not be saved and offers Sign out anyway 7ms
+ ✓ src/session/SessionPrompts.test.tsx > session ended and held-back sign-out > warns before signing out with forms that cannot be kept as a draft 12ms
+ ✓ src/session/SessionPrompts.test.tsx > session ended and held-back sign-out > go back does not claim to extend, and the countdown stays visible 10ms
+ ✓ src/session/SessionPrompts.test.tsx > session ended and held-back sign-out > tells the user when sign-out failed and stays signed in 4ms
+ ✓ src/documents/documents.test.tsx > list and viewer > hides upload and list controls the caller lacks permission for 3ms
+ ✓ src/documents/documents.test.tsx > list and viewer > refreshes by itself while a file is scanning and shows it clean afterwards 59ms
+ ✓ src/documents/documents.test.tsx > upload > creates, transfers with progress, completes, then shows the scan state 38ms
+ ✓ src/documents/documents.test.tsx > upload > refuses a disallowed type without calling the API 19ms
+ ✓ src/documents/documents.test.tsx > upload > retries from the failed step with the same idempotency key 23ms
+ ✓ src/documents/documents.test.tsx > upload > shows the server refusal for a file that is too large 14ms
+ ✓ src/documents/documents.test.tsx > classification confirm (staff) > shows the suggestion as a suggestion, sends classify then confirm with If-Match, and updates the row 42ms
+ ✓ src/documents/documents.test.tsx > classification confirm (staff) > skips classify when staff accept the current class and refreshes on a stale version 24ms
+ ✓ src/documents/documents.test.tsx > classification confirm (staff) > offers no confirm control without the classify permission 9ms
+ ✓ src/documents/documents.test.tsx > accessibility (axe, jsdom) > has no violations with every state on screen 92ms
+ ✓ src/errors/errors.test.tsx > problemView > maps statuses to the UI-UX 6 states 3ms
+ ✓ src/errors/errors.test.tsx > problemView > leaves 200, 400 and 401 to other handlers 0ms
+ ✓ src/errors/errors.test.tsx > problemView > 403 and 404 never echo server detail 0ms
+ ✓ src/errors/errors.test.tsx > pages > 404 and 403 are plain pages with an h1 and a way home 131ms
+ ✓ src/errors/errors.test.tsx > pages > ErrorBoundary replaces a crash with "Your work is safe" and Retry, then recovers 22ms
+ ✓ src/realm/RealmBar.test.tsx > realmKind > tells the staff and admin pools apart 2ms
+ ✓ src/realm/RealmBar.test.tsx > RealmBar > names the staff realm and offers the switch as a sign-out 128ms
+ ✓ src/realm/RealmBar.test.tsx > RealmBar > always shows the fixed admin banner 4ms
+ ✓ src/session/session-store.test.ts > idle warning > opens at 13 of 15 minutes with 2:00 left 5ms
+ ✓ src/session/session-store.test.ts > idle warning > counts down and ends the session at the deadline 2ms
+ ✓ src/session/session-store.test.ts > idle warning > makes no API call on its own, whatever the elapsed time 1ms
+ ✓ src/session/session-store.test.ts > idle warning > a later server deadline (interactive traffic) cancels a warning 1ms
+ ✓ src/session/session-store.test.ts > idle warning > ignores a malformed deadline 0ms
+ ✓ src/session/session-store.test.ts > extend > calls extend only when asked, then restarts the clock from the answer 1ms
+ ✓ src/session/session-store.test.ts > extend > 401 on extend ends the session; other failures keep the warning 1ms
+ ✓ src/session/session-store.test.ts > sign-out keeps drafts (X-20) > keeps the session and reports when sign-out fails 0ms
+ ✓ src/session/session-store.test.ts > sign-out keeps drafts (X-20) > saves server drafts first, then signs out 1ms
+ ✓ src/session/session-store.test.ts > sign-out keeps drafts (X-20) > holds sign-out back when a draft cannot be saved, until the user forces it 1ms
+ ✓ src/session/session-store.test.ts > sign-out keeps drafts (X-20) > a throwing save counts as not saved; forms without a draft route are listed as lost 0ms
+ ✓ src/session/session-store.test.ts > sign-out keeps drafts (X-20) > writes nothing to web storage 1ms
+ ✓ src/runtime.test.ts > shell runtime > loadSession starts the idle clock and keeps the CSRF token for later writes only 10ms
+ ✓ src/runtime.test.ts > shell runtime > every response header moves the deadline, passive or not 1ms
+ ✓ src/runtime.test.ts > shell runtime > 401 auth.session_expired ends the session; 401 auth.unauthenticated does not 2ms
+ ✓ src/runtime.test.ts > shell runtime > a refused release opens the release dialog state 1ms
+ ✓ src/runtime.test.ts > shell runtime > sign-out calls the generated operation and forgets the token 2ms
+ ✓ src/release/release-store.test.ts > client release parsing > parses and rejects like the API 2ms
+ ✓ src/release/release-store.test.ts > client release parsing > reads release_number from the manifest 0ms
+ ✓ src/release/release-store.test.ts > ReleaseStore > shows the bar only for a higher release number 1ms
+ ✓ src/release/release-store.test.ts > ReleaseStore > stays silent when the poll fails 0ms
+ ✓ src/release/release-store.test.ts > ReleaseStore > remind-me-later hides the bar for 30 minutes, in memory 0ms
+ ✓ src/release/release-store.test.ts > ReleaseStore > a refused call hides the bar in favour of the blocking dialog 1ms
+ ✓ src/release/release-store.test.ts > ReleaseStore > never reloads by itself; draft save must succeed before reload 1ms
+ ✓ src/release/release-store.test.ts > ReleaseStore > writes nothing to web storage 1ms
+ ✓ src/api/client.test.ts > createApiClient > sends X-Client-Release on a relative same-origin URL 6ms
+ ✓ src/api/client.test.ts > createApiClient > notifies on 400 kernel.client_release_unsupported with the requestId 2ms
+ ✓ src/api/client.test.ts > createApiClient > does not notify for other 400s or non-JSON bodies 1ms
+ ✓ src/api/client.test.ts > createApiClient > rejects a malformed release at construction 1ms
+ ✓ src/api/client.test.ts > createApiClient > puts the release in the alert stream query string 0ms
+
+ Test Files  9 passed (9)
+      Tests  71 passed (71)
+   Start at  21:41:39
+   Duration  3.42s (environment 64%, tests 17%, setup 12%, import 5%, transform 2%)
+
+Environment  jsdom was created 9 times · 5.72s total, 64% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+exit 0
