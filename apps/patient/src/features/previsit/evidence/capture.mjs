@@ -79,13 +79,35 @@ const video = (over = {}) => ({
   clinicLocalStart: '2031-06-02T09:30:00',
   ...over,
 });
+const FRONT = '88888888-8888-4888-8888-888888888881';
+const BACK = '88888888-8888-4888-8888-888888888882';
 const coverage = {
   id: '77777777-7777-4777-8777-777777777777',
-  version: 1,
+  rowVersion: 1,
+  active: true,
   payerName: 'SYNTHETIC Health Plan',
   memberId: 'SYN-0001',
-  status: 'active',
+  groupNumber: 'G-1',
+  frontDocumentId: FRONT,
+  backDocumentId: BACK,
 };
+const doc = (id, status) => ({
+  id,
+  patientId: ME,
+  classification: 'insurance_card',
+  status,
+  uploadedAt: iso(-MIN),
+  contentType: 'image/png',
+  sizeBytes: 1024,
+});
+const insuranceScenario = (id, front, back) => ({
+  id,
+  path: `/appointments/${RES}/previsit/insurance`,
+  routes: {
+    coverages: { items: [coverage] },
+    documents: { items: [doc(FRONT, front), doc(BACK, back)] },
+  },
+});
 
 const ONLY = process.env.ONLY;
 const scenarios = [
@@ -153,11 +175,9 @@ const scenarios = [
     },
   },
   { id: 'insurance-empty', path: `/appointments/${RES}/previsit/insurance`, routes: {} },
-  {
-    id: 'insurance-card',
-    path: `/appointments/${RES}/previsit/insurance`,
-    routes: { coverages: { items: [coverage] } },
-  },
+  insuranceScenario('insurance-card', 'clean', 'clean'),
+  insuranceScenario('insurance-scanning', 'scanning', 'scanning'),
+  insuranceScenario('insurance-rejected', 'quarantined', 'clean'),
   {
     id: 'video-device-check',
     path: `/appointments/${RES}/video`,
@@ -282,7 +302,8 @@ try {
               );
         if (p === `/api/v1/patients/${ME}/insurance-coverages`)
           return json(route, 200, r.coverages ?? { items: [] });
-        if (p === `/api/v1/patients/${ME}/documents`) return json(route, 200, { items: [] });
+        if (p === `/api/v1/patients/${ME}/documents`)
+          return json(route, 200, r.documents ?? { items: [] });
         if (p === `/api/v1/appointments/${RES}/video-session`)
           return json(route, 200, r.video ?? video());
         if (p === `/api/v1/appointments/${RES}/video-session/location`)
@@ -332,6 +353,10 @@ try {
           .slice(0, 5)
           .map((e) => `${e.tagName.toLowerCase()}#${e.id}.${String(e.className).slice(0, 30)}`),
       }));
+      const crashed = await page
+        .getByText('Something went wrong on our side')
+        .count()
+        .catch(() => 0);
       results.push({
         scenario: sc.id,
         viewport: vp.name,
@@ -340,6 +365,7 @@ try {
           .first()
           .textContent()
           .catch(() => null),
+        errorBoundary: crashed > 0,
         axeViolations: axe.violations.map((v) => ({
           id: v.id,
           impact: v.impact,
@@ -369,8 +395,14 @@ writeFileSync(
   ),
 );
 const bad = results.filter(
-  (r) => r.axeViolations.length || r.targetsUnder44.length || r.horizontalOverflow,
+  (r) =>
+    !r.h1 ||
+    r.errorBoundary ||
+    r.axeViolations.length ||
+    r.targetsUnder44.length ||
+    r.horizontalOverflow,
 );
+process.exitCode = bad.length ? 1 : 0;
 console.log(`${results.length} captures; ${bad.length} with findings`);
 for (const r of bad)
   console.log(
