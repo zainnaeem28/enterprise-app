@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Banner, Button, ErrorSummary, StatusChip, TextField } from '@ehr/ui';
 import type { Tone } from '@ehr/ui';
@@ -18,10 +18,26 @@ const statusOf = (c: ConsentItem): ItemStatus =>
 
 /** PP-26 consents to read and e-sign. A required consent that is not signed keeps the consultation gate closed (BR-09). */
 export function ConsentsPage() {
-  const { previsit, reservationId, go } = usePrevisit();
+  const { previsit, reservationId, go, api, reload } = usePrevisit();
   const ref = useHeadingFocus<HTMLHeadingElement>();
   usePageTitle('Consent forms');
   const items = previsit.consentItems;
+  const needsOpening =
+    previsit.canOpenConsents &&
+    items?.some((c) => c.id === undefined && c.status !== 'signed') === true;
+  const [openFailed, setOpenFailed] = useState(false);
+  useEffect(() => {
+    if (!needsOpening) return;
+    let live = true;
+    void api.openConsents(reservationId, newKey()).then((r) => {
+      if (!live) return;
+      if (r.ok) reload();
+      else setOpenFailed(true);
+    });
+    return () => {
+      live = false;
+    };
+  }, [needsOpening, api, reservationId, reload]);
   return (
     <section className="pv" aria-labelledby="c-h">
       <h1 id="c-h" ref={ref} tabIndex={-1}>
@@ -35,6 +51,11 @@ export function ConsentsPage() {
       {previsit.consents && (
         <Banner tone="info" title="All required consents are signed">
           Nothing more to do here.
+        </Banner>
+      )}
+      {openFailed && (
+        <Banner tone="warning" title="We could not get your forms ready">
+          Try again in a moment, or ask the clinic to help you sign before your visit.
         </Banner>
       )}
       {items === undefined ? (
