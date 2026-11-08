@@ -31,9 +31,9 @@ const dateOnly = (v: unknown): string | null =>
       ? v.toISOString().slice(0, 10)
       : String(v).slice(0, 10);
 
-/** `organisation` publishes the consent templates (24); `patient` asks only whether a version is still published. */
+/** `organisation` publishes the consent templates (24); `patient` asks only whether a `(key, version, language)` is still published. */
 export interface ConsentTemplatePort {
-  isPublished(tx: Tx, key: string, version: number): Promise<boolean>;
+  isPublished(tx: Tx, key: string, version: number, language: string): Promise<boolean>;
 }
 
 /** `identity` knows which principals are staff. `patient` asks before it puts one on a care team. */
@@ -81,6 +81,8 @@ export interface ConsentView {
   patientId: string;
   templateKey: string;
   templateVersion: number;
+  /** The language of the wording this row is signed against (HEAAA-296 D3b). Set at insert, never changed. */
+  templateLanguage: string | null;
   status: 'pending' | 'signed' | 'superseded' | 'withdrawn';
   signedAt: string | null;
   signerRelationship: string | null;
@@ -144,6 +146,7 @@ const consentOf = (r: Row): ConsentView => ({
   patientId: str(r['patient_id']),
   templateKey: str(r['template_key']),
   templateVersion: Number(r['template_version']),
+  templateLanguage: strOrNull(r['template_language']),
   status: r['status'] as ConsentView['status'],
   signedAt: iso(r['signed_at']),
   signerRelationship: strOrNull(r['signer_relationship']),
@@ -153,7 +156,7 @@ const consentOf = (r: Row): ConsentView => ({
 
 const COVERAGE_COLS = `id, patient_id, payer_name, member_id, group_number, front_document_id, back_document_id,
   eligibility_status, verified_at, active, row_version`;
-const CONSENT_COLS = `id, patient_id, template_key, template_version, status, signed_at, signer_relationship,
+const CONSENT_COLS = `id, patient_id, template_key, template_version, template_language, status, signed_at, signer_relationship,
   signature_document_id, withdrawn_at`;
 const CONTACT_COLS = `id, patient_id, kind, name, relationship, phone, email, row_version`;
 
@@ -515,25 +518,42 @@ export class PatientRecordsService {
     patientId: string,
     templateKey: unknown,
     templateVersion: unknown,
+    templateLanguage: unknown,
   ): Promise<ConsentView> {
     if (!isUuid(patientId)) throw new PatientValidationError(['patientId']);
     if (typeof templateKey !== 'string' || !TEMPLATE_KEY.test(templateKey))
       throw new PatientValidationError(['templateKey']);
     if (!Number.isInteger(templateVersion) || (templateVersion as number) < 1)
       throw new PatientValidationError(['templateVersion']);
-    if (!(await this.deps.consentTemplates.isPublished(tx, templateKey, templateVersion as number)))
+    if (
+      typeof templateLanguage !== 'string' ||
+      templateLanguage.length < 2 ||
+      templateLanguage.length > 35
+    )
+      throw new PatientValidationError(['templateLanguage']);
+    if (
+      !(await this.deps.consentTemplates.isPublished(
+        tx,
+        templateKey,
+        templateVersion as number,
+        templateLanguage,
+      ))
+    )
       throw new PatientValidationError(['templateKey']);
     const id = uuidv7();
     try {
       const ins = await tx.query(
-        `INSERT INTO patient.consent (id, organisation_id, patient_id, template_key, template_version, status, created_by)
-         VALUES ($1::uuid, kernel.uuid1('app.org_id'), $2::uuid, $3, $4, 'pending', kernel.uuid1('app.principal_id'))
+        `INSERT INTO patient.consent (id, organisation_id, patient_id, template_key, template_version, template_language, status, created_by)
+         VALUES ($1::uuid, kernel.uuid1('app.org_id'), $2::uuid, $3, $4, $5, 'pending', kernel.uuid1('app.principal_id'))
          ON CONFLICT (patient_id, template_key, template_version) WHERE status = 'pending' DO NOTHING RETURNING ${CONSENT_COLS}`,
-        [id, patientId, templateKey, templateVersion],
+        [id, patientId, templateKey, templateVersion, templateLanguage],
       );
       if (ins.rows[0] !== undefined) {
         await this.audit(tx, meta, 'patient.consent', id, patientId, 'create', {
           status: 'pending',
+          templateKey,
+          templateVersion,
+          templateLanguage,
         });
         return consentOf(ins.rows[0] as Row);
       }
@@ -579,14 +599,25 @@ export class PatientRecordsService {
         [consentId],
       );
       const c = cur.rows[0] as Row | undefined;
-      if (c === undefined) throw new PatientNotFoundError();
+      if (c === undefined) {
+        // FOR UPDATE only sees rows the UPDATE policy lets through (pending, signed); a withdrawn or superseded row is still
+        // readable by its owner and is "not pending", not "not found" (HEAAA-296 acceptance 2c).
+        const seen = await tx.query(`SELECT 1 FROM patient.consent WHERE id = $1::uuid`, [
+          consentId,
+        ]);
+        throw seen.rows.length === 0 ? new PatientNotFoundError() : new ConsentNotPendingError();
+      }
       if (c['status'] !== 'pending') throw new ConsentNotPendingError();
       const key = str(c['template_key']);
       const version = Number(c['template_version']);
       const patientId = str(c['patient_id']);
       // "Signed templates": the version signed must still be a published one, otherwise the patient would sign text that is no
       // longer the clinic's current wording. A newer version is a new pending row (requestConsent), never a silent upgrade.
-      if (!(await this.deps.consentTemplates.isPublished(tx, key, version)))
+      const language = strOrNull(c['template_language']);
+      if (
+        language === null ||
+        !(await this.deps.consentTemplates.isPublished(tx, key, version, language))
+      )
         throw new ConsentNotPendingError();
       await tx.query(
         `UPDATE patient.consent SET status = 'superseded' WHERE patient_id = $1::uuid AND template_key = $2 AND status = 'signed'`,
@@ -609,6 +640,7 @@ export class PatientRecordsService {
         status: 'signed',
         templateKey: key,
         templateVersion: version,
+        templateLanguage: language,
       });
       await this.deps.queue?.publish(tx, 'patient.consent_signed', { patientId, consentId });
       return consentOf(r.rows[0] as Row);
@@ -619,30 +651,80 @@ export class PatientRecordsService {
 
   /**
    * `requiredConsentStatus(patient, templates)` (24, BR-09): per required template, `signed` (this version or later), `outdated`
-   * (signed, but an older version than required), `pending` (asked, not signed) or `missing`.
+   * (signed, but an older version than required), `pending` (asked, not signed) or `missing`. Additively (HEAAA-296 D3b, A-F12/A-F13),
+   * `pending` lists every pending row of the key at `template_version >= version`, newest first. It does not judge whether such a row is
+   * stale: whether a template row is published is organisation data, so the caller decides.
    */
   async requiredConsentStatus(
     tx: Tx,
     patientId: string,
     templates: readonly { key: string; version: number }[],
   ): Promise<
-    { key: string; version: number; status: 'signed' | 'outdated' | 'pending' | 'missing' }[]
+    {
+      key: string;
+      version: number;
+      status: 'signed' | 'outdated' | 'pending' | 'missing';
+      pending: { id: string; version: number; language: string | null }[];
+    }[]
   > {
     if (!isUuid(patientId)) throw new PatientValidationError(['patientId']);
     const r = await tx.query(
-      `SELECT template_key, template_version, status FROM patient.consent
-        WHERE patient_id = $1::uuid AND status IN ('signed', 'pending') AND template_key = ANY($2::text[])`,
+      `SELECT id, template_key, template_version, template_language, status FROM patient.consent
+        WHERE patient_id = $1::uuid AND status IN ('signed', 'pending') AND template_key = ANY($2::text[])
+        ORDER BY created_at DESC, id DESC`,
       [patientId, templates.map((t) => t.key)],
     );
     return templates.map((t) => {
       const rows = r.rows.filter((x) => (x as Row)['template_key'] === t.key) as Row[];
       const signed = rows.filter((x) => x['status'] === 'signed');
+      const pending = rows
+        .filter((x) => x['status'] === 'pending' && Number(x['template_version']) >= t.version)
+        .map((x) => ({
+          id: str(x['id']),
+          version: Number(x['template_version']),
+          language: strOrNull(x['template_language']),
+        }));
       if (signed.some((x) => Number(x['template_version']) >= t.version))
-        return { ...t, status: 'signed' as const };
-      if (rows.some((x) => x['status'] === 'pending' && Number(x['template_version']) >= t.version))
-        return { ...t, status: 'pending' as const };
-      return { ...t, status: signed.length > 0 ? ('outdated' as const) : ('missing' as const) };
+        return { ...t, status: 'signed' as const, pending };
+      if (pending.length > 0) return { ...t, status: 'pending' as const, pending };
+      return {
+        ...t,
+        status: signed.length > 0 ? ('outdated' as const) : ('missing' as const),
+        pending,
+      };
     });
+  }
+
+  /**
+   * The stale-pending withdraw (HEAAA-296 D2 step 1): a pending row whose own `(key, version, language)` is no longer published is moved
+   * to `withdrawn`. Writes only the granted columns `status` and `reason`; `withdrawn_at` is set by `patient.guard_consent`. Conditional on
+   * `status = 'pending'`, so a concurrent sign or withdraw wins cleanly. Returns whether this call withdrew the row.
+   */
+  async withdrawStalePendingConsent(
+    tx: Tx,
+    meta: RequestMeta,
+    consentId: string,
+  ): Promise<boolean> {
+    if (!isUuid(consentId)) throw new PatientValidationError(['consentId']);
+    try {
+      const r = await tx.query(
+        `UPDATE patient.consent SET status = 'withdrawn', reason = 'template_not_published'
+          WHERE id = $1::uuid AND status = 'pending'
+        RETURNING patient_id, template_key, template_version, template_language`,
+        [consentId],
+      );
+      const row = r.rows[0] as Row | undefined;
+      if (row === undefined) return false;
+      await this.audit(tx, meta, 'patient.consent', consentId, str(row['patient_id']), 'update', {
+        status: 'withdrawn',
+        templateKey: str(row['template_key']),
+        templateVersion: Number(row['template_version']),
+        templateLanguage: strOrNull(row['template_language']),
+      });
+      return true;
+    } catch (e) {
+      translateDbError(e);
+    }
   }
 
   // --- communication preferences -----------------------------------------------------------------------------------
@@ -960,7 +1042,7 @@ export class PatientRecordsService {
       where = `WHERE id = $2::uuid`;
     }
     const r = await tx.query(
-      `SELECT id, template_key, template_version, status, signed_at, signer_relationship, withdrawn_at, signature_document_id
+      `SELECT id, template_key, template_version, template_language, status, signed_at, signer_relationship, withdrawn_at, signature_document_id
          FROM patient.consent ${where} ORDER BY created_at DESC, id LIMIT $1`,
       params,
     );
@@ -970,6 +1052,7 @@ export class PatientRecordsService {
         id: str(row['id']),
         templateKey: str(row['template_key']),
         templateVersion: Number(row['template_version']),
+        templateLanguage: strOrNull(row['template_language']),
         status: row['status'] as ConsentView['status'],
         signedAt: iso(row['signed_at']),
         signerRelationship: strOrNull(row['signer_relationship']),

@@ -1,0 +1,390 @@
+{
+  "numTotalTestSuites": 9,
+  "numPassedTestSuites": 9,
+  "numFailedTestSuites": 0,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 31,
+  "numPassedTests": 31,
+  "numFailedTests": 0,
+  "numPendingTests": 0,
+  "numTodoTests": 0,
+  "snapshot": {
+    "added": 0,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0,
+    "didUpdate": false
+  },
+  "startTime": 1794135282111,
+  "success": true,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": ["routes and parsers"],
+          "fullName": "routes and parsers matches only the reservation id in the path",
+          "status": "passed",
+          "title": "matches only the reservation id in the path",
+          "duration": 2.217781000000059,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["routes and parsers"],
+          "fullName": "routes and parsers refuses a previsit body without the three flags",
+          "status": "passed",
+          "title": "refuses a previsit body without the three flags",
+          "duration": 0.9166599999999789,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["routes and parsers"],
+          "fullName": "routes and parsers reads a required question as required unless the template says otherwise",
+          "status": "passed",
+          "title": "reads a required question as required unless the template says otherwise",
+          "duration": 0.6873899999999367,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["pre-visit overview (PP-25..27)"],
+          "fullName": "pre-visit overview (PP-25..27) shows each item as To do, Done or Needs fixing and says the consultation is blocked",
+          "status": "passed",
+          "title": "shows each item as To do, Done or Needs fixing and says the consultation is blocked",
+          "duration": 156.91945099999998,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["pre-visit overview (PP-25..27)"],
+          "fullName": "pre-visit overview (PP-25..27) does not warn about the gate when every consent is signed",
+          "status": "passed",
+          "title": "does not warn about the gate when every consent is signed",
+          "duration": 17.434533999999985,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["pre-visit overview (PP-25..27)"],
+          "fullName": "pre-visit overview (PP-25..27) a 404 reads the same as nothing there, with no hint what exists",
+          "status": "passed",
+          "title": "a 404 reads the same as nothing there, with no hint what exists",
+          "duration": 16.263104999999996,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["pre-visit overview (PP-25..27)"],
+          "fullName": "pre-visit overview (PP-25..27) has no axe violations",
+          "status": "passed",
+          "title": "has no axe violations",
+          "duration": 82.10669899999994,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["PP-26 consents"],
+          "fullName": "PP-26 consents keeps the gate closed until signed; sending needs the box and a typed name",
+          "status": "passed",
+          "title": "keeps the gate closed until signed; sending needs the box and a typed name",
+          "duration": 41.54881,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["PP-26 consents"],
+          "fullName": "PP-26 consents says plainly when the API gives no consent text, and offers no signing",
+          "status": "passed",
+          "title": "says plainly when the API gives no consent text, and offers no signing",
+          "duration": 6.513341000000082,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["PP-26 consents"],
+          "fullName": "PP-26 consents an outdated consent is Needs fixing",
+          "status": "passed",
+          "title": "an outdated consent is Needs fixing",
+          "duration": 6.9900659999998425,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["PP-26 consents"],
+          "fullName": "PP-26 consents has no axe violations",
+          "status": "passed",
+          "title": "has no axe violations",
+          "duration": 39.05480899999998,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["PP-25 questionnaire and PP-22 emergency advice"],
+          "fullName": "PP-25 questionnaire and PP-22 emergency advice blocks a blank required question without a request and does not echo values in the summary",
+          "status": "passed",
+          "title": "blocks a blank required question without a request and does not echo values in the summary",
+          "duration": 28.206905000000006,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["PP-25 questionnaire and PP-22 emergency advice"],
+          "fullName": "PP-25 questionnaire and PP-22 emergency advice saves a draft with a client-chosen response id and no If-Match the first time",
+          "status": "passed",
+          "title": "saves a draft with a client-chosen response id and no If-Match the first time",
+          "duration": 24.818107000000055,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["PP-25 questionnaire and PP-22 emergency advice"],
+          "fullName": "PP-25 questionnaire and PP-22 emergency advice submits with If-Match, then a red flag shows the advice from the template and a call link",
+          "status": "passed",
+          "title": "submits with If-Match, then a red flag shows the advice from the template and a call link",
+          "duration": 32.65912000000003,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["PP-25 questionnaire and PP-22 emergency advice"],
+          "fullName": "PP-25 questionnaire and PP-22 emergency advice no red flag goes back to the list without the emergency screen",
+          "status": "passed",
+          "title": "no red flag goes back to the list without the emergency screen",
+          "duration": 28.838029000000006,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["PP-25 questionnaire and PP-22 emergency advice"],
+          "fullName": "PP-25 questionnaire and PP-22 emergency advice a stale version shows the conflict state and keeps what was typed",
+          "status": "passed",
+          "title": "a stale version shows the conflict state and keeps what was typed",
+          "duration": 29.51573099999996,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["PP-25 questionnaire and PP-22 emergency advice"],
+          "fullName": "PP-25 questionnaire and PP-22 emergency advice a submitted questionnaire is read-only",
+          "status": "passed",
+          "title": "a submitted questionnaire is read-only",
+          "duration": 10.185011000000031,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["PP-25 questionnaire and PP-22 emergency advice"],
+          "fullName": "PP-25 questionnaire and PP-22 emergency advice has no axe violations on the form and on the emergency screen",
+          "status": "passed",
+          "title": "has no axe violations on the form and on the emergency screen",
+          "duration": 60.478657999999996,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["PP-27 insurance card"],
+          "fullName": "PP-27 insurance card uploads a file through create, put and complete, shows the scan state, then saves the card with the document id",
+          "status": "passed",
+          "title": "uploads a file through create, put and complete, shows the scan state, then saves the card with the document id",
+          "duration": 90.22947999999997,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["PP-27 insurance card"],
+          "fullName": "PP-27 insurance card refuses a file type that is not allowed before any request, and a rejected file asks for a new photo",
+          "status": "passed",
+          "title": "refuses a file type that is not allowed before any request, and a rejected file asks for a new photo",
+          "duration": 24.617451000000074,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        }
+      ],
+      "startTime": 1794135283144,
+      "endTime": 1794135283844.6174,
+      "status": "passed",
+      "message": "",
+      "name": "/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-128-sdlc-ticket-fe-07-patient-portal-pre-visit-forms-consents-insurance-upload-waiting-room-device-check-and-join/apps/patient/src/features/previsit/previsit.test.tsx"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": ["routes and time"],
+          "fullName": "routes and time matches the video route by reservation id only",
+          "status": "passed",
+          "title": "matches the video route by reservation id only",
+          "duration": 2.4095510000000786,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["routes and time"],
+          "fullName": "routes and time gives two labels when the zones differ and one when they read the same",
+          "status": "passed",
+          "title": "gives two labels when the zones differ and one when they read the same",
+          "duration": 5.120056999999974,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["PP-23 device check and join"],
+          "fullName": "PP-23 device check and join shows both time zones when they differ",
+          "status": "passed",
+          "title": "shows both time zones when they differ",
+          "duration": 60.87918000000002,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["PP-23 device check and join"],
+          "fullName": "PP-23 device check and join sends exactly camera, mic and bandwidth and shows each as words",
+          "status": "passed",
+          "title": "sends exactly camera, mic and bandwidth and shows each as words",
+          "duration": 99.63203199999998,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["PP-23 device check and join"],
+          "fullName": "PP-23 device check and join will not join before the location is confirmed, and does not join before the window opens",
+          "status": "passed",
+          "title": "will not join before the location is confirmed, and does not join before the window opens",
+          "duration": 89.20056999999997,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["PP-23 device check and join"],
+          "fullName": "PP-23 device check and join asks for a state before sending the location, and a licensing refusal offers no way around it",
+          "status": "passed",
+          "title": "asks for a state before sending the location, and a licensing refusal offers no way around it",
+          "duration": 42.28083300000003,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["PP-23 device check and join"],
+          "fullName": "PP-23 device check and join waits in the waiting room, then hands the credential to the video client once admitted, and never shows it",
+          "status": "passed",
+          "title": "waits in the waiting room, then hands the credential to the video client once admitted, and never shows it",
+          "duration": 45.95409399999994,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["PP-23 device check and join"],
+          "fullName": "PP-23 device check and join says the video app is not connected when no handler is given, instead of pretending to join",
+          "status": "passed",
+          "title": "says the video app is not connected when no handler is given, instead of pretending to join",
+          "duration": 27.171582999999828,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["PP-23 device check and join"],
+          "fullName": "PP-23 device check and join a join the server answers with location_required goes back to the confirmation step",
+          "status": "passed",
+          "title": "a join the server answers with location_required goes back to the confirmation step",
+          "duration": 23.80846200000019,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["PP-23 device check and join"],
+          "fullName": "PP-23 device check and join a 404 on the session is the same message as nothing there",
+          "status": "passed",
+          "title": "a 404 on the session is the same message as nothing there",
+          "duration": 5.006583999999975,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": ["PP-23 device check and join"],
+          "fullName": "PP-23 device check and join has no axe violations",
+          "status": "passed",
+          "title": "has no axe violations",
+          "duration": 99.18835000000013,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        }
+      ],
+      "startTime": 1794135283074,
+      "endTime": 1794135283575.1882,
+      "status": "passed",
+      "message": "",
+      "name": "/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-128-sdlc-ticket-fe-07-patient-portal-pre-visit-forms-consents-insurance-upload-waiting-room-device-check-and-join/apps/patient/src/features/telehealth/telehealth.test.tsx"
+    }
+  ]
+}

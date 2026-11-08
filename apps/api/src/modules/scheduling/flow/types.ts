@@ -33,6 +33,40 @@ export interface Previsit {
   insurance: boolean;
 }
 
+/** One consent the service requires, as the patient sees it (HEAAA-296 D1). `id` is the pending patient.consent row, else null. */
+export interface PrevisitRequiredConsent {
+  id: string | null;
+  templateKey: string;
+  templateVersion: number;
+  language: string;
+  title: string | null;
+  text: string | null;
+  status: 'signed' | 'pending' | 'missing' | 'outdated';
+}
+
+/** `GET /appointments/{reservationId}/previsit`. A proxy never reaches it (the guard answers 404, CN-04). */
+export interface PrevisitView extends Previsit {
+  reservationId: string;
+  /** True iff the occupancy is `confirmed` or `checked_in`: the POST accepts it only then. */
+  canOpenConsents: boolean;
+  requiredConsents: PrevisitRequiredConsent[];
+}
+
+/** One item of the compact POST body: no wording (it is kept out of the idempotency store). */
+export interface PrevisitConsentRef {
+  id: string | null;
+  templateKey: string;
+  templateVersion: number;
+  language: string;
+  status: 'signed' | 'pending' | 'missing' | 'outdated';
+}
+
+/** `POST /appointments/{reservationId}/previsit/consents`. */
+export interface PrevisitConsentsOpened {
+  reservationId: string;
+  requiredConsents: PrevisitConsentRef[];
+}
+
 /**
  * What the check-in asks of the modules that do not exist yet in this build (clinical, BE-18): which consent templates a service
  * requires, and whether the pre-visit questionnaire is complete. Both are optional. Without a source a service requires no consent

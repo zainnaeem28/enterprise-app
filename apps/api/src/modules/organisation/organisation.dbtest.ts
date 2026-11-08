@@ -472,11 +472,65 @@ describe('organisation module on PostgreSQL 17 (BE-03)', () => {
           `UPDATE organisation.consent_template SET body_document_id = $2 WHERE id = $1`,
           [id(81), id(82)],
         );
+      });
+      // HEAAA-296 D3: a version cannot be published without its title and wording
+      await rejectsCode(
+        db.withScope(admin, (tx) =>
+          tx.query(`UPDATE organisation.consent_template SET status = 'published' WHERE id = $1`, [
+            id(81),
+          ]),
+        ),
+        '23514',
+        'published needs title and body_text',
+      );
+      await rejectsCode(
+        db.withScope(admin, (tx) =>
+          tx.query(
+            `INSERT INTO organisation.consent_template (id, organisation_id, key, version, language, status, title, body_text) VALUES ($1, $2, 'blank', 1, 'en', 'published', 'Blank', null)`,
+            [id(87), ORG],
+          ),
+        ),
+        '23514',
+        'published insert without body_text',
+      );
+      await rejectsCode(
+        db.withScope(admin, (tx) =>
+          tx.query(
+            `INSERT INTO organisation.consent_template (id, organisation_id, key, version, language, status, title, body_text) VALUES ($1, $2, 'blank', 1, 'en', 'draft', '  ', 'x')`,
+            [id(88), ORG],
+          ),
+        ),
+        '23514',
+        'title must not be blank',
+      );
+      await db.withScope(admin, async (tx) => {
+        await tx.query(
+          `UPDATE organisation.consent_template SET title = 'Treatment', body_text = 'Placeholder wording (test data).' WHERE id = $1`,
+          [id(81)],
+        );
         await tx.query(
           `UPDATE organisation.consent_template SET status = 'published' WHERE id = $1`,
           [id(81)],
         );
       });
+      await rejectsCode(
+        db.withScope(admin, (tx) =>
+          tx.query(`UPDATE organisation.consent_template SET body_text = 'changed' WHERE id = $1`, [
+            id(81),
+          ]),
+        ),
+        '42501',
+        'edit published body_text',
+      );
+      await rejectsCode(
+        db.withScope(admin, (tx) =>
+          tx.query(`UPDATE organisation.consent_template SET title = 'changed' WHERE id = $1`, [
+            id(81),
+          ]),
+        ),
+        '42501',
+        'edit published title',
+      );
       await rejectsCode(
         db.withScope(admin, (tx) =>
           tx.query(`UPDATE organisation.consent_template SET body_document_id = $2 WHERE id = $1`, [
@@ -548,7 +602,7 @@ describe('organisation module on PostgreSQL 17 (BE-03)', () => {
       assert.equal(t?.version, 1);
       await db.withScope(admin, async (tx) => {
         await tx.query(
-          `INSERT INTO organisation.consent_template (id, organisation_id, key, version, language, body_document_id, status) VALUES ($1, $2, 'privacy', 1, 'en', $3, 'published'), ($4, $2, 'privacy', 2, 'en', $3, 'published')`,
+          `INSERT INTO organisation.consent_template (id, organisation_id, key, version, language, title, body_text, body_document_id, status) VALUES ($1, $2, 'privacy', 1, 'en', 'Privacy', 'Placeholder wording v1 (test data).', $3, 'published'), ($4, $2, 'privacy', 2, 'en', 'Privacy', 'Placeholder wording v2 (test data).', $3, 'published')`,
           [id(85), ORG, doc, id(86)],
         );
         await tx.query(
@@ -560,6 +614,64 @@ describe('organisation module on PostgreSQL 17 (BE-03)', () => {
       assert.deepEqual(
         req.map((x) => [x.key, x.version]),
         [['privacy', 2]],
+      );
+      // HEAAA-296 D1: wording is read only for the published (key, version, language) rows asked for, in one query
+      await db.withScope(admin, async (tx) => {
+        await tx.query(
+          `INSERT INTO organisation.consent_template (id, organisation_id, key, version, language, title, body_text, status) VALUES
+             ($1, $4, 'privacy', 2, 'fr', 'Confidentialité', 'Texte provisoire (données de test).', 'published'),
+             ($2, $4, 'privacy', 3, 'de', 'Datenschutz', 'Platzhalter (Testdaten).', 'draft'),
+             ($3, $4, 'privacy', 1, 'es', 'Privacidad', 'Texto provisional (datos de prueba).', 'published')`,
+          [id(92), id(93), id(94), ORG],
+        );
+      });
+      const wording = (refs: { key: string; version: number; language: string }[]) =>
+        db.withScope(patient, (tx) => org.consentTemplateWording(tx, refs));
+      assert.deepEqual(
+        (
+          await wording([
+            { key: 'privacy', version: 2, language: 'fr' },
+            { key: 'privacy', version: 2, language: 'en' },
+          ])
+        )
+          .map((x) => [x.version, x.language, x.title])
+          .sort(),
+        [
+          [2, 'en', 'Privacy'],
+          [2, 'fr', 'Confidentialité'],
+        ],
+      );
+      assert.deepEqual(await wording([]), []);
+      assert.deepEqual(
+        await wording([{ key: 'privacy', version: 3, language: 'de' }]),
+        [],
+        'a draft row is never returned',
+      );
+      // HEAAA-296 S-F02 (2b): the patient audience reads published rows only; staff still see draft and retired rows
+      await db.withScope(admin, (tx) =>
+        tx.query(`UPDATE organisation.consent_template SET status = 'retired' WHERE id = $1`, [
+          id(86),
+        ]),
+      );
+      const statusesFor = (scope: typeof patient) =>
+        db.withScope(scope, async (tx) =>
+          (
+            await tx.query(
+              `SELECT status, count(*)::int AS n FROM organisation.consent_template GROUP BY status ORDER BY status`,
+            )
+          ).rows.map((x) => [x['status'], x['n']]),
+        );
+      assert.deepEqual(
+        (await statusesFor(patient)).map((x) => x[0]),
+        ['published'],
+        'a patient-audience SELECT returns published rows only',
+      );
+      const staffStatuses = (await statusesFor(admin)).map((x) => x[0]);
+      assert.ok(staffStatuses.includes('draft') && staffStatuses.includes('retired'));
+      assert.deepEqual(
+        await wording([{ key: 'privacy', version: 2, language: 'en' }]),
+        [],
+        'a retired row is never returned',
       );
     });
 

@@ -39,6 +39,8 @@ import type {
   FlowMeta,
   NoShowCandidate,
   Previsit,
+  PrevisitConsentsOpened,
+  PrevisitView,
   QueueEntryView,
   QueueStage,
   TriageCategory,
@@ -713,19 +715,41 @@ export class SchedulingFlowService {
 
   // ===== pre-visit read (29.2) =========================================================================================
 
-  /** `GET /appointments/{reservationId}/previsit` for the patient: the three flags, live. The forms themselves are the clinical module's. */
-  async previsitFor(tx: Tx, reservationId: string): Promise<Previsit & { reservationId: string }> {
+  /** `GET /appointments/{reservationId}/previsit` for the patient: the flags and the required consents, live. Writes nothing. */
+  async previsitFor(tx: Tx, reservationId: string): Promise<PrevisitView> {
     if (!isUuid(reservationId)) throw new ReservationNotFoundError();
     const r = (await tx.query(APPT_SQL, [reservationId.toLowerCase()])).rows[0] as Row | undefined;
     if (r === undefined) throw new ReservationNotFoundError();
-    return {
+    return this.previsit.view(tx, {
       reservationId: String(r['id']),
-      ...(await this.previsit.status(
-        tx,
-        String(r['patient_id']),
-        String(r['service_id']),
-        String(r['id']),
-      )),
-    };
+      patientId: String(r['patient_id']),
+      serviceId: String(r['service_id']),
+      occupancy: String(r['status']),
+    });
+  }
+
+  /**
+   * `POST /appointments/{reservationId}/previsit/consents` for the patient (HEAAA-296 D2). A proxy never reaches it (the guard answers
+   * 404). A reservation that is not `confirmed` or `checked_in` answers 404 like one outside the caller's scope.
+   */
+  async openPrevisitConsents(
+    tx: Tx,
+    meta: FlowMeta,
+    reservationId: string,
+  ): Promise<PrevisitConsentsOpened> {
+    if (!isUuid(reservationId)) throw new ReservationNotFoundError();
+    const r = (await tx.query(APPT_SQL, [reservationId.toLowerCase()])).rows[0] as Row | undefined;
+    if (r === undefined) throw new ReservationNotFoundError();
+    if (r['status'] !== 'confirmed' && r['status'] !== 'checked_in')
+      throw new ReservationNotFoundError();
+    try {
+      return await this.previsit.openConsents(tx, meta, {
+        reservationId: String(r['id']),
+        patientId: String(r['patient_id']),
+        serviceId: String(r['service_id']),
+      });
+    } catch (e) {
+      translateDbError(e);
+    }
   }
 }

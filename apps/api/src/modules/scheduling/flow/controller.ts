@@ -21,6 +21,7 @@ import { beginIdempotent, completeIdempotent, parseIdempotencyKey, requestHash }
 import type { KernelDb, Tx } from '@ehr/kernel';
 import { ApiError } from '../../../platform/errors.js';
 import type { Req, Res } from '../../../platform/http.js';
+import type { RateLimiter } from '../../../platform/rate-limit.js';
 import { Route } from '../../../platform/route.js';
 import { ForbiddenError, requireAuthContext } from '../../identity/index.js';
 import type { ResourceResolver } from '../../identity/index.js';
@@ -33,6 +34,12 @@ import type { FlowMeta } from './types.js';
 export interface FlowControllerDeps {
   db: KernelDb;
   flow: SchedulingFlowService;
+  /**
+   * Counts `POST …/previsit/consents` (10 per 10 minutes per principal and reservation, HEAAA-296 D2). That limit bounds audit volume and
+   * is a control, so production must pass a `PgRateLimiter` (exact across instances, as `patient/controller.ts`). No production
+   * composition root exists yet; whoever builds one passes it here.
+   */
+  limiter: RateLimiter;
 }
 
 const metaOf = (req: Req): FlowMeta => ({
@@ -391,6 +398,7 @@ export function createFlowControllers(d: FlowControllerDeps): Type<unknown>[] {
       }));
     }
 
+    // `patient`: a proxy (scope `appointments`) gets the guard's 404 before the handler (CN-04, HEAAA-296 E14).
     @Get('appointments/:id/previsit')
     @Route({ permission: 'patient', resolver: 'reservation' })
     async previsit(
@@ -399,6 +407,38 @@ export function createFlowControllers(d: FlowControllerDeps): Type<unknown>[] {
       @ResParam() res: Res,
     ): Promise<void> {
       send(res, 200, await run(req, (tx) => d.flow.previsitFor(tx, id)));
+    }
+
+    // `patient`: a proxy gets the guard's 404, the same as a reservation outside scope (HEAAA-296 D2).
+    @Post('appointments/:id/previsit/consents')
+    @Route({ permission: 'patient', resolver: 'reservation' })
+    async openConsents(
+      @Param('id') id: string,
+      @ReqParam() req: Req,
+      @ResParam() res: Res,
+    ): Promise<void> {
+      // The route counter is the handler's first statement, before any database work: 10 per 10 minutes per principal and reservation.
+      const hit = await d.limiter.hit(
+        `previsit.consents:${requireAuthContext(req).session.principalId}:${id.toLowerCase()}`,
+        10,
+        600_000,
+      );
+      if (!hit.allowed)
+        throw new ApiError(429, 'kernel.rate_limited', true, {
+          retryAfterSeconds: hit.retryAfterSeconds,
+        });
+      if (Object.keys(bodyOf(req)).length > 0) throw new SchedulingValidationError(['body']);
+      await idempotent(
+        req,
+        res,
+        'POST /appointments/{reservationId}/previsit/consents',
+        [id.toLowerCase()],
+        req.body,
+        async (tx) => ({
+          status: 200,
+          body: await d.flow.openPrevisitConsents(tx, metaOf(req), id),
+        }),
+      );
     }
 
     @Post('waitlist-entries')

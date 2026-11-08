@@ -395,7 +395,7 @@ export class OrganisationService {
   async consentTemplatesRequired(
     tx: Tx,
     serviceId: string,
-  ): Promise<{ key: string; version: number; language: string; bodyDocumentId: string }[]> {
+  ): Promise<{ key: string; version: number; language: string; bodyDocumentId: string | null }[]> {
     if (!isUuid(serviceId)) throw new OrganisationValidationError(['serviceId']);
     const r = await tx.query(
       `SELECT DISTINCT ON (t.key, t.language) t.key, t.version, t.language, t.body_document_id
@@ -409,7 +409,35 @@ export class OrganisationService {
       key: str(x.key),
       version: num(x.version),
       language: str(x.language),
-      bodyDocumentId: str(x.body_document_id),
+      bodyDocumentId: x.body_document_id === null ? null : str(x.body_document_id),
+    }));
+  }
+
+  /**
+   * The title and plain wording of the given published `(key, version, language)` rows (HEAAA-296 D1): one `unnest` join on the unique
+   * `(key, version, language)`, so wording is read only for the rows asked for. Only `published` rows count. `title` and `text` are null
+   * only for a version published before they existed.
+   */
+  async consentTemplateWording(
+    tx: Tx,
+    refs: readonly { key: string; version: number; language: string }[],
+  ): Promise<
+    { key: string; version: number; language: string; title: string | null; text: string | null }[]
+  > {
+    if (refs.length === 0) return [];
+    const r = await tx.query(
+      `SELECT t.key, t.version, t.language, t.title, t.body_text
+         FROM unnest($1::text[], $2::int[], $3::text[]) AS q(key, version, language)
+         JOIN organisation.consent_template t ON t.key = q.key AND t.version = q.version AND t.language = q.language
+        WHERE t.status = 'published'`,
+      [refs.map((x) => x.key), refs.map((x) => x.version), refs.map((x) => x.language)],
+    );
+    return r.rows.map((x) => ({
+      key: str(x.key),
+      version: num(x.version),
+      language: str(x.language),
+      title: x.title === null ? null : str(x.title),
+      text: x.body_text === null ? null : str(x.body_text),
     }));
   }
 

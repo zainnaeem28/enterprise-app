@@ -1,0 +1,39 @@
+.th {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 1rem;
+}
+.th-zones {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0 0 1rem;
+}
+.th-zones dt {
+  font-weight: 600;
+}
+.th-zones dd {
+  margin: 0;
+}
+.th-step {
+  border: 1px solid var(--ehr-border, #c7ced6);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin: 0 0 1rem;
+  display: grid;
+  gap: 0.5rem;
+}
+.th-step h2 {
+  margin: 0;
+  font-size: 1.125rem;
+}
+.th-checks {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+.th-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}

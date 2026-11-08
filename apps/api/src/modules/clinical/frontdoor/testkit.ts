@@ -55,6 +55,7 @@ import { SCHEDULING_CORE_JOBS } from '../../scheduling/core/jobs.js';
 import { uuidv7 } from '../../scheduling/core/ids.js';
 import { nearbyFreeStarts, SchedulingCoreService } from '../../scheduling/core/service.js';
 import type { AvailabilityPort } from '../../scheduling/core/types.js';
+import { MemoryRateLimiter } from '../../../platform/rate-limit.js';
 import { createFlowControllers, flowResolvers } from '../../scheduling/flow/controller.js';
 import {
   SCHEDULING_FLOW_JOBS,
@@ -243,6 +244,7 @@ export async function setupFrontdoor(name: string): Promise<FrontdoorKit> {
         ...createFlowControllers({
           db: lazyDb,
           flow: lazy(() => holder.flow as SchedulingFlowService),
+          limiter: new MemoryRateLimiter(1),
         }),
         createAlertsController({
           db: lazyDb,
@@ -581,9 +583,17 @@ async function finish(
     },
     async publishConsent(key, version) {
       await k.sa.query(
-        `INSERT INTO organisation.consent_template (id, organisation_id, key, version, language, body_document_id, status)
-         VALUES ($1, $2, $3, $4, 'en', $5, 'published')`,
-        [uuidv7(), ORG, key, version, randomUUID()],
+        `INSERT INTO organisation.consent_template (id, organisation_id, key, version, language, title, body_text, body_document_id, status)
+         VALUES ($1, $2, $3, $4, 'en', $6, $7, $5, 'published')`,
+        [
+          uuidv7(),
+          ORG,
+          key,
+          version,
+          randomUUID(),
+          `Test consent ${key}`,
+          `Placeholder wording for ${key}, test data only.`,
+        ],
       );
     },
     async requireConsents(serviceId, keys) {

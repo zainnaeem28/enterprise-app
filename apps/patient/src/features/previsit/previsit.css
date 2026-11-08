@@ -1,0 +1,72 @@
+.pv {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 1rem;
+}
+.pv-items {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+}
+.pv-item {
+  border: 1px solid var(--ehr-border, #c7ced6);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  display: grid;
+  gap: 0.5rem;
+}
+.pv-item h2 {
+  margin: 0;
+  font-size: 1.125rem;
+}
+.pv-q {
+  border: 0;
+  padding: 0;
+  margin: 0 0 1rem;
+}
+.pv-radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  margin-right: 1rem;
+}
+.pv-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+.pv-consent-text {
+  max-height: 14rem;
+  overflow: auto;
+  padding: 0.75rem;
+  border: 1px solid var(--ehr-border, #c7ced6);
+  border-radius: 0.375rem;
+  white-space: pre-wrap;
+}
+.pv-advice {
+  font-size: 1.25rem;
+}
+.pv-call {
+  display: inline-flex;
+  align-items: center;
+  min-height: 3rem;
+  text-decoration: none;
+}
+.pv-zones {
+  display: grid;
+  gap: 0.25rem;
+}
+.pv-checks {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+@media (min-width: 40em) {
+  .pv-actions {
+    flex-wrap: nowrap;
+  }
+}

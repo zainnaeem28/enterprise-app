@@ -1,0 +1,22 @@
+
+Running 16 tests using 2 workers
+
+  ✓   1 [phone] › src/features/availability/e2e/availability.spec.ts:139:3 › DR-13 calendar connection: not_linked (1.1s)
+  ✓   2 [desktop] › src/features/availability/e2e/availability.spec.ts:139:3 › DR-13 calendar connection: not_linked (1.1s)
+  ✓   3 [phone] › src/features/availability/e2e/availability.spec.ts:139:3 › DR-13 calendar connection: active (997ms)
+  ✓   4 [desktop] › src/features/availability/e2e/availability.spec.ts:139:3 › DR-13 calendar connection: active (1.1s)
+  ✓   5 [phone] › src/features/availability/e2e/availability.spec.ts:139:3 › DR-13 calendar connection: token_revoked (1.0s)
+  ✓   6 [desktop] › src/features/availability/e2e/availability.spec.ts:139:3 › DR-13 calendar connection: token_revoked (1.1s)
+  ✓   7 [phone] › src/features/availability/e2e/availability.spec.ts:139:3 › DR-13 calendar connection: error (995ms)
+  ✓   8 [desktop] › src/features/availability/e2e/availability.spec.ts:139:3 › DR-13 calendar connection: error (970ms)
+  ✓   9 [phone] › src/features/availability/e2e/availability.spec.ts:153:1 › DR-13 return from Google: denied (755ms)
+  ✓  10 [desktop] › src/features/availability/e2e/availability.spec.ts:153:1 › DR-13 return from Google: denied (853ms)
+  ✓  11 [phone] › src/features/availability/e2e/availability.spec.ts:161:1 › DR-13 connect goes to Google only (353ms)
+  ✓  12 [desktop] › src/features/availability/e2e/availability.spec.ts:161:1 › DR-13 connect goes to Google only (391ms)
+  ✓  13 [phone] › src/features/availability/e2e/availability.spec.ts:172:1 › DR-11 weekly hours: list, editor and affected appointments before saving (1.9s)
+  ✓  14 [desktop] › src/features/availability/e2e/availability.spec.ts:172:1 › DR-11 weekly hours: list, editor and affected appointments before saving (1.9s)
+  ✓  15 [phone] › src/features/availability/e2e/availability.spec.ts:196:1 › DR-12 leave and blocked time: affected appointments before saving (860ms)
+  ✓  16 [desktop] › src/features/availability/e2e/availability.spec.ts:196:1 › DR-12 leave and blocked time: affected appointments before saving (902ms)
+
+  16 passed (9.6s)
+exit 0

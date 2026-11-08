@@ -1572,7 +1572,7 @@ paths:
       tags:
         - scheduling
       summary: GET /api/v1/appointments/{reservationId}/previsit
-      description: 'my.: Questionnaire (template + response), required consents and their status, insurance status'
+      description: 'my.: Questionnaire (template + response), required consents and their status, insurance status, plus canOpenConsents. One requiredConsents item per required template at the max published version across languages; title and text are plain text. Read-only: it never creates a row. A proxy gets 404 (scope appointments).'
       x-access:
         my:
           permission: patient
@@ -1623,7 +1623,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: common.yaml#/components/schemas/OpaqueObject
+                $ref: '#/components/schemas/GetAppointmentsByReservationIdPrevisitResponse'
         '400':
           $ref: common.yaml#/components/responses/Error400
           description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
@@ -1639,6 +1639,95 @@ paths:
         '409':
           $ref: common.yaml#/components/responses/Error409
           description: 'Codes: patient.merged.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/appointments/{reservationId}/previsit/consents:
+    post:
+      operationId: postAppointmentsByReservationIdPrevisitConsents
+      tags:
+        - scheduling
+      summary: POST /api/v1/appointments/{reservationId}/previsit/consents
+      description: 'my.: Opens a pending consent for each required template that is missing or outdated (first withdrawing every pending row whose own version and language are no longer published). Idempotent. 10 per 10 minutes per principal and reservation. Returns a compact body without wording; read the GET for the wording. Allowed while the occupancy is confirmed or checked_in, otherwise 404. A proxy gets 404 (scope appointments).'
+      x-access:
+        my:
+          permission: patient
+          resolver: reservation
+          realm: patient
+          idempotencyKey: true
+          ifMatch: false
+          pathAs: /api/v1/appointments/{reservationId}/previsit/consents
+          catalogueRow: 29.2#32
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: reservationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+        - $ref: common.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.idempotency_key_required
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '404':
+          - kernel.not_found
+        '409':
+          - kernel.idempotency_conflict
+          - patient.merged
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+            Idempotent-Replay:
+              $ref: common.yaml#/components/headers/IdempotentReplay
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostAppointmentsByReservationIdPrevisitConsentsResponse'
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.idempotency_key_required, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: kernel.idempotency_conflict, patient.merged.'
         '429':
           $ref: common.yaml#/components/responses/Error429
           description: 'Codes: kernel.rate_limited.'
@@ -3968,6 +4057,130 @@ paths:
           description: 'Codes: kernel.timeout.'
 components:
   schemas:
+    GetAppointmentsByReservationIdPrevisitResponse:
+      description: Pre-visit status. A proxy never receives it (404, scope appointments).
+      type: object
+      additionalProperties: false
+      required:
+        - reservationId
+        - questionnaire
+        - consents
+        - insurance
+        - canOpenConsents
+        - requiredConsents
+      properties:
+        reservationId:
+          type: string
+          format: uuid
+        questionnaire:
+          type: boolean
+        consents:
+          description: True iff every item of requiredConsents is signed (true when the list is empty).
+          type: boolean
+        insurance:
+          type: boolean
+        canOpenConsents:
+          description: True iff the occupancy status is confirmed or checked_in, which the POST accepts. Otherwise do not call the POST (404).
+          type: boolean
+        requiredConsents:
+          description: One item per required template at the max published version across languages, sorted by templateKey. Never truncated.
+          type: array
+          items:
+            $ref: '#/components/schemas/PrevisitRequiredConsent'
+    PrevisitRequiredConsent:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - templateKey
+        - templateVersion
+        - language
+        - title
+        - text
+        - status
+      properties:
+        id:
+          description: The current (non-stale) pending patient.consent id at templateVersion; null unless status is pending.
+          oneOf:
+            - type: string
+              format: uuid
+            - type: 'null'
+        templateKey:
+          type: string
+          maxLength: 100
+        templateVersion:
+          description: The required version, the max published version of the key across all languages.
+          type: integer
+          minimum: 1
+        language:
+          description: Language of the title and text returned (always a row at templateVersion).
+          type: string
+          maxLength: 35
+        title:
+          description: Plain text. Never HTML or markdown; render as text.
+          oneOf:
+            - type: string
+              maxLength: 200
+            - type: 'null'
+        text:
+          description: Plain text. Never HTML or markdown; render as text. Null only for a version published before the wording was stored.
+          oneOf:
+            - type: string
+              maxLength: 20000
+            - type: 'null'
+        status:
+          type: string
+          enum:
+            - signed
+            - pending
+            - missing
+            - outdated
+    PostAppointmentsByReservationIdPrevisitConsentsResponse:
+      description: The required consents after the writes, without wording. Every item is signed or pending, and every pending item has an id.
+      type: object
+      additionalProperties: false
+      required:
+        - reservationId
+        - requiredConsents
+      properties:
+        reservationId:
+          type: string
+          format: uuid
+        requiredConsents:
+          type: array
+          items:
+            $ref: '#/components/schemas/PrevisitConsentRef'
+    PrevisitConsentRef:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - templateKey
+        - templateVersion
+        - language
+        - status
+      properties:
+        id:
+          oneOf:
+            - type: string
+              format: uuid
+            - type: 'null'
+        templateKey:
+          type: string
+          maxLength: 100
+        templateVersion:
+          type: integer
+          minimum: 1
+        language:
+          type: string
+          maxLength: 35
+        status:
+          type: string
+          enum:
+            - signed
+            - pending
+            - missing
+            - outdated
     ClinicianScheduleItem:
       description: A subset of the arrivals board row. The front-desk fields (method, previsit, noShowCandidate, flaggedForStaff, version) are left out on purpose.
       type: object

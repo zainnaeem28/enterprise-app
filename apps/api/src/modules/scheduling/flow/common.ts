@@ -10,11 +10,21 @@ export type Row = Record<string, unknown>;
 
 export interface FlowDeps {
   audit: AuditService;
-  organisation: Pick<OrganisationService, 'bookingPolicy' | 'setting' | 'settingOrNull'>;
+  organisation: Pick<
+    OrganisationService,
+    | 'bookingPolicy'
+    | 'setting'
+    | 'settingOrNull'
+    | 'consentTemplatesRequired'
+    | 'consentTemplateWording'
+  >;
   /** The booking core's availability port (BE-12): the waitlist hold goes through `scheduling.hold`, which asks it. */
   availability: AvailabilityPort;
   notifications: Pick<NotificationService, 'send' | 'cancel'>;
-  records: Pick<PatientRecordsService, 'requiredConsentStatus'>;
+  records: Pick<
+    PatientRecordsService,
+    'requiredConsentStatus' | 'requestConsent' | 'withdrawStalePendingConsent' | 'getPreferences'
+  >;
   queue?: Queue;
   qrKey: QrKeyProvider;
   previsit?: PrevisitPort;

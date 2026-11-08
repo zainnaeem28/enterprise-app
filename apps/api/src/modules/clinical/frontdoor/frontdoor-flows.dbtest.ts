@@ -40,15 +40,15 @@ async function signConsent(
   if (status === 'withdrawn')
     await saWrite(
       t.k,
-      `INSERT INTO patient.consent (id, organisation_id, patient_id, template_key, template_version, status, withdrawn_at)
-       VALUES ($1, $2, $3, $4, $5, 'withdrawn', now())`,
+      `INSERT INTO patient.consent (id, organisation_id, patient_id, template_key, template_version, template_language, status, withdrawn_at)
+       VALUES ($1, $2, $3, $4, $5, 'en', 'withdrawn', now())`,
       [uuidv7(), ORG, patientId, key, version],
     );
   else
     await saWrite(
       t.k,
-      `INSERT INTO patient.consent (id, organisation_id, patient_id, template_key, template_version, status, signed_at, signer_principal_id, signer_relationship, signed_name)
-       VALUES ($1, $2, $3, $4, $5, 'signed', now(), $6, 'staff_witnessed', 'Synthetic Signer')`,
+      `INSERT INTO patient.consent (id, organisation_id, patient_id, template_key, template_version, template_language, status, signed_at, signer_principal_id, signer_relationship, signed_name)
+       VALUES ($1, $2, $3, $4, $5, 'en', 'signed', now(), $6, 'staff_witnessed', 'Synthetic Signer')`,
       [uuidv7(), ORG, patientId, key, version, t.desk.seeded.principalId],
     );
 }

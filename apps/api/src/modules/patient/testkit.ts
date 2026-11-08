@@ -66,7 +66,8 @@ export const now = (): Date => new Date(clock.t);
 
 /** Published consent template versions the test port reports (`organisation` owns the real ones). */
 export const publishedTemplates = new Set<string>();
-export const tpl = (key: string, version: number): string => `${key}:${version}`;
+export const tpl = (key: string, version: number, language = 'en'): string =>
+  `${key}:${version}:${language}`;
 
 export interface Kit {
   dbName: string;
@@ -195,8 +196,8 @@ export async function setup(opts: KitOptions): Promise<Kit> {
     limiter: new MemoryRateLimiter(1),
     matchKey: MATCH_KEY,
     consentTemplates: {
-      isPublished: (_tx, key, version) =>
-        Promise.resolve(publishedTemplates.has(tpl(key, version))),
+      isPublished: (_tx, key, version, language) =>
+        Promise.resolve(publishedTemplates.has(tpl(key, version, language))),
     },
     staff: {
       isStaffPrincipal: async (tx, principalId) =>

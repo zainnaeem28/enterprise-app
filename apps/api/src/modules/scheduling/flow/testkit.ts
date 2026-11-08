@@ -48,6 +48,7 @@ import { createSchedulingControllers, schedulingResolvers } from '../core/contro
 import { SCHEDULING_CORE_JOBS } from '../core/jobs.js';
 import { nearbyFreeStarts, SchedulingCoreService } from '../core/service.js';
 import type { AvailabilityPort } from '../core/types.js';
+import { PgRateLimiter } from '../../../platform/rate-limit.js';
 import { createFlowControllers, flowResolvers } from './controller.js';
 import { registerSchedulingFlowHandlers, SCHEDULING_FLOW_JOBS } from './jobs.js';
 import { flowPort } from './port.js';
@@ -281,6 +282,7 @@ export async function setupFlow(
         ...createFlowControllers({
           db: lazyDb,
           flow: lazy(() => holder.flow as SchedulingFlowService),
+          limiter: new PgRateLimiter(lazyDb, ORG, 'test-rate-limit-key-secret-0123456789'),
         }),
       ],
       beforeStart: ({ identity }) => {

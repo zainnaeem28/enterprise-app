@@ -1,0 +1,14 @@
+
+ RUN  v5.1.0 /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-123-sdlc-ticket-fe-11-doctor-portal-availability-templates-leave-and-blocked-time-google-calendar-connection/apps/staff
+
+
+ Test Files  11 passed (11)
+      Tests  148 passed (148)
+   Start at  23:37:06
+   Duration  6.94s (tests 47%, environment 37%, setup 8%, import 5%, transform 3%)
+
+Environment  jsdom was created 11 times · 6.71s total, 37% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+exit 0
