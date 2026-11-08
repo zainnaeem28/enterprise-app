@@ -241,4 +241,69 @@ describe('PP-23 device check and join', () => {
     expect(r.violations.map((v) => v.id)).toEqual([]);
     await act(async () => undefined);
   });
+
+  it('F01: leaves the waiting room and stops polling when the host removes the patient', async () => {
+    let status = 'waiting';
+    const m = setup(
+      {
+        [`GET ${BASE}`]: () =>
+          json(200, view({ admission: status, needsLocationConfirmation: false })),
+        [`POST ${BASE}/join`]: () =>
+          json(409, { status: 409, code: 'telehealth.not_admitted', requestId: 'r-3' }),
+      },
+      {},
+    );
+    await screen.findByText('Clinic time');
+    click('Join the visit');
+    expect(await screen.findByText('You are in the waiting room')).toBeInTheDocument();
+    status = 'removed';
+    expect(await screen.findByText('You were removed from the waiting room')).toBeInTheDocument();
+    expect(screen.queryByText('You are in the waiting room')).not.toBeInTheDocument();
+    const polls = m.seen.filter((x) => x.method === 'GET').length;
+    await new Promise((r) => setTimeout(r, 120));
+    expect(m.seen.filter((x) => x.method === 'GET').length).toBe(polls);
+  });
+
+  it('F01: stops polling when the session ends while waiting', async () => {
+    let status = 'open';
+    const m = setup(
+      {
+        [`GET ${BASE}`]: () => json(200, view({ status, needsLocationConfirmation: false })),
+        [`POST ${BASE}/join`]: () =>
+          json(409, { status: 409, code: 'telehealth.not_admitted', requestId: 'r-3' }),
+      },
+      {},
+    );
+    await screen.findByText('Clinic time');
+    click('Join the visit');
+    await screen.findByText('You are in the waiting room');
+    status = 'ended';
+    expect(await screen.findByText('This video visit is over')).toBeInTheDocument();
+    const polls = m.seen.filter((x) => x.method === 'GET').length;
+    await new Promise((r) => setTimeout(r, 120));
+    expect(m.seen.filter((x) => x.method === 'GET').length).toBe(polls);
+  });
+
+  it('F02: opens Join by itself when the join window opens', async () => {
+    const opens = new Date(view().joinOpensAt).getTime();
+    const start = Date.now();
+    setup({}, { now: () => opens - 300 + (Date.now() - start), pollMs: 100000 });
+    expect(await screen.findByText('Joining opens soon')).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText('Joining opens soon')).not.toBeInTheDocument(), {
+      timeout: 3000,
+    });
+  });
+
+  it('F05: clears the "one more step" note once the location is confirmed', async () => {
+    setup({
+      [`POST ${BASE}/join`]: () =>
+        json(409, { status: 409, code: 'telehealth.location_required', requestId: 'r-4' }),
+    });
+    await screen.findByText('Clinic time');
+    await confirm();
+    click('Join the visit');
+    await screen.findByText('One more step');
+    await confirm();
+    expect(screen.queryByText('One more step')).not.toBeInTheDocument();
+  });
 });

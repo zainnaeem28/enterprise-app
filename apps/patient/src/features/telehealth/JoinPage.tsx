@@ -85,6 +85,17 @@ export function JoinPage({
     void refresh();
   }, [refresh, attempt]);
 
+  // Re-evaluate the join window when it opens, so the banner and the button do not wait for another render.
+  const [, setTick] = useState(0);
+  const opensAt = session?.joinOpensAt;
+  useEffect(() => {
+    if (opensAt === undefined) return;
+    const wait = new Date(opensAt).getTime() - now();
+    if (!(wait > 0)) return;
+    const t = setTimeout(() => setTick((n) => n + 1), Math.min(wait + 50, 2_147_000_000));
+    return () => clearTimeout(t);
+  }, [opensAt, now]);
+
   const join = useCallback(async () => {
     if (busy.current) return;
     busy.current = true;
@@ -129,7 +140,10 @@ export function JoinPage({
     if (phase !== 'waiting') return;
     const t = setInterval(() => {
       void refresh().then((s) => {
-        if (s?.admission === 'admitted') void join();
+        if (s === undefined) return;
+        if (s.admission === 'removed' || s.status === 'ended' || s.status === 'failed')
+          return setPhase('idle');
+        if (s.admission === 'admitted') void join();
       });
     }, pollMs);
     return () => clearInterval(t);
@@ -158,7 +172,10 @@ export function JoinPage({
     setLocationProblem(undefined);
     const r = await api.confirmLocation(reservationId, state);
     if (!alive.current) return;
-    if (r.ok) return setConfirmed(state);
+    if (r.ok) {
+      setNote(undefined);
+      return setConfirmed(state);
+    }
     if (r.code === 'telehealth.licensing_refused') return setLocationProblem('refused');
     setLocationProblem(r);
   };
@@ -169,11 +186,13 @@ export function JoinPage({
 
   const times = zoneLabels(session.startsAt, session.clinicTimeZone, viewer);
   const ended = session.status === 'ended' || session.status === 'failed';
+  const removed = session.admission === 'removed';
   const early = new Date(session.joinOpensAt).getTime() > now();
   const locationDone =
     confirmed !== undefined || (!session.needsLocationConfirmation && note === undefined);
   const canJoin =
     !ended &&
+    !removed &&
     !early &&
     locationDone &&
     phase !== 'joining' &&
@@ -200,6 +219,12 @@ export function JoinPage({
           {session.status === 'failed'
             ? 'The video room could not be made. The clinic will contact you.'
             : 'There is nothing more to do here.'}
+        </Banner>
+      )}
+      {!ended && removed && (
+        <Banner tone="warning" title="You were removed from the waiting room">
+          Your clinician removed you from this visit. Contact the clinic if you think this is a
+          mistake. If this is an emergency, call 911.
         </Banner>
       )}
       {!ended && early && (
