@@ -131,8 +131,7 @@ export function Chart({
           <h2 id="chart-title">{d.chartTitle}</h2>
           <Banner tone="warning">
             <p>
-              <strong>This patient is not assigned to you.</strong> You cannot open this chart
-              unless you give a reason for emergency access.
+              <strong>{d.notAssignedTitle}</strong> {d.notAssignedBody}
             </p>
           </Banner>
           {btgFailure !== null && (
@@ -145,7 +144,7 @@ export function Chart({
           )}
           {canBtg && (
             <Button variant="primary" onClick={() => setAsking(true)}>
-              Open with emergency access
+              {d.btgOpenAction}
             </Button>
           )}
           {asking && (

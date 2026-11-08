@@ -70,3 +70,9 @@ pnpm exec playwright test -c src/features/doctor/e2e/playwright.config.ts
 pnpm exec eslint apps/staff/src/features/doctor
 pnpm exec prettier --check apps/staff/src/features/doctor
 ```
+
+## Review round 1 response (FE10-R1)
+
+- F03 fixed: not-assigned banner, emergency-access button and the `Patient` fallback now come from `strings.ts`.
+- F01 open (not mine to decide): the seeded `doctor` role lacks `patient.read`, `notifications.alert.read`/`acknowledge` and `scheduling.check_in`; `testkit.tsx` `DOCTOR` grants them. Needs an Architect seed/route decision. Test permissions are aligned after that decision, not before.
+- F02 open: needs a notes list/read route or a recorded scope decision. F04 open: wiring `StaffApp.tsx` is an Orchestrator request.

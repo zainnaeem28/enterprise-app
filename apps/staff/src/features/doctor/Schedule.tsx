@@ -37,7 +37,7 @@ export function Schedule({ locationIds }: { locationIds: readonly string[] }) {
     id: v.reservationId,
     start: timeOf(v.startsAt),
     end: timeOf(v.endsAt),
-    title: `${v.patientName ?? 'Patient'}${v.mrn === null ? '' : ` (${v.mrn})`}`,
+    title: `${v.patientName ?? d.patientFallback}${v.mrn === null ? '' : ` (${v.mrn})`}`,
     status: ` · ${v.mode === 'video' ? d.videoVisit : d.inPerson} · ${d.statusLabel(v.status)}`,
   }));
 
@@ -89,7 +89,7 @@ export function Schedule({ locationIds }: { locationIds: readonly string[] }) {
                 if (v === undefined) return;
                 workspace.set({
                   patientId: v.patientId,
-                  label: v.patientName ?? 'Patient',
+                  label: v.patientName ?? d.patientFallback,
                   visit: v,
                 });
                 navigate('/patients');

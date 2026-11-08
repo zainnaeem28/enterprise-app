@@ -78,6 +78,10 @@ export const docStrings = {
 
   // BTG (DR-09)
   btgEmergencyUntil: (t: string) => `Emergency access is open until ${t}.`,
+  notAssignedTitle: 'This patient is not assigned to you.',
+  notAssignedBody: 'You cannot open this chart unless you give a reason for emergency access.',
+  btgOpenAction: 'Open with emergency access',
+  patientFallback: 'Patient',
   btgFailed:
     'Emergency access could not be opened. Your reason was not recorded as a grant. Try again.',
 
