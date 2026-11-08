@@ -11,6 +11,11 @@ import { ProblemPage } from '../features/auth/ProblemPage.js';
 import { isProblemCode } from '../features/auth/problems.js';
 import type { Problem } from '../features/auth/problems.js';
 import { checkedReturnTo, DEFAULT_RETURN_TO } from '../features/auth/returnTo.js';
+import { isPrevisitPath, PrevisitRoutes } from '../features/previsit/index.js';
+import { isTelehealthPath, TelehealthRoutes } from '../features/telehealth/index.js';
+import { isProfilePath, ProfileRoutes } from '../features/profile/index.js';
+import { isPrivacyPath, PrivacyRoutes } from '../features/privacy/index.js';
+import { isMessagesPath, MessagesRoutes } from '../features/messages/index.js';
 import { probeSignIn, signInUrl } from '../features/auth/signIn.js';
 
 export function App({
@@ -74,6 +79,16 @@ export function App({
         onSignIn={() => toContinue('sign-in')}
       />
     );
+  } else if (isPrevisitPath(location.path)) {
+    page = <PrevisitRoutes runtime={runtime} path={location.path} go={go} />;
+  } else if (isTelehealthPath(location.path)) {
+    page = <TelehealthRoutes runtime={runtime} path={location.path} />;
+  } else if (isProfilePath(location.path)) {
+    page = <ProfileRoutes runtime={runtime} path={location.path} go={go} />;
+  } else if (isPrivacyPath(location.path)) {
+    page = <PrivacyRoutes runtime={runtime} path={location.path} />;
+  } else if (isMessagesPath(location.path)) {
+    page = <MessagesRoutes runtime={runtime} path={location.path} go={go} />;
   } else {
     page = <EntryPage onContinue={(intent) => toContinue(intent, DEFAULT_RETURN_TO)} />;
   }
