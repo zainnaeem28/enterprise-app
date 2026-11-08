@@ -1,0 +1,54 @@
+.ehr-av-narrow {
+  max-width: 24rem;
+}
+.ehr-av-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: var(--sp-3);
+}
+.ehr-av-card {
+  border: 1px solid var(--border, #d4d4d8);
+  border-radius: var(--radius-1, 4px);
+  padding: var(--sp-3);
+  margin: var(--sp-3) 0;
+}
+.ehr-av-list .ehr-av-card {
+  margin: 0;
+}
+.ehr-av-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+.ehr-av-editor {
+  max-width: 48rem;
+  margin: var(--sp-3) 0;
+}
+.ehr-av-dates {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--sp-3);
+}
+.ehr-av-day {
+  border: 1px solid var(--border, #d4d4d8);
+  border-radius: var(--radius-1, 4px);
+  margin: var(--sp-2) 0;
+  padding: var(--sp-2) var(--sp-3);
+}
+.ehr-av-window {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: var(--sp-2);
+  align-items: end;
+  margin-bottom: var(--sp-2);
+}
+.ehr-av-preview {
+  margin: var(--sp-3) 0;
+}
+.ehr-av-check {
+  display: block;
+  margin: var(--sp-2) 0;
+}
