@@ -21,6 +21,7 @@ import { beginIdempotent, completeIdempotent, parseIdempotencyKey, requestHash }
 import type { KernelDb, Tx } from '@ehr/kernel';
 import { ApiError } from '../../../platform/errors.js';
 import type { Req, Res } from '../../../platform/http.js';
+import type { RateLimiter } from '../../../platform/rate-limit.js';
 import { Route } from '../../../platform/route.js';
 import { ForbiddenError, requireAuthContext } from '../../identity/index.js';
 import type { ResourceResolver } from '../../identity/index.js';
@@ -33,6 +34,12 @@ import type { FlowMeta } from './types.js';
 export interface FlowControllerDeps {
   db: KernelDb;
   flow: SchedulingFlowService;
+  /**
+   * Counts `POST …/previsit/consents` (10 per 10 minutes per principal and reservation, HEAAA-296 D2). That limit bounds audit volume and
+   * is a control, so production must pass a `PgRateLimiter` (exact across instances, as `patient/controller.ts`). No production
+   * composition root exists yet; whoever builds one passes it here.
+   */
+  limiter: RateLimiter;
 }
 
 const metaOf = (req: Req): FlowMeta => ({
@@ -388,9 +395,9 @@ export function createFlowControllers(d: FlowControllerDeps): Type<unknown>[] {
       }));
     }
 
-    // `proxy`, not `patient`: a proxy reaches the service, which answers `requiredConsents: null` (D-7), instead of the guard's 404.
+    // `patient`: a proxy (scope `appointments`) gets the guard's 404 before the handler (CN-04, HEAAA-296 E14).
     @Get('appointments/:id/previsit')
-    @Route({ permission: 'proxy', resolver: 'reservation' })
+    @Route({ permission: 'patient', resolver: 'reservation' })
     async previsit(
       @Param('id') id: string,
       @ReqParam() req: Req,
@@ -399,14 +406,24 @@ export function createFlowControllers(d: FlowControllerDeps): Type<unknown>[] {
       send(res, 200, await run(req, (tx) => d.flow.previsitFor(tx, id)));
     }
 
-    // `proxy` only so that the service can answer a proxy with 403 auth.forbidden (D-7) as decided; the guard would answer 404.
+    // `patient`: a proxy gets the guard's 404, the same as a reservation outside scope (HEAAA-296 D2).
     @Post('appointments/:id/previsit/consents')
-    @Route({ permission: 'proxy', resolver: 'reservation' })
+    @Route({ permission: 'patient', resolver: 'reservation' })
     async openConsents(
       @Param('id') id: string,
       @ReqParam() req: Req,
       @ResParam() res: Res,
     ): Promise<void> {
+      // The route counter is the handler's first statement, before any database work: 10 per 10 minutes per principal and reservation.
+      const hit = await d.limiter.hit(
+        `previsit.consents:${requireAuthContext(req).session.principalId}:${id.toLowerCase()}`,
+        10,
+        600_000,
+      );
+      if (!hit.allowed)
+        throw new ApiError(429, 'kernel.rate_limited', true, {
+          retryAfterSeconds: hit.retryAfterSeconds,
+        });
       if (Object.keys(bodyOf(req)).length > 0) throw new SchedulingValidationError(['body']);
       await idempotent(
         req,

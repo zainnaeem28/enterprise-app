@@ -38,6 +38,7 @@ import type {
   FlowMeta,
   NoShowCandidate,
   Previsit,
+  PrevisitConsentsOpened,
   PrevisitView,
   QueueEntryView,
   QueueStage,
@@ -711,7 +712,7 @@ export class SchedulingFlowService {
 
   // ===== pre-visit read (29.2) =========================================================================================
 
-  /** `GET /appointments/{reservationId}/previsit` for the patient: the three flags and the required consents, live. Writes nothing. */
+  /** `GET /appointments/{reservationId}/previsit` for the patient: the flags and the required consents, live. Writes nothing. */
   async previsitFor(tx: Tx, reservationId: string): Promise<PrevisitView> {
     if (!isUuid(reservationId)) throw new ReservationNotFoundError();
     const r = (await tx.query(APPT_SQL, [reservationId.toLowerCase()])).rows[0] as Row | undefined;
@@ -720,26 +721,28 @@ export class SchedulingFlowService {
       reservationId: String(r['id']),
       patientId: String(r['patient_id']),
       serviceId: String(r['service_id']),
+      occupancy: String(r['status']),
     });
   }
 
   /**
-   * `POST /appointments/{reservationId}/previsit/consents` for the patient (HEAAA-296 D2). A proxy is refused (403); a reservation that is
-   * not `confirmed` or `checked_in` answers 404 like one outside the caller's scope, so its state is not disclosed.
+   * `POST /appointments/{reservationId}/previsit/consents` for the patient (HEAAA-296 D2). A proxy never reaches it (the guard answers
+   * 404). A reservation that is not `confirmed` or `checked_in` answers 404 like one outside the caller's scope.
    */
-  async openPrevisitConsents(tx: Tx, meta: FlowMeta, reservationId: string): Promise<PrevisitView> {
+  async openPrevisitConsents(
+    tx: Tx,
+    meta: FlowMeta,
+    reservationId: string,
+  ): Promise<PrevisitConsentsOpened> {
     if (!isUuid(reservationId)) throw new ReservationNotFoundError();
     const r = (await tx.query(APPT_SQL, [reservationId.toLowerCase()])).rows[0] as Row | undefined;
     if (r === undefined) throw new ReservationNotFoundError();
-    const patientId = String(r['patient_id']);
-    if ((tx.scope.proxyPatientIds ?? []).some((x) => x.toLowerCase() === patientId.toLowerCase()))
-      throw new SchedulingScopeError();
     if (r['status'] !== 'confirmed' && r['status'] !== 'checked_in')
       throw new ReservationNotFoundError();
     try {
       return await this.previsit.openConsents(tx, meta, {
         reservationId: String(r['id']),
-        patientId,
+        patientId: String(r['patient_id']),
         serviceId: String(r['service_id']),
       });
     } catch (e) {

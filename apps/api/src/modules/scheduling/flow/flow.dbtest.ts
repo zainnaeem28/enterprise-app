@@ -429,8 +429,8 @@ describe('pre-visit status (AC-09, F-PC-02, TC-PC-03)', () => {
     );
     assert.deepEqual(await flags(), { questionnaire: true, consents: false, insurance: true });
     await sys(
-      `INSERT INTO patient.consent (id, organisation_id, patient_id, template_key, template_version, status, signed_at, signer_principal_id, signer_relationship, signed_name)
-       VALUES (gen_random_uuid(), $1, $2, 'telehealth', 1, 'signed', now(), $3, 'self', 'Pat Ient')`,
+      `INSERT INTO patient.consent (id, organisation_id, patient_id, template_key, template_version, template_language, status, signed_at, signer_principal_id, signer_relationship, signed_name)
+       VALUES (gen_random_uuid(), $1, $2, 'telehealth', 1, 'en', 'signed', now(), $3, 'self', 'Pat Ient')`,
       [ORG, p.patientId, p.scope.principalId],
     );
     assert.deepEqual(await flags(), { questionnaire: true, consents: true, insurance: true });

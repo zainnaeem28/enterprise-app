@@ -1723,7 +1723,7 @@ export interface paths {
     };
     /**
      * GET /api/v1/appointments/{reservationId}/previsit
-     * @description my.: Questionnaire (template + response), required consents and their status, insurance status. Read-only: it never creates a row. requiredConsents is null for a proxy caller.
+     * @description my.: Questionnaire (template + response), required consents and their status, insurance status, plus canOpenConsents. One requiredConsents item per required template at the max published version across languages; title and text are plain text. Read-only: it never creates a row. A proxy gets 404 (scope appointments).
      */
     get: operations['getAppointmentsByReservationIdPrevisit'];
     put?: never;
@@ -1745,7 +1745,7 @@ export interface paths {
     put?: never;
     /**
      * POST /api/v1/appointments/{reservationId}/previsit/consents
-     * @description my.: Opens a pending consent for each required template that is missing or outdated (idempotent) and returns the GET previsit body read after the writes. Allowed while the occupancy is confirmed or checked_in, otherwise 404. A proxy gets 403 auth.forbidden (D-7).
+     * @description my.: Opens a pending consent for each required template that is missing or outdated (first withdrawing every pending row whose own version and language are no longer published). Idempotent. 10 per 10 minutes per principal and reservation. Returns a compact body without wording; read the GET for the wording. Allowed while the occupancy is confirmed or checked_in, otherwise 404. A proxy gets 404 (scope appointments).
      */
     post: operations['postAppointmentsByReservationIdPrevisitConsents'];
     delete?: never;
@@ -4646,28 +4646,46 @@ export interface components {
       acceptFee?: boolean;
     };
     PrevisitRequiredConsent: {
-      /** @description The pending patient.consent id; null unless status is pending. */
+      /** @description The current (non-stale) pending patient.consent id at templateVersion; null unless status is pending. */
       id: string | null;
       templateKey: string;
-      /** @description The latest published version (the one required). */
+      /** @description The required version, the max published version of the key across all languages. */
       templateVersion: number;
-      /** @description Language of title and text actually returned. */
+      /** @description Language of the title and text returned (always a row at templateVersion). */
       language: string;
+      /** @description Plain text. Never HTML or markdown; render as text. */
       title: string | null;
-      /** @description Plain text, never HTML. Null only for a version published before the wording was stored. */
+      /** @description Plain text. Never HTML or markdown; render as text. Null only for a version published before the wording was stored. */
       text: string | null;
       /** @enum {string} */
       status: 'signed' | 'pending' | 'missing' | 'outdated';
     };
-    /** @description Pre-visit status. requiredConsents is null when the caller is a proxy for the patient (a proxy neither sees nor signs consents). */
+    /** @description Pre-visit status. A proxy never receives it (404, scope appointments). */
     GetAppointmentsByReservationIdPrevisitResponse: {
       /** Format: uuid */
       reservationId: string;
       questionnaire: boolean;
-      /** @description Every required template is signed in its latest published version. */
+      /** @description True iff every item of requiredConsents is signed (true when the list is empty). */
       consents: boolean;
       insurance: boolean;
-      requiredConsents: null | components['schemas']['PrevisitRequiredConsent'][];
+      /** @description True iff the occupancy status is confirmed or checked_in, which the POST accepts. Otherwise do not call the POST (404). */
+      canOpenConsents: boolean;
+      /** @description One item per required template at the max published version across languages, sorted by templateKey. Never truncated. */
+      requiredConsents: components['schemas']['PrevisitRequiredConsent'][];
+    };
+    PrevisitConsentRef: {
+      id: string | null;
+      templateKey: string;
+      templateVersion: number;
+      language: string;
+      /** @enum {string} */
+      status: 'signed' | 'pending' | 'missing' | 'outdated';
+    };
+    /** @description The required consents after the writes, without wording. Every item is signed or pending, and every pending item has an id. */
+    PostAppointmentsByReservationIdPrevisitConsentsResponse: {
+      /** Format: uuid */
+      reservationId: string;
+      requiredConsents: components['schemas']['PrevisitConsentRef'][];
     };
     PostAppointmentsByReservationIdRescheduleRequest: {
       /** Format: uuid */
@@ -10741,15 +10759,13 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['GetAppointmentsByReservationIdPrevisitResponse'];
+          'application/json': components['schemas']['PostAppointmentsByReservationIdPrevisitConsentsResponse'];
         };
       };
       /** @description Codes: kernel.client_release_unsupported, kernel.idempotency_key_required, kernel.validation_failed. */
       400: components['responses']['Error400'];
       /** @description Codes: auth.unauthenticated. */
       401: components['responses']['Error401'];
-      /** @description Codes: auth.forbidden. */
-      403: components['responses']['Error403'];
       /** @description Codes: kernel.not_found. */
       404: components['responses']['Error404'];
       /** @description Codes: kernel.idempotency_conflict, patient.merged. */

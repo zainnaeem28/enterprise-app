@@ -123,7 +123,7 @@ before(async () => {
       [n(), ORG, p],
     );
     await q(
-      `INSERT INTO patient.consent (id, organisation_id, patient_id, template_key, template_version) VALUES ($1,$2,$3,'treatment',1)`,
+      `INSERT INTO patient.consent (id, organisation_id, patient_id, template_key, template_version, template_language) VALUES ($1,$2,$3,'treatment',1,'en')`,
       [n(), ORG, p],
     );
     await q(

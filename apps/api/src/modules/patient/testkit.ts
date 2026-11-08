@@ -65,7 +65,8 @@ export const now = (): Date => new Date(clock.t);
 
 /** Published consent template versions the test port reports (`organisation` owns the real ones). */
 export const publishedTemplates = new Set<string>();
-export const tpl = (key: string, version: number): string => `${key}:${version}`;
+export const tpl = (key: string, version: number, language = 'en'): string =>
+  `${key}:${version}:${language}`;
 
 export interface Kit {
   dbName: string;
@@ -188,8 +189,8 @@ export async function setup(opts: KitOptions): Promise<Kit> {
     limiter: new MemoryRateLimiter(1),
     matchKey: MATCH_KEY,
     consentTemplates: {
-      isPublished: (_tx, key, version) =>
-        Promise.resolve(publishedTemplates.has(tpl(key, version))),
+      isPublished: (_tx, key, version, language) =>
+        Promise.resolve(publishedTemplates.has(tpl(key, version, language))),
     },
     staff: {
       isStaffPrincipal: async (tx, principalId) =>
@@ -535,7 +536,11 @@ export const standardFixtures = async ({ sa }: { sa: Client }): Promise<void> =>
  * one directly (reservation and its occupancy twin in one transaction, a doctor of its own so that no slot ever collides), the way
  * the booking service leaves the database after a confirm. Returns the reservation ID.
  */
-export async function confirmedBooking(k: Kit, patientId: string, locationId: string): Promise<string> {
+export async function confirmedBooking(
+  k: Kit,
+  patientId: string,
+  locationId: string,
+): Promise<string> {
   const doctor = await seedPrincipal(k, 'google', { name: 'Seeded doctor' });
   const rid = uuidv7();
   const svc = id(399);

@@ -281,7 +281,8 @@ describe('consents with signed templates (BR-09, 22.6)', () => {
         principalId: desk.seeded.principalId,
         locationIds: [A1],
       },
-      (tx) => k.patient.records.requestConsent(tx, { requestId: randomUUID() }, pid, key, version),
+      (tx) =>
+        k.patient.records.requestConsent(tx, { requestId: randomUUID() }, pid, key, version, 'en'),
     );
 
   test('a pending consent is asked once; the patient signs it as themselves; signing records who, when and the typed signature', async () => {
@@ -395,7 +396,7 @@ describe('consents with signed templates (BR-09, 22.6)', () => {
     await assert.rejects(
       saWrite(
         k,
-        `INSERT INTO patient.consent (id, organisation_id, patient_id, template_key, template_version, status, signed_at, signer_principal_id, signer_relationship, signed_name) VALUES (gen_random_uuid(), $1, $2, 'treatment', 7, 'signed', now(), $3, 'self', 'X')`,
+        `INSERT INTO patient.consent (id, organisation_id, patient_id, template_key, template_version, template_language, status, signed_at, signer_principal_id, signer_relationship, signed_name) VALUES (gen_random_uuid(), $1, $2, 'treatment', 7, 'en', 'signed', now(), $3, 'self', 'X')`,
         [ORG, pid, acct.seeded.principalId],
       ),
       (e: unknown) => (e as { code?: string }).code === '23505',
@@ -435,7 +436,14 @@ describe('consents with signed templates (BR-09, 22.6)', () => {
           locationIds: [A1],
         },
         (tx) =>
-          k.patient.records.requestConsent(tx, { requestId: randomUUID() }, pid, 'unpublished', 1),
+          k.patient.records.requestConsent(
+            tx,
+            { requestId: randomUUID() },
+            pid,
+            'unpublished',
+            1,
+            'en',
+          ),
       ),
       (e: unknown) => (e as { code?: string }).code === 'kernel.validation_failed',
     );

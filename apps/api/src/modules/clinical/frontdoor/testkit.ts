@@ -55,6 +55,7 @@ import { SCHEDULING_CORE_JOBS } from '../../scheduling/core/jobs.js';
 import { uuidv7 } from '../../scheduling/core/ids.js';
 import { nearbyFreeStarts, SchedulingCoreService } from '../../scheduling/core/service.js';
 import type { AvailabilityPort } from '../../scheduling/core/types.js';
+import { MemoryRateLimiter } from '../../../platform/rate-limit.js';
 import { createFlowControllers, flowResolvers } from '../../scheduling/flow/controller.js';
 import {
   SCHEDULING_FLOW_JOBS,
@@ -243,6 +244,7 @@ export async function setupFrontdoor(name: string): Promise<FrontdoorKit> {
         ...createFlowControllers({
           db: lazyDb,
           flow: lazy(() => holder.flow as SchedulingFlowService),
+          limiter: new MemoryRateLimiter(1),
         }),
         createAlertsController({
           db: lazyDb,

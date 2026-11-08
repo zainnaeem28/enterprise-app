@@ -151,7 +151,7 @@ before(async () => {
     );
     seedRows['patient_contact' + tag] = pid;
     await sa(
-      `INSERT INTO patient.consent (id, organisation_id, patient_id, template_key, template_version) VALUES ($1,$2,$3,'privacy_notice',1)`,
+      `INSERT INTO patient.consent (id, organisation_id, patient_id, template_key, template_version, template_language) VALUES ($1,$2,$3,'privacy_notice',1,'en')`,
       [uid(), ORG, pid],
     );
     await sa(
@@ -671,7 +671,7 @@ describe('direct-SQL writes as staff of the second clinic change nothing of pati
           [uid(), ORG, A, doc],
         ),
         await c.run(
-          `INSERT INTO patient.consent (id, organisation_id, patient_id, template_key, template_version) VALUES ($1,$2,$3,'x',1)`,
+          `INSERT INTO patient.consent (id, organisation_id, patient_id, template_key, template_version, template_language) VALUES ($1,$2,$3,'x',1,'en')`,
           [uid(), ORG, A],
         ),
         await c.run(

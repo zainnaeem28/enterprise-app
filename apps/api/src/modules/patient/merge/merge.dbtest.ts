@@ -85,11 +85,11 @@ const coverage = (p: string) =>
 const consent = (p: string, key: string, version: number, st: 'signed' | 'pending' | 'withdrawn') =>
   w(
     st === 'signed'
-      ? `INSERT INTO patient.consent (id, organisation_id, patient_id, template_key, template_version, status, signed_at, signer_principal_id, signer_relationship, signed_name)
-         VALUES (gen_random_uuid(), $1, $2, $3, $4, 'signed', now() - ($4::int || ' days')::interval, gen_random_uuid(), 'self', 'Typed Name')`
+      ? `INSERT INTO patient.consent (id, organisation_id, patient_id, template_key, template_version, template_language, status, signed_at, signer_principal_id, signer_relationship, signed_name)
+         VALUES (gen_random_uuid(), $1, $2, $3, $4, 'en', 'signed', now() - ($4::int || ' days')::interval, gen_random_uuid(), 'self', 'Typed Name')`
       : st === 'withdrawn'
-        ? `INSERT INTO patient.consent (id, organisation_id, patient_id, template_key, template_version, status, withdrawn_at) VALUES (gen_random_uuid(), $1, $2, $3, $4, 'withdrawn', now())`
-        : `INSERT INTO patient.consent (id, organisation_id, patient_id, template_key, template_version, status) VALUES (gen_random_uuid(), $1, $2, $3, $4, 'pending')`,
+        ? `INSERT INTO patient.consent (id, organisation_id, patient_id, template_key, template_version, template_language, status, withdrawn_at) VALUES (gen_random_uuid(), $1, $2, $3, $4, 'en', 'withdrawn', now())`
+        : `INSERT INTO patient.consent (id, organisation_id, patient_id, template_key, template_version, template_language, status) VALUES (gen_random_uuid(), $1, $2, $3, $4, 'en', 'pending')`,
     [ORG, p, key, version],
   );
 const preference = (p: string, channel: string) =>

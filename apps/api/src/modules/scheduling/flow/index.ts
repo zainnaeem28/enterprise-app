@@ -48,6 +48,8 @@ export type {
   OfferCandidate,
   OfferView,
   Previsit,
+  PrevisitConsentRef,
+  PrevisitConsentsOpened,
   PrevisitRequiredConsent,
   PrevisitView,
   PrevisitPort,
