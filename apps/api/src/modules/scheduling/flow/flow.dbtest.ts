@@ -467,6 +467,7 @@ describe('pre-visit status (AC-09, F-PC-02, TC-PC-03)', () => {
     });
     assert.equal(http.status, 200, http.body);
     assert.deepEqual(Object.keys(http.json()).sort(), [
+      'canOpenConsents',
       'consents',
       'insurance',
       'questionnaire',

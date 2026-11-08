@@ -329,6 +329,7 @@ describe('consents with signed templates (BR-09, 22.6)', () => {
       status: 'signed',
       templateKey: 'treatment',
       templateVersion: 1,
+      templateLanguage: 'en',
     });
     // staff read the consent list of a patient they care for
     const list = await call2(desk, 'GET', `/api/v1/patients/${pid}/consents`);
