@@ -15,20 +15,24 @@ export const NOTE = '77777777-7777-4777-8777-777777777777';
 export const ME = '88888888-8888-4888-8888-888888888888';
 export const ALERT = '99999999-9999-4999-8999-999999999999';
 
+// The seeded `doctor` role (reference-data.ts after HEAAA-290): `clinical.*` expands to the clinical keys; no patient.read, no scheduling.check_in.
 export const DOCTOR = [
   'clinical.chart.read',
   'clinical.chart.read_previsit',
   'clinical.consultation.start',
   'clinical.note.write',
   'clinical.note.sign',
+  'clinical.note.cosign',
   'audit.btg.open',
+  'scheduling.booking.own_schedule',
+  'telehealth.session.host',
+  'patient.lookup',
   'notifications.alert.read',
   'notifications.alert.acknowledge',
-  'patient.read',
-  'scheduling.check_in',
 ];
+// `trainee_doctor` = doctor minus note.sign and audit.btg.open.
 export const TRAINEE = DOCTOR.filter((p) => p !== 'clinical.note.sign' && p !== 'audit.btg.open');
-export const SUPERVISOR = [...DOCTOR, 'clinical.note.cosign'];
+export const SUPERVISOR = DOCTOR;
 
 export const userEvent = {
   setup: () => ({
@@ -164,6 +168,37 @@ export const encounter = () => ({
   version: 2,
   consentExceptionId: null,
   patientBanner: banner(),
+});
+
+export const noteListItem = (over: Record<string, unknown> = {}) => ({
+  noteId: NOTE,
+  encounterId: ENC,
+  patientId: PAT,
+  patientBanner: {
+    patientId: PAT,
+    displayName: 'Amira Okafor',
+    dateOfBirth: '1984-03-09',
+    mrn: 'MRN-0000123',
+  },
+  authorPrincipalId: ME,
+  authorDisplayName: 'Dr Trainee',
+  status: 'draft',
+  templateId: 'soap',
+  createdAt: '2031-06-10T09:00:00.000Z',
+  updatedAt: null,
+  submittedForCosignAt: null,
+  rowVersion: 1,
+  ...over,
+});
+
+export const lookupItem = (over: Record<string, unknown> = {}) => ({
+  patientId: PAT,
+  mrn: 'MRN-0000123',
+  givenName: 'Amira',
+  middleName: null,
+  familyName: 'Okafor',
+  dateOfBirth: '1984-03-09',
+  ...over,
 });
 
 export const visit = (over: Record<string, unknown> = {}) => ({

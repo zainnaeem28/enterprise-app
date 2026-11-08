@@ -1,17 +1,27 @@
 import { useRef, useState } from 'react';
-import { Banner, Button, ConfirmRiskDialog, EmptyState, StatusChip, Tabs } from '@ehr/ui';
+import {
+  Banner,
+  Button,
+  ConfirmRiskDialog,
+  EmptyState,
+  LoadingState,
+  PermissionNote,
+  StatusChip,
+  Tabs,
+} from '@ehr/ui';
 import type { TabItem } from '@ehr/ui';
 import { useDoctor } from './DoctorContext.js';
-import { ActionError } from './Problem.js';
+import { ActionError, LoadError } from './Problem.js';
+import { useLoad } from '../preconsult/useLoad.js';
 import { ReauthRetryDialog } from './SignFlow.js';
 import { isReauth } from './NoteEditor.js';
 import type { Failure } from '../preconsult/http.js';
 import { newKey } from '../preconsult/http.js';
 import { docStrings as d } from './strings.js';
-import { noteStore, useKnownNotes, workspace } from './workspace.js';
-import type { KnownNote } from './workspace.js';
+import { noteStore, workspace } from './workspace.js';
+import type { Note, NoteListItem } from './types.js';
 
-function Sections({ note }: { note: KnownNote['note'] }) {
+function Sections({ note }: { note: Note }) {
   return (
     <dl className="ehr-dl">
       {Object.entries(note.sections).map(([k, v]) => (
@@ -29,12 +39,13 @@ function CosignRow({
   done,
   onDone,
 }: {
-  known: KnownNote;
+  known: NoteListItem;
   done: boolean;
   onDone: (id: string) => void;
 }) {
   const { api, openReauth, online } = useDoctor();
   const [reviewing, setReviewing] = useState(false);
+  const [loaded, setLoaded] = useState<Note | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [reauth, setReauth] = useState<{ opened: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -45,18 +56,13 @@ function CosignRow({
     key.current ??= newKey();
     setBusy(true);
     setFailure(null);
-    const r = await api.cosignNote(known.note.id, key.current);
+    const r = await api.cosignNote(known.noteId, key.current);
     setBusy(false);
     if (r.ok) {
       key.current = null;
       setConfirming(false);
       setReauth(null);
-      onDone(known.note.id);
-      noteStore.put({
-        note: r.data,
-        patientName: known.patientName,
-        dateOfBirth: known.dateOfBirth,
-      });
+      onDone(known.noteId);
       return;
     }
     if (isReauth(r)) {
@@ -67,6 +73,19 @@ function CosignRow({
     setConfirming(false);
     setReauth(null);
     setFailure(r);
+  }
+
+  async function toggleReview() {
+    if (reviewing) return setReviewing(false);
+    setReviewing(true);
+    if (loaded !== null) return;
+    setFailure(null);
+    const r = await api.getNote(known.noteId);
+    if (r.ok) setLoaded(r.data);
+    else {
+      setReviewing(false);
+      setFailure(r);
+    }
   }
 
   return (
@@ -83,9 +102,14 @@ function CosignRow({
           <p>{d.cosignDone}</p>
         </Banner>
       )}
-      {reviewing && <Sections note={known.note} />}
+      {reviewing &&
+        (loaded === null ? (
+          <LoadingState label={d.review} lines={3} />
+        ) : (
+          <Sections note={loaded} />
+        ))}
       <div className="ehr-actions">
-        <Button onClick={() => setReviewing((v) => !v)} aria-expanded={reviewing}>
+        <Button onClick={() => void toggleReview()} aria-expanded={reviewing}>
           {d.review}
           <span className="ehr-visually-hidden"> {known.patientName}</span>
         </Button>
@@ -137,78 +161,110 @@ function CosignRow({
   );
 }
 
-/** DR-07: drafts to sign and the co-sign queue. Both show the notes this session has opened (no route lists them, see README). */
-export function NotesToSign() {
-  const { can, navigate } = useDoctor();
-  const known = useKnownNotes();
-  const [tab, setTab] = useState('sign');
-  const drafts = known.filter((k) => k.note.status === 'draft');
-  const [cosigned, setCosigned] = useState<string[]>([]);
-  const pending = known.filter(
-    (k) => k.note.status === 'pending_cosign' || cosigned.includes(k.note.id),
-  );
+function DraftRow({ item }: { item: NoteListItem }) {
+  const { api, navigate } = useDoctor();
+  const [busy, setBusy] = useState(false);
+  const [failure, setFailure] = useState<Failure | null>(null);
 
-  const items: TabItem[] = [
-    {
+  /** Reads the note first, so the editor resumes the saved sections and version after a reload. */
+  async function open() {
+    setBusy(true);
+    setFailure(null);
+    const r = await api.getNote(item.noteId);
+    setBusy(false);
+    if (!r.ok) return setFailure(r);
+    noteStore.put({ note: r.data, patientName: item.patientName, dateOfBirth: item.dateOfBirth });
+    workspace.set({ patientId: item.patientId, label: item.patientName });
+    navigate('/patients');
+  }
+
+  return (
+    <li className="ehr-card">
+      <p>
+        <strong>{item.patientName}</strong>, {item.dateOfBirth}{' '}
+        <StatusChip tone="neutral">
+          {item.status === 'draft' ? d.statusDraft : d.statusPending}
+        </StatusChip>
+      </p>
+      {failure !== null && <ActionError failure={failure} />}
+      <Button disabled={busy} onClick={() => void open()}>
+        {d.open}
+        <span className="ehr-visually-hidden"> {item.patientName}</span>
+      </Button>
+    </li>
+  );
+}
+
+/** DR-07: own drafts to sign (`GET /clinicians/{id}/notes`) and the co-sign queue (`GET /clinicians/{id}/cosign-queue`). */
+export function NotesToSign() {
+  const { api, can, principalId } = useDoctor();
+  const [tab, setTab] = useState('sign');
+  const [cosigned, setCosigned] = useState<string[]>([]);
+  const canWrite = can('clinical.note.write');
+  const canCosign = can('clinical.note.cosign');
+  const mine = useLoad(() => api.myNotes(principalId), [principalId], canWrite);
+  const queue = useLoad(() => api.cosignQueue(principalId), [principalId], canCosign);
+
+  const panel = (
+    load: typeof mine,
+    empty: string,
+    render: (items: NoteListItem[]) => React.ReactNode,
+    label: string,
+  ) =>
+    load.state.kind === 'loading' ? (
+      <LoadingState label={label} lines={3} />
+    ) : load.state.kind === 'error' ? (
+      <LoadError failure={load.state.failure} onRetry={load.reload} />
+    ) : load.state.data.length === 0 ? (
+      <EmptyState message={empty} />
+    ) : (
+      <ul className="ehr-plain-list">{render(load.state.data)}</ul>
+    );
+
+  const count = (load: typeof mine) => (load.state.kind === 'ready' ? load.state.data.length : 0);
+  const items: TabItem[] = [];
+  if (canWrite)
+    items.push({
       id: 'sign',
       label: d.tabToSign,
-      count: drafts.length,
-      panel:
-        drafts.length === 0 ? (
-          <EmptyState message={d.toSignEmpty} />
-        ) : (
-          <ul className="ehr-plain-list">
-            {drafts.map((k) => (
-              <li key={k.note.id} className="ehr-card">
-                <p>
-                  <strong>{k.patientName}</strong>, {k.dateOfBirth}{' '}
-                  <StatusChip tone="neutral">{d.statusDraft}</StatusChip>
-                </p>
-                <Button
-                  onClick={() => {
-                    workspace.set({ patientId: k.note.patientId, label: k.patientName });
-                    navigate('/patients');
-                  }}
-                >
-                  {d.open}
-                  <span className="ehr-visually-hidden"> {k.patientName}</span>
-                </Button>
-              </li>
-            ))}
-          </ul>
-        ),
-    },
-  ];
-  if (can('clinical.note.cosign'))
+      count: count(mine),
+      panel: panel(
+        mine,
+        d.toSignEmpty,
+        (list) => list.map((k) => <DraftRow key={k.noteId} item={k} />),
+        d.tabToSign,
+      ),
+    });
+  if (canCosign)
     items.push({
       id: 'cosign',
       label: d.tabCosign,
-      count: pending.length,
-      panel:
-        pending.length === 0 ? (
-          <EmptyState message={d.cosignEmpty} />
-        ) : (
-          <ul className="ehr-plain-list">
-            {pending.map((k) => (
-              <CosignRow
-                key={k.note.id}
-                known={k}
-                done={cosigned.includes(k.note.id)}
-                onDone={(id) => setCosigned((c) => [...c, id])}
-              />
-            ))}
-          </ul>
-        ),
+      count: count(queue),
+      panel: panel(
+        queue,
+        d.cosignEmpty,
+        (list) =>
+          list.map((k) => (
+            <CosignRow
+              key={k.noteId}
+              known={k}
+              done={cosigned.includes(k.noteId)}
+              onDone={(id) => setCosigned((c) => [...c, id])}
+            />
+          )),
+        d.tabCosign,
+      ),
     });
-  const selected = items.some((i) => i.id === tab) ? tab : 'sign';
+  const selected = items.some((i) => i.id === tab) ? tab : (items[0]?.id ?? '');
 
   return (
     <section aria-labelledby="notes-title">
       <h1 id="notes-title">{d.notesTitle}</h1>
-      <Banner tone="info">
-        <p>{d.listGap}</p>
-      </Banner>
-      <Tabs items={items} selected={selected} onSelect={setTab} label={d.notesTitle} />
+      {items.length === 0 ? (
+        <PermissionNote scope={d.notesNoRead} />
+      ) : (
+        <Tabs items={items} selected={selected} onSelect={setTab} label={d.notesTitle} />
+      )}
     </section>
   );
 }

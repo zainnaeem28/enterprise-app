@@ -1,8 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import {
   ALERT,
-  LOC,
   ME,
   DOCTOR,
   ENC,
@@ -14,12 +13,15 @@ import {
   banner,
   encounter,
   json,
+  lookupItem,
   mount,
   note,
+  noteListItem,
   summary,
   userEvent,
   visit,
 } from './testkit.js';
+import type { Handler } from './testkit.js';
 import { noteStore, workspace } from './workspace.js';
 
 afterEach(() => {
@@ -309,51 +311,83 @@ describe('note editor, sign dialog, addenda (DR-03, DR-05, DR-06)', () => {
   });
 });
 
-describe('co-sign queue (DR-07)', () => {
-  const pending = () =>
-    noteStore.put({
-      note: {
-        id: NOTE,
-        encounterId: ENC,
-        patientId: PAT,
-        status: 'pending_cosign',
-        cosignRequiredFrom: 'sup',
-        sections: { subjective: 'Cough', objective: '', assessment: '', plan: '' },
-        signedAt: null,
-        cosignedAt: null,
-        version: 3,
-        banner: null,
-      },
-      patientName: 'Amira Okafor',
-      dateOfBirth: '1984-03-09',
-    });
+describe('notes to sign and co-sign queue (DR-07)', () => {
+  const queueHandler =
+    (
+      over: ((r: Parameters<Handler>[0]) => Response | undefined) | undefined = undefined,
+    ): Handler =>
+    (r) => {
+      if (r.path === `/api/v1/clinicians/${ME}/cosign-queue`)
+        return json(200, {
+          items: [
+            noteListItem({
+              status: 'pending_cosign',
+              submittedForCosignAt: '2031-06-10T09:30:00.000Z',
+            }),
+          ],
+          nextCursor: null,
+        });
+      if (r.path === `/api/v1/clinicians/${ME}/notes`)
+        return json(200, { items: [noteListItem()], nextCursor: null });
+      if (r.method === 'GET' && r.path === `/api/v1/notes/${NOTE}`)
+        return json(
+          200,
+          note({
+            status: 'pending_cosign',
+            version: 3,
+            body: { sections: { subjective: 'Cough', objective: '', assessment: '', plan: '' } },
+          }),
+          { ETag: 'W/"3"' },
+        );
+      return over?.(r);
+    };
 
-  it('is offered only with clinical.note.cosign', async () => {
-    pending();
-    mount(DOCTOR, '/notes-to-sign', () => undefined);
-    await screen.findByRole('heading', { name: 'Notes to sign' });
-    expect(screen.queryByRole('tab', { name: /Co-sign queue/ })).toBeNull();
+  it('lists the author’s own drafts from the server without the note having been opened here, and resumes one', async () => {
+    const user = userEvent.setup();
+    const { seen, navigated } = mount(DOCTOR, '/notes-to-sign', queueHandler());
+    const open = await screen.findByRole('button', { name: /Open/ });
+    expect(screen.getAllByText('Amira Okafor', { exact: false }).length).toBeGreaterThan(0);
+    await user.click(open);
+    await waitFor(() => expect(navigated).toEqual(['/patients']));
+    expect(seen.some((s) => s.method === 'GET' && s.path === `/api/v1/notes/${NOTE}`)).toBe(true);
+    expect(workspace.get()?.patientId).toBe(PAT);
+    expect(noteStore.get().some((k) => k.note.id === NOTE)).toBe(true);
   });
 
-  it('co-signs after a confirm that restates name and date of birth; a wrong supervisor is refused in words', async () => {
+  it('is offered only with clinical.note.cosign and never calls the queue without it', async () => {
+    const { seen } = mount(
+      DOCTOR.filter((p) => p !== 'clinical.note.cosign'),
+      '/notes-to-sign',
+      queueHandler(),
+    );
+    await screen.findByRole('heading', { name: 'Notes to sign' });
+    await screen.findByRole('button', { name: /Open/ });
+    expect(screen.queryByRole('tab', { name: /Co-sign queue/ })).toBeNull();
+    expect(seen.some((s) => s.path.endsWith('/cosign-queue'))).toBe(false);
+  });
+
+  it('shows a queue the supervisor never opened, co-signs after a confirm that restates name and date of birth; a wrong supervisor is refused in words', async () => {
     const user = userEvent.setup();
-    pending();
     let n = 0;
-    const { seen } = mount(SUPERVISOR, '/notes-to-sign', (r) => {
-      if (r.path === `/api/v1/notes/${NOTE}/cosign`) {
-        n += 1;
-        return n === 1
-          ? json(403, { code: 'clinical.cosign_not_supervisor' })
-          : json(
-              200,
-              note({ status: 'signed', version: 4, cosignedAt: '2031-06-10T10:00:00.000Z' }),
-            );
-      }
-      return undefined;
-    });
+    const { seen } = mount(
+      SUPERVISOR,
+      '/notes-to-sign',
+      queueHandler((r) => {
+        if (r.path === `/api/v1/notes/${NOTE}/cosign`) {
+          n += 1;
+          return n === 1
+            ? json(403, { code: 'clinical.cosign_not_supervisor' })
+            : json(
+                200,
+                note({ status: 'signed', version: 4, cosignedAt: '2031-06-10T10:00:00.000Z' }),
+              );
+        }
+        return undefined;
+      }),
+    );
     await user.click(await screen.findByRole('tab', { name: /Co-sign queue/ }));
     await user.click(await screen.findByRole('button', { name: /Review note/ }));
-    expect(screen.getByText('Cough')).toBeVisible();
+    expect(await screen.findByText('Cough')).toBeVisible();
     await user.click(screen.getByRole('button', { name: /Co-sign note/ }));
     let dlg = await screen.findByRole('alertdialog');
     expect(within(dlg).getByText('Amira Okafor')).toBeVisible();
@@ -366,6 +400,15 @@ describe('co-sign queue (DR-07)', () => {
     await user.click(within(dlg).getByRole('button', { name: 'Co-sign note' }));
     expect(await screen.findByText('Note co-signed.')).toBeVisible();
     expect(seen.filter((s) => s.path.endsWith('/cosign'))).toHaveLength(2);
+  });
+
+  it('says so, with a retry, when the list cannot be read', async () => {
+    mount(DOCTOR, '/notes-to-sign', (r) =>
+      r.path === `/api/v1/clinicians/${ME}/notes`
+        ? json(503, { code: 'kernel.unavailable' })
+        : undefined,
+    );
+    expect(await screen.findByRole('button', { name: /Try again|Retry/i })).toBeVisible();
   });
 });
 
@@ -411,8 +454,8 @@ describe('alert tray (UI-UX 7.4)', () => {
           },
           date,
         );
-      if (r.path === `/api/v1/patients/${PAT}/banner`)
-        return json(200, { patientBanner: banner() });
+      if (r.path === '/api/v1/patients/lookup')
+        return json(200, { items: [lookupItem()], truncated: false });
       if (r.path === `/api/v1/alerts/${ALERT}/acknowledge`) {
         acked = true;
         return json(200, {
@@ -442,7 +485,8 @@ describe('alert tray (UI-UX 7.4)', () => {
     mount(DOCTOR, '/alerts', (r) => {
       if (r.path === '/api/v1/alerts')
         return json(200, { items: [alert()], nextCursor: null }, date);
-      if (r.path.startsWith('/api/v1/patients/')) return json(200, { patientBanner: banner() });
+      if (r.path === '/api/v1/patients/lookup')
+        return json(200, { items: [lookupItem()], truncated: false });
       if (r.path.endsWith('/acknowledge')) return json(409, { code: 'notifications.alert_closed' });
       return undefined;
     });
@@ -455,8 +499,8 @@ describe('alert tray (UI-UX 7.4)', () => {
     mount(DOCTOR, '/alerts', (r) =>
       r.path === '/api/v1/alerts'
         ? json(200, { items: [alert()], nextCursor: null })
-        : r.path.startsWith('/api/v1/patients/')
-          ? json(200, { patientBanner: banner() })
+        : r.path === '/api/v1/patients/lookup'
+          ? json(200, { items: [lookupItem()], truncated: false })
           : undefined,
     );
     await screen.findByText(/Escalation time not set/);
@@ -488,7 +532,8 @@ describe('alert tray (UI-UX 7.4)', () => {
         reads += 1;
         return json(200, { items: reads > 1 ? [alert()] : [], nextCursor: null }, date);
       }
-      if (r.path.startsWith('/api/v1/patients/')) return json(200, { patientBanner: banner() });
+      if (r.path === '/api/v1/patients/lookup')
+        return json(200, { items: [lookupItem()], truncated: false });
       return undefined;
     });
     await screen.findByText('No open alerts.');
@@ -512,62 +557,62 @@ describe('alert tray (UI-UX 7.4)', () => {
 });
 
 describe('schedule and patient list (DR-01, DR-02)', () => {
-  it('lists only the doctor’s own visits and opens one in the chart', async () => {
+  it('lists the doctor’s own schedule and opens a visit in the chart', async () => {
     const user = userEvent.setup();
     const { navigated } = mount(DOCTOR, '/schedule', (r) =>
-      r.path === `/api/v1/locations/${LOC}/arrivals`
-        ? json(200, {
-            items: [
-              visit(),
-              visit({
-                reservationId: 'other',
-                clinicianId: 'someone-else',
-                patientName: 'Not Mine',
-              }),
-            ],
-            nextCursor: null,
-          })
+      r.path === `/api/v1/clinicians/${ME}/schedule`
+        ? json(200, { items: [visit()], timeZone: 'UTC' })
         : undefined,
     );
     await user.click(await screen.findByRole('button', { name: /Amira Okafor/ }));
-    expect(screen.queryByText(/Not Mine/)).toBeNull();
     expect(navigated).toEqual(['/patients']);
     expect(workspace.get()?.visit?.reservationId).toBe(RES);
   });
 
   it('says so when the role cannot list visits', async () => {
     mount(
-      DOCTOR.filter((p) => p !== 'scheduling.check_in'),
+      DOCTOR.filter((p) => p !== 'scheduling.booking.own_schedule'),
       '/schedule',
       () => undefined,
     );
-    await screen.findByText(/Your role cannot list the visits/);
+    await screen.findByText(/Your role cannot list your own schedule/);
   });
 
-  it('searches and opens a chart; checks the date of birth format first', async () => {
+  it('looks up by name with the exact body, opens a chart, and refuses forms the lookup refuses before sending', async () => {
     const user = userEvent.setup();
     const { seen } = mount(DOCTOR, '/patients', (r) =>
-      r.path === '/api/v1/patients/search'
-        ? json(200, {
-            items: [
-              {
-                id: PAT,
-                mrn: 'MRN-0000123',
-                givenName: 'Amira',
-                familyName: 'Okafor',
-                dateOfBirth: '1984-03-09',
-                status: 'active',
-              },
-            ],
-          })
+      r.path === '/api/v1/patients/lookup'
+        ? json(200, { items: [lookupItem()], truncated: true })
         : undefined,
     );
-    await user.type(await screen.findByLabelText('Date of birth'), '09/03/1984');
+    await user.type(await screen.findByLabelText('Date of birth'), '1984-03-09');
     await user.click(screen.getByRole('button', { name: 'Search' }));
     expect(
-      (await screen.findAllByText('Enter the date of birth as YYYY-MM-DD.')).length,
+      (await screen.findAllByText(/date of birth alone cannot be searched/)).length,
     ).toBeGreaterThan(0);
-    expect(seen.some((s) => s.path === '/api/v1/patients/search')).toBe(false);
+    await user.type(screen.getByLabelText('MRN'), 'MRN-0000123');
+    await user.click(screen.getByRole('button', { name: 'Search' }));
+    expect((await screen.findAllByText(/Search by MRN alone/)).length).toBeGreaterThan(0);
+    expect(seen.some((s) => s.path === '/api/v1/patients/lookup')).toBe(false);
+    // a one-letter word is refused too
+    const mrn = screen.getByLabelText('MRN') as HTMLInputElement;
+    await act(async () => {
+      fireEvent.change(mrn, { target: { value: '' } });
+    });
+    await user.type(screen.getByLabelText('Name'), 'A Okafor');
+    await user.click(screen.getByRole('button', { name: 'Search' }));
+    expect(
+      (await screen.findAllByText(/up to 4 words of at least 2 letters/)).length,
+    ).toBeGreaterThan(0);
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Amira Okafor' } });
+    });
+    await user.click(screen.getByRole('button', { name: 'Search' }));
+    expect(await screen.findByText(/More patients match than are shown/)).toBeVisible();
+    const call = seen.find((s) => s.path === '/api/v1/patients/lookup');
+    expect(call?.body).toEqual({ name: 'Amira Okafor', dateOfBirth: '1984-03-09' });
+    await user.click(screen.getByRole('button', { name: /Open chart/ }));
+    expect(workspace.get()?.patientId).toBe(PAT);
   });
 });
 

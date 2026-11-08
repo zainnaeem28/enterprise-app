@@ -145,7 +145,7 @@
       "line": 0,
       "specs": [
         {
-          "title": "schedule lists my visits only and opens the chart (DR-01)",
+          "title": "schedule lists my own visits and opens the chart (DR-01)",
           "ok": true,
           "tags": [],
           "tests": [
@@ -160,12 +160,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 796,
+                  "duration": 768,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-08T01:12:49.667Z",
+                  "startTime": "2026-11-08T10:23:58.324Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -173,9 +173,9 @@
               "status": "expected"
             }
           ],
-          "id": "a070fefda983850ccb7e-2c29d47bcc10734f62d1",
+          "id": "a070fefda983850ccb7e-b0947cb383d48b392521",
           "file": "doctor.spec.ts",
-          "line": 328,
+          "line": 392,
           "column": 1
         },
         {
@@ -194,12 +194,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 2702,
+                  "duration": 2802,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-08T01:12:50.539Z",
+                  "startTime": "2026-11-08T10:23:59.166Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -209,7 +209,7 @@
           ],
           "id": "a070fefda983850ccb7e-8c7a36974e283ffd2406",
           "file": "doctor.spec.ts",
-          "line": 340,
+          "line": 403,
           "column": 1
         },
         {
@@ -228,12 +228,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 1204,
+                  "duration": 1583,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-08T01:12:53.252Z",
+                  "startTime": "2026-11-08T10:24:01.978Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -243,7 +243,7 @@
           ],
           "id": "a070fefda983850ccb7e-11972bce65a31775a0a0",
           "file": "doctor.spec.ts",
-          "line": 386,
+          "line": 449,
           "column": 1
         },
         {
@@ -262,12 +262,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 671,
+                  "duration": 828,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-08T01:12:54.470Z",
+                  "startTime": "2026-11-08T10:24:03.577Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -277,7 +277,7 @@
           ],
           "id": "a070fefda983850ccb7e-966f6f5324425accde16",
           "file": "doctor.spec.ts",
-          "line": 407,
+          "line": 470,
           "column": 1
         },
         {
@@ -296,12 +296,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 737,
+                  "duration": 846,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-08T01:12:55.153Z",
+                  "startTime": "2026-11-08T10:24:04.420Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -311,7 +311,7 @@
           ],
           "id": "a070fefda983850ccb7e-947519e515061fb44a20",
           "file": "doctor.spec.ts",
-          "line": 416,
+          "line": 479,
           "column": 1
         },
         {
@@ -330,12 +330,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 963,
+                  "duration": 1189,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-08T01:12:55.903Z",
+                  "startTime": "2026-11-08T10:24:05.280Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -345,7 +345,7 @@
           ],
           "id": "a070fefda983850ccb7e-da9e9c3ec05c0c9548c6",
           "file": "doctor.spec.ts",
-          "line": 426,
+          "line": 489,
           "column": 1
         },
         {
@@ -364,12 +364,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 866,
+                  "duration": 1124,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-08T01:12:56.877Z",
+                  "startTime": "2026-11-08T10:24:06.484Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -379,11 +379,11 @@
           ],
           "id": "a070fefda983850ccb7e-0855e16a7494df00da60",
           "file": "doctor.spec.ts",
-          "line": 445,
+          "line": 508,
           "column": 1
         },
         {
-          "title": "schedule lists my visits only and opens the chart (DR-01)",
+          "title": "schedule lists my own visits and opens the chart (DR-01)",
           "ok": true,
           "tags": [],
           "tests": [
@@ -398,12 +398,12 @@
                   "workerIndex": 1,
                   "parallelIndex": 1,
                   "status": "passed",
-                  "duration": 780,
+                  "duration": 784,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-08T01:12:49.661Z",
+                  "startTime": "2026-11-08T10:23:58.322Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -411,9 +411,9 @@
               "status": "expected"
             }
           ],
-          "id": "a070fefda983850ccb7e-aa29f5ab1891aa207681",
+          "id": "a070fefda983850ccb7e-4de48e5cdc5d580b4a0d",
           "file": "doctor.spec.ts",
-          "line": 328,
+          "line": 392,
           "column": 1
         },
         {
@@ -432,12 +432,12 @@
                   "workerIndex": 1,
                   "parallelIndex": 1,
                   "status": "passed",
-                  "duration": 2575,
+                  "duration": 2862,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-08T01:12:50.523Z",
+                  "startTime": "2026-11-08T10:23:59.185Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -447,7 +447,7 @@
           ],
           "id": "a070fefda983850ccb7e-8e66267ef273aee646db",
           "file": "doctor.spec.ts",
-          "line": 340,
+          "line": 403,
           "column": 1
         },
         {
@@ -466,12 +466,12 @@
                   "workerIndex": 1,
                   "parallelIndex": 1,
                   "status": "passed",
-                  "duration": 1206,
+                  "duration": 1524,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-08T01:12:53.109Z",
+                  "startTime": "2026-11-08T10:24:02.060Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -481,7 +481,7 @@
           ],
           "id": "a070fefda983850ccb7e-f57d1abfe26836d1a729",
           "file": "doctor.spec.ts",
-          "line": 386,
+          "line": 449,
           "column": 1
         },
         {
@@ -500,12 +500,12 @@
                   "workerIndex": 1,
                   "parallelIndex": 1,
                   "status": "passed",
-                  "duration": 628,
+                  "duration": 806,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-08T01:12:54.330Z",
+                  "startTime": "2026-11-08T10:24:03.599Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -515,7 +515,7 @@
           ],
           "id": "a070fefda983850ccb7e-968b1e33f7220ec7ef4e",
           "file": "doctor.spec.ts",
-          "line": 407,
+          "line": 470,
           "column": 1
         },
         {
@@ -534,12 +534,12 @@
                   "workerIndex": 1,
                   "parallelIndex": 1,
                   "status": "passed",
-                  "duration": 675,
+                  "duration": 798,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-08T01:12:54.970Z",
+                  "startTime": "2026-11-08T10:24:04.421Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -549,7 +549,7 @@
           ],
           "id": "a070fefda983850ccb7e-b7600b752c02583fd911",
           "file": "doctor.spec.ts",
-          "line": 416,
+          "line": 479,
           "column": 1
         },
         {
@@ -568,12 +568,12 @@
                   "workerIndex": 1,
                   "parallelIndex": 1,
                   "status": "passed",
-                  "duration": 907,
+                  "duration": 1129,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-08T01:12:55.655Z",
+                  "startTime": "2026-11-08T10:24:05.230Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -583,7 +583,7 @@
           ],
           "id": "a070fefda983850ccb7e-51026fc17b73ea3512f1",
           "file": "doctor.spec.ts",
-          "line": 426,
+          "line": 489,
           "column": 1
         },
         {
@@ -602,12 +602,12 @@
                   "workerIndex": 1,
                   "parallelIndex": 1,
                   "status": "passed",
-                  "duration": 823,
+                  "duration": 1096,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-08T01:12:56.573Z",
+                  "startTime": "2026-11-08T10:24:06.375Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -617,7 +617,7 @@
           ],
           "id": "a070fefda983850ccb7e-1dc4872fb0a368fd76d7",
           "file": "doctor.spec.ts",
-          "line": 445,
+          "line": 508,
           "column": 1
         }
       ]
@@ -625,8 +625,8 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-11-08T01:12:48.787Z",
-    "duration": 9018.616,
+    "startTime": "2026-11-08T10:23:57.442Z",
+    "duration": 10239.824,
     "expected": 14,
     "skipped": 0,
     "unexpected": 0,

@@ -29,17 +29,18 @@ definite answer), offline banner with writes disabled, permission-limited note f
 
 ## Limitations and open points (not hidden)
 
-1. **No route lists notes.** The contract has no `GET /notes`, no "notes to sign" and no "pending co-signature for me" list, and no route
-   reads a note back. "Notes to sign" and the co-sign queue therefore show **the notes this browser session opened** (kept in memory only,
-   no storage, nothing after a reload). A supervisor who has not opened a trainee's note sees an empty queue. The queue's actions, dialogs,
-   re-authentication and errors are complete and tested, but the acceptance line "co-sign queue" is only fully met when the Architect adds a
-   list route (suggested: `GET /notes?status=pending_cosign` scoped to the named supervisor, and `GET /notes/{id}`). The screen says so.
-2. **Schedule uses the arrivals list.** There is no doctor-schedule route. `GET /locations/{id}/arrivals` (needs `scheduling.check_in`)
-   is filtered to the doctor's own principal. A doctor without that permission gets a plain sentence and can still search patients.
-3. **Patient list is a search.** `POST /patients/search`; no "my patients" list exists.
-4. **Not wired into the staff app.** `StaffApp.tsx` is outside the allowed paths. Request to Orchestrator: render
-   `<DoctorPortal runtime={runtime} path={path} navigate={navigate} video={...}/>` when `isDoctorPath(path)` instead of `NotAvailable`.
-   `e2e/harness` mounts it for the browser tests. Tasks & messages (`/tasks`) is not part of this ticket and stays "not available".
+1. **Notes lists (F02, resolved by HEAAA-290).** "Notes to sign" reads `GET /clinicians/{id}/notes`; the co-sign queue reads
+   `GET /clinicians/{id}/cosign-queue` (tab only with `clinical.note.cosign`); review and "Open" read `GET /notes/{id}`, so a draft resumes
+   after a reload and a supervisor sees the queue without having opened a note. First page only (no cursor paging yet: `nextCursor` is
+   ignored; the default page size applies).
+2. **Schedule** reads `GET /clinicians/{id}/schedule` (own reservations of one location-day, today). It needs
+   `scheduling.booking.own_schedule`, which the seeded doctor holds. A role without it gets a plain sentence.
+3. **Patient list is a lookup.** `POST /patients/lookup` (`patient.lookup`): an MRN alone, or a name (at most 4 words of 2+ letters) with
+   an optional date of birth. The form refuses a date of birth alone and mixed MRN forms before sending. More than 25 matches shows a
+   "narrow the search" note. No "my patients" list exists. Alert rows get name and date of birth through the same lookup (`patientIds`).
+4. **Wired into the staff app (F04, authorised by the Orchestrator).** `StaffApp.tsx` renders `<DoctorPortal/>` for `isDoctorPath(path)`
+   and nothing else of the app changed (plus the doctor-navigation test, which now sees the portal). The `/tasks` item stays "not available".
+   `e2e/harness` still mounts the portal on its own for the browser tests.
 5. **Contract gaps (Architect).** Request and response bodies of the notes, chart and alert routes are `OpaqueObject` in the generated
    types, so `types.ts` parses the shapes of the controllers. The staff video host routes are `GET .../video-session/host` and
    `POST .../video-session/admit|end` on the BE-15 branch (its D1); they are called untyped and are not on the prerequisites of this ticket.
@@ -74,5 +75,14 @@ pnpm exec prettier --check apps/staff/src/features/doctor
 ## Review round 1 response (FE10-R1)
 
 - F03 fixed: not-assigned banner, emergency-access button and the `Patient` fallback now come from `strings.ts`.
-- F01 open (not mine to decide): the seeded `doctor` role lacks `patient.read`, `notifications.alert.read`/`acknowledge` and `scheduling.check_in`; `testkit.tsx` `DOCTOR` grants them. Needs an Architect seed/route decision. Test permissions are aligned after that decision, not before.
-- F02 open: needs a notes list/read route or a recorded scope decision. F04 open: wiring `StaffApp.tsx` is an Orchestrator request.
+
+## Review round 2 response (F01, F02, F04)
+
+Candidate rebased by fast-forward onto `1348b737` (HEAAA-290, backend: doctor permissions, `patient.lookup`, own-schedule, notes routes).
+
+- F01 fixed: `testkit.tsx` and the browser spec use the seeded doctor permissions (no `patient.read`, no `scheduling.check_in`; with
+  `patient.lookup`, `notifications.alert.read`/`acknowledge`, `scheduling.booking.own_schedule`). No call to `/patients/search`,
+  `/patients/{id}/banner` or `/locations/{id}/arrivals` remains; the alert tray and red-flag bars render for the real role.
+- F02 fixed: see limitation 1; new tests list drafts and the queue from the server, resume a draft via `GET /notes/{id}`, and hide the queue call without the permission.
+- F04 fixed: see limitation 4.
+- Still contract mocks: no real API, database or identity provider ran. The DB-backed suites of HEAAA-290 were **not** run by me.

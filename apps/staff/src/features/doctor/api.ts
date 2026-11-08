@@ -4,10 +4,10 @@ import {
   parseAck,
   parseAddendum,
   parseAlert,
-  parseBanner,
   parseChartSummary,
   parseEncounter,
   parseNote,
+  parseNoteListItem,
   parseOpenId,
   parsePatientHit,
   parseVisit,
@@ -21,6 +21,7 @@ import type {
   ChartSummary,
   Encounter,
   Note,
+  NoteListItem,
   OpenAlertId,
   PatientHit,
   Visit,
@@ -57,24 +58,59 @@ export function createDoctorApi(api: Api) {
   const loose = api as unknown as Record<'GET' | 'POST' | 'PATCH', LooseCall>;
 
   return {
-    /** The visits of a location for a day (`scheduling.check_in` holders). The doctor's own are picked by clinician ID. */
-    visits: (locationId: string, date?: string): Promise<Outcome<Visit[]>> =>
+    /** `GET /clinicians/{id}/schedule` (scheduling.booking.own_schedule): the caller's own reservations of one location-day. */
+    schedule: (clinicianId: string, locationId: string, date?: string): Promise<Outcome<Visit[]>> =>
       guard(
         () =>
-          api.GET('/api/v1/locations/{locationId}/arrivals', {
-            params: { header, path: { locationId }, query: date === undefined ? {} : { date } },
+          loose.GET('/api/v1/clinicians/{id}/schedule', {
+            params: {
+              header,
+              path: { id: clinicianId },
+              query: date === undefined ? { locationId } : { locationId, date },
+            },
           }),
         listOf(parseVisit),
       ),
 
-    searchPatients: (q: {
-      name?: string;
-      dateOfBirth?: string;
-      mrn?: string;
-    }): Promise<Outcome<PatientHit[]>> =>
+    /** `POST /patients/lookup` (patient.lookup): exactly one criteria form; in-scope patients only. */
+    lookupPatients: (
+      q: { mrn: string } | { name: string; dateOfBirth?: string } | { patientIds: string[] },
+    ): Promise<Outcome<{ items: PatientHit[]; truncated: boolean }>> =>
       guard(
-        () => api.POST('/api/v1/patients/search', { params: { header }, body: q }),
-        listOf(parsePatientHit),
+        () => loose.POST('/api/v1/patients/lookup', { params: { header }, body: q }),
+        (d) => {
+          const items = listOf(parsePatientHit)(d);
+          return items === undefined
+            ? undefined
+            : { items, truncated: rec(d)['truncated'] === true };
+        },
+      ),
+
+    /** `GET /clinicians/{id}/notes`: the caller's own drafts and notes waiting for co-signature. */
+    myNotes: (clinicianId: string): Promise<Outcome<NoteListItem[]>> =>
+      guard(
+        () =>
+          loose.GET('/api/v1/clinicians/{id}/notes', {
+            params: { header, path: { id: clinicianId } },
+          }),
+        listOf(parseNoteListItem),
+      ),
+
+    /** `GET /clinicians/{id}/cosign-queue` (clinical.note.cosign): notes waiting for this supervisor. */
+    cosignQueue: (clinicianId: string): Promise<Outcome<NoteListItem[]>> =>
+      guard(
+        () =>
+          loose.GET('/api/v1/clinicians/{id}/cosign-queue', {
+            params: { header, path: { id: clinicianId } },
+          }),
+        listOf(parseNoteListItem),
+      ),
+
+    /** `GET /notes/{id}`: one note with its sections, on the first read basis that applies. */
+    getNote: (noteId: string): Promise<Outcome<Note>> =>
+      guard(
+        () => loose.GET('/api/v1/notes/{id}', { params: { header, path: { id: noteId } } }),
+        parseNote,
       ),
 
     /** A refusal keeps the `btgAvailable` extension member (ARCHITECTURE 30) so the screen can offer break-the-glass. */
@@ -92,14 +128,26 @@ export function createDoctorApi(api: Api) {
       return o.ok ? o : { ...o, btgAvailable: btg };
     },
 
-    /** `GET /patients/{id}/banner` (patient.read): name and date of birth for an alert row. */
+    /** Name and date of birth for an alert row through the minimised lookup (the doctor role holds no `patient.read`). */
     banner: (patientId: string): Promise<Outcome<Banner>> =>
       guard(
         () =>
-          api.GET('/api/v1/patients/{patientId}/banner', {
-            params: { header, path: { patientId } },
+          loose.POST('/api/v1/patients/lookup', {
+            params: { header },
+            body: { patientIds: [patientId] },
           }),
-        (d) => parseBanner(rec(d)['patientBanner']),
+        (d) => {
+          const hit = listOf(parsePatientHit)(d)?.[0];
+          return hit === undefined
+            ? undefined
+            : {
+                patientId: hit.id,
+                displayName: `${hit.givenName} ${hit.familyName}`,
+                dateOfBirth: hit.dateOfBirth,
+                mrn: hit.mrn,
+                allergies: null,
+              };
+        },
       ),
 
     breakGlass: (

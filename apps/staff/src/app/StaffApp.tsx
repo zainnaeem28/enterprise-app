@@ -18,6 +18,7 @@ import {
   safeReturnTo,
   useStaffSession,
 } from '../features/auth/index.js';
+import { DoctorPortal, isDoctorPath } from '../features/doctor/index.js';
 import { useLocation } from './router.js';
 
 const PRODUCT = 'Clinic';
@@ -172,6 +173,8 @@ function Gate({
           </Banner>
         ) : path === '/' ? (
           <Home first={(first ?? firstItem).path} navigate={navigate} />
+        ) : current !== undefined && isDoctorPath(path) ? (
+          <DoctorPortal runtime={runtime} path={path} navigate={(p) => navigate(p)} />
         ) : current !== undefined ? (
           <NotAvailable label={current.label} />
         ) : (

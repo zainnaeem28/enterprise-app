@@ -23,10 +23,11 @@ const DOCTOR = [
   'clinical.note.sign',
   'clinical.note.cosign',
   'audit.btg.open',
+  'scheduling.booking.own_schedule',
+  'telehealth.session.host',
+  'patient.lookup',
   'notifications.alert.read',
   'notifications.alert.acknowledge',
-  'patient.read',
-  'scheduling.check_in',
 ];
 
 async function axe(page: Page) {
@@ -44,6 +45,7 @@ interface Model {
   streamRefused: boolean;
   sectionsSaved: Record<string, string>;
   signKeys: string[];
+  queuedNote: boolean;
 }
 
 async function mockApi(page: Page, over: Partial<Model> = {}): Promise<Model> {
@@ -54,6 +56,7 @@ async function mockApi(page: Page, over: Partial<Model> = {}): Promise<Model> {
     streamRefused: false,
     sectionsSaved: { subjective: '', objective: '', assessment: '', plan: '' },
     signKeys: [],
+    queuedNote: false,
     ...over,
   };
   const reply = (
@@ -155,11 +158,11 @@ async function mockApi(page: Page, over: Partial<Model> = {}): Promise<Model> {
       return m.streamRefused
         ? route.fulfill({ status: 429, contentType: 'application/problem+json', body: '{}' })
         : route.fulfill({ status: 200, contentType: 'text/event-stream', body: 'retry: 5000\n\n' });
-    if (path === `/api/v1/locations/${LOC}/arrivals`)
+    if (path === `/api/v1/clinicians/${ME}/schedule`)
       return reply(route, 200, {
+        timeZone: 'UTC',
         items: [
           visit,
-          { ...visit, reservationId: 'r2', clinicianId: 'other', patientName: 'Not Mine' },
           {
             ...visit,
             reservationId: 'r3',
@@ -171,7 +174,6 @@ async function mockApi(page: Page, over: Partial<Model> = {}): Promise<Model> {
             endsAt: new Date(Date.now() + 90 * 60_000).toISOString(),
           },
         ],
-        nextCursor: null,
       });
     if (path === `/api/v1/patients/${PAT}/chart-summary`)
       return m.notAssigned
@@ -240,8 +242,70 @@ async function mockApi(page: Page, over: Partial<Model> = {}): Promise<Model> {
             encounters: [{}, {}],
             documents: [{}],
           });
-    if (path === `/api/v1/patients/${PAT}/banner`)
-      return reply(route, 200, { patientBanner: banner });
+    if (path === '/api/v1/patients/lookup')
+      return reply(route, 200, {
+        truncated: false,
+        items: [
+          {
+            patientId: PAT,
+            mrn: 'MRN-0000123',
+            givenName: 'Amira',
+            middleName: null,
+            familyName: 'Okafor',
+            dateOfBirth: '1984-03-27',
+          },
+        ],
+      });
+    if (path === `/api/v1/clinicians/${ME}/notes`)
+      return reply(route, 200, { items: [], nextCursor: null });
+    if (path === `/api/v1/clinicians/${ME}/cosign-queue`)
+      return reply(route, 200, {
+        nextCursor: null,
+        items: [
+          {
+            noteId: NOTE,
+            encounterId: ENC,
+            patientId: PAT,
+            patientBanner: {
+              patientId: PAT,
+              displayName: 'Amira Okafor',
+              dateOfBirth: '1984-03-27',
+              mrn: 'MRN-0000123',
+            },
+            authorPrincipalId: 'trainee',
+            authorDisplayName: 'Dr Trainee',
+            status: 'pending_cosign',
+            templateId: 'soap',
+            createdAt: new Date().toISOString(),
+            updatedAt: null,
+            submittedForCosignAt: new Date().toISOString(),
+            rowVersion: 3,
+          },
+        ],
+      });
+    if (path === `/api/v1/notes/${NOTE}` && method === 'GET' && m.queuedNote)
+      return reply(route, 200, {
+        id: NOTE,
+        encounterId: ENC,
+        patientId: PAT,
+        authorPrincipalId: 'trainee',
+        templateId: 'soap',
+        body: {
+          sections: {
+            subjective: 'Cough for three days',
+            objective: 'Chest clear',
+            assessment: 'Viral',
+            plan: 'Fluids',
+          },
+        },
+        status: 'pending_cosign',
+        submittedForCosignAt: new Date().toISOString(),
+        cosignRequiredFrom: ME,
+        signedAt: null,
+        cosignedAt: null,
+        version: 3,
+        patientBanner: banner,
+      });
     if (path === `/api/v1/patients/${PAT}/break-glass`) {
       m.notAssigned = false;
       return reply(route, 201, {
@@ -325,16 +389,15 @@ async function mockApi(page: Page, over: Partial<Model> = {}): Promise<Model> {
   return m;
 }
 
-test('schedule lists my visits only and opens the chart (DR-01)', async ({ page }, info) => {
+test('schedule lists my own visits and opens the chart (DR-01)', async ({ page }, info) => {
   const m = await mockApi(page);
   await page.goto('/?path=/schedule');
   await expect(page.getByRole('heading', { name: 'Schedule today' })).toBeVisible();
   await expect(page.getByText('Amira Okafor')).toBeVisible();
   await expect(page.getByText('Ben Hartley')).toBeVisible();
-  await expect(page.getByText('Not Mine')).toHaveCount(0);
   await axe(page);
   await page.screenshot({ path: shot(`${info.project.name}-1-schedule`), fullPage: true });
-  expect(m.seen).toContain(`GET /api/v1/locations/${LOC}/arrivals`);
+  expect(m.seen).toContain(`GET /api/v1/clinicians/${ME}/schedule`);
 });
 
 test('chart summary and note: start, draft, sign with re-authentication, addendum (DR-03, DR-05, DR-06)', async ({
@@ -443,8 +506,8 @@ test('video and notes side by side (DR-04)', async ({ page }, info) => {
 });
 
 test('co-sign queue (DR-07)', async ({ page }, info) => {
-  await mockApi(page);
-  await page.goto('/?path=/notes-to-sign&cosign=1');
+  await mockApi(page, { queuedNote: true });
+  await page.goto('/?path=/notes-to-sign');
   await page.getByRole('tab', { name: /Co-sign queue/ }).click();
   await page.getByRole('button', { name: /Review note/ }).click();
   await expect(page.getByText('Cough for three days')).toBeVisible();

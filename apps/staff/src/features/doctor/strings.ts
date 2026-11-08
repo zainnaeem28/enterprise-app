@@ -14,7 +14,7 @@ export const docStrings = {
   visitsHeading: 'Your visits',
   scheduleEmpty: 'You have no visits at this location today.',
   scheduleNoRead:
-    'Your role cannot list the visits of a location. Open a patient from the Patients screen.',
+    'Your role cannot list your own schedule. Open a patient from the Patients screen.',
   videoVisit: 'Video visit',
   inPerson: 'In person',
   openVisit: 'Open visit',
@@ -35,7 +35,7 @@ export const docStrings = {
   patientsTitle: 'Patients',
   findPatient: 'Find a patient',
   findHint:
-    'Search by name, date of birth (YYYY-MM-DD) or MRN. You see patients you are allowed to see.',
+    'Search by MRN, or by name with an optional date of birth (YYYY-MM-DD). You see patients you are allowed to see.',
   searchName: 'Name',
   searchDob: 'Date of birth',
   searchMrn: 'MRN',
@@ -47,7 +47,10 @@ export const docStrings = {
   colDob: 'Date of birth',
   colMrn: 'MRN',
   dobBad: 'Enter the date of birth as YYYY-MM-DD.',
-  needOne: 'Enter a name, a date of birth or an MRN.',
+  needOne: 'Enter an MRN, or a name (a date of birth alone cannot be searched).',
+  mrnAlone: 'Search by MRN alone, or clear it and search by name.',
+  nameBad: 'Enter up to 4 words of at least 2 letters each.',
+  truncated: 'More patients match than are shown. Narrow the search.',
   back: 'Back to the list',
 
   // Chart (DR-03)
@@ -141,10 +144,9 @@ export const docStrings = {
   notesTitle: 'Notes to sign',
   tabToSign: 'To sign',
   tabCosign: 'Co-sign queue',
-  toSignEmpty: 'No draft notes are waiting in this session. Open a visit to write a note.',
-  cosignEmpty: 'No notes are waiting for your co-signature in this session.',
-  listGap:
-    'This list shows notes opened in this browser session. A server list of notes to sign and to co-sign is not available yet.',
+  toSignEmpty: 'You have no draft notes. Open a visit to write a note.',
+  cosignEmpty: 'No notes are waiting for your co-signature.',
+  notesNoRead: 'Your role cannot list notes to sign or to co-sign.',
   open: 'Open',
   review: 'Review note',
   cosignAction: 'Co-sign note',

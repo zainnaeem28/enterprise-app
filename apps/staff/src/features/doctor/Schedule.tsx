@@ -15,22 +15,24 @@ import { docStrings as d } from './strings.js';
 import { timeOf } from './format.js';
 import { workspace } from './workspace.js';
 
-/** DR-01: the doctor's own visits at a location today, from the arrivals list filtered to this clinician. */
+/** DR-01: the doctor's own visits at a location today, from `GET /clinicians/{id}/schedule` (own reservations only). */
 export function Schedule({ locationIds }: { locationIds: readonly string[] }) {
   const { api, can, principalId, navigate } = useDoctor();
   const [chosen, setChosen] = useState<string | null>(null);
   const locationId = chosen !== null && locationIds.includes(chosen) ? chosen : locationIds[0];
-  const readable = can('scheduling.check_in') && locationId !== undefined;
-  const { state, reload } = useLoad(() => api.visits(locationId as string), [locationId], readable);
+  const readable = can('scheduling.booking.own_schedule') && locationId !== undefined;
+  const { state, reload } = useLoad(
+    () => api.schedule(principalId, locationId as string),
+    [locationId],
+    readable,
+  );
 
   const mine = useMemo(
     () =>
       state.kind === 'ready'
-        ? state.data
-            .filter((v) => v.clinicianId === principalId)
-            .sort((a, b) => a.startsAt.localeCompare(b.startsAt))
+        ? [...state.data].sort((a, b) => a.startsAt.localeCompare(b.startsAt))
         : [],
-    [state, principalId],
+    [state],
   );
 
   const events: ScheduleEvent[] = mine.map((v) => ({

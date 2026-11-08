@@ -1,7 +1,7 @@
 // Browser harness for the doctor portal only: the staff app's routing and session wiring are outside this ticket's allowed paths, so this
 // page mounts `DoctorPortal` with the real shell runtime and the portal's shared styles. The API is mocked per test by Playwright (contract
 // mock). `?path=` picks the screen; `?open=1` opens the chart of a visit as the schedule would; `?video=1` adds a fake video adapter;
-// `?stream=real` uses the browser's EventSource (the test then refuses it); `?cosign=1` puts a note that waits for co-signature into this session.
+// `?stream=real` uses the browser's EventSource (the test then refuses it);
 import { StrictMode, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { SkipLink } from '@ehr/ui';
@@ -10,7 +10,7 @@ import { createRuntime } from '../../../../runtime.js';
 import { DoctorPortal, isDoctorPath } from '../../index.js';
 import type { DoctorPath, VideoAdapter } from '../../index.js';
 import { FakeStream } from '../../fake-stream.js';
-import { noteStore, workspace } from '../../workspace.js';
+import { workspace } from '../../workspace.js';
 
 const runtime = createRuntime('r1.000000000000');
 const params = new URLSearchParams(window.location.search);
@@ -30,29 +30,6 @@ const visit = {
 };
 if (params.get('open') === '1')
   workspace.set({ patientId: visit.patientId, label: 'Amira Okafor', visit });
-if (params.get('cosign') === '1')
-  noteStore.put({
-    note: {
-      id: '77777777-7777-4777-8777-777777777777',
-      encounterId: '66666666-6666-4666-8666-666666666666',
-      patientId: visit.patientId,
-      status: 'pending_cosign',
-      sections: {
-        subjective: 'Cough for three days',
-        objective: 'Chest clear',
-        assessment: 'Viral',
-        plan: 'Fluids',
-      },
-      cosignRequiredFrom: 'sup',
-      signedAt: null,
-      cosignedAt: null,
-      version: 3,
-      banner: null,
-    },
-    patientName: 'Amira Okafor',
-    dateOfBirth: '1984-03-27',
-  });
-
 // A stand-in for the vendor SDK: draws a labelled box. The real adapter is added by the video-vendor ticket.
 const video: VideoAdapter = {
   join: (el) => {

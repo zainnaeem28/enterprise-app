@@ -171,14 +171,14 @@ export interface PatientHit {
 export function parsePatientHit(v: unknown): PatientHit | undefined {
   const p = rec(v);
   if (
-    typeof p['id'] !== 'string' ||
+    typeof p['patientId'] !== 'string' ||
     typeof p['familyName'] !== 'string' ||
     typeof p['givenName'] !== 'string' ||
     typeof p['dateOfBirth'] !== 'string'
   )
     return undefined;
   return {
-    id: p['id'],
+    id: p['patientId'],
     mrn: str(p['mrn']) ?? '',
     givenName: p['givenName'],
     familyName: p['familyName'],
@@ -218,6 +218,41 @@ export function parseVisit(v: unknown): Visit | undefined {
     startsAt: a['startsAt'],
     endsAt: a['endsAt'],
     queueStage: strOrNull(a['queueStage']),
+  };
+}
+
+/** One row of `GET /clinicians/{id}/notes` or `/cosign-queue` (NoteListItem). */
+export interface NoteListItem {
+  noteId: string;
+  patientId: string;
+  patientName: string;
+  dateOfBirth: string;
+  authorDisplayName: string;
+  status: NoteStatus;
+  updatedAt: string | null;
+  submittedForCosignAt: string | null;
+}
+export function parseNoteListItem(v: unknown): NoteListItem | undefined {
+  const r = rec(v);
+  const st = r['status'];
+  const b = rec(r['patientBanner']);
+  if (
+    typeof r['noteId'] !== 'string' ||
+    typeof r['patientId'] !== 'string' ||
+    typeof b['displayName'] !== 'string' ||
+    typeof b['dateOfBirth'] !== 'string' ||
+    (st !== 'draft' && st !== 'pending_cosign' && st !== 'signed')
+  )
+    return undefined;
+  return {
+    noteId: r['noteId'],
+    patientId: r['patientId'],
+    patientName: b['displayName'],
+    dateOfBirth: b['dateOfBirth'],
+    authorDisplayName: str(r['authorDisplayName']) ?? '',
+    status: st,
+    updatedAt: strOrNull(r['updatedAt']),
+    submittedForCosignAt: strOrNull(r['submittedForCosignAt']),
   };
 }
 

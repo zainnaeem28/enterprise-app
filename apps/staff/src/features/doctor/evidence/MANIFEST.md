@@ -6,7 +6,7 @@ Tools: node v24.22.2, vitest/5.1.0 linux-x64, playwright Version 1.64.1, chromiu
 | Check                                                                                                                 | Command (from apps/staff unless noted)                                      | Raw report                                 | Result                                                                                                                    |
 | --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
 | Typecheck                                                                                                             | `pnpm exec tsc -p tsconfig.json --noEmit`                                   | raw/typecheck-staff.txt                    | exit 0                                                                                                                    |
-| Unit (jsdom, whole staff app incl. 22 doctor tests)                                                                   | `NODE_ENV=test pnpm exec vitest run`                                        | raw/unit-staff.txt                         | 9 files, 104 tests passed                                                                                                 |
+| Unit (jsdom, whole staff app incl. 24 doctor tests)                                                                   | `NODE_ENV=test pnpm exec vitest run`                                        | raw/unit-staff.txt                         | 9 files, 106 tests passed                                                                                                 |
 | Playwright PR subset + axe (wcag2a/aa, 21aa, 22aa; serious/critical fail) on every screen, desktop 1280 and phone 390 | `pnpm exec playwright test -c src/features/doctor/e2e/playwright.config.ts` | raw/playwright.txt, playwright-report.json | 14 passed                                                                                                                 |
 | Lint                                                                                                                  | `pnpm exec eslint apps/staff/src/features/doctor` (root)                    | raw/lint.txt                               | exit 0                                                                                                                    |
 | Format                                                                                                                | `pnpm exec prettier --check apps/staff/src/features/doctor` (root)          | raw/format.txt                             | exit 0                                                                                                                    |
@@ -17,26 +17,26 @@ All API traffic in these tests is contract mocks; no real API/DB/identity provid
 Screenshots (sha256):
 
 ```
-4e4fe116fcac20044a05e522377b30c6d8847027623a2f5f85d6ee7f9a7b136b  desktop-1-schedule.png
+d04c7583c8b96053967384edb3db04e28b96c6365bd592f29c9223250753fe85  desktop-1-schedule.png
 d1379ace83fdf93d9e67a0aad3ce68282419cc5e71ca3c30da07ed8dbcbedf67  desktop-10-video-notes.png
-a3f877c32a2c6fcfa1401ff9440ec63b24ead082a5fe5cb5c301b3074ad07e0f  desktop-11-cosign-queue.png
-dfbd9b65c830fc689db0eee0a44f4689eee364a53f9f125914263ea99dfa5646  desktop-2-chart-note.png
-a65bdfae3a046c46a2dd033450aaf4138173b63ee29b90a94b5f5f95256f85e5  desktop-3-sign-dialog.png
-9937bd9e73836cc6362cfcd3011ef8062b0adde355c98cf3cdc54a4b8250056e  desktop-4-reauth.png
-2f69de409a84d1428704a0c608b5b352ea8728c71a69cb5a3e9aca17a5bc8671  desktop-5-signed-addendum.png
+4aac96864969aa8f33db3d63e9562cf8451edb128d11b7e4fd8c8186fbc446e6  desktop-11-cosign-queue.png
+19dd92c6b5440c006d59767d39a13faa98efee38db76f3833fa96dc90d7cbbe0  desktop-2-chart-note.png
+fcd8fcc2d39d08e0a13a38da9c6b57d87ada31033f97239bf3c5664848b3aaec  desktop-3-sign-dialog.png
+fb5ce5d7433a022296ef5b5dd3c5ddcf300f4dd2302d218a359381a159962b18  desktop-4-reauth.png
+d6047c8901ac8121136082a5056ec2b7647450e8ef533288f2f2e8e5936e66b2  desktop-5-signed-addendum.png
 1e2b2de686c430e48cea3d1e3e3f264b184175754098880220300b6fc3b83a33  desktop-6-btg-dialog.png
-96a129e51629254a6f3d8b417e27066e528a9e18182194b8dfcd3f0bd52b79e8  desktop-7-emergency-access.png
-2e62ad510d1fd3706a2018b4d5aff008f0ae3cd200212158db75d0a74251c34a  desktop-8-alert-tray.png
-4fb1ef3d8afb0c1b0cb46669e9ca4125470f7cc9508df998d629290706ce9197  desktop-9-alerts-paused.png
-b141ed94c05adac512a98e9d2eed594b5f4b51a5d98b64789acf2098b0e0a4ef  phone-1-schedule.png
+88e5415f3460901e7288de2cfc47db12705e10338fa613e174cc5ddbd74026dd  desktop-7-emergency-access.png
+fe95eaa78da1a37338f1936bbfa1efe3fc5f6f0c6899e4ac0ab7964227cce876  desktop-8-alert-tray.png
+0549e3290e67b532deb7d731119fb639fd17ade3544eb6d71aa4757a05285896  desktop-9-alerts-paused.png
+406184436c1bd5d381ae8f35225d9f8f61467101bea361507cbd4062ba6931a2  phone-1-schedule.png
 e08c302fdd9142819cdd10276433a17e8f0b7d78b0a10d1f09aadd7fd0411888  phone-10-video-notes.png
-fc51ae6a3ea52c34f89f0ba4a98bcd24b1432dc5f21fd8591aaf2ccb560d57c4  phone-11-cosign-queue.png
-a0a0f1b7f62fbb47d267f75d45fe57a97bcdde2eb3a102b01c6e7b56ab7ea51a  phone-2-chart-note.png
-88365e79fc74b2406b5ac541747075e32feb734fc0d173908a9fda4f5c2d0fa6  phone-3-sign-dialog.png
-5efd465392ceb5b66d1499a75c922cd4adbba7b097125d9af93a32f03952a214  phone-4-reauth.png
-a0737848af50375fc493c900c7cef205e5aaf1f8f93f573b893b3142b5967152  phone-5-signed-addendum.png
+c0dbdec085861d72d13f55782af25c94b802023211ec6439249d53459a757b56  phone-11-cosign-queue.png
+93a65721972e2e6e81670b930c3de29b4d325eee194f903e9fbf02ca5c2283d8  phone-2-chart-note.png
+2cd6b59932fa31b381c58002c8d22d7d5f04c371c9741b28375cec46180bf680  phone-3-sign-dialog.png
+04dd570aa44ef6bcc83b8100de1b312b3996283ea0619654efc4d503be01d93a  phone-4-reauth.png
+189efb59e692a3de2b7da6b60c0fd0b3679c694e603dd167decef0c417a19391  phone-5-signed-addendum.png
 5bcb6a926d775de071ae074b52ea08ef5b2d814f0783e363c0f95f9f3c7b9be4  phone-6-btg-dialog.png
-d875f2a0cce77ea141a61c5b88a1edd8c26fa8f1b77bdf0a93ff9f7307fa23a4  phone-7-emergency-access.png
-730aedff6e734427e820b8cbea950586ddc764b0183ee1d0132dd7f60d7d2aea  phone-8-alert-tray.png
-34fc0f02f2d7a1cfa97bd9e32a8d109e6f8080edf7829efb42b05b41fc5c7d09  phone-9-alerts-paused.png
+0800d279cc5df1c01b6eb1e63a4181fa23df111008dccc2a669aa183e6671902  phone-7-emergency-access.png
+5371d05f19d50179ee7f808479ef051aac6a7362c8868553202c94e80447be08  phone-8-alert-tray.png
+58dd9b3ef89c130ee20622876c72e2dc568d74cb9180cd32e480caed030946eb  phone-9-alerts-paused.png
 ```
