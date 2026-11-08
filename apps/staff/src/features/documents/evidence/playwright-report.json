@@ -34,7 +34,9 @@
         "name": "desktop",
         "testDir": "/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-105-sdlc-ticket-fe-06-shared-documents-ui-upload-with-scan-state-classification-list-and-viewer/apps/staff/src/features/documents/e2e",
         "testIgnore": [],
-        "testMatch": ["*.spec.ts"],
+        "testMatch": [
+          "*.spec.ts"
+        ],
         "timeout": 30000
       },
       {
@@ -48,7 +50,9 @@
         "name": "phone",
         "testDir": "/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-105-sdlc-ticket-fe-06-shared-documents-ui-upload-with-scan-state-classification-list-and-viewer/apps/staff/src/features/documents/e2e",
         "testIgnore": [],
-        "testMatch": ["*.spec.ts"],
+        "testMatch": [
+          "*.spec.ts"
+        ],
         "timeout": 30000
       }
     ],
@@ -111,7 +115,10 @@
     ],
     "quiet": false,
     "reporter": [
-      ["list", null],
+      [
+        "list",
+        null
+      ],
       [
         "json",
         {
