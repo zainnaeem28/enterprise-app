@@ -1,0 +1,52 @@
+.ehr-doc-location {
+  max-width: 24rem;
+}
+.ehr-doc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: var(--sp-3);
+  margin: var(--sp-3) 0;
+}
+.ehr-doc-pre {
+  white-space: pre-wrap;
+}
+.ehr-doc-exception {
+  margin-top: var(--sp-3);
+  max-width: 40rem;
+}
+.ehr-doc-addenda {
+  margin-top: var(--sp-4);
+}
+/* DR-04: video and notes side by side from 900 px, stacked below (UI-UX 9). */
+.ehr-doc-video {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+}
+@media (min-width: 900px) {
+  .ehr-doc-video {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+.ehr-doc-video__stage {
+  min-height: 12rem;
+  background: var(--surface-2, #f4f4f5);
+  border: 1px solid var(--border, #d4d4d8);
+  border-radius: var(--radius-1, 4px);
+  margin-bottom: var(--sp-2);
+}
+.ehr-doc-video__stage video {
+  width: 100%;
+  display: block;
+}
+.ehr-doc-back {
+  margin: var(--sp-2) 0;
+}
+.ehr-doc-video__pane h3 {
+  margin-top: var(--sp-4);
+}
+.ehr-doc-video__pane .ehr-actions {
+  margin-bottom: var(--sp-2);
+}
