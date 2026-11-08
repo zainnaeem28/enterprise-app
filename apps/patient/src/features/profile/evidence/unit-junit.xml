@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="34" failures="0" errors="0" time="1.21237894">
+    <testsuite name="src/features/messages/messages.test.tsx" timestamp="2026-11-08T10:42:20.007Z" hostname="314866be9867" tests="8" failures="0" errors="0" skipped="0" time="0.255803472">
+        <testcase classname="src/features/messages/messages.test.tsx" name="PP-37 messages (flag patient_messaging) &gt; matches only its own paths" time="0.002187294">
+        </testcase>
+        <testcase classname="src/features/messages/messages.test.tsx" name="PP-37 messages (flag patient_messaging) &gt; with the flag off (404) reads as a page that does not exist and reveals nothing about the flag" time="0.045806185">
+        </testcase>
+        <testcase classname="src/features/messages/messages.test.tsx" name="PP-37 messages (flag patient_messaging) &gt; lists threads with unread counts and opens one, telling &quot;You&quot; from the care team" time="0.126758486">
+        </testcase>
+        <testcase classname="src/features/messages/messages.test.tsx" name="PP-37 messages (flag patient_messaging) &gt; shows the empty state" time="0.016550179">
+        </testcase>
+        <testcase classname="src/features/messages/messages.test.tsx" name="PP-37 messages (flag patient_messaging) &gt; does not offer to write a message when no recipients are known" time="0.010617509">
+        </testcase>
+        <testcase classname="src/features/messages/messages.test.tsx" name="PP-37 messages (flag patient_messaging) &gt; sends a new message with the recipients and an idempotency key, then opens the thread" time="0.028067206">
+        </testcase>
+        <testcase classname="src/features/messages/messages.test.tsx" name="PP-37 messages (flag patient_messaging) &gt; requires a subject and a message before sending" time="0.018688481">
+        </testcase>
+        <testcase classname="src/features/messages/messages.test.tsx" name="PP-37 messages (flag patient_messaging) &gt; a proxy-only account sees a permission note and no thread call" time="0.005637155">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/privacy/privacy.test.tsx" timestamp="2026-11-08T10:42:20.009Z" hostname="314866be9867" tests="8" failures="0" errors="0" skipped="0" time="0.424052446">
+        <testcase classname="src/features/privacy/privacy.test.tsx" name="PP-24 my privacy &gt; records an export request with its own idempotency key and lists it" time="0.182948941">
+        </testcase>
+        <testcase classname="src/features/privacy/privacy.test.tsx" name="PP-24 my privacy &gt; records a deletion request without promising deletion, in the page, the dialog and the status" time="0.057780449">
+        </testcase>
+        <testcase classname="src/features/privacy/privacy.test.tsx" name="PP-24 my privacy &gt; a double click sends one request" time="0.064788938">
+        </testcase>
+        <testcase classname="src/features/privacy/privacy.test.tsx" name="PP-24 my privacy &gt; offers the download only when the copy is ready, and opens the short-lived URL" time="0.0702273">
+        </testcase>
+        <testcase classname="src/features/privacy/privacy.test.tsx" name="PP-24 my privacy &gt; says a copy is not ready when the server answers 409" time="0.020876295">
+        </testcase>
+        <testcase classname="src/features/privacy/privacy.test.tsx" name="PP-24 my privacy &gt; shows a refusal reason and never offers a download for it" time="0.010840227">
+        </testcase>
+        <testcase classname="src/features/privacy/privacy.test.tsx" name="PP-24 my privacy &gt; a proxy-only account cannot make privacy requests and no request is sent" time="0.004360141">
+        </testcase>
+        <testcase classname="src/features/privacy/privacy.test.tsx" name="PP-24 my privacy &gt; shows the error state with the reference when the list fails" time="0.010576442">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/profile/profile.test.tsx" timestamp="2026-11-08T10:42:20.010Z" hostname="314866be9867" tests="18" failures="0" errors="0" skipped="0" time="0.532523022">
+        <testcase classname="src/features/profile/profile.test.tsx" name="PP-35 profile and contact details &gt; shows the record, sends only the changed field with If-Match, and says what changed" time="0.186190964">
+        </testcase>
+        <testcase classname="src/features/profile/profile.test.tsx" name="PP-35 profile and contact details &gt; puts an address together from its parts and sends it whole" time="0.000913254">
+        </testcase>
+        <testcase classname="src/features/profile/profile.test.tsx" name="PP-35 profile and contact details &gt; refuses a bad email or state without a request, and the summary does not echo the value" time="0.047948674">
+        </testcase>
+        <testcase classname="src/features/profile/profile.test.tsx" name="PP-35 profile and contact details &gt; does not let a value be emptied" time="0.00032552">
+        </testcase>
+        <testcase classname="src/features/profile/profile.test.tsx" name="PP-35 profile and contact details &gt; on 412 keeps what was typed in the side panel and reloads on request" time="0.049513389">
+        </testcase>
+        <testcase classname="src/features/profile/profile.test.tsx" name="PP-35 profile and contact details &gt; shows the server field errors as inline messages" time="0.030406704">
+        </testcase>
+        <testcase classname="src/features/profile/profile.test.tsx" name="PP-35 profile and contact details &gt; saves an emergency contact" time="0.029483193">
+        </testcase>
+        <testcase classname="src/features/profile/profile.test.tsx" name="PP-35 profile and contact details &gt; a proxy-only account sees a permission note and no profile call is made" time="0.004180262">
+        </testcase>
+        <testcase classname="src/features/profile/profile.test.tsx" name="PP-35 profile and contact details &gt; shows the server error state with the reference on a 500" time="0.00839527">
+        </testcase>
+        <testcase classname="src/features/profile/profile.test.tsx" name="PP-36 notification preferences &gt; shows the portal channel switched on and locked, with the safety-notice sentence" time="0.02867153">
+        </testcase>
+        <testcase classname="src/features/profile/profile.test.tsx" name="PP-36 notification preferences &gt; always includes in_app in what it sends, even when every other channel is off" time="0.023818374">
+        </testcase>
+        <testcase classname="src/features/profile/profile.test.tsx" name="PP-36 notification preferences &gt; sends no If-Match on the first save and explains an unavailable channel" time="0.02369883">
+        </testcase>
+        <testcase classname="src/features/profile/profile.test.tsx" name="PP-36 notification preferences &gt; requires different quiet-hours times" time="0.022260693">
+        </testcase>
+        <testcase classname="src/features/profile/profile.test.tsx" name="PP-06..PP-09 family and proxy access &gt; states that a linked person sees appointments only and shows each status as text" time="0.008319457">
+        </testcase>
+        <testcase classname="src/features/profile/profile.test.tsx" name="PP-06..PP-09 family and proxy access &gt; removes access only after the confirm dialog, and says so" time="0.022112585">
+        </testcase>
+        <testcase classname="src/features/profile/profile.test.tsx" name="PP-06..PP-09 family and proxy access &gt; lists the people the account acts for as appointments only, and switches" time="0.014721608">
+        </testcase>
+        <testcase classname="src/features/profile/profile.test.tsx" name="PP-06..PP-09 family and proxy access &gt; PP-07: D-7 not configured reads as not open yet and never as sent" time="0.014464396">
+        </testcase>
+        <testcase classname="src/features/profile/profile.test.tsx" name="PP-06..PP-09 family and proxy access &gt; PP-07: a created request is shown as sent" time="0.01542643">
+        </testcase>
+    </testsuite>
+</testsuites>
