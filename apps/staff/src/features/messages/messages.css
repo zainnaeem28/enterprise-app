@@ -1,0 +1,65 @@
+/* Tasks & messages (FE-12). List-detail: two panes from 56rem, one pane at a time below. Tokens only. */
+.ehr-msg-panes {
+  display: grid;
+  gap: var(--space-4, 1rem);
+  grid-template-columns: minmax(0, 1fr);
+}
+.ehr-msg-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2, 0.5rem);
+  align-items: end;
+  margin-block: var(--space-2, 0.5rem);
+}
+.ehr-msg-threads,
+.ehr-msg-tasks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2, 0.5rem);
+}
+.ehr-msg-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2, 0.5rem);
+  align-items: center;
+  width: 100%;
+  min-height: 44px;
+  padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+  text-align: start;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.ehr-msg-row[aria-current='true'] {
+  border-width: 3px;
+}
+.ehr-msg-empty {
+  display: none;
+}
+/* Narrow: show the list, or the open thread with a Back button. */
+.ehr-msg[data-detail='true'] .ehr-msg-list {
+  display: none;
+}
+.ehr-msg[data-detail='false'] .ehr-msg-pane {
+  display: none;
+}
+@media (min-width: 56rem) {
+  .ehr-msg-panes {
+    grid-template-columns: minmax(16rem, 1fr) minmax(0, 2fr);
+  }
+  .ehr-msg[data-detail='true'] .ehr-msg-list,
+  .ehr-msg[data-detail='false'] .ehr-msg-pane {
+    display: block;
+  }
+  .ehr-msg-empty {
+    display: block;
+  }
+  .ehr-msg-back {
+    display: none;
+  }
+}

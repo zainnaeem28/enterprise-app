@@ -1,0 +1,15 @@
+# FE-12 evidence manifest (HEAAA-131)
+
+Base commit (prerequisite merges, unchanged): 5e0675b. Candidate = the commit that adds this folder; diff: `git diff 5e0675b -- apps/staff/src/features/messages`.
+Tools: node v24.22.2, pnpm 12.16.1, vitest 5.1.0, axe-core 4.14.0 (jsdom), playwright 1.64.1.
+
+| Check                                                                    | Command (from apps/staff unless noted)                                        | Raw report              | Result                                                                                                                                                    |
+| ------------------------------------------------------------------------ | ----------------------------------------------------------------------------- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Typecheck                                                                | `pnpm exec tsc -p tsconfig.json --noEmit`                                     | raw/typecheck-staff.txt | exit 0                                                                                                                                                    |
+| Unit incl. axe (jsdom)                                                   | `NODE_ENV=test pnpm exec vitest run`                                          | raw/unit-staff.txt      | 12 files, 160 tests passed (12 are FE-12: tasks, messages list-detail, errors, permission, axe)                                                           |
+| Lint                                                                     | `pnpm exec eslint apps/staff/src/features/messages` (root)                    | raw/lint.txt            | exit 0                                                                                                                                                    |
+| Format                                                                   | `pnpm exec prettier --check apps/staff/src/features/messages` (root)          | raw/format.txt          | exit 0                                                                                                                                                    |
+| Playwright + axe (contrast, target size), desktop and phone, screenshots | `pnpm exec playwright test -c src/features/messages/e2e/playwright.config.ts` | raw/playwright.txt      | **NOT RUN SUCCESSFULLY**: Chromium cannot start here (libglib-2.0.so.0 missing; no root). 6 launch failures, 0 assertions executed. No screenshots exist. |
+| Secret, dependency, SAST, container scans                                | CI tools                                                                      | n/a                     | NOT RUN: not installed in this sandbox. No dependency added; no credential in code, tests or evidence                                                     |
+
+All API traffic is contract mock. Dependencies added: none. Conditions touched: C-07 (patient messaging stays out; staff only), C-16.
