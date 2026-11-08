@@ -4,6 +4,29 @@ import { App } from './App.js';
 import { json, runtimeWith, SESSION } from './test-helpers.js';
 import type { Respond } from './test-helpers.js';
 
+vi.mock('../features/previsit/index.js', async (orig) => ({
+  ...(await orig<object>()),
+  PrevisitRoutes: () => <p>route:previsit</p>,
+}));
+vi.mock('../features/telehealth/index.js', async (orig) => ({
+  ...(await orig<object>()),
+  TelehealthRoutes: (props: object) => (
+    <p>route:telehealth{'onGrant' in props ? ' with onGrant' : ''}</p>
+  ),
+}));
+vi.mock('../features/profile/index.js', async (orig) => ({
+  ...(await orig<object>()),
+  ProfileRoutes: () => <p>route:profile</p>,
+}));
+vi.mock('../features/privacy/index.js', async (orig) => ({
+  ...(await orig<object>()),
+  PrivacyRoutes: () => <p>route:privacy</p>,
+}));
+vi.mock('../features/messages/index.js', async (orig) => ({
+  ...(await orig<object>()),
+  MessagesRoutes: () => <p>route:messages</p>,
+}));
+
 afterEach(cleanup);
 beforeEach(() => window.history.replaceState(null, '', '/'));
 
@@ -148,5 +171,26 @@ describe('landing after the callback', () => {
     window.history.replaceState(null, '', `/problem?code=${code}`);
     mount(happy);
     expect(await screen.findByRole('heading', { name: title })).toBeInTheDocument();
+  });
+});
+
+describe('patient-portal route sets (route components mocked)', () => {
+  it.each([
+    ['/appointments/0b1f4c2e-5d3a-4e6f-8a7b-9c0d1e2f3a4b/previsit', 'route:previsit'],
+    ['/appointments/0b1f4c2e-5d3a-4e6f-8a7b-9c0d1e2f3a4b/video', 'route:telehealth'],
+    ['/profile', 'route:profile'],
+    ['/privacy', 'route:privacy'],
+    ['/messages', 'route:messages'],
+  ])('%s renders its route component', (path, text) => {
+    window.history.replaceState(null, '', path);
+    mount(redirect);
+    expect(screen.getByText(text)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Sign in' })).not.toBeInTheDocument();
+  });
+
+  it('an unknown path still renders the entry page', () => {
+    window.history.replaceState(null, '', '/nothing-here');
+    mount(redirect);
+    expect(screen.getByRole('button', { name: 'Sign in' })).toBeInTheDocument();
   });
 });
