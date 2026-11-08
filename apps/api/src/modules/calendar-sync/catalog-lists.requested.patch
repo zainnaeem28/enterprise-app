@@ -1,0 +1,14 @@
+diff --git a/db/tools/catalog-lists.mjs b/db/tools/catalog-lists.mjs
+index e9c5323..eddff4b 100644
+--- a/db/tools/catalog-lists.mjs
++++ b/db/tools/catalog-lists.mjs
+@@ -83,6 +83,9 @@ export const definerInventory = [
+   'patient.identity_label',
+   // HEAAA-181 F09 (0951): the twin check reads the hidden occupancy columns, so it runs as the twin's owner.
+   'scheduling.check_twin',
++  // BE-14 (calendar-sync, 1403): the one writer of scheduling.busy_block (the worker's `replaceBusyBlocks`), owned by
++  // scheduling_booking_owner; fixes search_path, EXECUTE to app_worker only, refuses any scope but an organisation-wide system job.
++  'scheduling.replace_busy_blocks',
+ ];
+ 
+ /** Policies that can match audience `anonymous` (ARCHITECTURE 21.3 list, kernel rows only so far). */
