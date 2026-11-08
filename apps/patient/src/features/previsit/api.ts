@@ -82,6 +82,16 @@ export function createPrevisitApi(runtime: PatientRuntime) {
         (d, r) => parseSubmit(d, versionOf(r)),
       ),
 
+    /** Opens a pending consent for each required template that is missing or outdated. Idempotent. */
+    openConsents: (reservationId: string, key: string): Promise<Outcome<true>> =>
+      guard(
+        () =>
+          api.POST('/api/v1/appointments/{reservationId}/previsit/consents', {
+            params: { header: { ...header, 'Idempotency-Key': key }, path: { reservationId } },
+          }),
+        () => true as const,
+      ),
+
     signConsent: (consentId: string, typedName: string, key: string): Promise<Outcome<true>> =>
       guard(
         () =>

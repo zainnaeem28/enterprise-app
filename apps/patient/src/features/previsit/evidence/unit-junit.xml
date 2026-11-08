@@ -1,69 +1,394 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuites name="vitest tests" tests="31" failures="0" errors="0" time="1.204152052">
-    <testsuite name="src/features/previsit/previsit.test.tsx" timestamp="2026-11-08T10:54:43.864Z" hostname="314866be9867" tests="20" failures="0" errors="0" skipped="0" time="0.702048161">
-        <testcase classname="src/features/previsit/previsit.test.tsx" name="routes and parsers &gt; matches only the reservation id in the path" time="0.002217781">
+<testsuites name="vitest tests" tests="183" failures="0" errors="0" time="6.919271321">
+    <testsuite name="src/a11y.test.tsx" timestamp="2026-11-08T23:22:02.218Z" hostname="314866be9867" tests="14" failures="0" errors="0" skipped="0" time="0.534234346">
+        <testcase classname="src/a11y.test.tsx" name="axe on the patient pages (jsdom) &gt; entry" time="0.155024186">
         </testcase>
-        <testcase classname="src/features/previsit/previsit.test.tsx" name="routes and parsers &gt; refuses a previsit body without the three flags" time="0.00091666">
+        <testcase classname="src/a11y.test.tsx" name="axe on the patient pages (jsdom) &gt; pre-redirect" time="0.056755766">
         </testcase>
-        <testcase classname="src/features/previsit/previsit.test.tsx" name="routes and parsers &gt; reads a required question as required unless the template says otherwise" time="0.00068739">
+        <testcase classname="src/a11y.test.tsx" name="axe on the patient pages (jsdom) &gt; landing" time="0.044213">
         </testcase>
-        <testcase classname="src/features/previsit/previsit.test.tsx" name="pre-visit overview (PP-25..27) &gt; shows each item as To do, Done or Needs fixing and says the consultation is blocked" time="0.156919451">
+        <testcase classname="src/a11y.test.tsx" name="axe on the patient pages (jsdom) &gt; error page kernel.validation_failed" time="0.030247746">
         </testcase>
-        <testcase classname="src/features/previsit/previsit.test.tsx" name="pre-visit overview (PP-25..27) &gt; does not warn about the gate when every consent is signed" time="0.017434534">
+        <testcase classname="src/a11y.test.tsx" name="axe on the patient pages (jsdom) &gt; error page patient.merged" time="0.030478969">
         </testcase>
-        <testcase classname="src/features/previsit/previsit.test.tsx" name="pre-visit overview (PP-25..27) &gt; a 404 reads the same as nothing there, with no hint what exists" time="0.016263105">
+        <testcase classname="src/a11y.test.tsx" name="axe on the patient pages (jsdom) &gt; error page kernel.rate_limited" time="0.035662642">
         </testcase>
-        <testcase classname="src/features/previsit/previsit.test.tsx" name="pre-visit overview (PP-25..27) &gt; has no axe violations" time="0.082106699">
+        <testcase classname="src/a11y.test.tsx" name="axe on the patient pages (jsdom) &gt; error page kernel.unavailable" time="0.020425462">
         </testcase>
-        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-26 consents &gt; keeps the gate closed until signed; sending needs the box and a typed name" time="0.04154881">
+        <testcase classname="src/a11y.test.tsx" name="axe on the patient pages (jsdom) &gt; error page kernel.timeout" time="0.020517414">
         </testcase>
-        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-26 consents &gt; says plainly when the API gives no consent text, and offers no signing" time="0.006513341">
+        <testcase classname="src/a11y.test.tsx" name="axe on the patient pages (jsdom) &gt; error page kernel.not_found" time="0.023477025">
         </testcase>
-        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-26 consents &gt; an outdated consent is Needs fixing" time="0.006990066">
+        <testcase classname="src/a11y.test.tsx" name="axe on the patient pages (jsdom) &gt; error page identity.sign_in_failed" time="0.025275108">
         </testcase>
-        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-26 consents &gt; has no axe violations" time="0.039054809">
+        <testcase classname="src/a11y.test.tsx" name="axe on the patient pages (jsdom) &gt; error page auth.unauthenticated" time="0.021115105">
         </testcase>
-        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-25 questionnaire and PP-22 emergency advice &gt; blocks a blank required question without a request and does not echo values in the summary" time="0.028206905">
+        <testcase classname="src/a11y.test.tsx" name="axe on the patient pages (jsdom) &gt; error page auth.forbidden" time="0.024073824">
         </testcase>
-        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-25 questionnaire and PP-22 emergency advice &gt; saves a draft with a client-chosen response id and no If-Match the first time" time="0.024818107">
+        <testcase classname="src/a11y.test.tsx" name="axe on the patient pages (jsdom) &gt; error page signin.cancelled" time="0.019319728">
         </testcase>
-        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-25 questionnaire and PP-22 emergency advice &gt; submits with If-Match, then a red flag shows the advice from the template and a call link" time="0.03265912">
-        </testcase>
-        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-25 questionnaire and PP-22 emergency advice &gt; no red flag goes back to the list without the emergency screen" time="0.028838029">
-        </testcase>
-        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-25 questionnaire and PP-22 emergency advice &gt; a stale version shows the conflict state and keeps what was typed" time="0.029515731">
-        </testcase>
-        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-25 questionnaire and PP-22 emergency advice &gt; a submitted questionnaire is read-only" time="0.010185011">
-        </testcase>
-        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-25 questionnaire and PP-22 emergency advice &gt; has no axe violations on the form and on the emergency screen" time="0.060478658">
-        </testcase>
-        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-27 insurance card &gt; uploads a file through create, put and complete, shows the scan state, then saves the card with the document id" time="0.09022948">
-        </testcase>
-        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-27 insurance card &gt; refuses a file type that is not allowed before any request, and a rejected file asks for a new photo" time="0.024617451">
+        <testcase classname="src/a11y.test.tsx" name="axe on the patient pages (jsdom) &gt; error page signin.expired" time="0.025986101">
         </testcase>
     </testsuite>
-    <testsuite name="src/features/telehealth/telehealth.test.tsx" timestamp="2026-11-08T10:54:43.868Z" hostname="314866be9867" tests="11" failures="0" errors="0" skipped="0" time="0.502103891">
-        <testcase classname="src/features/telehealth/telehealth.test.tsx" name="routes and time &gt; matches the video route by reservation id only" time="0.002409551">
+    <testsuite name="src/app/App.test.tsx" timestamp="2026-11-08T23:22:02.221Z" hostname="314866be9867" tests="26" failures="0" errors="0" skipped="0" time="0.650118117">
+        <testcase classname="src/app/App.test.tsx" name="entry, pre-redirect and handoff &gt; renders no password, OTP or MFA input" time="0.031850993">
         </testcase>
-        <testcase classname="src/features/telehealth/telehealth.test.tsx" name="routes and time &gt; gives two labels when the zones differ and one when they read the same" time="0.005120057">
+        <testcase classname="src/app/App.test.tsx" name="entry, pre-redirect and handoff &gt; &quot;Sign in&quot; shows the message, then hands off to getAuthSignIn" time="0.163095034">
         </testcase>
-        <testcase classname="src/features/telehealth/telehealth.test.tsx" name="PP-23 device check and join &gt; shows both time zones when they differ" time="0.06087918">
+        <testcase classname="src/app/App.test.tsx" name="entry, pre-redirect and handoff &gt; &quot;Create account&quot; shows the message, then hands off to getAuthSignIn" time="0.076261232">
         </testcase>
-        <testcase classname="src/features/telehealth/telehealth.test.tsx" name="PP-23 device check and join &gt; sends exactly camera, mic and bandwidth and shows each as words" time="0.099632032">
+        <testcase classname="src/app/App.test.tsx" name="entry, pre-redirect and handoff &gt; never sends an unchecked returnTo" time="0.079675145">
         </testcase>
-        <testcase classname="src/features/telehealth/telehealth.test.tsx" name="PP-23 device check and join &gt; will not join before the location is confirmed, and does not join before the window opens" time="0.08920057">
+        <testcase classname="src/app/App.test.tsx" name="entry, pre-redirect and handoff &gt; shows the rate-limited state when sign-in is refused, and Try again asks again" time="0.092980463">
         </testcase>
-        <testcase classname="src/features/telehealth/telehealth.test.tsx" name="PP-23 device check and join &gt; asks for a state before sending the location, and a licensing refusal offers no way around it" time="0.042280833">
+        <testcase classname="src/app/App.test.tsx" name="landing after the callback &gt; starts the session and shows the signed-in principal" time="0.012957805">
         </testcase>
-        <testcase classname="src/features/telehealth/telehealth.test.tsx" name="PP-23 device check and join &gt; waits in the waiting room, then hands the credential to the video client once admitted, and never shows it" time="0.045954094">
+        <testcase classname="src/app/App.test.tsx" name="landing after the callback &gt; shows a neutral state when no patient is linked and does not self-register" time="0.010847245">
         </testcase>
-        <testcase classname="src/features/telehealth/telehealth.test.tsx" name="PP-23 device check and join &gt; says the video app is not connected when no handler is given, instead of pretending to join" time="0.027171583">
+        <testcase classname="src/app/App.test.tsx" name="landing after the callback &gt; signs out through POST /auth/sign-out with the in-memory CSRF token" time="0.063700873">
         </testcase>
-        <testcase classname="src/features/telehealth/telehealth.test.tsx" name="PP-23 device check and join &gt; a join the server answers with location_required goes back to the confirmation step" time="0.023808462">
+        <testcase classname="src/app/App.test.tsx" name="landing after the callback &gt; keeps tokens out of storage" time="0.01510399">
         </testcase>
-        <testcase classname="src/features/telehealth/telehealth.test.tsx" name="PP-23 device check and join &gt; a 404 on the session is the same message as nothing there" time="0.005006584">
+        <testcase classname="src/app/App.test.tsx" name="landing after the callback &gt; a callback that left no session shows the sign-in-failed state" time="0.011531259">
         </testcase>
-        <testcase classname="src/features/telehealth/telehealth.test.tsx" name="PP-23 device check and join &gt; has no axe violations" time="0.09918835">
+        <testcase classname="src/app/App.test.tsx" name="landing after the callback &gt; session answer 429 shows its own state" time="0.009943591">
+        </testcase>
+        <testcase classname="src/app/App.test.tsx" name="landing after the callback &gt; session answer 503 shows its own state" time="0.006635125">
+        </testcase>
+        <testcase classname="src/app/App.test.tsx" name="landing after the callback &gt; session answer 504 shows its own state" time="0.007236774">
+        </testcase>
+        <testcase classname="src/app/App.test.tsx" name="landing after the callback &gt; session answer 409 shows its own state" time="0.009881093">
+        </testcase>
+        <testcase classname="src/app/App.test.tsx" name="landing after the callback &gt; a valid session but GET /me answering 409 shows its own state, not &quot;not linked&quot;" time="0.006164844">
+        </testcase>
+        <testcase classname="src/app/App.test.tsx" name="landing after the callback &gt; a valid session but GET /me answering 503 shows its own state, not &quot;not linked&quot;" time="0.005924372">
+        </testcase>
+        <testcase classname="src/app/App.test.tsx" name="landing after the callback &gt; a valid session but GET /me answering 401 shows its own state, not &quot;not linked&quot;" time="0.008140007">
+        </testcase>
+        <testcase classname="src/app/App.test.tsx" name="landing after the callback &gt; /problem?code=signin.cancelled is reachable" time="0.006144165">
+        </testcase>
+        <testcase classname="src/app/App.test.tsx" name="landing after the callback &gt; /problem?code=signin.expired is reachable" time="0.005467244">
+        </testcase>
+        <testcase classname="src/app/App.test.tsx" name="landing after the callback &gt; /problem?code=identity.sign_in_failed is reachable" time="0.005760315">
+        </testcase>
+        <testcase classname="src/app/App.test.tsx" name="patient-portal route sets (route components mocked) &gt; /appointments/0b1f4c2e-5d3a-4e6f-8a7b-9c0d1e2f3a4b/previsit renders its route component" time="0.003366044">
+        </testcase>
+        <testcase classname="src/app/App.test.tsx" name="patient-portal route sets (route components mocked) &gt; /appointments/0b1f4c2e-5d3a-4e6f-8a7b-9c0d1e2f3a4b/video renders its route component" time="0.002672232">
+        </testcase>
+        <testcase classname="src/app/App.test.tsx" name="patient-portal route sets (route components mocked) &gt; /profile renders its route component" time="0.001891988">
+        </testcase>
+        <testcase classname="src/app/App.test.tsx" name="patient-portal route sets (route components mocked) &gt; /privacy renders its route component" time="0.002403729">
+        </testcase>
+        <testcase classname="src/app/App.test.tsx" name="patient-portal route sets (route components mocked) &gt; /messages renders its route component" time="0.001731267">
+        </testcase>
+        <testcase classname="src/app/App.test.tsx" name="patient-portal route sets (route components mocked) &gt; an unknown path still renders the entry page" time="0.006932824">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/auth/ProblemPage.test.tsx" timestamp="2026-11-08T23:22:02.225Z" hostname="314866be9867" tests="13" failures="0" errors="0" skipped="0" time="0.24602153">
+        <testcase classname="src/features/auth/ProblemPage.test.tsx" name="every documented problem has its own state &gt; has distinct titles" time="0.001735435">
+        </testcase>
+        <testcase classname="src/features/auth/ProblemPage.test.tsx" name="every documented problem has its own state &gt; kernel.validation_failed: titled, focused, announced, with a way forward" time="0.157930528">
+        </testcase>
+        <testcase classname="src/features/auth/ProblemPage.test.tsx" name="every documented problem has its own state &gt; patient.merged: titled, focused, announced, with a way forward" time="0.011074353">
+        </testcase>
+        <testcase classname="src/features/auth/ProblemPage.test.tsx" name="every documented problem has its own state &gt; kernel.rate_limited: titled, focused, announced, with a way forward" time="0.011274347">
+        </testcase>
+        <testcase classname="src/features/auth/ProblemPage.test.tsx" name="every documented problem has its own state &gt; kernel.unavailable: titled, focused, announced, with a way forward" time="0.00794363">
+        </testcase>
+        <testcase classname="src/features/auth/ProblemPage.test.tsx" name="every documented problem has its own state &gt; kernel.timeout: titled, focused, announced, with a way forward" time="0.00836474">
+        </testcase>
+        <testcase classname="src/features/auth/ProblemPage.test.tsx" name="every documented problem has its own state &gt; kernel.not_found: titled, focused, announced, with a way forward" time="0.012222895">
+        </testcase>
+        <testcase classname="src/features/auth/ProblemPage.test.tsx" name="every documented problem has its own state &gt; identity.sign_in_failed: titled, focused, announced, with a way forward" time="0.005931416">
+        </testcase>
+        <testcase classname="src/features/auth/ProblemPage.test.tsx" name="every documented problem has its own state &gt; auth.unauthenticated: titled, focused, announced, with a way forward" time="0.005952135">
+        </testcase>
+        <testcase classname="src/features/auth/ProblemPage.test.tsx" name="every documented problem has its own state &gt; auth.forbidden: titled, focused, announced, with a way forward" time="0.007147527">
+        </testcase>
+        <testcase classname="src/features/auth/ProblemPage.test.tsx" name="every documented problem has its own state &gt; signin.cancelled: titled, focused, announced, with a way forward" time="0.007728676">
+        </testcase>
+        <testcase classname="src/features/auth/ProblemPage.test.tsx" name="every documented problem has its own state &gt; signin.expired: titled, focused, announced, with a way forward" time="0.00650967">
+        </testcase>
+        <testcase classname="src/features/auth/ProblemPage.test.tsx" name="every documented problem has its own state &gt; mentions neither passwords nor codes to type" time="0.000541898">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/auth/returnTo.test.ts" timestamp="2026-11-08T23:22:02.227Z" hostname="314866be9867" tests="13" failures="0" errors="0" skipped="0" time="0.004498648">
+        <testcase classname="src/features/auth/returnTo.test.ts" name="checkedReturnTo &gt; keeps the relative path /account" time="0.00146611">
+        </testcase>
+        <testcase classname="src/features/auth/returnTo.test.ts" name="checkedReturnTo &gt; keeps the relative path /visits?x=1" time="0.000192571">
+        </testcase>
+        <testcase classname="src/features/auth/returnTo.test.ts" name="checkedReturnTo &gt; keeps the relative path /a/b#c" time="0.000131527">
+        </testcase>
+        <testcase classname="src/features/auth/returnTo.test.ts" name="checkedReturnTo &gt; replaces undefined with the default" time="0.000200767">
+        </testcase>
+        <testcase classname="src/features/auth/returnTo.test.ts" name="checkedReturnTo &gt; replaces null with the default" time="0.000139932">
+        </testcase>
+        <testcase classname="src/features/auth/returnTo.test.ts" name="checkedReturnTo &gt; replaces  with the default" time="0.000114184">
+        </testcase>
+        <testcase classname="src/features/auth/returnTo.test.ts" name="checkedReturnTo &gt; replaces account with the default" time="0.000125577">
+        </testcase>
+        <testcase classname="src/features/auth/returnTo.test.ts" name="checkedReturnTo &gt; replaces //evil.example with the default" time="0.000110117">
+        </testcase>
+        <testcase classname="src/features/auth/returnTo.test.ts" name="checkedReturnTo &gt; replaces https://evil.example/ with the default" time="0.000144912">
+        </testcase>
+        <testcase classname="src/features/auth/returnTo.test.ts" name="checkedReturnTo &gt; replaces /\evil.example with the default" time="0.000203511">
+        </testcase>
+        <testcase classname="src/features/auth/returnTo.test.ts" name="checkedReturnTo &gt; replaces /a
+b with the default" time="0.000123672">
+        </testcase>
+        <testcase classname="src/features/auth/returnTo.test.ts" name="checkedReturnTo &gt; replaces /aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa with the default" time="0.000072366">
+        </testcase>
+        <testcase classname="src/features/auth/returnTo.test.ts" name="checkedReturnTo &gt; replaces javascript:alert(1) with the default" time="0.000059532">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/auth/signIn.test.ts" timestamp="2026-11-08T23:22:02.228Z" hostname="314866be9867" tests="8" failures="0" errors="0" skipped="0" time="0.011603144">
+        <testcase classname="src/features/auth/signIn.test.ts" name="probeSignIn &gt; calls only getAuthSignIn with the checked returnTo and does not follow the redirect" time="0.005121075">
+        </testcase>
+        <testcase classname="src/features/auth/signIn.test.ts" name="probeSignIn &gt; maps 400 to its own state" time="0.002642526">
+        </testcase>
+        <testcase classname="src/features/auth/signIn.test.ts" name="probeSignIn &gt; maps 409 to its own state" time="0.000533621">
+        </testcase>
+        <testcase classname="src/features/auth/signIn.test.ts" name="probeSignIn &gt; maps 429 to its own state" time="0.000454754">
+        </testcase>
+        <testcase classname="src/features/auth/signIn.test.ts" name="probeSignIn &gt; maps 503 to its own state" time="0.000499987">
+        </testcase>
+        <testcase classname="src/features/auth/signIn.test.ts" name="probeSignIn &gt; maps 504 to its own state" time="0.000400401">
+        </testcase>
+        <testcase classname="src/features/auth/signIn.test.ts" name="probeSignIn &gt; shows the unavailable state when the network fails" time="0.000371027">
+        </testcase>
+        <testcase classname="src/features/auth/signIn.test.ts" name="probeSignIn &gt; encodes returnTo in the URL it navigates to" time="0.000252413">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/booking/flow.test.tsx" timestamp="2026-11-08T23:22:02.229Z" hostname="314866be9867" tests="28" failures="0" errors="0" skipped="0" time="1.773067476">
+        <testcase classname="src/features/booking/flow.test.tsx" name="PP-10..PP-14 book a visit &gt; walks service, doctor and place, time, confirm and booked, with step-1 and step-2 keys that differ" time="0.306162071">
+        </testcase>
+        <testcase classname="src/features/booking/flow.test.tsx" name="PP-10..PP-14 book a visit &gt; a double click on Confirm sends one request" time="0.119251407">
+        </testcase>
+        <testcase classname="src/features/booking/flow.test.tsx" name="PP-10..PP-14 book a visit &gt; add to calendar offers an .ics file with the appointment time" time="0.120519687">
+        </testcase>
+        <testcase classname="src/features/booking/flow.test.tsx" name="PP-10..PP-14 book a visit &gt; a video visit needs the state before a hold is made, and sends it with the hold" time="0.146877896">
+        </testcase>
+        <testcase classname="src/features/booking/flow.test.tsx" name="PP-10..PP-14 book a visit &gt; shows no raw patient or appointment detail in the tab title" time="0.052589531">
+        </testcase>
+        <testcase classname="src/features/booking/flow.test.tsx" name="hold idempotency keys &gt; picks A, B, A: the second pick of A is a new request with a new key" time="0.08948211">
+        </testcase>
+        <testcase classname="src/features/booking/flow.test.tsx" name="slot taken and hold expiry (X-01, X-02) &gt; shows &quot;That time was just taken&quot; with alternatives, a waitlist offer and a disabled primary with its reason" time="0.086404988">
+        </testcase>
+        <testcase classname="src/features/booking/flow.test.tsx" name="slot taken and hold expiry (X-01, X-02) &gt; an expired hold at confirm shows the expired state and keeps service and doctor" time="0.094822596">
+        </testcase>
+        <testcase classname="src/features/booking/flow.test.tsx" name="hold countdown follows UI-UX 7.2 &gt; counts down to the server expiresAt and announces only at 5, 2 and 1 minutes" time="0.132544302">
+        </testcase>
+        <testcase classname="src/features/booking/flow.test.tsx" name="hold countdown follows UI-UX 7.2 &gt; uses the server clock, not the device clock, when they differ" time="0.055002758">
+        </testcase>
+        <testcase classname="src/features/booking/flow.test.tsx" name="hold countdown follows UI-UX 7.2 &gt; ends the selection when the hold runs out and reloads the times" time="0.161575495">
+        </testcase>
+        <testcase classname="src/features/booking/flow.test.tsx" name="PP-15 appointments, PP-16 change time &gt; lists appointments and opens the detail with change, cancel and calendar actions" time="0.023149852">
+        </testcase>
+        <testcase classname="src/features/booking/flow.test.tsx" name="PP-15 appointments, PP-16 change time &gt; shows the empty state with one action" time="0.005894406">
+        </testcase>
+        <testcase classname="src/features/booking/flow.test.tsx" name="PP-15 appointments, PP-16 change time &gt; shows 404 neutrally for an appointment that is not the patient’s (CN-04)" time="0.006342807">
+        </testcase>
+        <testcase classname="src/features/booking/flow.test.tsx" name="PP-15 appointments, PP-16 change time &gt; changes the time with a hold marked rescheduleOf, then reschedule with If-Match and the held id" time="0.060517752">
+        </testcase>
+        <testcase classname="src/features/booking/flow.test.tsx" name="PP-17 cancel (block-only policy, no fee) &gt; quotes the policy, asks to confirm with a consequence label, and never sends or shows a fee" time="0.027176054">
+        </testcase>
+        <testcase classname="src/features/booking/flow.test.tsx" name="PP-17 cancel (block-only policy, no fee) &gt; uses the configured cut-off in the sentence when one is supplied" time="0.006557009">
+        </testcase>
+        <testcase classname="src/features/booking/flow.test.tsx" name="PP-17 cancel (block-only policy, no fee) &gt; scheduling.cutoff_passed reads as a block: call the clinic, no way to cancel online, no fee" time="0.020098328">
+        </testcase>
+        <testcase classname="src/features/booking/flow.test.tsx" name="PP-17 cancel (block-only policy, no fee) &gt; scheduling.fee_acceptance_required reads as a block: call the clinic, no way to cancel online, no fee" time="0.022662928">
+        </testcase>
+        <testcase classname="src/features/booking/flow.test.tsx" name="PP-17 cancel (block-only policy, no fee) &gt; 412 shows the conflict state" time="0.018354388">
+        </testcase>
+        <testcase classname="src/features/booking/flow.test.tsx" name="PP-18 waitlist, PP-19 offer &gt; joins the waitlist for the chosen visit" time="0.04685774">
+        </testcase>
+        <testcase classname="src/features/booking/flow.test.tsx" name="PP-18 waitlist, PP-19 offer &gt; says so when the clinic has the waitlist off" time="0.05306347">
+        </testcase>
+        <testcase classname="src/features/booking/flow.test.tsx" name="PP-18 waitlist, PP-19 offer &gt; accepts an offer within its countdown" time="0.016448702">
+        </testcase>
+        <testcase classname="src/features/booking/flow.test.tsx" name="PP-18 waitlist, PP-19 offer &gt; an expired offer says so and does not book" time="0.010432529">
+        </testcase>
+        <testcase classname="src/features/booking/flow.test.tsx" name="PP-18 waitlist, PP-19 offer &gt; declines an offer and stays on the waitlist" time="0.011027594">
+        </testcase>
+        <testcase classname="src/features/booking/flow.test.tsx" name="states &gt; shows the server-error state with a reference code and Retry when search fails" time="0.028436739">
+        </testcase>
+        <testcase classname="src/features/booking/flow.test.tsx" name="states &gt; a session that has no linked patient is a neutral message, not a booking form" time="0.00336424">
+        </testcase>
+        <testcase classname="src/features/booking/flow.test.tsx" name="states &gt; a search failure shows the error state and Try again re-runs the search" time="0.045290821">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/booking/lib.test.ts" timestamp="2026-11-08T23:22:02.233Z" hostname="314866be9867" tests="10" failures="0" errors="0" skipped="0" time="0.025800043">
+        <testcase classname="src/features/booking/lib.test.ts" name="add to calendar (.ics) &gt; is a well-formed VCALENDAR with one VEVENT and CRLF line ends" time="0.003044651">
+        </testcase>
+        <testcase classname="src/features/booking/lib.test.ts" name="add to calendar (.ics) &gt; carries the required event properties with UTC times" time="0.000583636">
+        </testcase>
+        <testcase classname="src/features/booking/lib.test.ts" name="add to calendar (.ics) &gt; names the event only &quot;Appointment&quot; (BR-23) and folds lines to 75 octets" time="0.001063254">
+        </testcase>
+        <testcase classname="src/features/booking/lib.test.ts" name="times (UX-R8, BR-05) &gt; shows the clinic zone label" time="0.014381254">
+        </testcase>
+        <testcase classname="src/features/booking/lib.test.ts" name="times (UX-R8, BR-05) &gt; shows both zones for a video visit when they differ, one otherwise" time="0.001367606">
+        </testcase>
+        <testcase classname="src/features/booking/lib.test.ts" name="times (UX-R8, BR-05) &gt; counts down to the server expiry corrected by the server clock offset" time="0.000265167">
+        </testcase>
+        <testcase classname="src/features/booking/lib.test.ts" name="routes and answers &gt; routes carry ids only" time="0.000744937">
+        </testcase>
+        <testcase classname="src/features/booking/lib.test.ts" name="routes and answers &gt; reads slot_taken alternatives from the error entries" time="0.001526593">
+        </testcase>
+        <testcase classname="src/features/booking/lib.test.ts" name="routes and answers &gt; reads alternatives from the documented top-level array too, without duplicates" time="0.000732865">
+        </testcase>
+        <testcase classname="src/features/booking/lib.test.ts" name="routes and answers &gt; rejects a malformed appointment instead of rendering it" time="0.000320962">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/messages/messages.test.tsx" timestamp="2026-11-08T23:22:02.234Z" hostname="314866be9867" tests="8" failures="0" errors="0" skipped="0" time="0.303668007">
+        <testcase classname="src/features/messages/messages.test.tsx" name="PP-37 messages (flag patient_messaging) &gt; matches only its own paths" time="0.002310764">
+        </testcase>
+        <testcase classname="src/features/messages/messages.test.tsx" name="PP-37 messages (flag patient_messaging) &gt; with the flag off (404) reads as a page that does not exist and reveals nothing about the flag" time="0.042252693">
+        </testcase>
+        <testcase classname="src/features/messages/messages.test.tsx" name="PP-37 messages (flag patient_messaging) &gt; lists threads with unread counts and opens one, telling &quot;You&quot; from the care team" time="0.133194201">
+        </testcase>
+        <testcase classname="src/features/messages/messages.test.tsx" name="PP-37 messages (flag patient_messaging) &gt; shows the empty state" time="0.014158968">
+        </testcase>
+        <testcase classname="src/features/messages/messages.test.tsx" name="PP-37 messages (flag patient_messaging) &gt; does not offer to write a message when no recipients are known" time="0.026594343">
+        </testcase>
+        <testcase classname="src/features/messages/messages.test.tsx" name="PP-37 messages (flag patient_messaging) &gt; sends a new message with the recipients and an idempotency key, then opens the thread" time="0.053493898">
+        </testcase>
+        <testcase classname="src/features/messages/messages.test.tsx" name="PP-37 messages (flag patient_messaging) &gt; requires a subject and a message before sending" time="0.02522276">
+        </testcase>
+        <testcase classname="src/features/messages/messages.test.tsx" name="PP-37 messages (flag patient_messaging) &gt; a proxy-only account sees a permission note and no thread call" time="0.004937451">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/previsit/previsit.test.tsx" timestamp="2026-11-08T23:22:02.235Z" hostname="314866be9867" tests="22" failures="0" errors="0" skipped="0" time="0.84441478">
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="routes and parsers &gt; matches only the reservation id in the path" time="0.002283533">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="routes and parsers &gt; refuses a previsit body without the three flags" time="0.00091777">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="routes and parsers &gt; reads a required question as required unless the template says otherwise" time="0.001063906">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="pre-visit overview (PP-25..27) &gt; shows each item as To do, Done or Needs fixing and says the consultation is blocked" time="0.155956956">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="pre-visit overview (PP-25..27) &gt; does not warn about the gate when every consent is signed" time="0.025482538">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="pre-visit overview (PP-25..27) &gt; a 404 reads the same as nothing there, with no hint what exists" time="0.006844958">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="pre-visit overview (PP-25..27) &gt; has no axe violations" time="0.105342399">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-26 consents &gt; keeps the gate closed until signed; sending needs the box and a typed name" time="0.051483176">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-26 consents &gt; says plainly when the API gives no consent text, and offers no signing" time="0.006838696">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-26 consents &gt; an outdated consent is Needs fixing" time="0.006934467">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-26 consents &gt; opens pending consents (POST) for a missing item, then shows the form to sign" time="0.015835633">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-26 consents &gt; does not call the open POST when the visit is not confirmed (canOpenConsents false)" time="0.016148479">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-26 consents &gt; has no axe violations" time="0.039205007">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-25 questionnaire and PP-22 emergency advice &gt; blocks a blank required question without a request and does not echo values in the summary" time="0.030930656">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-25 questionnaire and PP-22 emergency advice &gt; saves a draft with a client-chosen response id and no If-Match the first time" time="0.064995961">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-25 questionnaire and PP-22 emergency advice &gt; submits with If-Match, then a red flag shows the advice from the template and a call link" time="0.044660378">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-25 questionnaire and PP-22 emergency advice &gt; no red flag goes back to the list without the emergency screen" time="0.045166058">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-25 questionnaire and PP-22 emergency advice &gt; a stale version shows the conflict state and keeps what was typed" time="0.032473379">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-25 questionnaire and PP-22 emergency advice &gt; a submitted questionnaire is read-only" time="0.007136305">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-25 questionnaire and PP-22 emergency advice &gt; has no axe violations on the form and on the emergency screen" time="0.069815731">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-27 insurance card &gt; uploads a file through create, put and complete, shows the scan state, then saves the card with the document id" time="0.091787084">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-27 insurance card &gt; refuses a file type that is not allowed before any request, and a rejected file asks for a new photo" time="0.021353081">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/privacy/privacy.test.tsx" timestamp="2026-11-08T23:22:02.238Z" hostname="314866be9867" tests="8" failures="0" errors="0" skipped="0" time="0.471079137">
+        <testcase classname="src/features/privacy/privacy.test.tsx" name="PP-24 my privacy &gt; records an export request with its own idempotency key and lists it" time="0.225582332">
+        </testcase>
+        <testcase classname="src/features/privacy/privacy.test.tsx" name="PP-24 my privacy &gt; records a deletion request without promising deletion, in the page, the dialog and the status" time="0.054919582">
+        </testcase>
+        <testcase classname="src/features/privacy/privacy.test.tsx" name="PP-24 my privacy &gt; a double click sends one request" time="0.066549565">
+        </testcase>
+        <testcase classname="src/features/privacy/privacy.test.tsx" name="PP-24 my privacy &gt; offers the download only when the copy is ready, and opens the short-lived URL" time="0.068078183">
+        </testcase>
+        <testcase classname="src/features/privacy/privacy.test.tsx" name="PP-24 my privacy &gt; says a copy is not ready when the server answers 409" time="0.033101969">
+        </testcase>
+        <testcase classname="src/features/privacy/privacy.test.tsx" name="PP-24 my privacy &gt; shows a refusal reason and never offers a download for it" time="0.009659388">
+        </testcase>
+        <testcase classname="src/features/privacy/privacy.test.tsx" name="PP-24 my privacy &gt; a proxy-only account cannot make privacy requests and no request is sent" time="0.004007676">
+        </testcase>
+        <testcase classname="src/features/privacy/privacy.test.tsx" name="PP-24 my privacy &gt; shows the error state with the reference when the list fails" time="0.007654508">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/profile/profile.test.tsx" timestamp="2026-11-08T23:22:02.239Z" hostname="314866be9867" tests="18" failures="0" errors="0" skipped="0" time="0.615847874">
+        <testcase classname="src/features/profile/profile.test.tsx" name="PP-35 profile and contact details &gt; shows the record, sends only the changed field with If-Match, and says what changed" time="0.197414325">
+        </testcase>
+        <testcase classname="src/features/profile/profile.test.tsx" name="PP-35 profile and contact details &gt; puts an address together from its parts and sends it whole" time="0.00038348">
+        </testcase>
+        <testcase classname="src/features/profile/profile.test.tsx" name="PP-35 profile and contact details &gt; refuses a bad email or state without a request, and the summary does not echo the value" time="0.052288556">
+        </testcase>
+        <testcase classname="src/features/profile/profile.test.tsx" name="PP-35 profile and contact details &gt; does not let a value be emptied" time="0.000420259">
+        </testcase>
+        <testcase classname="src/features/profile/profile.test.tsx" name="PP-35 profile and contact details &gt; on 412 keeps what was typed in the side panel and reloads on request" time="0.079047578">
+        </testcase>
+        <testcase classname="src/features/profile/profile.test.tsx" name="PP-35 profile and contact details &gt; shows the server field errors as inline messages" time="0.033190996">
+        </testcase>
+        <testcase classname="src/features/profile/profile.test.tsx" name="PP-35 profile and contact details &gt; saves an emergency contact" time="0.034590661">
+        </testcase>
+        <testcase classname="src/features/profile/profile.test.tsx" name="PP-35 profile and contact details &gt; a proxy-only account sees a permission note and no profile call is made" time="0.004567257">
+        </testcase>
+        <testcase classname="src/features/profile/profile.test.tsx" name="PP-35 profile and contact details &gt; shows the server error state with the reference on a 500" time="0.008713654">
+        </testcase>
+        <testcase classname="src/features/profile/profile.test.tsx" name="PP-36 notification preferences &gt; shows the portal channel switched on and locked, with the safety-notice sentence" time="0.034241696">
+        </testcase>
+        <testcase classname="src/features/profile/profile.test.tsx" name="PP-36 notification preferences &gt; always includes in_app in what it sends, even when every other channel is off" time="0.02914687">
+        </testcase>
+        <testcase classname="src/features/profile/profile.test.tsx" name="PP-36 notification preferences &gt; sends no If-Match on the first save and explains an unavailable channel" time="0.034461289">
+        </testcase>
+        <testcase classname="src/features/profile/profile.test.tsx" name="PP-36 notification preferences &gt; requires different quiet-hours times" time="0.035775042">
+        </testcase>
+        <testcase classname="src/features/profile/profile.test.tsx" name="PP-06..PP-09 family and proxy access &gt; states that a linked person sees appointments only and shows each status as text" time="0.008558343">
+        </testcase>
+        <testcase classname="src/features/profile/profile.test.tsx" name="PP-06..PP-09 family and proxy access &gt; removes access only after the confirm dialog, and says so" time="0.021763641">
+        </testcase>
+        <testcase classname="src/features/profile/profile.test.tsx" name="PP-06..PP-09 family and proxy access &gt; lists the people the account acts for as appointments only, and switches" time="0.012902661">
+        </testcase>
+        <testcase classname="src/features/profile/profile.test.tsx" name="PP-06..PP-09 family and proxy access &gt; PP-07: D-7 not configured reads as not open yet and never as sent" time="0.012504975">
+        </testcase>
+        <testcase classname="src/features/profile/profile.test.tsx" name="PP-06..PP-09 family and proxy access &gt; PP-07: a created request is shown as sent" time="0.01403723">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/telehealth/telehealth.test.tsx" timestamp="2026-11-08T23:22:02.242Z" hostname="314866be9867" tests="15" failures="0" errors="0" skipped="0" time="1.438918219">
+        <testcase classname="src/features/telehealth/telehealth.test.tsx" name="routes and time &gt; matches the video route by reservation id only" time="0.00248958">
+        </testcase>
+        <testcase classname="src/features/telehealth/telehealth.test.tsx" name="routes and time &gt; gives two labels when the zones differ and one when they read the same" time="0.00553397">
+        </testcase>
+        <testcase classname="src/features/telehealth/telehealth.test.tsx" name="PP-23 device check and join &gt; shows both time zones when they differ" time="0.067275627">
+        </testcase>
+        <testcase classname="src/features/telehealth/telehealth.test.tsx" name="PP-23 device check and join &gt; sends exactly camera, mic and bandwidth and shows each as words" time="0.115486004">
+        </testcase>
+        <testcase classname="src/features/telehealth/telehealth.test.tsx" name="PP-23 device check and join &gt; will not join before the location is confirmed, and does not join before the window opens" time="0.067619532">
+        </testcase>
+        <testcase classname="src/features/telehealth/telehealth.test.tsx" name="PP-23 device check and join &gt; asks for a state before sending the location, and a licensing refusal offers no way around it" time="0.053451347">
+        </testcase>
+        <testcase classname="src/features/telehealth/telehealth.test.tsx" name="PP-23 device check and join &gt; waits in the waiting room, then hands the credential to the video client once admitted, and never shows it" time="0.053653106">
+        </testcase>
+        <testcase classname="src/features/telehealth/telehealth.test.tsx" name="PP-23 device check and join &gt; says the video app is not connected when no handler is given, instead of pretending to join" time="0.039752553">
+        </testcase>
+        <testcase classname="src/features/telehealth/telehealth.test.tsx" name="PP-23 device check and join &gt; a join the server answers with location_required goes back to the confirmation step" time="0.050584861">
+        </testcase>
+        <testcase classname="src/features/telehealth/telehealth.test.tsx" name="PP-23 device check and join &gt; a 404 on the session is the same message as nothing there" time="0.007802015">
+        </testcase>
+        <testcase classname="src/features/telehealth/telehealth.test.tsx" name="PP-23 device check and join &gt; has no axe violations" time="0.190396612">
+        </testcase>
+        <testcase classname="src/features/telehealth/telehealth.test.tsx" name="PP-23 device check and join &gt; F01: leaves the waiting room and stops polling when the host removes the patient" time="0.183067616">
+        </testcase>
+        <testcase classname="src/features/telehealth/telehealth.test.tsx" name="PP-23 device check and join &gt; F01: stops polling when the session ends while waiting" time="0.182781199">
+        </testcase>
+        <testcase classname="src/features/telehealth/telehealth.test.tsx" name="PP-23 device check and join &gt; F02: opens Join by itself when the join window opens" time="0.356689416">
+        </testcase>
+        <testcase classname="src/features/telehealth/telehealth.test.tsx" name="PP-23 device check and join &gt; F05: clears the &quot;one more step&quot; note once the location is confirmed" time="0.060580659">
         </testcase>
     </testsuite>
 </testsuites>

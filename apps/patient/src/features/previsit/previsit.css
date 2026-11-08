@@ -70,3 +70,29 @@
     flex-wrap: nowrap;
   }
 }
+.pv input[type='radio'],
+.pv input[type='checkbox'] {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+.pv input[type='file'] {
+  box-sizing: border-box;
+  max-width: 100%;
+  min-height: 2.75rem;
+}
+.pv input[type='file']::file-selector-button {
+  min-height: 2.75rem;
+  margin-inline-end: 0.75rem;
+  padding: 0 1rem;
+  border: 1px solid currentColor;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.pv-item {
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+}

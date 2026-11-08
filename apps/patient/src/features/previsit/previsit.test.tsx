@@ -168,6 +168,59 @@ describe('PP-26 consents', () => {
     expect(await screen.findByText('Needs fixing')).toBeInTheDocument();
   });
 
+  it('opens pending consents (POST) for a missing item, then shows the form to sign', async () => {
+    let opened = false;
+    const item = (over: object) => ({
+      templateKey: 'telehealth',
+      title: 'Telehealth consent',
+      text: 'SYNTHETIC wording.',
+      ...over,
+    });
+    const m = mount(`${HUB}/consents`, {
+      ['GET ' + PREVISIT]: () =>
+        json(
+          200,
+          previsitBody({
+            canOpenConsents: true,
+            requiredConsents: [
+              opened
+                ? item({ id: CONSENT, status: 'pending' })
+                : item({ id: null, status: 'missing' }),
+            ],
+          }),
+        ),
+      ['POST ' + PREVISIT + '/consents']: () => {
+        opened = true;
+        return json(200, { reservationId: RES, requiredConsents: [] });
+      },
+    });
+    expect(await screen.findByRole('button', { name: 'Sign' })).toBeInTheDocument();
+    expect(sent(m.seen, 'POST', PREVISIT + '/consents')).toHaveLength(1);
+  });
+
+  it('does not call the open POST when the visit is not confirmed (canOpenConsents false)', async () => {
+    const m = mount(`${HUB}/consents`, {
+      ['GET ' + PREVISIT]: () =>
+        json(
+          200,
+          previsitBody({
+            canOpenConsents: false,
+            requiredConsents: [
+              {
+                id: null,
+                templateKey: 'telehealth',
+                title: 'Telehealth consent',
+                text: 't',
+                status: 'missing',
+              },
+            ],
+          }),
+        ),
+    });
+    await screen.findByRole('heading', { name: 'Consent forms' });
+    expect(sent(m.seen, 'POST', PREVISIT + '/consents')).toHaveLength(0);
+  });
+
   it('has no axe violations', async () => {
     const m = mount(`${HUB}/consents`);
     await screen.findByRole('heading', { name: 'Consent forms' });

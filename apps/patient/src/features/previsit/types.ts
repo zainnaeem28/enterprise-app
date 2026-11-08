@@ -29,6 +29,8 @@ export interface Previsit {
   insurance: boolean;
   /** Present only if the API lists the required consents (the implemented route returns the three flags only). */
   consentItems: ConsentItem[] | undefined;
+  /** The API accepts the open-consents POST only while the visit is confirmed or checked in; otherwise it answers 404. */
+  canOpenConsents: boolean;
 }
 
 const STATUSES: readonly string[] = ['signed', 'pending', 'missing', 'outdated'];
@@ -68,6 +70,7 @@ export function parsePrevisit(d: unknown): Previsit | undefined {
     consents: o['consents'],
     insurance: o['insurance'],
     consentItems,
+    canOpenConsents: o['canOpenConsents'] === true,
   };
 }
 
