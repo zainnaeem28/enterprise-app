@@ -4,9 +4,9 @@
 -- copy, to scheduling.slot_reservation (which carried the unlocked scheduling copy and the commit re-check) and to the two
 -- notifications.staff_alert tables that had no guard at all. The attach runs as an owner step (21.2 point 5): the grant to
 -- app_owner exists only between the first step and the last, and the runner refuses the file if it is still there at commit.
--- The copy functions are dropped by 1601 (contract).
+-- The copy functions are dropped by 1605 (contract).
 
--- 1601 drops the copy functions as their owner, which needs USAGE on their schema; 1602 takes it back.
+-- 1605 drops the copy functions as their owner, which needs USAGE on their schema; 1606 takes it back.
 GRANT USAGE ON SCHEMA documents, telehealth TO patient_scope_owner;
 
 SET LOCAL ROLE patient_scope_owner;

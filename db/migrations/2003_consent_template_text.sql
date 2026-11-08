@@ -1,6 +1,6 @@
 -- migration-class: expand
 -- HEAAA-296 D3: consent wording on the template, the signed language on the consent row. Constraints are added NOT VALID here and
--- validated in 2001 (DEVOPS-PLAN 5.2). No DEFAULT anywhere: a missing language or wording is never invented.
+-- validated in 2004 (DEVOPS-PLAN 5.2). No DEFAULT anywhere: a missing language or wording is never invented.
 
 -- D3a: template wording and the patient read
 ALTER TABLE organisation.consent_template
