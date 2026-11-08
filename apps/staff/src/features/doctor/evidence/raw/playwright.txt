@@ -1,0 +1,19 @@
+
+Running 14 tests using 2 workers
+
+  ✓   2 [desktop] › src/features/doctor/e2e/doctor.spec.ts:392:1 › schedule lists my own visits and opens the chart (DR-01) (768ms)
+  ✓   1 [phone] › src/features/doctor/e2e/doctor.spec.ts:392:1 › schedule lists my own visits and opens the chart (DR-01) (784ms)
+  ✓   3 [desktop] › src/features/doctor/e2e/doctor.spec.ts:403:1 › chart summary and note: start, draft, sign with re-authentication, addendum (DR-03, DR-05, DR-06) (2.8s)
+  ✓   4 [phone] › src/features/doctor/e2e/doctor.spec.ts:403:1 › chart summary and note: start, draft, sign with re-authentication, addendum (DR-03, DR-05, DR-06) (2.9s)
+  ✓   5 [desktop] › src/features/doctor/e2e/doctor.spec.ts:449:1 › break the glass: refused until a reason is entered (DR-09) (1.6s)
+  ✓   6 [phone] › src/features/doctor/e2e/doctor.spec.ts:449:1 › break the glass: refused until a reason is entered (DR-09) (1.5s)
+  ✓   7 [desktop] › src/features/doctor/e2e/doctor.spec.ts:470:1 › alert tray: countdown, acknowledge, paused stream (UI-UX 7.4) (828ms)
+  ✓   8 [phone] › src/features/doctor/e2e/doctor.spec.ts:470:1 › alert tray: countdown, acknowledge, paused stream (UI-UX 7.4) (806ms)
+  ✓  10 [phone] › src/features/doctor/e2e/doctor.spec.ts:479:1 › alert tray shows the paused state when the stream is refused (798ms)
+  ✓   9 [desktop] › src/features/doctor/e2e/doctor.spec.ts:479:1 › alert tray shows the paused state when the stream is refused (846ms)
+  ✓  11 [phone] › src/features/doctor/e2e/doctor.spec.ts:489:1 › video and notes side by side (DR-04) (1.1s)
+  ✓  12 [desktop] › src/features/doctor/e2e/doctor.spec.ts:489:1 › video and notes side by side (DR-04) (1.2s)
+  ✓  13 [phone] › src/features/doctor/e2e/doctor.spec.ts:508:1 › co-sign queue (DR-07) (1.1s)
+  ✓  14 [desktop] › src/features/doctor/e2e/doctor.spec.ts:508:1 › co-sign queue (DR-07) (1.1s)
+
+  14 passed (10.2s)

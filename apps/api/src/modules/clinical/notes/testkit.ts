@@ -223,7 +223,9 @@ export async function setupNotes(name: string): Promise<NotesKit> {
     flow?: SchedulingFlowService;
     core?: SchedulingCoreService;
     alerts?: AlertService;
+    clock?: { at: Date | undefined };
   } = {};
+  holder.clock = { at: undefined };
   const lazy = <T extends object>(get: () => T): T =>
     new Proxy({} as T, {
       get: (_t, prop) => {
@@ -321,6 +323,8 @@ export async function setupNotes(name: string): Promise<NotesKit> {
           consentGate: frontdoor.consentGate,
           identity,
           ports: notePorts,
+          cursorKey: CURSOR_KEY,
+          now: () => (holder.clock as { at: Date | undefined }).at ?? new Date(),
         });
         holder.notes = notes;
         // Registered first: the chart's banner route and the front door's routes sit before the patient module's.
@@ -356,6 +360,7 @@ async function finish(
     flow?: SchedulingFlowService;
     core?: SchedulingCoreService;
     alerts?: AlertService;
+    clock?: { at: Date | undefined };
   },
   org: OrganisationService,
   lazy: <T extends object>(get: () => T) => T,
@@ -376,6 +381,19 @@ async function finish(
     ...NOTES_JOBS,
   ])
     if (!safeHas(k, j.name)) k.registry.defineJob(j);
+  // A stand-in for the handler of `audit.btg_opened` (the compliance alert, a later ticket): the event is published in the BTG
+  // transaction, and the read tests look for the job it creates (the chart's testkit does the same).
+  if (!safeHas(k, 'sink.on_btg_opened')) {
+    k.registry.defineJob({
+      name: 'sink.on_btg_opened',
+      maxAttempts: 3,
+      onMerged: 'resolve',
+      carriesPatientIds: true,
+      jobScope: 'patients',
+      jobClass: 'handler',
+    });
+    k.registry.registerHandler('audit.btg_opened', 'sink');
+  }
   registerSchedulingFlowHandlers(k.registry);
   registerFrontdoorHandlers(k.registry);
   const wc = new pg.Client({ connectionString: k.urlFor('app_worker') });
@@ -395,7 +413,7 @@ async function finish(
     queue: apiQueue,
   });
   holder.core = core;
-  const clock: { at: Date | undefined } = { at: undefined };
+  const clock = holder.clock as { at: Date | undefined };
   holder.alerts = new AlertService({ queue: apiQueue });
   holder.flow = new SchedulingFlowService({
     audit: k.audit,

@@ -18,6 +18,18 @@ BQ-8; PRD RA-R1-09, BR-09, BR-11, BR-12; TC-CL-01..07.
 
 Every response carries `patientBanner` (x-banner). The module also registers the `authored` assignment source (27.4).
 
+## Read routes (decision HEAAA-286, draft 8.3; `read.ts`, `cursor.ts`, migration `1803`)
+
+| Route                               | Permission (resolver)                      | Notes                                                                                                                                                                                                                                                                                                  |
+| ----------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET /clinicians/{id}/notes`        | `clinical.note.write` (`notes-clinician`)  | Own only (`{id}` = caller, else `403 auth.forbidden` before any transaction). Draft and pending notes, `COALESCE(updated_at, created_at) DESC, id DESC`                                                                                                                                                |
+| `GET /clinicians/{id}/cosign-queue` | `clinical.note.cosign` (`notes-clinician`) | Own only. `pending_cosign` with `cosign_required_from` = caller, `submitted_for_cosign_at, id`; index `note_cosign_queue_idx`                                                                                                                                                                          |
+| `GET /notes/{id}`                   | `clinical.note.write` (`note`)             | First basis that applies: `author`, `supervisor` (pending co-sign from the caller, or co-signed by the caller; never a draft), `btg`, `assigned`. Else `403 clinical.not_assigned` (audited `denied`, `NoteNotAssignedError.btgAvailable` from the caller's own `audit.btg.open`; not on the wire yet) |
+
+Cursors are HMAC-signed, bound to principal, route and status filter, and valid for 15 minutes; `NotesDeps.cursorKey` must be the same secret
+as `ChartDeps.cursorKey` (the composition root passes it; no clinical module is wired into `main.ts` yet). The closed audit action list of 22.2 has
+no `read` or `list`, so reads and lists are `view` events on `clinical.note` (`change.basis` for a read, `change.patientIds` for a list).
+
 ## Signing
 
 `sign` is declared with the write permission because a trainee has no `clinical.note.sign` (27.3) and still submits.

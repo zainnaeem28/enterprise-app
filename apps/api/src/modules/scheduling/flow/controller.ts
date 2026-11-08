@@ -22,7 +22,7 @@ import type { KernelDb, Tx } from '@ehr/kernel';
 import { ApiError } from '../../../platform/errors.js';
 import type { Req, Res } from '../../../platform/http.js';
 import { Route } from '../../../platform/route.js';
-import { requireAuthContext } from '../../identity/index.js';
+import { ForbiddenError, requireAuthContext } from '../../identity/index.js';
 import type { ResourceResolver } from '../../identity/index.js';
 import { ifMatchVersion } from '../../patient/index.js';
 import { SchedulingValidationError } from '../core/errors.js';
@@ -109,6 +109,12 @@ export function flowResolvers(): Record<string, ResourceResolver> {
       true,
       false,
     ),
+    // /clinicians/{id}/schedule: the clinician is a principal, not a place. Syntactic only, no query; the same for every caller. Own-only
+    // is the handler's, before it opens a transaction (decision HEAAA-286, SEC288-F06).
+    'flow-clinician': (req) => {
+      const id = pathId(req, 'clinicians');
+      return Promise.resolve(id === undefined ? undefined : {});
+    },
     // GET /waitlist?locationId=...: the place when given
     'flow-waitlist-query': async (req, _ctx, tx) => {
       const l = req.query['locationId'];
@@ -257,6 +263,43 @@ export function createFlowControllers(d: FlowControllerDeps): Type<unknown>[] {
       );
       res.setHeader('ETag', etag(e.version));
       send(res, 200, e);
+    }
+
+    @Get('clinicians/:id/schedule')
+    @Route({ permission: 'scheduling.booking.own_schedule', resolver: 'flow-clinician' })
+    async schedule(
+      @Param('id') id: string,
+      @ReqParam() req: Req,
+      @ResParam() res: Res,
+    ): Promise<void> {
+      const ctx = requireAuthContext(req);
+      // Own-only, and the grant at the named location, both before any transaction or query; one refusal for every case.
+      const loc = req.query['locationId'];
+      const date = req.query['date'];
+      const mine = ctx.session.principalId.toLowerCase() === id.toLowerCase();
+      const granted =
+        typeof loc === 'string' && isUuid(loc)
+          ? ctx.grants.has('scheduling.booking.own_schedule', loc.toLowerCase())
+          : true;
+      if (!mine || !granted) {
+        await d.flow.audit.recordDenied(d.db, ctx.scope, {
+          requestId: req.requestId ?? null,
+          resourceType: 'scheduling.route',
+          denialReason: 'forbidden',
+          ip: req.ip ?? null,
+          userAgent: req.header('user-agent') ?? null,
+        });
+        throw new ForbiddenError();
+      }
+      if (typeof loc !== 'string' || !isUuid(loc))
+        throw new SchedulingValidationError(['locationId']);
+      if (date !== undefined && typeof date !== 'string')
+        throw new SchedulingValidationError(['date']);
+      send(
+        res,
+        200,
+        await run(req, (tx) => d.flow.clinicianSchedule(tx, metaOf(req), id, loc, date)),
+      );
     }
 
     @Get('locations/:locationId/arrivals')

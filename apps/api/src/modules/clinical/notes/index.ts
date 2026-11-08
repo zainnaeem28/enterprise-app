@@ -3,7 +3,8 @@
 //   1. define NOTES_JOBS in the API's and the worker's JobRegistry (and sync queue task types);
 //   2. registerNotesParticipants() INSTEAD of registerFrontdoorParticipants(): the registry takes one clinical participant, and this
 //      composes the chart's, the front door's and this ticket's parts;
-//   3. API: createClinicalNotes({ db, audit, chart, consentGate: frontdoor.consentGate, identity, ports: createNotesPorts({...}) });
+//   3. API: createClinicalNotes({ db, audit, chart, consentGate: frontdoor.consentGate, identity, ports: createNotesPorts({...}), cursorKey });
+//      (cursorKey: the same secret as the chart's `ChartDeps.cursorKey`);
 //      register `controllers` (after the scheduling resolvers); it registers its resolvers (`reservation-body`, `encounter`, `note`) and
 //      the `authored` assignment source with the identity module;
 //   4. worker: a `clinical.note_sign_reminder` handler that calls `runNoteSignReminder` (outside this ticket's paths; README).
@@ -43,6 +44,8 @@ export {
   TRAINEE_ROLE,
   toNoteView,
 } from './notes.js';
+export { NoteReadService, LISTED_STATUSES } from './read.js';
+export type { NoteReadDeps } from './read.js';
 export { NoteReminderService } from './reminder.js';
 export type { ReminderOutcome } from './reminder.js';
 export { authoredSource, registerNotesAssignmentSources } from './assignment.js';
@@ -64,6 +67,7 @@ export {
 export {
   CosignNotSupervisorError,
   NoteLockedError,
+  NoteNotAssignedError,
   NoteUnsignedError,
   ReauthRequiredError,
 } from './errors.js';
@@ -71,6 +75,10 @@ export type {
   AddendumView,
   EncounterStatus,
   EncounterView,
+  NoteListItem,
+  NoteListPage,
+  NoteReadBasis,
+  NoteReadView,
   NoteSections,
   NoteStatus,
   NoteView,

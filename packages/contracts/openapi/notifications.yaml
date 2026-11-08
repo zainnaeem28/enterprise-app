@@ -19,7 +19,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/alert-settings
-          catalogueRow: 29.4#126
+          catalogueRow: 29.4#131
       security:
         - sessionCookie: []
       parameters:
@@ -94,7 +94,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/alert-settings
-          catalogueRow: 29.4#126
+          catalogueRow: 29.4#131
       security:
         - sessionCookie: []
       parameters:
@@ -180,7 +180,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/message-templates
-          catalogueRow: 29.4#125
+          catalogueRow: 29.4#130
       security:
         - sessionCookie: []
       parameters:
@@ -261,7 +261,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/message-templates
-          catalogueRow: 29.4#125
+          catalogueRow: 29.4#130
       security:
         - sessionCookie: []
       parameters:
@@ -353,7 +353,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/message-templates/{id}/publish
-          catalogueRow: 29.4#125
+          catalogueRow: 29.4#130
       security:
         - sessionCookie: []
       parameters:
@@ -439,7 +439,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/message-templates/{id}/render-check
-          catalogueRow: 29.4#125
+          catalogueRow: 29.4#130
       security:
         - sessionCookie: []
       parameters:

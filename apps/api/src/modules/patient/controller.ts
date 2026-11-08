@@ -483,6 +483,19 @@ export function createPatientControllers(d: PatientControllerDeps): Type<unknown
       send(res, 200, itemsOf(rows.map(profileBody)));
     }
 
+    @Post('patients/lookup')
+    @Route({ permission: 'patient.lookup', resolver: 'none' })
+    async lookup(@ReqParam() req: Req, @ResParam() res: Res): Promise<void> {
+      // The counter is the handler's first statement: 30 calls a minute per principal, a counter of its own (31.3, draft 8.3).
+      const hit = await d.limiter.hit(
+        `patient.lookup:${requireAuthContext(req).session.principalId}`,
+        30,
+        60_000,
+      );
+      if (!hit.allowed) throw new PatientRateLimitedError(hit.retryAfterSeconds);
+      send(res, 200, await run(req, (tx) => d.patients.lookup(tx, metaOf(req), req.body)));
+    }
+
     @Post('patients/match')
     @Route({ permission: 'patient.match', resolver: 'location-body' })
     async match(@ReqParam() req: Req, @ResParam() res: Res): Promise<void> {

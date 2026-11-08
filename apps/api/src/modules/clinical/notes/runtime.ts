@@ -13,6 +13,7 @@ import { registerNotesAssignmentSources } from './assignment.js';
 import { createNotesControllers, notesResolvers } from './controller.js';
 import { EncounterService } from './encounters.js';
 import { NoteService } from './notes.js';
+import { NoteReadService } from './read.js';
 import type { NotesPorts } from './ports.js';
 import { NoteReminderService } from './reminder.js';
 
@@ -26,12 +27,15 @@ export interface NotesDeps {
   consentGate: Pick<ConsentGateService, 'start'>;
   identity: Pick<Identity, 'policy' | 'assignment'>;
   ports: NotesPorts;
+  /** The HMAC key of the list cursors; the same secret as `ChartDeps.cursorKey` (decision HEAAA-286). */
+  cursorKey: string;
   now?: () => Date;
 }
 
 export interface ClinicalNotes {
   encounters: EncounterService;
   notes: NoteService;
+  reads: NoteReadService;
   reminder: NoteReminderService;
   controllers: Type<unknown>[];
 }
@@ -51,6 +55,15 @@ export function createClinicalNotes(deps: NotesDeps): ClinicalNotes {
     ports: deps.ports,
     ...nowDep,
   });
+  const reads = new NoteReadService({
+    db: deps.db,
+    audit,
+    denied: deps.audit,
+    access: deps.chart.access,
+    banner: deps.chart.banner,
+    cursorKey: deps.cursorKey,
+    ...nowDep,
+  });
   const reminder = new NoteReminderService({ alerts: deps.ports.alerts });
   for (const [name, fn] of Object.entries(notesResolvers()))
     deps.identity.policy.registerResolver(name, fn);
@@ -60,6 +73,8 @@ export function createClinicalNotes(deps: NotesDeps): ClinicalNotes {
     banner: deps.chart.banner,
     encounters,
     notes,
+    reads,
+    audit: deps.audit,
   });
-  return { encounters, notes, reminder, controllers };
+  return { encounters, notes, reads, reminder, controllers };
 }

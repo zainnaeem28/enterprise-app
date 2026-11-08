@@ -42,7 +42,10 @@ function setup(opts: {
             displayName: 'Dr Test',
             csrfToken: 'csrf-1',
             idleExpiresAt: idle,
-            roles: (opts.roles ?? ['doctor']).map((key) => ({ key })),
+            roles: (opts.roles ?? ['doctor']).map((key) => ({
+              key,
+              locationId: '22222222-2222-4222-8222-222222222222',
+            })),
             permissions: [],
             patients: [],
           }),
@@ -146,7 +149,7 @@ describe('session gate and role navigation', () => {
     ).toEqual(['Alerts', 'Schedule', 'Patients']);
     expect(within(phone).getByText('More')).toBeInTheDocument();
     await waitFor(() => expect(window.location.pathname).toBe('/schedule'));
-    expect(screen.getByRole('heading', { name: 'Schedule' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Schedule today' })).toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: 'Schedule' })[0]).toHaveAttribute(
       'aria-current',
       'page',

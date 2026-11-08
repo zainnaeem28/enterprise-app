@@ -13,13 +13,23 @@
 //
 // `sign` is declared with the WRITE permission because a trainee has no `clinical.note.sign` (27.3) and still submits; the service
 // decides between signing, submitting and refusing (an assistant). Every response carries the patient banner (x-banner).
-import { Controller, Param, Patch, Post, Req as ReqParam, Res as ResParam } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req as ReqParam,
+  Res as ResParam,
+} from '@nestjs/common';
 import type { Type } from '@nestjs/common';
 import type { KernelDb, Tx } from '@ehr/kernel';
 import { ApiError } from '../../../platform/errors.js';
 import type { Req, Res } from '../../../platform/http.js';
 import { Route } from '../../../platform/route.js';
-import { requireAuthContext } from '../../identity/index.js';
+import type { AuditService } from '../../audit/index.js';
+import { ForbiddenError, requireAuthContext } from '../../identity/index.js';
 import type { AuthContext, ResourceResolver } from '../../identity/index.js';
 import { ifMatchVersion } from '../../patient/index.js';
 import type { BannerService } from '../chart/banner.js';
@@ -28,15 +38,19 @@ import { etag, idempotentWrite, metaOf, send } from '../chart/http.js';
 import { isUuid } from '../chart/ids.js';
 import type { EncounterService } from './encounters.js';
 import type { NoteService } from './notes.js';
+import type { NoteReadService } from './read.js';
 
 export interface NotesControllerDeps {
   db: KernelDb;
   banner: BannerService;
   encounters: EncounterService;
   notes: NoteService;
+  reads: NoteReadService;
+  audit: Pick<AuditService, 'recordDenied'>;
 }
 
 const PATH_ENCOUNTER = /\/encounters\/([0-9a-f-]{36})(?:\/|$)/i;
+const PATH_CLINICIAN = /\/clinicians\/([0-9a-f-]{36})(?:\/|$)/i;
 const PATH_NOTE = /\/notes\/([0-9a-f-]{36})(?:\/|$)/i;
 
 /** Resolvers (27.1): the encounter or note named in the path, or the reservation named in the body, found through the caller's own RLS. */
@@ -65,6 +79,12 @@ export function notesResolvers(): Record<string, ResourceResolver> {
       return row === undefined
         ? undefined
         : { patientId: String(row['patient_id']), locationId: String(row['location_id']) };
+    },
+    // /clinicians/{id}/notes and /cosign-queue: the clinician is a principal, not a place. Syntactic only, no query; the same for every
+    // caller. Own-only is the handler's, before it opens a transaction (decision HEAAA-286, SEC288-F06).
+    'notes-clinician': (req) => {
+      const m = PATH_CLINICIAN.exec(req.path);
+      return Promise.resolve(m?.[1] !== undefined && isUuid(m[1]) ? {} : undefined);
     },
     note: async (req, _ctx, tx) => {
       const m = PATH_NOTE.exec(req.path);
@@ -184,8 +204,72 @@ export function createNotesControllers(d: NotesControllerDeps): Type<unknown>[] 
     }
   }
 
+  /** Own-only: another `{id}` is audited `denied` and refused with the one `403 auth.forbidden`, before any transaction or query. */
+  const ownOnly = async (req: Req, clinicianId: string): Promise<AuthContext> => {
+    const ctx = requireAuthContext(req);
+    if (ctx.session.principalId.toLowerCase() === clinicianId.toLowerCase()) return ctx;
+    await d.audit.recordDenied(d.db, ctx.scope, {
+      requestId: req.requestId ?? null,
+      resourceType: 'clinical.note',
+      denialReason: 'forbidden',
+      ip: req.ip ?? null,
+      userAgent: req.header('user-agent') ?? null,
+    });
+    throw new ForbiddenError();
+  };
+
+  @Controller('api/v1')
+  class ClinicianNotesController {
+    @Get('clinicians/:id/notes')
+    @Route({ permission: 'clinical.note.write', resolver: 'notes-clinician' })
+    async mine(
+      @Param('id') id: string,
+      @Query() q: Record<string, unknown>,
+      @ReqParam() req: Req,
+      @ResParam() res: Res,
+    ): Promise<void> {
+      const ctx = await ownOnly(req, id);
+      const out = await d.db.withScope(ctx.scope, (tx) =>
+        d.reads.listMine(tx, metaOf(req), {
+          status: q['status'],
+          limit: q['limit'],
+          cursor: q['cursor'],
+        }),
+      );
+      send(res, 200, out);
+    }
+
+    @Get('clinicians/:id/cosign-queue')
+    @Route({ permission: 'clinical.note.cosign', resolver: 'notes-clinician' })
+    async cosignQueue(
+      @Param('id') id: string,
+      @Query() q: Record<string, unknown>,
+      @ReqParam() req: Req,
+      @ResParam() res: Res,
+    ): Promise<void> {
+      const ctx = await ownOnly(req, id);
+      const out = await d.db.withScope(ctx.scope, (tx) =>
+        d.reads.cosignQueue(tx, metaOf(req), { limit: q['limit'], cursor: q['cursor'] }),
+      );
+      send(res, 200, out);
+    }
+  }
+
   @Controller('api/v1')
   class NoteController {
+    @Get('notes/:id')
+    @Route({ permission: 'clinical.note.write', resolver: 'note' })
+    async read(@Param('id') id: string, @ReqParam() req: Req, @ResParam() res: Res): Promise<void> {
+      const ctx = requireAuthContext(req);
+      const out = await d.db.withScope(ctx.scope, (tx) => d.reads.get(tx, ctx, metaOf(req), id));
+      send(
+        res,
+        200,
+        { ...out.note, patientBanner: out.patientBanner },
+        { ETag: etag(out.note.rowVersion) },
+      );
+    }
+
     @Patch('notes/:id')
     @Route({ permission: 'clinical.note.write', resolver: 'note' })
     async save(@Param('id') id: string, @ReqParam() req: Req, @ResParam() res: Res): Promise<void> {
@@ -274,5 +358,5 @@ export function createNotesControllers(d: NotesControllerDeps): Type<unknown>[] 
     }
   }
 
-  return [EncounterController, NoteController];
+  return [EncounterController, ClinicianNotesController, NoteController];
 }

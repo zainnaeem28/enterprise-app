@@ -1,0 +1,13 @@
+
+ RUN  v5.1.0 /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-125-sdlc-ticket-fe-10-doctor-portal-schedule-patient-list-chart-summary-note-editor-sign-addenda-co-sign-alert-tra/apps/staff
+
+
+ Test Files  9 passed (9)
+      Tests  106 passed (106)
+   Start at  10:24:12
+   Duration  4.96s (tests 45%, environment 39%, setup 8%, import 5%, transform 3%)
+
+Environment  jsdom was created 9 times · 4.94s total, 39% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+

@@ -20,10 +20,39 @@ const base = (over: Partial<RoleSeed>): RoleSeed => ({
   ...over,
 });
 
+const DOCTOR_PINNED = [
+  'audit.btg.open',
+  'calendar.link.own',
+  'clinical.alert.red_flag.receive',
+  'clinical.chart.read',
+  'clinical.chart.read_previsit',
+  'clinical.consultation.start',
+  'clinical.list.write',
+  'clinical.note.cosign',
+  'clinical.note.sign',
+  'clinical.note.write',
+  'clinical.referral.manage',
+  'clinical.terminology.search',
+  'clinical.triage.record',
+  'clinical.vitals.record',
+  'documents.read',
+  'documents.upload',
+  'messaging.task.manage',
+  'messaging.thread.patient',
+  'messaging.thread.staff',
+  'notifications.alert.acknowledge',
+  'notifications.alert.read',
+  'patient.lookup',
+  'scheduling.blocked_time.manage',
+  'scheduling.booking.own_schedule',
+  'scheduling.template.manage',
+  'telehealth.session.host',
+];
+
 describe('the 27.2 catalogue and the 27.3 default mapping as data (a Proposal until G2)', () => {
-  test('80 permissions, flags as in 27.2, and compliance slices only on the six slice permissions', () => {
-    assert.equal(PERMISSIONS.length, 80);
-    assert.equal(new Set(PERMISSIONS.map((p) => p.key)).size, 80);
+  test('81 permissions, flags as in 27.2, and compliance slices only on the six slice permissions', () => {
+    assert.equal(PERMISSIONS.length, 81);
+    assert.equal(new Set(PERMISSIONS.map((p) => p.key)).size, 81);
     const by = Object.fromEntries(PERMISSIONS.map((p) => [p.key, p]));
     assert.deepEqual(
       [by['identity.principal.kill']?.privileged, by['identity.principal.kill']?.needsElevation],
@@ -93,12 +122,24 @@ describe('the 27.2 catalogue and the 27.3 default mapping as data (a Proposal un
       'a privileged permission is never given to a staff-realm role',
     );
     assert.ok(
-      !doctor.some((k) => k.startsWith('patient.') || k.startsWith('identity.')),
-      'a doctor has no patient.* right in 27.3',
+      !doctor.some(
+        (k) => (k.startsWith('patient.') && k !== 'patient.lookup') || k.startsWith('identity.'),
+      ),
+      'a doctor has no patient.* right but patient.lookup (draft 8.3)',
     );
     const trainee = keys('trainee_doctor');
     assert.ok(!trainee.includes('clinical.note.sign') && !trainee.includes('audit.btg.open'));
     assert.equal(trainee.length, doctor.length - 2);
+    assert.deepEqual([...doctor].sort(), DOCTOR_PINNED, 'draft 8.3 FE10D pinned set (26 keys)');
+    assert.deepEqual(
+      [...trainee].sort(),
+      DOCTOR_PINNED.filter((k) => k !== 'audit.btg.open' && k !== 'clinical.note.sign'),
+      'trainee_doctor: the pinned set without audit.btg.open and clinical.note.sign (24 keys)',
+    );
+    assert.equal(DOCTOR_PINNED.length, 26);
+    for (const forbidden of ['patient.read', 'scheduling.check_in']) {
+      assert.ok(!doctor.includes(forbidden) && !trainee.includes(forbidden), forbidden);
+    }
     assert.deepEqual(keys('assistant'), [
       'clinical.chart.read',
       'clinical.list.write',

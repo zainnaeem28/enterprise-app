@@ -34,6 +34,7 @@ import { QUEUE_STAGES, TRIAGE_CATEGORIES } from './types.js';
 import type {
   ArrivalView,
   CheckInMethod,
+  ClinicianScheduleItem,
   CheckInResult,
   FlowMeta,
   NoShowCandidate,
@@ -76,12 +77,37 @@ const toQueueView = (r: Row, now: Date): QueueEntryView => ({
   version: Number(r['row_version']),
 });
 
+/** The clinician predicate of the own-schedule read (decision HEAAA-286): in the `WHERE` clause, not a post-filter. */
+export const CLINICIAN_PREDICATE = 'AND r.clinician_principal_id = $3::uuid';
+
+/** The arrivals query; with `ownClinician` it also carries {@link CLINICIAN_PREDICATE} (parameter `$3`). */
+export const arrivalsSql = (ownClinician: boolean): string =>
+  `SELECT r.id, r.patient_id, r.service_id, r.clinician_principal_id, r.mode, o.status, lower(o.period) AS starts_at,
+              upper(o.period) AS ends_at, (r.row_version + o.row_version) AS version, ci.checked_in_at, ci.method, q.stage,
+              (f.reservation_id IS NOT NULL) AS flagged, p.given_name, p.family_name, p.mrn
+         FROM scheduling.slot_reservation r
+         JOIN scheduling.slot_occupancy o ON o.id = r.id
+         JOIN organisation.location l ON l.id = r.location_id
+         LEFT JOIN scheduling.check_in ci ON ci.id = r.id
+         LEFT JOIN scheduling.queue_entry q ON q.id = r.id
+         LEFT JOIN scheduling.no_show_flag f ON f.reservation_id = r.id
+         LEFT JOIN patient.patient p ON p.id = r.patient_id
+        WHERE r.location_id = $1::uuid
+          AND o.status IN ('confirmed', 'checked_in', 'in_consultation', 'completed', 'no_show')
+          AND (lower(o.period) AT TIME ZONE l.time_zone)::date = $2::date
+          ${ownClinician ? CLINICIAN_PREDICATE : ''}
+        ORDER BY lower(o.period), r.id LIMIT 500`;
+
 export class SchedulingFlowService {
   readonly waitlist: WaitlistService;
   readonly previsit: PrevisitService;
   readonly notices: NoticeService;
 
+  /** The audit service, for the controller's own-only refusal (a property read, not a call into the flow). */
+  readonly audit: FlowDeps['audit'];
+
   constructor(private readonly deps: FlowDeps) {
+    this.audit = deps.audit;
     this.previsit = new PrevisitService(deps);
     this.notices = new NoticeService(deps);
     this.waitlist = new WaitlistService(deps);
@@ -246,23 +272,7 @@ export class SchedulingFlowService {
     const today = await localDate(tx, loc, now);
     if (today === undefined) throw new ReservationNotFoundError();
     const day = date ?? today.date;
-    const r = await tx.query(
-      `SELECT r.id, r.patient_id, r.service_id, r.clinician_principal_id, r.mode, o.status, lower(o.period) AS starts_at,
-              upper(o.period) AS ends_at, (r.row_version + o.row_version) AS version, ci.checked_in_at, ci.method, q.stage,
-              (f.reservation_id IS NOT NULL) AS flagged, p.given_name, p.family_name, p.mrn
-         FROM scheduling.slot_reservation r
-         JOIN scheduling.slot_occupancy o ON o.id = r.id
-         JOIN organisation.location l ON l.id = r.location_id
-         LEFT JOIN scheduling.check_in ci ON ci.id = r.id
-         LEFT JOIN scheduling.queue_entry q ON q.id = r.id
-         LEFT JOIN scheduling.no_show_flag f ON f.reservation_id = r.id
-         LEFT JOIN patient.patient p ON p.id = r.patient_id
-        WHERE r.location_id = $1::uuid
-          AND o.status IN ('confirmed', 'checked_in', 'in_consultation', 'completed', 'no_show')
-          AND (lower(o.period) AT TIME ZONE l.time_zone)::date = $2::date
-        ORDER BY lower(o.period), r.id LIMIT 500`,
-      [loc, day],
-    );
+    const r = await tx.query(arrivalsSql(false), [loc, day]);
     const graces = new Map<string, number>();
     const out: ArrivalView[] = [];
     for (const x of r.rows as Row[]) {
@@ -307,6 +317,48 @@ export class SchedulingFlowService {
       });
     }
     return out;
+  }
+
+  /**
+   * `GET /clinicians/{id}/schedule?locationId&date` (draft 8.3, FE-10): the clinician's own reservations of one location-day. The same
+   * query as `arrivals` plus the clinician predicate; no pre-visit lookups; only the fields of `ClinicianScheduleItem`. Audited as one
+   * `view` with the patient IDs returned (at most the 500 rows of the query).
+   */
+  async clinicianSchedule(
+    tx: Tx,
+    meta: FlowMeta,
+    clinicianId: string,
+    locationId: string,
+    date?: string,
+  ): Promise<{ items: ClinicianScheduleItem[]; timeZone: string }> {
+    if (!isUuid(locationId)) throw new SchedulingValidationError(['locationId']);
+    if (date !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(date))
+      throw new SchedulingValidationError(['date']);
+    const loc = locationId.toLowerCase();
+    const today = await localDate(tx, loc, this.now());
+    if (today === undefined) throw new ReservationNotFoundError();
+    const day = date ?? today.date;
+    const r = await tx.query(arrivalsSql(true), [loc, day, clinicianId.toLowerCase()]);
+    const items: ClinicianScheduleItem[] = (r.rows as Row[]).map((x) => ({
+      reservationId: String(x['id']),
+      patientId: String(x['patient_id']),
+      patientName: name(x),
+      mrn: x['mrn'] === null || x['mrn'] === undefined ? null : String(x['mrn']),
+      serviceId: String(x['service_id']),
+      mode: x['mode'] as 'in_person' | 'video',
+      status: String(x['status']) as ClinicianScheduleItem['status'],
+      startsAt: iso(x['starts_at']),
+      endsAt: iso(x['ends_at']),
+      checkedInAt: isoOrNull(x['checked_in_at']),
+      queueStage: (x['stage'] as QueueStage | null) ?? null,
+    }));
+    await record(this.deps, tx, meta, {
+      action: 'view',
+      resourceType: 'scheduling.reservation',
+      locationId: loc,
+      change: { patientIds: [...new Set(items.map((i) => i.patientId))] },
+    });
+    return { items, timeZone: today.timeZone };
   }
 
   // ===== queue (29.3) ==================================================================================================

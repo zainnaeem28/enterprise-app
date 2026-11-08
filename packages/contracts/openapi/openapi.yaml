@@ -316,6 +316,12 @@ paths:
     $ref: ./scheduling.yaml#/paths/~1api~1v1~1clinicians~1{id}~1availability-templates~1{templateId}
   /api/v1/clinicians/{id}/blocked-times:
     $ref: ./scheduling.yaml#/paths/~1api~1v1~1clinicians~1{id}~1blocked-times
+  /api/v1/clinicians/{id}/cosign-queue:
+    $ref: ./clinical.yaml#/paths/~1api~1v1~1clinicians~1{id}~1cosign-queue
+  /api/v1/clinicians/{id}/notes:
+    $ref: ./clinical.yaml#/paths/~1api~1v1~1clinicians~1{id}~1notes
+  /api/v1/clinicians/{id}/schedule:
+    $ref: ./scheduling.yaml#/paths/~1api~1v1~1clinicians~1{id}~1schedule
   /api/v1/consents/{consentId}/sign:
     $ref: ./patient.yaml#/paths/~1api~1v1~1consents~1{consentId}~1sign
   /api/v1/deletion-requests/{id}/decide:
@@ -444,6 +450,8 @@ paths:
     $ref: ./clinical.yaml#/paths/~1api~1v1~1patients~1{patientId}~1referrals
   /api/v1/patients/{patientId}/threads:
     $ref: ./messaging.yaml#/paths/~1api~1v1~1patients~1{patientId}~1threads
+  /api/v1/patients/lookup:
+    $ref: ./patient.yaml#/paths/~1api~1v1~1patients~1lookup
   /api/v1/patients/match:
     $ref: ./patient.yaml#/paths/~1api~1v1~1patients~1match
   /api/v1/patients/search:
