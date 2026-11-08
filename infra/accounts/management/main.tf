@@ -124,7 +124,7 @@ data "aws_iam_policy_document" "guardrails" {
     resources = ["*"]
   }
   statement {
-    sid    = "DenyDeletingBackupVaultAndLogArchive"
+    sid    = "DenyDeletingBackupVaultAndRecoveryPoints"
     effect = "Deny"
     actions = [
       "backup:DeleteBackupVault", "backup:DeleteBackupVaultLockConfiguration",
@@ -242,9 +242,16 @@ data "aws_iam_policy_document" "control_plane" {
 
 resource "aws_organizations_policy" "guardrails" {
   name        = "ehr-guardrails"
-  description = "Deny disabling CloudTrail/GuardDuty/Config, deleting the log vault, leaving the organisation."
+  description = "Deny disabling CloudTrail/GuardDuty/Config, deleting backup vaults and recovery points, leaving the organisation."
   type        = "SERVICE_CONTROL_POLICY"
   content     = data.aws_iam_policy_document.guardrails.json
+
+  lifecycle {
+    precondition {
+      condition     = length(data.aws_iam_policy_document.guardrails.minified_json) <= 5120
+      error_message = "Rendered SCP exceeds the 5,120-character AWS limit."
+    }
+  }
 }
 
 resource "aws_organizations_policy" "region_restriction" {
@@ -252,6 +259,13 @@ resource "aws_organizations_policy" "region_restriction" {
   description = "Two US regions plus named us-east-1 exemptions (C-12, UNVERIFIED list)."
   type        = "SERVICE_CONTROL_POLICY"
   content     = data.aws_iam_policy_document.region_restriction.json
+
+  lifecycle {
+    precondition {
+      condition     = length(data.aws_iam_policy_document.region_restriction.minified_json) <= 5120
+      error_message = "Rendered SCP exceeds the 5,120-character AWS limit."
+    }
+  }
 }
 
 resource "aws_organizations_policy" "control_plane" {
@@ -259,6 +273,13 @@ resource "aws_organizations_policy" "control_plane" {
   description = "Only platform-admin-apply may change approvals, pipeline-role trust and org policies."
   type        = "SERVICE_CONTROL_POLICY"
   content     = data.aws_iam_policy_document.control_plane.json
+
+  lifecycle {
+    precondition {
+      condition     = length(data.aws_iam_policy_document.control_plane.minified_json) <= 5120
+      error_message = "Rendered SCP exceeds the 5,120-character AWS limit."
+    }
+  }
 }
 
 # Attached to the organisation root only when attach_scps = true (human decision after C-12 verification).

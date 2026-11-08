@@ -72,6 +72,59 @@ resource "aws_s3_bucket_ownership_controls" "replica" {
   rule { object_ownership = "BucketOwnerEnforced" }
 }
 
+resource "aws_s3_bucket_lifecycle_configuration" "replica" {
+  provider = aws.recovery
+  bucket   = aws_s3_bucket.replica.id
+  rule {
+    id     = "expire-noncurrent-state"
+    status = "Enabled"
+    filter {}
+    noncurrent_version_expiration { noncurrent_days = 365 }
+    abort_incomplete_multipart_upload { days_after_initiation = 7 }
+  }
+}
+
+data "aws_iam_policy_document" "replica_bucket" {
+  statement {
+    sid       = "DenyInsecureTransport"
+    effect    = "Deny"
+    actions   = ["s3:*"]
+    resources = [aws_s3_bucket.replica.arn, "${aws_s3_bucket.replica.arn}/*"]
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values   = ["false"]
+    }
+  }
+
+  statement {
+    sid       = "DenyOutsideOrganization"
+    effect    = "Deny"
+    actions   = ["s3:*"]
+    resources = [aws_s3_bucket.replica.arn, "${aws_s3_bucket.replica.arn}/*"]
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+    condition {
+      test     = "StringNotEquals"
+      variable = "aws:PrincipalOrgID"
+      values   = [var.organization_id]
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "replica" {
+  provider   = aws.recovery
+  bucket     = aws_s3_bucket.replica.id
+  policy     = data.aws_iam_policy_document.replica_bucket.json
+  depends_on = [aws_s3_bucket_public_access_block.replica, aws_s3_bucket_replication_configuration.state]
+}
+
 # ---- primary state bucket --------------------------------------------------
 
 resource "aws_s3_bucket" "state" {
@@ -201,9 +254,15 @@ data "aws_iam_policy_document" "state_bucket" {
 }
 
 resource "aws_s3_bucket_policy" "state" {
-  bucket     = aws_s3_bucket.state.id
-  policy     = data.aws_iam_policy_document.state_bucket.json
-  depends_on = [aws_s3_bucket_public_access_block.state]
+  bucket = aws_s3_bucket.state.id
+  policy = data.aws_iam_policy_document.state_bucket.json
+  depends_on = [
+    aws_s3_bucket_public_access_block.state,
+    aws_s3_bucket_versioning.state,
+    aws_s3_bucket_server_side_encryption_configuration.state,
+    aws_s3_bucket_lifecycle_configuration.state,
+    aws_s3_bucket_replication_configuration.state,
+  ]
 }
 
 # ---- replication -----------------------------------------------------------
@@ -281,3 +340,8 @@ resource "aws_s3_bucket_replication_configuration" "state" {
 
   depends_on = [aws_s3_bucket_versioning.state, aws_s3_bucket_versioning.replica]
 }
+
+# Applied last: the bucket policy denies administration to everyone but platform-admin,
+# so every other bucket configuration is created before it can restrict the applier.
+# The first apply must still be run as the platform-admin role (see README).
+
