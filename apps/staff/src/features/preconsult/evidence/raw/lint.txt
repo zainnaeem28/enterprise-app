@@ -1,0 +1,2 @@
+## eslint apps/staff/src/features/preconsult
+exit 0

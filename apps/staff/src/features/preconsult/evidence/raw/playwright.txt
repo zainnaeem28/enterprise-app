@@ -1,0 +1,22 @@
+
+Running 16 tests using 2 workers
+
+  ✓   1 [phone] › src/features/preconsult/e2e/preconsult.spec.ts:454:1 › arrivals board: pre-visit items, check-in from the board, and an accessible page (1.4s)
+  ✓   2 [desktop] › src/features/preconsult/e2e/preconsult.spec.ts:454:1 › arrivals board: pre-visit items, check-in from the board, and an accessible page (1.4s)
+  ✓   3 [phone] › src/features/preconsult/e2e/preconsult.spec.ts:472:1 › check in: patient search, and the daily QR code (1.2s)
+  ✓   4 [desktop] › src/features/preconsult/e2e/preconsult.spec.ts:472:1 › check in: patient search, and the daily QR code (1.2s)
+  ✓   5 [phone] › src/features/preconsult/e2e/preconsult.spec.ts:489:1 › queue: waiting time and stage; then triage with vitals, out-of-range text and the red-flag bar (1.0s)
+  ✓   7 [phone] › src/features/preconsult/e2e/preconsult.spec.ts:540:1 › allergy block shows "not shown" for a role without the chart read, never "none" (271ms)
+  ✓   8 [phone] › src/features/preconsult/e2e/preconsult.spec.ts:551:1 › forms review: to do, done and withdrawn in words (719ms)
+  ✓   6 [desktop] › src/features/preconsult/e2e/preconsult.spec.ts:489:1 › queue: waiting time and stage; then triage with vitals, out-of-range text and the red-flag bar (2.3s)
+  ✓  10 [desktop] › src/features/preconsult/e2e/preconsult.spec.ts:540:1 › allergy block shows "not shown" for a role without the chart read, never "none" (343ms)
+  ✓   9 [phone] › src/features/preconsult/e2e/preconsult.spec.ts:561:1 › registration: duplicate warning shows only visible fields and needs a reason to create anyway (1.1s)
+  ✓  11 [desktop] › src/features/preconsult/e2e/preconsult.spec.ts:551:1 › forms review: to do, done and withdrawn in words (786ms)
+  ✓  12 [phone] › src/features/preconsult/e2e/preconsult.spec.ts:590:1 › merge: an unauthorised user sees no merge action; a lead requests and a second person approves (1.4s)
+  ✓  13 [desktop] › src/features/preconsult/e2e/preconsult.spec.ts:561:1 › registration: duplicate warning shows only visible fields and needs a reason to create anyway (1.1s)
+  ✓  14 [phone] › src/features/preconsult/e2e/preconsult.spec.ts:624:1 › follow-ups and no-shows (1.2s)
+  ✓  15 [desktop] › src/features/preconsult/e2e/preconsult.spec.ts:590:1 › merge: an unauthorised user sees no merge action; a lead requests and a second person approves (1.4s)
+  ✓  16 [desktop] › src/features/preconsult/e2e/preconsult.spec.ts:624:1 › follow-ups and no-shows (1.1s)
+
+  16 passed (10.9s)
+exit 0

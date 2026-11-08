@@ -1,0 +1,89 @@
+.ehr-auth {
+  max-width: 36rem;
+}
+.ehr-auth .ehr-btn {
+  display: inline-block;
+  text-decoration: none;
+}
+.ehr-nav {
+  border-bottom: 1px solid currentColor;
+}
+.ehr-nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ehr-nav__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+}
+.ehr-nav__link,
+.ehr-nav__more > summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 0.5rem;
+  cursor: pointer;
+}
+.ehr-nav__link[aria-current='page'] {
+  font-weight: 700;
+  text-decoration: underline;
+}
+.ehr-nav__list--phone {
+  display: none;
+}
+@media (max-width: 639px) {
+  .ehr-nav {
+    position: fixed;
+    inset: auto 0 0 0;
+    background: Canvas;
+    border-top: 1px solid currentColor;
+    border-bottom: 0;
+    z-index: 5;
+  }
+  .ehr-nav__list--wide {
+    display: none;
+  }
+  .ehr-nav__list--phone {
+    display: flex;
+    flex-wrap: nowrap;
+  }
+  .ehr-nav__list--phone > li {
+    flex: 1 1 0;
+    min-width: 0;
+    text-align: center;
+  }
+  .ehr-nav__list--phone .ehr-nav__link,
+  .ehr-nav__list--phone .ehr-nav__more > summary {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    padding: 0 0.25rem;
+    box-sizing: border-box;
+    font-size: 0.875rem;
+    line-height: 1.2;
+  }
+  .ehr-nav__more > ul {
+    position: absolute;
+    right: 0;
+    bottom: 44px;
+    width: max-content;
+    min-width: 11rem;
+    text-align: left;
+    background: Canvas;
+    border: 1px solid currentColor;
+    padding: 0.25rem;
+  }
+  .ehr-nav__more {
+    position: relative;
+  }
+  .ehr-main {
+    padding-bottom: 5rem;
+  }
+}
+
+.ehr-help {
+  padding: 0.75rem 1rem;
+  margin: 0;
+}

@@ -1,0 +1,15 @@
+
+Running 10 tests using 2 workers
+
+  ✓   2 [phone] › src/features/auth/e2e/auth.spec.ts:76:1 › sign-in offers Continue with Google only and the plain contact-IT message (1.2s)
+  ✓   1 [desktop] › src/features/auth/e2e/auth.spec.ts:76:1 › sign-in offers Continue with Google only and the plain contact-IT message (1.2s)
+  ✓   3 [phone] › src/features/auth/e2e/auth.spec.ts:97:1 › a visitor who is not signed in is sent to sign-in with a known screen path only (570ms)
+  ✓   4 [desktop] › src/features/auth/e2e/auth.spec.ts:97:1 › a visitor who is not signed in is sent to sign-in with a known screen path only (577ms)
+  ✓   6 [desktop] › src/features/auth/e2e/auth.spec.ts:107:1 › a doctor sees the Doctor navigation; front desk sees Pre-consultation (1.4s)
+  ✓   5 [phone] › src/features/auth/e2e/auth.spec.ts:107:1 › a doctor sees the Doctor navigation; front desk sees Pre-consultation (1.5s)
+  ✓   8 [phone] › src/features/auth/e2e/auth.spec.ts:143:1 › idle warning, stay signed in, sign out and the signed-out screen (3.7s)
+  ✓   7 [desktop] › src/features/auth/e2e/auth.spec.ts:143:1 › idle warning, stay signed in, sign out and the signed-out screen (3.8s)
+  ✓   9 [phone] › src/features/auth/e2e/auth.spec.ts:166:1 › the session ending shows the signed-out dialog and returns to the same screen after sign-in (3.3s)
+  ✓  10 [desktop] › src/features/auth/e2e/auth.spec.ts:166:1 › the session ending shows the signed-out dialog and returns to the same screen after sign-in (3.3s)
+
+  10 passed (11.4s)

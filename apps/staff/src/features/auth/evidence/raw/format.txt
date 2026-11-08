@@ -1,0 +1,4 @@
+Checking formatting...
+[warn] src/features/auth/evidence/MANIFEST.md
+[warn] src/features/auth/evidence/playwright-report.json
+[warn] Code style issues found in 2 files. Run Prettier with --write to fix.
