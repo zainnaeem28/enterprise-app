@@ -191,8 +191,8 @@ export class OrganisationService {
     );
     if (updated.rows.length > 0) return;
     await tx.query(
-      `INSERT INTO kernel.setting (id, organisation_id, key, value, value_schema, location_id, pre_auth, created_by)
-       VALUES ($1, $2, $3, $4::jsonb, $5, $6, false, $7)`,
+      `INSERT INTO kernel.setting (id, organisation_id, key, value, value_schema, location_id, created_by)
+       VALUES ($1, $2, $3, $4::jsonb, $5, $6, $7)`,
       [
         uuidv7(),
         tx.scope.orgId,

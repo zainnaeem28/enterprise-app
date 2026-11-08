@@ -18,6 +18,8 @@ export {
 export type { LockMode, ScopeOptions } from './scope/with-scope.js';
 export { ScopeError, buildScopeStatement } from './scope/settings.js';
 export type { AuthIdentity, ScopeSettings } from './scope/settings.js';
+export { applyOnMerged, JobPatientMergedError } from './queue/on-merged.js';
+export type { PatientState } from './queue/on-merged.js';
 export { checkLockOrder, checkSignInCallSites } from './scope/lock-order-check.js';
 export type { Violation } from './scope/lock-order-check.js';
 export { canonicalJson, requestHash } from './idempotency/hash.js';
