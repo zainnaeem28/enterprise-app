@@ -602,7 +602,9 @@ export class PatientRecordsService {
       if (c === undefined) {
         // FOR UPDATE only sees rows the UPDATE policy lets through (pending, signed); a withdrawn or superseded row is still
         // readable by its owner and is "not pending", not "not found" (HEAAA-296 acceptance 2c).
-        const seen = await tx.query(`SELECT 1 FROM patient.consent WHERE id = $1::uuid`, [consentId]);
+        const seen = await tx.query(`SELECT 1 FROM patient.consent WHERE id = $1::uuid`, [
+          consentId,
+        ]);
         throw seen.rows.length === 0 ? new PatientNotFoundError() : new ConsentNotPendingError();
       }
       if (c['status'] !== 'pending') throw new ConsentNotPendingError();

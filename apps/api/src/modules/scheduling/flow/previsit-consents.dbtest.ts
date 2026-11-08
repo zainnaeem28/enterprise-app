@@ -905,10 +905,9 @@ describe('migration and wording hygiene (HEAAA-296 D3, rules 5-8)', () => {
     assert.ok(body?.includes(marker), 'the GET carries the wording');
     assert.ok(!captured.join('').includes(marker), 'log output');
     assert.equal(
-      await count(
-        `SELECT count(*) AS n FROM audit.event e WHERE to_jsonb(e)::text LIKE $1`,
-        [`%${marker}%`],
-      ),
+      await count(`SELECT count(*) AS n FROM audit.event e WHERE to_jsonb(e)::text LIKE $1`, [
+        `%${marker}%`,
+      ]),
       0,
       'audit payloads',
     );
