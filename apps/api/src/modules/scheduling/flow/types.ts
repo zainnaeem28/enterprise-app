@@ -33,6 +33,23 @@ export interface Previsit {
   insurance: boolean;
 }
 
+/** One consent the service requires, as the patient sees it (HEAAA-296 D1). `id` is the pending patient.consent row, else null. */
+export interface PrevisitRequiredConsent {
+  id: string | null;
+  templateKey: string;
+  templateVersion: number;
+  language: string;
+  title: string | null;
+  text: string | null;
+  status: 'signed' | 'pending' | 'missing' | 'outdated';
+}
+
+/** `GET /appointments/{reservationId}/previsit`. `requiredConsents` is null for a proxy caller (D-7: a proxy neither sees nor signs consents). */
+export interface PrevisitView extends Previsit {
+  reservationId: string;
+  requiredConsents: PrevisitRequiredConsent[] | null;
+}
+
 /**
  * What the check-in asks of the modules that do not exist yet in this build (clinical, BE-18): which consent templates a service
  * requires, and whether the pre-visit questionnaire is complete. Both are optional. Without a source a service requires no consent

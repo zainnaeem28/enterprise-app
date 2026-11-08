@@ -1723,11 +1723,31 @@ export interface paths {
     };
     /**
      * GET /api/v1/appointments/{reservationId}/previsit
-     * @description my.: Questionnaire (template + response), required consents and their status, insurance status
+     * @description my.: Questionnaire (template + response), required consents and their status, insurance status. Read-only: it never creates a row. requiredConsents is null for a proxy caller.
      */
     get: operations['getAppointmentsByReservationIdPrevisit'];
     put?: never;
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/appointments/{reservationId}/previsit/consents': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * POST /api/v1/appointments/{reservationId}/previsit/consents
+     * @description my.: Opens a pending consent for each required template that is missing or outdated (idempotent) and returns the GET previsit body read after the writes. Allowed while the occupancy is confirmed or checked_in, otherwise 404. A proxy gets 403 auth.forbidden (D-7).
+     */
+    post: operations['postAppointmentsByReservationIdPrevisitConsents'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4624,6 +4644,30 @@ export interface components {
     PostAppointmentsByReservationIdCancelRequest: {
       reason?: string;
       acceptFee?: boolean;
+    };
+    PrevisitRequiredConsent: {
+      /** @description The pending patient.consent id; null unless status is pending. */
+      id: string | null;
+      templateKey: string;
+      /** @description The latest published version (the one required). */
+      templateVersion: number;
+      /** @description Language of title and text actually returned. */
+      language: string;
+      title: string | null;
+      /** @description Plain text, never HTML. Null only for a version published before the wording was stored. */
+      text: string | null;
+      /** @enum {string} */
+      status: 'signed' | 'pending' | 'missing' | 'outdated';
+    };
+    /** @description Pre-visit status. requiredConsents is null when the caller is a proxy for the patient (a proxy neither sees nor signs consents). */
+    GetAppointmentsByReservationIdPrevisitResponse: {
+      /** Format: uuid */
+      reservationId: string;
+      questionnaire: boolean;
+      /** @description Every required template is signed in its latest published version. */
+      consents: boolean;
+      insurance: boolean;
+      requiredConsents: null | components['schemas']['PrevisitRequiredConsent'][];
     };
     PostAppointmentsByReservationIdRescheduleRequest: {
       /** Format: uuid */
@@ -10646,7 +10690,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['OpaqueObject'];
+          'application/json': components['schemas']['GetAppointmentsByReservationIdPrevisitResponse'];
         };
       };
       /** @description Codes: kernel.client_release_unsupported, kernel.validation_failed. */
@@ -10658,6 +10702,57 @@ export interface operations {
       /** @description Codes: kernel.not_found. */
       404: components['responses']['Error404'];
       /** @description Codes: patient.merged. */
+      409: components['responses']['Error409'];
+      /** @description Codes: kernel.rate_limited. */
+      429: components['responses']['Error429'];
+      /** @description Codes: kernel.unavailable. */
+      503: components['responses']['Error503'];
+      /** @description Codes: kernel.timeout. */
+      504: components['responses']['Error504'];
+    };
+  };
+  postAppointmentsByReservationIdPrevisitConsents: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description r<releaseNumber>.<gitSha12>, for example r142.3f9a1c2b7d10, sent by every portal bundle on every /api/* call (28.6). Missing, malformed or releaseNumber < min_client_release is refused with 400 kernel.client_release_unsupported before any session lookup. */
+        'X-Client-Release': components['parameters']['ClientRelease'];
+        /** @description UUID v4 or v7. Required on every portal POST marked "Idem" (28.3). Missing: 400 kernel.idempotency_key_required. Same key and request hash replays the stored response; same key with a different hash: 409 kernel.idempotency_conflict. */
+        'Idempotency-Key': components['parameters']['IdempotencyKey'];
+      };
+      path: {
+        reservationId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': Record<string, never>;
+      };
+    };
+    responses: {
+      /** @description Success (200) */
+      200: {
+        headers: {
+          'X-Request-Id': components['headers']['XRequestId'];
+          'Cache-Control': components['headers']['CacheNoStore'];
+          'X-Session-Idle-Expires-At': components['headers']['XSessionIdleExpiresAt'];
+          'Idempotent-Replay': components['headers']['IdempotentReplay'];
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GetAppointmentsByReservationIdPrevisitResponse'];
+        };
+      };
+      /** @description Codes: kernel.client_release_unsupported, kernel.idempotency_key_required, kernel.validation_failed. */
+      400: components['responses']['Error400'];
+      /** @description Codes: auth.unauthenticated. */
+      401: components['responses']['Error401'];
+      /** @description Codes: auth.forbidden. */
+      403: components['responses']['Error403'];
+      /** @description Codes: kernel.not_found. */
+      404: components['responses']['Error404'];
+      /** @description Codes: kernel.idempotency_conflict, patient.merged. */
       409: components['responses']['Error409'];
       /** @description Codes: kernel.rate_limited. */
       429: components['responses']['Error429'];

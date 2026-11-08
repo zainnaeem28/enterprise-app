@@ -469,11 +469,65 @@ describe('organisation module on PostgreSQL 17 (BE-03)', () => {
           `UPDATE organisation.consent_template SET body_document_id = $2 WHERE id = $1`,
           [id(81), id(82)],
         );
+      });
+      // HEAAA-296 D3: a version cannot be published without its title and wording
+      await rejectsCode(
+        db.withScope(admin, (tx) =>
+          tx.query(`UPDATE organisation.consent_template SET status = 'published' WHERE id = $1`, [
+            id(81),
+          ]),
+        ),
+        '23514',
+        'published needs title and body_text',
+      );
+      await rejectsCode(
+        db.withScope(admin, (tx) =>
+          tx.query(
+            `INSERT INTO organisation.consent_template (id, organisation_id, key, version, language, status, title, body_text) VALUES ($1, $2, 'blank', 1, 'en', 'published', 'Blank', null)`,
+            [id(87), ORG],
+          ),
+        ),
+        '23514',
+        'published insert without body_text',
+      );
+      await rejectsCode(
+        db.withScope(admin, (tx) =>
+          tx.query(
+            `INSERT INTO organisation.consent_template (id, organisation_id, key, version, language, status, title, body_text) VALUES ($1, $2, 'blank', 1, 'en', 'draft', '  ', 'x')`,
+            [id(88), ORG],
+          ),
+        ),
+        '23514',
+        'title must not be blank',
+      );
+      await db.withScope(admin, async (tx) => {
+        await tx.query(
+          `UPDATE organisation.consent_template SET title = 'Treatment', body_text = 'Placeholder wording (test data).' WHERE id = $1`,
+          [id(81)],
+        );
         await tx.query(
           `UPDATE organisation.consent_template SET status = 'published' WHERE id = $1`,
           [id(81)],
         );
       });
+      await rejectsCode(
+        db.withScope(admin, (tx) =>
+          tx.query(`UPDATE organisation.consent_template SET body_text = 'changed' WHERE id = $1`, [
+            id(81),
+          ]),
+        ),
+        '42501',
+        'edit published body_text',
+      );
+      await rejectsCode(
+        db.withScope(admin, (tx) =>
+          tx.query(`UPDATE organisation.consent_template SET title = 'changed' WHERE id = $1`, [
+            id(81),
+          ]),
+        ),
+        '42501',
+        'edit published title',
+      );
       await rejectsCode(
         db.withScope(admin, (tx) =>
           tx.query(`UPDATE organisation.consent_template SET body_document_id = $2 WHERE id = $1`, [
@@ -545,7 +599,7 @@ describe('organisation module on PostgreSQL 17 (BE-03)', () => {
       assert.equal(t?.version, 1);
       await db.withScope(admin, async (tx) => {
         await tx.query(
-          `INSERT INTO organisation.consent_template (id, organisation_id, key, version, language, body_document_id, status) VALUES ($1, $2, 'privacy', 1, 'en', $3, 'published'), ($4, $2, 'privacy', 2, 'en', $3, 'published')`,
+          `INSERT INTO organisation.consent_template (id, organisation_id, key, version, language, title, body_text, body_document_id, status) VALUES ($1, $2, 'privacy', 1, 'en', 'Privacy', 'Placeholder wording v1 (test data).', $3, 'published'), ($4, $2, 'privacy', 2, 'en', 'Privacy', 'Placeholder wording v2 (test data).', $3, 'published')`,
           [id(85), ORG, doc, id(86)],
         );
         await tx.query(
@@ -557,6 +611,41 @@ describe('organisation module on PostgreSQL 17 (BE-03)', () => {
       assert.deepEqual(
         req.map((x) => [x.key, x.version]),
         [['privacy', 2]],
+      );
+      // HEAAA-296 D1: one item per key at the latest version; the language is the preferred one of that version, else en, else the lowest
+      await db.withScope(admin, async (tx) => {
+        await tx.query(
+          `INSERT INTO organisation.consent_template (id, organisation_id, key, version, language, title, body_text, status) VALUES
+             ($1, $4, 'privacy', 2, 'fr', 'Confidentialité', 'Texte provisoire (données de test).', 'published'),
+             ($2, $4, 'privacy', 2, 'de', 'Datenschutz', 'Platzhalter (Testdaten).', 'published'),
+             ($3, $4, 'privacy', 1, 'es', 'Privacidad', 'Texto provisional (datos de prueba).', 'published')`,
+          [id(92), id(93), id(94), ORG],
+        );
+      });
+      const texts = (lang: string | null) =>
+        db.withScope(patient, (tx) => org.consentTemplatesWithText(tx, S_PLAIN, lang));
+      assert.deepEqual(
+        (await texts('fr')).map((x) => [x.key, x.version, x.language, x.title]),
+        [['privacy', 2, 'fr', 'Confidentialité']],
+      );
+      assert.deepEqual(
+        (await texts('es')).map((x) => [x.version, x.language]),
+        [[2, 'en']],
+        'es exists only at v1: the latest version wins, then en',
+      );
+      assert.deepEqual(
+        (await texts(null)).map((x) => [x.version, x.language, x.text]),
+        [[2, 'en', 'Placeholder wording v2 (test data).']],
+      );
+      await db.withScope(admin, (tx) =>
+        tx.query(`UPDATE organisation.consent_template SET status = 'retired' WHERE id = $1`, [
+          id(86),
+        ]),
+      );
+      assert.deepEqual(
+        (await texts('it')).map((x) => [x.version, x.language]),
+        [[2, 'de']],
+        'no preferred and no en: the lowest language value',
       );
     });
 

@@ -14,6 +14,10 @@ export const EXPANSIONS = {
     'POST /api/v1/admin/auth/enrolment/options',
     'POST /api/v1/admin/auth/enrolment/verify',
   ],
+  '`GET /appointments/{reservationId}/previsit`, `POST …/consents`': [
+    'GET /appointments/{reservationId}/previsit',
+    'POST /appointments/{reservationId}/previsit/consents',
+  ],
   '`GET/POST /patients/{patientId}/contacts`, `PATCH/DELETE …/contacts/{id}`': [
     'GET /patients/{patientId}/contacts',
     'POST /patients/{patientId}/contacts',

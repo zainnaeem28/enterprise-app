@@ -693,9 +693,17 @@ async function finish(
     },
     async publishConsent(key, version) {
       await k.sa.query(
-        `INSERT INTO organisation.consent_template (id, organisation_id, key, version, language, body_document_id, status)
-         VALUES ($1, $2, $3, $4, 'en', $5, 'published')`,
-        [uuidv7(), ORG, key, version, randomUUID()],
+        `INSERT INTO organisation.consent_template (id, organisation_id, key, version, language, title, body_text, body_document_id, status)
+         VALUES ($1, $2, $3, $4, 'en', $6, $7, $5, 'published')`,
+        [
+          uuidv7(),
+          ORG,
+          key,
+          version,
+          randomUUID(),
+          `Test consent ${key}`,
+          `Placeholder wording for ${key}, test data only.`,
+        ],
       );
     },
     async requireConsents(serviceId, keys) {

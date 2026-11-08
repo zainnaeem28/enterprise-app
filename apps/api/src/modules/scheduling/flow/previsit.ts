@@ -9,7 +9,7 @@ import { isUuid } from '../core/ids.js';
 import { SchedulingValidationError } from '../core/errors.js';
 import { clock, iso, record } from './common.js';
 import type { FlowDeps, Row } from './common.js';
-import type { FlowMeta, Previsit } from './types.js';
+import type { FlowMeta, Previsit, PrevisitRequiredConsent, PrevisitView } from './types.js';
 
 export type SendPrevisitOutcome = 'sent' | 'duplicate' | 'skipped' | 'gone';
 
@@ -37,6 +37,87 @@ export class PrevisitService {
         ? false
         : await this.deps.previsit.questionnaireComplete(tx, patientId, reservationId);
     return { questionnaire, consents, insurance: ins.rows.length > 0 };
+  }
+
+  /**
+   * The patient's view of the pre-visit (HEAAA-296 D1): the three flags and the required consents with their wording and status.
+   * Read-only. A proxy gets `requiredConsents: null` (RLS hides the patient's consent rows from a proxy, and a proxy never signs), and
+   * the `consents` flag keeps its current computation. For everyone else `consents` is exactly "every listed consent is signed".
+   */
+  async view(
+    tx: Tx,
+    r: { reservationId: string; patientId: string; serviceId: string },
+  ): Promise<PrevisitView> {
+    const base = await this.status(tx, r.patientId, r.serviceId, r.reservationId);
+    const isProxy = (tx.scope.proxyPatientIds ?? []).some(
+      (x) => x.toLowerCase() === r.patientId.toLowerCase(),
+    );
+    if (isProxy) return { reservationId: r.reservationId, ...base, requiredConsents: null };
+    const lang = await tx.query(
+      `SELECT preferred_language FROM patient.patient WHERE id = $1::uuid`,
+      [r.patientId],
+    );
+    const preferred = (lang.rows[0] as Row | undefined)?.['preferred_language'];
+    const templates = [
+      ...(await this.deps.organisation.consentTemplatesWithText(
+        tx,
+        r.serviceId,
+        typeof preferred === 'string' ? preferred : null,
+      )),
+    ]
+      .sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0))
+      .slice(0, 50);
+    const required = templates.map((t) => ({ key: t.key, version: t.version }));
+    const statuses =
+      required.length === 0
+        ? []
+        : await this.deps.records.requiredConsentStatus(tx, r.patientId, required);
+    const pending =
+      required.length === 0
+        ? new Map<string, string>()
+        : await this.deps.records.pendingConsentIds(tx, r.patientId, required);
+    const requiredConsents: PrevisitRequiredConsent[] = templates.map((t, i) => {
+      const status = statuses[i]?.status ?? 'missing';
+      return {
+        id: status === 'pending' ? (pending.get(t.key) ?? null) : null,
+        templateKey: t.key,
+        templateVersion: t.version,
+        language: t.language,
+        title: t.title,
+        text: t.text,
+        status,
+      };
+    });
+    return {
+      reservationId: r.reservationId,
+      ...base,
+      consents: requiredConsents.every((c) => c.status === 'signed'),
+      requiredConsents,
+    };
+  }
+
+  /**
+   * `POST /appointments/{reservationId}/previsit/consents` (HEAAA-296 D2): opens a pending consent for each required template the
+   * patient has `missing` or `outdated`, then returns the view read after the writes. `requestConsent` is idempotent through the
+   * unique index on open consents, so a second call or a concurrent one adds nothing. Signed and pending items are untouched.
+   */
+  async openConsents(
+    tx: Tx,
+    meta: FlowMeta,
+    r: { reservationId: string; patientId: string; serviceId: string },
+  ): Promise<PrevisitView> {
+    const before = await this.view(tx, r);
+    for (const c of before.requiredConsents ?? []) {
+      if (c.status === 'missing' || c.status === 'outdated')
+        await this.deps.records.requestConsent(
+          tx,
+          meta,
+          r.patientId,
+          c.templateKey,
+          c.templateVersion,
+        );
+    }
+    return this.view(tx, r);
   }
 
   /**

@@ -395,7 +395,7 @@ export class OrganisationService {
   async consentTemplatesRequired(
     tx: Tx,
     serviceId: string,
-  ): Promise<{ key: string; version: number; language: string; bodyDocumentId: string }[]> {
+  ): Promise<{ key: string; version: number; language: string; bodyDocumentId: string | null }[]> {
     if (!isUuid(serviceId)) throw new OrganisationValidationError(['serviceId']);
     const r = await tx.query(
       `SELECT DISTINCT ON (t.key, t.language) t.key, t.version, t.language, t.body_document_id
@@ -409,7 +409,37 @@ export class OrganisationService {
       key: str(x.key),
       version: num(x.version),
       language: str(x.language),
-      bodyDocumentId: str(x.body_document_id),
+      bodyDocumentId: x.body_document_id === null ? null : str(x.body_document_id),
+    }));
+  }
+
+  /**
+   * The consent templates the service requires, one per key, each at its latest published version (any language), with the title and
+   * the plain wording of the language the patient reads: the preferred language of that version, else `en`, else the lowest language
+   * value (HEAAA-296 D1). One query for all keys. `title` and `text` are null only for a version published before they existed.
+   */
+  async consentTemplatesWithText(
+    tx: Tx,
+    serviceId: string,
+    preferredLanguage: string | null,
+  ): Promise<
+    { key: string; version: number; language: string; title: string | null; text: string | null }[]
+  > {
+    if (!isUuid(serviceId)) throw new OrganisationValidationError(['serviceId']);
+    const r = await tx.query(
+      `SELECT DISTINCT ON (t.key) t.key, t.version, t.language, t.title, t.body_text
+         FROM organisation.service_required_consent rc
+         JOIN organisation.consent_template t ON t.key = rc.consent_template_key AND t.status = 'published'
+        WHERE rc.service_id = $1
+        ORDER BY t.key, t.version DESC, COALESCE(t.language = $2::text, false) DESC, (t.language = 'en') DESC, t.language`,
+      [serviceId, preferredLanguage],
+    );
+    return r.rows.map((x) => ({
+      key: str(x.key),
+      version: num(x.version),
+      language: str(x.language),
+      title: x.title === null ? null : str(x.title),
+      text: x.body_text === null ? null : str(x.body_text),
     }));
   }
 

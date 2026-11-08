@@ -272,6 +272,8 @@ paths:
     $ref: ./scheduling.yaml#/paths/~1api~1v1~1appointments~1{reservationId}~1confirm
   /api/v1/appointments/{reservationId}/previsit:
     $ref: ./scheduling.yaml#/paths/~1api~1v1~1appointments~1{reservationId}~1previsit
+  /api/v1/appointments/{reservationId}/previsit/consents:
+    $ref: ./scheduling.yaml#/paths/~1api~1v1~1appointments~1{reservationId}~1previsit~1consents
   /api/v1/appointments/{reservationId}/reschedule:
     $ref: ./scheduling.yaml#/paths/~1api~1v1~1appointments~1{reservationId}~1reschedule
   /api/v1/appointments/{reservationId}/video-session:

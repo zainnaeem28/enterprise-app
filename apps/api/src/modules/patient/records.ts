@@ -645,6 +645,31 @@ export class PatientRecordsService {
     });
   }
 
+  /**
+   * The open (pending) consent of each template for the patient: the newest pending row whose version is at least the one required,
+   * by template key. A read helper for the pre-visit consent list; it changes nothing.
+   */
+  async pendingConsentIds(
+    tx: Tx,
+    patientId: string,
+    templates: readonly { key: string; version: number }[],
+  ): Promise<Map<string, string>> {
+    if (!isUuid(patientId)) throw new PatientValidationError(['patientId']);
+    const r = await tx.query(
+      `SELECT DISTINCT ON (template_key) template_key, template_version, id FROM patient.consent
+        WHERE patient_id = $1::uuid AND status = 'pending' AND template_key = ANY($2::text[])
+        ORDER BY template_key, template_version DESC`,
+      [patientId, templates.map((t) => t.key)],
+    );
+    const out = new Map<string, string>();
+    for (const x of r.rows as Row[]) {
+      const need = templates.find((t) => t.key === x['template_key']);
+      if (need !== undefined && Number(x['template_version']) >= need.version)
+        out.set(need.key, str(x['id']));
+    }
+    return out;
+  }
+
   // --- communication preferences -----------------------------------------------------------------------------------
 
   async getPreferences(tx: Tx, patientId: string): Promise<PreferenceView | undefined> {

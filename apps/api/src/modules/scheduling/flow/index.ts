@@ -48,6 +48,8 @@ export type {
   OfferCandidate,
   OfferView,
   Previsit,
+  PrevisitRequiredConsent,
+  PrevisitView,
   PrevisitPort,
   QrKeyProvider,
   QueueEntryView,

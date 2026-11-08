@@ -388,14 +388,37 @@ export function createFlowControllers(d: FlowControllerDeps): Type<unknown>[] {
       }));
     }
 
+    // `proxy`, not `patient`: a proxy reaches the service, which answers `requiredConsents: null` (D-7), instead of the guard's 404.
     @Get('appointments/:id/previsit')
-    @Route({ permission: 'patient', resolver: 'reservation' })
+    @Route({ permission: 'proxy', resolver: 'reservation' })
     async previsit(
       @Param('id') id: string,
       @ReqParam() req: Req,
       @ResParam() res: Res,
     ): Promise<void> {
       send(res, 200, await run(req, (tx) => d.flow.previsitFor(tx, id)));
+    }
+
+    // `proxy` only so that the service can answer a proxy with 403 auth.forbidden (D-7) as decided; the guard would answer 404.
+    @Post('appointments/:id/previsit/consents')
+    @Route({ permission: 'proxy', resolver: 'reservation' })
+    async openConsents(
+      @Param('id') id: string,
+      @ReqParam() req: Req,
+      @ResParam() res: Res,
+    ): Promise<void> {
+      if (Object.keys(bodyOf(req)).length > 0) throw new SchedulingValidationError(['body']);
+      await idempotent(
+        req,
+        res,
+        'POST /appointments/{reservationId}/previsit/consents',
+        [id.toLowerCase()],
+        req.body,
+        async (tx) => ({
+          status: 200,
+          body: await d.flow.openPrevisitConsents(tx, metaOf(req), id),
+        }),
+      );
     }
 
     @Post('waitlist-entries')

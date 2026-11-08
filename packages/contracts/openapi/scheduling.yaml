@@ -1572,10 +1572,10 @@ paths:
       tags:
         - scheduling
       summary: GET /api/v1/appointments/{reservationId}/previsit
-      description: 'my.: Questionnaire (template + response), required consents and their status, insurance status'
+      description: 'my.: Questionnaire (template + response), required consents and their status, insurance status. Read-only: it never creates a row. requiredConsents is null for a proxy caller.'
       x-access:
         my:
-          permission: patient
+          permission: patient, proxy
           resolver: reservation
           realm: patient
           idempotencyKey: false
@@ -1623,7 +1623,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: common.yaml#/components/schemas/OpaqueObject
+                $ref: '#/components/schemas/GetAppointmentsByReservationIdPrevisitResponse'
         '400':
           $ref: common.yaml#/components/responses/Error400
           description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
@@ -1639,6 +1639,100 @@ paths:
         '409':
           $ref: common.yaml#/components/responses/Error409
           description: 'Codes: patient.merged.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/appointments/{reservationId}/previsit/consents:
+    post:
+      operationId: postAppointmentsByReservationIdPrevisitConsents
+      tags:
+        - scheduling
+      summary: POST /api/v1/appointments/{reservationId}/previsit/consents
+      description: 'my.: Opens a pending consent for each required template that is missing or outdated (idempotent) and returns the GET previsit body read after the writes. Allowed while the occupancy is confirmed or checked_in, otherwise 404. A proxy gets 403 auth.forbidden (D-7).'
+      x-access:
+        my:
+          permission: patient, proxy
+          resolver: reservation
+          realm: patient
+          idempotencyKey: true
+          ifMatch: false
+          pathAs: /api/v1/appointments/{reservationId}/previsit/consents
+          catalogueRow: 29.2#32
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: reservationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+        - $ref: common.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.idempotency_key_required
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - kernel.idempotency_conflict
+          - patient.merged
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+            Idempotent-Replay:
+              $ref: common.yaml#/components/headers/IdempotentReplay
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetAppointmentsByReservationIdPrevisitResponse'
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.idempotency_key_required, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: kernel.idempotency_conflict, patient.merged.'
         '429':
           $ref: common.yaml#/components/responses/Error429
           description: 'Codes: kernel.rate_limited.'
@@ -3964,6 +4058,81 @@ paths:
           description: 'Codes: kernel.timeout.'
 components:
   schemas:
+    GetAppointmentsByReservationIdPrevisitResponse:
+      description: Pre-visit status. requiredConsents is null when the caller is a proxy for the patient (a proxy neither sees nor signs consents).
+      type: object
+      additionalProperties: false
+      required:
+        - reservationId
+        - questionnaire
+        - consents
+        - insurance
+        - requiredConsents
+      properties:
+        reservationId:
+          type: string
+          format: uuid
+        questionnaire:
+          type: boolean
+        consents:
+          description: Every required template is signed in its latest published version.
+          type: boolean
+        insurance:
+          type: boolean
+        requiredConsents:
+          oneOf:
+            - type: 'null'
+            - type: array
+              maxItems: 50
+              items:
+                $ref: '#/components/schemas/PrevisitRequiredConsent'
+    PrevisitRequiredConsent:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - templateKey
+        - templateVersion
+        - language
+        - title
+        - text
+        - status
+      properties:
+        id:
+          description: The pending patient.consent id; null unless status is pending.
+          oneOf:
+            - type: string
+              format: uuid
+            - type: 'null'
+        templateKey:
+          type: string
+          maxLength: 100
+        templateVersion:
+          description: The latest published version (the one required).
+          type: integer
+          minimum: 1
+        language:
+          description: Language of title and text actually returned.
+          type: string
+          maxLength: 35
+        title:
+          oneOf:
+            - type: string
+              maxLength: 200
+            - type: 'null'
+        text:
+          description: Plain text, never HTML. Null only for a version published before the wording was stored.
+          oneOf:
+            - type: string
+              maxLength: 20000
+            - type: 'null'
+        status:
+          type: string
+          enum:
+            - signed
+            - pending
+            - missing
+            - outdated
     ClinicianScheduleItem:
       description: A subset of the arrivals board row. The front-desk fields (method, previsit, noShowCandidate, flaggedForStaff, version) are left out on purpose.
       type: object

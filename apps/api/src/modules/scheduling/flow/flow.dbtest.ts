@@ -470,6 +470,7 @@ describe('pre-visit status (AC-09, F-PC-02, TC-PC-03)', () => {
       'consents',
       'insurance',
       'questionnaire',
+      'requiredConsents',
       'reservationId',
     ]);
     assert.equal(
