@@ -1,0 +1,56 @@
+.profile-row {
+  display: grid;
+  grid-template-columns: 9rem 1fr;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+}
+.profile-row dt {
+  font-weight: 600;
+}
+.profile-row dd {
+  margin: 0;
+}
+.profile-fixed {
+  margin: 1rem 0 0;
+}
+.profile-note {
+  margin: 0.25rem 0 1rem;
+}
+.profile-set {
+  border: 0;
+  padding: 0;
+  margin: 1.5rem 0;
+}
+.profile-set legend,
+.profile-set h2 {
+  font-weight: 600;
+  padding: 0;
+}
+.profile-choice {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  min-height: 44px;
+}
+.profile-choice input {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+.profile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 1.5rem 0 0;
+}
+.profile-list {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+}
+.profile-item {
+  padding: 0.75rem 0;
+  border-top: 1px solid currentColor;
+}
+.profile-item p {
+  margin: 0.25rem 0;
+}
