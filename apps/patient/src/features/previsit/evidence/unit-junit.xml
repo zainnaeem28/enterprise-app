@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="31" failures="0" errors="0" time="1.204152052">
+    <testsuite name="src/features/previsit/previsit.test.tsx" timestamp="2026-11-08T10:54:43.864Z" hostname="314866be9867" tests="20" failures="0" errors="0" skipped="0" time="0.702048161">
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="routes and parsers &gt; matches only the reservation id in the path" time="0.002217781">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="routes and parsers &gt; refuses a previsit body without the three flags" time="0.00091666">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="routes and parsers &gt; reads a required question as required unless the template says otherwise" time="0.00068739">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="pre-visit overview (PP-25..27) &gt; shows each item as To do, Done or Needs fixing and says the consultation is blocked" time="0.156919451">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="pre-visit overview (PP-25..27) &gt; does not warn about the gate when every consent is signed" time="0.017434534">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="pre-visit overview (PP-25..27) &gt; a 404 reads the same as nothing there, with no hint what exists" time="0.016263105">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="pre-visit overview (PP-25..27) &gt; has no axe violations" time="0.082106699">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-26 consents &gt; keeps the gate closed until signed; sending needs the box and a typed name" time="0.04154881">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-26 consents &gt; says plainly when the API gives no consent text, and offers no signing" time="0.006513341">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-26 consents &gt; an outdated consent is Needs fixing" time="0.006990066">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-26 consents &gt; has no axe violations" time="0.039054809">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-25 questionnaire and PP-22 emergency advice &gt; blocks a blank required question without a request and does not echo values in the summary" time="0.028206905">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-25 questionnaire and PP-22 emergency advice &gt; saves a draft with a client-chosen response id and no If-Match the first time" time="0.024818107">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-25 questionnaire and PP-22 emergency advice &gt; submits with If-Match, then a red flag shows the advice from the template and a call link" time="0.03265912">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-25 questionnaire and PP-22 emergency advice &gt; no red flag goes back to the list without the emergency screen" time="0.028838029">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-25 questionnaire and PP-22 emergency advice &gt; a stale version shows the conflict state and keeps what was typed" time="0.029515731">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-25 questionnaire and PP-22 emergency advice &gt; a submitted questionnaire is read-only" time="0.010185011">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-25 questionnaire and PP-22 emergency advice &gt; has no axe violations on the form and on the emergency screen" time="0.060478658">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-27 insurance card &gt; uploads a file through create, put and complete, shows the scan state, then saves the card with the document id" time="0.09022948">
+        </testcase>
+        <testcase classname="src/features/previsit/previsit.test.tsx" name="PP-27 insurance card &gt; refuses a file type that is not allowed before any request, and a rejected file asks for a new photo" time="0.024617451">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/telehealth/telehealth.test.tsx" timestamp="2026-11-08T10:54:43.868Z" hostname="314866be9867" tests="11" failures="0" errors="0" skipped="0" time="0.502103891">
+        <testcase classname="src/features/telehealth/telehealth.test.tsx" name="routes and time &gt; matches the video route by reservation id only" time="0.002409551">
+        </testcase>
+        <testcase classname="src/features/telehealth/telehealth.test.tsx" name="routes and time &gt; gives two labels when the zones differ and one when they read the same" time="0.005120057">
+        </testcase>
+        <testcase classname="src/features/telehealth/telehealth.test.tsx" name="PP-23 device check and join &gt; shows both time zones when they differ" time="0.06087918">
+        </testcase>
+        <testcase classname="src/features/telehealth/telehealth.test.tsx" name="PP-23 device check and join &gt; sends exactly camera, mic and bandwidth and shows each as words" time="0.099632032">
+        </testcase>
+        <testcase classname="src/features/telehealth/telehealth.test.tsx" name="PP-23 device check and join &gt; will not join before the location is confirmed, and does not join before the window opens" time="0.08920057">
+        </testcase>
+        <testcase classname="src/features/telehealth/telehealth.test.tsx" name="PP-23 device check and join &gt; asks for a state before sending the location, and a licensing refusal offers no way around it" time="0.042280833">
+        </testcase>
+        <testcase classname="src/features/telehealth/telehealth.test.tsx" name="PP-23 device check and join &gt; waits in the waiting room, then hands the credential to the video client once admitted, and never shows it" time="0.045954094">
+        </testcase>
+        <testcase classname="src/features/telehealth/telehealth.test.tsx" name="PP-23 device check and join &gt; says the video app is not connected when no handler is given, instead of pretending to join" time="0.027171583">
+        </testcase>
+        <testcase classname="src/features/telehealth/telehealth.test.tsx" name="PP-23 device check and join &gt; a join the server answers with location_required goes back to the confirmation step" time="0.023808462">
+        </testcase>
+        <testcase classname="src/features/telehealth/telehealth.test.tsx" name="PP-23 device check and join &gt; a 404 on the session is the same message as nothing there" time="0.005006584">
+        </testcase>
+        <testcase classname="src/features/telehealth/telehealth.test.tsx" name="PP-23 device check and join &gt; has no axe violations" time="0.09918835">
+        </testcase>
+    </testsuite>
+</testsuites>
