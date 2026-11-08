@@ -86,6 +86,24 @@ export interface ArrivalView {
   version: number;
 }
 
+/**
+ * `GET /clinicians/{id}/schedule` item (draft 8.3, FE-10): a subset of {@link ArrivalView}. The front-desk fields (`method`, `previsit`,
+ * `noShowCandidate`, `flaggedForStaff`, `version`) are left out on purpose: the doctor has no write on these rows.
+ */
+export interface ClinicianScheduleItem {
+  reservationId: string;
+  patientId: string;
+  patientName: string | null;
+  mrn: string | null;
+  serviceId: string;
+  mode: 'in_person' | 'video';
+  status: 'confirmed' | 'checked_in' | 'in_consultation' | 'completed' | 'no_show';
+  startsAt: string;
+  endsAt: string;
+  checkedInAt: string | null;
+  queueStage: QueueStage | null;
+}
+
 export interface QueueEntryView {
   id: string;
   patientId: string;

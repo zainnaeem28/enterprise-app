@@ -106,3 +106,18 @@ export const LABEL_REFERENCE_KINDS = {
   incident: 'privacy.incident',
 } as const;
 export type LabelReferenceKind = keyof typeof LABEL_REFERENCE_KINDS;
+
+/** `POST /patients/lookup` item (draft 8.3, FE-10): the minimised projection, no contact, no sex, no photo. */
+export interface PatientLookupItem {
+  patientId: string;
+  mrn: string;
+  givenName: string;
+  middleName: string | null;
+  familyName: string;
+  dateOfBirth: string;
+}
+
+export interface PatientLookupResult {
+  items: PatientLookupItem[];
+  truncated: boolean;
+}

@@ -55,3 +55,48 @@ export interface StartedEncounter {
   encounter: EncounterView;
   consentExceptionId: string | null;
 }
+
+/** What a read of a note rested on (decision HEAAA-286): recorded in the audit event's `change.basis`. */
+export type NoteReadBasis = 'author' | 'supervisor' | 'btg' | 'assigned';
+
+/** `GET /clinicians/{id}/notes` and `…/cosign-queue` items: no body, no photo, no contact. */
+export interface NoteListItem {
+  noteId: string;
+  encounterId: string;
+  patientId: string;
+  patientBanner: { patientId: string; displayName: string; dateOfBirth: string; mrn: string };
+  authorPrincipalId: string;
+  authorDisplayName: string;
+  status: NoteStatus;
+  templateId: string;
+  createdAt: string;
+  updatedAt: string | null;
+  submittedForCosignAt: string | null;
+  rowVersion: number;
+}
+
+export interface NoteListPage {
+  items: NoteListItem[];
+  nextCursor: string | null;
+}
+
+/** `GET /notes/{id}`. */
+export interface NoteReadView {
+  id: string;
+  encounterId: string;
+  patientId: string;
+  authorPrincipalId: string;
+  templateId: string;
+  status: NoteStatus;
+  body: { sections: NoteSections };
+  createdAt: string;
+  updatedAt: string | null;
+  submittedForCosignAt: string | null;
+  cosignRequiredFrom: string | null;
+  signedAt: string | null;
+  signedBy: string | null;
+  cosign: { supervisorPrincipalId: string; cosignedAt: string } | null;
+  addenda: { id: string; authorPrincipalId: string; body: string; signedAt: string }[];
+  rowVersion: number;
+  timeZone: string;
+}

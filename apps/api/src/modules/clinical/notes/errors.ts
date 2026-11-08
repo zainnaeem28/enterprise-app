@@ -73,3 +73,17 @@ export function translateDbError(err: unknown): never {
       throw err;
   }
 }
+
+/**
+ * 403 clinical.not_assigned on `GET /notes/{id}` (decision HEAAA-286): the same status and code as the chart's `NotAssignedError`, with
+ * the member `btgAvailable` set from the caller's own `audit.btg.open` grant. The platform's problem body does not serialise it yet
+ * (filter.ts), the same as for the chart; the class carries it so the follow-up can.
+ */
+export class NoteNotAssignedError extends ChartError {
+  readonly btgAvailable: boolean;
+  constructor(btgAvailable: boolean) {
+    super('clinical.not_assigned', 403);
+    this.name = 'NoteNotAssignedError';
+    this.btgAvailable = btgAvailable;
+  }
+}

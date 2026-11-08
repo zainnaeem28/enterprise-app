@@ -2203,6 +2203,66 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/clinicians/{id}/cosign-queue': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * GET /api/v1/clinicians/{id}/cosign-queue
+     * @description staff.: Own only. `pending_cosign` notes with `cosign_required_from` = caller, `submitted_for_cosign_at, id` (draft 8.3, FE-10)
+     */
+    get: operations['getCliniciansByIdCosignQueue'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/clinicians/{id}/notes': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * GET /api/v1/clinicians/{id}/notes
+     * @description staff.: Own only. The caller's `draft` and `pending_cosign` notes, `COALESCE(updated_at, created_at) DESC, id DESC`; the cursor is bound to the caller, the route and the filter, and valid 15 minutes (draft 8.3, FE-10)
+     */
+    get: operations['getCliniciansByIdNotes'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/clinicians/{id}/schedule': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * GET /api/v1/clinicians/{id}/schedule
+     * @description staff.: Own only (`{id}` = caller, else `403 auth.forbidden` before any query); grant required at `locationId`. The caller's own reservations of one location-day (draft 8.3, FE-10)
+     */
+    get: operations['getCliniciansByIdSchedule'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/consents/{consentId}/sign': {
     parameters: {
       query?: never;
@@ -2641,7 +2701,11 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    get?: never;
+    /**
+     * GET /api/v1/notes/{id}
+     * @description staff.: Read basis: author; supervisor (pending co-sign from the caller, or co-signed by the caller; never a draft); BTG; assigned. Otherwise `403 clinical.not_assigned`, audited `denied`. No photo or contacts in `patientBanner` on the author and supervisor bases (draft 8.3, FE-10)
+     */
+    get: operations['getNotesById'];
     put?: never;
     post?: never;
     delete?: never;
@@ -3538,6 +3602,26 @@ export interface paths {
      * @description my.: **Only if flag `patient_messaging`** (D-5); else `404`
      */
     post: operations['postPatientsByPatientIdThreads'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/patients/lookup': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * POST /api/v1/patients/lookup
+     * @description staff.: Minimised lookup (draft 8.3, FE-10): body exactly one of `{mrn}`, `{name, dateOfBirth?}`, `{patientIds}` (at most 25); at most 25 items, no cursor; in-scope patients only, out of scope = absent; audited `search` with the returned IDs (no terms)
+     */
+    post: operations['postPatientsLookup'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4656,6 +4740,65 @@ export interface components {
       items: components['schemas']['OpaqueObject'][];
       nextCursor: string | null;
     };
+    NoteListItem: {
+      /** Format: uuid */
+      noteId: string;
+      /** Format: uuid */
+      encounterId: string;
+      /** Format: uuid */
+      patientId: string;
+      patientBanner: {
+        /** Format: uuid */
+        patientId: string;
+        displayName: string;
+        dateOfBirth: string;
+        mrn: string;
+      };
+      /** Format: uuid */
+      authorPrincipalId: string;
+      authorDisplayName: string;
+      /** @enum {string} */
+      status: 'draft' | 'pending_cosign' | 'signed';
+      templateId: string;
+      /** Format: date-time */
+      createdAt: string;
+      updatedAt: string | null;
+      submittedForCosignAt: string | null;
+      rowVersion: number;
+    };
+    GetCliniciansByIdCosignQueueResponse: {
+      items: components['schemas']['NoteListItem'][];
+      nextCursor: string | null;
+    };
+    GetCliniciansByIdNotesResponse: {
+      items: components['schemas']['NoteListItem'][];
+      nextCursor: string | null;
+    };
+    /** @description A subset of the arrivals board row. The front-desk fields (method, previsit, noShowCandidate, flaggedForStaff, version) are left out on purpose. */
+    ClinicianScheduleItem: {
+      /** Format: uuid */
+      reservationId: string;
+      /** Format: uuid */
+      patientId: string;
+      patientName: string | null;
+      mrn: string | null;
+      /** Format: uuid */
+      serviceId: string;
+      /** @enum {string} */
+      mode: 'in_person' | 'video';
+      /** @enum {string} */
+      status: 'confirmed' | 'checked_in' | 'in_consultation' | 'completed' | 'no_show';
+      /** Format: date-time */
+      startsAt: string;
+      /** Format: date-time */
+      endsAt: string;
+      checkedInAt: string | null;
+      queueStage: ('waiting' | 'vitals' | 'triage' | 'ready' | 'with_clinician' | 'done') | null;
+    };
+    GetCliniciansByIdScheduleResponse: {
+      items: components['schemas']['ClinicianScheduleItem'][];
+      timeZone: string;
+    };
     PostConsentsByConsentIdSignRequest: {
       /** Format: uuid */
       signatureDocumentId?: string;
@@ -4723,6 +4866,49 @@ export interface components {
     GetLocationsByLocationIdReferralInboxResponse: {
       items: components['schemas']['OpaqueObject'][];
       nextCursor: string | null;
+    };
+    Note: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      encounterId: string;
+      /** Format: uuid */
+      patientId: string;
+      /** Format: uuid */
+      authorPrincipalId: string;
+      templateId: string;
+      /** @enum {string} */
+      status: 'draft' | 'pending_cosign' | 'signed';
+      body: {
+        sections: {
+          [key: string]: string;
+        };
+      };
+      /** Format: date-time */
+      createdAt: string;
+      updatedAt: string | null;
+      submittedForCosignAt: string | null;
+      cosignRequiredFrom: string | null;
+      signedAt: string | null;
+      signedBy: string | null;
+      cosign: {
+        /** Format: uuid */
+        supervisorPrincipalId: string;
+        /** Format: date-time */
+        cosignedAt: string;
+      } | null;
+      addenda: {
+        /** Format: uuid */
+        id: string;
+        /** Format: uuid */
+        authorPrincipalId: string;
+        body: string;
+        /** Format: date-time */
+        signedAt: string;
+      }[];
+      rowVersion: number;
+      timeZone: string;
+      patientBanner: components['schemas']['OpaqueObject'];
     };
     GetNoticesResponse: {
       items: components['schemas']['OpaqueObject'][];
@@ -4852,6 +5038,34 @@ export interface components {
     GetPatientsByPatientIdThreadsResponse: {
       items: components['schemas']['OpaqueObject'][];
       nextCursor: string | null;
+    };
+    /** @description Exactly one criteria form. `phone`, `email`, `dateOfBirth` alone and mixed forms are refused. */
+    PostPatientsLookupRequest:
+      | {
+          mrn: string;
+        }
+      | {
+          /** @description At most 4 words, each of at least 2 characters; prefix match on given or family name. */
+          name: string;
+          /** Format: date */
+          dateOfBirth?: string;
+        }
+      | {
+          patientIds: string[];
+        };
+    PatientLookupItem: {
+      /** Format: uuid */
+      patientId: string;
+      mrn: string;
+      givenName: string;
+      middleName: string | null;
+      familyName: string;
+      /** Format: date */
+      dateOfBirth: string;
+    };
+    PostPatientsLookupResponse: {
+      items: components['schemas']['PatientLookupItem'][];
+      truncated: boolean;
     };
     PostPatientsMatchResponse: {
       matchCheckId: string;
@@ -11715,6 +11929,154 @@ export interface operations {
       504: components['responses']['Error504'];
     };
   };
+  getCliniciansByIdCosignQueue: {
+    parameters: {
+      query?: {
+        /** @description Page size, 1-100, default 25 (28.2). */
+        limit?: components['parameters']['Limit'];
+        /** @description Opaque cursor from nextCursor; HMAC-signed, so a forged or altered cursor is refused (28.2, CN-08). */
+        cursor?: components['parameters']['Cursor'];
+      };
+      header: {
+        /** @description r<releaseNumber>.<gitSha12>, for example r142.3f9a1c2b7d10, sent by every portal bundle on every /api/* call (28.6). Missing, malformed or releaseNumber < min_client_release is refused with 400 kernel.client_release_unsupported before any session lookup. */
+        'X-Client-Release': components['parameters']['ClientRelease'];
+      };
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success (200) */
+      200: {
+        headers: {
+          'X-Request-Id': components['headers']['XRequestId'];
+          'Cache-Control': components['headers']['CacheNoStore'];
+          'X-Session-Idle-Expires-At': components['headers']['XSessionIdleExpiresAt'];
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GetCliniciansByIdCosignQueueResponse'];
+        };
+      };
+      /** @description Codes: kernel.client_release_unsupported, kernel.validation_failed. */
+      400: components['responses']['Error400'];
+      /** @description Codes: auth.unauthenticated. */
+      401: components['responses']['Error401'];
+      /** @description Codes: auth.forbidden. */
+      403: components['responses']['Error403'];
+      /** @description Codes: kernel.not_found. */
+      404: components['responses']['Error404'];
+      /** @description Codes: patient.merged. */
+      409: components['responses']['Error409'];
+      /** @description Codes: kernel.rate_limited. */
+      429: components['responses']['Error429'];
+      /** @description Codes: kernel.unavailable. */
+      503: components['responses']['Error503'];
+      /** @description Codes: kernel.timeout. */
+      504: components['responses']['Error504'];
+    };
+  };
+  getCliniciansByIdNotes: {
+    parameters: {
+      query?: {
+        /** @description Repeatable; default both. `signed` is refused. */
+        status?: ('draft' | 'pending_cosign')[];
+        /** @description Page size, 1-100, default 25 (28.2). */
+        limit?: components['parameters']['Limit'];
+        /** @description Opaque cursor from nextCursor; HMAC-signed, so a forged or altered cursor is refused (28.2, CN-08). */
+        cursor?: components['parameters']['Cursor'];
+      };
+      header: {
+        /** @description r<releaseNumber>.<gitSha12>, for example r142.3f9a1c2b7d10, sent by every portal bundle on every /api/* call (28.6). Missing, malformed or releaseNumber < min_client_release is refused with 400 kernel.client_release_unsupported before any session lookup. */
+        'X-Client-Release': components['parameters']['ClientRelease'];
+      };
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success (200) */
+      200: {
+        headers: {
+          'X-Request-Id': components['headers']['XRequestId'];
+          'Cache-Control': components['headers']['CacheNoStore'];
+          'X-Session-Idle-Expires-At': components['headers']['XSessionIdleExpiresAt'];
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GetCliniciansByIdNotesResponse'];
+        };
+      };
+      /** @description Codes: kernel.client_release_unsupported, kernel.validation_failed. */
+      400: components['responses']['Error400'];
+      /** @description Codes: auth.unauthenticated. */
+      401: components['responses']['Error401'];
+      /** @description Codes: auth.forbidden. */
+      403: components['responses']['Error403'];
+      /** @description Codes: kernel.not_found. */
+      404: components['responses']['Error404'];
+      /** @description Codes: patient.merged. */
+      409: components['responses']['Error409'];
+      /** @description Codes: kernel.rate_limited. */
+      429: components['responses']['Error429'];
+      /** @description Codes: kernel.unavailable. */
+      503: components['responses']['Error503'];
+      /** @description Codes: kernel.timeout. */
+      504: components['responses']['Error504'];
+    };
+  };
+  getCliniciansByIdSchedule: {
+    parameters: {
+      query: {
+        locationId: string;
+        /** @description The location's local calendar date; default today */
+        date?: string;
+      };
+      header: {
+        /** @description r<releaseNumber>.<gitSha12>, for example r142.3f9a1c2b7d10, sent by every portal bundle on every /api/* call (28.6). Missing, malformed or releaseNumber < min_client_release is refused with 400 kernel.client_release_unsupported before any session lookup. */
+        'X-Client-Release': components['parameters']['ClientRelease'];
+      };
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success (200) */
+      200: {
+        headers: {
+          'X-Request-Id': components['headers']['XRequestId'];
+          'Cache-Control': components['headers']['CacheNoStore'];
+          'X-Session-Idle-Expires-At': components['headers']['XSessionIdleExpiresAt'];
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GetCliniciansByIdScheduleResponse'];
+        };
+      };
+      /** @description Codes: kernel.client_release_unsupported, kernel.validation_failed. */
+      400: components['responses']['Error400'];
+      /** @description Codes: auth.unauthenticated. */
+      401: components['responses']['Error401'];
+      /** @description Codes: auth.forbidden. */
+      403: components['responses']['Error403'];
+      /** @description Codes: kernel.not_found. */
+      404: components['responses']['Error404'];
+      /** @description Codes: patient.merged. */
+      409: components['responses']['Error409'];
+      /** @description Codes: kernel.rate_limited. */
+      429: components['responses']['Error429'];
+      /** @description Codes: kernel.unavailable. */
+      503: components['responses']['Error503'];
+      /** @description Codes: kernel.timeout. */
+      504: components['responses']['Error504'];
+    };
+  };
   postConsentsByConsentIdSign: {
     parameters: {
       query?: never;
@@ -12858,6 +13220,51 @@ export interface operations {
       /** @description Codes: auth.unauthenticated. */
       401: components['responses']['Error401'];
       /** @description Codes: auth.forbidden. */
+      403: components['responses']['Error403'];
+      /** @description Codes: kernel.not_found. */
+      404: components['responses']['Error404'];
+      /** @description Codes: patient.merged. */
+      409: components['responses']['Error409'];
+      /** @description Codes: kernel.rate_limited. */
+      429: components['responses']['Error429'];
+      /** @description Codes: kernel.unavailable. */
+      503: components['responses']['Error503'];
+      /** @description Codes: kernel.timeout. */
+      504: components['responses']['Error504'];
+    };
+  };
+  getNotesById: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description r<releaseNumber>.<gitSha12>, for example r142.3f9a1c2b7d10, sent by every portal bundle on every /api/* call (28.6). Missing, malformed or releaseNumber < min_client_release is refused with 400 kernel.client_release_unsupported before any session lookup. */
+        'X-Client-Release': components['parameters']['ClientRelease'];
+      };
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success (200) */
+      200: {
+        headers: {
+          'X-Request-Id': components['headers']['XRequestId'];
+          'Cache-Control': components['headers']['CacheNoStore'];
+          ETag: components['headers']['ETag'];
+          'X-Session-Idle-Expires-At': components['headers']['XSessionIdleExpiresAt'];
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Note'];
+        };
+      };
+      /** @description Codes: kernel.client_release_unsupported, kernel.validation_failed. */
+      400: components['responses']['Error400'];
+      /** @description Codes: auth.unauthenticated. */
+      401: components['responses']['Error401'];
+      /** @description Codes: auth.forbidden, clinical.not_assigned. */
       403: components['responses']['Error403'];
       /** @description Codes: kernel.not_found. */
       404: components['responses']['Error404'];
@@ -15676,6 +16083,54 @@ export interface operations {
       /** @description Codes: kernel.not_found. */
       404: components['responses']['Error404'];
       /** @description Codes: kernel.idempotency_conflict, patient.merged. */
+      409: components['responses']['Error409'];
+      /** @description Codes: kernel.payload_too_large. */
+      413: components['responses']['Error413'];
+      /** @description Codes: kernel.rate_limited. */
+      429: components['responses']['Error429'];
+      /** @description Codes: kernel.unavailable. */
+      503: components['responses']['Error503'];
+      /** @description Codes: kernel.timeout. */
+      504: components['responses']['Error504'];
+    };
+  };
+  postPatientsLookup: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description r<releaseNumber>.<gitSha12>, for example r142.3f9a1c2b7d10, sent by every portal bundle on every /api/* call (28.6). Missing, malformed or releaseNumber < min_client_release is refused with 400 kernel.client_release_unsupported before any session lookup. */
+        'X-Client-Release': components['parameters']['ClientRelease'];
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['PostPatientsLookupRequest'];
+      };
+    };
+    responses: {
+      /** @description Success (200) */
+      200: {
+        headers: {
+          'X-Request-Id': components['headers']['XRequestId'];
+          'Cache-Control': components['headers']['CacheNoStore'];
+          'X-Session-Idle-Expires-At': components['headers']['XSessionIdleExpiresAt'];
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PostPatientsLookupResponse'];
+        };
+      };
+      /** @description Codes: kernel.client_release_unsupported, kernel.validation_failed. */
+      400: components['responses']['Error400'];
+      /** @description Codes: auth.unauthenticated. */
+      401: components['responses']['Error401'];
+      /** @description Codes: auth.forbidden. */
+      403: components['responses']['Error403'];
+      /** @description Codes: kernel.not_found. */
+      404: components['responses']['Error404'];
+      /** @description Codes: patient.merged. */
       409: components['responses']['Error409'];
       /** @description Codes: kernel.payload_too_large. */
       413: components['responses']['Error413'];

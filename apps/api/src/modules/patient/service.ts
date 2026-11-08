@@ -37,6 +37,8 @@ import type {
   MatchCandidate,
   MatchResult,
   PatientBanner,
+  PatientLookupItem,
+  PatientLookupResult,
   PatientRecord,
   RegisterInput,
   RequestMeta,
@@ -678,6 +680,94 @@ export class PatientService {
       userAgent: meta.userAgent ?? null,
     });
     return r.rows.map((x) => recordOf(x as Row));
+  }
+
+  /**
+   * `POST /patients/lookup` (draft 8.3, FE-10): the minimised lookup for doctors. Exactly one criteria form: `{mrn}`,
+   * `{name, dateOfBirth?}` or `{patientIds}` (1 to 25). Read under the caller's own RLS, so an out-of-scope patient is simply absent
+   * (200, the same shape). At most 25 items and `truncated`. Audited `search` with the form, the count and the returned IDs; the
+   * criteria values are never stored.
+   */
+  async lookup(tx: Tx, meta: RequestMeta, q: unknown): Promise<PatientLookupResult> {
+    const body =
+      q !== null && typeof q === 'object' && !Array.isArray(q)
+        ? (q as Record<string, unknown>)
+        : {};
+    const keys = Object.keys(body);
+    const has = (...allowed: string[]): boolean =>
+      keys.length > 0 && keys.every((k) => allowed.includes(k));
+    const params: unknown[] = [];
+    const where: string[] = [];
+    let form: 'mrn' | 'name' | 'ids';
+    if (has('mrn') && keys.length === 1) {
+      const m = body['mrn'];
+      if (typeof m !== 'string' || !/^MRN-[0-9]{7,12}$/i.test(m.trim()))
+        throw new PatientValidationError(['mrn']);
+      params.push(m.trim().toUpperCase());
+      where.push(`mrn = $1`);
+      form = 'mrn';
+    } else if (has('name', 'dateOfBirth') && 'name' in body) {
+      const n = normaliseName(body['name']);
+      const words = n === undefined ? [] : n.replace(/,/g, ' ').split(' ').filter(Boolean);
+      if (
+        n === undefined ||
+        words.length === 0 ||
+        words.length > 4 ||
+        words.some((w) => w.length < 2)
+      )
+        throw new PatientValidationError(['name']);
+      for (const w of words) {
+        params.push(`${w.toLowerCase().replace(/[\\%_]/g, (c) => `\\${c}`)}%`);
+        where.push(
+          `(lower(family_name) LIKE $${params.length} OR lower(given_name) LIKE $${params.length})`,
+        );
+      }
+      if ('dateOfBirth' in body) {
+        const dob = normaliseDateOfBirth(body['dateOfBirth'], this.now());
+        if (dob === undefined) throw new PatientValidationError(['dateOfBirth']);
+        params.push(dob);
+        where.push(`date_of_birth = $${params.length}::date`);
+      }
+      form = 'name';
+    } else if (has('patientIds') && keys.length === 1) {
+      const ids = body['patientIds'];
+      if (
+        !Array.isArray(ids) ||
+        ids.length < 1 ||
+        ids.length > 25 ||
+        !ids.every((x) => typeof x === 'string' && isUuid(x))
+      )
+        throw new PatientValidationError(['patientIds']);
+      params.push([...new Set((ids as string[]).map((x) => x.toLowerCase()))]);
+      where.push(`id = ANY($1::uuid[])`);
+      form = 'ids';
+    } else {
+      throw new PatientValidationError(['body']);
+    }
+    const r = await tx.query(
+      `SELECT id, mrn, given_name, middle_name, family_name, to_char(date_of_birth, 'YYYY-MM-DD') AS date_of_birth
+         FROM patient.patient WHERE status = 'active' AND ${where.join(' AND ')}
+        ORDER BY lower(family_name), lower(given_name), id LIMIT 26`,
+      params,
+    );
+    const rows = r.rows as Row[];
+    const items = rows.slice(0, 25).map((x): PatientLookupItem => ({
+      patientId: String(x['id']),
+      mrn: String(x['mrn']),
+      givenName: String(x['given_name']),
+      middleName: x['middle_name'] === null ? null : String(x['middle_name']),
+      familyName: String(x['family_name']),
+      dateOfBirth: String(x['date_of_birth']),
+    }));
+    await this.deps.audit.record(tx, {
+      requestId: meta.requestId,
+      action: 'search',
+      resourceType: 'patient.patient',
+      change: { form, results: items.length, patientIds: items.map((i) => i.patientId) },
+      ip: meta.ip ?? null,
+      userAgent: meta.userAgent ?? null,
+    });
+    return { items, truncated: rows.length > 25 };
   }
 
   // --- the identity label (6.7) ------------------------------------------------------------------------------------

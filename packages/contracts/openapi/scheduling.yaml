@@ -18,7 +18,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/clinicians/{id}/availability-templates
-          catalogueRow: 29.4#119
+          catalogueRow: 29.4#124
       security:
         - sessionCookie: []
       parameters:
@@ -100,7 +100,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/clinicians/{id}/availability-templates
-          catalogueRow: 29.4#119
+          catalogueRow: 29.4#124
       security:
         - sessionCookie: []
       parameters:
@@ -192,7 +192,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/clinicians/{id}/availability-templates/{templateId}
-          catalogueRow: 29.4#119
+          catalogueRow: 29.4#124
       security:
         - sessionCookie: []
       parameters:
@@ -274,7 +274,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/clinicians/{id}/availability-templates/{templateId}
-          catalogueRow: 29.4#119
+          catalogueRow: 29.4#124
       security:
         - sessionCookie: []
       parameters:
@@ -373,7 +373,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/clinicians/{id}/blocked-times
-          catalogueRow: 29.4#119
+          catalogueRow: 29.4#124
       x-catalogue-gap: The catalogue lists DELETE on the collection and names no identifier of the blocked time to delete
       security:
         - sessionCookie: []
@@ -451,7 +451,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/clinicians/{id}/blocked-times
-          catalogueRow: 29.4#119
+          catalogueRow: 29.4#124
       security:
         - sessionCookie: []
       parameters:
@@ -534,7 +534,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/clinicians/{id}/blocked-times
-          catalogueRow: 29.4#119
+          catalogueRow: 29.4#124
       security:
         - sessionCookie: []
       parameters:
@@ -627,7 +627,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/locations/{id}/roster
-          catalogueRow: 29.4#120
+          catalogueRow: 29.4#125
       x-catalogue-gap: The catalogue lists DELETE on the collection and names no identifier of the roster entry to delete
       security:
         - sessionCookie: []
@@ -705,7 +705,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/locations/{id}/roster
-          catalogueRow: 29.4#120
+          catalogueRow: 29.4#125
       security:
         - sessionCookie: []
       parameters:
@@ -788,7 +788,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/locations/{id}/roster
-          catalogueRow: 29.4#120
+          catalogueRow: 29.4#125
       security:
         - sessionCookie: []
       parameters:
@@ -2614,6 +2614,101 @@ paths:
         '504':
           $ref: common.yaml#/components/responses/Error504
           description: 'Codes: kernel.timeout.'
+  /api/v1/clinicians/{id}/schedule:
+    get:
+      operationId: getCliniciansByIdSchedule
+      tags:
+        - scheduling
+      summary: GET /api/v1/clinicians/{id}/schedule
+      description: "staff.: Own only (`{id}` = caller, else `403 auth.forbidden` before any query); grant required at `locationId`. The caller's own reservations of one location-day (draft 8.3, FE-10)"
+      x-access:
+        staff:
+          permission: scheduling.booking.own_schedule
+          resolver: clinician
+          realm: google
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/clinicians/{id}/schedule
+          catalogueRow: 29.3#110
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: locationId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: date
+          in: query
+          required: false
+          description: The location's local calendar date; default today
+          schema:
+            type: string
+            format: date
+        - $ref: common.yaml#/components/parameters/ClientRelease
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCliniciansByIdScheduleResponse'
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
   /api/v1/holds:
     post:
       operationId: postHolds
@@ -3818,7 +3913,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /public/v1/clinicians/{id}/next-available
-          catalogueRow: 29.5#142
+          catalogueRow: 29.5#147
       security: []
       x-authentication: none
       parameters:
@@ -3869,6 +3964,88 @@ paths:
           description: 'Codes: kernel.timeout.'
 components:
   schemas:
+    ClinicianScheduleItem:
+      description: A subset of the arrivals board row. The front-desk fields (method, previsit, noShowCandidate, flaggedForStaff, version) are left out on purpose.
+      type: object
+      additionalProperties: false
+      required:
+        - reservationId
+        - patientId
+        - patientName
+        - mrn
+        - serviceId
+        - mode
+        - status
+        - startsAt
+        - endsAt
+        - checkedInAt
+        - queueStage
+      properties:
+        reservationId:
+          type: string
+          format: uuid
+        patientId:
+          type: string
+          format: uuid
+        patientName:
+          oneOf:
+            - type: string
+            - type: 'null'
+        mrn:
+          oneOf:
+            - type: string
+            - type: 'null'
+        serviceId:
+          type: string
+          format: uuid
+        mode:
+          type: string
+          enum:
+            - in_person
+            - video
+        status:
+          type: string
+          enum:
+            - confirmed
+            - checked_in
+            - in_consultation
+            - completed
+            - no_show
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: string
+          format: date-time
+        checkedInAt:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+        queueStage:
+          oneOf:
+            - type: string
+              enum:
+                - waiting
+                - vitals
+                - triage
+                - ready
+                - with_clinician
+                - done
+            - type: 'null'
+    GetCliniciansByIdScheduleResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - timeZone
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClinicianScheduleItem'
+        timeZone:
+          type: string
     GetAdminCliniciansByIdAvailabilityTemplatesResponse:
       type: object
       required:

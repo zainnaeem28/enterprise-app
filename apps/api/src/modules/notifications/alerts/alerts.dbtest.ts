@@ -816,6 +816,48 @@ describe('staff alerts and the alert stream on PostgreSQL 17 (BE-07)', () => {
       await k.wdb.withScope(system, (tx) => svcW.close(tx, a.alertId));
     });
 
+    test('HEAAA-286 (draft 8.3): a red flag targeted at a principal holding the seeded doctor role is listed, streamed and acknowledged; a doctor who is not targeted gets 404 and sees nothing (38.2 item 22)', async () => {
+      const targeted = await seedPrincipal(k, 'google', { email: 'doctor.target@example.com' });
+      const other = await seedPrincipal(k, 'google', { email: 'doctor.other@example.com' });
+      for (const p of [targeted, other]) await assignRole(k, p.principalId, 'doctor', L1);
+      const sTarget = await seedSession(k, targeted, 'google');
+      const sOther = await seedSession(k, other, 'google');
+      const a = await raiseSys({
+        type: 'red_flag',
+        severity: 'high',
+        targets: { kind: 'principal', principalIds: [targeted.principalId] },
+        resourceType: 'triage_assessment',
+        resourceId: RES,
+        patientId: P1,
+      });
+      const stream = await openStream(base, { cookie: sTarget.cookie });
+      assert.equal(stream.status, 200, 'the guard lets the doctor in: notifications.alert.read');
+      await stream.waitFor((f) =>
+        f.some((x) => x.event === 'alert' && JSON.parse(x.data ?? '{}').alertId === a.alertId),
+      );
+      stream.destroy();
+      const list = await getH(sTarget, '/api/v1/alerts?status=open');
+      assert.equal(list.status, 200, list.body);
+      assert.ok(
+        (list.json()['items'] as { alertId: string }[]).some((x) => x.alertId === a.alertId),
+        'the targeted doctor lists the alert',
+      );
+      const none = await getH(sOther, '/api/v1/alerts?status=open');
+      assert.equal(none.status, 200, none.body);
+      assert.ok(
+        !(none.json()['items'] as { alertId: string }[]).some((x) => x.alertId === a.alertId),
+        'a doctor who is not targeted does not see it',
+      );
+      const refused = await ack(sOther, a.alertId);
+      assert.equal(refused.status, 404);
+      assert.equal(refused.json()['code'], 'kernel.not_found');
+      const ok = await ack(sTarget, a.alertId);
+      assert.equal(ok.status, 200, ok.body);
+      assert.equal(ok.json()['status'], 'acknowledged');
+      assert.equal(ok.json()['acknowledgedBy'], targeted.principalId);
+      await k.wdb.withScope(system, (tx) => svcW.close(tx, a.alertId));
+    });
+
     test('an admin-realm principal (compliance) reads and acknowledges an alert of a compliance type in its own scope; no patient anywhere', async () => {
       const a = await raiseSys({
         type: 'btg_opened',

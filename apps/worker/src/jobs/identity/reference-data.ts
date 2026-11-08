@@ -288,6 +288,13 @@ export const PERMISSIONS: readonly PermissionSeed[] = [
     complianceScope: null,
   },
   {
+    key: 'patient.lookup',
+    module: 'patient',
+    privileged: false,
+    needsElevation: false,
+    complianceScope: null,
+  },
+  {
     key: 'patient.attach',
     module: 'patient',
     privileged: false,
@@ -626,6 +633,9 @@ const DOCTOR = [
   'messaging.*',
   'documents.read',
   'documents.upload',
+  'patient.lookup',
+  'notifications.alert.read',
+  'notifications.alert.acknowledge',
 ] as const;
 
 export const ROLES: readonly RoleSeed[] = [

@@ -18,7 +18,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/consents
-          catalogueRow: 29.4#138
+          catalogueRow: 29.4#143
       security:
         - sessionCookie: []
       parameters:
@@ -105,7 +105,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/patient-labels
-          catalogueRow: 29.4#139
+          catalogueRow: 29.4#144
       security:
         - sessionCookie: []
       parameters:
@@ -2812,6 +2812,93 @@ paths:
         '504':
           $ref: common.yaml#/components/responses/Error504
           description: 'Codes: kernel.timeout.'
+  /api/v1/patients/lookup:
+    post:
+      operationId: postPatientsLookup
+      tags:
+        - patient
+      summary: POST /api/v1/patients/lookup
+      description: 'staff.: Minimised lookup (draft 8.3, FE-10): body exactly one of `{mrn}`, `{name, dateOfBirth?}`, `{patientIds}` (at most 25); at most 25 items, no cursor; in-scope patients only, out of scope = absent; audited `search` with the returned IDs (no terms)'
+      x-access:
+        staff:
+          permission: patient.lookup
+          resolver: caller's scope
+          realm: google
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/patients/lookup
+          catalogueRow: 29.3#109
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: common.yaml#/components/parameters/ClientRelease
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostPatientsLookupRequest'
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '413':
+          - kernel.payload_too_large
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostPatientsLookupResponse'
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '413':
+          $ref: common.yaml#/components/responses/Error413
+          description: 'Codes: kernel.payload_too_large.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
   /api/v1/patients/match:
     post:
       operationId: postPatientsMatch
@@ -3081,6 +3168,80 @@ paths:
           description: 'Codes: kernel.timeout.'
 components:
   schemas:
+    PatientLookupItem:
+      type: object
+      additionalProperties: false
+      required:
+        - patientId
+        - mrn
+        - givenName
+        - middleName
+        - familyName
+        - dateOfBirth
+      properties:
+        patientId:
+          type: string
+          format: uuid
+        mrn:
+          type: string
+        givenName:
+          type: string
+        middleName:
+          oneOf:
+            - type: string
+            - type: 'null'
+        familyName:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+    PostPatientsLookupRequest:
+      description: Exactly one criteria form. `phone`, `email`, `dateOfBirth` alone and mixed forms are refused.
+      oneOf:
+        - type: object
+          additionalProperties: false
+          required:
+            - mrn
+          properties:
+            mrn:
+              type: string
+        - type: object
+          additionalProperties: false
+          required:
+            - name
+          properties:
+            name:
+              type: string
+              description: At most 4 words, each of at least 2 characters; prefix match on given or family name.
+            dateOfBirth:
+              type: string
+              format: date
+        - type: object
+          additionalProperties: false
+          required:
+            - patientIds
+          properties:
+            patientIds:
+              type: array
+              minItems: 1
+              maxItems: 25
+              items:
+                type: string
+                format: uuid
+    PostPatientsLookupResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - truncated
+      properties:
+        items:
+          type: array
+          maxItems: 25
+          items:
+            $ref: '#/components/schemas/PatientLookupItem'
+        truncated:
+          type: boolean
     GetAdminConsentsResponse:
       type: object
       required:

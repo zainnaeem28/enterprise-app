@@ -75,8 +75,8 @@ after(async () => {
 describe('identity.apply_reference_data', () => {
   test('loads the catalogue, the roles and the 27.3 mapping, labelled Proposal, with the version row', async () => {
     const r = await runApplyReferenceData({ db: wdb, orgId: ORG, jobId: 'job-1' });
-    assert.deepEqual([r.permissions, r.roles, r.changed], [80, 11, true]);
-    assert.equal(await n(`SELECT count(*) AS n FROM identity.permission`), 80);
+    assert.deepEqual([r.permissions, r.roles, r.changed], [81, 11, true]);
+    assert.equal(await n(`SELECT count(*) AS n FROM identity.permission`), 81);
     assert.equal(await n(`SELECT count(*) AS n FROM identity.role`), 11);
     assert.equal(await n(`SELECT count(*) AS n FROM identity.role_permission`), r.mappings);
     assert.equal(

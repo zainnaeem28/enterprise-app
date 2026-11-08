@@ -17,11 +17,13 @@ import {
   SVC_IP,
   call,
   setupFlow,
+  staffMember,
   workerJobs,
   writeHeaders,
 } from './testkit.js';
 import type { FlowKit, PatientKit, WorkerJobs } from './testkit.js';
 import { qrToken, SCHEDULING_FLOW_JOBS } from './index.js';
+import { CLINICIAN_PREDICATE, arrivalsSql } from './service.js';
 
 let t: FlowKit;
 let W: WorkerJobs;
@@ -1058,6 +1060,200 @@ describe('the database rules under the flow (1300-1302)', () => {
       'scheduling.on_slot_freed',
       'scheduling.send_previsit',
     ]);
+  });
+});
+
+/** SQL text of every statement a transaction opened through the API's `withScope` ran while `fn` ran. */
+const traced = async <T>(fn: () => Promise<T>): Promise<{ res: T; sql: string[] }> => {
+  const db = t.k.db as unknown as { withScope: (...a: never[]) => unknown };
+  const orig = db.withScope as (...a: unknown[]) => unknown;
+  const sql: string[] = [];
+  db.withScope = ((scope: unknown, body: (tx: object) => unknown, ...rest: unknown[]) =>
+    orig.call(
+      t.k.db,
+      scope,
+      (tx: Record<string, unknown>) =>
+        body(
+          new Proxy(tx, {
+            get: (target, prop) => {
+              if (prop === 'query')
+                return (...a: unknown[]) => {
+                  sql.push(typeof a[0] === 'string' ? a[0] : JSON.stringify(a[0]));
+                  return (target['query'] as (...x: unknown[]) => unknown)(...a);
+                };
+              const v = Reflect.get(target, prop);
+              return typeof v === 'function' ? (v as (...x: unknown[]) => unknown).bind(target) : v;
+            },
+          }),
+        ),
+      ...rest,
+    )) as never;
+  try {
+    return { res: await fn(), sql };
+  } finally {
+    db.withScope = orig as never;
+  }
+};
+
+// ===== the doctor's role (HEAAA-286, draft 8.3, 38.2 items 24, 25, 29) =====================================================
+describe('the seeded doctor: front-desk writes are refused (38.2 item 24)', () => {
+  test('POST /appointments/{id}/check-in, …/no-show and GET /locations/{id}/check-in-qr are 403 auth.forbidden', async () => {
+    t.clock.at = NOW;
+    const dr = await staffMember(t.k, 'doctor', A1, 'Doctor no desk');
+    const { rid } = await visit(900);
+    const v = await version(rid);
+    for (const path of [
+      `/api/v1/appointments/${rid}/check-in`,
+      `/api/v1/appointments/${rid}/no-show`,
+    ]) {
+      const r = await call(t.k.base, 'POST', path, {
+        cookie: dr.cookie,
+        headers: { ...writeHeaders(dr, undefined, randomUUID()), 'if-match': `W/"${v}"` },
+        body: {},
+      });
+      assert.equal(r.status, 403, `${path} ${r.body}`);
+      assert.equal(r.json()['code'], 'auth.forbidden');
+    }
+    const qr = await call(t.k.base, 'GET', `/api/v1/locations/${A1}/check-in-qr`, {
+      cookie: dr.cookie,
+    });
+    assert.equal(qr.status, 403, qr.body);
+    assert.equal(qr.json()['code'], 'auth.forbidden');
+    assert.equal(await status(rid), 'confirmed', 'nothing changed');
+    t.clock.at = undefined;
+  });
+});
+
+describe('GET /clinicians/{id}/schedule (38.2 items 25 and 29)', () => {
+  const sched = (who: { cookie: string }, id: string, qs: string) =>
+    call(t.k.base, 'GET', `/api/v1/clinicians/${id}/schedule${qs}`, { cookie: who.cookie });
+  const KEYS = [
+    'checkedInAt',
+    'endsAt',
+    'mode',
+    'mrn',
+    'patientId',
+    'patientName',
+    'queueStage',
+    'reservationId',
+    'serviceId',
+    'startsAt',
+    'status',
+  ];
+
+  test("(a) only the caller's own reservations, the clinician predicate is in the SQL, items carry no front-desk field; (e) the date is read in the location time zone; one view event per call", async () => {
+    t.clock.at = NOW;
+    const dr = await staffMember(t.k, 'doctor', A1, 'Doctor own schedule');
+    const me = dr.seeded.principalId;
+    const otherDoc = (await t.doctor()).principalId;
+    const p1 = await t.patient(910);
+    const p2 = await t.patient(911);
+    const p3 = await t.patient(912);
+    const mine = await t.seed(p1, me, APPT);
+    const theirs = await t.seed(p2, otherDoc, new Date(APPT.getTime() + 3_600_000));
+    // 22:30 EST on 03-04 is 03:30Z on 03-05: it belongs to the 4th at New York
+    const lateEvening = await t.seed(p3, me, new Date('2031-03-05T03:30:00.000Z'));
+    assert.ok(arrivalsSql(true).includes(CLINICIAN_PREDICATE));
+    assert.ok(!arrivalsSql(false).includes(CLINICIAN_PREDICATE));
+    const beforeEvents = await nrows(
+      `SELECT count(*)::text AS n FROM audit.event WHERE action = 'view' AND resource_type = 'scheduling.reservation' AND actor_principal_id = $1`,
+      [me],
+    );
+    const { res, sql } = await traced(() => sched(dr, me, `?locationId=${A1}&date=2031-03-04`));
+    assert.equal(res.status, 200, res.body);
+    const body = res.json() as { items: Record<string, unknown>[]; timeZone: string };
+    assert.equal(body.timeZone, 'America/New_York');
+    const ids = body.items.map((x) => x['reservationId']);
+    assert.ok(ids.includes(mine));
+    assert.ok(
+      !ids.includes(theirs),
+      "another clinician's reservation at the same location-day is not returned",
+    );
+    assert.ok(ids.includes(lateEvening), 'the date is the location-local date');
+    for (const item of body.items) assert.deepEqual(Object.keys(item).sort(), KEYS);
+    assert.ok(
+      sql.some((q) => q.includes(CLINICIAN_PREDICATE)),
+      'the SQL carries the clinician predicate',
+    );
+    assert.equal(sql.filter((q) => /previsit/i.test(q)).length, 0, 'no per-row pre-visit lookups');
+    const next = await sched(dr, me, `?locationId=${A1}&date=2031-03-05`);
+    assert.equal(
+      (next.json()['items'] as { reservationId: string }[]).some(
+        (x) => x.reservationId === lateEvening,
+      ),
+      false,
+    );
+    // item 29: one view event per call, patient IDs only
+    const afterEvents = await nrows(
+      `SELECT count(*)::text AS n FROM audit.event WHERE action = 'view' AND resource_type = 'scheduling.reservation' AND actor_principal_id = $1`,
+      [me],
+    );
+    assert.equal(afterEvents - beforeEvents, 2);
+    const ev = await one<{ change: { patientIds: string[] } }>(
+      `SELECT change FROM audit.event WHERE action = 'view' AND resource_type = 'scheduling.reservation' AND actor_principal_id = $1 ORDER BY occurred_at LIMIT 1`,
+      [me],
+    );
+    assert.deepEqual(ev.change.patientIds.sort(), [p1.patientId, p3.patientId].sort());
+    t.clock.at = undefined;
+  });
+
+  test("(b)(c)(d) another clinician's id, an unknown id and a disabled principal give the same 403 before any scheduling query; a non-UUID id is 404; a location outside the grant is 403", async () => {
+    const dr = await staffMember(t.k, 'doctor', A1, 'Doctor refusals');
+    const gone = await t.doctor();
+    await t.k.sa.query(`SET session_replication_role = replica`);
+    try {
+      await t.k.sa.query(`UPDATE identity.principal SET status = 'disabled' WHERE id = $1`, [
+        gone.principalId,
+      ]);
+    } finally {
+      await t.k.sa.query(`SET session_replication_role = DEFAULT`);
+    }
+    const flowSvc = t.flow as unknown as Record<string, (...a: unknown[]) => unknown>;
+    const orig = flowSvc['clinicianSchedule'] as (...a: unknown[]) => unknown;
+    let calls = 0;
+    flowSvc['clinicianSchedule'] = (...a: unknown[]) => {
+      calls += 1;
+      return orig.apply(t.flow, a);
+    };
+    const bodies: string[] = [];
+    try {
+      for (const id of [(await t.doctor()).principalId, randomUUID(), gone.principalId]) {
+        const { res, sql } = await traced(() => sched(dr, id, `?locationId=${A1}&date=2031-03-04`));
+        assert.equal(res.status, 403, res.body);
+        assert.equal(res.json()['code'], 'auth.forbidden');
+        assert.equal(
+          sql.some((q) => /scheduling\.|patient\./.test(q)),
+          false,
+          'no scheduling or patient query before the refusal',
+        );
+        bodies.push(res.body.replace(/"requestId":"[^"]*"/, ''));
+      }
+      assert.equal(new Set(bodies).size, 1, 'the body is identical in every case');
+      assert.equal(calls, 0, 'the flow service was not called');
+      // (d) a location outside the grant
+      const far = await traced(() =>
+        sched(dr, dr.seeded.principalId, `?locationId=${A2}&date=2031-03-04`),
+      );
+      assert.equal(far.res.status, 403, far.res.body);
+      assert.equal(calls, 0);
+    } finally {
+      flowSvc['clinicianSchedule'] = orig;
+    }
+    assert.equal((await sched(dr, 'not-a-uuid', `?locationId=${A1}`)).status, 404);
+    assert.equal(
+      (await sched(dr, dr.seeded.principalId, `?locationId=${A1}&date=nonsense`)).json()['code'],
+      'kernel.validation_failed',
+    );
+    assert.equal(
+      (await sched(dr, dr.seeded.principalId, '')).json()['code'],
+      'kernel.validation_failed',
+      'locationId is required',
+    );
+    const denied = await nrows(
+      `SELECT count(*)::text AS n FROM audit.event WHERE action = 'denied' AND resource_type = 'scheduling.route' AND actor_principal_id = $1`,
+      [dr.seeded.principalId],
+    );
+    assert.ok(denied >= 4);
   });
 });
 

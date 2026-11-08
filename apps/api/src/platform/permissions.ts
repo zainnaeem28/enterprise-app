@@ -44,6 +44,7 @@ export const PERMISSIONS: readonly string[] = [
   'patient.register',
   'patient.update',
   'patient.match',
+  'patient.lookup',
   'patient.attach',
   'patient.merge.request',
   'patient.merge.approve',

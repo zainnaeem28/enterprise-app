@@ -18,7 +18,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/vital-ranges
-          catalogueRow: 29.4#127
+          catalogueRow: 29.4#132
       security:
         - sessionCookie: []
       parameters:
@@ -96,7 +96,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/vital-ranges
-          catalogueRow: 29.4#127
+          catalogueRow: 29.4#132
       security:
         - sessionCookie: []
       parameters:
@@ -184,7 +184,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/vital-ranges/{id}/retire
-          catalogueRow: 29.4#127
+          catalogueRow: 29.4#132
       security:
         - sessionCookie: []
       parameters:
@@ -441,6 +441,187 @@ paths:
         '413':
           $ref: common.yaml#/components/responses/Error413
           description: 'Codes: kernel.payload_too_large.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/clinicians/{id}/cosign-queue:
+    get:
+      operationId: getCliniciansByIdCosignQueue
+      tags:
+        - clinical
+      summary: GET /api/v1/clinicians/{id}/cosign-queue
+      description: 'staff.: Own only. `pending_cosign` notes with `cosign_required_from` = caller, `submitted_for_cosign_at, id` (draft 8.3, FE-10)'
+      x-access:
+        staff:
+          permission: clinical.note.cosign
+          resolver: clinician
+          realm: google
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/clinicians/{id}/cosign-queue
+          catalogueRow: 29.3#112
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/Limit
+        - $ref: common.yaml#/components/parameters/Cursor
+        - $ref: common.yaml#/components/parameters/ClientRelease
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCliniciansByIdCosignQueueResponse'
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/clinicians/{id}/notes:
+    get:
+      operationId: getCliniciansByIdNotes
+      tags:
+        - clinical
+      summary: GET /api/v1/clinicians/{id}/notes
+      description: "staff.: Own only. The caller's `draft` and `pending_cosign` notes, `COALESCE(updated_at, created_at) DESC, id DESC`; the cursor is bound to the caller, the route and the filter, and valid 15 minutes (draft 8.3, FE-10)"
+      x-access:
+        staff:
+          permission: clinical.note.write
+          resolver: clinician
+          realm: google
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/clinicians/{id}/notes
+          catalogueRow: 29.3#111
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          required: false
+          description: Repeatable; default both. `signed` is refused.
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - draft
+                - pending_cosign
+          style: form
+          explode: true
+        - $ref: common.yaml#/components/parameters/Limit
+        - $ref: common.yaml#/components/parameters/Cursor
+        - $ref: common.yaml#/components/parameters/ClientRelease
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCliniciansByIdNotesResponse'
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
         '429':
           $ref: common.yaml#/components/responses/Error429
           description: 'Codes: kernel.rate_limited.'
@@ -841,6 +1022,91 @@ paths:
           $ref: common.yaml#/components/responses/Error504
           description: 'Codes: kernel.timeout.'
   /api/v1/notes/{id}:
+    get:
+      operationId: getNotesById
+      tags:
+        - clinical
+      summary: GET /api/v1/notes/{id}
+      description: 'staff.: Read basis: author; supervisor (pending co-sign from the caller, or co-signed by the caller; never a draft); BTG; assigned. Otherwise `403 clinical.not_assigned`, audited `denied`. No photo or contacts in `patientBanner` on the author and supervisor bases (draft 8.3, FE-10)'
+      x-access:
+        staff:
+          permission: clinical.note.write
+          resolver: note
+          realm: google
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/notes/{id}
+          catalogueRow: 29.3#113
+      x-banner: true
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+          - clinical.not_assigned
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            ETag:
+              $ref: common.yaml#/components/headers/ETag
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Note'
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden, clinical.not_assigned.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
     patch:
       operationId: patchNotesById
       tags:
@@ -3373,6 +3639,228 @@ paths:
           description: 'Codes: kernel.timeout.'
 components:
   schemas:
+    NoteListItem:
+      type: object
+      additionalProperties: false
+      required:
+        - noteId
+        - encounterId
+        - patientId
+        - patientBanner
+        - authorPrincipalId
+        - authorDisplayName
+        - status
+        - templateId
+        - createdAt
+        - updatedAt
+        - submittedForCosignAt
+        - rowVersion
+      properties:
+        noteId:
+          type: string
+          format: uuid
+        encounterId:
+          type: string
+          format: uuid
+        patientId:
+          type: string
+          format: uuid
+        patientBanner:
+          type: object
+          additionalProperties: false
+          required:
+            - patientId
+            - displayName
+            - dateOfBirth
+            - mrn
+          properties:
+            patientId:
+              type: string
+              format: uuid
+            displayName:
+              type: string
+            dateOfBirth:
+              type: string
+            mrn:
+              type: string
+        authorPrincipalId:
+          type: string
+          format: uuid
+        authorDisplayName:
+          type: string
+        status:
+          type: string
+          enum:
+            - draft
+            - pending_cosign
+            - signed
+        templateId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+        submittedForCosignAt:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+        rowVersion:
+          type: integer
+    GetCliniciansByIdNotesResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - nextCursor
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/NoteListItem'
+        nextCursor:
+          oneOf:
+            - type: string
+            - type: 'null'
+    GetCliniciansByIdCosignQueueResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - nextCursor
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/NoteListItem'
+        nextCursor:
+          oneOf:
+            - type: string
+            - type: 'null'
+    Note:
+      type: object
+      required:
+        - id
+        - encounterId
+        - patientId
+        - authorPrincipalId
+        - templateId
+        - status
+        - body
+        - createdAt
+        - updatedAt
+        - submittedForCosignAt
+        - cosignRequiredFrom
+        - signedAt
+        - signedBy
+        - cosign
+        - addenda
+        - rowVersion
+        - timeZone
+        - patientBanner
+      properties:
+        id:
+          type: string
+          format: uuid
+        encounterId:
+          type: string
+          format: uuid
+        patientId:
+          type: string
+          format: uuid
+        authorPrincipalId:
+          type: string
+          format: uuid
+        templateId:
+          type: string
+        status:
+          type: string
+          enum:
+            - draft
+            - pending_cosign
+            - signed
+        body:
+          type: object
+          required:
+            - sections
+          properties:
+            sections:
+              type: object
+              additionalProperties:
+                type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+        submittedForCosignAt:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+        cosignRequiredFrom:
+          oneOf:
+            - type: string
+              format: uuid
+            - type: 'null'
+        signedAt:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+        signedBy:
+          oneOf:
+            - type: string
+              format: uuid
+            - type: 'null'
+        cosign:
+          oneOf:
+            - type: object
+              required:
+                - supervisorPrincipalId
+                - cosignedAt
+              properties:
+                supervisorPrincipalId:
+                  type: string
+                  format: uuid
+                cosignedAt:
+                  type: string
+                  format: date-time
+            - type: 'null'
+        addenda:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - authorPrincipalId
+              - body
+              - signedAt
+            properties:
+              id:
+                type: string
+                format: uuid
+              authorPrincipalId:
+                type: string
+                format: uuid
+              body:
+                type: string
+              signedAt:
+                type: string
+                format: date-time
+        rowVersion:
+          type: integer
+        timeZone:
+          type: string
+        patientBanner:
+          $ref: common.yaml#/components/schemas/OpaqueObject
     ClinicalErrorCode:
       type: string
       enum:

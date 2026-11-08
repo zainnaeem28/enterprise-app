@@ -62,7 +62,18 @@ import { SchedulingFlowService } from './service.js';
 import { uuidv7 } from '../core/ids.js';
 import type { PrevisitPort } from './types.js';
 
-export { ORG, adminUrl, call, id, pg, saWrite, seedPrincipal, seedSession, writeHeaders };
+export {
+  ORG,
+  adminUrl,
+  call,
+  id,
+  pg,
+  saWrite,
+  seedPrincipal,
+  seedSession,
+  staffMember,
+  writeHeaders,
+};
 export type { Client, Kit, SeededSession };
 
 /** The worker's real scheduling job handlers (apps/worker/dist), loaded the way the patient kit loads the identity jobs. */
