@@ -1,0 +1,4 @@
+## prettier --check apps/staff/src/features/preconsult (excluding generated evidence/test-results and playwright-report.json)
+Checking formatting...
+All matched files use Prettier code style!
+exit 0

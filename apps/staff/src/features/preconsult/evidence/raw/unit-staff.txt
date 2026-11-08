@@ -1,0 +1,15 @@
+## vitest run (apps/staff), tool: vitest/5.1.0 linux-x64 node-v24.22.2
+
+ RUN  v5.1.0 /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-119-sdlc-ticket-fe-09-pre-consultation-desk-arrivals-board-check-in-forms-review-triage-panel-red-flag-bar-queues-/apps/staff
+
+
+ Test Files  8 passed (8)
+      Tests  82 passed (82)
+   Start at  00:55:01
+   Duration  4.15s (tests 44%, environment 42%, setup 7%, import 5%, transform 2%)
+
+Environment  jsdom was created 8 times · 4.45s total, 42% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+exit 0

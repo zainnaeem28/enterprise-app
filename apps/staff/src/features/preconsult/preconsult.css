@@ -1,0 +1,76 @@
+.ehr-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-4);
+}
+.ehr-toolbar h2 {
+  margin: 0;
+  flex: 1 1 auto;
+}
+.ehr-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--sp-2);
+}
+.ehr-chip-row {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-2);
+}
+.ehr-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--sp-3) var(--sp-4);
+  margin-bottom: var(--sp-3);
+}
+.ehr-card--warning {
+  border-color: var(--warning);
+  background: var(--warning-tint);
+}
+.ehr-desk-location {
+  max-width: 24rem;
+}
+
+/* Triage entry is for a tablet or computer (UI-UX 9): under 600 px the forms are not drawn and a note says where to go. */
+.ehr-desk-phone-note {
+  display: none;
+}
+@media (max-width: 599px) {
+  .ehr-desk-tablet-up {
+    display: none;
+  }
+  .ehr-desk-phone-note {
+    display: block;
+  }
+  /* Table rows become cards with the same fields; the identifier and status stay first (UI-UX 9). */
+  .ehr-table-wrap .ehr-table,
+  .ehr-table-wrap .ehr-table tbody,
+  .ehr-table-wrap .ehr-table tr,
+  .ehr-table-wrap .ehr-table td {
+    display: block;
+    width: 100%;
+  }
+  .ehr-table-wrap .ehr-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .ehr-table-wrap .ehr-table tr {
+    padding: var(--sp-2) 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .ehr-table-wrap .ehr-table td {
+    border-bottom: 0;
+    padding: var(--sp-1) var(--sp-3);
+  }
+  .ehr-desk-cell::before {
+    content: attr(data-label);
+    display: block;
+    font-size: var(--fs-caption);
+    color: var(--muted);
+  }
+}
