@@ -7,7 +7,11 @@ import { AUDIT_CRONTAB, AUDIT_JOBS } from './jobs/audit/jobs.js';
 import { CALENDAR_SYNC_JOBS } from './jobs/calendar-sync/jobs.js';
 import { CLINICAL_JOBS } from './jobs/clinical/jobs.js';
 import { DOCUMENTS_JOBS } from './jobs/documents/jobs.js';
-import { IDENTITY_ADMIN_JOBS, IDENTITY_JOBS } from './jobs/identity/jobs.js';
+import {
+  IDENTITY_ADMIN_JOBS,
+  IDENTITY_ADMIN_WORKER_JOBS,
+  IDENTITY_JOBS,
+} from './jobs/identity/jobs.js';
 import { INTEGRATION_CORE_JOBS } from './jobs/integration-core/jobs.js';
 import { MESSAGING_JOBS } from './jobs/messaging/jobs.js';
 import { ALERT_JOBS } from './jobs/notifications/alert-jobs.js';
@@ -26,6 +30,7 @@ import { TELEHEALTH_JOBS } from './jobs/telehealth/jobs.js';
 export const WORKER_JOBS: readonly JobType[] = [
   ...IDENTITY_JOBS,
   ...IDENTITY_ADMIN_JOBS,
+  ...IDENTITY_ADMIN_WORKER_JOBS,
   ...AUDIT_JOBS,
   ...PATIENT_JOBS,
   ...NOTIFICATIONS_JOBS,

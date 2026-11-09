@@ -1254,6 +1254,7 @@ describe('the run-level admin event, read by the worker under audience system', 
         {
           db: new KernelDb(pool as never),
           orgId: org,
+          queue: { enqueue: async () => undefined } as never,
           alerts: { raise: async (_tx, i) => void alerts.push(i as never) },
           notice: { notify: async (n) => void notices.push(n as never) },
         },

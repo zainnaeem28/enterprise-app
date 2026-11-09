@@ -41,6 +41,20 @@ export const IDENTITY_ADMIN_JOBS: readonly JobType[] = [
   },
 ];
 
+/** Worker-only: the notice is queued by `identity.admin_event` (worker path), never by the API tier. */
+export const ADMIN_EVENT_NOTICE_JOB = 'identity.admin_event_notice';
+export const IDENTITY_ADMIN_WORKER_JOBS: readonly JobType[] = [
+  {
+    name: ADMIN_EVENT_NOTICE_JOB,
+    apiEnqueue: false,
+    maxAttempts: 8,
+    onMerged: 'none',
+    carriesPatientIds: false,
+    jobScope: 'org',
+    jobClass: 'job',
+  },
+];
+
 export const ADMIN_EVENT_KINDS = [
   'credential_enrolled',
   'credential_revoked',

@@ -4,7 +4,8 @@
 import type { Task } from 'graphile-worker';
 import type { JobRegistry, KernelDb, Queue } from '@ehr/kernel';
 import { runApplyReferenceData } from './apply-reference-data.js';
-import { runAdminEvent, type AdminEventDeps } from './admin-events.js';
+import { runAdminEvent, runAdminEventNotice, type AdminEventDeps } from './admin-events.js';
+import type { SecurityNoticePort } from './admin-events.js';
 import { IDENTITY_JOBS } from './jobs.js';
 import { jobUuid } from '../messaging/index.js';
 import { runPurgeSessions } from './purge-sessions.js';
@@ -12,12 +13,20 @@ import { runRecordSignIn } from './record-sign-in.js';
 
 export {
   ADMIN_EVENT_KINDS,
+  ADMIN_EVENT_NOTICE_JOB,
   IDENTITY_ADMIN_JOBS,
+  IDENTITY_ADMIN_WORKER_JOBS,
   IDENTITY_CRONTAB,
   IDENTITY_EVENTS,
   IDENTITY_JOBS,
 } from './jobs.js';
-export { runAdminEvent, COMPLIANCE_PERMISSION, MIN_ACTIVE_CREDENTIALS } from './admin-events.js';
+export {
+  adminEventDeadLetters,
+  runAdminEvent,
+  runAdminEventNotice,
+  COMPLIANCE_PERMISSION,
+  MIN_ACTIVE_CREDENTIALS,
+} from './admin-events.js';
 export type {
   AdminEventDeps,
   ComplianceAlertInput,
@@ -46,8 +55,8 @@ export interface IdentityTaskDeps {
   /** Worker-path queue (`new Queue(registry, 'worker')`). */
   queue: Queue;
   workspaceDomain?: string;
-  /** Ports of `identity.admin_event` (alert and security-contact notice). Absent: the handler refuses, so the job retries and dead-letters. */
-  adminEvents?: Pick<AdminEventDeps, 'alerts' | 'notice'>;
+  /** Ports of `identity.admin_event` (the alert) and `identity.admin_event_notice` (the security-contact notice). Absent: the handler refuses, so the job retries and dead-letters. */
+  adminEvents?: { alerts: AdminEventDeps['alerts']; notice: SecurityNoticePort };
 }
 
 export function createIdentityTasks(deps: IdentityTaskDeps): Record<string, Task> {
@@ -69,10 +78,20 @@ export function createIdentityTasks(deps: IdentityTaskDeps): Record<string, Task
         throw new Error('identity.admin_event: alert and notice ports are not configured');
       const key = (helpers.job as { key?: string | null }).key;
       await runAdminEvent(
-        { db: deps.db, orgId: deps.orgId, ...deps.adminEvents },
+        { db: deps.db, orgId: deps.orgId, queue: deps.queue, ...deps.adminEvents },
         payload as Record<string, unknown>,
         jobUuid('identity.admin_event', String(helpers.job.id)),
         `identity.admin_event:${key ?? String(helpers.job.id)}`,
+      );
+    },
+    'identity.admin_event_notice': async (payload, helpers) => {
+      if (deps.adminEvents === undefined)
+        throw new Error('identity.admin_event_notice: notice port is not configured');
+      const key = (helpers.job as { key?: string | null }).key;
+      await runAdminEventNotice(
+        deps.adminEvents,
+        payload as Record<string, unknown>,
+        `identity.admin_event_notice:${key ?? String(helpers.job.id)}`,
       );
     },
     'identity.apply_reference_data': async (_payload, helpers) => {

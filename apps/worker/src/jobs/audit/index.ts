@@ -8,6 +8,7 @@ import { runArchiveAnchors, type AnchorArchiveStore } from './archive.js';
 import { runExportChunk, type ExportSink } from './export.js';
 import { AUDIT_JOBS } from './jobs.js';
 import { auditAnchorLateSeconds, type MetricSink } from './metrics.js';
+import { adminEventDeadLetters } from '../identity/admin-events.js';
 import { runVerify } from './verify.js';
 
 export { AUDIT_CRONTAB, AUDIT_JOBS } from './jobs.js';
@@ -35,7 +36,7 @@ export interface AuditTaskDeps {
   anchor?: AnchorOptions;
   /** The Object Lock archive of anchors (SEC05-F02). Composition supplies a refusing port until the bucket exists. */
   archive: AnchorArchiveStore;
-  /** Gauges: `AuditAnchorLateSeconds` after every anchor run, `AuditAnchorVerificationMismatch` after every verification. */
+  /** Gauges: `AuditAnchorLateSeconds` and `AdminEventDeadLettered` after every anchor run, `AuditAnchorVerificationMismatch` after every verification. */
   metrics?: MetricSink;
 }
 
@@ -50,6 +51,12 @@ export function createAuditTasks(deps: AuditTaskDeps): Record<string, Task> {
         deps.metrics.gauge(
           'AuditAnchorLateSeconds',
           await auditAnchorLateSeconds(deps.db, deps.orgId),
+        );
+      // Detection that failed for good (INT04F02-S1): the alarm `AdminEventDeadLettered` fires at > 0, on the same hourly cadence.
+      if (deps.metrics !== undefined)
+        deps.metrics.gauge(
+          'AdminEventDeadLettered',
+          await adminEventDeadLetters(deps.db, deps.orgId),
         );
       if (r.status === 'anchored' && r.lateRows > 0)
         deps.log.warn('audit anchor includes late rows', { lateRows: r.lateRows });
