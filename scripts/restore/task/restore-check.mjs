@@ -10,6 +10,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { runRestoreCheck } from './run.mjs';
+import { selectTarget } from '../lib/plan.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const env = (n) => {
@@ -50,12 +51,7 @@ const deps = {
   imageDigest,
   tables: JSON.parse(readFileSync(join(here, 'tables.json'), 'utf8')),
   async findTarget() {
-    const all = (await rdsc.send(new DescribeDBInstancesCommand({}))).DBInstances.filter((i) =>
-      (i.TagList ?? []).some((t) => t.Key === 'purpose' && t.Value === 'restore-test'),
-    );
-    if (all.length !== 1)
-      throw new Error(`expected exactly one restore-test instance, found ${all.length}`);
-    const i = all[0];
+    const i = selectTarget((await rdsc.send(new DescribeDBInstancesCommand({}))).DBInstances);
     if (i.DBInstanceStatus !== 'available') throw new Error('restore target is not available');
     return {
       id: i.DBInstanceIdentifier,

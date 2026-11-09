@@ -49,3 +49,15 @@ export function staleTargets(instances, { now = new Date(), maxAgeHours = 24 } =
     .filter((i) => !i.InstanceCreateTime || Date.parse(i.InstanceCreateTime) < cutoff)
     .map((i) => i.DBInstanceIdentifier);
 }
+
+/** The one live restore target. Instances already being deleted still carry the tag, so they are not candidates. */
+export function selectTarget(instances) {
+  const live = (instances ?? []).filter(
+    (i) =>
+      (i.TagList ?? []).some((t) => t.Key === 'purpose' && t.Value === 'restore-test') &&
+      !['deleting', 'deleted'].includes(i.DBInstanceStatus),
+  );
+  if (live.length !== 1)
+    throw new Error(`expected exactly one restore-test instance, found ${live.length}`);
+  return live[0];
+}

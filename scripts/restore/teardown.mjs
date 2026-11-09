@@ -5,6 +5,7 @@
 import { aws, TARGET_PREFIX } from './lib/aws.mjs';
 import { args, isMain, main } from '../deploy/lib/cli.mjs';
 import { staleTargets } from './lib/plan.mjs';
+import { dbGone } from './lib/wait.mjs';
 
 export function deleteArgs(id) {
   return [
@@ -18,11 +19,12 @@ export function deleteArgs(id) {
 }
 
 if (isMain(import.meta.url))
-  main(() => {
+  main(async () => {
     const a = args(process.argv.slice(2), {
       target: 'optional',
       stale: 'flag',
       'max-age-hours': 'optional',
+      'wait-seconds': 'optional',
     });
     if (!a.target === !a.stale) throw new Error('give exactly one of --target and --stale');
     let ids;
@@ -47,6 +49,15 @@ if (isMain(import.meta.url))
       }
     }
     if (failed.length) throw new Error(`could not delete: ${failed.join(', ')}`);
+    // Deletion is asynchronous. The next matrix leg finds its target by tag, so wait until every target is really gone
+    // (deadline of our own, named failure) instead of leaving one in `deleting` still carrying the tag.
+    for (const id of ids)
+      await dbGone(
+        async () => aws(['rds', 'describe-db-instances', '--db-instance-identifier', id]),
+        { timeoutSeconds: Number(a['wait-seconds'] ?? 1800), intervalSeconds: 20 },
+      ).catch((e) => {
+        throw new Error(`${id} is still not deleted: ${e.message}`);
+      });
     console.log(
       ids.length
         ? `teardown requested for ${ids.length} target(s)`

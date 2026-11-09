@@ -46,3 +46,17 @@ export const taskStopped = (describe, opts) =>
     done: (t) => t?.lastStatus === 'STOPPED',
     ...opts,
   });
+
+/** Resolves once `describe()` reports the instance as gone (an empty list or DBInstanceNotFound); a named failure at the deadline. */
+export const dbGone = (describe, opts) =>
+  pollUntil(
+    async () => {
+      try {
+        return (await describe()).DBInstances?.length ?? 0;
+      } catch (e) {
+        if (/DBInstanceNotFound/.test(String(e.stderr ?? e.message))) return 0;
+        throw e;
+      }
+    },
+    { done: (n) => n === 0, ...opts },
+  );

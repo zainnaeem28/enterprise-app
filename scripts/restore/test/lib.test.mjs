@@ -245,3 +245,13 @@ test('consecutive failures: two in a row stop releases; a success resets; manual
   );
   assert.equal(consecutiveFailures([]).stopReleases, false);
 });
+
+test('selectTarget ignores a tagged instance that is already deleting', async () => {
+  const { selectTarget } = await import('../lib/plan.mjs');
+  const tag = [{ Key: 'purpose', Value: 'restore-test' }];
+  const old = { DBInstanceIdentifier: 'rt-a', DBInstanceStatus: 'deleting', TagList: tag };
+  const cur = { DBInstanceIdentifier: 'rt-b', DBInstanceStatus: 'available', TagList: tag };
+  assert.equal(selectTarget([old, cur]).DBInstanceIdentifier, 'rt-b');
+  assert.throws(() => selectTarget([cur, { ...cur, DBInstanceIdentifier: 'rt-c' }]), /found 2/);
+  assert.throws(() => selectTarget([old]), /found 0/);
+});

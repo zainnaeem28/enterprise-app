@@ -59,3 +59,35 @@ test('task polling returns the stopped task and times out otherwise', async () =
     /timed out/,
   );
 });
+
+test('dbGone waits through deleting, treats not-found as gone, and a deadline is a named failure', async () => {
+  const { dbGone } = await import('../lib/wait.mjs');
+  const seq = [{ DBInstances: [{}] }, { DBInstances: [{}] }, 'notfound'];
+  let i = 0;
+  await dbGone(
+    async () => {
+      const v = seq[i++];
+      if (v === 'notfound') throw new Error('DBInstanceNotFound');
+      return v;
+    },
+    { timeoutSeconds: 600, intervalSeconds: 20, ...fake() },
+  );
+  assert.equal(i, 3);
+  await assert.rejects(
+    dbGone(async () => ({ DBInstances: [{}] }), {
+      timeoutSeconds: 60,
+      intervalSeconds: 20,
+      ...fake(),
+    }),
+    /timed out after 60 s/,
+  );
+  await assert.rejects(
+    dbGone(
+      async () => {
+        throw new Error('AccessDenied');
+      },
+      { timeoutSeconds: 60, ...fake() },
+    ),
+    /AccessDenied/,
+  );
+});
