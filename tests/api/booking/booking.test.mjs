@@ -4,7 +4,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  SVC, A1, B1, login, newPatient, search, hold, holdBody, book, sql, closeAdmin, uuid, nextDay, until, principalId, newService, setPolicy, sleep,
+  SVC, A1, B1, login, newPatient, search, hold, holdBody, book, sql, closeAdmin, uuid, nextDay, until, principalId, newService, setPolicy, sleep, newDoctor,
 } from '../../e2e/journeys/lib/world.mjs';
 
 const slotOf = async (p, o) => {
@@ -68,18 +68,19 @@ describe('TC-BK booking and rescheduling', () => {
 
   it('TC-BK-03 availability = template - bookings (mechanics: busy block by SQL) [no Google: the sync itself is TC-CAL]', async () => {
     const p = await newPatient();
+    const doc = await newDoctor({ services: [SVC.IN] }); // a fresh doctor: the seeded one accumulates bookings across reruns
     const day = nextDay();
-    const s0 = await slotOf(p, { day, clinicianId: principalId('STF-DR-A1') });
+    const s0 = await slotOf(p, { day, clinicianId: doc.id });
     const first = s0.slots[0];
     const end = new Date(new Date(first.startsAt).getTime() + 60 * 60000).toISOString();
     await sql(
       `INSERT INTO scheduling.busy_block (organisation_id, clinician_principal_id, period, source, external_hash, synced_at)
        VALUES ($1,$2,tstzrange($3::timestamptz,$4::timestamptz,'[)'),'google',decode(md5($5),'hex'),now())`,
-      ['00000000-0000-7000-8000-0000000000a1', principalId('STF-DR-A1'), first.startsAt, end, uuid()],
+      ['00000000-0000-7000-8000-0000000000a1', doc.id, first.startsAt, end, uuid()],
     ).catch(async (e) => {
       throw new Error(`busy_block fixture could not be written: ${e.message}`);
     });
-    const s1 = await search(p.client, { day, clinicianId: principalId('STF-DR-A1') });
+    const s1 = await search(p.client, { day, clinicianId: doc.id });
     const blocked = s1.slots.filter((x) => x.startsAt >= first.startsAt && x.startsAt < end);
     assert.equal(blocked.length, 0, 'no slot is offered inside the busy block');
     assert.ok(s1.slots.length < s0.slots.length);
