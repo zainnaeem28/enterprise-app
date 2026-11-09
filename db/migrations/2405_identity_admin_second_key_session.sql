@@ -1,7 +1,7 @@
 -- migration-class: expand
 -- BE05-R3-S01: the enrolment token is spent at the first key. The second key is registered under the admin's own session
 -- (the one the enrolment created, amr 'enrol'), not with the token. These are the staff-side counterparts of the anonymous
--- policies of 2202: a challenge of purpose 'enrol' bound to the session and the principal, and the credential insert.
+-- policies of 2402: a challenge of purpose 'enrol' bound to the session and the principal, and the credential insert.
 CREATE POLICY webauthn_challenge_staff_enrol_select ON identity.webauthn_challenge
   FOR SELECT TO app_api
   USING (organisation_id = (SELECT kernel.uuid1('app.org_id'))

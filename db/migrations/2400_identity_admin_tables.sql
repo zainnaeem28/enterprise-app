@@ -1,7 +1,7 @@
 -- migration-class: expand
--- Admin-realm tables of ARCHITECTURE 22.4 (draft 8.2, ID-FREEZE, variant B2; ticket BE-05, migrations 2200-2299):
+-- Admin-realm tables of ARCHITECTURE 22.4 (draft 8.2, ID-FREEZE, variant B2; ticket BE-05, migrations 2400-2499):
 -- role_change_request, enrolment_token, admin_credential, webauthn_challenge, elevation_grant, and the foreign key that
--- BE-04 left open (role_assignment.granted_via_request_id). DDL only (SBR-17). Triggers follow in 2201, RLS and grants in 2202.
+-- BE-04 left open (role_assignment.granted_via_request_id). DDL only (SBR-17). Triggers follow in 2401, RLS and grants in 2402.
 --
 -- Not created here, on purpose: person_link_request and directory_check (26.3 person link; the C2/C3 hourly directory
 -- reconciliation). Neither is part of the BE-05 acceptance list; they need the Directory API crossing and are ticketed
