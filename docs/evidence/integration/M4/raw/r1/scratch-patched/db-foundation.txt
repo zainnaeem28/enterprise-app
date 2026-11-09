@@ -1,0 +1,458 @@
+▶ migrations from empty on PostgreSQL 17
+  ✔ a second run applies nothing (172.939933ms)
+  ✖ catalog checks M-1..M-5 and the role checks all pass (402.433118ms)
+  ✔ role-level settings are stored and visible to a new session (32.274919ms)
+  ✔ the runner tracker is not reachable by application roles (6.790476ms)
+✖ migrations from empty on PostgreSQL 17 (2328.661482ms)
+▶ spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics)
+  ✔ FORCE RLS: the table owner cannot insert, and its UPDATE changes 0 rows (SBR-17) (20.043261ms)
+  ✔ a missing setting returns 0 rows on every kernel table (fail closed) (20.306464ms)
+  ✔ setting: admin_pool staff reads and writes its organisation; WITH CHECK refuses everything else (35.618725ms)
+  ✔ audience anonymous reads only pre_auth settings and nothing in idempotency_key (10.301386ms)
+  ✔ app_api cannot act as audience system; app_worker can, within its job scope (30.252053ms)
+  ✔ idempotency_key: a principal sees only its own keys; updates bump row_version (19.82502ms)
+  ✔ reporting_ro is refused on the kernel tables (M-4) (7.632646ms)
+  ✔ role switching: app_api reaches only identity_signin_ro, which holds no table right (14.654136ms)
+  ✔ app_owner holds SET but not INHERIT on directory_ro: it can switch but gains no rights (4.872917ms)
+  ✔ function ownership transfer needs SET membership and CREATE on the schema (21.2 point 1) (9.353667ms)
+  ✔ SELECT ... FOR KEY SHARE needs UPDATE rights: a SELECT-only role is refused (16.219273ms)
+  ✔ an owner-rights view returns 0 rows under FORCE; a security_invoker view returns the caller rows (M-4) (297.561105ms)
+  ✔ negative control: the catalog checks fail on a table without FORCE and on a policy TO PUBLIC (261.520047ms)
+✔ spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics) (758.684142ms)
+▶ SEC03-F13 / F09 catalog negative controls
+  ✖ the positive baseline: the four new checks pass on the migrated database (254.622912ms)
+  ✔ M-5-policy-tautology fails on a policy comparing a column with itself (F01) (263.261305ms)
+  ✖ M-5-patient-guard fails when the guard trigger is disabled, AFTER, or INSERT-only (874.843361ms)
+  ✔ M-5-setting-grants fails when app_api can write pre_auth or UPDATE every column (N-3) (859.708622ms)
+  ✔ M-5-hidden-columns fails when an application role can read occupancy created_by (F09) (461.997027ms)
+✖ SEC03-F13 / F09 catalog negative controls (2714.986817ms)
+▶ R-timeouts negative control (F03-R1-02)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 0s (253.855832ms)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 0ms (267.219505ms)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 0000ms (260.356894ms)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 61s (261.560113ms)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 120s (259.568494ms)
+✔ R-timeouts negative control (F03-R1-02) (1303.084529ms)
+▶ TC-AU-04 (ARCHITECTURE 21.5, SAR-10; step 2 per SA-TC-06)
+  ✔ step 1: transaction_timeout unset (0) -> refused PA001, no row (7.14458ms)
+  ✔ step 2 (SA-TC-06): B + 1 s -> refused PA001, no row (5.979694ms)
+  ✔ step 3: app_owner -> privilege error 42501 raised before the trigger, no row (4.690213ms)
+  ✔ step 4 (positive control): at or below the bound -> accepted and written (7.097122ms)
+  ✔ production shape: the role-level 60 s of app_api and app_worker is accepted, 120 s is refused (21.078382ms)
+✔ TC-AU-04 (ARCHITECTURE 21.5, SAR-10; step 2 per SA-TC-06) (61.29015ms)
+▶ the runner against a real database
+  ✔ applies 0001 and 0003, then rejects 0002 as out of order and leaves the schema untouched (24.32092ms)
+  ✔ a migration that fails at run time rolls back with its tracker row (3.097955ms)
+✔ the runner against a real database (100.95496ms)
+▶ the single merge write guard (T1-T4 of the HEAAA-190 ruling)
+  ✔ T1: a write naming a merged patient is refused with PM001 on every guarded table (96.806003ms)
+  ✔ T1: an open patient passes the guard (any later refusal is another check) on every guarded table (68.543605ms)
+  ✔ T1: a write naming a patient of another organisation is refused (42501 or PM008) (66.190157ms)
+  ✔ T2: app_owner holds no EXECUTE on the guard, the five refused functions are gone, all 15 tables carry the trigger (80.774051ms)
+  ✔ T3: a merge holding the root lock makes a concurrent reservation write wait; after the commit it gets PM001 (519.204464ms)
+  ✔ T4: a file that leaves the guard granted to app_owner is rolled back by the runner post-check, with its tracker row (101.889805ms)
+✔ the single merge write guard (T1-T4 of the HEAAA-190 ruling) (997.540831ms)
+ℹ tests 40
+ℹ suites 7
+ℹ pass 37
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8370.038564
+
+✖ failing tests:
+
+test at db/tools/db-test.mjs:100:3
+✖ catalog checks M-1..M-5 and the role checks all pass (402.433118ms)
+  AssertionError [ERR_ASSERTION]: [
+    {
+      "id": "M-3",
+      "title": "policies target only known roles; identity_signin_ro and directory_ro hold no table-level SELECT (column grants only)",
+      "status": "fail",
+      "violations": [
+        {
+          "table": "reporting.ops_integration_health",
+          "policyname": "ops_integration_health_ro_select",
+          "role": "reporting_ro"
+        },
+        {
+          "table": "reporting.ops_queue",
+          "policyname": "ops_queue_ro_select",
+          "role": "reporting_ro"
+        },
+        {
+          "table": "reporting.ops_calendar_staleness",
+          "policyname": "ops_calendar_staleness_ro_select",
+          "role": "reporting_ro"
+        },
+        {
+          "table": "reporting.ops_alert_backlog",
+          "policyname": "ops_alert_backlog_ro_select",
+          "role": "reporting_ro"
+        }
+      ]
+    },
+    {
+      "id": "M-4-reporting",
+      "title": "reporting_ro holds a privilege on nothing outside the C0/C1 list (tables, views, columns)",
+      "status": "fail",
+      "violations": [
+        {
+          "object": "reporting.ops_integration_health"
+        },
+        {
+          "object": "reporting.ops_queue"
+        },
+        {
+          "object": "reporting.ops_calendar_staleness"
+        },
+        {
+          "object": "reporting.ops_alert_backlog"
+        }
+      ]
+    },
+    {
+      "id": "M-5-patient-guard",
+      "title": "every table with a patient_id column has the merge write guard (an enabled BEFORE INSERT OR UPDATE row trigger on a listed guard function) or is exempt",
+      "status": "fail",
+      "violations": [
+        {
+          "table": "clinical.problem"
+        },
+        {
+          "table": "clinical.allergy"
+        },
+        {
+          "table": "clinical.medication_statement"
+        },
+        {
+          "table": "clinical.vital_sign"
+        },
+        {
+          "table": "clinical.questionnaire_response"
+        },
+        {
+          "table": "clinical.triage_assessment"
+        },
+        {
+          "table": "clinical.referral"
+        },
+        {
+          "table": "clinical.consent_exception"
+        },
+        {
+          "table": "clinical.follow_up"
+        },
+        {
+          "table": "clinical.encounter"
+        },
+        {
+          "table": "clinical.note"
+        },
+        {
+          "table": "clinical.note_cosign"
+        },
+        {
+          "table": "clinical.note_addendum"
+        },
+        {
+          "table": "privacy.request"
+        },
+        {
+          "table": "privacy.export_package"
+        },
+        {
+          "table": "privacy.incident_patient"
+        },
+        {
+          "table": "messaging.thread"
+        },
+        {
+          "table": "messaging.message"
+        },
+        {
+          "table": "messaging.task"
+        }
+      ]
+    },
+    {
+      "id": "M-5-definer",
+      "title": "every SECURITY DEFINER function is in the inventory, has a fixed search_path and a NOLOGIN owner",
+      "status": "fail",
+      "violations": [
+        {
+          "function": "messaging.is_participant(uuid)",
+          "in_inventory": false,
+          "fixed_search_path": true,
+          "owner": "patient_scope_owner"
+        },
+        {
+          "function": "messaging.is_owner(uuid)",
+          "in_inventory": false,
+          "fixed_search_path": true,
+          "owner": "patient_scope_owner"
+        },
+        {
+          "function": "messaging.is_creator(uuid)",
+          "in_inventory": false,
+          "fixed_search_path": true,
+          "owner": "patient_scope_owner"
+        },
+        {
+          "function": "messaging.guard_open_patient()",
+          "in_inventory": false,
+          "fixed_search_path": true,
+          "owner": "patient_scope_owner"
+        },
+        {
+          "function": "clinical.guard_open_patient()",
+          "in_inventory": false,
+          "fixed_search_path": true,
+          "owner": "patient_scope_owner"
+        },
+        {
+          "function": "clinical.frontdoor_guard_open_patient()",
+          "in_inventory": false,
+          "fixed_search_path": true,
+          "owner": "patient_scope_owner"
+        },
+        {
+          "function": "clinical.notes_guard_open_patient()",
+          "in_inventory": false,
+          "fixed_search_path": true,
+          "owner": "patient_scope_owner"
+        },
+        {
+          "function": "privacy.guard_open_patient()",
+          "in_inventory": false,
+          "fixed_search_path": true,
+          "owner": "patient_scope_owner"
+        }
+      ]
+    }
+  ]
+  + actual - expected
+  
+  + [
+  +   {
+  +     id: 'M-3',
+  +     status: 'fail',
+  +     title: 'policies target only known roles; identity_signin_ro and directory_ro hold no table-level SELECT (column grants only)',
+  +     violations: [
+  +       {
+  +         policyname: 'ops_integration_health_ro_select',
+  +         role: 'reporting_ro',
+  +         table: 'reporting.ops_integration_health'
+  +       },
+  +       {
+  +         policyname: 'ops_queue_ro_select',
+  +         role: 'reporting_ro',
+  +         table: 'reporting.ops_queue'
+  +       },
+  +       {
+  +         policyname: 'ops_calendar_staleness_ro_select',
+  +         role: 'reporting_ro',
+  +         table: 'reporting.ops_calendar_staleness'
+  +       },
+  +       {
+  +         policyname: 'ops_alert_backlog_ro_select',
+  +         role: 'reporting_ro',
+  +         table: 'reporting.ops_alert_backlog'
+  +       }
+  +     ]
+  +   },
+  +   {
+  +     id: 'M-4-reporting',
+  +     status: 'fail',
+  +     title: 'reporting_ro holds a privilege on nothing outside the C0/C1 list (tables, views, columns)',
+  +     violations: [
+  +       {
+  +         object: 'reporting.ops_integration_health'
+  +       },
+  +       {
+  +         object: 'reporting.ops_queue'
+  +       },
+  +       {
+  +         object: 'reporting.ops_calendar_staleness'
+  +       },
+  +       {
+  +         object: 'reporting.ops_alert_backlog'
+  +       }
+  +     ]
+  +   },
+  +   {
+  +     id: 'M-5-patient-guard',
+  +     status: 'fail',
+  +     title: 'every table with a patient_id column has the merge write guard (an enabled BEFORE INSERT OR UPDATE row trigger on a listed guard function) or is exempt',
+  +     violations: [
+  +       {
+  +         table: 'clinical.problem'
+  +       },
+  +       {
+  +         table: 'clinical.allergy'
+  +       },
+  +       {
+  +         table: 'clinical.medication_statement'
+  +       },
+  +       {
+  +         table: 'clinical.vital_sign'
+  +       },
+  +       {
+  +         table: 'clinical.questionnaire_response'
+  +       },
+  +       {
+  +         table: 'clinical.triage_assessment'
+  +       },
+  +       {
+  +         table: 'clinical.referral'
+  +       },
+  +       {
+  +         table: 'clinical.consent_exception'
+  +       },
+  +       {
+  +         table: 'clinical.follow_up'
+  +       },
+  +       {
+  +         table: 'clinical.encounter'
+  +       },
+  +       {
+  +         table: 'clinical.note'
+  +       },
+  +       {
+  +         table: 'clinical.note_cosign'
+  +       },
+  +       {
+  +         table: 'clinical.note_addendum'
+  +       },
+  +       {
+  +         table: 'privacy.request'
+  +       },
+  +       {
+  +         table: 'privacy.export_package'
+  +       },
+  +       {
+  +         table: 'privacy.incident_patient'
+  +       },
+  +       {
+  +         table: 'messaging.thread'
+  +       },
+  +       {
+  +         table: 'messaging.message'
+  +       },
+  +       {
+  +         table: 'messaging.task'
+  +       }
+  +     ]
+  +   },
+  +   {
+  +     id: 'M-5-definer',
+  +     status: 'fail',
+  +     title: 'every SECURITY DEFINER function is in the inventory, has a fixed search_path and a NOLOGIN owner',
+  +     violations: [
+  +       {
+  +         fixed_search_path: true,
+  +         function: 'messaging.is_participant(uuid)',
+  +         in_inventory: false,
+  +         owner: 'patient_scope_owner'
+  +       },
+  +       {
+  +         fixed_search_path: true,
+  +         function: 'messaging.is_owner(uuid)',
+  +         in_inventory: false,
+  +         owner: 'patient_scope_owner'
+  +       },
+  +       {
+  +         fixed_search_path: true,
+  +         function: 'messaging.is_creator(uuid)',
+  +         in_inventory: false,
+  +         owner: 'patient_scope_owner'
+  +       },
+  +       {
+  +         fixed_search_path: true,
+  +         function: 'messaging.guard_open_patient()',
+  +         in_inventory: false,
+  +         owner: 'patient_scope_owner'
+  +       },
+  +       {
+  +         fixed_search_path: true,
+  +         function: 'clinical.guard_open_patient()',
+  +         in_inventory: false,
+  +         owner: 'patient_scope_owner'
+  +       },
+  +       {
+  +         fixed_search_path: true,
+  +         function: 'clinical.frontdoor_guard_open_patient()',
+  +         in_inventory: false,
+  +         owner: 'patient_scope_owner'
+  +       },
+  +       {
+  +         fixed_search_path: true,
+  +         function: 'clinical.notes_guard_open_patient()',
+  +         in_inventory: false,
+  +         owner: 'patient_scope_owner'
+  +       },
+  +       {
+  +         fixed_search_path: true,
+  +         function: 'privacy.guard_open_patient()',
+  +         in_inventory: false,
+  +         owner: 'patient_scope_owner'
+  +       }
+  +     ]
+  +   }
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (file:///tmp/paperclip-run-heaaa-133-df03e191-589-f2vVN3/scratch/db/tools/db-test.mjs:103:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { id: 'M-3', title: 'policies target only known roles; identity_signin_ro and directory_ro hold no table-level SELECT (column grants only)', status: 'fail', violations: [Array] }, { id: 'M-4-reporting', title: 'reporting_ro holds a privilege on nothing outside the C0/C1 list (tables, views, columns)', status: 'fail', violations: [Array] }, { id: 'M-5-patient-guard', title: 'every table with a patient_id column has the merge write guard (an enabled BEFORE INSERT OR UPDATE row trigger on a listed guard function) or is exempt', status: 'fail', violations: [Array] }, { id: 'M-5-definer', title: 'every SECURITY DEFINER function is in the inventory, has a fixed search_path and a NOLOGIN owner', status: 'fail', violations: [Array] } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at db/tools/db-test.mjs:463:3
+✖ the positive baseline: the four new checks pass on the migrated database (254.622912ms)
+  AssertionError [ERR_ASSERTION]: [{"table":"clinical.vital_sign"},{"table":"clinical.problem"},{"table":"clinical.allergy"},{"table":"clinical.medication_statement"},{"table":"clinical.triage_assessment"},{"table":"clinical.consent_exception"},{"table":"clinical.questionnaire_response"},{"table":"clinical.referral"},{"table":"clinical.follow_up"},{"table":"clinical.note_cosign"},{"table":"clinical.note_addendum"},{"table":"clinical.encounter"},{"table":"clinical.note"},{"table":"privacy.incident_patient"},{"table":"privacy.request"},{"table":"privacy.export_package"},{"table":"messaging.message"},{"table":"messaging.thread"},{"table":"messaging.task"}]
+  
+  'fail' !== 'pass'
+  
+      at file:///tmp/paperclip-run-heaaa-133-df03e191-589-f2vVN3/scratch/db/tools/db-test.mjs:472:16
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async withAdmin (file:///tmp/paperclip-run-heaaa-133-df03e191-589-f2vVN3/scratch/db/tools/db-test.mjs:458:14)
+      at async TestContext.<anonymous> (file:///tmp/paperclip-run-heaaa-133-df03e191-589-f2vVN3/scratch/db/tools/db-test.mjs:464:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'fail',
+    expected: 'pass',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at db/tools/db-test.mjs:489:3
+✖ M-5-patient-guard fails when the guard trigger is disabled, AFTER, or INSERT-only (874.843361ms)
+  AssertionError [ERR_ASSERTION]: restored
+  
+  'fail' !== 'pass'
+  
+      at file:///tmp/paperclip-run-heaaa-133-df03e191-589-f2vVN3/scratch/db/tools/db-test.mjs:515:14
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async withAdmin (file:///tmp/paperclip-run-heaaa-133-df03e191-589-f2vVN3/scratch/db/tools/db-test.mjs:458:14)
+      at async TestContext.<anonymous> (file:///tmp/paperclip-run-heaaa-133-df03e191-589-f2vVN3/scratch/db/tools/db-test.mjs:490:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'fail',
+    expected: 'pass',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

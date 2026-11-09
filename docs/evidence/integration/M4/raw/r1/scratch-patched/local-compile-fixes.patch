@@ -1,0 +1,26 @@
+diff --git a/apps/api/src/composition.ts b/apps/api/src/composition.ts
+index 8a4c1cb..bd10888 100644
+--- a/apps/api/src/composition.ts
++++ b/apps/api/src/composition.ts
+@@ -184,7 +184,7 @@ export function buildComposition(deps: {
+       }),
+       ...createAvailabilityControllers({ db: deps.db, audit, availability, search }),
+       ...createSchedulingControllers({ db: deps.db, scheduling: core }),
+-      ...createFlowControllers({ db: deps.db, flow }),
++      ...createFlowControllers({ db: deps.db, flow, limiter: new MemoryRateLimiter(1) }),
+     ],
+   };
+ }
+diff --git a/apps/api/src/modules/patient/identity-label.dbtest.ts b/apps/api/src/modules/patient/identity-label.dbtest.ts
+index 685123a..d83a335 100644
+--- a/apps/api/src/modules/patient/identity-label.dbtest.ts
++++ b/apps/api/src/modules/patient/identity-label.dbtest.ts
+@@ -60,7 +60,7 @@ before(async () => {
+         locationIds: [A1],
+       },
+       (tx) =>
+-        k.patient.records.requestConsent(tx, { requestId: randomUUID() }, pid, 'treatment', 1),
++        k.patient.records.requestConsent(tx, { requestId: randomUUID() }, pid, 'treatment', 1, 'en'),
+     );
+   consent1 = (await ask(p1)).id;
+   consent2 = (await ask(p2)).id;

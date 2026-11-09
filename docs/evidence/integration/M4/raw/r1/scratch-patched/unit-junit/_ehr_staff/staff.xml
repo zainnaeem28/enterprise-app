@@ -1,0 +1,440 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="160" failures="0" errors="0" time="8.716132989">
+    <testsuite name="src/App.test.tsx" timestamp="2026-11-08T23:54:31.931Z" hostname="314866be9867" tests="2" failures="0" errors="0" skipped="0" time="0.165401123">
+        <testcase classname="src/App.test.tsx" name="staff shell &gt; marks the identity as placeholder and has a skip link and main landmark" time="0.146087943">
+        </testcase>
+        <testcase classname="src/App.test.tsx" name="staff shell &gt; opens the blocking dialog when the page call is refused for its release" time="0.018038658">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/a11y.test.tsx" timestamp="2026-11-08T23:54:31.942Z" hostname="314866be9867" tests="2" failures="0" errors="0" skipped="0" time="0.221717188">
+        <testcase classname="src/a11y.test.tsx" name="axe smoke on the shell (jsdom) &gt; shell with the non-blocking release bar" time="0.160435614">
+        </testcase>
+        <testcase classname="src/a11y.test.tsx" name="axe smoke on the shell (jsdom) &gt; shell with the blocking release dialog" time="0.060027731">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/app/StaffApp.test.tsx" timestamp="2026-11-08T23:54:31.943Z" hostname="314866be9867" tests="20" failures="0" errors="0" skipped="0" time="2.616678104">
+        <testcase classname="src/app/StaffApp.test.tsx" name="sign-in screen (SH-03) &gt; offers Continue with Google only, no password, and the plain contact-IT message" time="0.139485181">
+        </testcase>
+        <testcase classname="src/app/StaffApp.test.tsx" name="sign-in screen (SH-03) &gt; shows the notice when a sign-in came back with a problem" time="0.012025652">
+        </testcase>
+        <testcase classname="src/app/StaffApp.test.tsx" name="sign-in screen (SH-03) &gt; never forwards a returnTo that is not a known screen" time="0.00731992">
+        </testcase>
+        <testcase classname="src/app/StaffApp.test.tsx" name="sign-in screen (SH-03) &gt; makes no API call while signed out of the portal" time="0.002743499">
+        </testcase>
+        <testcase classname="src/app/StaffApp.test.tsx" name="signed-out screen (SH-06) &gt; says so and offers sign in again" time="0.011083954">
+        </testcase>
+        <testcase classname="src/app/StaffApp.test.tsx" name="session gate and role navigation &gt; sends an unauthenticated visitor to sign-in, keeping only a known screen path" time="0.059584238">
+        </testcase>
+        <testcase classname="src/app/StaffApp.test.tsx" name="session gate and role navigation &gt; drops an unknown path or identifier on the way to sign-in" time="0.055985073">
+        </testcase>
+        <testcase classname="src/app/StaffApp.test.tsx" name="session gate and role navigation &gt; shows the Doctor navigation to a doctor and lands on the first screen" time="0.090597749">
+        </testcase>
+        <testcase classname="src/app/StaffApp.test.tsx" name="session gate and role navigation &gt; shows a retryable error, not &quot;contact IT&quot;, when the roles read returns no data" time="0.022133104">
+        </testcase>
+        <testcase classname="src/app/StaffApp.test.tsx" name="session gate and role navigation &gt; shows the Help link on public pages, loading and the signed-in shell" time="0.03590858">
+        </testcase>
+        <testcase classname="src/app/StaffApp.test.tsx" name="session gate and role navigation &gt; shows the Pre-consultation navigation to front desk, not the Doctor one" time="0.020556414">
+        </testcase>
+        <testcase classname="src/app/StaffApp.test.tsx" name="session gate and role navigation &gt; says plainly when no screen is assigned" time="0.006803029">
+        </testcase>
+        <testcase classname="src/app/StaffApp.test.tsx" name="session gate and role navigation &gt; gives an administrator session no staff navigation" time="0.006002045">
+        </testcase>
+        <testcase classname="src/app/StaffApp.test.tsx" name="session gate and role navigation &gt; a path outside the map is a plain not-found page" time="0.010330561">
+        </testcase>
+        <testcase classname="src/app/StaffApp.test.tsx" name="session gate and role navigation &gt; navigation keeps the URL to a fixed path" time="0.026853172">
+        </testcase>
+        <testcase classname="src/app/StaffApp.test.tsx" name="idle warning and sign-out &gt; warns before expiry and extends only when asked" time="0.026561596">
+        </testcase>
+        <testcase classname="src/app/StaffApp.test.tsx" name="idle warning and sign-out &gt; shows the session-ended dialog when the deadline has passed and goes to sign-in" time="2.027331745">
+        </testcase>
+        <testcase classname="src/app/StaffApp.test.tsx" name="idle warning and sign-out &gt; sign out posts once, then leaves for the signed-out screen" time="0.018951531">
+        </testcase>
+        <testcase classname="src/app/StaffApp.test.tsx" name="idle warning and sign-out &gt; a failed sign-out does not claim the user is signed out" time="0.021948327">
+        </testcase>
+        <testcase classname="src/app/StaffApp.test.tsx" name="no PHI in URLs &gt; no API call carries anything but fixed paths" time="0.012577998">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/app/a11y.test.tsx" timestamp="2026-11-08T23:54:31.946Z" hostname="314866be9867" tests="5" failures="0" errors="0" skipped="0" time="0.405296353">
+        <testcase classname="src/app/a11y.test.tsx" name="axe on the staff shell (jsdom) &gt; /sign-in" time="0.141845871">
+        </testcase>
+        <testcase classname="src/app/a11y.test.tsx" name="axe on the staff shell (jsdom) &gt; /signed-out" time="0.029749258">
+        </testcase>
+        <testcase classname="src/app/a11y.test.tsx" name="axe on the staff shell (jsdom) &gt; sign-in with the problem notice" time="0.073108814">
+        </testcase>
+        <testcase classname="src/app/a11y.test.tsx" name="axe on the staff shell (jsdom) &gt; signed-in doctor shell" time="0.095908679">
+        </testcase>
+        <testcase classname="src/app/a11y.test.tsx" name="axe on the staff shell (jsdom) &gt; signed-in shell with the idle warning open" time="0.063341771">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/auth/auth.test.ts" timestamp="2026-11-08T23:54:31.947Z" hostname="314866be9867" tests="17" failures="0" errors="0" skipped="0" time="0.007098183">
+        <testcase classname="src/features/auth/auth.test.ts" name="role navigation follows UI-UX 3.2 &gt; doctor roles get the Doctor map" time="0.002068082">
+        </testcase>
+        <testcase classname="src/features/auth/auth.test.ts" name="role navigation follows UI-UX 3.2 &gt; front-desk, triage and coordination roles get the Pre-consultation map" time="0.000380955">
+        </testcase>
+        <testcase classname="src/features/auth/auth.test.ts" name="role navigation follows UI-UX 3.2 &gt; a person with both kinds of role gets both maps once" time="0.000772922">
+        </testcase>
+        <testcase classname="src/features/auth/auth.test.ts" name="role navigation follows UI-UX 3.2 &gt; admin-realm and unknown roles get nothing" time="0.000214562">
+        </testcase>
+        <testcase classname="src/features/auth/auth.test.ts" name="role navigation follows UI-UX 3.2 &gt; offers no R2/R3 item and no path carries an identifier" time="0.00046332">
+        </testcase>
+        <testcase classname="src/features/auth/auth.test.ts" name="returnTo carries a known screen path only &gt; accepts navigation paths" time="0.000356408">
+        </testcase>
+        <testcase classname="src/features/auth/auth.test.ts" name="returnTo carries a known screen path only &gt; refuses /patients/123" time="0.000192692">
+        </testcase>
+        <testcase classname="src/features/auth/auth.test.ts" name="returnTo carries a known screen path only &gt; refuses /patients?name=Jane" time="0.00011737">
+        </testcase>
+        <testcase classname="src/features/auth/auth.test.ts" name="returnTo carries a known screen path only &gt; refuses /patients#x" time="0.000222998">
+        </testcase>
+        <testcase classname="src/features/auth/auth.test.ts" name="returnTo carries a known screen path only &gt; refuses https://evil.example/" time="0.000162985">
+        </testcase>
+        <testcase classname="src/features/auth/auth.test.ts" name="returnTo carries a known screen path only &gt; refuses //evil.example" time="0.000107302">
+        </testcase>
+        <testcase classname="src/features/auth/auth.test.ts" name="returnTo carries a known screen path only &gt; refuses /\evil" time="0.000087063">
+        </testcase>
+        <testcase classname="src/features/auth/auth.test.ts" name="returnTo carries a known screen path only &gt; refuses /" time="0.000066835">
+        </testcase>
+        <testcase classname="src/features/auth/auth.test.ts" name="returnTo carries a known screen path only &gt; refuses " time="0.000065003">
+        </testcase>
+        <testcase classname="src/features/auth/auth.test.ts" name="returnTo carries a known screen path only &gt; refuses null" time="0.00006391">
+        </testcase>
+        <testcase classname="src/features/auth/auth.test.ts" name="returnTo carries a known screen path only &gt; refuses undefined" time="0.000057338">
+        </testcase>
+        <testcase classname="src/features/auth/auth.test.ts" name="returnTo carries a known screen path only &gt; builds the Google sign-in link on the typed route" time="0.000124443">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/availability/affected.test.ts" timestamp="2026-11-08T23:54:31.949Z" hostname="314866be9867" tests="8" failures="0" errors="0" skipped="0" time="0.02102266">
+        <testcase classname="src/features/availability/affected.test.ts" name="strandedVisits &gt; counts a visit the old hours covered and the new hours do not" time="0.01530653">
+        </testcase>
+        <testcase classname="src/features/availability/affected.test.ts" name="strandedVisits &gt; leaves a visit alone when the new hours still cover it" time="0.000576852">
+        </testcase>
+        <testcase classname="src/features/availability/affected.test.ts" name="strandedVisits &gt; does not blame the change for a visit outside the old hours too" time="0.000385294">
+        </testcase>
+        <testcase classname="src/features/availability/affected.test.ts" name="strandedVisits &gt; adding hours never strands anything" time="0.000507783">
+        </testcase>
+        <testcase classname="src/features/availability/affected.test.ts" name="strandedVisits &gt; ignores finished and cancelled visits" time="0.000198462">
+        </testcase>
+        <testcase classname="src/features/availability/affected.test.ts" name="strandedVisits &gt; respects the valid-from and valid-to dates of the new hours" time="0.000838483">
+        </testcase>
+        <testcase classname="src/features/availability/affected.test.ts" name="strandedVisits &gt; reads the visit in the time zone of the location, not the device" time="0.000772581">
+        </testcase>
+        <testcase classname="src/features/availability/affected.test.ts" name="localDate &gt; adds days on the calendar of the location" time="0.000646203">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/availability/availability.test.tsx" timestamp="2026-11-08T23:54:31.950Z" hostname="314866be9867" tests="34" failures="0" errors="0" skipped="0" time="2.20745911">
+        <testcase classname="src/features/availability/availability.test.tsx" name="weekly hours (DR-11) &gt; lists the active hours of the location with their validity" time="0.149725662">
+        </testcase>
+        <testcase classname="src/features/availability/availability.test.tsx" name="weekly hours (DR-11) &gt; shows an empty state and offers to set hours up" time="0.019571135">
+        </testcase>
+        <testcase classname="src/features/availability/availability.test.tsx" name="weekly hours (DR-11) &gt; shows the appointments a change would leave outside the hours before it saves, and saves only after acknowledgement" time="0.126642025">
+        </testcase>
+        <testcase classname="src/features/availability/availability.test.tsx" name="weekly hours (DR-11) &gt; saves straight after the check when no appointment is affected" time="0.115627911">
+        </testcase>
+        <testcase classname="src/features/availability/availability.test.tsx" name="weekly hours (DR-11) &gt; does not offer to save when the appointments could not be checked" time="0.063787137">
+        </testcase>
+        <testcase classname="src/features/availability/availability.test.tsx" name="weekly hours (DR-11) &gt; refuses an end before the start and names the field, without calling the server" time="0.065585403">
+        </testcase>
+        <testcase classname="src/features/availability/availability.test.tsx" name="weekly hours (DR-11) &gt; creates new hours with one idempotency key and no If-Match" time="0.093966983">
+        </testcase>
+        <testcase classname="src/features/availability/availability.test.tsx" name="weekly hours (DR-11) &gt; explains a 412 in words and keeps the form" time="0.064520614">
+        </testcase>
+        <testcase classname="src/features/availability/availability.test.tsx" name="weekly hours (DR-11) &gt; stops using hours only after showing the affected appointments" time="1.046367648">
+        </testcase>
+        <testcase classname="src/features/availability/availability.test.tsx" name="weekly hours (DR-11) &gt; says plainly when the role cannot manage hours, and does not call the route" time="0.006588396">
+        </testcase>
+        <testcase classname="src/features/availability/availability.test.tsx" name="weekly hours (DR-11) &gt; shows a load error with a retry when the list cannot be read" time="0.007669345">
+        </testcase>
+        <testcase classname="src/features/availability/availability.test.tsx" name="leave and blocked time (DR-12) &gt; lists upcoming leave" time="0.015477009">
+        </testcase>
+        <testcase classname="src/features/availability/availability.test.tsx" name="leave and blocked time (DR-12) &gt; checks the period without saving, shows counts only, and needs acknowledgement before saving" time="0.050321403">
+        </testcase>
+        <testcase classname="src/features/availability/availability.test.tsx" name="leave and blocked time (DR-12) &gt; saves without acknowledgement when nothing is booked in the period" time="0.039445528">
+        </testcase>
+        <testcase classname="src/features/availability/availability.test.tsx" name="leave and blocked time (DR-12) &gt; asks again with the new count when bookings arrive between the check and the save" time="0.044472874">
+        </testcase>
+        <testcase classname="src/features/availability/availability.test.tsx" name="leave and blocked time (DR-12) &gt; names the field when the end is not after the start, without calling the server" time="0.031602267">
+        </testcase>
+        <testcase classname="src/features/availability/availability.test.tsx" name="leave and blocked time (DR-12) &gt; removes a period after confirmation" time="0.03858367">
+        </testcase>
+        <testcase classname="src/features/availability/availability.test.tsx" name="leave and blocked time (DR-12) &gt; is limited by permission" time="0.010178194">
+        </testcase>
+        <testcase classname="src/features/availability/availability.test.tsx" name="Google Calendar connection (DR-13) &gt; disconnected: shows the consent text and the busy-only note before the connect button" time="0.017686678">
+        </testcase>
+        <testcase classname="src/features/availability/availability.test.tsx" name="Google Calendar connection (DR-13) &gt; connect sends the browser to the Google consent address the server gave" time="0.013227437">
+        </testcase>
+        <testcase classname="src/features/availability/availability.test.tsx" name="Google Calendar connection (DR-13) &gt; refuses to follow an address that is not Google" time="0.016495472">
+        </testcase>
+        <testcase classname="src/features/availability/availability.test.tsx" name="Google Calendar connection (DR-13) &gt; says so, in place, when starting fails" time="0.017124021">
+        </testcase>
+        <testcase classname="src/features/availability/availability.test.tsx" name="Google Calendar connection (DR-13) &gt; connected: shows the state, the last sync and the busy-only note, and offers disconnect" time="0.018550819">
+        </testcase>
+        <testcase classname="src/features/availability/availability.test.tsx" name="Google Calendar connection (DR-13) &gt; waiting for Google: offers to connect again" time="0.013400022">
+        </testcase>
+        <testcase classname="src/features/availability/availability.test.tsx" name="Google Calendar connection (DR-13) &gt; token_revoked: draws an error state with words, not colour alone" time="0.019391968">
+        </testcase>
+        <testcase classname="src/features/availability/availability.test.tsx" name="Google Calendar connection (DR-13) &gt; error: draws an error state with words, not colour alone" time="0.021772746">
+        </testcase>
+        <testcase classname="src/features/availability/availability.test.tsx" name="Google Calendar connection (DR-13) &gt; disconnect asks first, then calls DELETE once" time="0.030209553">
+        </testcase>
+        <testcase classname="src/features/availability/availability.test.tsx" name="Google Calendar connection (DR-13) &gt; the return from Google (?calendar=linked) opens this section and says what happened" time="0.009141599">
+        </testcase>
+        <testcase classname="src/features/availability/availability.test.tsx" name="Google Calendar connection (DR-13) &gt; the return from Google (?calendar=denied) opens this section and says what happened" time="0.008875829">
+        </testcase>
+        <testcase classname="src/features/availability/availability.test.tsx" name="Google Calendar connection (DR-13) &gt; the return from Google (?calendar=error) opens this section and says what happened" time="0.009103076">
+        </testcase>
+        <testcase classname="src/features/availability/availability.test.tsx" name="Google Calendar connection (DR-13) &gt; ignores an unknown return word" time="0.005712061">
+        </testcase>
+        <testcase classname="src/features/availability/availability.test.tsx" name="Google Calendar connection (DR-13) &gt; is limited by permission" time="0.00895624">
+        </testcase>
+        <testcase classname="src/features/availability/availability.test.tsx" name="the whole screen &gt; says so when the account has no location" time="0.005278858">
+        </testcase>
+        <testcase classname="src/features/availability/availability.test.tsx" name="rule defaults &gt; keeps room and overbooking of a rule as sent" time="0.000215555">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/doctor/doctor.test.tsx" timestamp="2026-11-08T23:54:31.955Z" hostname="314866be9867" tests="24" failures="0" errors="0" skipped="0" time="0.921548584">
+        <testcase classname="src/features/doctor/doctor.test.tsx" name="chart summary (BR-34, UI-UX 8) &gt; shows name, date of birth, photo and the allergy block" time="0.202806834">
+            <system-err>
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+            </system-err>
+        </testcase>
+        <testcase classname="src/features/doctor/doctor.test.tsx" name="chart summary (BR-34, UI-UX 8) &gt; draws a hidden allergy part as &quot;not shown&quot;, never as &quot;none&quot;" time="0.026838314">
+            <system-err>
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+            </system-err>
+        </testcase>
+        <testcase classname="src/features/doctor/doctor.test.tsx" name="chart summary (BR-34, UI-UX 8) &gt; says &quot;No allergies recorded&quot; when none are recorded" time="0.018069586">
+            <system-err>
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+            </system-err>
+        </testcase>
+        <testcase classname="src/features/doctor/doctor.test.tsx" name="break the glass (BR-14, DR-09) &gt; refuses access until a reason of at least 10 characters is entered, then opens the chart" time="0.100631142">
+            <system-err>
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+            </system-err>
+        </testcase>
+        <testcase classname="src/features/doctor/doctor.test.tsx" name="break the glass (BR-14, DR-09) &gt; offers no break-the-glass to a role without audit.btg.open" time="0.008934209">
+        </testcase>
+        <testcase classname="src/features/doctor/doctor.test.tsx" name="note editor, sign dialog, addenda (DR-03, DR-05, DR-06) &gt; starts the consultation, saves a draft with If-Match and signs after re-authentication with the same key" time="0.157490246">
+            <system-err>
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+            </system-err>
+        </testcase>
+        <testcase classname="src/features/doctor/doctor.test.tsx" name="note editor, sign dialog, addenda (DR-03, DR-05, DR-06) &gt; shows the consent gate reason and requires a reason for the emergency exception" time="0.051447216">
+            <system-err>
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+            </system-err>
+        </testcase>
+        <testcase classname="src/features/doctor/doctor.test.tsx" name="note editor, sign dialog, addenda (DR-03, DR-05, DR-06) &gt; lets a trainee submit for co-signature, without a sign permission" time="0.046777169">
+            <system-err>
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+            </system-err>
+        </testcase>
+        <testcase classname="src/features/doctor/doctor.test.tsx" name="note editor, sign dialog, addenda (DR-03, DR-05, DR-06) &gt; keeps the dialog out of the way when the sign is refused (403) and says why" time="0.038464287">
+            <system-err>
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+            </system-err>
+        </testcase>
+        <testcase classname="src/features/doctor/doctor.test.tsx" name="notes to sign and co-sign queue (DR-07) &gt; lists the author’s own drafts from the server without the note having been opened here, and resumes one" time="0.015782162">
+        </testcase>
+        <testcase classname="src/features/doctor/doctor.test.tsx" name="notes to sign and co-sign queue (DR-07) &gt; is offered only with clinical.note.cosign and never calls the queue without it" time="0.01206178">
+        </testcase>
+        <testcase classname="src/features/doctor/doctor.test.tsx" name="notes to sign and co-sign queue (DR-07) &gt; shows a queue the supervisor never opened, co-signs after a confirm that restates name and date of birth; a wrong supervisor is refused in words" time="0.052761853">
+        </testcase>
+        <testcase classname="src/features/doctor/doctor.test.tsx" name="notes to sign and co-sign queue (DR-07) &gt; says so, with a retry, when the list cannot be read" time="0.012303574">
+        </testcase>
+        <testcase classname="src/features/doctor/doctor.test.tsx" name="alert tray (UI-UX 7.4) &gt; counts down from the server Date header, acknowledges once with a key, and shows who after the next read" time="0.016562818">
+        </testcase>
+        <testcase classname="src/features/doctor/doctor.test.tsx" name="alert tray (UI-UX 7.4) &gt; removes a closed alert and says so" time="0.013207921">
+        </testcase>
+        <testcase classname="src/features/doctor/doctor.test.tsx" name="alert tray (UI-UX 7.4) &gt; never shows a countdown when the server time is unknown, and says the time is not set" time="0.007071684">
+        </testcase>
+        <testcase classname="src/features/doctor/doctor.test.tsx" name="alert tray (UI-UX 7.4) &gt; shows the paused bar (no dismiss) when the stream is refused, and &quot;Check for alerts&quot; when it drops" time="0.01410238">
+        </testcase>
+        <testcase classname="src/features/doctor/doctor.test.tsx" name="alert tray (UI-UX 7.4) &gt; reloads the list when the stream announces an alert" time="0.006849217">
+        </testcase>
+        <testcase classname="src/features/doctor/doctor.test.tsx" name="alert tray (UI-UX 7.4) &gt; shows a red-flag bar on other doctor screens, with no close control" time="0.009181623">
+        </testcase>
+        <testcase classname="src/features/doctor/doctor.test.tsx" name="schedule and patient list (DR-01, DR-02) &gt; lists the doctor’s own schedule and opens a visit in the chart" time="0.007962105">
+        </testcase>
+        <testcase classname="src/features/doctor/doctor.test.tsx" name="schedule and patient list (DR-01, DR-02) &gt; says so when the role cannot list visits" time="0.002587266">
+        </testcase>
+        <testcase classname="src/features/doctor/doctor.test.tsx" name="schedule and patient list (DR-01, DR-02) &gt; looks up by name with the exact body, opens a chart, and refuses forms the lookup refuses before sending" time="0.046295536">
+        </testcase>
+        <testcase classname="src/features/doctor/doctor.test.tsx" name="video and notes side by side (DR-04) &gt; joins through the adapter only, admits a waiting patient, and ends the call" time="0.03684085">
+            <system-err>
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+            </system-err>
+        </testcase>
+        <testcase classname="src/features/doctor/doctor.test.tsx" name="video and notes side by side (DR-04) &gt; says video is not connected when no adapter is configured, and notes still work" time="0.014210473">
+            <system-err>
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+            </system-err>
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/documents/DocumentsPage.test.tsx" timestamp="2026-11-08T23:54:31.960Z" hostname="314866be9867" tests="3" failures="0" errors="0" skipped="0" time="0.194175282">
+        <testcase classname="src/features/documents/DocumentsPage.test.tsx" name="DocumentsPage &gt; shows upload, list and the confirm control to a classifier" time="0.16238916">
+        </testcase>
+        <testcase classname="src/features/documents/DocumentsPage.test.tsx" name="DocumentsPage &gt; shows a read-only list to a reader: no upload, no confirm" time="0.025039408">
+        </testcase>
+        <testcase classname="src/features/documents/DocumentsPage.test.tsx" name="DocumentsPage &gt; makes no call without documents.read" time="0.005468124">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/messages/messages.test.tsx" timestamp="2026-11-08T23:54:31.961Z" hostname="314866be9867" tests="12" failures="0" errors="0" skipped="0" time="0.72753689">
+        <testcase classname="src/features/messages/messages.test.tsx" name="tasks &gt; lists open tasks and completes one with the version held as If-Match" time="0.156919123">
+        </testcase>
+        <testcase classname="src/features/messages/messages.test.tsx" name="tasks &gt; creates a task for a role at a location, with one idempotency key" time="0.065894543">
+        </testcase>
+        <testcase classname="src/features/messages/messages.test.tsx" name="tasks &gt; explains a stale version and reloads" time="0.022045559">
+        </testcase>
+        <testcase classname="src/features/messages/messages.test.tsx" name="tasks &gt; shows a permission note without the permission and makes no task call" time="0.005660444">
+        </testcase>
+        <testcase classname="src/features/messages/messages.test.tsx" name="tasks &gt; has an empty state and an error state with retry" time="0.018518319">
+        </testcase>
+        <testcase classname="src/features/messages/messages.test.tsx" name="secure messages (list-detail) &gt; lists threads with unread count and opens one oldest first, without author identifiers" time="0.042368535">
+        </testcase>
+        <testcase classname="src/features/messages/messages.test.tsx" name="secure messages (list-detail) &gt; sends a reply with an idempotency key and refreshes" time="0.076478218">
+        </testcase>
+        <testcase classname="src/features/messages/messages.test.tsx" name="secure messages (list-detail) &gt; starts a new thread, validating recipients, and opens it" time="0.049541879">
+        </testcase>
+        <testcase classname="src/features/messages/messages.test.tsx" name="secure messages (list-detail) &gt; explains a refused recipient (outside the organisation) in words" time="0.031760875">
+        </testcase>
+        <testcase classname="src/features/messages/messages.test.tsx" name="secure messages (list-detail) &gt; a closed thread can be read but not replied to" time="0.025101695">
+        </testcase>
+        <testcase classname="src/features/messages/messages.test.tsx" name="secure messages (list-detail) &gt; shows the empty state" time="0.010796374">
+        </testcase>
+        <testcase classname="src/features/messages/messages.test.tsx" name="axe (jsdom; contrast and target size run in the Playwright spec) &gt; tasks, new task, threads and an open thread have no violations" time="0.220383705">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/preconsult/desk.test.tsx" timestamp="2026-11-08T23:54:31.962Z" hostname="314866be9867" tests="30" failures="0" errors="0" skipped="0" time="1.222452605">
+        <testcase classname="src/features/preconsult/desk.test.tsx" name="arrivals board and check-in (PC-01, PC-02) &gt; lists today&apos;s visits with the three pre-visit items in words" time="0.225479079">
+        </testcase>
+        <testcase classname="src/features/preconsult/desk.test.tsx" name="arrivals board and check-in (PC-01, PC-02) &gt; checks a visit in with the visit version as If-Match and a fresh idempotency key" time="0.072517263">
+        </testcase>
+        <testcase classname="src/features/preconsult/desk.test.tsx" name="arrivals board and check-in (PC-01, PC-02) &gt; explains a stale version (412) and refreshes the list instead of retrying" time="0.054552805">
+        </testcase>
+        <testcase classname="src/features/preconsult/desk.test.tsx" name="arrivals board and check-in (PC-01, PC-02) &gt; shows the daily QR code for the location and its text fallback" time="0.054109152">
+        </testcase>
+        <testcase classname="src/features/preconsult/desk.test.tsx" name="arrivals board and check-in (PC-01, PC-02) &gt; finds a patient by search and offers check-in for today&apos;s visit only" time="0.117943096">
+        </testcase>
+        <testcase classname="src/features/preconsult/desk.test.tsx" name="arrivals board and check-in (PC-01, PC-02) &gt; asks for at least one search field and does not call the API" time="0.042820744">
+        </testcase>
+        <testcase classname="src/features/preconsult/desk.test.tsx" name="queue (waiting time and stage) &gt; shows the wait in minutes and moves a stage with If-Match" time="0.051040402">
+        </testcase>
+        <testcase classname="src/features/preconsult/desk.test.tsx" name="triage with vitals and the red-flag bar (PC-04, PC-06) &gt; shows out-of-range vitals in words with the stored range, never blocking the save" time="0.043974539">
+        </testcase>
+        <testcase classname="src/features/preconsult/desk.test.tsx" name="triage with vitals and the red-flag bar (PC-04, PC-06) &gt; rejects a non-number inline and sends nothing" time="0.028915013">
+        </testcase>
+        <testcase classname="src/features/preconsult/desk.test.tsx" name="triage with vitals and the red-flag bar (PC-04, PC-06) &gt; raises the red-flag bar with the fixed text and no control after a triage that raised a flag" time="0.037152494">
+        </testcase>
+        <testcase classname="src/features/preconsult/desk.test.tsx" name="triage with vitals and the red-flag bar (PC-04, PC-06) &gt; re-triage sends the current assessment count as If-Match" time="0.033272011">
+        </testcase>
+        <testcase classname="src/features/preconsult/desk.test.tsx" name="triage with vitals and the red-flag bar (PC-04, PC-06) &gt; says so when offline and disables the clinical writes" time="0.029395987">
+        </testcase>
+        <testcase classname="src/features/preconsult/desk.test.tsx" name="triage with vitals and the red-flag bar (PC-04, PC-06) &gt; draws the allergy block in all three states: recorded, none recorded, not shown" time="0.038474645">
+        </testcase>
+        <testcase classname="src/features/preconsult/desk.test.tsx" name="forms review (PC-03) &gt; shows each item as to do or done, a withdrawn consent, and a permission note for a part the role cannot read" time="0.015380238">
+        </testcase>
+        <testcase classname="src/features/preconsult/desk.test.tsx" name="registration and the duplicate warning (7.3) &gt; warns with the agreed words, never shows an out-of-scope record, and requires a reason to create anyway" time="0.062638481">
+        </testcase>
+        <testcase classname="src/features/preconsult/desk.test.tsx" name="registration and the duplicate warning (7.3) &gt; registers straight away when nothing matches, using the check ID" time="0.037523531">
+        </testcase>
+        <testcase classname="src/features/preconsult/desk.test.tsx" name="registration and the duplicate warning (7.3) &gt; invalidates the check when a field changes after it" time="0.029476717">
+        </testcase>
+        <testcase classname="src/features/preconsult/desk.test.tsx" name="merge request and approval (7.3, 8) &gt; does not offer merge, or the merge tab, to a user without either merge permission" time="0.005393374">
+        </testcase>
+        <testcase classname="src/features/preconsult/desk.test.tsx" name="merge request and approval (7.3, 8) &gt; hides &quot;Request a merge&quot; from the duplicate queue without patient.merge.request" time="0.012369328">
+        </testcase>
+        <testcase classname="src/features/preconsult/desk.test.tsx" name="merge request and approval (7.3, 8) &gt; requests a merge only after the survivor MRN is typed, and shows the reference" time="0.045227009">
+            <system-err>
+In HTML, &lt;form&gt; cannot be a descendant of &lt;form&gt;.
+This will cause a hydration error.
+
+  &lt;PreconsultDesk runtime={{api:{...}}} path=&quot;/arrivals&quot; navigate={function navigate}&gt;
+    &lt;div&gt;
+      &lt;Screens path=&quot;/arrivals&quot; api={{...}} locationId=&quot;11111111-1...&quot; permissions={[...]} navigate={function navigate}&gt;
+        &lt;h1&gt;
+        &lt;Tabs items={[...]} selected=&quot;merge&quot; onSelect={function bound dispatchSetState} label=&quot;Pre-consul...&quot;&gt;
+          &lt;div className=&quot;ehr-tabs&quot;&gt;
+            &lt;div&gt;
+            &lt;div&gt;
+            &lt;div&gt;
+            &lt;div&gt;
+            &lt;div&gt;
+            &lt;div role=&quot;tabpanel&quot; id=&quot;_r_4c_-pan...&quot; aria-labelledby=&quot;_r_4c_-tab...&quot; hidden={false} tabIndex={0} ...&gt;
+              &lt;Merge preset={{...}}&gt;
+                &lt;section aria-labelledby=&quot;merge-title&quot;&gt;
+                  &lt;h2&gt;
+                  &lt;MergeRequestForm preset={{...}}&gt;
+                    &lt;section aria-labelledby=&quot;mreq-title&quot; className=&quot;ehr-card&quot;&gt;
+                      &lt;h3&gt;
+                      &lt;p&gt;
+&gt;                     &lt;form onSubmit={function onSubmit} noValidate={true}&gt;
+                        &lt;ErrorSummary&gt;
+                        &lt;fieldset&gt;
+                          &lt;legend&gt;
+                          &lt;RecordLine&gt;
+                          &lt;PatientPicker idPrefix=&quot;ms&quot; chooseLabel=&quot;Choose thi...&quot; chosenId={null} ...&gt;
+                            &lt;div&gt;
+&gt;                             &lt;form onSubmit={function onSubmit} noValidate={true} aria-label=&quot;Find the patient&quot;&gt;
+                        ...
+
+&lt;form&gt; cannot contain a nested &lt;form&gt;.
+See this log for the ancestor stack trace.
+
+            </system-err>
+        </testcase>
+        <testcase classname="src/features/preconsult/desk.test.tsx" name="merge request and approval (7.3, 8) &gt; lets an approver open a request, hides records they cannot see, and approves after a confirmation" time="0.027563596">
+        </testcase>
+        <testcase classname="src/features/preconsult/desk.test.tsx" name="merge request and approval (7.3, 8) &gt; says so plainly when the server refuses a self-approval" time="0.024623338">
+        </testcase>
+        <testcase classname="src/features/preconsult/desk.test.tsx" name="follow-ups and no-shows (PC-07, PC-08) &gt; lists open follow-ups due-first with overdue in words and closes one with If-Match" time="0.028496487">
+        </testcase>
+        <testcase classname="src/features/preconsult/desk.test.tsx" name="follow-ups and no-shows (PC-07, PC-08) &gt; lists missed visits and marks a past-grace visit as no-show" time="0.036237307">
+        </testcase>
+        <testcase classname="src/features/preconsult/desk.test.tsx" name="follow-ups and no-shows (PC-07, PC-08) &gt; shows the grace-period refusal in words" time="0.023050626">
+        </testcase>
+        <testcase classname="src/features/preconsult/desk.test.tsx" name="states &gt; shows the location notice when the account has no location" time="0.005053776">
+        </testcase>
+        <testcase classname="src/features/preconsult/desk.test.tsx" name="states &gt; shows the 403 page when no tab is permitted" time="0.005001288">
+        </testcase>
+        <testcase classname="src/features/preconsult/desk.test.tsx" name="states &gt; shows a server error with a reference and a retry for a failed load" time="0.014442267">
+        </testcase>
+        <testcase classname="src/features/preconsult/desk.test.tsx" name="states &gt; shows the empty arrivals board in words" time="0.007891623">
+        </testcase>
+        <testcase classname="src/features/preconsult/desk.test.tsx" name="states &gt; lets a user with two locations choose between them" time="0.010120917">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/preconsult/qr.test.ts" timestamp="2026-11-08T23:54:31.966Z" hostname="314866be9867" tests="3" failures="0" errors="0" skipped="0" time="0.005746907">
+        <testcase classname="src/features/preconsult/qr.test.ts" name="qr &gt; computes the Reed-Solomon codewords of the standard HELLO WORLD example" time="0.001863258">
+        </testcase>
+        <testcase classname="src/features/preconsult/qr.test.ts" name="qr &gt; draws a 25 x 25 symbol for the 22-character daily token, with the three finder patterns" time="0.001651599">
+        </testcase>
+        <testcase classname="src/features/preconsult/qr.test.ts" name="qr &gt; is deterministic and refuses a payload that does not fit" time="0.001059519">
+        </testcase>
+    </testsuite>
+</testsuites>

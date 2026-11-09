@@ -1,0 +1,42 @@
+$ pnpm --filter @ehr/kernel --filter @ehr/contracts run build && pnpm -r run typecheck
+Scope: 2 of 11 workspace projects
+packages/contracts build$ tsc -p tsconfig.json
+packages/kernel build$ tsc -p tsconfig.json
+packages/contracts build: Done
+packages/kernel build: Done
+Scope: 10 of 11 workspace projects
+apps/site typecheck$ tsc -p tsconfig.json --noEmit
+apps/cms typecheck$ tsc -p tsconfig.json --noEmit
+packages/contracts typecheck$ tsc -p tsconfig.json --noEmit
+packages/kernel typecheck$ tsc -p tsconfig.json --noEmit
+apps/site typecheck: Done
+packages/ui typecheck$ tsc -p tsconfig.json --noEmit
+apps/cms typecheck: Done
+packages/contracts typecheck: Done
+packages/kernel typecheck: Done
+apps/api typecheck$ tsc -p tsconfig.json --noEmit
+apps/worker typecheck$ tsc -p tsconfig.json --noEmit
+apps/worker typecheck: Done
+packages/ui typecheck: Done
+packages/app-shell typecheck$ tsc -p tsconfig.json --noEmit
+packages/app-shell typecheck: Done
+apps/staff typecheck$ tsc -p tsconfig.json --noEmit
+apps/patient typecheck$ tsc -p tsconfig.json --noEmit
+apps/api typecheck: src/composition.ts(187,32): error TS2345: Argument of type '{ db: KernelDb; flow: SchedulingFlowService; }' is not assignable to parameter of type 'FlowControllerDeps'.
+apps/api typecheck:   Property 'limiter' is missing in type '{ db: KernelDb; flow: SchedulingFlowService; }' but required in type 'FlowControllerDeps'.
+apps/api typecheck: src/modules/patient/identity-label.dbtest.ts(63,27): error TS2554: Expected 6 arguments, but got 5.
+apps/api typecheck: Failed
+[ELIFECYCLE] Command failed with exit code 2.
+apps/patient typecheck: Failed
+[ELIFECYCLE] Command failed with signal SIGKILL.
+apps/staff typecheck: Failed
+[ELIFECYCLE] Command failed with signal SIGKILL.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in /paperclip/instances/default/
+  │ projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-
+  │ 47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-133-sdlc-ticket-
+  │ int-03-integrate-m4-clinical-and-front-desk-clinical-messaging-privacy-
+  │ reporting-staff-and-patient/apps/api
+
+[ELIFECYCLE] Command failed with exit code 1.
