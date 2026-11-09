@@ -1,6 +1,6 @@
 # archive module (log-archive account)
 
-- `<prefix>-audit-archive`: S3 Object Lock, **compliance mode** default retention, versioned, SSE-KMS. The bucket policy denies `DeleteObject*`, retention changes, lifecycle changes and bucket deletion to every principal with no exception, so production roles cannot delete from the archive; writers (named roles inside the organisation) get `PutObject` and list only.
+- `<prefix>-audit-archive`: S3 Object Lock, **compliance mode** default retention, versioned, SSE-KMS. The bucket policy denies `DeleteObject*`, retention changes, lifecycle changes and bucket deletion to every principal with no exception, so production roles cannot delete from the archive; writers (named roles inside the organisation) get `PutObject` on their own prefix only (`writer_principal_arns` → `partitions/*`, `anchor_writer_principal_arns` → `anchors/*`), with prefix-conditioned listing; `anchor_reader_principal_arns` read and list versions under `anchors/*`. The KMS grant for these roles belongs in the log-archive key policy (not part of this module).
 - `<prefix>-audit-archive-replica` in the recovery Region with Object Lock also on, fed by S3 replication with RTC; lock settings replicate with the objects (ARCHITECTURE 9.4).
 - AWS Backup vaults (primary and recovery Region) with a vault lock and a policy that accepts copies only from inside the organisation and denies deletion of recovery points (DEVOPS-PLAN 10.1, SEC-D-17).
 

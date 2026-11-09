@@ -27,6 +27,9 @@ variables {
   replica_kms_key_arn   = "arn:aws:kms:us-west-2:333333333333:key/bbbb"
   retention_days        = 2190
   writer_principal_arns = ["arn:aws:iam::111111111111:role/audit-archiver"]
+
+  anchor_writer_principal_arns = ["arn:aws:iam::111111111111:role/worker"]
+  anchor_reader_principal_arns = ["arn:aws:iam::111111111111:role/worker"]
 }
 
 run "object_lock_compliance_on_archive_and_replica" {
@@ -121,5 +124,30 @@ run "vault_policies_keep_a_repair_path" {
       anytrue([for a in s.actions : contains(["backup:PutBackupVaultAccessPolicy", "backup:DeleteBackupVaultAccessPolicy", "backup:DeleteBackupVault"], a)])
     ])
     error_message = "vault policy must not deny its own repair or vault deletion; the vault lock provides immutability"
+  }
+}
+
+run "writers_are_scoped_to_their_own_prefix" {
+  # apply against the mock provider so the bucket ARN is known
+  command = apply
+  assert {
+    condition = anytrue([for s in data.aws_iam_policy_document.archive.statement :
+      s.sid == "AllowAnchorWritersFromOrganisation" && s.effect == "Allow" && s.actions == toset(["s3:PutObject"]) &&
+      alltrue([for r in s.resources : endswith(r, "/anchors/*")])
+    ])
+    error_message = "anchor writers get PutObject on anchors/* only"
+  }
+  assert {
+    condition = anytrue([for s in data.aws_iam_policy_document.archive.statement :
+      s.sid == "AllowPartitionWritersFromOrganisation" && s.effect == "Allow" && s.actions == toset(["s3:PutObject"]) &&
+      alltrue([for r in s.resources : endswith(r, "/partitions/*")])
+    ])
+    error_message = "partition writers get PutObject on partitions/* only"
+  }
+  assert {
+    condition = anytrue([for s in data.aws_iam_policy_document.archive.statement :
+      s.sid == "AllowAnchorPrefixList" && contains(s.actions, "s3:ListBucketVersions") && anytrue([for c in s.condition : c.variable == "s3:prefix" && contains(c.values, "anchors/*") && length(c.values) == 1])
+    ])
+    error_message = "listing object versions is limited to the anchors/ prefix"
   }
 }

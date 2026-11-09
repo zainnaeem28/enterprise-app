@@ -119,19 +119,68 @@ data "aws_iam_policy_document" "archive" {
     }
   }
 
-  statement {
-    sid       = "AllowWritersFromOrganisation"
-    effect    = "Allow"
-    actions   = ["s3:PutObject", "s3:GetBucketLocation", "s3:ListBucket"]
-    resources = [aws_s3_bucket.archive.arn, "${aws_s3_bucket.archive.arn}/*"]
-    principals {
-      type        = "AWS"
-      identifiers = var.writer_principal_arns
+  # Writers are scoped to their own key prefix (INT04-F10 decision log 3.6):
+  # the audit archiver writes partitions/*, the worker writes anchors/*. Neither
+  # can write, or even list, the other's prefix.
+  dynamic "statement" {
+    for_each = length(var.writer_principal_arns) > 0 ? [1] : []
+    content {
+      sid       = "AllowPartitionWritersFromOrganisation"
+      effect    = "Allow"
+      actions   = ["s3:PutObject"]
+      resources = ["${aws_s3_bucket.archive.arn}/partitions/*"]
+      principals {
+        type        = "AWS"
+        identifiers = var.writer_principal_arns
+      }
+      condition {
+        test     = "StringEquals"
+        variable = "aws:PrincipalOrgID"
+        values   = [var.organization_id]
+      }
     }
-    condition {
-      test     = "StringEquals"
-      variable = "aws:PrincipalOrgID"
-      values   = [var.organization_id]
+  }
+
+  dynamic "statement" {
+    for_each = length(var.anchor_writer_principal_arns) > 0 ? [1] : []
+    content {
+      sid       = "AllowAnchorWritersFromOrganisation"
+      effect    = "Allow"
+      actions   = ["s3:PutObject"]
+      resources = ["${aws_s3_bucket.archive.arn}/anchors/*"]
+      principals {
+        type        = "AWS"
+        identifiers = var.anchor_writer_principal_arns
+      }
+      condition {
+        test     = "StringEquals"
+        variable = "aws:PrincipalOrgID"
+        values   = [var.organization_id]
+      }
+    }
+  }
+
+  dynamic "statement" {
+    for_each = length(var.writer_principal_arns) > 0 ? [1] : []
+    content {
+      sid       = "AllowPartitionWritersList"
+      effect    = "Allow"
+      actions   = ["s3:GetBucketLocation", "s3:ListBucket"]
+      resources = [aws_s3_bucket.archive.arn]
+      principals {
+        type        = "AWS"
+        identifiers = var.writer_principal_arns
+      }
+      condition {
+        test     = "StringEquals"
+        variable = "aws:PrincipalOrgID"
+        values   = [var.organization_id]
+      }
+      condition {
+        test     = "StringLike"
+        variable = "s3:prefix"
+        values   = ["partitions/*"]
+      }
     }
   }
 
@@ -150,6 +199,50 @@ data "aws_iam_policy_document" "archive" {
         test     = "StringEquals"
         variable = "aws:PrincipalOrgID"
         values   = [var.organization_id]
+      }
+    }
+  }
+
+  # The worker verifies anchors: read and list object versions under anchors/ only.
+  dynamic "statement" {
+    for_each = length(var.anchor_reader_principal_arns) > 0 ? [1] : []
+    content {
+      sid       = "AllowAnchorReaders"
+      effect    = "Allow"
+      actions   = ["s3:GetObject", "s3:GetObjectVersion"]
+      resources = ["${aws_s3_bucket.archive.arn}/anchors/*"]
+      principals {
+        type        = "AWS"
+        identifiers = var.anchor_reader_principal_arns
+      }
+      condition {
+        test     = "StringEquals"
+        variable = "aws:PrincipalOrgID"
+        values   = [var.organization_id]
+      }
+    }
+  }
+
+  dynamic "statement" {
+    for_each = length(setunion(var.anchor_writer_principal_arns, var.anchor_reader_principal_arns)) > 0 ? [1] : []
+    content {
+      sid       = "AllowAnchorPrefixList"
+      effect    = "Allow"
+      actions   = ["s3:GetBucketLocation", "s3:ListBucket", "s3:ListBucketVersions"]
+      resources = [aws_s3_bucket.archive.arn]
+      principals {
+        type        = "AWS"
+        identifiers = tolist(setunion(var.anchor_writer_principal_arns, var.anchor_reader_principal_arns))
+      }
+      condition {
+        test     = "StringEquals"
+        variable = "aws:PrincipalOrgID"
+        values   = [var.organization_id]
+      }
+      condition {
+        test     = "StringLike"
+        variable = "s3:prefix"
+        values   = ["anchors/*"]
       }
     }
   }

@@ -38,12 +38,25 @@ variable "object_lock_mode" {
 }
 
 variable "writer_principal_arns" {
-  description = "Roles that may add objects (the worker's audit archiver in the production account). They get PutObject and read only, never delete."
+  description = "Roles that may add objects under partitions/ (the worker's audit archiver in the production account). PutObject on partitions/* and list under that prefix only; never delete. May be empty."
   type        = list(string)
+  default     = []
+}
+
+variable "anchor_writer_principal_arns" {
+  description = "Roles that may add objects under anchors/ (the worker task role, which archives audit anchors). PutObject on anchors/* only; no retention, legal-hold or delete actions."
+  type        = list(string)
+  default     = []
+}
+
+variable "anchor_reader_principal_arns" {
+  description = "Roles that may read anchors/ (the worker's verification job): GetObject, GetObjectVersion and list versions under anchors/ only."
+  type        = list(string)
+  default     = []
 }
 
 variable "reader_principal_arns" {
-  description = "Roles that may read the archive (verification job, auditors)."
+  description = "Roles that may read the whole archive (auditors)."
   type        = list(string)
   default     = []
 }
