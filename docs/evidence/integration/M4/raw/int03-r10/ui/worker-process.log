@@ -1,0 +1,107 @@
+{"count":46,"level":"info","time":"2026-11-09T08:20:22.232Z","msg":"task types synced"}
+{"tasks":48,"level":"info","time":"2026-11-09T08:20:22.239Z","msg":"worker started"}
+{"database":"[redacted]","level":"info","time":"2026-11-09T08:20:22.239Z","msg":"worker booted"}
+{"level":"info","time":"2026-11-09T08:20:22.242Z","msg":"Worker connected and looking for jobs... (task names: 'identity.record_sign_in', 'identity.apply_reference_data', 'identity.purge_sessions', 'patient.verify_staff_scope', 'patient.execute_merge', 'patient.purge_match_checks', 'audit.anchor', 'audit.verify_anchors', 'audit.export', 'scheduling.on_slot_freed', 'scheduling.offer_waitlist', 'scheduling.expire_offer', 'scheduling.no_show_sweep', 'scheduling.on_reservation_confirmed', 'scheduling.on_reservation_cancelled', 'scheduling.on_reservation_rescheduled', 'scheduling.send_previsit', 'telehealth.on_reservation_confirmed', 'telehealth.create_meeting', 'telehealth.end_stale', 'calendar_sync.on_reservation_confirmed', 'calendar_sync.on_reservation_cancelled', 'calendar_sync.on_reservation_rescheduled', 'calendar_sync.push_busy', 'calendar_sync.delete_busy', 'calendar_sync.incremental_sync', 'calendar_sync.full_resync', 'calendar_sync.renew_watch', 'calendar_sync.unlink_cleanup', 'notifications.send_message', 'notifications.send_staff_message', 'documents.await_scan', 'documents.ocr_suggest', 'documents.retention_sweep', 'integration_core.dispatch_inbound', 'integration_core.health_check', 'integration_core.apply_inbound_secret', 'clinical.terminology_load', 'clinical.on_alert_unacknowledged', 'clinical.note_sign_reminder', 'notifications.escalate_alert', 'messaging.on_correction_requested', 'reporting.refresh_ops', 'privacy.assemble_export', 'privacy.check_legal_holds', 'privacy.expire_packages', 'privacy/expire_packages', 'reporting/refresh_ops')"}
+{"job":"1","jobType":"identity.record_sign_in","attempt":1,"level":"info","time":"2026-11-09T08:20:35.024Z","msg":"job started"}
+{"job":"1","jobType":"identity.record_sign_in","attempt":1,"level":"info","time":"2026-11-09T08:20:35.043Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T08:20:35.043Z","msg":"Completed task 1 (identity.record_sign_in, 19.20ms) with success"}
+{"job":"2","jobType":"scheduling.on_reservation_confirmed","attempt":1,"level":"info","time":"2026-11-09T08:20:35.156Z","msg":"job started"}
+{"job":"2","jobType":"scheduling.on_reservation_confirmed","attempt":1,"level":"info","time":"2026-11-09T08:20:35.197Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T08:20:35.197Z","msg":"Completed task 2 (scheduling.on_reservation_confirmed, 40.66ms) with success"}
+{"job":"3","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-09T08:20:35.199Z","msg":"job started"}
+{"job":"4","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-09T08:20:35.200Z","msg":"job started"}
+{"job":"5","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-09T08:20:35.201Z","msg":"job started"}
+{"job":"6","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-09T08:20:35.202Z","msg":"job started"}
+{"job":"11","jobType":"scheduling.send_previsit","attempt":1,"level":"info","time":"2026-11-09T08:20:35.212Z","msg":"job started"}
+{"job":"6","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-09T08:20:35.226Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T08:20:35.226Z","msg":"Completed task 6 (notifications.send_message, 24.17ms) with success"}
+{"job":"5","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-09T08:20:35.240Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T08:20:35.240Z","msg":"Completed task 5 (notifications.send_message, 38.79ms) with success"}
+{"job":"3","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-09T08:20:35.243Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T08:20:35.243Z","msg":"Completed task 3 (notifications.send_message, 44.28ms) with success"}
+{"job":"4","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-09T08:20:35.244Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T08:20:35.244Z","msg":"Completed task 4 (notifications.send_message, 44.18ms) with success"}
+{"job":"11","jobType":"scheduling.send_previsit","attempt":1,"level":"info","time":"2026-11-09T08:20:35.256Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T08:20:35.256Z","msg":"Completed task 11 (scheduling.send_previsit, 44.10ms) with success"}
+{"job":"12","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-09T08:20:35.257Z","msg":"job started"}
+{"job":"13","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-09T08:20:35.258Z","msg":"job started"}
+{"job":"14","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-09T08:20:35.258Z","msg":"job started"}
+{"job":"15","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-09T08:20:35.258Z","msg":"job started"}
+{"job":"12","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-09T08:20:35.266Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T08:20:35.266Z","msg":"Completed task 12 (notifications.send_message, 9.11ms) with success"}
+{"job":"13","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-09T08:20:35.267Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T08:20:35.267Z","msg":"Completed task 13 (notifications.send_message, 9.85ms) with success"}
+{"job":"15","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-09T08:20:35.269Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T08:20:35.269Z","msg":"Completed task 15 (notifications.send_message, 11.01ms) with success"}
+{"job":"14","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-09T08:20:35.271Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T08:20:35.271Z","msg":"Completed task 14 (notifications.send_message, 12.95ms) with success"}
+{"job":"16","jobType":"identity.record_sign_in","attempt":1,"level":"info","time":"2026-11-09T08:20:35.711Z","msg":"job started"}
+{"job":"16","jobType":"identity.record_sign_in","attempt":1,"level":"info","time":"2026-11-09T08:20:35.728Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T08:20:35.728Z","msg":"Completed task 16 (identity.record_sign_in, 17.22ms) with success"}
+{"job":"17","jobType":"reporting.refresh_ops","attempt":1,"level":"info","time":"2026-11-09T08:21:00.008Z","msg":"job started"}
+{"job":"17","jobType":"reporting.refresh_ops","attempt":1,"level":"info","time":"2026-11-09T08:21:00.029Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T08:21:00.029Z","msg":"Completed task 17 (reporting/refresh_ops, 20.82ms) with success"}
+{"job":"18","jobType":"identity.record_sign_in","attempt":1,"level":"info","time":"2026-11-09T08:21:51.759Z","msg":"job started"}
+{"job":"18","jobType":"identity.record_sign_in","attempt":1,"level":"info","time":"2026-11-09T08:21:51.782Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T08:21:51.782Z","msg":"Completed task 18 (identity.record_sign_in, 23.21ms) with success"}
+{"job":"19","jobType":"reporting.refresh_ops","attempt":1,"level":"info","time":"2026-11-09T08:22:00.008Z","msg":"job started"}
+{"job":"19","jobType":"reporting.refresh_ops","attempt":1,"level":"info","time":"2026-11-09T08:22:00.028Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T08:22:00.028Z","msg":"Completed task 19 (reporting/refresh_ops, 19.88ms) with success"}
+{"job":"20","jobType":"identity.record_sign_in","attempt":1,"level":"info","time":"2026-11-09T08:22:38.422Z","msg":"job started"}
+{"job":"20","jobType":"identity.record_sign_in","attempt":1,"level":"info","time":"2026-11-09T08:22:38.440Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T08:22:38.441Z","msg":"Completed task 20 (identity.record_sign_in, 19.18ms) with success"}
+{"job":"21","jobType":"scheduling.on_reservation_confirmed","attempt":1,"level":"info","time":"2026-11-09T08:22:38.532Z","msg":"job started"}
+{"job":"21","jobType":"scheduling.on_reservation_confirmed","attempt":1,"level":"info","time":"2026-11-09T08:22:38.575Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T08:22:38.575Z","msg":"Completed task 21 (scheduling.on_reservation_confirmed, 42.73ms) with success"}
+{"job":"22","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-09T08:22:38.576Z","msg":"job started"}
+{"job":"23","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-09T08:22:38.577Z","msg":"job started"}
+{"job":"24","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-09T08:22:38.577Z","msg":"job started"}
+{"job":"25","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-09T08:22:38.585Z","msg":"job started"}
+{"job":"30","jobType":"scheduling.send_previsit","attempt":1,"level":"info","time":"2026-11-09T08:22:38.594Z","msg":"job started"}
+{"job":"24","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-09T08:22:38.596Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T08:22:38.596Z","msg":"Completed task 24 (notifications.send_message, 18.58ms) with success"}
+{"job":"23","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-09T08:22:38.599Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T08:22:38.599Z","msg":"Completed task 23 (notifications.send_message, 21.85ms) with success"}
+{"job":"22","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-09T08:22:38.599Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T08:22:38.599Z","msg":"Completed task 22 (notifications.send_message, 22.74ms) with success"}
+{"job":"25","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-09T08:22:38.601Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T08:22:38.601Z","msg":"Completed task 25 (notifications.send_message, 16.64ms) with success"}
+{"job":"30","jobType":"scheduling.send_previsit","attempt":1,"level":"info","time":"2026-11-09T08:22:38.637Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T08:22:38.637Z","msg":"Completed task 30 (scheduling.send_previsit, 43.18ms) with success"}
+{"job":"31","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-09T08:22:38.639Z","msg":"job started"}
+{"job":"32","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-09T08:22:38.639Z","msg":"job started"}
+{"job":"33","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-09T08:22:38.640Z","msg":"job started"}
+{"job":"34","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-09T08:22:38.640Z","msg":"job started"}
+{"job":"33","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-09T08:22:38.647Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T08:22:38.647Z","msg":"Completed task 33 (notifications.send_message, 7.86ms) with success"}
+{"job":"34","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-09T08:22:38.649Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T08:22:38.649Z","msg":"Completed task 34 (notifications.send_message, 8.90ms) with success"}
+{"job":"32","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-09T08:22:38.650Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T08:22:38.650Z","msg":"Completed task 32 (notifications.send_message, 10.34ms) with success"}
+{"job":"31","jobType":"notifications.send_message","attempt":1,"level":"info","time":"2026-11-09T08:22:38.651Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T08:22:38.651Z","msg":"Completed task 31 (notifications.send_message, 11.95ms) with success"}
+{"job":"35","jobType":"identity.record_sign_in","attempt":1,"level":"info","time":"2026-11-09T08:22:38.965Z","msg":"job started"}
+{"job":"35","jobType":"identity.record_sign_in","attempt":1,"level":"info","time":"2026-11-09T08:22:38.982Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T08:22:38.982Z","msg":"Completed task 35 (identity.record_sign_in, 16.27ms) with success"}
+{"job":"36","jobType":"reporting.refresh_ops","attempt":1,"level":"info","time":"2026-11-09T08:23:00.009Z","msg":"job started"}
+{"job":"36","jobType":"reporting.refresh_ops","attempt":1,"level":"info","time":"2026-11-09T08:23:00.030Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T08:23:00.030Z","msg":"Completed task 36 (reporting/refresh_ops, 21.02ms) with success"}
+{"job":"37","jobType":"identity.record_sign_in","attempt":1,"level":"info","time":"2026-11-09T08:23:06.333Z","msg":"job started"}
+{"job":"37","jobType":"identity.record_sign_in","attempt":1,"level":"info","time":"2026-11-09T08:23:06.357Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T08:23:06.357Z","msg":"Completed task 37 (identity.record_sign_in, 23.95ms) with success"}
+{"job":"38","jobType":"identity.record_sign_in","attempt":1,"level":"info","time":"2026-11-09T08:23:53.999Z","msg":"job started"}
+{"job":"38","jobType":"identity.record_sign_in","attempt":1,"level":"info","time":"2026-11-09T08:23:54.016Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T08:23:54.016Z","msg":"Completed task 38 (identity.record_sign_in, 16.56ms) with success"}
+{"job":"39","jobType":"reporting.refresh_ops","attempt":1,"level":"info","time":"2026-11-09T08:24:00.007Z","msg":"job started"}
+{"job":"39","jobType":"reporting.refresh_ops","attempt":1,"level":"info","time":"2026-11-09T08:24:00.026Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T08:24:00.026Z","msg":"Completed task 39 (reporting/refresh_ops, 18.72ms) with success"}
+{"job":"40","jobType":"identity.record_sign_in","attempt":1,"level":"info","time":"2026-11-09T08:24:48.084Z","msg":"job started"}
+{"job":"40","jobType":"identity.record_sign_in","attempt":1,"level":"info","time":"2026-11-09T08:24:48.102Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T08:24:48.102Z","msg":"Completed task 40 (identity.record_sign_in, 17.53ms) with success"}
+{"job":"41","jobType":"reporting.refresh_ops","attempt":1,"level":"info","time":"2026-11-09T08:25:00.007Z","msg":"job started"}
+{"job":"41","jobType":"reporting.refresh_ops","attempt":1,"level":"info","time":"2026-11-09T08:25:00.027Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T08:25:00.027Z","msg":"Completed task 41 (reporting/refresh_ops, 19.49ms) with success"}
+{"job":"42","jobType":"reporting.refresh_ops","attempt":1,"level":"info","time":"2026-11-09T08:26:00.007Z","msg":"job started"}
+{"job":"42","jobType":"reporting.refresh_ops","attempt":1,"level":"info","time":"2026-11-09T08:26:00.033Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T08:26:00.033Z","msg":"Completed task 42 (reporting/refresh_ops, 25.48ms) with success"}
+{"level":"info","time":"2026-11-09T08:26:20.644Z","msg":"worker stopped"}
