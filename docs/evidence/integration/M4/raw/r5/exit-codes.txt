@@ -1,0 +1,10 @@
+build 0
+boundary 0
+unit 0
+db=0
+secrets=127
+deps=127
+sast=127
+secrets=1
+deps=0
+secrets-range=1
