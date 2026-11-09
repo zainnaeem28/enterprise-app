@@ -1,0 +1,96 @@
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+▶ clinical chart (BE-16) on PostgreSQL 17
+  ✔ the job type is the same on both sides, organisation scope, no patient IDs, and the queue registry accepts it (1.606486ms)
+  ▶ terminology (reference data, chunked load)
+    ✔ the synthetic release is loaded; search returns active concepts of one system, a code match first, literal text (67.816621ms)
+    ✔ bad system or text is a 422; the route is for terminology.search holders only (33.80665ms)
+    ✔ at most 20 concepts come back (15.802924ms)
+    ✔ the load is chunked: each chunk commits on its own, a failure resumes from the last committed chunk, a rerun changes nothing (40.074295ms)
+    ✔ a newer release marks concepts that are not in it inactive (never deleted); a saved chart entry keeps its code and display (136.994367ms)
+    ✔ a source that returns more than the chunk size, or a bad code, is refused and nothing is written (1.984195ms)
+  ✔ terminology (reference data, chunked load) (297.193562ms)
+  ▶ problems, allergies, medications
+    ✔ TC-CL-04: coded items are saved with their codes; free text is saved flagged uncoded; the saved chart shows both (207.804057ms)
+    ✔ validation: a code must come from the picker and its own system; free text needs its text; the database also holds the shape (154.43725ms)
+    ✔ PATCH: If-Match is required, a stale version is 412, the entry keeps its code, an uncoded entry can be coded, entered in error is final (311.928222ms)
+    ✔ resolving or stopping dates the entry; reactivating clears the date; two editors of one entry cannot both win (167.919639ms)
+    ✔ an idempotent POST replays: same key and body gives the stored answer and one row; same key, other body is 409 (96.152882ms)
+    ✔ lists page with a signed cursor, newest first, and filter by status (383.243481ms)
+  ✔ problems, allergies, medications (1322.387484ms)
+  ▶ chart access is assignment-bound, BTG is the exception
+    ✔ TC-AZ-10: an unassigned doctor gets 403 clinical.not_assigned with btgAvailable on reads, the summary and the writes, each audited as denied (168.741882ms)
+    ✔ TC-AZ-10/11: break-the-glass lets the next request pass; the grant is audited; the compliance alert is queued; the opener cannot review it (114.283685ms)
+    ✔ the assignment rules: care team (and its end), a reservation, a patient merged into the patient; none of them is the pre-visit permission (112.758583ms)
+    ✔ a front-desk user and a triage nurse hold only the pre-visit permission: no list route, the summary is the pre-visit slice (107.121833ms)
+    ✔ TC-AZ-04: a patient who has no care relationship at the user's location is not visible (54.980436ms)
+    ✔ a patient-realm session reaches no chart route and gets no banner (TC-PC-15 step 5) (114.384666ms)
+  ✔ chart access is assignment-bound, BTG is the exception (672.929812ms)
+  ▶ patient banner and allergy summary
+    ✔ 38.2 item 18 / TC-PC-15: nurse, front desk, assigned doctor and a doctor under BTG see the same filled allergy block; no resolved, withdrawn or inactive allergy (157.987383ms)
+    ✔ the banner on every banner: true route of this ticket (lists, writes, summary, banner route) (120.659325ms)
+    ✔ a patient with no allergy reads none_recorded (never "no known allergies") (158.356587ms)
+    ✔ a caller with patient.read only (medical records) gets allergies: null, and the audit names allergy_summary only when it was filled (42.62336ms)
+    ✔ a patient registered at another location is not visible, so no banner leaks across locations (15.329235ms)
+    ✔ no allergy text reaches the audit trail (RA-R1-19): the canary in a free-text allergy appears in no audit row (2.234293ms)
+  ✔ patient banner and allergy summary (1144.864428ms)
+  ▶ vital ranges and vitals
+    ✔ TC-CL-10 step 1: the table ships empty and every vital is no_range; out of range never blocks saving (41.98416ms)
+    ✔ the admin routes: only clinical.vital_range.manage in the admin realm; validation; overlap is 409 clinical.vital_range_overlap (143.776158ms)
+    ✔ two admins adding overlapping ranges at once: exactly one wins, the other gets 409 (exclusion constraint) (52.237648ms)
+    ✔ TC-CL-10 / item 19: inclusive bounds, below and above, unit mismatch, age at measured_at, sex-specific beats any, null sex matches any only (289.575403ms)
+    ✔ item 19: retiring a range changes no stored vital; the next vital has no range; retiring twice is 409; a range is never edited or deleted (110.38042ms)
+    ✔ the database holds the range rule: a status that disagrees with the value or the named range is refused (63.906991ms)
+    ✔ a vital sign is append-only; a correction is a new row; a row is corrected once, also under a race; the summary shows the current value (210.900929ms)
+  ✔ vital ranges and vitals (913.401069ms)
+  ▶ merge participant and export part
+    ✔ item 11: problems, allergies and medications of every status move to the survivor; vitals are kept; duplicates both stay; counts add up (637.577089ms)
+    ✔ the participant refuses anything but a patients-scope job that names both IDs, and nothing else touches the rows (84.3038ms)
+    ✔ the export part returns the chart of every ID asked for, every status, with the vital shape (123.632776ms)
+  ✔ merge participant and export part (845.823004ms)
+  ▶ row-level security and roles
+    ✖ every clinical table forces RLS and names its roles; no application role owns one (4.482325ms)
+    ✔ TC-AZ-05: reporting_ro, the directory role and a transaction with no or an anonymous/public audience read nothing (135.81807ms)
+    ✔ TC-AZ-06: the function-owner roles read no clinical table (11.172622ms)
+    ✔ staff at another location, an admin without BTG, and a patient session see no chart row; a BTG admin sees it (72.431113ms)
+    ✔ a write for an unknown patient is refused by the merge guard, and the application role can neither delete nor truncate (16.84468ms)
+    ✔ the stored author cannot be forged: a staff insert must name the caller as recorder (24.095391ms)
+  ✖ row-level security and roles (265.363294ms)
+✖ clinical chart (BE-16) on PostgreSQL 17 (7406.670608ms)
+ℹ tests 41
+ℹ suites 8
+ℹ pass 40
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7829.111389
+
+✖ failing tests:
+
+test at apps/api/dist/src/modules/clinical/chart/chart.dbtest.js:927:9
+✖ every clinical table forces RLS and names its roles; no application role owns one (4.482325ms)
+  AssertionError [ERR_ASSERTION]: zz_negative_control
+  + actual - expected
+  
+    [
+  +   false,
+  +   false,
+  +   'postgres'
+  -   true,
+  -   true,
+  -   'app_owner'
+    ]
+  
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-318-sdlc-correction-int03-f08a-update-the-stale-clinical-rls-table-list-in-chart-dbtest/apps/api/dist/src/modules/clinical/chart/chart.dbtest.js:938:24)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ false, false, 'postgres' ],
+    expected: [ true, true, 'app_owner' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
