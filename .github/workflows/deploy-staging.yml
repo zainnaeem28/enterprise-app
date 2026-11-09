@@ -1,0 +1,159 @@
+# Staging deploy of a SELECTED candidate (DO-06, HEAAA-97; DEVOPS-PLAN 4.2, 6.2 (DPR-33), 7.2, 7.5 (DPR-35)).
+#
+# AUTHORED DISABLED (C-01). Not enabled until: DPR-37 (staging Terraform apply role) and DPR-38 (named creator of the
+# loadtest, bootstrap and ENV-DR stacks) are resolved, DPR-39 is in place (task definitions pinned by ARN, gate-check read
+# actions, `gh-nightly-staging` row; see scripts/deploy/README.md for where), the staging authorisation exists, and a
+# person sets DEPLOY_STAGING_ENABLED=true and enables the workflow. No secret and no account identifier is in this file.
+#
+# Staging has no workflow that registers a task definition or writes IAM (the SCP guard applies): `approvals-staging`
+# registers the revisions for the chosen manifest by a human platform-admin apply, and the first job here stops, waiting,
+# if they are not there. The migration runs from the pre-registered migration task definition pinned by ARN.
+# Terraform plan/apply for staging belongs to infra.yml (DO-08), not to this file.
+name: deploy-staging
+
+on:
+  workflow_dispatch:
+    inputs:
+      manifest_hash:
+        description: 'sha256 of release-manifest.json of the selected candidate'
+        required: true
+        type: string
+      build_run_id:
+        description: 'build-release run that produced the manifest artifact'
+        required: true
+        type: string
+      rollback_rehearsal:
+        description: 'Deploying an OLDER release number on purpose (rollback rehearsal)'
+        required: false
+        type: boolean
+        default: false
+
+permissions: {}
+
+concurrency:
+  group: staging-release
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CI: 'true'
+  WORK: ${{ github.workspace }}/deploy-work
+  AWS_REGION: ${{ vars.DEPLOY_AWS_REGION }}
+  AWS_DEFAULT_REGION: ${{ vars.DEPLOY_AWS_REGION }}
+
+jobs:
+  enabled:
+    name: enabled and on main
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Refuse unless deliberately enabled, from main
+        env:
+          ENABLED: ${{ vars.DEPLOY_STAGING_ENABLED }}
+          REF: ${{ github.ref }}
+        run: |
+          [ "$REF" = "refs/heads/main" ] || { echo "::error::staging deploys run from refs/heads/main only (got $REF)"; exit 1; }
+          [ "$ENABLED" = "true" ] || { echo "::error::deploy-staging is authored but not enabled (DEPLOY_STAGING_ENABLED is not 'true'). DPR-37, DPR-38, DPR-39 must be done first (C-14)."; exit 1; }
+
+  deploy:
+    name: verify, migrate, roll out, smoke
+    needs: [enabled]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    environment: staging
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+    env:
+      CLUSTER: ${{ vars.DEPLOY_CLUSTER }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Fetch the release manifest (exact bytes)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ inputs.build_run_id }}
+        run: |
+          mkdir -p "$WORK/current"
+          gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" --name "release-artifacts-$RUN_ID" --dir "$WORK/current"
+
+      - name: Assume gh-deploy-staging (OIDC; denied by AWS unless the staging-release record is applied and unexpired)
+        run: scripts/deploy/aws-login.sh "${{ vars.DEPLOY_ROLE_ARN }}" gh-deploy-staging 7200
+
+      - name: Read the staging-release record and verify manifest = dispatch hash = record
+        id: verify
+        env:
+          MANIFEST_HASH: ${{ inputs.manifest_hash }}
+        run: |
+          aws ssm get-parameter --name /approved/staging-release --with-decryption --query Parameter.Value --output text > "$WORK/record.json"
+          node scripts/deploy/verify-release.mjs --manifest "$WORK/current/release-manifest.json" --manifest-hash "$MANIFEST_HASH" \
+            --record "$WORK/record.json" --environment staging --actions migrate,rollout,portal-switch,smoke --no-rollback-target --skip-min-client
+
+      - name: Task definitions registered by approvals-staging for this manifest (stops and waits if absent)
+        id: taskdefs
+        run: |
+          node scripts/deploy/resolve-taskdefs.mjs --manifest "$WORK/current/release-manifest.json" \
+            --family "api=${{ vars.DEPLOY_API_FAMILY }}" --family "worker=${{ vars.DEPLOY_WORKER_FAMILY }}" \
+            --migration-arn "${{ vars.DEPLOY_MIGRATION_TASKDEF_ARN }}" --migration-image api
+
+      - name: min_client_release from what is deployed to staging (DPR-33)
+        id: floor
+        env:
+          ROLLBACK_REHEARSAL: ${{ inputs.rollback_rehearsal }}
+        run: |
+          flag=()
+          if [ "$ROLLBACK_REHEARSAL" = "true" ]; then flag=(--rollback-rehearsal); fi
+          node scripts/deploy/staging-floor.mjs --manifest "$WORK/current/release-manifest.json" "${flag[@]}"
+
+      - name: Run the migration task (idempotent runner, pinned definition)
+        run: |
+          node scripts/deploy/run-migration.mjs --cluster "$CLUSTER" --taskdef "${{ steps.taskdefs.outputs.taskdef_migration }}" \
+            --subnets "${{ vars.DEPLOY_SUBNETS }}" --security-groups "${{ vars.DEPLOY_SECURITY_GROUPS }}" --timeout-minutes 30
+
+      - name: Set min_client_release
+        run: node scripts/deploy/set-release-config.mjs --param "${{ vars.DEPLOY_MIN_CLIENT_PARAM }}" --value "${{ steps.floor.outputs.min_client_release }}"
+
+      - name: Roll out worker, then api
+        run: |
+          node scripts/deploy/rollout.mjs --cluster "$CLUSTER" \
+            --service "worker=${{ vars.DEPLOY_WORKER_SERVICE }}:${{ steps.taskdefs.outputs.taskdef_worker }}" \
+            --service "api=${{ vars.DEPLOY_API_SERVICE }}:${{ steps.taskdefs.outputs.taskdef_api }}"
+
+      - name: Switch portal entry documents
+        run: |
+          node scripts/deploy/portal-switch.mjs --bucket "${{ vars.DEPLOY_PORTAL_BUCKET }}" --sha "${{ steps.verify.outputs.git_sha }}" \
+            --portal "${{ vars.DEPLOY_PORTAL_NAME }}" --distribution "${{ vars.DEPLOY_PORTAL_DISTRIBUTION }}"
+
+      - name: Smoke checks
+        run: |
+          node scripts/deploy/smoke.mjs --api-url "${{ vars.DEPLOY_API_URL }}" --portal-url "${{ vars.DEPLOY_PORTAL_URL }}" \
+            --release-number "${{ steps.verify.outputs.release_number }}"
+
+      - name: Record what is deployed (only after smoke passed)
+        run: |
+          node scripts/deploy/set-release-config.mjs --param "/deployed/min_client_release/${{ steps.verify.outputs.release_number }}" --value "${{ steps.floor.outputs.min_client_release }}"
+          node scripts/deploy/set-release-config.mjs --param /deployed/release_number --value "${{ steps.verify.outputs.release_number }}"
+
+      - name: Evidence
+        if: ${{ !cancelled() }}
+        env:
+          MANIFEST_HASH: ${{ inputs.manifest_hash }}
+        run: |
+          {
+            echo "### deploy-staging"
+            echo "- manifest hash (dispatch input, unverified text): $MANIFEST_HASH"
+            echo "- release_number: ${{ steps.verify.outputs.release_number }} (git ${{ steps.verify.outputs.git_sha }})"
+            echo "- task definitions (pinned): api ${{ steps.taskdefs.outputs.taskdef_api }}, worker ${{ steps.taskdefs.outputs.taskdef_worker }}, migration ${{ steps.taskdefs.outputs.taskdef_migration }}"
+            echo "- min_client_release: ${{ steps.floor.outputs.min_client_release }}"
+            echo "- e2e and ZAP baseline run from the nightly/staging suites (DO-07/DO-08), not from this file"
+          } >> "$GITHUB_STEP_SUMMARY"
