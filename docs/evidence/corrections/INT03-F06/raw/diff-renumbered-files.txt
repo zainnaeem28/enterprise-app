@@ -1,0 +1,60 @@
+# git diff -M per renumbered file (originals: INT-02 275fdd4 for 1600-1603; HEAAA-305 597225f for consent 2000/2001)
+=== 1600_merge_guard_single -> 1604_merge_guard_single
+--- /dev/fd/63	2026-11-09 01:21:13.427791371 +0000
++++ /dev/fd/62	2026-11-09 01:21:13.428791373 +0000
+@@ -4,9 +4,9 @@
+ -- copy, to scheduling.slot_reservation (which carried the unlocked scheduling copy and the commit re-check) and to the two
+ -- notifications.staff_alert tables that had no guard at all. The attach runs as an owner step (21.2 point 5): the grant to
+ -- app_owner exists only between the first step and the last, and the runner refuses the file if it is still there at commit.
+--- The copy functions are dropped by 1601 (contract).
++-- The copy functions are dropped by 1605 (contract).
+ 
+--- 1601 drops the copy functions as their owner, which needs USAGE on their schema; 1602 takes it back.
++-- 1605 drops the copy functions as their owner, which needs USAGE on their schema; 1606 takes it back.
+ GRANT USAGE ON SCHEMA documents, telehealth TO patient_scope_owner;
+ 
+ SET LOCAL ROLE patient_scope_owner;
+=== 1601_drop_merge_guard_copies -> 1605_drop_merge_guard_copies
+--- /dev/fd/63	2026-11-09 01:21:13.456791418 +0000
++++ /dev/fd/62	2026-11-09 01:21:13.456791418 +0000
+@@ -1,6 +1,6 @@
+ -- migration-class: contract
+ -- contract-approval: HEAAA-190 ruling (document ruling rev e3070476), ARCHITECTURE amendment A-3 / SHARED-BOUNDARIES SB-A2 at commit 0dfd892
+--- INT02-F02 (HEAAA-186). Drops the five refused copies of the merge write guard. 1600 has already moved every trigger to
++-- INT02-F02 (HEAAA-186). Drops the five refused copies of the merge write guard. 1604 has already moved every trigger to
+ -- patient.guard_open_patient; no trigger or application code calls these functions (trigger functions cannot be called).
+ -- Dropping a function a function-owner role owns needs that role: an owner step, DROP FUNCTION without CASCADE.
+ 
+=== 1602_revoke_guard_drop_usage -> 1606_revoke_guard_drop_usage
+--- /dev/fd/63	2026-11-09 01:21:13.485791464 +0000
++++ /dev/fd/62	2026-11-09 01:21:13.485791464 +0000
+@@ -1,4 +1,4 @@
+ -- migration-class: expand
+--- INT02-F02 (HEAAA-186): 1600 granted patient_scope_owner USAGE on documents and telehealth only so that 1601 could drop the
++-- INT02-F02 (HEAAA-186): 1604 granted patient_scope_owner USAGE on documents and telehealth only so that 1605 could drop the
+ -- copies of the merge guard it owns. The role keeps no right on those schemas (least privilege, 21.2).
+ REVOKE USAGE ON SCHEMA documents, telehealth FROM patient_scope_owner;
+=== 1603_identity_principal_patients_scope_read -> 1607_identity_principal_patients_scope_read
+=== 2000_consent_template_text -> 2003_consent_template_text
+--- /dev/fd/63	2026-11-09 01:21:13.541791554 +0000
++++ /dev/fd/62	2026-11-09 01:21:13.541791554 +0000
+@@ -1,6 +1,6 @@
+ -- migration-class: expand
+ -- HEAAA-296 D3: consent wording on the template, the signed language on the consent row. Constraints are added NOT VALID here and
+--- validated in 2001 (DEVOPS-PLAN 5.2). No DEFAULT anywhere: a missing language or wording is never invented.
++-- validated in 2004 (DEVOPS-PLAN 5.2). No DEFAULT anywhere: a missing language or wording is never invented.
+ 
+ -- D3a: template wording and the patient read
+ ALTER TABLE organisation.consent_template
+=== 2001_consent_template_text_validate -> 2004_consent_template_text_validate
+--- /dev/fd/63	2026-11-09 01:21:13.573791605 +0000
++++ /dev/fd/62	2026-11-09 01:21:13.573791605 +0000
+@@ -1,5 +1,5 @@
+ -- migration-class: expand
+--- HEAAA-296 D3: validate the constraints added NOT VALID in 2000. Own file, own transaction: VALIDATE takes SHARE UPDATE EXCLUSIVE.
++-- HEAAA-296 D3: validate the constraints added NOT VALID in 2003. Own file, own transaction: VALIDATE takes SHARE UPDATE EXCLUSIVE.
+ ALTER TABLE organisation.consent_template VALIDATE CONSTRAINT consent_template_title_len;
+ ALTER TABLE organisation.consent_template VALIDATE CONSTRAINT consent_template_body_text_len;
+ ALTER TABLE organisation.consent_template VALIDATE CONSTRAINT consent_template_published_has_text;
+
+# clinical 1600-1603 vs e659507, messaging 2000-2002 vs c56f76d: byte-identical (cmp)
