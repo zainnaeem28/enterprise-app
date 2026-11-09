@@ -47,3 +47,11 @@ Binaries come from `tools.lock` (version, URL, sha256; verified by `install-tool
 | Secret scanning / push protection                        | `GET /secret-scanning/alerts` -> 403 "Resource not accessible by integration"                                     | **Unverified** (feature state unknown)                      |
 
 Consequence, stated plainly: until the repository owner moves to a plan that supports rulesets (DEVOPS-PLAN 4.1 Recommendation A1), nothing technical stops a direct push to `main` or a merge with failing or absent checks. `ci.yml` makes the checks run and fail; making them _required_ is an owner action that has not happened. This ticket changes no GitHub setting.
+
+## Admin run (INT04-F22a, `admin-run.mjs`)
+
+Real-stack browser driver for the administrator path: sign-in with the CI WebAuthn fixture (`admin-fixture/`), admin configuration (creates a service and checks it persisted), the audit viewer (entries for the last 24 hours) and the break-the-glass review (records a decision, checks it is stored). It starts nothing: the CI start script runs the API, PostgreSQL and the built staff app (`vite preview`, which proxies `/api`) with the `adminFixtureEnv()` values, seeds an admin principal with an approved enrolment token and one pending break-the-glass grant opened by another principal, then runs `CI=true EHR_ADMIN_CI_FIXTURE=1 node scripts/ci/admin-run.mjs`.
+
+Variables (names only; the token is read from the environment, never printed or written): `ADMIN_RUN_STAFF_URL`, `ADMIN_RUN_HANDLE`, `ADMIN_RUN_ENROLMENT_TOKEN` (required); `ADMIN_RUN_API_URL`, `ADMIN_RUN_RP_ID`, `ADMIN_RUN_OUT` (default `artifacts/admin-run`). The staff origin's host must equal the `EHR_STAFF_HOST` / allowed origin the API was started with. Output: numbered screenshots and `summary.json` (step, ok, error text without secrets) in `$ADMIN_RUN_OUT`; exit code 1 if any step fails or a prerequisite is missing.
+
+Self-test without a stack or browser: `node scripts/ci/admin-run.mjs --selftest` (configuration checks, secret redaction, screenshot naming). The browser steps have **not** been exercised against a live API in this change: that needs the DevOps start script and a seeded database.
