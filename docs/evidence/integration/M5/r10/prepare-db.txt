@@ -1,0 +1,1 @@
+prepare-db rc=0; migrations applied through 2407_identity_bootstrap_admins.sql

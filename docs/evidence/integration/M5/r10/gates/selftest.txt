@@ -1,0 +1,2 @@
+admin-run self-test: configuration, redaction and screenshot naming ok
+admin-stack self-test: environments and key sizes ok
