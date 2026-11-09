@@ -1,0 +1,38 @@
+Scope: 10 of 11 workspace projects
+packages/ui test$ NODE_ENV=test vitest run --reporter=default --reporter=junit --outputFile.junit="${JUNIT_DIR:-.junit}/ui.xml"
+packages/kernel test$ pnpm run build && node --test --test-reporter=spec --test-reporter-destination=stdout --test-reporter=junit --test-reporter-destination="${JUNIT_DIR:-.junit}/kernel.xml" "dist/**/*.test.js"
+packages/kernel test: $ tsc -p tsconfig.json
+packages/ui test: 
+packages/ui test:  RUN  v5.1.0 /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-133-sdlc-ticket-int-03-integrate-m4-clinical-and-front-desk-clinical-messaging-privacy-reporting-staff-and-patient/packages/ui
+packages/ui test: 
+packages/ui test:  ✓ src/tokens.test.ts (38 tests) 14ms
+packages/kernel test: node:internal/test_runner/harness:131
+packages/kernel test:       throw err;
+packages/kernel test:       ^
+packages/kernel test: 
+packages/kernel test: Error: ENOENT: no such file or directory, open '.junit/kernel.xml'
+packages/kernel test: Emitted 'error' event on WriteStream instance at:
+packages/kernel test:     at WriteStream.onerror (node:internal/streams/readable:1054:14)
+packages/kernel test:     at WriteStream.emit (node:events:514:28)
+packages/kernel test:     at emitErrorNT (node:internal/streams/destroy:170:8)
+packages/kernel test:     at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+packages/kernel test:     at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+packages/kernel test:   errno: -2,
+packages/kernel test:   code: 'ENOENT',
+packages/kernel test:   syscall: 'open',
+packages/kernel test:   path: '.junit/kernel.xml'
+packages/kernel test: }
+packages/kernel test: 
+packages/kernel test: Node.js v24.22.2
+packages/kernel test: Failed
+[ELIFECYCLE] Test failed. See above for more details.
+packages/ui test: Failed
+[ELIFECYCLE] Command failed with signal SIGKILL.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in /paperclip/instances/default/
+  │ projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-
+  │ 47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-133-sdlc-ticket-
+  │ int-03-integrate-m4-clinical-and-front-desk-clinical-messaging-privacy-
+  │ reporting-staff-and-patient/packages/kernel
+
