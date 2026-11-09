@@ -1,0 +1,2 @@
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+admin stack: duplicate key value violates unique constraint "principal_realm_subject_uq"

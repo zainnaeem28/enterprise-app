@@ -1,0 +1,41 @@
+diff --git a/scripts/ci/admin-run.mjs b/scripts/ci/admin-run.mjs
+index 5d0fc3d..f8d999b 100644
+--- a/scripts/ci/admin-run.mjs
++++ b/scripts/ci/admin-run.mjs
+@@ -139,6 +139,7 @@ export async function main(fixture) {
+       headers: {
+         'content-type': 'application/json',
+         origin: cfg.origin,
++        'x-client-release': 'r1.000000000000',
+         ...(session === undefined ? {} : { cookie: session.cookie, 'x-csrf-token': session.csrf }),
+       },
+       body: JSON.stringify(body),
+diff --git a/scripts/ci/admin-stack.mjs b/scripts/ci/admin-stack.mjs
+index dbea0c7..e466396 100644
+--- a/scripts/ci/admin-stack.mjs
++++ b/scripts/ci/admin-stack.mjs
+@@ -198,6 +198,7 @@ async function main() {
+       const person = async (subject, realm = 'admin_pool') => {
+         const personId = randomUUID();
+         const principalId = randomUUID();
++        await sa.query('BEGIN');
+         await sa.query(
+           `INSERT INTO identity.person (id, organisation_id, display_name) VALUES ($1,$2,$3)`,
+           [personId, ORG, `CI ${subject}`],
+@@ -206,6 +207,7 @@ async function main() {
+           `INSERT INTO identity.principal (id, organisation_id, person_id, realm, subject, status) VALUES ($1,$2,$3,$4,$5,'active')`,
+           [principalId, ORG, personId, realm, subject],
+         );
++        await sa.query('COMMIT');
+         return { personId, principalId };
+       };
+       const requester = await person('ci-requester');
+@@ -285,7 +287,7 @@ async function main() {
+       'staff-preview',
+       process.execPath,
+       [
+-        createRequire(path('apps/staff/package.json')).resolve('vite/bin/vite.js'),
++        path('apps/staff/node_modules/vite/bin/vite.js'),
+         'preview',
+         '--host',
+         '127.0.0.1',

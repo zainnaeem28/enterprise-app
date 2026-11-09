@@ -1,0 +1,5 @@
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+chromium 156.0.8078.4
+FAIL enrol the admin principal with the fixture key (token spent, second key registered): /auth/enrolment/options answered 403
+run stopped: fatal step failed: enrol the admin principal with the fixture key (token spent, second key registered)
+admin run FAILED

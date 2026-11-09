@@ -1,0 +1,2 @@
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+admin stack: Package subpath './bin/vite.js' is not defined by "exports" in /tmp/int04-r5/apps/staff/node_modules/vite/package.json

@@ -1,0 +1,8 @@
+$ eslint .
+
+/tmp/int04-r5/scripts/ci/admin-stack.mjs
+  163:7  error  The value assigned to 'code' is not used in subsequent statements  no-useless-assignment
+
+✖ 1 problem (1 error, 0 warnings)
+
+[ELIFECYCLE] Command failed with exit code 1.
