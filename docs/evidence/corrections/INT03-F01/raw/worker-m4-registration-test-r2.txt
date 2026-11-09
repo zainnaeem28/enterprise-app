@@ -1,0 +1,20 @@
+✔ every M4 job type is defined in the worker registry and has a handler in the composed table (2.910972ms)
+✔ negative control: a table without the M4 handlers reports them unhandled (0.362811ms)
+✔ the crontab holds the privacy expiry and the operations refresh, each with a handler (0.276448ms)
+✔ without the API ports and infrastructure the M4 handlers refuse (nothing pretends to work) (1.00215ms)
+✔ the worker's clinical.terminology_load equal the API's CLINICAL_CHART_JOBS (0.715883ms)
+✔ the worker's clinical.on_alert_unacknowledged equal the API's FRONTDOOR_JOBS (0.498225ms)
+✔ the worker's clinical.note_sign_reminder equal the API's NOTES_JOBS (0.393158ms)
+✔ the worker's notifications.escalate_alert equal the API's ALERT_JOBS (0.402725ms)
+✔ the worker's messaging.on_correction_requested equal the API's MESSAGING_JOBS (0.428896ms)
+✔ the worker's privacy.assemble_export, privacy.check_legal_holds, privacy.expire_packages equal the API's PRIVACY_JOBS (0.472085ms)
+✔ the worker's reporting.refresh_ops equal the API's REPORTING_JOBS (0.39476ms)
+✔ every job type the API path may publish exists in the worker registry, with the same definition (F01-R1) (217.512017ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 369.346133

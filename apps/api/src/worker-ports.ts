@@ -9,7 +9,7 @@ import {
   TriageService,
 } from './modules/clinical/frontdoor/index.js';
 import { NoteReminderService, runNoteSignReminder } from './modules/clinical/notes/index.js';
-import { AlertService } from './modules/notifications/alerts/index.js';
+import { AlertService, escalateAlert } from './modules/notifications/alerts/index.js';
 import { registerMessagingHandlers, runOnCorrectionRequested } from './modules/messaging/index.js';
 import { assembleExport } from './modules/privacy/index.js';
 import type { PackageWriterPort } from './modules/privacy/index.js';
@@ -121,6 +121,10 @@ export function buildWorkerPorts(deps: WorkerPortsDeps) {
         triage.retargetUnacknowledged(tx, alertId),
       noteSignReminder: (tx: Tx, payload: { encounterId: string; patientId: string }) =>
         runNoteSignReminder(reminder, tx, payload),
+    },
+    alerts: {
+      escalateAlert: (tx: Tx, payload: { alertId: string; level: number }, jobId: string) =>
+        escalateAlert(tx, deps.queue, payload, { jobId, audit }),
     },
     messaging: {
       onCorrectionRequested: (payload: Record<string, unknown>, jobId: string) =>

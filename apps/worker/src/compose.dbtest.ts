@@ -6,9 +6,11 @@ import { execFileSync } from 'node:child_process';
 import { after, before, describe, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { installQueue } from '@ehr/kernel/dist/queue/install.js';
-import { createLogger, JobRegistry, loadConfig, Queue } from '@ehr/kernel';
+import { createLogger, JobRegistry, loadConfig, Queue, syncTaskTypes } from '@ehr/kernel';
+import type { JobType } from '@ehr/kernel';
+import { pathToFileURL } from 'node:url';
 import { composeWorker } from './compose.js';
-import { WORKER_JOBS } from './job-registry.js';
+import { buildWorkerRegistry, WORKER_JOBS } from './job-registry.js';
 import { createPool, startWorker } from './runner.js';
 
 const PG: string = 'pg';
@@ -163,6 +165,84 @@ describe('every registered worker job type has a handler in the composed task ta
     } finally {
       await w.end();
       await worker.stop();
+    }
+  });
+
+  // F01-R2: the API tier publishes through queue_api.enqueue, which accepts only types in queue_api.task_type, filled from the worker.
+  test('every job type the API path may publish is accepted by queue_api.enqueue against a table synced from the worker registry', async () => {
+    const url = pathToFileURL(
+      fileURLToPath(new URL('../../api/dist/src/composition.js', import.meta.url)),
+    ).href;
+    const api = ((await import(url)) as { API_PATH_JOBS: readonly JobType[] }).API_PATH_JOBS;
+    const owner = new pg.Client({ connectionString: urlFor('app_owner') });
+    await owner.connect();
+    const w = new pg.Client({ connectionString: urlFor('app_worker') });
+    await w.connect();
+    const a = new pg.Client({ connectionString: urlFor('app_api') });
+    await a.connect();
+    try {
+      await syncTaskTypes(w, buildWorkerRegistry());
+      const apiRegistry = new JobRegistry();
+      for (const j of api) apiRegistry.defineJob(j);
+      const queue = new Queue(apiRegistry, 'api');
+      // patient.execute_merge is an INT-02 gap (no worker registration), reported separately; every other API-publishable type must be accepted.
+      const publishable = apiRegistry
+        .list()
+        .filter((j) => j.apiEnqueue && j.name !== 'patient.execute_merge');
+      assert.ok(publishable.some((j) => j.name === 'notifications.escalate_alert'));
+      // Control: a type absent from the table is refused by the database.
+      const ghost = new JobRegistry();
+      ghost.defineJob({
+        name: 'f01.ghost',
+        maxAttempts: 1,
+        onMerged: 'none',
+        carriesPatientIds: false,
+        jobScope: 'org',
+        jobClass: 'job',
+      });
+      await a.query('BEGIN');
+      await assert.rejects(
+        new Queue(ghost, 'api').enqueue(
+          {
+            query: (q: string, p?: unknown[]) => a.query(q, p),
+            scope: { audience: 'system', realm: 'api', orgId: ORG },
+          } as never,
+          'f01.ghost',
+          { id: '00000000-0000-7000-8000-000000000001' },
+        ),
+        /not allowed/,
+      );
+      await a.query('ROLLBACK');
+      const refused: string[] = [];
+      for (const j of publishable) {
+        await a.query('BEGIN');
+        try {
+          const payload: Record<string, unknown> = {
+            id: '00000000-0000-7000-8000-000000000001',
+            alertId: '00000000-0000-7000-8000-000000000002',
+            level: 1,
+          };
+          if (api.find((x) => x.name === j.name)?.carriesPatientIds)
+            payload['patientId'] = '00000000-0000-7000-8000-000000000003';
+          await queue.enqueue(
+            {
+              query: (q: string, p?: unknown[]) => a.query(q, p),
+              scope: { audience: 'system', realm: 'api', orgId: ORG },
+            } as never,
+            j.name,
+            payload,
+            { jobKey: `f01:${j.name}` },
+          );
+        } catch (e) {
+          refused.push(`${j.name}: ${(e as Error).message}`);
+        }
+        await a.query('ROLLBACK');
+      }
+      assert.deepEqual(refused, []);
+    } finally {
+      await a.end();
+      await w.end();
+      await owner.end();
     }
   });
 });

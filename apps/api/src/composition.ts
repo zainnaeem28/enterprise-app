@@ -4,7 +4,7 @@
 // Scheduling registers through the flow participant INSTEAD of the booking core's (it covers the core's tables too).
 import { createHmac } from 'node:crypto';
 import { defaultRegistries, JobRegistry, Queue } from '@ehr/kernel';
-import type { KernelDb, Logger, ParticipantRegistries, ScopeSettings } from '@ehr/kernel';
+import type { JobType, KernelDb, Logger, ParticipantRegistries, ScopeSettings } from '@ehr/kernel';
 import type { Type } from '@nestjs/common';
 import { createPatientCliniciansControllers } from './clinicians.controller.js';
 import type { IdentityEnv } from './identity-env.js';
@@ -100,6 +100,23 @@ export interface Composition {
   registry: JobRegistry;
 }
 
+/** Every job type an API request may publish (the API-path queue). The worker's registry must hold each one (worker test). */
+export const API_PATH_JOBS: readonly JobType[] = [
+  ...IDENTITY_JOBS,
+  ...AUDIT_JOBS,
+  ...MERGE_JOBS,
+  ...NOTIFICATIONS_JOBS,
+  ...SCHEDULING_CORE_JOBS,
+  ...SCHEDULING_FLOW_JOBS,
+  ...ALERT_JOBS,
+  ...CLINICAL_CHART_JOBS,
+  ...FRONTDOOR_JOBS,
+  ...NOTES_JOBS,
+  ...MESSAGING_JOBS,
+  ...PRIVACY_JOBS,
+  ...REPORTING_JOBS,
+];
+
 /**
  * The HTTP surface of the API process and its guard. Mounted: identity (sign-in, callback, session), the patient catalogue reads
  * (`GET /api/v1/services|locations`), the patient clinician list (`GET /api/v1/clinicians`), scheduling availability (search and
@@ -118,22 +135,7 @@ export function buildComposition(deps: {
   const env = deps.identity;
   // The API-path queue: every job type an API request may publish, defined once.
   const registry = new JobRegistry();
-  for (const j of [
-    ...IDENTITY_JOBS,
-    ...AUDIT_JOBS,
-    ...MERGE_JOBS,
-    ...NOTIFICATIONS_JOBS,
-    ...SCHEDULING_CORE_JOBS,
-    ...SCHEDULING_FLOW_JOBS,
-    ...ALERT_JOBS,
-    ...CLINICAL_CHART_JOBS,
-    ...FRONTDOOR_JOBS,
-    ...NOTES_JOBS,
-    ...MESSAGING_JOBS,
-    ...PRIVACY_JOBS,
-    ...REPORTING_JOBS,
-  ])
-    registry.defineJob(j);
+  for (const j of API_PATH_JOBS) registry.defineJob(j);
   registerSchedulingFlowHandlers(registry);
   registerFrontdoorHandlers(registry);
   registerMessagingHandlers(registry);

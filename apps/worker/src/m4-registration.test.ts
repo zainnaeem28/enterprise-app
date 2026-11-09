@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
 import { test } from 'node:test';
-import { createLogger, Queue } from '@ehr/kernel';
+import { createLogger, JobRegistry, Queue } from '@ehr/kernel';
 import type { JobType, KernelConfig } from '@ehr/kernel';
 import { composeTasks, PortNotConfiguredError } from './compose.js';
 import { buildWorkerRegistry, WORKER_CRONTAB, WORKER_JOBS } from './job-registry.js';
@@ -15,6 +15,7 @@ const M4 = [
   'clinical.on_alert_unacknowledged',
   'clinical.note_sign_reminder',
   'messaging.on_correction_requested',
+  'notifications.escalate_alert',
   'privacy.assemble_export',
   'privacy.check_legal_holds',
   'privacy.expire_packages',
@@ -86,6 +87,7 @@ const API_JOB_LISTS: [string, string, readonly string[]][] = [
   ['clinical/chart/jobs.js', 'CLINICAL_CHART_JOBS', ['clinical.terminology_load']],
   ['clinical/frontdoor/jobs.js', 'FRONTDOOR_JOBS', ['clinical.on_alert_unacknowledged']],
   ['clinical/notes/jobs.js', 'NOTES_JOBS', ['clinical.note_sign_reminder']],
+  ['notifications/alerts/jobs.js', 'ALERT_JOBS', ['notifications.escalate_alert']],
   ['messaging/jobs.js', 'MESSAGING_JOBS', ['messaging.on_correction_requested']],
   [
     'privacy/jobs.js',
@@ -106,3 +108,26 @@ for (const [file, exportName, names] of API_JOB_LISTS)
     const mine = WORKER_JOBS.filter((j) => names.includes(j.name));
     assert.deepEqual(mine, [...api]);
   });
+
+test('every job type the API path may publish exists in the worker registry, with the same definition (F01-R1)', async () => {
+  const url = pathToFileURL(
+    new URL('../../api/dist/src/composition.js', import.meta.url).pathname,
+  ).href;
+  const api = ((await import(url)) as { API_PATH_JOBS: readonly JobType[] }).API_PATH_JOBS;
+  const reg = new JobRegistry();
+  for (const j of api) reg.defineJob(j);
+  const publishable = new Set(
+    reg
+      .list()
+      .filter((j) => j.apiEnqueue)
+      .map((j) => j.name),
+  );
+  const mine = new Map(WORKER_JOBS.map((j) => [j.name, j]));
+  // Known INT-02 gap, not M4 and not this ticket: patient.execute_merge has no worker registration (reported to Orchestrator).
+  const missing = api
+    .filter((j) => publishable.has(j.name) && !mine.has(j.name))
+    .map((j) => j.name);
+  assert.deepEqual(missing, ['patient.execute_merge']);
+  assert.ok(publishable.has('notifications.escalate_alert'));
+  for (const j of api) if (mine.has(j.name)) assert.deepEqual(mine.get(j.name), j, j.name);
+});

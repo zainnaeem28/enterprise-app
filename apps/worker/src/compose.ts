@@ -9,6 +9,8 @@ import type { KernelConfig, Logger, PoolLike as KernelPoolLike } from '@ehr/kern
 import type { Task } from 'graphile-worker';
 import { createClinicalTasks, createClinicalWorkflowTasks } from './jobs/clinical/index.js';
 import type { ClinicalWorkerPort, TerminologySource } from './jobs/clinical/index.js';
+import { createAlertTasks } from './jobs/notifications/alert-jobs.js';
+import type { AlertWorkerPort } from './jobs/notifications/alert-jobs.js';
 import { createMessagingTasks } from './jobs/messaging/index.js';
 import type { MessagingWorkerPort } from './jobs/messaging/index.js';
 import { closureOf, createPrivacyTasks, documentsLegalHolds } from './jobs/privacy/index.js';
@@ -79,6 +81,7 @@ export interface ApiPorts {
   telehealth: TelehealthWorkerPort;
   clinical: ClinicalWorkerPort;
   messaging: MessagingWorkerPort;
+  alerts: AlertWorkerPort;
   reporting: ReportingWorkerPort;
   /** `privacy.assemble_export`: the API's `assembleExport` with the worker's package writer. */
   assembleExport(
@@ -264,6 +267,11 @@ export function composeTasks(opts: ComposeOptions & { queue: Queue }): TaskTable
       db,
       orgId,
       clinical: opts.api?.clinical ?? refusingPort<ClinicalWorkerPort>('clinical'),
+    }),
+    ...createAlertTasks({
+      db,
+      orgId,
+      alerts: opts.api?.alerts ?? refusingPort<AlertWorkerPort>('alerts'),
     }),
     ...createMessagingTasks({
       messaging: opts.api?.messaging ?? refusingPort<MessagingWorkerPort>('messaging'),

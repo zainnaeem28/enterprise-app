@@ -28,8 +28,15 @@ Base: HEAAA-307 reviewed tip `4c9b638` (INT03-F02), which contains HEAAA-133 evi
 ## Limitations and open points (requests, not done here)
 1. `GET/POST /patients/{id}/immunisations` and `PATCH .../immunisations/{id}` are in `clinical.yaml` but no BE-16..21 module implements them; not mounted. Needs an Architect/Orchestrator ruling (descope or ticket).
 2. Red-flag rule content stays BLOCKED on D-12a: only mechanics are mounted. `retargetUnacknowledged` works from the roster; timing comes from the alert setting.
-3. The `notifications.escalate_alert` handler (alert escalation job) has no worker handler (BE-07 left it outside its paths); the job type is defined in the API registry only. Without it a red flag never escalates. Needs a ticket.
+3. (Superseded by round 2, below.)
 4. The crontab wiring covers M4 entries (privacy expiry, reporting refresh). INT-02 crontabs (`PATIENT_CRONTAB`, `SCHEDULING_FLOW_CRONTAB`) are still unwired; adding them is one line in `WORKER_CRONTAB` but is INT-02 scope.
 5. Real infrastructure is refusing until delivered: terminology source (C-09), package writer/store (C-01), object store, etc. A job picked up before then fails with `PortNotConfiguredError` and retries.
 6. `privacy.assemble_export` coverage depends on INT03-F04 (participant/contributor registration); not verified here.
 7. The privacy and messaging real-database suites were not re-run (module code unchanged).
+
+## Round 2 (review r1: F01-R1, F01-R2)
+- **F01-R1 fixed.** `apps/worker/src/jobs/notifications/alert-jobs.ts` defines `notifications.escalate_alert` (same definition as the API's `ALERT_JOBS`) and a handler that opens a patients-scope (patient alert) or org-scope (no patient) system transaction and calls the API's `escalateAlert` through the new `alerts` port (`worker-ports.ts`). `WORKER_JOBS` includes it. `apps/api/src/composition.ts` now exports `API_PATH_JOBS`.
+- **Test:** worker `m4-registration.test.ts` (12 pass, raw/worker-m4-registration-test-r2.txt): every API-path job type that is API-publishable exists in `WORKER_JOBS` with an identical definition.
+- **F01-R2 proof:** worker `compose.dbtest` (2 pass, raw/worker-compose-dbtest-r2.txt): with `queue_api.task_type` synced from the worker registry, every API-publishable type (incl. all M4 types and `notifications.escalate_alert`) is accepted by `queue_api.enqueue` as `app_api`; control: a type absent from the table is refused ("not allowed").
+- Also re-run: typecheck, lint, build pass; API composition unit 5/5; worker unit 92/92; prettier clean on touched files.
+- **Found, not fixed (INT-02, not M4):** `patient.execute_merge` is published by the API (`MERGE_JOBS`, class `job`) but has no worker registration/handler, so a merge execute enqueue would be refused. The tests pin this as the single known exception. Request to Orchestrator: ticket for the worker registration (relates to INT03-F04).

@@ -10,6 +10,7 @@ import { DOCUMENTS_JOBS } from './jobs/documents/jobs.js';
 import { IDENTITY_JOBS } from './jobs/identity/jobs.js';
 import { INTEGRATION_CORE_JOBS } from './jobs/integration-core/jobs.js';
 import { MESSAGING_JOBS } from './jobs/messaging/jobs.js';
+import { ALERT_JOBS } from './jobs/notifications/alert-jobs.js';
 import { NOTIFICATIONS_JOBS } from './jobs/notifications/jobs.js';
 import { PATIENT_JOBS } from './jobs/patient/jobs.js';
 import { PRIVACY_CRONTAB, PRIVACY_JOBS } from './jobs/privacy/jobs.js';
@@ -22,6 +23,7 @@ export const WORKER_JOBS: readonly JobType[] = [
   ...AUDIT_JOBS,
   ...PATIENT_JOBS,
   ...NOTIFICATIONS_JOBS,
+  ...ALERT_JOBS,
   ...SCHEDULING_FLOW_JOBS,
   ...TELEHEALTH_JOBS,
   ...CALENDAR_SYNC_JOBS,
