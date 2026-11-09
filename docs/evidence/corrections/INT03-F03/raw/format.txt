@@ -1,0 +1,10 @@
+$ prettier --check .
+Checking formatting...
+[warn] apps/staff/src/features/auth/evidence/MANIFEST.md
+[warn] apps/staff/src/features/auth/evidence/playwright-report.json
+[warn] apps/staff/src/features/documents/evidence/playwright-report.json
+[warn] apps/staff/src/features/preconsult/evidence/MANIFEST.md
+[warn] apps/staff/src/features/preconsult/evidence/playwright-report.json
+[warn] Code style issues found in 5 files. Run Prettier with --write to fix.
+[ELIFECYCLE] Command failed with exit code 1.
+exit 1

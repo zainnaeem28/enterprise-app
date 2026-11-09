@@ -81,6 +81,7 @@ over an in-memory package store.
 
 - **D1. Merge write guard.** As BE-10's D1: `patient.guard_open_patient` cannot be attached from this range, so `1901` carries `privacy.guard_open_patient`,
   the same refusal and the same `FOR KEY SHARE` lock, and moves it to `patient_scope_owner`. Needs the inventory entries in `catalog-lists.requested.patch`.
+- `privacy.guard_open_patient` (own copy of the merge guard) is superseded by the HEAAA-310 ruling: migrations 2200–2202 attach `patient.guard_open_patient` and drop the copy.
 - **D2. Extra columns:** `request.verified_at`, `decided_at`, `legal_hold_documents`, `legal_hold_checked_at`; `export_package.failure_code` (a code only); the
   organisation, creation and version columns every table carries. A request has at most one package that is not `failed` (partial unique index), so a failed
   assembly can be started again (`decide: retry`).

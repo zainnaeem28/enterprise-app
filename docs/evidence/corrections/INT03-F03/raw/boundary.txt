@@ -1,0 +1,11 @@
+$ node eslint/test-boundary-fixture.mjs
+failing fixture messages: [
+  {
+    "file": "boundary/apps/api/src/modules/audit/violation.ts",
+    "ruleId": "boundaries/module-boundaries",
+    "message": "Import of module \"identity\" from module \"audit\" is not an allowed edge (BD-02: downwards only)."
+  }
+]
+passing fixture messages: []
+PASS: upward import rejected, downward import accepted
+exit 0

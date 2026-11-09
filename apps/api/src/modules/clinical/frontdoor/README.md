@@ -49,6 +49,10 @@ route here. Migrations `1700`-`1702`. ARCHITECTURE 22.11, 25.5, 29.3; PRD RA-R1-
    have (RA-R1-30 needs it): the Architect should confirm it.
 6. `missingConsentTemplates` is carried in `errors[]` paths; the standard body does not serialise the extra member yet.
 
+## Departures from the design
+
+`clinical.frontdoor_guard_open_patient` (own copy of the merge guard) is superseded by the HEAAA-310 ruling: migrations 2200–2202 attach `patient.guard_open_patient` and drop the copy.
+
 ## Run the tests
 
 ```

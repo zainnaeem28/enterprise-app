@@ -1,0 +1,58 @@
+9.2 queued job naming a merged patient ID :: a type that declares nothing is treated as fail
+9.2 queued job naming a merged patient ID :: fail type: the merged ID dead-letters the job with code patient.merged; an active ID passes
+9.2 queued job naming a merged patient ID :: resolve type: the merged ID is replaced by its final survivor; an active ID is used as it is
+AN-1 behavioural row-visibility matrix: one row per table with RLS, run as every audience and realm :: the catalogue has the expected shape and every patient table holds a row for patient A and for patient B (no vacuous cell)
+K states are immutable for every role, including a data_repair job (38.2 item 2) :: an update of a K row is refused by the database for the application roles and for a superuser alike
+POST /admin/patient-labels (TC-AZ-08 step 3, O-5) :: a malformed body is 422 and rate limiting applies per principal (labelLimitPerHour = 3 in this harness): the 4th call is 429
+POST /admin/patient-labels (TC-AZ-08 step 3, O-5) :: a referencing record that does not exist: 404 and the database function is never reached (no label audit row)
+POST /admin/patient-labels (TC-AZ-08 step 3, O-5) :: a referencing record that exists but belongs to another patient: 404 (O5-1) and no label audit row
+POST /admin/patient-labels (TC-AZ-08 step 3, O-5) :: a visible referencing record of the same patient: 200 with the label and exactly one audit row naming the reference (O5-2, O5-5)
+POST /admin/patient-labels (TC-AZ-08 step 3, O-5) :: without the patient_label key or outside the admin realm: refused, no label audit row
+a merge against writers that hold the patients (25.2, 38.2 item 1; TC-MG-09 on patient rows) :: a lock upgrade (a writer that takes KEY SHARE first, then asks for NO KEY UPDATE while the merge waits) is a deadlock the database breaks: one side retries whole, nothing partial
+a merge against writers that hold the patients (25.2, 38.2 item 1; TC-MG-09 on patient rows) :: a writer that inserts a row WITHOUT locking first is still serialised by the guard's KEY SHARE: no orphan on the merged ID
+a merge against writers that hold the patients (25.2, 38.2 item 1; TC-MG-09 on patient rows) :: merge first: the merge holds the roots, a later writer waits and is then refused for the merged ID (patient.merged) but may write the survivor
+a merge against writers that hold the patients (25.2, 38.2 item 1; TC-MG-09 on patient rows) :: two merges of different pairs at the same moment both complete; two merges that share a patient never deadlock
+a merge against writers that hold the patients (25.2, 38.2 item 1; TC-MG-09 on patient rows) :: writer first: a transaction writing rows for BOTH patients commits first, the merge waits for it, then counts and re-points both rows
+appointment notices (INT02-R11-N1) :: merge between publish and handler run: confirm, cancel and reschedule resolve to the survivor
+clinical chart (BE-16) on PostgreSQL 17.merge participant and export part :: item 11: problems, allergies and medications of every status move to the survivor; vitals are kept; duplicates both stay; counts add up
+clinical chart (BE-16) on PostgreSQL 17.row-level security and roles :: every clinical table forces RLS and names its roles; no application role owns one
+clinical front door (BE-18), flows on PostgreSQL 17.merge participant and export part :: item 11: questionnaire (open), triage (kept), referral and follow-up rows follow the survivor; counts add up; the export part lists them
+clinical front door (BE-18), flows on PostgreSQL 17.referrals: referrer, target, status; the accept re-checks and creates the care relationship :: TODO (BE-08/INT-02): the real accept path without any stand-in
+clinical notes (BE-17) on PostgreSQL 17.merge participant and export part (38.2 item 11) :: item 11: R encounters and notes follow the survivor, K rows stay, counts add up; a later addendum carries the survivor ID; the export lists them
+documents (BE-10) on PostgreSQL 17 :: 38.2 item 11: a document scanning at merge time is re-pointed and served after the retried scan
+documents (BE-10) on PostgreSQL 17 :: merge participant: documents, versions and pending requests move; holds and decided requests are kept; counts add up
+merge participant (22.16, 38.2 items 1 and 11) :: 38.2 item 1, confirm first: a confirm that holds the patient root commits first, the merge waits for it, then counts and re-points the confirmed reservation
+merge participant (22.16, 38.2 items 1 and 11) :: 38.2 item 1, merge first: a confirm that arrives while the merge holds the roots waits, then is refused whole; nothing is written for the merged ID
+merge participant (22.16, 38.2 items 1 and 11) :: 38.2 item 1, repeated: confirms racing a merge, 10 rounds, with no ordering forced: every round ends serialised and consistent
+merge participant (22.16, 38.2 items 1 and 11) :: an expired hold of a merged patient is still just a stale hold: the survivor's confirm of it is 409 hold_expired
+merge participant (22.16, 38.2 items 1 and 11) :: item 11: R reservations (held, confirmed) move to the survivor, the K one stays; found = re-pointed + resolved + kept; no appointment is cancelled
+merge participant (22.16, 38.2 items 1 and 11) :: the participant is registered through the registry with its rules, and the privacy export part returns the survivor's reservations
+merge participant and export (22.16, 38.2 item 11; HEAAA-88 registry) :: the count test: sessions, participants and tokens in R are re-pointed, K rows stay, found = re-pointed + resolved + kept, no R row is left
+merge participant and export part for the flow tables (22.16, 38.2 item 11; TC-BK-22) :: TC-BK-22: a waitlisted patient is merged into another; the slot frees; the offer job resolves to the survivor and offers once
+merge participant and export part for the flow tables (22.16, 38.2 item 11; TC-BK-22) :: counts add up for every table; R rows move, K rows stay; the conflict rule keeps the earlier entry; an open offer resolves on the survivor and is never duplicated
+messaging (BE-19) on PostgreSQL 17 :: TC-MSG-05 (merge participant, 38.2 item 11): open threads and tasks follow the survivor, closed/done/messages stay, counts add up, no R row is left
+organisation module on PostgreSQL 17 (BE-03).directory views and the directory_ro role (22.5.1, 21.2, 38.2 item 17) :: the repository catalog check passes, or fails only on the allow-lists/M-3 clause db/tools owns (catalog-lists.requested.patch)
+privacy (BE-20) on PostgreSQL 17 :: TC-PR-02: a patient requests an export; compliance sees it, verifies identity and approves; it is assembled and delivered through the portal
+privacy (BE-20) on PostgreSQL 17 :: TC-PR-04: a patient cannot see or download another patient's export; the database says the same
+privacy (BE-20) on PostgreSQL 17 :: a merge while the package is assembling restarts the assembly for the survivor and the merged IDs
+privacy (BE-20) on PostgreSQL 17 :: a ready package expires: the download is refused after its time, and the daily job removes the object
+privacy (BE-20) on PostgreSQL 17 :: access requests are assembled the same way as exports
+privacy (BE-20) on PostgreSQL 17 :: chunks: each contributor runs in its own short transaction, and progress is committed between them
+privacy (BE-20) on PostgreSQL 17 :: coverage: a module that appears later (a table with a patient_id) fails until its contributor is registered, then its part is in the package
+privacy (BE-20) on PostgreSQL 17 :: coverage: a module that holds patient data and has no contributor FAILS the job before anything is read
+privacy (BE-20) on PostgreSQL 17 :: failure handling: a transient error is retried, a permanent one (or the last attempt) marks the package failed, a store outage leaves nothing behind
+privacy (BE-20) on PostgreSQL 17 :: merge: R requests and packages move to the survivor, K ones stay, and found = re-pointed + kept
+privacy (BE-20) on PostgreSQL 17 :: rules no route can bypass: the tables refuse a hand-written change
+reporting (BE-21) on PostgreSQL 17.the operations feed (GET /api/v1/admin/reports/ops) :: the feed carries no patient data: no patient ID of any alert or grant appears
+request, approval and permissions (25.4, BQ-3) :: a request or an approval naming a merged patient is refused with patient.already_merged; an unknown request is 404
+the execute job and the conflict rules (22.16, 38.2 items 2 and 11; TC-MG-02, TC-MG-05, TC-MG-11) :: INT-02 fix B: the composition root registers every module; all participants run, report counts for all their tables, and the alert rows are re-pointed
+the execute job and the conflict rules (22.16, 38.2 items 2 and 11; TC-MG-02, TC-MG-05, TC-MG-11) :: TC-MG-04: the job runs with the exact patient IDs, not the requester or approver scope: patients at different locations, an approver who sees neither
+the execute job and the conflict rules (22.16, 38.2 items 2 and 11; TC-MG-02, TC-MG-05, TC-MG-11) :: TC-MG-06: a failure in one participant rolls everything back: no partial merge, the request is failed, the operations alert is raised
+the execute job and the conflict rules (22.16, 38.2 items 2 and 11; TC-MG-02, TC-MG-05, TC-MG-11) :: a participant whose counts do not add up fails the merge (patient.merge_count_mismatch) and nothing is written
+the execute job and the conflict rules (22.16, 38.2 items 2 and 11; TC-MG-02, TC-MG-05, TC-MG-11) :: one merge with a conflict in every rule: survivor rows win, deleted rows are in merge_residue, counts add up, K rows stay and no R row is left
+the time bound (TC-MG-14, 25.4: 60 s, then a complete rollback) :: a chart ten times the sizing assumption merges inside the bound with counts that add up (timing recorded)
+the time bound (TC-MG-14, 25.4: 60 s, then a complete rollback) :: a merge that exceeds the transaction bound rolls back completely and is reported (the session-ending timeout is retried whole, then recorded as failed)
+writes after the merge (TC-MG-07) and chains (TC-MG-12, TC-MG-13) :: TC-MG-07: a stale staff session and a stale portal session writing to the merged ID get 409 patient.merged and nothing is written
+writes after the merge (TC-MG-07) and chains (TC-MG-12, TC-MG-13) :: TC-MG-12: two merges that share a patient, approved at the same moment, do not deadlock and leave one consistent outcome
+writes after the merge (TC-MG-07) and chains (TC-MG-12, TC-MG-13) :: TC-MG-13: chained merges A -> B -> C: C's location sees A's rows, a new location sees the merged history, ending the relationship removes the merged-ID rows there
+writes after the merge (TC-MG-07) and chains (TC-MG-12, TC-MG-13) :: another open request that names the merged patient on either side is cancelled with patient.already_merged by complete_merge (22.16)
