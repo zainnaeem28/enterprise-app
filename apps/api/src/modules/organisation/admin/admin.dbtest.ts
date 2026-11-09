@@ -799,30 +799,37 @@ describe('settings and operating states: schema-validated, audited, reference da
 
 describe('consent and questionnaire templates: drafts, publish, red-flag sign-off', () => {
   test('drafts get the next version; publish is elevated, once, and a published version is immutable', async () => {
-    const doc = '00000000-0000-7000-8000-00000000d0c1';
+    const text = {
+      title: 'Telehealth consent',
+      bodyText: 'I agree to a video visit.\nSecond line.',
+    };
     const v1 = await api(k, adm, 'POST', '/consent-templates', {
       key: 'telehealth',
       language: 'en',
-      bodyDocumentId: doc,
+      ...text,
     });
     assert.equal(v1.status, 200, v1.body);
     assert.equal(j(v1)['version'], 1);
     assert.equal(j(v1)['status'], 'draft');
+    assert.equal(j(v1)['title'], text.title);
+    assert.equal(j(v1)['bodyText'], text.bodyText);
+    assert.equal('bodyDocumentId' in j(v1), false);
     const v2 = await api(k, adm, 'POST', '/consent-templates', {
       key: 'telehealth',
       language: 'en',
-      bodyDocumentId: doc,
+      ...text,
     });
     assert.equal(j(v2)['version'], 2);
     const es = await api(k, adm, 'POST', '/consent-templates', {
       key: 'telehealth',
       language: 'es',
-      bodyDocumentId: doc,
+      ...text,
     });
     assert.equal(j(es)['version'], 1, 'versions count per language');
     const pub = await api(k, adm, 'POST', `/consent-templates/${String(j(v1)['id'])}/publish`, {});
     assert.equal(pub.status, 200, pub.body);
     assert.equal(j(pub)['status'], 'published');
+    assert.equal(j(pub)['bodyText'], text.bodyText);
     assert.equal(
       (await api(k, adm, 'POST', `/consent-templates/${String(j(v1)['id'])}/publish`, {})).status,
       412,
@@ -868,11 +875,61 @@ describe('consent and questionnaire templates: drafts, publish, red-flag sign-of
         api(k, adm, 'POST', '/consent-templates', {
           key: 'concurrent',
           language: 'en',
-          bodyDocumentId: doc,
+          ...text,
         }),
       ),
     );
     assert.deepEqual(many.map((r) => j(r)['version']).sort(), [1, 2, 3, 4]);
+  });
+
+  test('consent text: required, closed body, code-point limits, legacy textless draft cannot publish', async () => {
+    const post = (b: Record<string, unknown>) =>
+      api(k, adm, 'POST', '/consent-templates', { key: 'texty', language: 'en', ...b });
+    const ok = { title: 'T', bodyText: 'B' };
+    const noTitle = await post({ bodyText: 'B' });
+    assert.equal(noTitle.status, 400);
+    assert.deepEqual(errors(noTitle), [{ path: '/title', code: 'kernel.required' }]);
+    const noBody = await post({ title: 'T' });
+    assert.deepEqual(errors(noBody), [{ path: '/bodyText', code: 'kernel.required' }]);
+    const doc = await post({ ...ok, bodyDocumentId: '00000000-0000-7000-8000-00000000d0c1' });
+    assert.equal(doc.status, 400);
+    assert.deepEqual(errors(doc), [{ path: '/bodyDocumentId', code: 'kernel.unknown_field' }]);
+    for (const bad of [
+      { title: 'x'.repeat(201) },
+      { title: '   ' },
+      { title: 5 },
+      { bodyText: 'y'.repeat(20_001) },
+      { bodyText: ' \n ' },
+    ]) {
+      const r = await post({ ...ok, ...bad });
+      assert.equal(r.status, 400, JSON.stringify(bad).slice(0, 40));
+      assert.equal(errors(r)[0]!.code, 'kernel.invalid_format');
+    }
+    const astral = await post({ ...ok, title: '\u{1F600}'.repeat(200) });
+    assert.equal(astral.status, 200, astral.body);
+    const max = await post({ ...ok, bodyText: 'y'.repeat(20_000) });
+    assert.equal(max.status, 200, max.body);
+    const trimmed = await post({ ...ok, title: '  padded  ' });
+    assert.equal(j(trimmed)['title'], 'padded');
+    // A draft from before migration 2003 has no text: publish refuses it and names the fields; the row stays a draft.
+    const legacy = '00000000-0000-7000-8000-00000000dd01';
+    await k.q(
+      `INSERT INTO organisation.consent_template (id, organisation_id, key, version, language, status)
+       VALUES ($1, $2, 'legacy', 1, 'en', 'draft')`,
+      [legacy, ORG],
+    );
+    const refused = await api(k, adm, 'POST', `/consent-templates/${legacy}/publish`, {});
+    assert.equal(refused.status, 400, refused.body);
+    assert.deepEqual(errors(refused), [
+      { path: '/title', code: 'kernel.required' },
+      { path: '/bodyText', code: 'kernel.required' },
+    ]);
+    assert.equal(
+      (await k.q(`SELECT status FROM organisation.consent_template WHERE id = $1`, [legacy]))[0]![
+        'status'
+      ],
+      'draft',
+    );
   });
 
   test('a questionnaire with red-flag rules needs the safety reviewer note to publish and records it', async () => {
