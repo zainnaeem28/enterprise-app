@@ -31,6 +31,15 @@ describe('host variables (INT02-R7-N1)', () => {
   test('bare host names are accepted', () => {
     assert.equal(loadIdentityEnv(base({})).patientHost, 'my.example.test');
   });
+  for (const patient of ['staff.example.test', 'STAFF.example.test'])
+    test(`equal staff and patient hosts are refused (${patient})`, () => {
+      assert.throws(
+        () => loadIdentityEnv(base({ EHR_PATIENT_HOST: patient })),
+        (e: unknown) =>
+          e instanceof ConfigError &&
+          e.problems.includes('EHR_STAFF_HOST and EHR_PATIENT_HOST must differ'),
+      );
+    });
   for (const name of ['EHR_STAFF_HOST', 'EHR_PATIENT_HOST'])
     test(`${name} with a port is refused by name (hostOf strips the port, so it could never match)`, () => {
       assert.throws(

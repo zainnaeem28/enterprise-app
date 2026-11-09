@@ -318,8 +318,8 @@ export function buildComposition(deps: {
     receiver: { receive: () => Promise.resolve({ status: 404 }) },
   });
 
-  // Documents (BE-10): the patient-portal routes and the staff-only routes. The staff variants of the five shared paths (e.g.
-  // GET /patients/{id}/documents) are not built (documents README O-1), so the staff chart's list stays refused.
+  // Documents (BE-10): the patient-portal routes (patient host) and the staff routes (staff host), including the staff variants of the
+  // four shared paths (INT03-F21-O1).
   const documents = new DocumentsService({
     audit,
     organisation,
@@ -379,6 +379,7 @@ export function buildComposition(deps: {
         db: deps.db,
         documents,
         hosts: { staff: env.staffHost, patient: env.patientHost },
+        banner: chart.banner,
       }),
       ...integrationsHost,
     ],

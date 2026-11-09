@@ -13,17 +13,20 @@ import { pathToFileURL } from 'node:url';
 import { DOCUMENTS_JOBS } from './jobs.js';
 import { DocumentNotFoundError, InvalidTransitionError, NotAvailableError } from './errors.js';
 import { documentsExportContributor } from './merge.js';
+import { createDocumentsControllers } from './controller.js';
 import { fileNameAllowed } from './service.js';
 import {
   A1,
   B1,
   JPEG_WITH_EXIF,
   ORG,
+  PATIENT_HOST,
   PDF,
   PNG_WITH_TEXT,
   call,
   keyOfUrl,
   repoRoot,
+  STAFF_HOST,
   setupDocuments,
 } from './testkit.js';
 import type { DocKit, SeededSession } from './testkit.js';
@@ -322,6 +325,11 @@ describe('documents (BE-10) on PostgreSQL 17', () => {
       (x) => x['id'] === documentId,
     );
     assert.equal(item?.['status'], 'clean');
+    assert.equal(
+      (list.json()['patientBanner'] as Record<string, unknown> | undefined)?.['patientId'],
+      patientId,
+      'the staff list carries the patient banner (28.2)',
+    );
     assert.ok(item !== undefined && 'onLegalHold' in item && 'retentionUntil' in item);
     const after = await t.k.q(
       `SELECT count(*)::int AS n FROM audit.event WHERE action = 'view' AND resource_type = 'documents.document' AND patient_id = $1`,
@@ -336,8 +344,21 @@ describe('documents (BE-10) on PostgreSQL 17', () => {
     assert.equal((await t.scall(session, 'GET', listPath)).status, 403);
     assert.equal((await t.scall(session, 'POST', up, body)).status, 403);
     assert.equal((await t.scall(session, 'POST', dl)).status, 403);
+    // Via X-Forwarded-Host from a trusted (loopback) peer: routing uses req.hostname, so the request lands on the other host's
+    // declaration and the realm check refuses it.
+    assert.equal(
+      (await t.scall(t.desk, 'GET', listPath, undefined, { 'x-forwarded-host': PATIENT_HOST }))
+        .status,
+      403,
+    );
+    assert.equal(
+      (await t.pcall(session, 'GET', listPath, undefined, { 'x-forwarded-host': STAFF_HOST }))
+        .status,
+      403,
+    );
     const mine = await t.pcall(session, 'GET', listPath);
     assert.equal(mine.status, 200);
+    assert.equal('patientBanner' in mine.json(), false, 'no banner on the patient host');
     assert.equal(
       (mine.json()['items'] as Record<string, unknown>[]).every((x) => !('onLegalHold' in x)),
       true,
@@ -347,6 +368,22 @@ describe('documents (BE-10) on PostgreSQL 17', () => {
       cookie: t.desk.cookie,
     });
     assert.equal(stray.status, 404);
+  });
+
+  test('INT03-F21-O1: the controllers refuse empty or equal hosts (also differing in letter case)', () => {
+    const banner = { bannerFor: () => Promise.resolve(undefined) };
+    const mk = (staff: string, patient: string): unknown =>
+      createDocumentsControllers({
+        db: {} as never,
+        documents: {} as never,
+        banner,
+        hosts: { staff, patient },
+      });
+    assert.throws(() => mk('', PATIENT_HOST));
+    assert.throws(() => mk(STAFF_HOST, ''));
+    assert.throws(() => mk('a.example.test', 'a.example.test'));
+    assert.throws(() => mk('A.example.test', 'a.example.test'));
+    assert.doesNotThrow(() => mk(STAFF_HOST, PATIENT_HOST));
   });
 
   test('an upload request is idempotent: the same key is the same document and one row', async () => {

@@ -83,6 +83,8 @@ export function loadIdentityEnv(env: Readonly<Record<string, string | undefined>
   if (orgId !== '' && !UUID.test(orgId)) problems.push('EHR_ORGANISATION_ID must be a UUID');
   const staffHost = host('EHR_STAFF_HOST');
   const patientHost = host('EHR_PATIENT_HOST');
+  if (staffHost !== '' && staffHost.toLowerCase() === patientHost.toLowerCase())
+    problems.push('EHR_STAFF_HOST and EHR_PATIENT_HOST must differ');
   const origins = (env['EHR_ALLOWED_ORIGINS'] ?? '')
     .split(',')
     .map((s) => s.trim())

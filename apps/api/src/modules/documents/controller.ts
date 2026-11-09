@@ -24,9 +24,14 @@ import { ApiError, problemBody } from '../../platform/errors.js';
 import type { Req, Res } from '../../platform/http.js';
 import { Route } from '../../platform/route.js';
 import { requireAuthContext } from '../identity/index.js';
-import type { ResourceResolver } from '../identity/index.js';
+import type { AuthContext, ResourceResolver } from '../identity/index.js';
 import { ifMatchVersion } from '../patient/index.js';
-import { DocumentsValidationError, LegalHoldError, RetentionError } from './errors.js';
+import {
+  DocumentNotFoundError,
+  DocumentsValidationError,
+  LegalHoldError,
+  RetentionError,
+} from './errors.js';
 import { isUuid } from './ids.js';
 import type { DocumentsService } from './service.js';
 import type {
@@ -42,6 +47,15 @@ export interface DocumentsControllerDeps {
   documents: DocumentsService;
   /** The configured hosts (EHR_STAFF_HOST, EHR_PATIENT_HOST); both are required. */
   hosts: { staff: string; patient: string };
+  /** The patient banner of the staff list (28.2, BR-34): the same service the chart and front-door routes use. */
+  banner: {
+    bannerFor(
+      tx: Tx,
+      ctx: AuthContext,
+      meta: RequestMeta,
+      patientId: string,
+    ): Promise<object | undefined>;
+  };
 }
 
 const metaOf = (req: Req): RequestMeta => ({
@@ -116,7 +130,11 @@ export function documentsResolvers(): Record<string, ResourceResolver> {
 }
 
 export function createDocumentsControllers(d: DocumentsControllerDeps): Type<unknown>[] {
-  if (!d.hosts?.staff || !d.hosts.patient || d.hosts.staff === d.hosts.patient)
+  if (
+    !d.hosts?.staff ||
+    !d.hosts.patient ||
+    d.hosts.staff.toLowerCase() === d.hosts.patient.toLowerCase()
+  )
     throw new Error('documents controllers need two distinct, non-empty staff and patient hosts');
   const run = <T>(req: Req, fn: (tx: Tx) => Promise<T>): Promise<T> =>
     d.db.withScope(requireAuthContext(req).scope, fn);
@@ -309,8 +327,18 @@ export function createDocumentsControllers(d: DocumentsControllerDeps): Type<unk
       @ReqParam() req: Req,
       @ResParam() res: Res,
     ): Promise<void> {
-      const items = await run(req, (tx) => d.documents.listAudited(tx, metaOf(req), patientId));
-      send(res, 200, { items: items.map((x) => docBody(x, true)), nextCursor: null });
+      const ctx = requireAuthContext(req);
+      const { items, patientBanner } = await d.db.withScope(ctx.scope, async (tx) => {
+        const rows = await d.documents.listAudited(tx, metaOf(req), patientId);
+        const b = await d.banner.bannerFor(tx, ctx, metaOf(req), patientId);
+        if (b === undefined) throw new DocumentNotFoundError();
+        return { items: rows, patientBanner: b };
+      });
+      send(res, 200, {
+        items: items.map((x) => docBody(x, true)),
+        nextCursor: null,
+        patientBanner,
+      });
     }
 
     @Post('documents/:documentId/download-url')

@@ -251,6 +251,23 @@ export async function setupDocuments(name: string): Promise<DocKit> {
           db: lazyDb,
           documents: lazySvc,
           hosts: { staff: STAFF_HOST, patient: PATIENT_HOST },
+          // Visibility by row-level security, as the real BannerService (patient.get under the caller's scope); the banner content is not under test here.
+          banner: {
+            bannerFor: async (tx, _ctx, _meta, patientId) => {
+              const r = await tx.query('SELECT 1 FROM patient.patient WHERE id = $1::uuid', [
+                patientId,
+              ]);
+              return r.rows.length === 0
+                ? undefined
+                : {
+                    patientId,
+                    displayName: 'Banner',
+                    dateOfBirth: '1980-05-17',
+                    mrn: 'MRN',
+                    allergies: null,
+                  };
+            },
+          },
         }),
       ],
       beforeStart: ({ identity }) => {
