@@ -506,7 +506,8 @@ describe('Templates (AD-08)', () => {
             key: 'telehealth',
             version: 2,
             language: 'en',
-            bodyDocumentId: ID(71),
+            title: 'Telehealth consent',
+            bodyText: 'Line one\n<b>not bold</b>',
             status: 'draft',
             rowVersion: 1,
           },
@@ -525,6 +526,30 @@ describe('Templates (AD-08)', () => {
         ]);
       return problem(404, 'kernel.not_found');
     };
+
+  it('lists consent title and body as plain text, and creates with title and bodyText', async () => {
+    const { ui, seen } = portal(
+      '/admin/templates',
+      routes((x) => (x.method === 'POST' ? json(201, { id: ID(73), status: 'draft' }) : undefined)),
+    );
+    render(ui);
+    await screen.findByText('Telehealth consent');
+    expect(screen.getByText(/<b>not bold<\/b>/)).toBeInTheDocument();
+    await click(new RegExp(`^${s.add}: ${s.consent}`));
+    type('Template key', 'photo');
+    type('Language', 'en');
+    type(s.consentTitle, 'Photo consent');
+    type(s.consentBody, 'First line\nSecond line');
+    await click(s.save);
+    const w = writes(seen)[0];
+    expect(w?.path).toBe('/api/v1/admin/consent-templates');
+    expect(w?.body).toEqual({
+      key: 'photo',
+      language: 'en',
+      title: 'Photo consent',
+      bodyText: 'First line\nSecond line',
+    });
+  });
 
   it('publishes a consent draft with an empty body', async () => {
     const { ui, seen } = portal(

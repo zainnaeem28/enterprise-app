@@ -92,8 +92,10 @@ export const configStrings = {
   reviewerNoteShort: 'Enter the reviewer’s note, at least 10 characters.',
   schemaLabel: 'Questionnaire definition (JSON)',
   schemaInvalid: 'Enter a valid JSON object.',
-  bodyDocument: 'Consent text (document reference)',
-  bodyDocumentHint: 'The reference of the uploaded consent document.',
+  consentTitle: 'Consent title',
+  consentBody: 'Consent text',
+  consentBodyHint:
+    'Shown to the patient exactly as written, as plain text. Review it here before publishing.',
   messageTemplatesNote:
     'Message templates (e-mail and text) are managed with notifications and are not part of this screen yet.',
 

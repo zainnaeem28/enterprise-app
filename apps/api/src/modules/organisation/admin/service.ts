@@ -3,6 +3,7 @@
 // under the caller's own scope, so the table policies are the second line. Each accepted change writes its audit row (action
 // `config_change`, who from the scope, `change: {before, after}`) in the same transaction: a failed audit write rolls the change
 // back. A refusal that must be audited is written with `recordDenied` after the business transaction has ended.
+import { createHash } from 'node:crypto';
 import type { KernelDb, ScopeSettings, Tx } from '@ehr/kernel';
 import { ApiError } from '../../../platform/errors.js';
 import type { AuditService } from '../../audit/index.js';
@@ -30,7 +31,29 @@ import {
   parsePage,
   parseValue,
 } from './fields.js';
-import type { FieldDef } from './fields.js';
+import type { FieldDef, FieldError } from './fields.js';
+
+/** The plain-text fields of a consent template (ARCHITECTURE A-6): lengths count Unicode code points, as the DB CHECKs do. */
+function consentText(
+  o: Record<string, unknown>,
+  name: string,
+  max: number,
+  trim: boolean,
+  errors: FieldError[],
+): string {
+  const raw = o[name];
+  if (raw === undefined) {
+    errors.push({ path: `/${name}`, code: 'kernel.required' });
+    return '';
+  }
+  const t = typeof raw === 'string' ? (trim ? raw.trim() : raw) : '';
+  const len = [...t].length;
+  if (typeof raw !== 'string' || len < 1 || len > max || t.trim() === '' || t.includes('\u0000')) {
+    errors.push({ path: `/${name}`, code: 'kernel.invalid_format' });
+    return '';
+  }
+  return t;
+}
 
 type Row = Record<string, unknown>;
 
@@ -965,7 +988,7 @@ export class OrganisationAdminService {
 
   // --- consent and questionnaire templates (drafts, then publish) ----------------------------------------------------------------
 
-  private static readonly CONSENT_SELECT = `id, key, version, language, body_document_id AS "bodyDocumentId", status, row_version::text AS "rowVersion"`;
+  private static readonly CONSENT_SELECT = `id, key, version, language, title, body_text AS "bodyText", status, row_version::text AS "rowVersion"`;
   private static readonly QUESTIONNAIRE_SELECT = `id, key, version, schema, status, approved_by_note AS "approvedByNote", row_version::text AS "rowVersion"`;
 
   private templateList(
@@ -1015,22 +1038,27 @@ export class OrganisationAdminService {
 
   /** POST: a new DRAFT version (the next number for the key and language). It has no effect until it is published. */
   async createConsentTemplate(scope: ScopeSettings, body: unknown, meta: Meta): Promise<One> {
+    const o = asObject(body);
     const v = parseFields(
       [
         f('key', 'key', 'text', { req: true, max: 100 }),
         f('language', 'language', 'text', { req: true, min: 2, max: 35 }),
-        f('bodyDocumentId', 'body_document_id', 'uuid', { req: true }),
       ],
-      asObject(body),
+      o,
       'create',
+      ['title', 'bodyText'],
     );
+    const textErrors: FieldError[] = [];
+    const title = consentText(o, 'title', 200, true, textErrors);
+    const bodyText = consentText(o, 'bodyText', 20_000, false, textErrors);
+    if (textErrors.length > 0) throw invalid(textErrors);
     if (!KEY100.test(v['key'] as string)) throw invalidField('key');
     return this.write(scope, async (tx) => {
       await lockKey(tx, `consent_template:${String(v['key'])}`);
       const id = uuidv7();
       const r = await tx.query(
-        `INSERT INTO organisation.consent_template (id, organisation_id, key, version, language, body_document_id, status, created_by)
-         SELECT $1, $2, $3, coalesce(max(version), 0) + 1, $4, $5, 'draft', $6
+        `INSERT INTO organisation.consent_template (id, organisation_id, key, version, language, title, body_text, status, created_by)
+         SELECT $1, $2, $3, coalesce(max(version), 0) + 1, $4, $5, $6, 'draft', $7
            FROM organisation.consent_template WHERE key = $3 AND language = $4
          RETURNING ${OrganisationAdminService.CONSENT_SELECT}`,
         [
@@ -1038,14 +1066,18 @@ export class OrganisationAdminService {
           tx.scope.orgId,
           v['key'],
           v['language'],
-          v['bodyDocumentId'],
+          title,
+          bodyText,
           tx.scope.principalId ?? null,
         ],
       );
       const row = norm(r.rows[0] as Row);
       await this.changed(tx, meta, 'organisation.consent_template', id, null, {
         before: null,
-        after: pick(row, ['key', 'version', 'language', 'bodyDocumentId', 'status']),
+        after: {
+          ...pick(row, ['key', 'version', 'language', 'status', 'title']),
+          bodyTextSha256: createHash('sha256').update(bodyText).digest('hex'),
+        },
       });
       return { body: row, etag: etag(row['rowVersion'] as number) };
     });
@@ -1112,6 +1144,11 @@ export class OrganisationAdminService {
       const before = r.rows[0] as Row | undefined;
       if (before === undefined) throw notFound();
       if (before['status'] !== 'draft') throw new ApiError(412, 'kernel.precondition_failed');
+      // A draft from before migration 2003 may have no text; the CHECK stays the backstop, the API names the fields.
+      const missing: FieldError[] = (['title', 'bodyText'] as const)
+        .filter((k) => typeof before[k] !== 'string' || (before[k] as string).trim() === '')
+        .map((k) => ({ path: `/${k}`, code: 'kernel.required' }));
+      if (missing.length > 0) throw invalid(missing);
       await tx.query(
         `UPDATE organisation.consent_template SET status = 'published' WHERE id = $1`,
         [id],
