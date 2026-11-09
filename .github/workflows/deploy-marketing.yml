@@ -87,7 +87,9 @@ jobs:
           gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" --name "release-artifacts-$RUN_ID" --dir "$WORK/current"
 
       - name: Assume gh-deploy-marketing-<env> (OIDC; denied unless the marketing-<env> record is applied and unexpired)
-        run: scripts/deploy/aws-login.sh "${{ vars.DEPLOY_ROLE_ARN }}" "gh-deploy-$TARGET" 7200
+        run: scripts/deploy/aws-login.sh "${DEPLOY_ROLE_ARN}" "gh-deploy-$TARGET" 7200
+        env:
+          DEPLOY_ROLE_ARN: ${{ vars.DEPLOY_ROLE_ARN }}
 
       - name: Read the approved-release record and verify
         id: verify
@@ -110,20 +112,27 @@ jobs:
         run: |
           corepack enable
           ../scripts/deploy/without-cloud.sh pnpm install --frozen-lockfile
-          ../scripts/deploy/without-cloud.sh pnpm --filter "${{ vars.DEPLOY_SITE_FILTER }}" build
+          ../scripts/deploy/without-cloud.sh pnpm --filter "${DEPLOY_SITE_FILTER}" build
+        env:
+          DEPLOY_SITE_FILTER: ${{ vars.DEPLOY_SITE_FILTER }}
 
       - name: Publish to the marketing bucket and invalidate the cache
         run: |
-          node scripts/deploy/publish-marketing.mjs --dir "site-src/${{ vars.DEPLOY_SITE_DIR }}" --bucket "${{ vars.DEPLOY_SITE_BUCKET }}" \
-            --distribution "${{ vars.DEPLOY_SITE_DISTRIBUTION }}"
+          node scripts/deploy/publish-marketing.mjs --dir "site-src/${DEPLOY_SITE_DIR}" --bucket "${DEPLOY_SITE_BUCKET}" \
+            --distribution "${DEPLOY_SITE_DISTRIBUTION}"
+        env:
+          DEPLOY_SITE_DIR: ${{ vars.DEPLOY_SITE_DIR }}
+          DEPLOY_SITE_BUCKET: ${{ vars.DEPLOY_SITE_BUCKET }}
+          DEPLOY_SITE_DISTRIBUTION: ${{ vars.DEPLOY_SITE_DISTRIBUTION }}
 
       - name: Evidence
         if: ${{ !cancelled() }}
         env:
           MANIFEST_HASH: ${{ inputs.manifest_hash }}
+          STEP_VERIFY_GIT_SHA: ${{ steps.verify.outputs.git_sha }}
         run: |
           {
             echo "### deploy-marketing ($TARGET)"
             echo "- manifest hash (dispatch input, unverified text): $MANIFEST_HASH"
-            echo "- git: ${{ steps.verify.outputs.git_sha }}"
+            echo "- git: ${STEP_VERIFY_GIT_SHA}"
           } >> "$GITHUB_STEP_SUMMARY"

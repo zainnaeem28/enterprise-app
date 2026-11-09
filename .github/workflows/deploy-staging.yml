@@ -88,7 +88,9 @@ jobs:
           gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" --name "release-artifacts-$RUN_ID" --dir "$WORK/current"
 
       - name: Assume gh-deploy-staging (OIDC; denied by AWS unless the staging-release record is applied and unexpired)
-        run: scripts/deploy/aws-login.sh "${{ vars.DEPLOY_ROLE_ARN }}" gh-deploy-staging 7200
+        run: scripts/deploy/aws-login.sh "${DEPLOY_ROLE_ARN}" gh-deploy-staging 7200
+        env:
+          DEPLOY_ROLE_ARN: ${{ vars.DEPLOY_ROLE_ARN }}
 
       - name: Read the staging-release record and verify manifest = dispatch hash = record
         id: verify
@@ -103,8 +105,12 @@ jobs:
         id: taskdefs
         run: |
           node scripts/deploy/resolve-taskdefs.mjs --manifest "$WORK/current/release-manifest.json" \
-            --family "api=${{ vars.DEPLOY_API_FAMILY }}" --family "worker=${{ vars.DEPLOY_WORKER_FAMILY }}" \
-            --migration-arn "${{ vars.DEPLOY_MIGRATION_TASKDEF_ARN }}" --migration-image api
+            --family "api=${DEPLOY_API_FAMILY}" --family "worker=${DEPLOY_WORKER_FAMILY}" \
+            --migration-arn "${DEPLOY_MIGRATION_TASKDEF_ARN}" --migration-image api
+        env:
+          DEPLOY_API_FAMILY: ${{ vars.DEPLOY_API_FAMILY }}
+          DEPLOY_WORKER_FAMILY: ${{ vars.DEPLOY_WORKER_FAMILY }}
+          DEPLOY_MIGRATION_TASKDEF_ARN: ${{ vars.DEPLOY_MIGRATION_TASKDEF_ARN }}
 
       - name: min_client_release from what is deployed to staging (DPR-33)
         id: floor
@@ -117,43 +123,73 @@ jobs:
 
       - name: Run the migration task (idempotent runner, pinned definition)
         run: |
-          node scripts/deploy/run-migration.mjs --cluster "$CLUSTER" --taskdef "${{ steps.taskdefs.outputs.taskdef_migration }}" \
-            --subnets "${{ vars.DEPLOY_SUBNETS }}" --security-groups "${{ vars.DEPLOY_SECURITY_GROUPS }}" --timeout-minutes 30
+          node scripts/deploy/run-migration.mjs --cluster "$CLUSTER" --taskdef "${STEP_TASKDEFS_TASKDEF_MIGRATION}" \
+            --subnets "${DEPLOY_SUBNETS}" --security-groups "${DEPLOY_SECURITY_GROUPS}" --timeout-minutes 30
+        env:
+          STEP_TASKDEFS_TASKDEF_MIGRATION: ${{ steps.taskdefs.outputs.taskdef_migration }}
+          DEPLOY_SUBNETS: ${{ vars.DEPLOY_SUBNETS }}
+          DEPLOY_SECURITY_GROUPS: ${{ vars.DEPLOY_SECURITY_GROUPS }}
 
       - name: Set min_client_release
-        run: node scripts/deploy/set-release-config.mjs --param "${{ vars.DEPLOY_MIN_CLIENT_PARAM }}" --value "${{ steps.floor.outputs.min_client_release }}"
+        run: node scripts/deploy/set-release-config.mjs --param "${DEPLOY_MIN_CLIENT_PARAM}" --value "${STEP_FLOOR_MIN_CLIENT_RELEASE}"
+        env:
+          DEPLOY_MIN_CLIENT_PARAM: ${{ vars.DEPLOY_MIN_CLIENT_PARAM }}
+          STEP_FLOOR_MIN_CLIENT_RELEASE: ${{ steps.floor.outputs.min_client_release }}
 
       - name: Roll out worker, then api
         run: |
           node scripts/deploy/rollout.mjs --cluster "$CLUSTER" \
-            --service "worker=${{ vars.DEPLOY_WORKER_SERVICE }}:${{ steps.taskdefs.outputs.taskdef_worker }}" \
-            --service "api=${{ vars.DEPLOY_API_SERVICE }}:${{ steps.taskdefs.outputs.taskdef_api }}"
+            --service "worker=${DEPLOY_WORKER_SERVICE}:${STEP_TASKDEFS_TASKDEF_WORKER}" \
+            --service "api=${DEPLOY_API_SERVICE}:${STEP_TASKDEFS_TASKDEF_API}"
+        env:
+          DEPLOY_WORKER_SERVICE: ${{ vars.DEPLOY_WORKER_SERVICE }}
+          STEP_TASKDEFS_TASKDEF_WORKER: ${{ steps.taskdefs.outputs.taskdef_worker }}
+          DEPLOY_API_SERVICE: ${{ vars.DEPLOY_API_SERVICE }}
+          STEP_TASKDEFS_TASKDEF_API: ${{ steps.taskdefs.outputs.taskdef_api }}
 
       - name: Switch portal entry documents
         run: |
-          node scripts/deploy/portal-switch.mjs --bucket "${{ vars.DEPLOY_PORTAL_BUCKET }}" --sha "${{ steps.verify.outputs.git_sha }}" \
-            --portal "${{ vars.DEPLOY_PORTAL_NAME }}" --distribution "${{ vars.DEPLOY_PORTAL_DISTRIBUTION }}"
+          node scripts/deploy/portal-switch.mjs --bucket "${DEPLOY_PORTAL_BUCKET}" --sha "${STEP_VERIFY_GIT_SHA}" \
+            --portal "${DEPLOY_PORTAL_NAME}" --distribution "${DEPLOY_PORTAL_DISTRIBUTION}"
+        env:
+          DEPLOY_PORTAL_BUCKET: ${{ vars.DEPLOY_PORTAL_BUCKET }}
+          STEP_VERIFY_GIT_SHA: ${{ steps.verify.outputs.git_sha }}
+          DEPLOY_PORTAL_NAME: ${{ vars.DEPLOY_PORTAL_NAME }}
+          DEPLOY_PORTAL_DISTRIBUTION: ${{ vars.DEPLOY_PORTAL_DISTRIBUTION }}
 
       - name: Smoke checks
         run: |
-          node scripts/deploy/smoke.mjs --api-url "${{ vars.DEPLOY_API_URL }}" --portal-url "${{ vars.DEPLOY_PORTAL_URL }}" \
-            --release-number "${{ steps.verify.outputs.release_number }}"
+          node scripts/deploy/smoke.mjs --api-url "${DEPLOY_API_URL}" --portal-url "${DEPLOY_PORTAL_URL}" \
+            --release-number "${STEP_VERIFY_RELEASE_NUMBER}"
+        env:
+          DEPLOY_API_URL: ${{ vars.DEPLOY_API_URL }}
+          DEPLOY_PORTAL_URL: ${{ vars.DEPLOY_PORTAL_URL }}
+          STEP_VERIFY_RELEASE_NUMBER: ${{ steps.verify.outputs.release_number }}
 
       - name: Record what is deployed (only after smoke passed)
         run: |
-          node scripts/deploy/set-release-config.mjs --param "/deployed/min_client_release/${{ steps.verify.outputs.release_number }}" --value "${{ steps.floor.outputs.min_client_release }}"
-          node scripts/deploy/set-release-config.mjs --param /deployed/release_number --value "${{ steps.verify.outputs.release_number }}"
+          node scripts/deploy/set-release-config.mjs --param "/deployed/min_client_release/${STEP_VERIFY_RELEASE_NUMBER}" --value "${STEP_FLOOR_MIN_CLIENT_RELEASE}"
+          node scripts/deploy/set-release-config.mjs --param /deployed/release_number --value "${STEP_VERIFY_RELEASE_NUMBER}"
+        env:
+          STEP_VERIFY_RELEASE_NUMBER: ${{ steps.verify.outputs.release_number }}
+          STEP_FLOOR_MIN_CLIENT_RELEASE: ${{ steps.floor.outputs.min_client_release }}
 
       - name: Evidence
         if: ${{ !cancelled() }}
         env:
           MANIFEST_HASH: ${{ inputs.manifest_hash }}
+          STEP_VERIFY_RELEASE_NUMBER: ${{ steps.verify.outputs.release_number }}
+          STEP_VERIFY_GIT_SHA: ${{ steps.verify.outputs.git_sha }}
+          STEP_TASKDEFS_TASKDEF_API: ${{ steps.taskdefs.outputs.taskdef_api }}
+          STEP_TASKDEFS_TASKDEF_WORKER: ${{ steps.taskdefs.outputs.taskdef_worker }}
+          STEP_TASKDEFS_TASKDEF_MIGRATION: ${{ steps.taskdefs.outputs.taskdef_migration }}
+          STEP_FLOOR_MIN_CLIENT_RELEASE: ${{ steps.floor.outputs.min_client_release }}
         run: |
           {
             echo "### deploy-staging"
             echo "- manifest hash (dispatch input, unverified text): $MANIFEST_HASH"
-            echo "- release_number: ${{ steps.verify.outputs.release_number }} (git ${{ steps.verify.outputs.git_sha }})"
-            echo "- task definitions (pinned): api ${{ steps.taskdefs.outputs.taskdef_api }}, worker ${{ steps.taskdefs.outputs.taskdef_worker }}, migration ${{ steps.taskdefs.outputs.taskdef_migration }}"
-            echo "- min_client_release: ${{ steps.floor.outputs.min_client_release }}"
+            echo "- release_number: ${STEP_VERIFY_RELEASE_NUMBER} (git ${STEP_VERIFY_GIT_SHA})"
+            echo "- task definitions (pinned): api ${STEP_TASKDEFS_TASKDEF_API}, worker ${STEP_TASKDEFS_TASKDEF_WORKER}, migration ${STEP_TASKDEFS_TASKDEF_MIGRATION}"
+            echo "- min_client_release: ${STEP_FLOOR_MIN_CLIENT_RELEASE}"
             echo "- e2e and ZAP baseline run from the nightly/staging suites (DO-07/DO-08), not from this file"
           } >> "$GITHUB_STEP_SUMMARY"
