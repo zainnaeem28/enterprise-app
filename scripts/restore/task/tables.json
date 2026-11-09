@@ -1,0 +1,11 @@
+{
+  "_comment": "PROPOSAL for the Architect to agree (DEVOPS-PLAN 10.3 step 4; unverified until rehearsed). immutable = append-only: count and hash are compared exactly up to the baseline watermark. mutable = bounded drift. Identifiers only, never values.",
+  "sample_modulus": 100,
+  "tables": [
+    { "name": "audit.event", "class": "immutable", "pk": "event_id", "ts": "occurred_at" },
+    { "name": "audit.anchor", "class": "immutable", "pk": "id", "ts": "to_ts" },
+    { "name": "migration.schema_migration", "class": "immutable", "pk": "version", "ts": null },
+    { "name": "kernel.setting", "class": "mutable", "pk": null, "ts": null, "max_drift_ratio": 0.05 },
+    { "name": "kernel.reference_data_version", "class": "mutable", "pk": null, "ts": null, "max_drift_ratio": 0.05 }
+  ]
+}

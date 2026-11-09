@@ -1,0 +1,181 @@
+# Monthly restore test (DO-08, HEAAA-111; DEVOPS-PLAN 10.3, 7.2, 7.4, 15.3).
+#
+# AUTHORED DISABLED (C-01). It touches production PHI, so nothing here runs until, in this order: the restore-test boundary
+# (infra/modules/dr/restore-boundary) is applied by a human through the approvals root, a human applies the `restore-test`
+# approved record (standing operations authority from OPERATIONS_RECEIPT, one year at most), a human sets the repository
+# variable RESTORE_TEST_ENABLED=true, and the environment `restore-test` holds the variables listed in scripts/restore/README.md.
+# The file holds no secret and no account identifier.
+#
+# What runs where: this workflow makes API calls only (restore request, RunTask, describe, delete). The checks run in a one-off
+# task INSIDE the restore VPC; the task emits counts, hashes, pass/fail and timings, validated against a closed schema
+# (scripts/restore/lib/result.mjs). The runner never connects to the restored database and the role cannot read its data.
+name: restore-test
+
+on:
+  schedule:
+    - cron: '17 5 2 * *' # monthly, 02:17 UTC on the 2nd; an off-peak minute, not on the hour
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'which restore: latest automated backup, a random point in the last 7 days, or both (the monthly default)'
+        required: false
+        default: both
+        type: choice
+        options: [both, latest, pitr]
+
+permissions: {}
+
+# One restore test at a time, never cancelled midway: a half-finished run leaves a PHI copy that only teardown removes.
+concurrency:
+  group: restore-test
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CI: 'true'
+  AWS_REGION: ${{ vars.RESTORE_AWS_REGION }}
+  AWS_DEFAULT_REGION: ${{ vars.RESTORE_AWS_REGION }}
+
+jobs:
+  enabled:
+    name: enabled and on main
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - name: Refuse unless deliberately enabled, from main
+        env:
+          ENABLED: ${{ vars.RESTORE_TEST_ENABLED }}
+          REF: ${{ github.ref }}
+        run: |
+          [ "$REF" = "refs/heads/main" ] || { echo "::error::the restore test runs from refs/heads/main only (got $REF)"; exit 1; }
+          [ "$ENABLED" = "true" ] || { echo "::error::restore-test is authored but not enabled (repository variable RESTORE_TEST_ENABLED is not 'true'). A person enables it after the boundary and the restore-test record are applied (C-01)."; exit 1; }
+      - name: Which restores
+        id: matrix
+        env:
+          MODE: ${{ inputs.mode }}
+        run: |
+          case "${MODE:-both}" in
+            both) echo 'matrix={"mode":["latest","pitr"]}' >>"$GITHUB_OUTPUT" ;;
+            latest) echo 'matrix={"mode":["latest"]}' >>"$GITHUB_OUTPUT" ;;
+            pitr) echo 'matrix={"mode":["pitr"]}' >>"$GITHUB_OUTPUT" ;;
+            *) echo "::error::unknown mode"; exit 1 ;;
+          esac
+
+  restore:
+    name: restore ${{ matrix.mode }}, check in the restore VPC, tear down
+    needs: [enabled]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 240
+    environment: restore-test
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      max-parallel: 1 # the pinned task finds exactly one restore target by tag
+      matrix: ${{ fromJSON(needs.enabled.outputs.matrix) }}
+    env:
+      WORK: ${{ github.workspace }}/restore-out
+      ROLE_ARN: ${{ vars.RESTORE_ROLE_ARN }}
+      MODE: ${{ matrix.mode }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Assume gh-restore-test (OIDC; denied by AWS unless the restore-test record is applied and unexpired)
+        run: scripts/deploy/aws-login.sh "$ROLE_ARN" gh-restore-test 7200
+
+      - name: Read and check the restore-test record (15.3)
+        run: |
+          mkdir -p "$WORK"
+          aws ssm get-parameter --name /approved/restore-test --with-decryption --query Parameter.Value --output text > "$WORK/record.json"
+          node scripts/restore/verify-record.mjs --record "$WORK/record.json"
+
+      - name: Remove restore targets older than 24 h (a leftover PHI copy is a finding)
+        run: node scripts/restore/teardown.mjs --stale
+
+      - name: Restore into the pinned subnet group, security group and key
+        id: start
+        env:
+          SOURCE_DB: ${{ vars.RESTORE_SOURCE_DB }}
+          SUBNET_GROUP: ${{ vars.RESTORE_SUBNET_GROUP }}
+          TARGET_SG: ${{ vars.RESTORE_TARGET_SG }}
+          KMS_KEY: ${{ vars.RESTORE_KMS_KEY_ARN }}
+          INSTANCE_CLASS: ${{ vars.RESTORE_INSTANCE_CLASS }}
+          RUN_ID: ${{ github.run_id }}
+          ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          node scripts/restore/start-restore.mjs --source "$SOURCE_DB" --mode "$MODE" --subnet-group "$SUBNET_GROUP" \
+            --security-group "$TARGET_SG" --kms-key "$KMS_KEY" --instance-class "$INSTANCE_CLASS" --run-id "$RUN_ID" --attempt "$ATTEMPT"
+
+      - name: Run the pinned check task inside the restore VPC (no overrides)
+        id: checks
+        env:
+          CLUSTER: ${{ vars.RESTORE_CLUSTER }}
+          TASK_DEFINITION_ARN: ${{ vars.RESTORE_TASK_DEFINITION_ARN }}
+          SUBNETS: ${{ vars.RESTORE_SUBNETS }}
+          TASK_SG: ${{ vars.RESTORE_TASK_SG }}
+        run: |
+          node scripts/restore/run-checks.mjs --cluster "$CLUSTER" --task-definition "$TASK_DEFINITION_ARN" \
+            --subnets "$SUBNETS" --security-group "$TASK_SG"
+
+      - name: Fetch, validate and summarise the PHI-free result
+        id: result
+        env:
+          BUCKET: ${{ vars.RESTORE_RESULT_BUCKET }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          node scripts/restore/fetch-result.mjs --bucket "$BUCKET" --run-id "$RUN_ID" --out "$WORK"
+
+      - name: Destroy the restore target and its backups (always)
+        if: ${{ always() && steps.start.outputs.target != '' }}
+        env:
+          TARGET: ${{ steps.start.outputs.target }}
+        run: node scripts/restore/teardown.mjs --target "$TARGET"
+
+      - name: Job summary (validated fields only)
+        if: ${{ always() && steps.result.outcome != 'skipped' && hashFiles('restore-out/summary.md') != '' }}
+        run: cat "$WORK/summary.md" >>"$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ always() && hashFiles('restore-out/summary.md') != '' }}
+        with:
+          name: restore-test-${{ matrix.mode }}-${{ github.run_id }}
+          path: |
+            restore-out/result.json
+            restore-out/summary.md
+          if-no-files-found: error
+          retention-days: 400
+
+  history:
+    name: two consecutive failures stop releases
+    needs: [restore]
+    if: ${{ always() && github.event_name == 'schedule' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Evaluate the last scheduled runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run list --repo "$GITHUB_REPOSITORY" --workflow restore-test.yml --status completed --limit 6 --json conclusion,createdAt,event \
+            | node scripts/restore/consecutive-failures.mjs
