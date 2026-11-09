@@ -32,6 +32,9 @@ variables {
     migration_passrole_arns       = ["arn:aws:iam::111111111111:role/migrate-task", "arn:aws:iam::111111111111:role/migrate-exec"]
     recover_passrole_arns         = ["arn:aws:iam::111111111111:role/api-task"]
     restore_task_definition_arn   = "arn:aws:ecs:us-east-2:111111111111:task-definition/restore:3"
+    signing_key_arn               = "arn:aws:kms:us-east-2:111111111111:key/22222222-2222-2222-2222-222222222222"
+    restore_kms_key_arn           = "arn:aws:kms:us-east-2:111111111111:key/33333333-3333-3333-3333-333333333333"
+    secrets_kms_key_arn           = "arn:aws:kms:us-east-2:111111111111:key/44444444-4444-4444-4444-444444444444"
     restore_passrole_arns         = ["arn:aws:iam::111111111111:role/restore-task"]
     workload_passrole             = [{ arn = "arn:aws:iam::111111111111:role/api-task", service = "ecs-tasks.amazonaws.com" }]
   }
@@ -259,5 +262,20 @@ run "tf_roles_read_their_record_through_ssm_and_cannot_edit_protecting_controls"
       anytrue([for st in jsondecode(output.role_policies[n]).Statement : st.Sid == "NoEditOfEvidenceBuckets" && contains(st.Resource, var.state_bucket_arn) && contains(st.Action, "s3:PutBucket*")])
     )])
     error_message = "tf roles must be denied edits of the record key, the state key and the state bucket policy"
+  }
+}
+
+run "infra_roles_cannot_edit_signing_restore_secrets_keys_or_secret_policies" {
+  command = plan
+
+  assert {
+    condition = alltrue([for n in ["gh-tf-staging", "gh-tf-production", "gh-rehearsal-staging"] : (
+      anytrue([for st in jsondecode(output.role_policies[n]).Statement : st.Sid == "NoEditOfRecordAndEvidenceKeys" && st.Effect == "Deny" &&
+        alltrue([for k in [var.refs.signing_key_arn, var.refs.restore_kms_key_arn, var.refs.secrets_kms_key_arn] : contains(st.Resource, k)]) &&
+        alltrue([for a in ["kms:PutKeyPolicy", "kms:CreateGrant", "kms:Revoke*", "kms:Disable*", "kms:ScheduleKeyDeletion"] : contains(st.Action, a)])]) &&
+      anytrue([for st in jsondecode(output.role_policies[n]).Statement : st.Sid == "NoEditOfSecretResourcePolicies" && st.Effect == "Deny" && contains(st.Action, "secretsmanager:PutResourcePolicy") && contains(st.Action, "secretsmanager:DeleteResourcePolicy")]) &&
+      !anytrue([for st in jsondecode(output.role_policies[n]).Statement : st.Effect == "Allow" && (contains(try(tolist(st.Action), [st.Action]), "secretsmanager:PutResourcePolicy") || contains(try(tolist(st.Action), [st.Action]), "secretsmanager:DeleteResourcePolicy"))])
+    )])
+    error_message = "infra roles must be denied key-policy edits on signing, restore and secrets keys and may not put or delete secret resource policies"
   }
 }

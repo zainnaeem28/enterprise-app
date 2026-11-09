@@ -128,6 +128,7 @@ variable "refs" {
     recover_passrole_arns          = optional(list(string), [])
     ecr_repository_arns            = optional(list(string), [])
     signing_key_arn                = optional(string)
+    secrets_kms_key_arn            = optional(string)
     release_manifest_bucket_arn    = optional(string)
     audit_bucket_arn               = optional(string)
     marketing_bucket_arns          = optional(map(string), {})
