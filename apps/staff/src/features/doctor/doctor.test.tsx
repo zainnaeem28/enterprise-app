@@ -193,6 +193,26 @@ describe('note editor, sign dialog, addenda (DR-03, DR-05, DR-06)', () => {
     expect(screen.queryByText(/Something went wrong/)).toBeNull();
   });
 
+  it('lists the drafts with the signed-in principal even when the schedule item carries no clinicianId (INT03-F20-R3)', async () => {
+    const user = userEvent.setup();
+    // The schedule item has no clinicianId, so the parsed visit holds '' (types.ts).
+    open({ clinicianId: '' });
+    const { seen } = mount(DOCTOR, '/patients', (r) => {
+      if (r.path.endsWith('/chart-summary')) return json(200, summary());
+      if (r.path === '/api/v1/encounters')
+        return json(409, { code: 'clinical.invalid_transition', requestId: 'r' });
+      if (r.path === `/api/v1/clinicians/${ME}/notes`)
+        return json(200, { items: [noteListItem()], nextCursor: null });
+      if (r.method === 'GET' && r.path === `/api/v1/notes/${NOTE}`)
+        return json(200, note(), { ETag: 'W/"1"' });
+      return undefined;
+    });
+    await user.click(await screen.findByRole('button', { name: 'Start consultation' }));
+    await user.click(await screen.findByRole('button', { name: 'Open this draft' }));
+    expect(seen.some((s) => s.path === '/api/v1/clinicians//notes')).toBe(false);
+    expect(screen.queryByText(/Something went wrong/)).toBeNull();
+  });
+
   it('two drafts for the same patient are never opened automatically (INT03-F20-R1)', async () => {
     const user = userEvent.setup();
     open({});

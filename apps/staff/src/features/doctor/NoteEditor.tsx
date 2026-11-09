@@ -40,7 +40,7 @@ export function NoteEditor({
   /** A note this session already holds (there is no route that reads a note back). */
   resume?: Note;
 }) {
-  const { api, can, online, openReauth } = useDoctor();
+  const { api, can, online, openReauth, principalId } = useDoctor();
   const [encounter, setEncounter] = useState<Encounter | null>(null);
   const [note, setNote] = useState<Note | null>(resume ?? null);
   const [sections, setSections] = useState<Record<string, string>>(resume?.sections ?? {});
@@ -92,7 +92,7 @@ export function NoteEditor({
    */
   async function findDrafts(): Promise<boolean> {
     if (visit === undefined) return false;
-    const list = await api.myNotes(visit.clinicianId);
+    const list = await api.myNotes(principalId);
     if (!list.ok) return false;
     const drafts = list.data
       .filter((n) => n.status === 'draft' && n.patientId === visit.patientId)
