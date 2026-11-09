@@ -18,8 +18,14 @@ function request(url, headers, readBody) {
         if (readBody && size <= MAX_BODY) chunks.push(c);
       });
       res.on('end', () => {
-        const days = cert && cert.valid_to ? (new Date(cert.valid_to).getTime() - Date.now()) / 86400000 : NaN;
-        resolve({ status: res.statusCode, ms: Date.now() - started, certDays: days, body: readBody ? Buffer.concat(chunks).toString('utf8') : '' });
+        const days =
+          cert && cert.valid_to ? (new Date(cert.valid_to).getTime() - Date.now()) / 86400000 : NaN;
+        resolve({
+          status: res.statusCode,
+          ms: Date.now() - started,
+          certDays: days,
+          body: readBody ? Buffer.concat(chunks).toString('utf8') : '',
+        });
       });
     });
     req.on('timeout', () => req.destroy(new Error('timeout')));
@@ -32,7 +38,8 @@ async function releaseHeader(releaseUrl) {
   const r = await request(releaseUrl, { 'Cache-Control': 'no-cache' }, true);
   if (r.status !== 200) throw new Error(`release.json status ${r.status}`);
   const j = JSON.parse(r.body);
-  if (!Number.isInteger(j.release_number) || typeof j.git_sha12 !== 'string') throw new Error('release.json shape');
+  if (!Number.isInteger(j.release_number) || typeof j.git_sha12 !== 'string')
+    throw new Error('release.json shape');
   return { 'X-Client-Release': `r${j.release_number}.${j.git_sha12}` };
 }
 
@@ -44,7 +51,8 @@ const handler = async () => {
   const r = await request(url, headers, false);
   log.info(`kind=${kind} status=${r.status} ms=${r.ms} certDays=${Math.floor(r.certDays)}`);
   if (r.status !== 200) throw new Error(`status ${r.status}`);
-  if (!(r.certDays >= minDays)) throw new Error(`certificate expires in ${Math.floor(r.certDays)} days`);
+  if (!(r.certDays >= minDays))
+    throw new Error(`certificate expires in ${Math.floor(r.certDays)} days`);
 };
 
 exports.handler = async () => {

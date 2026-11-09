@@ -31,18 +31,34 @@ export function scrubSpan<S extends SpanLike>(span: S): S {
   };
   if (span.events)
     props['events'] = {
-      value: span.events.map((e) => ({ ...e, name: scrubSpanName(e.name), attributes: scrubAttributes(e.attributes).attributes })),
+      value: span.events.map((e) => ({
+        ...e,
+        name: scrubSpanName(e.name),
+        attributes: scrubAttributes(e.attributes).attributes,
+      })),
       enumerable: true,
     };
   if (span.links)
-    props['links'] = { value: span.links.map((l) => ({ ...l, attributes: scrubAttributes(l.attributes).attributes })), enumerable: true };
-  if (span.resource) props['resource'] = { value: { ...span.resource, attributes: scrubAttributes(span.resource.attributes).attributes }, enumerable: true };
+    props['links'] = {
+      value: span.links.map((l) => ({
+        ...l,
+        attributes: scrubAttributes(l.attributes).attributes,
+      })),
+      enumerable: true,
+    };
+  if (span.resource)
+    props['resource'] = {
+      value: { ...span.resource, attributes: scrubAttributes(span.resource.attributes).attributes },
+      enumerable: true,
+    };
   // Exception messages and stacks are free text from application code: never exported. Only status code and exception.type remain.
   if (span.status) props['status'] = { value: { code: span.status.code }, enumerable: true };
   return Object.create(span, props) as S;
 }
 
-export function wrapSpanExporter<S extends SpanLike>(inner: SpanExporterLike<S>): SpanExporterLike<S> {
+export function wrapSpanExporter<S extends SpanLike>(
+  inner: SpanExporterLike<S>,
+): SpanExporterLike<S> {
   const wrapped: SpanExporterLike<S> = {
     export: (spans, cb) => inner.export(spans.map(scrubSpan), cb),
     shutdown: () => inner.shutdown(),

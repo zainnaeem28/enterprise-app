@@ -19,20 +19,27 @@ export class TelemetryConfigError extends Error {
 
 const LOOPBACK = /^http:\/\/(127\.0\.0\.1|localhost|\[::1\]):[0-9]{2,5}\/?$/;
 
-export function loadTelemetryConfig(env: Readonly<Record<string, string | undefined>>): TelemetryConfig {
+export function loadTelemetryConfig(
+  env: Readonly<Record<string, string | undefined>>,
+): TelemetryConfig {
   const problems: string[] = [];
   const mode = env['EHR_TELEMETRY'] ?? 'off';
   if (mode !== 'on' && mode !== 'off') problems.push('EHR_TELEMETRY must be on or off');
   const endpoint = env['OTEL_EXPORTER_OTLP_ENDPOINT'] ?? 'http://127.0.0.1:4318';
-  if (!LOOPBACK.test(endpoint)) problems.push('OTEL_EXPORTER_OTLP_ENDPOINT must be a loopback http endpoint with a port');
+  if (!LOOPBACK.test(endpoint))
+    problems.push('OTEL_EXPORTER_OTLP_ENDPOINT must be a loopback http endpoint with a port');
   const protocol = env['OTEL_EXPORTER_OTLP_PROTOCOL'] ?? 'http/protobuf';
-  if (protocol !== 'http/protobuf' && protocol !== 'http/json') problems.push('OTEL_EXPORTER_OTLP_PROTOCOL must be http/protobuf or http/json');
+  if (protocol !== 'http/protobuf' && protocol !== 'http/json')
+    problems.push('OTEL_EXPORTER_OTLP_PROTOCOL must be http/protobuf or http/json');
   const rn = env['EHR_RELEASE_NUMBER'];
-  if (rn !== undefined && !/^[1-9][0-9]{0,9}$/.test(rn)) problems.push('EHR_RELEASE_NUMBER must be a positive integer');
+  if (rn !== undefined && !/^[1-9][0-9]{0,9}$/.test(rn))
+    problems.push('EHR_RELEASE_NUMBER must be a positive integer');
   const serviceName = env['OTEL_SERVICE_NAME'] ?? 'ehr-api';
-  if (!/^[a-z][a-z0-9-]{1,40}$/.test(serviceName)) problems.push('OTEL_SERVICE_NAME must be a lower-case slug');
+  if (!/^[a-z][a-z0-9-]{1,40}$/.test(serviceName))
+    problems.push('OTEL_SERVICE_NAME must be a lower-case slug');
   const environment = env['EHR_ENVIRONMENT'] ?? 'unknown';
-  if (!/^[a-z][a-z0-9-]{1,30}$/.test(environment)) problems.push('EHR_ENVIRONMENT must be a lower-case slug');
+  if (!/^[a-z][a-z0-9-]{1,30}$/.test(environment))
+    problems.push('EHR_ENVIRONMENT must be a lower-case slug');
   if (problems.length > 0) throw new TelemetryConfigError(problems);
   return {
     enabled: mode === 'on',

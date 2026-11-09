@@ -5,16 +5,16 @@ Nothing here has been applied. `tofu plan` runs offline (`examples/plan`, fake c
 
 ## What it creates
 
-| Area | Resources | File |
-| --- | --- | --- |
-| Routes | SNS topics `page`, `ticket`, `security` (KMS-encrypted), policy, email subscriptions | `sns.tf` |
-| Catalogue and SLOs | Alert catalogue (owner, impact, first step, runbook for every alert), fixed SLO table | `catalog.tf` |
-| Alarms | ALB 5xx, unhealthy target, latency, multi-window error-budget burn (14.4x / 6x, composite), DB, queue, outbox, integrations, audit pipeline, staff-scope drift, backup health, certificates, WAF, PHI-in-logs, canaries | `alarms.tf` |
-| Event alerts | GuardDuty high, CloudTrail logging changes, root login, break-glass use, migration task failure, ECS deployment failure, RDS events; cost budgets | `events.tf` |
-| PHI scrubbing | Log data-protection policy (audit + de-identify) per application log group, findings log group; ADOT collector config with key allowlist and PHI value blockers | `dataprotection.tf`, `adot.tf`, `adot/` |
-| Synthetic checks | Read-only CloudWatch Synthetics canaries (script in `canary/`), cost output | `canaries.tf` |
-| Backup lag | Lambda + schedule publishing `BackupReplicaLagSeconds` (DPR-15) | `backup_lag.tf`, `lambda/` |
-| Dashboard | One metric-only operations dashboard | `dashboard.tf` |
+| Area               | Resources                                                                                                                                                                                                               | File                                    |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| Routes             | SNS topics `page`, `ticket`, `security` (KMS-encrypted), policy, email subscriptions                                                                                                                                    | `sns.tf`                                |
+| Catalogue and SLOs | Alert catalogue (owner, impact, first step, runbook for every alert), fixed SLO table                                                                                                                                   | `catalog.tf`                            |
+| Alarms             | ALB 5xx, unhealthy target, latency, multi-window error-budget burn (14.4x / 6x, composite), DB, queue, outbox, integrations, audit pipeline, staff-scope drift, backup health, certificates, WAF, PHI-in-logs, canaries | `alarms.tf`                             |
+| Event alerts       | GuardDuty high, CloudTrail logging changes, root login, break-glass use, migration task failure, ECS deployment failure, RDS events; cost budgets                                                                       | `events.tf`                             |
+| PHI scrubbing      | Log data-protection policy (audit + de-identify) per application log group, findings log group; ADOT collector config with key allowlist and PHI value blockers                                                         | `dataprotection.tf`, `adot.tf`, `adot/` |
+| Synthetic checks   | Read-only CloudWatch Synthetics canaries (script in `canary/`), cost output                                                                                                                                             | `canaries.tf`                           |
+| Backup lag         | Lambda + schedule publishing `BackupReplicaLagSeconds` (DPR-15)                                                                                                                                                         | `backup_lag.tf`, `lambda/`              |
+| Dashboard          | One metric-only operations dashboard                                                                                                                                                                                    | `dashboard.tf`                          |
 
 Application side: `apps/api/src/telemetry/` (config, allowlist, scrubbing exporter wrapper). The key allowlist is one list in two places (`adot/allowed-attributes.json` and `allowlist.ts`); a test fails if they differ.
 

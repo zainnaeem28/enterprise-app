@@ -1,5 +1,10 @@
 // Attribute scrubbing for spans, events, links and resources. Pure functions; no OpenTelemetry import.
-import { ALLOWED_ATTRIBUTE_KEYS, BLOCKED_VALUE_PATTERNS, MAX_VALUE_LENGTH, REDACTED } from './allowlist.js';
+import {
+  ALLOWED_ATTRIBUTE_KEYS,
+  BLOCKED_VALUE_PATTERNS,
+  MAX_VALUE_LENGTH,
+  REDACTED,
+} from './allowlist.js';
 
 export type AttributeValue = string | number | boolean | ReadonlyArray<string | number | boolean>;
 export type Attributes = Readonly<Record<string, unknown>>;
@@ -19,8 +24,12 @@ export function scrubString(value: string): string {
 
 function scrubValue(key: string, value: unknown): AttributeValue | undefined {
   if (typeof value === 'number' || typeof value === 'boolean') return value;
-  if (typeof value === 'string') return key === 'http.route' ? scrubString(normaliseRoute(value)) : scrubString(value);
-  if (Array.isArray(value) && value.every((v) => typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean'))
+  if (typeof value === 'string')
+    return key === 'http.route' ? scrubString(normaliseRoute(value)) : scrubString(value);
+  if (
+    Array.isArray(value) &&
+    value.every((v) => typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean')
+  )
     return value.map((v) => (typeof v === 'string' ? scrubString(v) : v));
   return undefined; // objects, functions, bigint, null: not telemetry
 }

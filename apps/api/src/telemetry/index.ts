@@ -34,7 +34,11 @@ export function startTelemetry(
 ): Telemetry {
   const config = loadTelemetryConfig(env);
   if (!config.enabled) return { enabled: false, shutdown: () => Promise.resolve() };
-  const sdk = createSdk({ config, resource: resourceAttributes(config), wrapExporter: wrapSpanExporter });
+  const sdk = createSdk({
+    config,
+    resource: resourceAttributes(config),
+    wrapExporter: wrapSpanExporter,
+  });
   sdk.start();
   return { enabled: true, shutdown: () => sdk.shutdown() };
 }
