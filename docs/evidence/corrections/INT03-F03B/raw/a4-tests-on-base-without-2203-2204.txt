@@ -1,0 +1,410 @@
+▶ migrations from empty on PostgreSQL 17
+  ✔ a second run applies nothing (133.362455ms)
+  ✖ catalog checks M-1..M-5 and the role checks all pass (199.808705ms)
+  ✔ role-level settings are stored and visible to a new session (18.792763ms)
+  ✔ the runner tracker is not reachable by application roles (3.976707ms)
+✖ migrations from empty on PostgreSQL 17 (1513.840509ms)
+▶ spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics)
+  ✔ FORCE RLS: the table owner cannot insert, and its UPDATE changes 0 rows (SBR-17) (13.187826ms)
+  ✔ a missing setting returns 0 rows on every kernel table (fail closed) (15.91693ms)
+  ✔ setting: admin_pool staff reads and writes its organisation; WITH CHECK refuses everything else (22.811478ms)
+  ✔ audience anonymous reads only pre_auth settings and nothing in idempotency_key (6.864ms)
+  ✔ app_api cannot act as audience system; app_worker can, within its job scope (15.265187ms)
+  ✔ idempotency_key: a principal sees only its own keys; updates bump row_version (10.980671ms)
+  ✔ reporting_ro is refused on the kernel tables (M-4) (3.107005ms)
+  ✔ role switching: app_api reaches only identity_signin_ro, which holds no table right (7.732782ms)
+  ✔ app_owner holds SET but not INHERIT on directory_ro: it can switch but gains no rights (2.816789ms)
+  ✔ function ownership transfer needs SET membership and CREATE on the schema (21.2 point 1) (5.547688ms)
+  ✔ SELECT ... FOR KEY SHARE needs UPDATE rights: a SELECT-only role is refused (11.529803ms)
+  ✔ an owner-rights view returns 0 rows under FORCE; a security_invoker view returns the caller rows (M-4) (211.846812ms)
+  ✔ negative control: the catalog checks fail on a table without FORCE and on a policy TO PUBLIC (199.312422ms)
+✔ spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics) (534.214964ms)
+▶ SEC03-F13 / F09 catalog negative controls
+  ✔ the positive baseline: the four new checks pass on the migrated database (189.205663ms)
+  ✔ M-5-policy-tautology fails on a policy comparing a column with itself (F01) (231.5704ms)
+  ✔ M-5-patient-guard fails when the guard trigger is disabled, AFTER, or INSERT-only (patient.patient_contact) (687.58018ms)
+  ✔ M-5-patient-guard fails when the guard trigger is disabled, AFTER, or INSERT-only (clinical.note) (699.751866ms)
+  ✔ M-5-setting-grants fails when app_api can write pre_auth or UPDATE every column (N-3) (687.223568ms)
+  ✔ M-5-hidden-columns fails when an application role can read occupancy created_by (F09) (354.003058ms)
+✔ SEC03-F13 / F09 catalog negative controls (2849.9538ms)
+▶ R-timeouts negative control (F03-R1-02)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 0s (198.665777ms)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 0ms (197.428974ms)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 0000ms (192.862229ms)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 61s (196.592233ms)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 120s (195.47247ms)
+✔ R-timeouts negative control (F03-R1-02) (981.52002ms)
+▶ TC-AU-04 (ARCHITECTURE 21.5, SAR-10; step 2 per SA-TC-06)
+  ✔ step 1: transaction_timeout unset (0) -> refused PA001, no row (4.097555ms)
+  ✔ step 2 (SA-TC-06): B + 1 s -> refused PA001, no row (3.201923ms)
+  ✔ step 3: app_owner -> privilege error 42501 raised before the trigger, no row (2.605142ms)
+  ✔ step 4 (positive control): at or below the bound -> accepted and written (3.779749ms)
+  ✔ production shape: the role-level 60 s of app_api and app_worker is accepted, 120 s is refused (13.981565ms)
+✔ TC-AU-04 (ARCHITECTURE 21.5, SAR-10; step 2 per SA-TC-06) (39.776377ms)
+▶ the runner against a real database
+  ✔ applies 0001 and 0003, then rejects 0002 as out of order and leaves the schema untouched (17.558353ms)
+  ✔ a migration that fails at run time rolls back with its tracker row (3.228915ms)
+✔ the runner against a real database (83.482854ms)
+▶ the single merge write guard (T1-T4 of HEAAA-190, extended by HEAAA-310)
+  ✔ T1: a write naming a merged patient is refused with PM001 on every guarded table (156.590663ms)
+  ✔ T1: an open patient passes the guard (any later refusal is another check) on every guarded table (83.265846ms)
+  ✔ T1: a write naming a patient of another organisation is refused (42501 or PM008) (101.423915ms)
+  ✖ T2: app_owner holds no EXECUTE on the guard, the ten refused functions are gone, all 33 tables carry the trigger (53.111418ms)
+  ✔ T5: privacy.incident_patient is exempt: no guard trigger, and a merged-ID link is not refused with PM001 (76.092564ms)
+  ✔ T6: patient_scope_owner holds no USAGE or CREATE on clinical or privacy; the 18 M4 guard triggers keep their names (4.639792ms)
+  ✔ T3: a merge holding the root lock makes a concurrent reservation write wait; after the commit it gets PM001 (516.493659ms)
+  ✔ T4: a file that leaves the guard granted to app_owner is rolled back by the runner post-check, with its tracker row (103.554025ms)
+✖ the single merge write guard (T1-T4 of HEAAA-190, extended by HEAAA-310) (1532.190815ms)
+▶ A-4 messaging definers (migrations 2203/2204): T-1..T-10 of Cybersecurity, I-10, I-11
+  ✖ I-10: M-5-definer passes with 25 entries; is_creator does not exist; patient_scope_owner holds only the four participant columns (187.340248ms)
+  ✔ T-1: under system, anonymous, public, webhook or an unset audience the definers return false for a real owner and never raise; the owner role reads no row (70.82386ms)
+  ✔ T-2: the caller comes only from the settings; a foreign, random, NULL or unset input gives false/NULL, never an error or true (23.699175ms)
+  ✖ T-3: patient_scope_owner as SET ROLE: no thread right, only the four participant columns, no write right anywhere, one policy with the principal clause (5.67129ms)
+  ✔ T-4: membership alone does not widen scope; a removed member loses access at once (36.607216ms)
+  ✖ T-5: the creator path (replacement of is_creator): invoker EXISTS under the thread's own policy (37.066037ms)
+  ✔ T-6: patient and proxy: a proxy reads and updates nothing; a patient cannot add a staff owner to a staff thread; ineligible participants are refused (29.081723ms)
+  ✔ T-7: owner and member rules; no cross-thread, no cross-organisation power (27.398222ms)
+  ✔ T-8: every messaging statement class under staff, patient and system runs without "infinite recursion detected in policy"; the definers are not inlined; row_security on as the table owner (60.56233ms)
+  ✖ T-9: catalog guards: is_creator absent (also from pg_depend and pg_policies), exactly two definers in messaging, attributes pinned, search_path not overridable (0.687542ms)
+  ✖ T-10 upgrade path: with 2203 applied and 2204 not, nothing depends on is_creator and messaging works; 2204 then applies; 2204 without 2203 fails (no CASCADE) and leaves the function (284.053967ms)
+✖ A-4 messaging definers (migrations 2203/2204): T-1..T-10 of Cybersecurity, I-10, I-11 (793.467187ms)
+ℹ tests 54
+ℹ suites 8
+ℹ pass 47
+ℹ fail 7
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8449.234564
+
+✖ failing tests:
+
+test at db/tools/db-test.mjs:100:3
+✖ catalog checks M-1..M-5 and the role checks all pass (199.808705ms)
+  AssertionError [ERR_ASSERTION]: [
+    {
+      "id": "M-5-definer",
+      "title": "every SECURITY DEFINER function is in the inventory, has a fixed search_path and a NOLOGIN owner",
+      "status": "fail",
+      "violations": [
+        {
+          "function": "messaging.is_creator(uuid)",
+          "in_inventory": false,
+          "fixed_search_path": true,
+          "owner": "patient_scope_owner"
+        }
+      ]
+    },
+    {
+      "id": "M-5-messaging-definer",
+      "title": "the A-4 messaging definers carry exactly the pinned attributes; patient_scope_owner is NOLOGIN, not superuser/BYPASSRLS, without GRANT OPTION, and holds only the four thread_participant columns (A4-3, A4-4, C-1..C-3)",
+      "status": "fail",
+      "violations": [
+        {
+          "problem": "unexpected-messaging-function",
+          "object": "messaging.is_creator(uuid)"
+        },
+        {
+          "problem": "table-privilege",
+          "object": "messaging.thread"
+        },
+        {
+          "problem": "table-privilege",
+          "object": "messaging.thread_participant"
+        },
+        {
+          "problem": "column-privilege",
+          "object": "messaging.thread.id"
+        },
+        {
+          "problem": "column-privilege",
+          "object": "messaging.thread.organisation_id"
+        },
+        {
+          "problem": "column-privilege",
+          "object": "messaging.thread.kind"
+        },
+        {
+          "problem": "column-privilege",
+          "object": "messaging.thread.patient_id"
+        },
+        {
+          "problem": "column-privilege",
+          "object": "messaging.thread.subject"
+        },
+        {
+          "problem": "column-privilege",
+          "object": "messaging.thread.status"
+        },
+        {
+          "problem": "column-privilege",
+          "object": "messaging.thread.location_id"
+        },
+        {
+          "problem": "column-privilege",
+          "object": "messaging.thread.created_at"
+        },
+        {
+          "problem": "column-privilege",
+          "object": "messaging.thread.created_by"
+        },
+        {
+          "problem": "column-privilege",
+          "object": "messaging.thread.row_version"
+        },
+        {
+          "problem": "column-privilege",
+          "object": "messaging.thread.updated_at"
+        },
+        {
+          "problem": "column-privilege",
+          "object": "messaging.thread_participant.last_read_at"
+        },
+        {
+          "problem": "column-privilege",
+          "object": "messaging.thread_participant.added_by"
+        },
+        {
+          "problem": "column-privilege",
+          "object": "messaging.thread_participant.created_at"
+        },
+        {
+          "problem": "policy-on-thread",
+          "object": "thread_definer_select"
+        },
+        {
+          "problem": "participant-policy-shape",
+          "object": "participant_definer_select"
+        }
+      ]
+    }
+  ]
+  + actual - expected
+  
+  + [
+  +   {
+  +     id: 'M-5-definer',
+  +     status: 'fail',
+  +     title: 'every SECURITY DEFINER function is in the inventory, has a fixed search_path and a NOLOGIN owner',
+  +     violations: [
+  +       {
+  +         fixed_search_path: true,
+  +         function: 'messaging.is_creator(uuid)',
+  +         in_inventory: false,
+  +         owner: 'patient_scope_owner'
+  +       }
+  +     ]
+  +   },
+  +   {
+  +     id: 'M-5-messaging-definer',
+  +     status: 'fail',
+  +     title: 'the A-4 messaging definers carry exactly the pinned attributes; patient_scope_owner is NOLOGIN, not superuser/BYPASSRLS, without GRANT OPTION, and holds only the four thread_participant columns (A4-3, A4-4, C-1..C-3)',
+  +     violations: [
+  +       {
+  +         object: 'messaging.is_creator(uuid)',
+  +         problem: 'unexpected-messaging-function'
+  +       },
+  +       {
+  +         object: 'messaging.thread',
+  +         problem: 'table-privilege'
+  +       },
+  +       {
+  +         object: 'messaging.thread_participant',
+  +         problem: 'table-privilege'
+  +       },
+  +       {
+  +         object: 'messaging.thread.id',
+  +         problem: 'column-privilege'
+  +       },
+  +       {
+  +         object: 'messaging.thread.organisation_id',
+  +         problem: 'column-privilege'
+  +       },
+  +       {
+  +         object: 'messaging.thread.kind',
+  +         problem: 'column-privilege'
+  +       },
+  +       {
+  +         object: 'messaging.thread.patient_id',
+  +         problem: 'column-privilege'
+  +       },
+  +       {
+  +         object: 'messaging.thread.subject',
+  +         problem: 'column-privilege'
+  +       },
+  +       {
+  +         object: 'messaging.thread.status',
+  +         problem: 'column-privilege'
+  +       },
+  +       {
+  +         object: 'messaging.thread.location_id',
+  +         problem: 'column-privilege'
+  +       },
+  +       {
+  +         object: 'messaging.thread.created_at',
+  +         problem: 'column-privilege'
+  +       },
+  +       {
+  +         object: 'messaging.thread.created_by',
+  +         problem: 'column-privilege'
+  +       },
+  +       {
+  +         object: 'messaging.thread.row_version',
+  +         problem: 'column-privilege'
+  +       },
+  +       {
+  +         object: 'messaging.thread.updated_at',
+  +         problem: 'column-privilege'
+  +       },
+  +       {
+  +         object: 'messaging.thread_participant.last_read_at',
+  +         problem: 'column-privilege'
+  +       },
+  +       {
+  +         object: 'messaging.thread_participant.added_by',
+  +         problem: 'column-privilege'
+  +       },
+  +       {
+  +         object: 'messaging.thread_participant.created_at',
+  +         problem: 'column-privilege'
+  +       },
+  +       {
+  +         object: 'thread_definer_select',
+  +         problem: 'policy-on-thread'
+  +       },
+  +       {
+  +         object: 'participant_definer_select',
+  +         problem: 'participant-policy-shape'
+  +       }
+  +     ]
+  +   }
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-334-sdlc-correction-int03-f03b-messaging-definers-migrations-2203-2204-per-accepted-a-4/db/tools/db-test.mjs:103:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { id: 'M-5-definer', title: 'every SECURITY DEFINER function is in the inventory, has a fixed search_path and a NOLOGIN owner', status: 'fail', violations: [Array] }, { id: 'M-5-messaging-definer', title: 'the A-4 messaging definers carry exactly the pinned attributes; patient_scope_owner is NOLOGIN, not superuser/BYPASSRLS, without GRANT OPTION, and holds only the four thread_participant columns (A4-3, A4-4, C-1..C-3)', status: 'fail', violations: [Array] } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at db/tools/db-test.mjs:878:3
+✖ T2: app_owner holds no EXECUTE on the guard, the ten refused functions are gone, all 33 tables carry the trigger (53.111418ms)
+  AssertionError [ERR_ASSERTION]: messaging.is_creator must not exist
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-334-sdlc-correction-int03-f03b-messaging-definers-migrations-2203-2204-per-accepted-a-4/db/tools/db-test.mjs:901:14)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at db/tools/db-test.mjs:1230:3
+✖ I-10: M-5-definer passes with 25 entries; is_creator does not exist; patient_scope_owner holds only the four participant columns (187.340248ms)
+  AssertionError [ERR_ASSERTION]: M-5-definer
+  
+  'fail' !== 'pass'
+  
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-334-sdlc-correction-int03-f03b-messaging-definers-migrations-2203-2204-per-accepted-a-4/db/tools/db-test.mjs:1233:14)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'fail',
+    expected: 'pass',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at db/tools/db-test.mjs:1324:3
+✖ T-3: patient_scope_owner as SET ROLE: no thread right, only the four participant columns, no write right anywhere, one policy with the principal clause (5.67129ms)
+  AssertionError [ERR_ASSERTION]: SELECT * FROM messaging.thread
+  + actual - expected
+  
+  + undefined
+  - '42501'
+  
+      at file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-334-sdlc-correction-int03-f03b-messaging-definers-migrations-2203-2204-per-accepted-a-4/db/tools/db-test.mjs:1335:16
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async as (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-334-sdlc-correction-int03-f03b-messaging-definers-migrations-2203-2204-per-accepted-a-4/db/tools/db-test.mjs:50:12)
+      at async TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-334-sdlc-correction-int03-f03b-messaging-definers-migrations-2203-2204-per-accepted-a-4/db/tools/db-test.mjs:1325:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: '42501',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at db/tools/db-test.mjs:1451:3
+✖ T-5: the creator path (replacement of is_creator): invoker EXISTS under the thread's own policy (37.066037ms)
+  AssertionError [ERR_ASSERTION]: policy: creator lost patient scope
+  + actual - expected
+  
+  + undefined
+  - '42501'
+  
+      at file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-334-sdlc-correction-int03-f03b-messaging-definers-migrations-2203-2204-per-accepted-a-4/db/tools/db-test.mjs:1504:14
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async as (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-334-sdlc-correction-int03-f03b-messaging-definers-migrations-2203-2204-per-accepted-a-4/db/tools/db-test.mjs:50:12)
+      at async TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-334-sdlc-correction-int03-f03b-messaging-definers-migrations-2203-2204-per-accepted-a-4/db/tools/db-test.mjs:1498:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: '42501',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at db/tools/db-test.mjs:1795:3
+✖ T-9: catalog guards: is_creator absent (also from pg_depend and pg_policies), exactly two definers in messaging, attributes pinned, search_path not overridable (0.687542ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-334-sdlc-correction-int03-f03b-messaging-definers-migrations-2203-2204-per-accepted-a-4/db/tools/db-test.mjs:1799:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at db/tools/db-test.mjs:1858:3
+✖ T-10 upgrade path: with 2203 applied and 2204 not, nothing depends on is_creator and messaging works; 2204 then applies; 2204 without 2203 fails (no CASCADE) and leaves the function (284.053967ms)
+  Error: ENOENT: no such file or directory, lstat '/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-334-sdlc-correction-int03-f03b-messaging-definers-migrations-2203-2204-per-accepted-a-4/db/migrations/2203_messaging_participant_policies_invoker_creator.sql'
+      at cpSyncFn (node:internal/fs/cp/cp-sync:56:13)
+      at cpSync (node:fs:3252:3)
+      at mk (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-334-sdlc-correction-int03-f03b-messaging-definers-migrations-2203-2204-per-accepted-a-4/db/tools/db-test.mjs:1864:30)
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-334-sdlc-correction-int03-f03b-messaging-definers-migrations-2203-2204-per-accepted-a-4/db/tools/db-test.mjs:1876:20)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-334-sdlc-correction-int03-f03b-messaging-definers-migrations-2203-2204-per-accepted-a-4/db/migrations/2203_messaging_participant_policies_invoker_creator.sql'
+  }

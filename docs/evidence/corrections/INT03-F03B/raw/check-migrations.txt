@@ -1,0 +1,2 @@
+ok: 92 migration(s), combined sha256 20bb70c7bff1c1c228d73b26eee495250570b2760245a3761a3aadabb0421ab3
+exit 0

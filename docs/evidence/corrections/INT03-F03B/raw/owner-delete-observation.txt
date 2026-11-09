@@ -1,0 +1,6 @@
+== base (2202):
+owner sees participant rows: [ 'self' ]
+owner DELETE of the member row: rowCount = 0
+== candidate (2204):
+owner sees participant rows: [ 'self' ]
+owner DELETE of the member row: rowCount = 0
