@@ -1,0 +1,6 @@
+SQL-IDENTICAL(non-comment) 1600_merge_guard_single -> 1604_merge_guard_single
+SQL-IDENTICAL(non-comment) 1601_drop_merge_guard_copies -> 1605_drop_merge_guard_copies
+SQL-IDENTICAL(non-comment) 1602_revoke_guard_drop_usage -> 1606_revoke_guard_drop_usage
+SQL-IDENTICAL(non-comment) 1603_identity_principal_patients_scope_read -> 1607_identity_principal_patients_scope_read
+SQL-IDENTICAL(non-comment) 2000_consent_template_text -> 2003_consent_template_text
+SQL-IDENTICAL(non-comment) 2001_consent_template_text_validate -> 2004_consent_template_text_validate

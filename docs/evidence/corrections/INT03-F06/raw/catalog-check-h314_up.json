@@ -1,0 +1,278 @@
+{
+  "server": "PostgreSQL 17.11 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
+  "checks": [
+    {
+      "id": "ENV-pg17",
+      "title": "server is PostgreSQL 17 or later",
+      "status": "pass",
+      "violations": []
+    },
+    {
+      "id": "R-roles",
+      "title": "every role of ARCHITECTURE 21.2 exists",
+      "status": "pass",
+      "violations": []
+    },
+    {
+      "id": "R-attributes",
+      "title": "no role is superuser/BYPASSRLS/CREATEROLE/CREATEDB/REPLICATION; function-owner, signin and directory roles are NOLOGIN, the others LOGIN",
+      "status": "pass",
+      "violations": []
+    },
+    {
+      "id": "R-no-owned-tables",
+      "title": "no application role owns a table, view, sequence or schema",
+      "status": "pass",
+      "violations": []
+    },
+    {
+      "id": "R-memberships",
+      "title": "role memberships are exactly the SET-only grants of ARCHITECTURE 21.2 (no INHERIT, no ADMIN, nothing else)",
+      "status": "pass",
+      "violations": []
+    },
+    {
+      "id": "R-timeouts",
+      "title": "every audit-writing role has a role-level transaction_timeout of 1..60 s (SAR-10)",
+      "status": "pass",
+      "violations": []
+    },
+    {
+      "id": "R-app-owner-no-audit-insert",
+      "title": "app_owner has no INSERT on any audit table",
+      "status": "pass",
+      "violations": []
+    },
+    {
+      "id": "M-1",
+      "title": "every module/kernel table has ENABLE and FORCE ROW LEVEL SECURITY",
+      "status": "pass",
+      "violations": []
+    },
+    {
+      "id": "M-1-kernel",
+      "title": "the four kernel tables of ARCHITECTURE 22.1 exist",
+      "status": "pass",
+      "violations": []
+    },
+    {
+      "id": "M-2",
+      "title": "no policy is TO PUBLIC; every policy names its roles",
+      "status": "pass",
+      "violations": []
+    },
+    {
+      "id": "M-3",
+      "title": "policies target only known roles; identity_signin_ro and directory_ro hold no table-level SELECT (column grants only)",
+      "status": "fail",
+      "violations": [
+        {
+          "table": "reporting.ops_integration_health",
+          "policyname": "ops_integration_health_ro_select",
+          "role": "reporting_ro"
+        },
+        {
+          "table": "reporting.ops_queue",
+          "policyname": "ops_queue_ro_select",
+          "role": "reporting_ro"
+        },
+        {
+          "table": "reporting.ops_calendar_staleness",
+          "policyname": "ops_calendar_staleness_ro_select",
+          "role": "reporting_ro"
+        },
+        {
+          "table": "reporting.ops_alert_backlog",
+          "policyname": "ops_alert_backlog_ro_select",
+          "role": "reporting_ro"
+        }
+      ]
+    },
+    {
+      "id": "M-4-views",
+      "title": "every view not on the C0/C1 owner-rights list has security_invoker = true",
+      "status": "pass",
+      "violations": []
+    },
+    {
+      "id": "M-4-reporting",
+      "title": "reporting_ro holds a privilege on nothing outside the C0/C1 list (tables, views, columns)",
+      "status": "fail",
+      "violations": [
+        {
+          "object": "reporting.ops_integration_health"
+        },
+        {
+          "object": "reporting.ops_queue"
+        },
+        {
+          "object": "reporting.ops_calendar_staleness"
+        },
+        {
+          "object": "reporting.ops_alert_backlog"
+        }
+      ]
+    },
+    {
+      "id": "M-5-patient-guard",
+      "title": "every table with a patient_id column has the merge write guard (an enabled BEFORE INSERT OR UPDATE row trigger on a listed guard function) or is exempt",
+      "status": "fail",
+      "violations": [
+        {
+          "table": "clinical.problem"
+        },
+        {
+          "table": "clinical.allergy"
+        },
+        {
+          "table": "clinical.medication_statement"
+        },
+        {
+          "table": "clinical.vital_sign"
+        },
+        {
+          "table": "clinical.questionnaire_response"
+        },
+        {
+          "table": "clinical.triage_assessment"
+        },
+        {
+          "table": "clinical.referral"
+        },
+        {
+          "table": "clinical.consent_exception"
+        },
+        {
+          "table": "clinical.follow_up"
+        },
+        {
+          "table": "clinical.encounter"
+        },
+        {
+          "table": "clinical.note"
+        },
+        {
+          "table": "clinical.note_cosign"
+        },
+        {
+          "table": "clinical.note_addendum"
+        },
+        {
+          "table": "privacy.request"
+        },
+        {
+          "table": "privacy.export_package"
+        },
+        {
+          "table": "privacy.incident_patient"
+        },
+        {
+          "table": "messaging.thread"
+        },
+        {
+          "table": "messaging.message"
+        },
+        {
+          "table": "messaging.task"
+        }
+      ]
+    },
+    {
+      "id": "M-5-interim-exempt",
+      "title": "a table on the interim patient-guard exemption list (INT01-F6) does not already have the guard (remove it from the list)",
+      "status": "pass",
+      "violations": []
+    },
+    {
+      "id": "M-5-definer",
+      "title": "every SECURITY DEFINER function is in the inventory, has a fixed search_path and a NOLOGIN owner",
+      "status": "fail",
+      "violations": [
+        {
+          "function": "messaging.is_participant(uuid)",
+          "in_inventory": false,
+          "fixed_search_path": true,
+          "owner": "patient_scope_owner"
+        },
+        {
+          "function": "messaging.is_owner(uuid)",
+          "in_inventory": false,
+          "fixed_search_path": true,
+          "owner": "patient_scope_owner"
+        },
+        {
+          "function": "messaging.is_creator(uuid)",
+          "in_inventory": false,
+          "fixed_search_path": true,
+          "owner": "patient_scope_owner"
+        },
+        {
+          "function": "messaging.guard_open_patient()",
+          "in_inventory": false,
+          "fixed_search_path": true,
+          "owner": "patient_scope_owner"
+        },
+        {
+          "function": "clinical.guard_open_patient()",
+          "in_inventory": false,
+          "fixed_search_path": true,
+          "owner": "patient_scope_owner"
+        },
+        {
+          "function": "clinical.frontdoor_guard_open_patient()",
+          "in_inventory": false,
+          "fixed_search_path": true,
+          "owner": "patient_scope_owner"
+        },
+        {
+          "function": "clinical.notes_guard_open_patient()",
+          "in_inventory": false,
+          "fixed_search_path": true,
+          "owner": "patient_scope_owner"
+        },
+        {
+          "function": "privacy.guard_open_patient()",
+          "in_inventory": false,
+          "fixed_search_path": true,
+          "owner": "patient_scope_owner"
+        }
+      ]
+    },
+    {
+      "id": "M-5-anonymous",
+      "title": "the policies that can match audience anonymous are exactly the ARCHITECTURE 21.3 list",
+      "status": "pass",
+      "violations": []
+    },
+    {
+      "id": "M-5-public",
+      "title": "the policies that can match audience public are exactly the T-DIRECTORY policies (plus recorded exceptions)",
+      "status": "pass",
+      "violations": []
+    },
+    {
+      "id": "M-5-setting-grants",
+      "title": "app_api and app_worker hold exactly the column lists of ARCHITECTURE 21.2 (N-3) for INSERT and UPDATE on kernel.setting",
+      "status": "pass",
+      "violations": []
+    },
+    {
+      "id": "M-5-hidden-columns",
+      "title": "no application role can read a column on the hidden-columns list (the occupancy twin names no principal, F09)",
+      "status": "pass",
+      "violations": []
+    },
+    {
+      "id": "M-5-policy-tautology",
+      "title": "no policy predicate compares an expression with itself (the F01 tautology; the behavioural matrix of F07 covers the rest)",
+      "status": "pass",
+      "violations": []
+    },
+    {
+      "id": "M-5-directory",
+      "title": "every object owned by directory_ro is a view on the C0 list",
+      "status": "pass",
+      "violations": []
+    }
+  ]
+}

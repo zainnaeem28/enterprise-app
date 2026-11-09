@@ -1,0 +1,29 @@
+applied before: 63
+rename 1600 -> 1604 merge_guard_single 1
+rename 1601 -> 1605 drop_merge_guard_copies 1
+rename 1602 -> 1606 revoke_guard_drop_usage 1
+rename 1603 -> 1607 identity_principal_patients_scope_read 1
+planPending after surgery: OUT_OF_ORDER Out-of-order migrations 1600_clinical_schema_and_chart_tables.sql, 1601_clinical_chart_triggers.sql, 1602_clinical_chart_rls_and_grants.sql, 1603_clinical_guard_owner.sql: version is below the highest
+pending 1600_clinical_schema_and_chart_tables.sql 1601_clinical_chart_triggers.sql 1602_clinical_chart_rls_and_grants.sql 1603_clinical_guard_owner.sql 1700_frontdoor_tables.sql 1701_frontdoor_triggers.sql 1702_frontdoor_rls_and_grants.sql 1800_notes_tables.sql 1801_notes_triggers.sql 1802_notes_rls_and_grants.sql 1803_notes_cosign_queue_index.sql 1900_privacy_schema_and_tables.sql 1901_privacy_triggers.sql 1902_privacy_rls_and_grants.sql 1903_privacy_review_round1_fixes.sql 2000_messaging_schema_and_tables.sql 2001_messaging_triggers.sql 2002_messaging_rls_and_grants.sql 2003_consent_template_text.sql 2004_consent_template_text_validate.sql 2100_reporting_schema_and_tables.sql 2101_reporting_rls_and_grants.sql
+applied 1600_clinical_schema_and_chart_tables.sql
+applied 1601_clinical_chart_triggers.sql
+applied 1602_clinical_chart_rls_and_grants.sql
+applied 1603_clinical_guard_owner.sql
+applied 1700_frontdoor_tables.sql
+applied 1701_frontdoor_triggers.sql
+applied 1702_frontdoor_rls_and_grants.sql
+applied 1800_notes_tables.sql
+applied 1801_notes_triggers.sql
+applied 1802_notes_rls_and_grants.sql
+applied(no-tx) 1803_notes_cosign_queue_index.sql
+applied 1900_privacy_schema_and_tables.sql
+applied 1901_privacy_triggers.sql
+applied 1902_privacy_rls_and_grants.sql
+applied 1903_privacy_review_round1_fixes.sql
+applied 2000_messaging_schema_and_tables.sql
+applied 2001_messaging_triggers.sql
+applied 2002_messaging_rls_and_grants.sql
+applied 2003_consent_template_text.sql
+applied 2004_consent_template_text_validate.sql
+applied 2100_reporting_schema_and_tables.sql
+applied 2101_reporting_rls_and_grants.sql
