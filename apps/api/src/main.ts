@@ -42,10 +42,15 @@ async function main(): Promise<void> {
     provisioned: provisioned.provisioned.length,
     present: provisioned.present.length,
   });
+  // pg has no declared types here (same device as pg-readiness); the hub's LISTEN needs its own connection, never a pooled one.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const pg: any = (await import('pg' as string)).default;
   const composition = buildComposition({
     db,
     logger,
     identity: identityEnv,
+    listen: () =>
+      new pg.Client({ connectionString: kernelCfg.databaseUrl, application_name: 'api-listen' }),
   });
   const app = await createApp({
     config: platformCfg,
@@ -53,8 +58,10 @@ async function main(): Promise<void> {
     readiness: readiness.probe,
     policy: composition.policy,
     controllers: composition.controllers,
+    replaceAlertStream: composition.alertStreamHub !== undefined,
   });
   await app.init();
+  await composition.alertStreamHub?.start();
   // 16 KB header limit (31.2); a larger header is refused by Node with 431 before any application code runs.
   const server = createServer(
     { maxHeaderSize: MAX_HEADER_BYTES, requestTimeout: platformCfg.requestTimeoutMs + 5_000 },
@@ -66,6 +73,7 @@ async function main(): Promise<void> {
   const stop = (): void => {
     app.get(Lifecycle).draining = true; // /readyz answers 503 at once (DEVOPS-PLAN 5)
     app.get(StreamRegistry).drain();
+    void composition.alertStreamHub?.stop();
     server.close(() => {
       void readiness.close().finally(() => process.exit(0));
     });

@@ -44,6 +44,8 @@ export interface AppDeps {
   metrics?: ReleaseMetrics;
   /** Module controllers beyond the platform ones (feature modules, test fixtures). */
   controllers?: readonly Type<unknown>[];
+  /** The notifications module's controller owns `GET /alerts/stream` (ALR-N3): leave out the platform's transport-only one. */
+  replaceAlertStream?: boolean;
 }
 
 export function buildModule(deps: AppDeps): DynamicModule {
@@ -51,7 +53,12 @@ export function buildModule(deps: AppDeps): DynamicModule {
   class PlatformModule {}
   return {
     module: PlatformModule,
-    controllers: [...PLATFORM_CONTROLLERS, ...(deps.controllers ?? [])],
+    controllers: [
+      ...PLATFORM_CONTROLLERS.filter(
+        (c) => !(deps.replaceAlertStream && c === AlertStreamController),
+      ),
+      ...(deps.controllers ?? []),
+    ],
     providers: [
       Lifecycle,
       StreamRegistry,

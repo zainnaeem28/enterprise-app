@@ -30,7 +30,18 @@ describe('role navigation follows UI-UX 3.2', () => {
         'Forms & consents',
         'Follow-ups',
         'Waitlist',
+        ...(r === 'front_desk' || r === 'front_desk_lead' || r === 'care_coordinator'
+          ? ['Tasks & messages']
+          : []),
       ]);
+  });
+  it('front_desk plus care_coordinator reach /tasks once (INT03-F19, RA-R1-25)', () => {
+    const items = navigationFor(['front_desk', 'care_coordinator']);
+    expect(items.filter((i) => i.path === '/tasks')).toHaveLength(1);
+  });
+  it('triage and medical records do not get Tasks & messages', () => {
+    expect(labels(['triage_nurse'])).not.toContain('Tasks & messages');
+    expect(labels(['medical_records'])).not.toContain('Tasks & messages');
   });
   it('a person with both kinds of role gets both maps once', () => {
     expect(navigationFor(['front_desk', 'doctor', 'triage_nurse'])).toHaveLength(11);

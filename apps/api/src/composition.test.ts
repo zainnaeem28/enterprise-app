@@ -287,3 +287,63 @@ describe('integrations host composition (INT03-F18)', () => {
     }
   });
 });
+
+describe('documents and alerts composition (INT03-F21)', () => {
+  const noDb = { withScope: () => Promise.reject(new Error('no db')) } as unknown as KernelDb;
+  const build = (listen?: () => never) =>
+    buildComposition({
+      db: noDb,
+      logger: createLogger({ sink: () => undefined }),
+      identity: loadIdentityEnv(ENV),
+      ...(listen === undefined ? {} : { listen }),
+    });
+  const P = '11111111-1111-4111-8111-111111111111';
+  const routes: [string, string][] = [
+    ['GET', '/api/v1/alerts'],
+    ['GET', '/api/v1/alerts/open-ids'],
+    ['POST', `/api/v1/alerts/${P}/acknowledge`],
+    ['GET', `/api/v1/patients/${P}/documents`],
+    ['POST', `/api/v1/patients/${P}/document-uploads`],
+    ['POST', `/api/v1/documents/${P}/confirm`],
+  ];
+
+  test('the routes are mounted: without a session they are refused (401), not 404', async () => {
+    const comp = build();
+    const run = await start({ controllers: comp.controllers, policy: comp.policy });
+    try {
+      for (const [m, p] of routes) {
+        const r = await fetch(`${run.base}${p}`, {
+          method: m,
+          headers: { 'x-client-release': R(MIN_RELEASE) },
+        });
+        assert.equal(r.status, 401, `${m} ${p}`);
+      }
+    } finally {
+      await run.close();
+    }
+  });
+
+  test('the notifications stream hub is composed only when a LISTEN factory is given', () => {
+    assert.equal(build().alertStreamHub, undefined);
+    assert.ok(build((() => undefined) as never).alertStreamHub !== undefined);
+  });
+
+  test('negative control: without these controllers the routes are 404', async () => {
+    const comp = build();
+    const kept = comp.controllers.filter((x) => !/Alerts|Documents/.test(x.name));
+    assert.ok(kept.length < comp.controllers.length);
+    const run = await start({ controllers: kept, policy: comp.policy });
+    try {
+      const r = await fetch(`${run.base}/api/v1/alerts`, {
+        headers: { 'x-client-release': R(MIN_RELEASE) },
+      });
+      assert.equal(r.status, 404);
+      const d = await fetch(`${run.base}/api/v1/patients/${P}/documents`, {
+        headers: { 'x-client-release': R(MIN_RELEASE) },
+      });
+      assert.equal(d.status, 404);
+    } finally {
+      await run.close();
+    }
+  });
+});

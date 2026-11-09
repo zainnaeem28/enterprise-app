@@ -104,3 +104,19 @@ describe('axe (jsdom) on every page state', () => {
     ).toEqual([]);
   });
 });
+
+describe('services mode label (INT03-F22)', () => {
+  const html = (mode: string) =>
+    renderToStaticMarkup(
+      <ServicesPage
+        ctx={ctx({ ...dir, services: [{ id: S, name: 'Visit', durationMin: 20, mode }] })}
+      />,
+    );
+  it('labels the API mode "video" as a video visit', () => {
+    expect(html('video')).toContain('Video visit');
+    expect(html('video')).not.toContain('In person');
+  });
+  it('labels in_person as in person', () => {
+    expect(html('in_person')).toContain('In person');
+  });
+});

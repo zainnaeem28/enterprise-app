@@ -83,6 +83,27 @@ export function NoteEditor({
     return true;
   }
 
+  /**
+   * `POST /encounters` answers 409 when the visit already has its encounter (a consultation in progress). There is no read
+   * route for an encounter by reservation, so the clinician's own draft for this patient is the way back in. False when none is found.
+   */
+  async function resumeDraft(): Promise<boolean> {
+    if (visit === undefined) return false;
+    const list = await api.myNotes(visit.clinicianId);
+    if (!list.ok) return false;
+    const drafts = list.data
+      .filter((n) => n.status === 'draft' && n.patientId === visit.patientId)
+      .sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''));
+    for (const d of drafts) {
+      const got = await api.getNote(d.noteId);
+      if (!got.ok) continue;
+      setSections(got.data.sections);
+      adopt(got.data);
+      return true;
+    }
+    return false;
+  }
+
   async function start(reason?: string) {
     if (visit === undefined) return;
     setBusy('start');
@@ -91,6 +112,10 @@ export function NoteEditor({
     if (enc === null) {
       const r = await api.startEncounter(visit.reservationId, startKey.current, reason);
       if (!r.ok) {
+        if (r.status === 409 && r.code !== 'clinical.consents_missing' && (await resumeDraft())) {
+          setBusy(null);
+          return;
+        }
         setBusy(null);
         if (r.status === 409 && r.code === 'clinical.consents_missing') setConsentMissing(true);
         else setFailure(r);

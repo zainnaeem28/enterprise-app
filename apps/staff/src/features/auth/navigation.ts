@@ -29,6 +29,14 @@ const doctor: readonly NavItem[] = [
   { id: 'availability', label: 'Availability', path: '/availability' },
 ];
 
+// RA-R1-25: front desk and care coordination create tasks and send messages, so they are offered "Tasks & messages" too.
+const TASKS: NavItem = { id: 'tasks', label: 'Tasks & messages', path: '/tasks' };
+const tasksRoles: ReadonlySet<string> = new Set([
+  'front_desk',
+  'front_desk_lead',
+  'care_coordinator',
+]);
+
 export const surfaces: Record<Surface, readonly NavItem[]> = { preconsult, doctor };
 
 /** Staff-realm role keys (ARCHITECTURE 27.3). Admin-realm roles never get staff navigation. */
@@ -52,7 +60,10 @@ export function navigationFor(roleKeys: readonly string[]): NavItem[] {
   }
   const out: NavItem[] = [];
   if (wanted.has('doctor')) out.push(...doctor);
-  if (wanted.has('preconsult')) out.push(...preconsult);
+  if (wanted.has('preconsult')) {
+    out.push(...preconsult);
+    if (!wanted.has('doctor') && roleKeys.some((k) => tasksRoles.has(k))) out.push(TASKS);
+  }
   return out;
 }
 

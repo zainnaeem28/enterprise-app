@@ -28,7 +28,19 @@ import {
   MESSAGING_JOBS,
   registerMessagingHandlers,
 } from './modules/messaging/index.js';
-import { AlertService, ALERT_JOBS } from './modules/notifications/alerts/index.js';
+import {
+  AlertService,
+  ALERT_JOBS,
+  createAlertsController,
+} from './modules/notifications/alerts/index.js';
+import { createAlertStreamController, StreamHub } from './modules/notifications/stream/index.js';
+import type { ListenClient } from './modules/notifications/stream/index.js';
+import {
+  createDocumentsControllers,
+  documentsResolvers,
+  DocumentsService,
+} from './modules/documents/index.js';
+import type { ObjectStorePort } from './modules/documents/index.js';
 import { createPrivacy, PRIVACY_JOBS } from './modules/privacy/index.js';
 import type { PackageStorePort } from './modules/privacy/index.js';
 import {
@@ -89,7 +101,19 @@ export const refusingPackageStore: PackageStorePort = {
 export const cursorKeyOf = (rateKey: string): string =>
   createHmac('sha256', rateKey).update('ehr:list-cursor-key:v1').digest('hex');
 
+/** The documents object store's presigner is delivered with the bucket (C-01); until then an upload or download URL is refused, never faked. */
+export const refusingObjectStore: ObjectStorePort = {
+  presignPut(): never {
+    throw new Error('port not configured: object_store');
+  },
+  presignGet(): never {
+    throw new Error('port not configured: object_store');
+  },
+};
+
 export interface Composition {
+  /** Present when a LISTEN connection factory was supplied: it replaces the platform's transport-only `GET /alerts/stream` (ALR-N3); the caller runs `start()`/`stop()` with the app. */
+  alertStreamHub?: StreamHub;
   /** The identity guard policy: pass to `createApp` as `policy` (replaces the deny-everything default). */
   policy: GuardPolicy;
   controllers: Type<unknown>[];
@@ -127,6 +151,10 @@ export function buildComposition(deps: {
   identity: IdentityEnv;
   /** Presigner of the privacy package store; defaults to the refusing one. */
   packageStore?: PackageStorePort;
+  /** Presigner of the documents store; defaults to the refusing one. */
+  objectStore?: ObjectStorePort;
+  /** A NEW client on its own (non-pooled) connection per call; when given, the alert stream hub is composed. */
+  listen?: () => ListenClient;
   now?: () => Date;
 }): Composition {
   const env = deps.identity;
@@ -290,9 +318,40 @@ export function buildComposition(deps: {
     receiver: { receive: () => Promise.resolve({ status: 404 }) },
   });
 
+  // Documents (BE-10): the patient-portal routes and the staff-only routes. The staff variants of the five shared paths (e.g.
+  // GET /patients/{id}/documents) are not built (documents README O-1), so the staff chart's list stays refused.
+  const documents = new DocumentsService({
+    audit,
+    organisation,
+    store: deps.objectStore ?? refusingObjectStore,
+    queue,
+    ...(deps.now === undefined ? {} : { now: deps.now }),
+  });
+  for (const [name, fn] of Object.entries(documentsResolvers()))
+    identity.policy.registerResolver(name, fn);
+
   const scopeOf = (req: Parameters<typeof requireAuthContext>[0]): ScopeSettings =>
     requireAuthContext(req).scope;
+  const alertControllers: Type<unknown>[] = [
+    createAlertsController({ db: deps.db, alerts, scopeOf }),
+  ];
+  let alertStreamHub: StreamHub | undefined;
+  if (deps.listen !== undefined) {
+    alertStreamHub = new StreamHub({
+      db: deps.db,
+      alerts,
+      listen: deps.listen,
+      logger: deps.logger,
+    });
+    alertControllers.push(
+      createAlertStreamController(alertStreamHub, (req) => {
+        const c = requireAuthContext(req);
+        return { sessionId: c.session.id, principalId: c.session.principalId, scope: c.scope };
+      }),
+    );
+  }
   return {
+    ...(alertStreamHub === undefined ? {} : { alertStreamHub }),
     policy: identity.policy,
     registry,
     controllers: [
@@ -315,6 +374,8 @@ export function buildComposition(deps: {
       ...messaging.controllers,
       ...privacy.controllers,
       ...reporting.controllers,
+      ...alertControllers,
+      ...createDocumentsControllers({ db: deps.db, documents }),
       ...integrationsHost,
     ],
   };

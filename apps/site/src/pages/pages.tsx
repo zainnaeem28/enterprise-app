@@ -105,7 +105,7 @@ export function ServicesPage({ ctx }: { ctx: Ctx }) {
               <p>
                 {s.durationMin} minutes ·{' '}
                 <StatusChip tone="info">
-                  {s.mode === 'telehealth' ? 'Video visit' : 'In person'}
+                  {s.mode === 'video' ? 'Video visit' : 'In person'}
                 </StatusChip>
               </p>
               <BookLink

@@ -165,6 +165,31 @@ describe('note editor, sign dialog, addenda (DR-03, DR-05, DR-06)', () => {
     };
   }
 
+  it('reopens an in-progress visit: 409 on POST /encounters opens the existing draft (INT03-F20)', async () => {
+    const user = userEvent.setup();
+    open({});
+    const { seen } = mount(DOCTOR, '/patients', (r) => {
+      if (r.path.endsWith('/chart-summary')) return json(200, summary());
+      if (r.path === '/api/v1/encounters')
+        return json(409, { code: 'clinical.invalid_transition', requestId: 'r' });
+      if (r.path === `/api/v1/clinicians/${ME}/notes`)
+        return json(200, { items: [noteListItem()], nextCursor: null });
+      if (r.method === 'GET' && r.path === `/api/v1/notes/${NOTE}`)
+        return json(
+          200,
+          note({
+            body: { sections: { subjective: 'Cough', objective: '', assessment: '', plan: '' } },
+          }),
+          { ETag: 'W/"1"' },
+        );
+      return undefined;
+    });
+    await user.click(await screen.findByRole('button', { name: 'Start consultation' }));
+    await waitFor(() => expect(screen.getByLabelText('S: Subjective')).toHaveValue('Cough'));
+    expect(seen.some((s) => s.path === `/api/v1/notes/${NOTE}`)).toBe(true);
+    expect(screen.queryByText(/Something went wrong/)).toBeNull();
+  });
+
   it('starts the consultation, saves a draft with If-Match and signs after re-authentication with the same key', async () => {
     const user = userEvent.setup();
     open({});
