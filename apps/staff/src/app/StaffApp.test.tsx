@@ -12,7 +12,7 @@ interface Seen {
 function setup(opts: {
   status?: number;
   roles?: string[];
-  audience?: string;
+  realm?: string;
   idleInMs?: number;
   signOutStatus?: number;
   rolesReadEmpty?: boolean;
@@ -37,8 +37,9 @@ function setup(opts: {
         return new Response(
           JSON.stringify({
             principalId: '11111111-1111-4111-8111-111111111111',
-            realm: 'staff',
-            audience: opts.audience ?? 'google',
+            // Real API pair (ARCH 26.1, AUDIENCE_OF): both staff realms carry audience 'staff'.
+            realm: opts.realm ?? 'google',
+            audience: 'staff',
             displayName: 'Dr Test',
             csrfToken: 'csrf-1',
             idleExpiresAt: idle,
@@ -206,11 +207,25 @@ describe('session gate and role navigation', () => {
     expect(screen.queryByRole('navigation')).toBeNull();
   });
   it('an administrator session never gets staff navigation; it opens on the audit log', async () => {
-    const { runtime, assign } = setup({ roles: ['org_admin'], audience: 'admin_pool' });
+    const { runtime, assign } = setup({ roles: ['org_admin'], realm: 'admin_pool' });
     render(<StaffApp runtime={runtime} assign={assign} />);
     expect(await screen.findByRole('heading', { level: 1, name: 'Audit log' })).toBeInTheDocument();
     expect(window.location.pathname).toBe('/admin/audit');
     expect(screen.queryByRole('link', { name: 'Schedule' })).toBeNull();
+  });
+  it('a google-realm session renders the staff shell with staff navigation', async () => {
+    const { runtime, assign } = setup({ roles: ['doctor'], realm: 'google' });
+    render(<StaffApp runtime={runtime} assign={assign} />);
+    expect(await screen.findByRole('navigation')).toBeInTheDocument();
+    expect(screen.queryByText(/Administrator sign-in\. Clinical data/)).toBeNull();
+  });
+  it('an unknown realm renders neither the admin shell nor staff navigation', async () => {
+    const { runtime, assign } = setup({ roles: ['org_admin'], realm: 'staff' });
+    render(<StaffApp runtime={runtime} assign={assign} />);
+    await act(async () => {});
+    expect(screen.queryByRole('navigation')).toBeNull();
+    expect(screen.queryByRole('heading', { level: 1, name: 'Audit log' })).toBeNull();
+    expect(screen.queryByText(/Administrator sign-in\. Clinical data/)).toBeNull();
   });
   it('a path outside the map is a plain not-found page', async () => {
     at('/patients/9f2c');
@@ -286,7 +301,7 @@ describe('no PHI in URLs', () => {
 });
 
 describe('administrator portal is routed (INT04-F03)', () => {
-  const admin = { roles: ['org_admin'], audience: 'admin_pool' };
+  const admin = { roles: ['org_admin'], realm: 'admin_pool' };
   it.each([
     ['/admin/audit', 'Audit log'],
     ['/admin/btg', 'Break-the-glass review'],

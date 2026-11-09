@@ -27,8 +27,8 @@ function runtime(roles: string[], idleInMs = 30 * 60_000) {
       return new Response(
         JSON.stringify({
           principalId: '11111111-1111-4111-8111-111111111111',
-          realm: 'staff',
-          audience: 'google',
+          realm: 'google',
+          audience: 'staff',
           displayName: 'Dr Test',
           csrfToken: 'c',
           idleExpiresAt: idle,
@@ -53,8 +53,8 @@ function adminRuntime() {
         return new Response(
           JSON.stringify({
             principalId: '11111111-1111-4111-8111-111111111111',
-            realm: 'admin',
-            audience: 'admin_pool',
+            realm: 'admin_pool',
+            audience: 'staff',
             displayName: 'Admin Test',
             csrfToken: 'c',
             idleExpiresAt: idle,

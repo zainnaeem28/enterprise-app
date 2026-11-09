@@ -42,8 +42,8 @@ async function mockApi(page: Page, session: 'admin' | 'none') {
         headers: { 'X-Session-Idle-Expires-At': idle },
         body: JSON.stringify({
           principalId: '11111111-1111-4111-8111-111111111111',
-          realm: 'admin',
-          audience: 'admin_pool',
+          realm: 'admin_pool',
+          audience: 'staff',
           displayName: 'Admin Test',
           csrfToken: 'c',
           idleExpiresAt: idle,

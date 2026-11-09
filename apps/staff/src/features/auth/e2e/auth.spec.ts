@@ -55,8 +55,8 @@ async function mockApi(page: Page, roles: string[] | 'signed-out', idleInMs = 30
       headers: { 'x-session-idle-expires-at': idle },
       body: JSON.stringify({
         principalId: '11111111-1111-4111-8111-111111111111',
-        realm: 'staff',
-        audience: 'google',
+        realm: 'google',
+        audience: 'staff',
         displayName: 'Dr Test',
         csrfToken: 'csrf-1',
         idleExpiresAt: idle,

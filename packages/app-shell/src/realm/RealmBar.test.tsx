@@ -6,13 +6,31 @@ import { realmKind } from './realm.js';
 
 afterEach(cleanup);
 
+// Real pairs: `PrincipalRealm` with its `AUDIENCE_OF` audience (apps/api/src/modules/identity/types.ts);
+// the admin sign-in stores realm `admin_pool`, audience `staff` (identity/admin/session.ts).
 describe('realmKind', () => {
-  it('tells the staff and admin pools apart', () => {
-    expect(realmKind({ audience: 'google' })).toBe('staff');
-    expect(realmKind({ audience: 'admin_pool' })).toBe('admin');
-    expect(realmKind({ audience: 'patient' })).toBe('patient');
-    expect(realmKind(undefined)).toBe('unknown');
-    expect(realmKind({ audience: 'my-staff-admin-x' })).toBe('unknown');
+  it.each([
+    ['google', 'staff', 'staff'],
+    ['admin_pool', 'staff', 'admin'],
+    ['patient_pool', 'patient', 'patient'],
+    ['partner_pool', 'partner', 'partner'],
+  ])('realm %s with audience %s is %s', (realm, audience, kind) => {
+    expect(realmKind({ realm, audience })).toBe(kind);
+  });
+
+  it.each([
+    ['no session', undefined],
+    ['empty session', {}],
+    ['audience only', { audience: 'staff' }],
+    ['invented realm admin', { realm: 'admin' }],
+    ['invented realm staff', { realm: 'staff', audience: 'staff' }],
+    ['upper-case realm', { realm: 'ADMIN_POOL', audience: 'staff' }],
+    ['admin realm, patient audience', { realm: 'admin_pool', audience: 'patient' }],
+    ['staff realm, admin_pool audience', { realm: 'google', audience: 'admin_pool' }],
+    ['missing audience', { realm: 'admin_pool' }],
+    ['prototype key', { realm: 'constructor', audience: 'staff' }],
+  ])('%s is unknown', (_name, session) => {
+    expect(realmKind(session)).toBe('unknown');
   });
 });
 
