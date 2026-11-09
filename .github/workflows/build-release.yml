@@ -83,14 +83,12 @@ jobs:
           echo "$CI_TOOLS_DIR/bin" >> "$GITHUB_PATH"
 
       - name: Install dependencies (frozen lockfile) without the OIDC request token
-        env:
-          ACTIONS_ID_TOKEN_REQUEST_URL: ''
-          ACTIONS_ID_TOKEN_REQUEST_TOKEN: ''
         run: |
           corepack enable
-          pnpm install --frozen-lockfile
-          echo "probe: OIDC request token visible to dependency-running steps = ${#ACTIONS_ID_TOKEN_REQUEST_TOKEN} characters (must be 0)"
-          [ -z "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" ]
+          scripts/release/without-oidc.sh pnpm install --frozen-lockfile
+          # Probe: the wrapper really removes the token from a child (a step-level env blank does not).
+          scripts/release/without-oidc.sh bash -c 'echo "probe: OIDC request token visible to dependency-running commands = ${#ACTIONS_ID_TOKEN_REQUEST_TOKEN} characters (must be 0)"; [ -z "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]'
+          echo "probe: and visible to a plain step = ${#ACTIONS_ID_TOKEN_REQUEST_TOKEN} characters (expected > 0 in publish mode)"
 
       - name: Release number
         id: rn
@@ -99,25 +97,16 @@ jobs:
           node scripts/release/release-number.mjs "$GITHUB_SHA" | tee "$OUT/release.json"
 
       - name: Release scripts tests
-        env:
-          ACTIONS_ID_TOKEN_REQUEST_URL: ''
-          ACTIONS_ID_TOKEN_REQUEST_TOKEN: ''
-        run: node --test scripts/release/test/lib.test.mjs scripts/release/test/manifest.test.mjs scripts/release/test/bundles.test.mjs
+        run: scripts/release/without-oidc.sh node --test scripts/release/test/lib.test.mjs scripts/release/test/manifest.test.mjs scripts/release/test/bundles.test.mjs
 
       - name: Build packages and run the refusal-path test against the built API
-        env:
-          ACTIONS_ID_TOKEN_REQUEST_URL: ''
-          ACTIONS_ID_TOKEN_REQUEST_TOKEN: ''
         run: |
-          pnpm build
-          node --test scripts/release/test/refusal-path.test.mjs
+          scripts/release/without-oidc.sh pnpm build
+          scripts/release/without-oidc.sh node --test scripts/release/test/refusal-path.test.mjs
 
       - name: Portal bundles (release number embedded, release.json written)
-        env:
-          ACTIONS_ID_TOKEN_REQUEST_URL: ''
-          ACTIONS_ID_TOKEN_REQUEST_TOKEN: ''
         run: |
-          node scripts/release/build-bundles.mjs --out "$OUT" --release-number "${{ steps.rn.outputs.release_number }}" --sha "$GITHUB_SHA"
+          scripts/release/without-oidc.sh node scripts/release/build-bundles.mjs --out "$OUT" --release-number "${{ steps.rn.outputs.release_number }}" --sha "$GITHUB_SHA"
 
       - name: Images (built once), Trivy scan, SBOM
         run: scripts/release/build-images.sh "$OUT" "${{ steps.rn.outputs.release_number }}" "$GITHUB_SHA"
