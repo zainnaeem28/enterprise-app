@@ -38,6 +38,7 @@ import {
   ADMIN_LANDING,
   ADMIN_SIGN_IN_PATH,
   AdminRealmBar,
+  AdminSignInLink,
   AdminSignInPage,
   ElevationProvider,
   ElevationStore,
@@ -149,6 +150,7 @@ export function StaffApp({
         <SignInPage
           returnTo={safeReturnTo(params.get('returnTo'))}
           problem={params.has('problem')}
+          belowGoogle={<AdminSignInLink />}
         />
       </PublicShell>
     );

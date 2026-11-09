@@ -1,0 +1,9 @@
+{
+  "screen": "btg",
+  "project": "phone",
+  "url": "/admin/btg",
+  "axeVersion": "4.14.0",
+  "violations": [],
+  "passes": 37,
+  "incomplete": []
+}

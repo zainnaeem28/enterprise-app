@@ -10,9 +10,12 @@ import { googleSignInHref } from './return-to.js';
 export function SignInPage({
   returnTo,
   problem,
+  belowGoogle,
 }: {
   returnTo?: string | undefined;
   problem?: boolean;
+  /** Rendered directly below the Google button (the app composes the separate administrator sign-in link here). */
+  belowGoogle?: React.ReactNode;
 }) {
   return (
     <section aria-labelledby="signin-title" className="ehr-auth">
@@ -28,6 +31,7 @@ export function SignInPage({
           {s.continueWithGoogle}
         </a>
       </p>
+      {belowGoogle}
       <p className="ehr-muted" data-testid="not-enrolled">
         <strong>{s.notEnrolledTitle}.</strong> {s.notEnrolledBody}
       </p>

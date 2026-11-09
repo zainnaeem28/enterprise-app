@@ -82,6 +82,15 @@ describe('sign-in screen (SH-03)', () => {
     expect(screen.getByTestId('not-enrolled')).toHaveTextContent('Contact IT');
     expect(screen.queryByText('We could not sign you in')).toBeNull();
   });
+  it('shows the separate Administrator sign-in link below the Google button (INT04-F03-R1)', () => {
+    at('/sign-in');
+    const { runtime, assign } = setup({});
+    render(<StaffApp runtime={runtime} assign={assign} />);
+    const google = screen.getByRole('link', { name: 'Continue with Google' });
+    const admin = screen.getByRole('link', { name: /administrator sign-in/i });
+    expect(admin).toHaveAttribute('href', '/admin/sign-in');
+    expect(google.compareDocumentPosition(admin) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
   it('shows the notice when a sign-in came back with a problem', () => {
     at('/sign-in', '?problem=1&returnTo=/schedule');
     render(<StaffApp runtime={setup({}).runtime} />);

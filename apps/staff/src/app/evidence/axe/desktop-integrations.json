@@ -1,0 +1,9 @@
+{
+  "screen": "integrations",
+  "project": "desktop",
+  "url": "/admin/integrations",
+  "axeVersion": "4.14.0",
+  "violations": [],
+  "passes": 42,
+  "incomplete": []
+}

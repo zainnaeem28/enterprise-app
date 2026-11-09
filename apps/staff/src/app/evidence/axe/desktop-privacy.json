@@ -1,0 +1,9 @@
+{
+  "screen": "privacy",
+  "project": "desktop",
+  "url": "/admin/privacy",
+  "axeVersion": "4.14.0",
+  "violations": [],
+  "passes": 37,
+  "incomplete": []
+}

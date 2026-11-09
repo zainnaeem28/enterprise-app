@@ -42,6 +42,36 @@ function runtime(roles: string[], idleInMs = 30 * 60_000) {
   });
 }
 
+function adminRuntime() {
+  return createShellRuntime({
+    clientRelease: 'r5.bbbbbbbbbbbb',
+    baseUrl: 'http://portal.test',
+    fetch: async (input) => {
+      const idle = new Date(Date.now() + 30 * 60_000).toISOString();
+      const url = String(input instanceof Request ? input.url : input);
+      if (url.endsWith('/auth/session'))
+        return new Response(
+          JSON.stringify({
+            principalId: '11111111-1111-4111-8111-111111111111',
+            realm: 'admin',
+            audience: 'admin_pool',
+            displayName: 'Admin Test',
+            csrfToken: 'c',
+            idleExpiresAt: idle,
+            roles: [{ key: 'org_admin' }],
+            permissions: [],
+            patients: [],
+          }),
+          { status: 200, headers: { 'X-Session-Idle-Expires-At': idle } },
+        );
+      return new Response(JSON.stringify({ items: [], nextCursor: null }), {
+        status: 200,
+        headers: { 'X-Session-Idle-Expires-At': idle },
+      });
+    },
+  });
+}
+
 describe('axe on the staff shell (jsdom)', () => {
   it.each(['/sign-in', '/signed-out'])('%s', async (path) => {
     window.history.replaceState(null, '', path);
@@ -63,6 +93,38 @@ describe('axe on the staff shell (jsdom)', () => {
     window.history.replaceState(null, '', '/alerts');
     const { container } = render(<StaffApp runtime={runtime(['front_desk'], 90_000)} />);
     await screen.findByRole('alertdialog');
+    expect(await violations(container)).toEqual([]);
+  });
+  it('sign-in shows the Administrator sign-in link', async () => {
+    window.history.replaceState(null, '', '/sign-in');
+    const { container } = render(<StaffApp runtime={runtime([])} />);
+    expect(screen.getByRole('link', { name: /administrator sign-in/i })).toBeInTheDocument();
+    expect(await violations(container)).toEqual([]);
+  });
+  it('administrator sign-in', async () => {
+    window.history.replaceState(null, '', '/admin/sign-in');
+    const { container } = render(<StaffApp runtime={runtime([])} />);
+    expect(await violations(container)).toEqual([]);
+  });
+});
+
+describe('axe on the administrator screens (jsdom)', () => {
+  it.each([
+    ['/admin/audit', 'Audit log'],
+    ['/admin/btg', 'Break-the-glass review'],
+    ['/admin/users', 'Users & roles'],
+    ['/admin/privacy', 'Privacy requests'],
+    ['/admin/clinics', 'Clinics, rooms, hours and holidays'],
+    ['/admin/services', 'Services catalogue'],
+    ['/admin/policies', 'Booking policies'],
+    ['/admin/templates', 'Consent and questionnaire templates'],
+    ['/admin/integrations', 'Integrations'],
+    ['/admin/flags', 'Feature flags and banners'],
+    ['/admin/vital-ranges', 'Vital-sign reference ranges'],
+  ])('%s', async (path, heading) => {
+    window.history.replaceState(null, '', path);
+    const { container } = render(<StaffApp runtime={adminRuntime()} />);
+    await screen.findByRole('heading', { level: 1, name: heading });
     expect(await violations(container)).toEqual([]);
   });
 });
