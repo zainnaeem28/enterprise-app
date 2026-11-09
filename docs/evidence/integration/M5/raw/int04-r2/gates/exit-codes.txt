@@ -1,0 +1,6 @@
+secrets=127
+sast=127
+boundary=0
+release-tests=1
+hygiene=0
+unit=1

@@ -1,0 +1,65 @@
+▶ build-bundles
+  ✔ embeds r<n>.<sha12>, writes release.json, hashes the listing, for both required bundles (75.347761ms)
+  ✔ fails when the release is not in any shipped .js file (38.683715ms)
+  ✔ fails when only one bundle lacks the release (patient not embedded) (44.78346ms)
+  ✔ fails when a required bundle was not produced (34.51856ms)
+✔ build-bundles (194.596689ms)
+▶ release number
+  ✔ is the first-parent count and r<n>.<sha12> round-trips (816.727837ms)
+  ✔ a merge counts once along the first parent (1562.697082ms)
+  ✔ a shallow clone and a malformed sha are refused (819.702579ms)
+  ✔ malformed client releases do not parse (0.216496ms)
+✔ release number (3200.458053ms)
+▶ store decision (release_number check)
+  ✔ greater than every other manifest publishes (0.338265ms)
+  ✔ an older build finishing late fails by design with code release_number (0.19737ms)
+  ✔ an equal number from another commit fails (0.162786ms)
+  ✔ a re-run of a stored commit is idempotent: reuse, even when newer manifests exist (0.160141ms)
+  ✔ store keys encode number and sha; a foreign object in the index is an error (0.361257ms)
+✔ store decision (release_number check) (1.620481ms)
+▶ min_client_release (DEVOPS-PLAN 6.2, 15.3)
+  ✔ is the previous released number, not the previous commit (0.24517ms)
+  ✔ first release equals its own number (0.120887ms)
+  ✔ a hand-edited value above or below is refused (0.181201ms)
+  ✔ a previous number that is not below the own number is refused (0.13363ms)
+✔ min_client_release (DEVOPS-PLAN 6.2, 15.3) (0.870173ms)
+▶ listing hash
+  ✔ is independent of creation order and changes with content (1.967673ms)
+✔ listing hash (2.060867ms)
+▶ release manifest
+  ✔ a complete publish manifest and a dry-run manifest validate (1.83878ms)
+  ✔ lists image digests, bundle hashes, lockfile hash, migrations and release_number (0.312576ms)
+  ✔ refuses: image by tag instead of digest (0.263756ms)
+  ✔ refuses: unsigned image (0.236023ms)
+  ✔ refuses: missing provenance attestation (0.300915ms)
+  ✔ refuses: missing required image (0.216956ms)
+  ✔ refuses: bad digest (0.164919ms)
+  ✔ refuses: release number not matching client release (0.168195ms)
+  ✔ refuses: bundle embeds another release (0.19188ms)
+  ✔ refuses: required bundle not built (0.205105ms)
+  ✔ refuses: migration list tampered (0.940615ms)
+  ✔ refuses: no lockfile hash (0.113854ms)
+  ✔ refuses: no source SBOM (0.100118ms)
+  ✔ refuses: no signing key reference (0.225604ms)
+  ✔ a dry-run manifest cannot claim a published reference (0.146615ms)
+  ✔ the manifest hash is stable and changes with content (0.54874ms)
+✔ release manifest (7.512436ms)
+▶ client release refusal path, producer to API
+  ✔ the current build, the previous released build and an unreleased one in between are accepted (1183.077099ms)
+  ✔ refused: older than min_client_release -> 400 kernel.client_release_unsupported, no cookie (170.24165ms)
+  ✔ refused: much older -> 400 kernel.client_release_unsupported, no cookie (168.703042ms)
+  ✔ refused: missing -> 400 kernel.client_release_unsupported, no cookie (1.81136ms)
+  ✔ refused: malformed (no r prefix) -> 400 kernel.client_release_unsupported, no cookie (170.991376ms)
+  ✔ refused: malformed (short sha) -> 400 kernel.client_release_unsupported, no cookie (81.018511ms)
+  ✔ the stream takes the same value as a query parameter and refuses an old one before any event (158.716494ms)
+  ✔ exempt routes work without the header (1.819825ms)
+  ✔ first release: min_client_release equals its own number, so the previous number is refused (392.089682ms)
+✔ client release refusal path, producer to API (2658.731456ms)
+ℹ tests 43
+ℹ suites 7
+ℹ pass 43
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4098.639168

@@ -1,0 +1,8 @@
+-- packages/contracts
+-- packages/kernel
+-- apps/api
+-- apps/cms
+-- apps/patient
+-- apps/site
+-- apps/staff
+-- apps/worker

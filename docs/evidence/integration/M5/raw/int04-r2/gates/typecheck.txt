@@ -1,0 +1,27 @@
+$ pnpm --filter @ehr/kernel --filter @ehr/contracts run build && pnpm -r run typecheck
+Scope: 2 of 11 workspace projects
+packages/contracts build$ tsc -p tsconfig.json
+packages/kernel build$ tsc -p tsconfig.json
+packages/contracts build: Done
+packages/kernel build: Done
+Scope: 10 of 11 workspace projects
+packages/contracts typecheck$ tsc -p tsconfig.json --noEmit
+apps/cms typecheck$ tsc -p tsconfig.json --noEmit
+packages/kernel typecheck$ tsc -p tsconfig.json --noEmit
+packages/ui typecheck$ tsc -p tsconfig.json --noEmit
+apps/cms typecheck: Done
+packages/contracts typecheck: Done
+packages/kernel typecheck: Done
+apps/worker typecheck$ tsc -p tsconfig.json --noEmit
+apps/api typecheck$ tsc -p tsconfig.json --noEmit
+packages/ui typecheck: Done
+apps/site typecheck$ tsc -p tsconfig.json --noEmit
+packages/app-shell typecheck$ tsc -p tsconfig.json --noEmit
+apps/worker typecheck: Done
+apps/site typecheck: Done
+packages/app-shell typecheck: Done
+apps/patient typecheck$ tsc -p tsconfig.json --noEmit
+apps/staff typecheck$ tsc -p tsconfig.json --noEmit
+apps/api typecheck: Done
+apps/patient typecheck: Done
+apps/staff typecheck: Done
