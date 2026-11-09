@@ -617,20 +617,28 @@ describe('TC-AD-08 / 10 and INT03-F17 1(c): feature flags', () => {
       1,
     );
     const trail = await audit('organisation.feature_flag', "change->>'key' = 'race_flag'");
-    let state: boolean | null = null;
-    for (const t of trail) {
+    // audit.event.occurred_at is the transaction START time (DEFAULT now()), taken before the per-flag advisory lock is won, so
+    // (occurred_at, event_id) order can differ from the order the writes were serialised in (INT04-F34). The serialised order is
+    // therefore not read from timestamps: the audited changes must form one chain null -> ... -> final that uses every row once,
+    // each "before" being the previous "after".
+    type Edge = { from: boolean | null; to: boolean };
+    const edges: Edge[] = trail.map((t) => {
       const c = t['change'] as { before: { enabled: boolean } | null; after: { enabled: boolean } };
-      assert.equal(
-        c.before === null ? null : c.before.enabled,
-        state,
-        'each audited "before" is the previous audited "after"',
-      );
-      state = c.after.enabled;
-    }
+      return { from: c.before === null ? null : c.before.enabled, to: c.after.enabled };
+    });
     const final = (
       await k.q(`SELECT enabled FROM organisation.feature_flag WHERE key = 'race_flag'`)
-    )[0]!['enabled'];
-    assert.equal(state, final);
+    )[0]!['enabled'] as boolean;
+    const chains = (at: boolean | null, left: Edge[]): boolean =>
+      left.length === 0
+        ? at === final
+        : left.some(
+            (e, i) => e.from === at && chains(e.to, [...left.slice(0, i), ...left.slice(i + 1)]),
+          );
+    assert.ok(
+      chains(null, edges),
+      'each audited "before" is the previous audited "after", ending at the stored value',
+    );
   });
 });
 
