@@ -175,3 +175,21 @@ paths = [
   '''(^|/)docs/evidence/integration/M5/INT-04-RESULT-r9\.md$''',
 ]
 regexes = ['''^2406_notifications_staff_scope_allows_patient\.sql$''']
+
+# INT04-F33 (continued; same owner and reviewer). The full-history scan also reports six synthetic
+# test constants in older commits (abbdd6b, cfc7f66, 0de3e06), the same shapes as INT03-F12-a: a
+# deterministic test key and the public template names appointment_reminder_48h/4h in test
+# assertions. No credentials. Pinned to the exact file AND exact value (condition = "AND") and to
+# this rule only, so the same value elsewhere, or any other value in these files, still fails.
+[[allowlists]]
+description = "INT04-F33: synthetic test key and template names in older test files (exact file + exact value)"
+condition = "AND"
+targetRules = ["generic-api-key"]
+paths = [
+  '''(^|/)apps/worker/src/jobs/identity/admin-event\.dbtest\.ts$''',
+  '''(^|/)tests/api/booking/(booking|notifications)\.test\.mjs$''',
+]
+regexes = [
+  '''^qr-key-for-tests-0123456789abcdef0123$''',
+  '''^appointment_reminder_(48h|4h)$''',
+]
