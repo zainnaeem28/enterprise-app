@@ -1,0 +1,34 @@
+# worker image (F-07 foundation proof). Build context is the REPOSITORY ROOT:
+#   docker build -f docker/Dockerfile.worker -t ehr-worker:local .
+# Frozen-lockfile install and build in a throwaway stage; only the production dependency closure and the compiled
+# output reach the runtime stage, which runs as the unprivileged 'node' user. The base image is pinned by digest
+# (DEVOPS-PLAN 6.1). No secret is baked in: configuration arrives as EHR_* variables at run time.
+ARG NODE_IMAGE=node:24.22.2-slim@sha256:01d566e8d94d8c619591d78652babfccd3c6992a3dffa9ed5ab39e11cf6c70e9
+
+FROM ${NODE_IMAGE} AS build
+WORKDIR /src
+RUN corepack enable
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc tsconfig.base.json ./
+COPY apps ./apps
+COPY packages ./packages
+# A developer's host node_modules must never reach the image (there is no .dockerignore in this ticket's paths).
+RUN find . -name node_modules -type d -prune -exec rm -rf {} + \
+ && pnpm install --frozen-lockfile \
+ && pnpm --filter @ehr/worker... run build \
+ && pnpm --filter @ehr/worker --prod deploy /out \
+ && rm -rf /out/src /out/test /out/dist/test /out/tsconfig.json /out/pnpm-workspace.yaml
+
+FROM ${NODE_IMAGE}
+ENV NODE_ENV=production
+WORKDIR /app
+# The runtime needs only the node binary. npm and corepack (bundled in the base image, with their own dependencies) are
+# removed: Trivy flagged HIGH findings with fixes in npm's brace-expansion and undici (CI run 42145137492), and nothing
+# at run time installs packages.
+RUN rm -rf /usr/local/lib/node_modules /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
+COPY --from=build --chown=node:node /out/ /app/
+USER node
+# The worker has no HTTP surface. Liveness is process liveness only (PID 1 exists); queue health is observed through
+# the database and logs, not by this check.
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD ["node", "-e", "process.kill(1,0)"]
+CMD ["node", "dist/main.js"]

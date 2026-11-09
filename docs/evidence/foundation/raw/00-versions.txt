@@ -1,0 +1,9 @@
+candidate_commit=e24d08693eb59ae79d42e07d7eea01e865cbdbd6
+lockfile_sha256=fe5fc3b2942639ad7fb5c06a7a12457930183824e4f37a8fbec849e05d04f174  pnpm-lock.yaml
+node=v24.22.2
+docker=Docker version 28.0.4, build b8034c0
+runner=ubuntu24 20261101.360.1
+dockerfile_api_sha256=5df716024056310597bc208745349d57e88f87e86079a35b42351a4e6b2647d2  docker/Dockerfile.api
+dockerfile_worker_sha256=e54838925a4b7341dd440ea089cf949d0f1c176ec1f03a40ae34fa4391f5846c  docker/Dockerfile.worker
+node_modules_present_before_install=0
+pnpm=12.16.1

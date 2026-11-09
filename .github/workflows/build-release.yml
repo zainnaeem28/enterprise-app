@@ -1,0 +1,186 @@
+# Build once, sign, attest, record (DO-05, HEAAA-89; DEVOPS-PLAN 4.2, 6.1, 6.2). Producer side of the release contract.
+#
+# SCOPE: builds artifacts and publishes them to the build registry and release store that the `gh-build` role may write
+# (ECR repositories, the release-signing KMS key, the release-store bucket). There is NO deploy step, no environment
+# configuration change, no migration and no infrastructure apply in this file. Deploying is deploy-*.yml (DO-06).
+#
+# Two modes, chosen by the ref:
+#   refs/heads/main            publish: assume gh-build via OIDC (denied by AWS unless an unexpired `ci` approved-release
+#                              record is applied), push images, sign, attest, upload bundles, store the release manifest.
+#   refs/heads/ci/release-dry-run/**   dry-run: the same build, scans, SBOMs, bundles and manifest, with NO cloud
+#                              credentials and nothing published; the artifacts are uploaded for inspection.
+#
+# Rules (enforced by ci.yml `workflow-hygiene`): every `uses:` is a SHA-pinned allow-listed action, `permissions` are
+# declared, no `continue-on-error` or swallowed failures, every job has a timeout.
+name: build-release
+
+on:
+  push:
+    branches:
+      - main
+      - 'ci/release-dry-run/**'
+
+permissions: {}
+
+# Non-cancelling: a build of an older commit that finishes after a newer one fails the release_number check by design.
+# GitHub keeps only one PENDING run per group, so under a burst of pushes a middle commit may never be built; such a
+# commit has no manifest and is not deployable. Dry-runs use their own group so they never queue behind main.
+concurrency:
+  group: build-release-${{ github.ref == 'refs/heads/main' && 'main' || github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CI_TOOLS_DIR: ${{ github.workspace }}/.ci-tools
+  CI: 'true'
+  OUT: ${{ github.workspace }}/release-out
+  REPORT_ROOT: ${{ github.workspace }}/release-out/reports
+
+jobs:
+  release:
+    name: release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    # The `build` environment is part of the OIDC sub claim the gh-build trust policy checks (ci-trust catalog). Dry-runs
+    # use no environment and no credentials.
+    environment: ${{ github.ref == 'refs/heads/main' && 'build' || '' }}
+    permissions:
+      contents: read
+      id-token: write # used only by aws-login.sh, after every dependency-running step; see the probe step
+    env:
+      PUBLISH: ${{ github.ref == 'refs/heads/main' && 'true' || 'false' }}
+      AWS_REGION: ${{ vars.RELEASE_AWS_REGION }}
+      RELEASE_BUILD_ROLE_ARN: ${{ vars.RELEASE_BUILD_ROLE_ARN }}
+      RELEASE_ECR_REGISTRY: ${{ vars.RELEASE_ECR_REGISTRY }}
+      RELEASE_ECR_REPOSITORY_PREFIX: ${{ vars.RELEASE_ECR_REPOSITORY_PREFIX }}
+      RELEASE_STORE_BUCKET: ${{ vars.RELEASE_STORE_BUCKET }}
+      RELEASE_SIGNING_KEY_ARN: ${{ vars.RELEASE_SIGNING_KEY_ARN }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # release_number counts first-parent commits: a shallow clone is refused by the script
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Publish configuration is present (main only)
+        if: ${{ env.PUBLISH == 'true' }}
+        run: |
+          missing=0
+          for v in AWS_REGION RELEASE_BUILD_ROLE_ARN RELEASE_ECR_REGISTRY RELEASE_ECR_REPOSITORY_PREFIX RELEASE_STORE_BUCKET RELEASE_SIGNING_KEY_ARN; do
+            [ -n "${!v}" ] || { echo "::error::repository variable for $v is not set; nothing is published"; missing=1; }
+          done
+          exit "$missing"
+
+      - name: Install pinned tools (sha256-verified)
+        run: |
+          scripts/ci/install-tools.sh trivy syft
+          TOOLS_LOCK=scripts/release/tools.lock scripts/ci/install-tools.sh cosign
+          echo "$CI_TOOLS_DIR/bin" >> "$GITHUB_PATH"
+
+      - name: Install dependencies (frozen lockfile) without the OIDC request token
+        run: |
+          corepack enable
+          scripts/release/without-oidc.sh pnpm install --frozen-lockfile
+          # Probe: the wrapper really removes the token from a child (a step-level env blank does not).
+          scripts/release/without-oidc.sh bash -c 'echo "probe: OIDC request token visible to dependency-running commands = ${#ACTIONS_ID_TOKEN_REQUEST_TOKEN} characters (must be 0)"; [ -z "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]'
+          echo "probe: and visible to a plain step = ${#ACTIONS_ID_TOKEN_REQUEST_TOKEN} characters (expected > 0 in publish mode)"
+
+      - name: Release number
+        id: rn
+        run: |
+          mkdir -p "$OUT"
+          node scripts/release/release-number.mjs "$GITHUB_SHA" | tee "$OUT/release.json"
+
+      - name: Release scripts tests
+        run: scripts/release/without-oidc.sh node --test scripts/release/test/lib.test.mjs scripts/release/test/manifest.test.mjs scripts/release/test/bundles.test.mjs
+
+      - name: Build packages and run the refusal-path test against the built API
+        run: |
+          scripts/release/without-oidc.sh pnpm build
+          scripts/release/without-oidc.sh node --test scripts/release/test/refusal-path.test.mjs
+
+      - name: Portal bundles (release number embedded, release.json written)
+        run: |
+          scripts/release/without-oidc.sh node scripts/release/build-bundles.mjs --out "$OUT" --release-number "${{ steps.rn.outputs.release_number }}" --sha "$GITHUB_SHA"
+
+      - name: Images (built once), Trivy scan, SBOM
+        run: scripts/release/build-images.sh "$OUT" "${{ steps.rn.outputs.release_number }}" "$GITHUB_SHA"
+
+      - name: Source SBOM and inventory (migrations, lock hashes, base images, tool versions)
+        run: |
+          syft scan "dir:$GITHUB_WORKSPACE" --config syft/syft.yaml --output "cyclonedx-json=$OUT/sbom/source.cdx.json" --quiet
+          node scripts/ci/check-sbom.mjs "$OUT/sbom/source.cdx.json"
+          node scripts/release/inventory.mjs --out "$OUT/inventory.json"
+
+      - name: Assume gh-build (OIDC)
+        if: ${{ env.PUBLISH == 'true' }}
+        run: scripts/release/aws-login.sh
+
+      - name: Release number against the store
+        id: store
+        if: ${{ env.PUBLISH == 'true' }}
+        run: |
+          node scripts/release/store.mjs decide --bucket "$RELEASE_STORE_BUCKET" \
+            --number "${{ steps.rn.outputs.release_number }}" --sha "$GITHUB_SHA"
+
+      - name: Push, sign and attest images
+        if: ${{ env.PUBLISH == 'true' && steps.store.outputs.store_action == 'publish' }}
+        run: scripts/release/publish-images.sh "$OUT" "${{ steps.rn.outputs.release_number }}" "$GITHUB_SHA"
+
+      - name: Upload bundles to the release store
+        if: ${{ env.PUBLISH == 'true' && steps.store.outputs.store_action == 'publish' }}
+        run: node scripts/release/store.mjs put-bundles --bucket "$RELEASE_STORE_BUCKET" --sha "$GITHUB_SHA" --dir "$OUT/bundles"
+
+      - name: Release manifest
+        if: ${{ !(env.PUBLISH == 'true' && steps.store.outputs.store_action == 'reuse') }}
+        run: |
+          node scripts/release/assemble-manifest.mjs --mode "${{ env.PUBLISH == 'true' && 'publish' || 'dry-run' }}" \
+            --release "$OUT/release.json" --bundles "$OUT/bundles.json" --inventory "$OUT/inventory.json" \
+            --images "$OUT/images.json" --source-sbom "$OUT/sbom/source.cdx.json" \
+            --key-ref "$RELEASE_SIGNING_KEY_ARN" --out "$OUT/release-manifest.json"
+          node scripts/release/validate-manifest.mjs "$OUT/release-manifest.json"
+
+      - name: Store the release manifest (the commit point of a release)
+        if: ${{ env.PUBLISH == 'true' && steps.store.outputs.store_action == 'publish' }}
+        run: |
+          node scripts/release/store.mjs put-manifest --bucket "$RELEASE_STORE_BUCKET" --sha "$GITHUB_SHA" \
+            --number "${{ steps.rn.outputs.release_number }}" --file "$OUT/release-manifest.json"
+
+      - name: Re-run of a released commit - reuse the stored manifest, publish nothing
+        if: ${{ env.PUBLISH == 'true' && steps.store.outputs.store_action == 'reuse' }}
+        run: |
+          node scripts/release/store.mjs get-manifest --bucket "$RELEASE_STORE_BUCKET" --sha "$GITHUB_SHA" --out "$OUT/release-manifest.json"
+          node scripts/release/validate-manifest.mjs "$OUT/release-manifest.json"
+
+      - name: Summary
+        if: ${{ !cancelled() }}
+        run: |
+          {
+            echo "### build-release (${{ env.PUBLISH == 'true' && 'publish' || 'dry-run, nothing published' }})"
+            echo "- release_number: ${{ steps.rn.outputs.release_number }}"
+            echo "- client_release: ${{ steps.rn.outputs.client_release }}"
+            [ -f "$OUT/release-manifest.json" ] && echo "- manifest sha256: $(cut -d' ' -f1 "$OUT/release-manifest.json.sha256" 2>/dev/null || sha256sum "$OUT/release-manifest.json" | cut -d' ' -f1)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: release-artifacts-${{ github.run_id }}
+          path: |
+            release-out/release-manifest.json
+            release-out/release-manifest.json.sha256
+            release-out/release.json
+            release-out/bundles.json
+            release-out/inventory.json
+            release-out/images.json
+            release-out/sbom
+            release-out/scan
+            release-out/provenance
+            release-out/bundles
+          if-no-files-found: error
+          retention-days: 30
