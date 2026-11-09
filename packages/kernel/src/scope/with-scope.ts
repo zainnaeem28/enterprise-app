@@ -6,6 +6,7 @@ import type { AuthIdentity, ScopeSettings } from './settings.js';
 export const PATIENT_SCOPE_OWNER_FUNCTIONS: readonly string[] = [
   'patient.register',
   'patient.ensure_care_relationship',
+  'patient.ensure_referral_care_relationship',
   'patient.attach',
   'patient.end_care_relationship',
   'patient.begin_merge',
@@ -53,6 +54,22 @@ export class Tx implements Queryable {
     const sorted = [...new Set(ids.map((x) => x.toLowerCase()))].sort();
     await this.query('SELECT patient.lock_patients($1::uuid[], $2)', [sorted, mode]);
     this.locked = { ids: new Set(sorted), mode };
+  }
+
+  /**
+   * `patient.lock_referral_patient(referral, patient, mode)` (ruling HEAAA-325, A-4): the root lock of an accept or decline
+   * transaction, where the receiving location has no care relationship yet. The basis is the pending referral addressed to the
+   * caller's location, checked in the database. Same once-per-transaction rule as {@link lockPatients}.
+   */
+  async lockReferralPatient(referralId: string, patientId: string, mode: LockMode): Promise<void> {
+    if (this.locked !== undefined)
+      throw new LockOrderError('lockPatients may be called once, at the start of the transaction');
+    await this.query('SELECT patient.lock_referral_patient($1::uuid, $2::uuid, $3)', [
+      referralId,
+      patientId,
+      mode,
+    ]);
+    this.locked = { ids: new Set([patientId.toLowerCase()]), mode };
   }
 
   /** Runtime half of the lock-order rule: a `patient_scope_owner` function runs only after `lockPatients`. */

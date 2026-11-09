@@ -914,8 +914,8 @@ describe('the single merge write guard (T1-T4 of HEAAA-190, extended by HEAAA-31
     const { definerInventory } = await import('./catalog-lists.mjs');
     assert.equal(
       definerInventory.length,
-      25,
-      'definerInventory has the 23 entries of A-3 and the two of A-4',
+      27,
+      'definerInventory has the 23 entries of A-3, the two messaging predicates and the two referral definers of the two A-4 amendments',
     );
   });
 
@@ -935,7 +935,7 @@ describe('the single merge write guard (T1-T4 of HEAAA-190, extended by HEAAA-31
     });
   });
 
-  test('T6: patient_scope_owner holds no USAGE or CREATE on clinical or privacy; the 18 M4 guard triggers keep their names', async () => {
+  test('T6: patient_scope_owner holds no CREATE on clinical or privacy and no USAGE on privacy (USAGE on clinical only by A-4); the 18 M4 guard triggers keep their names', async () => {
     for (const schema of ['clinical', 'privacy'])
       for (const priv of ['USAGE', 'CREATE']) {
         const r = await adm.query('SELECT has_schema_privilege($1, $2, $3) AS ok', [
@@ -943,7 +943,10 @@ describe('the single merge write guard (T1-T4 of HEAAA-190, extended by HEAAA-31
           schema,
           priv,
         ]);
-        assert.equal(r.rows[0].ok, false, `${schema} ${priv}`);
+        // A-4 (HEAAA-325 rev e3fa32f4, migration 2300): patient_scope_owner holds USAGE on clinical (and only USAGE, and only column
+        // SELECT on two tables, checked by the T-RA-29 test) so that its referral-scope policies and the origin guard can read them.
+        const allowed = schema === 'clinical' && priv === 'USAGE';
+        assert.equal(r.rows[0].ok, allowed, `${schema} ${priv}`);
       }
     const names = {
       'clinical.problem': 'problem_guard_open',
@@ -1227,12 +1230,12 @@ describe('A-4 messaging definers (migrations 2203/2204): T-1..T-10 of Cybersecur
   });
   after(() => adm?.end());
 
-  test('I-10: M-5-definer passes with 25 entries; is_creator does not exist; patient_scope_owner holds only the four participant columns', async () => {
+  test('I-10: M-5-definer passes with 27 entries (25 of F03B plus the two referral definers of F08d); is_creator does not exist; patient_scope_owner holds only the four participant columns', async () => {
     const report = await runChecks(adm);
     for (const id_ of ['M-5-definer', 'M-5-messaging-definer'])
       assert.equal(report.find((r) => r.id === id_)?.status, 'pass', id_);
     const { definerInventory } = await import('./catalog-lists.mjs');
-    assert.equal(definerInventory.length, 25);
+    assert.equal(definerInventory.length, 27);
     const gone = await adm.query(
       "SELECT count(*)::int AS n FROM pg_proc WHERE pronamespace = 'messaging'::regnamespace AND proname = 'is_creator'",
     );

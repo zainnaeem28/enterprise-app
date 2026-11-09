@@ -82,7 +82,7 @@ export const patientGuardExempt = [
   // ARCHITECTURE 22.14 table row and 22.16 note (G2, bd6de63): records history; HEAAA-310 ruling.
   'privacy.incident_patient',
 ];
-/** SECURITY DEFINER functions of SHARED-BOUNDARIES 6.2 and ARCHITECTURE 21.6 (schema.name): 25 entries after A-4. */
+/** SECURITY DEFINER functions of SHARED-BOUNDARIES 6.2 and ARCHITECTURE 21.6 (schema.name): 27 entries after the two A-4 amendments (messaging predicates; referral definers), INT-03 r3 merge. */
 export const definerInventory = [
   'integration_core.receive_inbound',
   // BE-08 (patient): owners patient_scope_owner (writes) and patient_match_owner (reads); all fix search_path.
@@ -118,6 +118,10 @@ export const definerInventory = [
   // predicates, owner patient_scope_owner, migration 2002. messaging.is_creator is refused and dropped by 2204; it must not be listed.
   'messaging.is_participant',
   'messaging.is_owner',
+  // ARCHITECTURE amendment A-4 (HEAAA-325 ruling rev e3fa32f4, G2 delta decision HEAAA-330; migration 2300): the receiving location's
+  // referral accept/decline, bound to a sent internal referral with a pending inbox row (R-REF-2). Owner patient_scope_owner.
+  'patient.lock_referral_patient',
+  'patient.ensure_referral_care_relationship',
 ];
 
 /**

@@ -82,13 +82,15 @@ export interface ConsentPort {
 }
 
 export interface CarePort {
-  /** `patient.ensureCareRelationship(patient, location, 'referral')`; the caller has locked the patient. */
-  ensureForReferral(
+  /** `patient.lockForReferral(referral, patient, mode)`: the root lock of a decision, taken first. */
+  lockForReferral(
     tx: Tx,
-    meta: RequestMeta,
+    referralId: string,
     patientId: string,
-    locationId: string,
-  ): Promise<string>;
+    mode: 'key_share' | 'no_key_update',
+  ): Promise<void>;
+  /** `patient.ensureReferralCareRelationship(referral)`: accept only; the caller has locked the patient and the referral is pending. */
+  ensureForReferral(tx: Tx, meta: RequestMeta, referralId: string): Promise<string>;
 }
 
 export interface EventPort {

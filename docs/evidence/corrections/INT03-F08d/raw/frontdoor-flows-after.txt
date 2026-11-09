@@ -1,0 +1,37 @@
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+▶ clinical front door (BE-18), flows on PostgreSQL 17
+  ▶ consent status gate with a recorded emergency exception
+    ✔ all required consents signed in the latest version: nothing is recorded (92.466904ms)
+    ✔ a missing, an outdated and a withdrawn consent each block with 409 naming the template keys, and nothing is recorded (35.204406ms)
+    ✔ an emergency exception (reason 10..500 chars) lets the start through and records one append-only row and an audit row (57.848618ms)
+    ✔ a too short or too long reason is a validation error and records nothing (29.64956ms)
+    ✔ the database refuses an exception for a patient outside the caller's scope or in another principal's name (67.878294ms)
+  ✔ consent status gate with a recorded emergency exception (284.235722ms)
+  ▶ questionnaire template + response
+    ✔ the patient reads the template, saves a draft, edits it with If-Match, and submits; a second submit is refused (116.533396ms)
+    ✔ another patient cannot read or write this patient's response (61.045538ms)
+    ✔ staff with the pre-visit right read the responses of a patient in their scope; staff of another location do not (53.998782ms)
+  ✔ questionnaire template + response (263.771741ms)
+  ▶ referrals: referrer, target, status; the accept re-checks and creates the care relationship
+    ✔ the accept path works for the receiving location with no pre-existing scope there (103.982207ms)
+    ✔ draft -> sent -> accepted (internal location): inbox is PHI-minimal; the care relationship appears at the target location only (124.11238ms)
+    ✔ only the target location can decide: staff of the sending location and of a third location are refused; decline needs a reason (99.243633ms)
+    ✔ an external referral has no inbox row; a draft edit needs If-Match; an invalid target is 422; a sent referral can be cancelled by the referrer (129.010494ms)
+    ✔ a staff member without the referral right, or at a location that has no scope on the patient, is refused (60.977551ms)
+  ✔ referrals: referrer, target, status; the accept re-checks and creates the care relationship (517.817528ms)
+  ▶ follow-up records (RA-R1-30)
+    ✔ create, list by patient and by location, update with If-Match, close; invalid data is 422; no If-Match is 428 (131.452317ms)
+    ✔ a location without scope on the patient, and a user without the right, are refused (58.090902ms)
+  ✔ follow-up records (RA-R1-30) (189.814148ms)
+  ▶ merge participant and export part
+    ✔ item 11: questionnaire (open), triage (kept), referral and follow-up rows follow the survivor; counts add up; the export part lists them (364.74993ms)
+  ✔ merge participant and export part (364.959825ms)
+✔ clinical front door (BE-18), flows on PostgreSQL 17 (3844.786715ms)
+ℹ tests 16
+ℹ suites 6
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4344.635317

@@ -25,7 +25,7 @@ export interface FrontdoorPortDeps {
   };
   organisation: Pick<OrganisationService, 'consentTemplatesRequired'>;
   records: Pick<PatientRecordsService, 'requiredConsentStatus'>;
-  patients: Pick<PatientService, 'ensureCareRelationship'>;
+  patients: Pick<PatientService, 'lockForReferral' | 'ensureReferralCareRelationship'>;
   queue: Pick<Queue, 'publish'>;
 }
 
@@ -138,8 +138,10 @@ export function createFrontdoorPorts(d: FrontdoorPortDeps): FrontdoorPorts {
         d.records.requiredConsentStatus(tx, patientId, templates),
     },
     care: {
-      ensureForReferral: (tx, meta, patientId, locationId) =>
-        d.patients.ensureCareRelationship(tx, meta, patientId, locationId, 'referral'),
+      lockForReferral: (tx, referralId, patientId, mode) =>
+        d.patients.lockForReferral(tx, referralId, patientId, mode),
+      ensureForReferral: (tx, meta, referralId) =>
+        d.patients.ensureReferralCareRelationship(tx, meta, referralId),
     },
     events: { publish: (tx, event, payload) => d.queue.publish(tx, event, payload) },
   };
