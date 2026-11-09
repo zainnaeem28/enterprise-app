@@ -110,7 +110,7 @@ export function checkLockOrder(
     const body = src.slice(a, b);
     const first = ownerCalls.find((m) => m.index > a && m.index < b);
     if (first === undefined) continue;
-    const lock = body.search(/\blockPatients\s*\(/);
+    const lock = body.search(/\b(?:lockPatients|lockReferralPatient|lockForReferral)\s*\(/);
     if (lock < 0 || a + lock > first.index) {
       out.push({
         file,

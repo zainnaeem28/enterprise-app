@@ -8,8 +8,9 @@
 //   an external referral has no receiving side here: sent -> completed | cancelled, by the referrer.
 // declined, completed and cancelled are final. A sent referral's target and reason cannot change.
 //
-// Lock order (25.2): the patient root first (`lockPatients`), then the rows. Accept needs `no_key_update` for the scope-owner
-// function `ensure_care_relationship`; the other writes need `key_share`.
+// Lock order (25.2): the patient root first (`lockPatients`; for accept and decline the referral-bound `lockForReferral`, since the
+// receiving location has no care relationship yet), then the rows. Accept needs `no_key_update` for the scope-owner function
+// `ensure_referral_care_relationship`; the other writes need `key_share`.
 import type { Tx } from '@ehr/kernel';
 import type { AuthContext } from '../../identity/index.js';
 import type { ChartAuditPort } from '../chart/audit-port.js';
@@ -459,8 +460,16 @@ export class ReferralService {
       );
       throw stale.rows.length > 0 ? new ReferralNotPendingError() : new FrontdoorNotFoundError();
     }
+    // A decided referral the caller can still read (accepted: the relationship exists) is "not pending"; the referral-bound lock
+    // below would answer it with the same 404 as a missing one. The state is checked again under the lock.
+    if (peek['status'] !== 'sent') throw new ReferralNotPendingError();
     try {
-      await tx.lockPatients([String(peek['patient_id'])], 'no_key_update');
+      await this.deps.care.lockForReferral(
+        tx,
+        rid,
+        String(peek['patient_id']),
+        decision === 'accepted' ? 'no_key_update' : 'key_share',
+      );
       // The row is locked only while pending: the update policy shows a decided row to nobody, so a plain read comes first and a
       // decided row is "not pending", never "not found". A decision that wins the lock between the two reads leaves the second
       // read empty, which is the same answer.
@@ -488,6 +497,9 @@ export class ReferralService {
         String(row['target_location_id']) !== here
       )
         throw new ReferralNotPendingError();
+      // R-REF-8: the care relationship is created on accept only, while the referral is still sent/pending and locked here, and
+      // before both status updates (the database checks the pending state).
+      if (decision === 'accepted') await this.deps.care.ensureForReferral(tx, meta, rid);
       const u = await tx.query(
         `UPDATE clinical.referral SET status = $2, decided_by = $3::uuid, decided_at = now(), decline_reason = $4 WHERE id = $1::uuid RETURNING *`,
         [rid, decision, tx.scope.principalId, declineReason ?? null],
@@ -496,13 +508,6 @@ export class ReferralService {
         `UPDATE clinical.referral_inbox SET status = $2, decided_at = now() WHERE referral_id = $1::uuid`,
         [rid, decision],
       );
-      if (decision === 'accepted')
-        await this.deps.care.ensureForReferral(
-          tx,
-          meta,
-          String(row['patient_id']),
-          String(row['target_location_id']),
-        );
       await this.audit(tx, meta, 'update', u.rows[0] as Row, here, { status: decision });
       return toReferralView(u.rows[0] as Row);
     } catch (e) {

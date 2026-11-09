@@ -1,0 +1,37 @@
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+▶ clinical front door (BE-18) on PostgreSQL 17
+  ▶ vitals with out-of-range flags (TC-PC-04)
+    ✔ below the low bound is out of range; in range is not; exactly at the bound is in range (inclusive); never refused (119.111428ms)
+    ✔ a unit the range is not stated in is unit_mismatch (no conversion); a code with no range is no_range (25.030039ms)
+    ✔ validation: nothing is saved when one entry is bad; a front-desk user and a nurse of another location are refused (45.633188ms)
+    ✔ an idempotent retry replays the stored answer and saves one set of rows (30.625701ms)
+  ✔ vitals with out-of-range flags (TC-PC-04) (342.279729ms)
+  ▶ triage category and the assessment chain
+    ✔ TC-PC-05: the category is saved, set on the queue entry, shown on read; a re-triage supersedes it; nobody drops out of the queue (349.261062ms)
+    ✔ TC-PC-06: two nurses holding the same ETag: one wins, the other gets 412 and nothing is overwritten (190.866244ms)
+    ✔ two first triages of one check-in at the same moment: exactly one is saved (83.743757ms)
+    ✔ validation and permissions: a bad category, bad symptoms or an over-long note is 422; front desk is 403; unknown check-in is 404 (103.754305ms)
+    ✔ the table is append-only: no UPDATE or DELETE by the application role or even a superuser (the trigger) (73.352344ms)
+  ✔ triage category and the assessment chain (801.654361ms)
+  ▶ red-flag alert at triage (mechanics only: the rules here are SYNTHETIC, D-12a blocks acceptance)
+    ✔ TC-SAF-01 / 38.2 item 16: a rule match creates the alert for the on-duty doctor; the nurse who raised it is not a target and still sees it; the advice is returned (107.555189ms)
+    ✔ TC-SAF-03: every configured rule alerts; a near-miss and a non-flag answer do not; the boundary of a numeric rule is exact (946.063479ms)
+    ✔ TC-SAF-03 step 3: a rule question left blank is rejected, not read as "no red flag"; nothing is saved; a match elsewhere still alerts (97.087902ms)
+    ✔ a rule that cannot be read fails toward safety (counts as a match); an unknown template is 422 (138.731672ms)
+    ✔ the nurse can mark the red flag without any rule; with no template at all the mark alone decides (157.849385ms)
+    ✔ the alert row commits with the triage or not at all: a failure after the alert rolls back alert, triage and category (71.39478ms)
+    ✔ TC-SAF-04: if the stream service is down the durable alert still exists and the patient still gets the advice (the alert row is the source) (78.037036ms)
+    ✔ no doctor on duty: the alert goes to every holder of the receive permission at the location (not the raiser), and the roster gap is published (80.395563ms)
+    ✔ nobody can receive the alert: the triage is NOT saved (409) rather than looking handled (116.594885ms)
+    ✔ escalation is configurable and not assumed: with no setting there is no timer; with one the job is queued at that time (PM-confirm-1, D-12a) (184.424883ms)
+    ✔ an unacknowledged red flag is re-targeted to the on-call doctor (25.5); the targets are added, not replaced; repeating adds nothing (89.348866ms)
+  ✔ red-flag alert at triage (mechanics only: the rules here are SYNTHETIC, D-12a blocks acceptance) (2082.704059ms)
+✔ clinical front door (BE-18) on PostgreSQL 17 (5120.167533ms)
+ℹ tests 20
+ℹ suites 4
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5523.934297

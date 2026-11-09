@@ -213,6 +213,25 @@ export class PatientService {
     }
   }
 
+  /**
+   * `lockForReferral(referral, patient, mode)`: the root lock of a referral accept or decline, in place of `lockPatients`, for the
+   * receiving location (ruling HEAAA-325). Missing, invisible and not-pending referrals fail the same way (404).
+   */
+  async lockForReferral(
+    tx: Tx,
+    referralId: string,
+    patientId: string,
+    mode: 'key_share' | 'no_key_update',
+  ): Promise<void> {
+    if (!isUuid(referralId) || !isUuid(patientId))
+      throw new PatientValidationError(['referralId', 'patientId']);
+    try {
+      await tx.lockReferralPatient(referralId, patientId, mode);
+    } catch (e) {
+      translateDbError(e);
+    }
+  }
+
   // --- registration and matching (25.3) ---------------------------------------------------------------------------
 
   /** `POST /patients/match`: at most 5 candidates; the values are hashed with the key, never stored. */
@@ -446,6 +465,27 @@ export class PatientService {
         [patientId],
       );
       return str((r.rows[0] as Row)['ensure_care_relationship']);
+    } catch (e) {
+      translateDbError(e);
+    }
+  }
+
+  /**
+   * `ensureReferralCareRelationship(referral)`: the accept's care relationship. Patient and location come from the referral row in
+   * the database. The caller has called `lockForReferral(..., 'no_key_update')` and the referral is still pending.
+   */
+  async ensureReferralCareRelationship(
+    tx: Tx,
+    meta: RequestMeta,
+    referralId: string,
+  ): Promise<string> {
+    if (!isUuid(referralId)) throw new PatientValidationError(['referralId']);
+    try {
+      const r = await tx.callScopeOwner(scopeOwnerFn('ensure_referral_care_relationship'), [
+        meta.requestId,
+        referralId,
+      ]);
+      return str((r.rows[0] as Row)['ensure_referral_care_relationship']);
     } catch (e) {
       translateDbError(e);
     }

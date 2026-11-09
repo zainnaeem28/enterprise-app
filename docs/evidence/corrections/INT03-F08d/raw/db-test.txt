@@ -1,0 +1,139 @@
+▶ migrations from empty on PostgreSQL 17
+  ✔ a second run applies nothing (153.58942ms)
+  ✖ catalog checks M-1..M-5 and the role checks all pass (256.032996ms)
+  ✔ role-level settings are stored and visible to a new session (25.307129ms)
+  ✔ the runner tracker is not reachable by application roles (5.026956ms)
+✖ migrations from empty on PostgreSQL 17 (2111.987515ms)
+▶ spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics)
+  ✔ FORCE RLS: the table owner cannot insert, and its UPDATE changes 0 rows (SBR-17) (14.204971ms)
+  ✔ a missing setting returns 0 rows on every kernel table (fail closed) (16.352713ms)
+  ✔ setting: admin_pool staff reads and writes its organisation; WITH CHECK refuses everything else (27.624798ms)
+  ✔ audience anonymous reads only pre_auth settings and nothing in idempotency_key (8.796309ms)
+  ✔ app_api cannot act as audience system; app_worker can, within its job scope (22.502013ms)
+  ✔ idempotency_key: a principal sees only its own keys; updates bump row_version (15.486085ms)
+  ✔ reporting_ro is refused on the kernel tables (M-4) (4.988804ms)
+  ✔ role switching: app_api reaches only identity_signin_ro, which holds no table right (11.922287ms)
+  ✔ app_owner holds SET but not INHERIT on directory_ro: it can switch but gains no rights (5.043145ms)
+  ✔ function ownership transfer needs SET membership and CREATE on the schema (21.2 point 1) (7.933881ms)
+  ✔ SELECT ... FOR KEY SHARE needs UPDATE rights: a SELECT-only role is refused (13.495439ms)
+  ✔ an owner-rights view returns 0 rows under FORCE; a security_invoker view returns the caller rows (M-4) (264.236362ms)
+  ✔ negative control: the catalog checks fail on a table without FORCE and on a policy TO PUBLIC (262.961949ms)
+✔ spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics) (685.775234ms)
+▶ SEC03-F13 / F09 catalog negative controls
+  ✔ the positive baseline: the four new checks pass on the migrated database (241.928042ms)
+  ✔ M-5-policy-tautology fails on a policy comparing a column with itself (F01) (261.842068ms)
+  ✔ M-5-patient-guard fails when the guard trigger is disabled, AFTER, or INSERT-only (patient.patient_contact) (797.169658ms)
+  ✔ M-5-patient-guard fails when the guard trigger is disabled, AFTER, or INSERT-only (clinical.note) (820.170498ms)
+  ✔ M-5-setting-grants fails when app_api can write pre_auth or UPDATE every column (N-3) (791.347059ms)
+  ✔ M-5-hidden-columns fails when an application role can read occupancy created_by (F09) (432.27974ms)
+✔ SEC03-F13 / F09 catalog negative controls (3345.82188ms)
+▶ R-timeouts negative control (F03-R1-02)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 0s (248.101178ms)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 0ms (256.878301ms)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 0000ms (253.052922ms)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 61s (240.702442ms)
+  ✔ R-timeouts fails when an audit-writing role has transaction_timeout = 120s (241.424055ms)
+✔ R-timeouts negative control (F03-R1-02) (1240.903265ms)
+▶ TC-AU-04 (ARCHITECTURE 21.5, SAR-10; step 2 per SA-TC-06)
+  ✔ step 1: transaction_timeout unset (0) -> refused PA001, no row (6.517483ms)
+  ✔ step 2 (SA-TC-06): B + 1 s -> refused PA001, no row (5.014702ms)
+  ✔ step 3: app_owner -> privilege error 42501 raised before the trigger, no row (4.832049ms)
+  ✔ step 4 (positive control): at or below the bound -> accepted and written (5.073022ms)
+  ✔ production shape: the role-level 60 s of app_api and app_worker is accepted, 120 s is refused (21.733311ms)
+✔ TC-AU-04 (ARCHITECTURE 21.5, SAR-10; step 2 per SA-TC-06) (58.555271ms)
+▶ the runner against a real database
+  ✔ applies 0001 and 0003, then rejects 0002 as out of order and leaves the schema untouched (21.997608ms)
+  ✔ a migration that fails at run time rolls back with its tracker row (2.747026ms)
+✔ the runner against a real database (96.306115ms)
+▶ the single merge write guard (T1-T4 of HEAAA-190, extended by HEAAA-310)
+  ✔ T1: a write naming a merged patient is refused with PM001 on every guarded table (174.339245ms)
+  ✔ T1: an open patient passes the guard (any later refusal is another check) on every guarded table (112.81993ms)
+  ✔ T1: a write naming a patient of another organisation is refused (42501 or PM008) (100.180757ms)
+  ✔ T2: app_owner holds no EXECUTE on the guard, the ten refused functions are gone, all 33 tables carry the trigger (85.034941ms)
+  ✔ T5: privacy.incident_patient is exempt: no guard trigger, and a merged-ID link is not refused with PM001 (82.443787ms)
+  ✔ T6: patient_scope_owner holds no CREATE on clinical or privacy and no USAGE on privacy (USAGE on clinical only by A-4); the 18 M4 guard triggers keep their names (4.486982ms)
+  ✔ T3: a merge holding the root lock makes a concurrent reservation write wait; after the commit it gets PM001 (517.788179ms)
+  ✔ T4: a file that leaves the guard granted to app_owner is rolled back by the runner post-check, with its tracker row (106.60236ms)
+✔ the single merge write guard (T1-T4 of HEAAA-190, extended by HEAAA-310) (1247.380149ms)
+ℹ tests 43
+ℹ suites 7
+ℹ pass 42
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8828.402437
+
+✖ failing tests:
+
+test at db/tools/db-test.mjs:100:3
+✖ catalog checks M-1..M-5 and the role checks all pass (256.032996ms)
+  AssertionError [ERR_ASSERTION]: [
+    {
+      "id": "M-5-definer",
+      "title": "every SECURITY DEFINER function is in the inventory, has a fixed search_path and a NOLOGIN owner",
+      "status": "fail",
+      "violations": [
+        {
+          "function": "messaging.is_participant(uuid)",
+          "in_inventory": false,
+          "fixed_search_path": true,
+          "owner": "patient_scope_owner"
+        },
+        {
+          "function": "messaging.is_owner(uuid)",
+          "in_inventory": false,
+          "fixed_search_path": true,
+          "owner": "patient_scope_owner"
+        },
+        {
+          "function": "messaging.is_creator(uuid)",
+          "in_inventory": false,
+          "fixed_search_path": true,
+          "owner": "patient_scope_owner"
+        }
+      ]
+    }
+  ]
+  + actual - expected
+  
+  + [
+  +   {
+  +     id: 'M-5-definer',
+  +     status: 'fail',
+  +     title: 'every SECURITY DEFINER function is in the inventory, has a fixed search_path and a NOLOGIN owner',
+  +     violations: [
+  +       {
+  +         fixed_search_path: true,
+  +         function: 'messaging.is_participant(uuid)',
+  +         in_inventory: false,
+  +         owner: 'patient_scope_owner'
+  +       },
+  +       {
+  +         fixed_search_path: true,
+  +         function: 'messaging.is_owner(uuid)',
+  +         in_inventory: false,
+  +         owner: 'patient_scope_owner'
+  +       },
+  +       {
+  +         fixed_search_path: true,
+  +         function: 'messaging.is_creator(uuid)',
+  +         in_inventory: false,
+  +         owner: 'patient_scope_owner'
+  +       }
+  +     ]
+  +   }
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-321-sdlc-correction-int03-f08d-fix-the-front-door-accept-path-returning-404-todo-marked-test/db/tools/db-test.mjs:103:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [Array],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

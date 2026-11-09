@@ -1,0 +1,4 @@
+694:    ⚠ TODO (BE-08/INT-02): the real accept path without any stand-in (298.683872ms) # caller_sees() hides the patient from the receiving location
+2203:test at apps/api/dist/src/modules/clinical/frontdoor/frontdoor-flows.dbtest.js:170:9
+2204:⚠ TODO (BE-08/INT-02): the real accept path without any stand-in (298.683872ms) # caller_sees() hides the patient from the receiving location
+2209:      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-133-sdlc-ticket-int-03-integrate-m4-clinical-and-front-desk-clinical-messaging-privacy-reporting-staff-and-patient/apps/api/dist/src/modules/clinical/frontdoor/frontdoor-flows.dbtest.js:182:20)

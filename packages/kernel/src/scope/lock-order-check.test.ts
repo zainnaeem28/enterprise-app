@@ -86,3 +86,23 @@ test('sign-in setter call sites are limited to the allowed files', () => {
     0,
   );
 });
+
+test('accepts lockReferralPatient as the patient-root lock before the referral relationship function', () => {
+  const src = `
+db.withScope(scope, async (tx) => {
+  await tx.lockReferralPatient(referralId, id, 'no_key_update');
+  await tx.callScopeOwner('patient.ensure_referral_care_relationship', [req, referralId]);
+});`;
+  assert.deepEqual(checkLockOrder('d.ts', src), []);
+});
+
+test('fails a handler that calls patient.ensure_referral_care_relationship with no lock', () => {
+  const src = `
+db.withScope(scope, async (tx) => {
+  await tx.callScopeOwner('patient.ensure_referral_care_relationship', [req, referralId]);
+});`;
+  assert.deepEqual(
+    checkLockOrder('e.ts', src).map((x) => x.rule),
+    ['lock-order'],
+  );
+});

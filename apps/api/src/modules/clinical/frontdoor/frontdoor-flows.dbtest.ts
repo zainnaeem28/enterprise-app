@@ -334,36 +334,23 @@ describe('clinical front door (BE-18), flows on PostgreSQL 17', () => {
       extra: Record<string, string> = {},
     ) => t.scall(s, 'POST', path, body, { 'idempotency-key': randomUUID(), ...extra });
 
-    // BLOCKER FOR INTEGRATION (module README, limitations): patient.lock_patients and patient.ensure_care_relationship (BE-08, 0703) call
-    // patient.caller_sees(), which is false for the RECEIVING location of a referral (it has no care relationship yet), so accept ends in
-    // PM008 -> 404 on the combined base. The function is another ticket's; this ticket cannot change it. The tests below put the
-    // receiving location's sight in place by a staff_scope row (as the owner's fix would make visible) to prove everything on this side;
-    // the `todo` test is the real path and passes once BE-08 / INT-02 adds the referral case to caller_sees.
-    const seedTargetSight = (patientId: string): Promise<unknown> =>
-      saWrite(
-        t.k,
-        `INSERT INTO patient.staff_scope (patient_id, location_id, organisation_id) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`,
-        [patientId, A2, ORG],
-      );
-
-    test(
-      'TODO (BE-08/INT-02): the real accept path without any stand-in',
-      { todo: 'caller_sees() hides the patient from the receiving location' },
-      async () => {
-        const p = await t.mkPatient(n());
-        await t.checkedIn(p);
-        const c = await post(t.coord, `/api/v1/patients/${p.patientId}/referrals`, {
-          fromLocationId: A1,
-          targetKind: 'internal_location',
-          targetLocationId: A2,
-          reason: 'Real path',
-        });
-        const id = String(c.json()['id']);
-        await post(t.coord, `/api/v1/referrals/${id}/send`);
-        const a = await post(t.coordB, `/api/v1/referrals/${id}/accept`);
-        assert.equal(a.status, 200, a.body);
-      },
-    );
+    // The receiving location sees a pending referral's patient through patient.caller_sees (migration 2300, ruling HEAAA-325), so the
+    // accept path below runs with no staff_scope stand-in for the target location.
+    test('the accept path works for the receiving location with no pre-existing scope there', async () => {
+      const p = await t.mkPatient(n());
+      await t.checkedIn(p);
+      const c = await post(t.coord, `/api/v1/patients/${p.patientId}/referrals`, {
+        fromLocationId: A1,
+        targetKind: 'internal_location',
+        targetLocationId: A2,
+        reason: 'Real path',
+      });
+      const id = String(c.json()['id']);
+      await post(t.coord, `/api/v1/referrals/${id}/send`);
+      const a = await post(t.coordB, `/api/v1/referrals/${id}/accept`);
+      assert.equal(a.status, 200, a.body);
+      assert.equal(a.json()['status'], 'accepted');
+    });
 
     test('draft -> sent -> accepted (internal location): inbox is PHI-minimal; the care relationship appears at the target location only', async () => {
       const p = await t.mkPatient(n());
@@ -404,7 +391,6 @@ describe('clinical front door (BE-18), flows on PostgreSQL 17', () => {
         ).length,
         0,
       );
-      await seedTargetSight(p.patientId);
       const a = await post(t.coordB, `/api/v1/referrals/${id}/accept`);
       assert.equal(a.status, 200, a.body);
       assert.equal(a.json()['status'], 'accepted');
@@ -436,7 +422,6 @@ describe('clinical front door (BE-18), flows on PostgreSQL 17', () => {
       });
       const id = String(c.json()['id']);
       await post(t.coord, `/api/v1/referrals/${id}/send`);
-      await seedTargetSight(p.patientId);
       const self = await post(t.coord, `/api/v1/referrals/${id}/accept`);
       assert.ok(
         [403, 404].includes(self.status),
