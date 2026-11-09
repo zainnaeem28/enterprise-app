@@ -10,6 +10,7 @@ import { after, before, describe, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { KernelDb } from '@ehr/kernel';
 import type { ScopeSettings } from '@ehr/kernel';
+import { isConsentTemplatePublished } from './consent-template-port.js';
 import {
   NeutralNameRequiredError,
   OrganisationService,
@@ -512,6 +513,12 @@ describe('organisation module on PostgreSQL 17 (BE-03)', () => {
           `UPDATE organisation.consent_template SET status = 'published' WHERE id = $1`,
           [id(81)],
         );
+      });
+      // INT03-F02: published in language A only; the probe must not report language B as published
+      await db.withScope(admin, async (tx) => {
+        assert.equal(await isConsentTemplatePublished(tx, 'treatment', 1, 'en'), true);
+        assert.equal(await isConsentTemplatePublished(tx, 'treatment', 1, 'fr'), false);
+        assert.equal(await isConsentTemplatePublished(tx, 'treatment', 2, 'en'), false);
       });
       await rejectsCode(
         db.withScope(admin, (tx) =>

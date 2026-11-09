@@ -5,6 +5,7 @@ import type { JobRegistry, Logger, Queue } from '@ehr/kernel';
 import { AuditService } from './modules/audit/index.js';
 import { NotificationService } from './modules/notifications/index.js';
 import { OrganisationService } from './modules/organisation/index.js';
+import { isConsentTemplatePublished } from './modules/organisation/consent-template-port.js';
 import { PatientRecordsService } from './modules/patient/index.js';
 import { AvailabilitySearch } from './modules/scheduling/availability/index.js';
 import {
@@ -39,15 +40,7 @@ export function buildWorkerPorts(deps: WorkerPortsDeps): {
   const organisation = new OrganisationService();
   const records = new PatientRecordsService({
     audit,
-    consentTemplates: {
-      isPublished: async (tx, key, version) =>
-        (
-          await tx.query(
-            `SELECT 1 FROM organisation.consent_template WHERE key = $1 AND version = $2 AND status = 'published' LIMIT 1`,
-            [key, version],
-          )
-        ).rows.length > 0,
-    },
+    consentTemplates: { isPublished: isConsentTemplatePublished },
     staff: {
       isStaffPrincipal: async (tx, principalId) =>
         (

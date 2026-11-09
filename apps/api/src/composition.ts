@@ -41,6 +41,7 @@ import {
   SchedulingFlowService,
 } from './modules/scheduling/flow/index.js';
 import { createCatalogueControllers, OrganisationService } from './modules/organisation/index.js';
+import { isConsentTemplatePublished } from './modules/organisation/consent-template-port.js';
 import { registerNotificationsParticipants } from './modules/notifications/index.js';
 import { registerSchedulingFlowParticipants } from './modules/scheduling/flow/index.js';
 import { registerTelehealthParticipants } from './modules/telehealth/index.js';
@@ -126,15 +127,7 @@ export function buildComposition(deps: {
     identity,
     limiter: new MemoryRateLimiter(1),
     matchKey: env.matchKey,
-    consentTemplates: {
-      isPublished: async (tx, key, version) =>
-        (
-          await tx.query(
-            `SELECT 1 FROM organisation.consent_template WHERE key = $1 AND version = $2 AND status = 'published' LIMIT 1`,
-            [key, version],
-          )
-        ).rows.length > 0,
-    },
+    consentTemplates: { isPublished: isConsentTemplatePublished },
     staff: {
       isStaffPrincipal: async (tx, principalId) =>
         (
@@ -184,7 +177,7 @@ export function buildComposition(deps: {
       }),
       ...createAvailabilityControllers({ db: deps.db, audit, availability, search }),
       ...createSchedulingControllers({ db: deps.db, scheduling: core }),
-      ...createFlowControllers({ db: deps.db, flow }),
+      ...createFlowControllers({ db: deps.db, flow, limiter: new MemoryRateLimiter(1) }),
     ],
   };
 }
