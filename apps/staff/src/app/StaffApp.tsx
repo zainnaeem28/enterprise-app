@@ -19,6 +19,11 @@ import {
   useStaffSession,
 } from '../features/auth/index.js';
 import { DoctorPortal, isDoctorPath } from '../features/doctor/index.js';
+import { PreconsultDesk, isPreconsultPath } from '../features/preconsult/index.js';
+import { MessagesPortal, isMessagesPath } from '../features/messages/index.js';
+import { AvailabilityPortal, isAvailabilityPath } from '../features/availability/index.js';
+import { DocumentsPage } from '../features/documents/index.js';
+import { workspace } from '../features/doctor/workspace.js';
 import { useLocation } from './router.js';
 
 const PRODUCT = 'Clinic';
@@ -173,8 +178,29 @@ function Gate({
           </Banner>
         ) : path === '/' ? (
           <Home first={(first ?? firstItem).path} navigate={navigate} />
+        ) : current !== undefined && isMessagesPath(path) ? (
+          <MessagesPortal runtime={runtime} />
+        ) : current !== undefined && isAvailabilityPath(path) ? (
+          <AvailabilityPortal runtime={runtime} />
+        ) : current !== undefined && isPreconsultPath(path) ? (
+          <PreconsultDesk
+            runtime={runtime}
+            path={path}
+            navigate={(p) => navigate(p)}
+            openChart={(patientId) => {
+              workspace.set({ patientId, label: 'Patient' });
+              navigate('/patients');
+            }}
+          />
         ) : current !== undefined && isDoctorPath(path) ? (
-          <DoctorPortal runtime={runtime} path={path} navigate={(p) => navigate(p)} />
+          <DoctorPortal
+            runtime={runtime}
+            path={path}
+            navigate={(p) => navigate(p)}
+            renderDocuments={(patientId, permissions) => (
+              <DocumentsPage runtime={runtime} patientId={patientId} permissions={permissions} />
+            )}
+          />
         ) : current !== undefined ? (
           <NotAvailable label={current.label} />
         ) : (

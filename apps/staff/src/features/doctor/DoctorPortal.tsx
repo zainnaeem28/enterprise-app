@@ -36,6 +36,7 @@ export function DoctorPortal({
   navigate,
   video,
   stream = defaultStream,
+  renderDocuments,
 }: {
   runtime: Pick<ShellRuntime, 'api'>;
   path: DoctorPath;
@@ -44,6 +45,8 @@ export function DoctorPortal({
   video?: VideoAdapter;
   /** Seam for tests: the live stream. */
   stream?: StreamFactory;
+  /** Patient documents panel for the open chart, supplied by the app (documents feature). */
+  renderDocuments?: (patientId: string, permissions: readonly string[]) => React.ReactNode;
 }) {
   const sessionLoad = useDoctorSession(runtime);
   const api = useMemo(() => createDoctorApi(runtime.api), [runtime.api]);
@@ -83,7 +86,13 @@ export function DoctorPortal({
         ) : (
           <Schedule locationIds={ready.locationIds} />
         ))}
-      {path === '/patients' && <Patients />}
+      {path === '/patients' && (
+        <Patients
+          {...(renderDocuments === undefined
+            ? {}
+            : { documents: (id: string) => renderDocuments(id, ready.permissions) })}
+        />
+      )}
       {path === '/alerts' &&
         (canAlerts ? (
           <AlertsScreen model={alerts} />
@@ -95,7 +104,7 @@ export function DoctorPortal({
   );
 }
 
-function Patients() {
+function Patients({ documents }: { documents?: (patientId: string) => React.ReactNode }) {
   const open = useOpen();
   const known = useKnownNotes();
   const [banner, setBanner] = useState<BannerData | null>(null);
@@ -126,6 +135,9 @@ function Patients() {
         </Button>
       </div>
       <Chart key={key} patientId={open.patientId} onBanner={setBanner} />
+      {documents !== undefined && (
+        <section aria-label="Patient documents">{documents(open.patientId)}</section>
+      )}
       {patient !== null &&
         (open.visit?.mode === 'video' ? (
           <VideoNotes

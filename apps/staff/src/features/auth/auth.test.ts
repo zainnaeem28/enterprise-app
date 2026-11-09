@@ -13,6 +13,7 @@ describe('role navigation follows UI-UX 3.2', () => {
         'Patients',
         'Tasks & messages',
         'Notes to sign',
+        'Availability',
       ]);
   });
   it('front-desk, triage and coordination roles get the Pre-consultation map', () => {
@@ -32,7 +33,7 @@ describe('role navigation follows UI-UX 3.2', () => {
       ]);
   });
   it('a person with both kinds of role gets both maps once', () => {
-    expect(navigationFor(['front_desk', 'doctor', 'triage_nurse'])).toHaveLength(10);
+    expect(navigationFor(['front_desk', 'doctor', 'triage_nurse'])).toHaveLength(11);
   });
   it('admin-realm and unknown roles get nothing', () => {
     expect(navigationFor(['org_admin', 'compliance_officer', 'made_up'])).toEqual([]);
@@ -40,7 +41,7 @@ describe('role navigation follows UI-UX 3.2', () => {
   });
   it('offers no R2/R3 item and no path carries an identifier', () => {
     const all = [...surfaces.doctor, ...surfaces.preconsult];
-    expect(all.map((i) => i.label.toLowerCase()).join()).not.toMatch(/prescription|result|lab/);
+    expect(all.map((i) => i.label.toLowerCase()).join()).not.toMatch(/prescription|result|\blab\b/);
     for (const i of all) expect(i.path).toMatch(/^\/[a-z-]+$/);
   });
 });

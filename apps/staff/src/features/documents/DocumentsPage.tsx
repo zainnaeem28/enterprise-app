@@ -4,7 +4,7 @@ import {
   createDocumentsApi,
 } from '../../../../../packages/app-shell/src/documents/index.js';
 import type { DocumentPermissions } from '../../../../../packages/app-shell/src/documents/index.js';
-import type { Runtime } from '../../runtime.js';
+import type { ShellRuntime } from '@ehr/app-shell';
 
 /**
  * Staff documents for one patient (J-19, SH-01, SH-02). Permissions come from the session (`documents.read`,
@@ -15,7 +15,7 @@ export function DocumentsPage({
   patientId,
   permissions,
 }: {
-  runtime: Runtime;
+  runtime: Pick<ShellRuntime, 'api'>;
   patientId: string;
   permissions: readonly string[];
 }) {

@@ -1,0 +1,3 @@
+$ tsc -p tsconfig.json --noEmit
+ Test Files  12 passed (12)
+      Tests  160 passed (160)

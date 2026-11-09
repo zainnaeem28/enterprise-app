@@ -26,6 +26,7 @@ const doctor: readonly NavItem[] = [
   { id: 'patients', label: 'Patients', path: '/patients' },
   { id: 'tasks', label: 'Tasks & messages', path: '/tasks' },
   { id: 'notes', label: 'Notes to sign', path: '/notes-to-sign' },
+  { id: 'availability', label: 'Availability', path: '/availability' },
 ];
 
 export const surfaces: Record<Surface, readonly NavItem[]> = { preconsult, doctor };

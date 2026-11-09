@@ -138,7 +138,14 @@ describe('session gate and role navigation', () => {
       within(wide)
         .getAllByRole('link')
         .map((a) => a.textContent),
-    ).toEqual(['Alerts', 'Schedule', 'Patients', 'Tasks & messages', 'Notes to sign']);
+    ).toEqual([
+      'Alerts',
+      'Schedule',
+      'Patients',
+      'Tasks & messages',
+      'Notes to sign',
+      'Availability',
+    ]);
     // Phone bar is Alerts · Schedule · Patients · More (UI-UX 3.2)
     const phone = within(nav).getAllByRole('list')[1]!;
     expect(
