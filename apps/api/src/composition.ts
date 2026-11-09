@@ -32,6 +32,7 @@ import {
   AlertService,
   ALERT_JOBS,
   createAlertsController,
+  registerComplianceAlertHandlers,
 } from './modules/notifications/alerts/index.js';
 import { createTargetResolver } from './alert-target-resolver.js';
 import { createAlertStreamController, StreamHub } from './modules/notifications/stream/index.js';
@@ -165,6 +166,7 @@ export function buildComposition(deps: {
   registerSchedulingFlowHandlers(registry);
   registerFrontdoorHandlers(registry);
   registerMessagingHandlers(registry);
+  registerComplianceAlertHandlers(registry);
   const queue = new Queue(registry, 'api');
   const audit = new AuditService({ logger: deps.logger, queue });
   const organisation = new OrganisationService();

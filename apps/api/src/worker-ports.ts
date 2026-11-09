@@ -9,7 +9,12 @@ import {
   TriageService,
 } from './modules/clinical/frontdoor/index.js';
 import { NoteReminderService, runNoteSignReminder } from './modules/clinical/notes/index.js';
-import { AlertService, escalateAlert } from './modules/notifications/alerts/index.js';
+import { createTargetResolver } from './alert-target-resolver.js';
+import {
+  AlertService,
+  escalateAlert,
+  registerComplianceAlertHandlers,
+} from './modules/notifications/alerts/index.js';
 import { registerMessagingHandlers, runOnCorrectionRequested } from './modules/messaging/index.js';
 import { assembleExport } from './modules/privacy/index.js';
 import { executeMerge } from './modules/patient/index.js';
@@ -55,6 +60,7 @@ export function buildWorkerPorts(deps: WorkerPortsDeps) {
   registerTelehealthHandlers(deps.registry);
   registerFrontdoorHandlers(deps.registry);
   registerMessagingHandlers(deps.registry);
+  registerComplianceAlertHandlers(deps.registry);
   // One explicit registry object for the jobs that run here (merge executor, export assembly): the same registration site as the
   // API process and the dbtests (INT03-F04), and no dependence on the process-wide default being filled (INT03-F13, D-F13-5).
   const registries = newRegisteredRegistries();
@@ -90,7 +96,7 @@ export function buildWorkerPorts(deps: WorkerPortsDeps) {
     ...(deps.now === undefined ? {} : { now: deps.now }),
   });
   // Milestone M4 handlers. The re-target needs only the roster and the alert service; the ports it never calls refuse.
-  const alerts = new AlertService({ queue: deps.queue, audit });
+  const alerts = new AlertService({ queue: deps.queue, audit, resolver: createTargetResolver() });
   const unused = (port: string): never =>
     new Proxy({} as never, {
       get: (_t, prop) => (): Promise<never> =>
@@ -132,6 +138,30 @@ export function buildWorkerPorts(deps: WorkerPortsDeps) {
     alerts: {
       escalateAlert: (tx: Tx, payload: { alertId: string; level: number }, jobId: string) =>
         escalateAlert(tx, deps.queue, payload, { jobId, audit }),
+    },
+    complianceAlerts: {
+      raise: (
+        tx: Tx,
+        input: {
+          type: 'btg_opened' | 'privileged_change' | 'kill_switch_used' | 'audit_anchor_mismatch';
+          severity: 'low' | 'medium' | 'high' | 'critical';
+          resourceType: string;
+          resourceId: string;
+          permission: string;
+        },
+        jobId: string,
+      ) =>
+        alerts.raise(
+          tx,
+          {
+            type: input.type,
+            severity: input.severity,
+            targets: { kind: 'compliance_permission', permission: input.permission },
+            resourceType: input.resourceType,
+            resourceId: input.resourceId,
+          },
+          { jobId },
+        ),
     },
     messaging: {
       onCorrectionRequested: (payload: Record<string, unknown>, jobId: string) =>

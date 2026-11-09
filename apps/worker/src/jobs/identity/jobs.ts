@@ -29,6 +29,30 @@ export const IDENTITY_JOBS: readonly JobType[] = [
   },
 ];
 
+/** Admin realm event job (ARCHITECTURE 26.3 B2-9). Keep apps/api/src/modules/identity/admin/jobs.ts in step (a test compares them). */
+export const IDENTITY_ADMIN_JOBS: readonly JobType[] = [
+  {
+    name: 'identity.admin_event',
+    maxAttempts: 8,
+    onMerged: 'none',
+    carriesPatientIds: false,
+    jobScope: 'org',
+    jobClass: 'job',
+  },
+];
+
+export const ADMIN_EVENT_KINDS = [
+  'credential_enrolled',
+  'credential_revoked',
+  'counter_regression',
+  'enrolment_token_requested',
+  'enrolment_token_approved',
+  'role_change_requested',
+  'role_change_decided',
+  'handle_failures',
+] as const;
+export type AdminEventKind = (typeof ADMIN_EVENT_KINDS)[number];
+
 /** Events this module publishes (24). Handlers register in the notifications module (BE-06). */
 export const IDENTITY_EVENTS = ['identity.principal_bound'] as const;
 

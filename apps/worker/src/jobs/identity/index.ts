@@ -4,11 +4,27 @@
 import type { Task } from 'graphile-worker';
 import type { JobRegistry, KernelDb, Queue } from '@ehr/kernel';
 import { runApplyReferenceData } from './apply-reference-data.js';
+import { runAdminEvent, type AdminEventDeps } from './admin-events.js';
 import { IDENTITY_JOBS } from './jobs.js';
+import { jobUuid } from '../messaging/index.js';
 import { runPurgeSessions } from './purge-sessions.js';
 import { runRecordSignIn } from './record-sign-in.js';
 
-export { IDENTITY_CRONTAB, IDENTITY_EVENTS, IDENTITY_JOBS } from './jobs.js';
+export {
+  ADMIN_EVENT_KINDS,
+  IDENTITY_ADMIN_JOBS,
+  IDENTITY_CRONTAB,
+  IDENTITY_EVENTS,
+  IDENTITY_JOBS,
+} from './jobs.js';
+export { runAdminEvent, COMPLIANCE_PERMISSION, MIN_ACTIVE_CREDENTIALS } from './admin-events.js';
+export type {
+  AdminEventDeps,
+  ComplianceAlertInput,
+  ComplianceAlertPort,
+  SecurityNotice,
+  SecurityNoticePort,
+} from './admin-events.js';
 export {
   expandRole,
   expandedMapping,
@@ -30,6 +46,8 @@ export interface IdentityTaskDeps {
   /** Worker-path queue (`new Queue(registry, 'worker')`). */
   queue: Queue;
   workspaceDomain?: string;
+  /** Ports of `identity.admin_event` (alert and security-contact notice). Absent: the handler refuses, so the job retries and dead-letters. */
+  adminEvents?: Pick<AdminEventDeps, 'alerts' | 'notice'>;
 }
 
 export function createIdentityTasks(deps: IdentityTaskDeps): Record<string, Task> {
@@ -44,6 +62,17 @@ export function createIdentityTasks(deps: IdentityTaskDeps): Record<string, Task
         },
         payload as Record<string, unknown>,
         String(helpers.job.id),
+      );
+    },
+    'identity.admin_event': async (payload, helpers) => {
+      if (deps.adminEvents === undefined)
+        throw new Error('identity.admin_event: alert and notice ports are not configured');
+      const key = (helpers.job as { key?: string | null }).key;
+      await runAdminEvent(
+        { db: deps.db, orgId: deps.orgId, ...deps.adminEvents },
+        payload as Record<string, unknown>,
+        jobUuid('identity.admin_event', String(helpers.job.id)),
+        `identity.admin_event:${key ?? String(helpers.job.id)}`,
       );
     },
     'identity.apply_reference_data': async (_payload, helpers) => {

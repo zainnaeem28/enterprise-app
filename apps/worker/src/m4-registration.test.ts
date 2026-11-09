@@ -59,12 +59,14 @@ test('negative control: a table without the M4 handlers reports them unhandled',
   assert.deepEqual(unhandledJobTypes(registry, without).sort(), [...M4].sort());
 });
 
-test('the crontab holds the privacy expiry and the operations refresh, each with a handler', () => {
+test('the crontab holds the privacy expiry, the operations refresh and the audit anchor jobs, each with a handler (SEC05-F01)', () => {
   const { tasks } = table();
   const entries = WORKER_CRONTAB.split('\n');
   assert.deepEqual(entries, [
     '50 3 * * * privacy/expire_packages',
     '* * * * * reporting/refresh_ops',
+    '* * * * * audit/anchor',
+    '10 3 * * * audit/verify_anchors',
   ]);
   for (const e of entries)
     assert.equal(typeof tasks[fromCrontabTaskId(e.split(/\s+/)[5] as string)], 'function', e);
@@ -73,7 +75,7 @@ test('the crontab holds the privacy expiry and the operations refresh, each with
 test('INT03-F11: graphile-worker parseCrontab accepts WORKER_CRONTAB and every entry maps to a registered task', () => {
   const { registry, tasks } = table();
   const items = parseCrontab(WORKER_CRONTAB);
-  assert.equal(items.length, 2);
+  assert.equal(items.length, 4);
   const registered = registry.list().map((j) => j.name);
   for (const item of items) {
     const name = fromCrontabTaskId(item.task);
@@ -105,7 +107,17 @@ const API_JOB_LISTS: [string, string, readonly string[]][] = [
   ['clinical/chart/jobs.js', 'CLINICAL_CHART_JOBS', ['clinical.terminology_load']],
   ['clinical/frontdoor/jobs.js', 'FRONTDOOR_JOBS', ['clinical.on_alert_unacknowledged']],
   ['clinical/notes/jobs.js', 'NOTES_JOBS', ['clinical.note_sign_reminder']],
-  ['notifications/alerts/jobs.js', 'ALERT_JOBS', ['notifications.escalate_alert']],
+  [
+    'notifications/alerts/jobs.js',
+    'ALERT_JOBS',
+    [
+      'notifications.escalate_alert',
+      'notifications.on_btg_opened',
+      'notifications.on_anchor_mismatch',
+      'notifications.on_kill_switch_used',
+    ],
+  ],
+  ['identity/admin/jobs.js', 'IDENTITY_ADMIN_JOBS', ['identity.admin_event']],
   ['messaging/jobs.js', 'MESSAGING_JOBS', ['messaging.on_correction_requested']],
   [
     'privacy/jobs.js',
@@ -128,6 +140,35 @@ for (const [file, exportName, names] of API_JOB_LISTS)
     const mine = WORKER_JOBS.filter((j) => names.includes(j.name));
     assert.deepEqual(mine, [...api]);
   });
+
+test('every event the API or the worker publishes has at least one handler registered (SEC05-F03)', () => {
+  const { registry } = table();
+  for (const e of ['audit.btg_opened', 'audit.anchor_mismatch', 'identity.kill_switch_used'])
+    assert.deepEqual(registry.handlersOf(e), ['notifications'], e);
+  for (const j of WORKER_JOBS.filter((x) => x.jobClass === 'handler'))
+    assert.ok(
+      registry.list().some((x) => x.name === j.name),
+      j.name,
+    );
+});
+
+test('every admin job is registered with a handler in the composed table (INT04-F02)', () => {
+  const { registry, tasks } = table();
+  for (const n of [
+    'identity.admin_event',
+    'audit.anchor',
+    'audit.verify_anchors',
+    'audit.export',
+    'integration_core.apply_secret',
+    'notifications.on_btg_opened',
+    'notifications.on_anchor_mismatch',
+    'notifications.on_kill_switch_used',
+  ]) {
+    if (!registry.list().some((j) => j.name === n)) continue;
+    assert.equal(typeof tasks[n], 'function', n);
+  }
+  assert.deepEqual(unhandledJobTypes(registry, tasks), []);
+});
 
 test('every job type the API path may publish exists in the worker registry, with the same definition (F01-R1)', async () => {
   const url = pathToFileURL(

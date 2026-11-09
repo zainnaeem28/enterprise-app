@@ -17,7 +17,8 @@ import { closureOf, createPrivacyTasks, documentsLegalHolds } from './jobs/priva
 import type { PackageWriter, WorkerPackageStore } from './jobs/privacy/index.js';
 import { createReportingTasks } from './jobs/reporting/index.js';
 import type { ReportingWorkerPort } from './jobs/reporting/index.js';
-import { createAuditTasks } from './jobs/audit/index.js';
+import { createAuditTasks, emfMetricSink } from './jobs/audit/index.js';
+import type { MetricSink } from './jobs/audit/index.js';
 import type { ExportSink } from './jobs/audit/index.js';
 import { createCalendarSyncTasks, registerGooglePushHandler } from './jobs/calendar-sync/index.js';
 import type { CalendarJobDeps } from './jobs/calendar-sync/index.js';
@@ -27,6 +28,8 @@ import {
   type WorkerObjectStore,
 } from './jobs/documents/index.js';
 import { createIdentityTasks } from './jobs/identity/index.js';
+import type { ComplianceAlertPort, SecurityNoticePort } from './jobs/identity/index.js';
+import { createComplianceAlertTasks } from './jobs/notifications/compliance-alerts.js';
 import {
   AdapterRegistry,
   createIntegrationCoreTasks,
@@ -82,6 +85,8 @@ export interface ApiPorts {
   clinical: ClinicalWorkerPort;
   messaging: MessagingWorkerPort;
   alerts: AlertWorkerPort;
+  /** `AlertService.raise` under system scope with the admin-realm target resolver (SEC05-F03). */
+  complianceAlerts: ComplianceAlertPort;
   reporting: ReportingWorkerPort;
   /** `patient.execute_merge`: the API's `executeMerge` with every participant registered (INT03-F13). */
   executeMerge(
@@ -116,6 +121,10 @@ export interface ComposeOptions {
     /** Privacy package store with write access (bucket and KMS key, C-01). */
     packageWriter?: PackageWriter;
     packageStore?: WorkerPackageStore;
+    /** The PHI-free notice to the security contact mailbox (B2-9); no mail channel is provisioned yet, so it defaults to refusing. */
+    securityNotice?: SecurityNoticePort;
+    /** Receives gauges such as `AuditAnchorLateSeconds`; defaults to a CloudWatch EMF line on stdout. */
+    metrics?: MetricSink;
   };
 }
 
@@ -196,7 +205,16 @@ export function composeTasks(opts: ComposeOptions & { queue: Queue }): TaskTable
   registerGooglePushHandler(inbound, calendar);
 
   const tasks: Record<string, Task> = {
-    ...createIdentityTasks({ db, orgId, queue }),
+    ...createIdentityTasks({
+      db,
+      orgId,
+      queue,
+      adminEvents: {
+        alerts:
+          opts.api?.complianceAlerts ?? refusingPort<ComplianceAlertPort>('compliance_alerts'),
+        notice: infra.securityNotice ?? refusingPort<SecurityNoticePort>('security_notice'),
+      },
+    }),
     ...createPatientTasks({
       db,
       orgId,
@@ -210,6 +228,7 @@ export function composeTasks(opts: ComposeOptions & { queue: Queue }): TaskTable
       orgId,
       log,
       sink: infra.exportSink ?? refusingPort<ExportSink>('audit_export_sink'),
+      metrics: infra.metrics ?? emfMetricSink(),
     }),
     ...createSchedulingFlowTasks({
       db,
@@ -278,6 +297,11 @@ export function composeTasks(opts: ComposeOptions & { queue: Queue }): TaskTable
       db,
       orgId,
       clinical: opts.api?.clinical ?? refusingPort<ClinicalWorkerPort>('clinical'),
+    }),
+    ...createComplianceAlertTasks({
+      db,
+      orgId,
+      alerts: opts.api?.complianceAlerts ?? refusingPort<ComplianceAlertPort>('compliance_alerts'),
     }),
     ...createAlertTasks({
       db,

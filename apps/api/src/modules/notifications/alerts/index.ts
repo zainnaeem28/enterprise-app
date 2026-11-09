@@ -8,7 +8,14 @@ export type { EscalationOutcome, EscalationPayload } from './escalate.js';
 export { createAlertsController } from './controller.js';
 export type { AlertsControllerDeps } from './controller.js';
 export { AlertClosedError } from './errors.js';
-export { ALERT_EVENTS, ALERT_JOBS, ALERT_UNACKNOWLEDGED, ESCALATION_LEVEL } from './jobs.js';
+export {
+  ALERT_EVENTS,
+  ALERT_JOBS,
+  ALERT_UNACKNOWLEDGED,
+  COMPLIANCE_ALERT_EVENTS,
+  ESCALATION_LEVEL,
+  registerComplianceAlertHandlers,
+} from './jobs.js';
 export {
   ALERT_CONFLICT_RULES,
   ALERT_MERGE_TABLES,
