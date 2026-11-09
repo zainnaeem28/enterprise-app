@@ -48,11 +48,12 @@ describe('TC-BK rooms, leakage, merge', () => {
       entries.map((e) => desk.client.put(`/api/v1/appointments/${e.id}/assignment`, { roomId: ROOM_A }, { headers: { 'if-match': W(e.version) } })),
     );
     t.diagnostic(`assignment statuses: ${res.map((r) => r.status + ':' + (r.json?.code ?? 'ok')).join(', ')}`);
+    const n = await sql(`SELECT count(*)::int c FROM scheduling.queue_entry WHERE room_id = $1 AND id = ANY($2::uuid[])`, [ROOM_A, entries.map((x) => x.id)]);
+    t.diagnostic(`queue entries holding the room (all three share one start time): ${n.rows[0].c}`);
     assert.ok(res.every((r) => r.status < 500), 'no server error');
     assert.equal(res.filter((r) => r.status === 200).length, 1, 'exactly one assignment succeeds');
     assert.ok(res.filter((r) => r.status !== 200).every((r) => r.status === 409 && r.json.code === 'scheduling.slot_taken'), 'the others get slot_taken');
-    const n = await sql(`SELECT count(*)::int c FROM scheduling.slot_occupancy WHERE room_id = $1 AND lower(period) = $2::timestamptz AND status IN ('held','confirmed','checked_in')`, [ROOM_A, start]);
-    assert.equal(n.rows[0].c, 1, 'one occupancy holds the room');
+    assert.equal(n.rows[0].c, 1, 'one visit holds the room');
   });
 
   it('TC-BK-18 slot search and /public/v1 show no identifiers of other patients, reservations or rooms', async () => {
