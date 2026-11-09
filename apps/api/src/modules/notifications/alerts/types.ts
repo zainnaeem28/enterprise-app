@@ -92,3 +92,6 @@ export interface TargetResolver {
 
 /** `link` is a portal path with IDs only (32.1); the detail is read through the normal audited routes. */
 export const alertLink = (alertId: string): string => `/alerts/${alertId}`;
+
+/** The realms that read and acknowledge alerts: staff, and the admin pool for the compliance alerts (ARCHITECTURE 32.2 point 1). */
+export const ALERT_REALMS = ['google', 'admin_pool'] as const;

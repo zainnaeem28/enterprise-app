@@ -12,7 +12,8 @@ export interface RouteDeclaration {
   /** Names how the resource's patient/location/organisation is found; `none` when the route has no resource. */
   resolver: string;
   elevation?: boolean;
-  realm?: Realm;
+  /** One realm, or the list of realms a route accepts (e.g. the alert routes: staff and admin). */
+  realm?: Realm | readonly Realm[];
   /** Release-contract exemption (28.6). Closed list; decided from the route template, never from a header. */
   releaseExempt?: boolean;
   /** Request class for limits and rate limits (31.2, 31.3). Default: read for GET/HEAD, write otherwise. */

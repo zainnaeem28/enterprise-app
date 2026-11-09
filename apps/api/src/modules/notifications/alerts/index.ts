@@ -15,7 +15,13 @@ export {
   alertExportContributor,
   repointAlertRows,
 } from './merge.js';
-export { ALERT_SEVERITIES, ALERT_TYPES, PATIENT_ALERT_TYPES, alertLink } from './types.js';
+export {
+  ALERT_REALMS,
+  ALERT_SEVERITIES,
+  ALERT_TYPES,
+  PATIENT_ALERT_TYPES,
+  alertLink,
+} from './types.js';
 export type {
   AcknowledgeResult,
   AlertSeverity,

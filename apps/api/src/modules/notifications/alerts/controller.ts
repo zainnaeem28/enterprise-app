@@ -16,6 +16,7 @@ import { ApiError } from '../../../platform/errors.js';
 import type { Req, Res } from '../../../platform/http.js';
 import { Route } from '../../../platform/route.js';
 import { NotificationsError } from '../errors.js';
+import { ALERT_REALMS } from './types.js';
 import type { AlertService } from './service.js';
 
 export interface AlertsControllerDeps {
@@ -41,7 +42,7 @@ export function createAlertsController(d: AlertsControllerDeps): Type<unknown> {
   @Controller('api/v1/alerts')
   class AlertsController {
     @Get()
-    @Route({ permission: 'notifications.alert.read', resolver: 'none' })
+    @Route({ permission: 'notifications.alert.read', resolver: 'none', realm: [...ALERT_REALMS] })
     async list(@ReqParam() req: Req): Promise<unknown> {
       const limit = one(req.query['limit']);
       try {
@@ -66,7 +67,7 @@ export function createAlertsController(d: AlertsControllerDeps): Type<unknown> {
 
     // Passive (26.2): the 60 s background poll. It never extends the idle timer (the guard decides that from the route template).
     @Get('open-ids')
-    @Route({ permission: 'notifications.alert.read', resolver: 'none' })
+    @Route({ permission: 'notifications.alert.read', resolver: 'none', realm: [...ALERT_REALMS] })
     async openIds(@ReqParam() req: Req): Promise<unknown> {
       try {
         return await d.db.withScope(d.scopeOf(req), (tx) => d.alerts.openIds(tx), {
@@ -78,7 +79,11 @@ export function createAlertsController(d: AlertsControllerDeps): Type<unknown> {
     }
 
     @Post(':id/acknowledge')
-    @Route({ permission: 'notifications.alert.acknowledge', resolver: 'none' })
+    @Route({
+      permission: 'notifications.alert.acknowledge',
+      resolver: 'none',
+      realm: [...ALERT_REALMS],
+    })
     async acknowledge(
       @ReqParam() req: Req,
       @ResParam({ passthrough: true }) res: Res,

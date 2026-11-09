@@ -9,7 +9,7 @@ import { ApiError } from '../../platform/errors.js';
 import type { GuardPolicy } from '../../platform/guard.js';
 import type { Req, Res } from '../../platform/http.js';
 import { PATIENT_REALM, PUBLIC } from '../../platform/permissions.js';
-import type { RouteDeclaration } from '../../platform/route.js';
+import type { Realm, RouteDeclaration } from '../../platform/route.js';
 import { ASSIGNMENT_BOUND_PERMISSIONS } from './assignment.js';
 import type { AssignmentResolver } from './assignment.js';
 import { ForbiddenError, UnauthenticatedError } from './errors.js';
@@ -91,22 +91,25 @@ export const requireAuthContext = (req: Req): AuthContext => {
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
-function expectedRealm(decl: RouteDeclaration, path: string): PrincipalRealm | undefined {
-  switch (decl.realm) {
-    case 'google':
-    case 'admin_pool':
-      return decl.realm;
-    case 'patient':
-      return 'patient_pool';
-    case 'partner':
-      return 'partner_pool';
-    case 'none':
-      return undefined;
-    case undefined:
-      break;
-  }
-  if ((PATIENT_REALM as readonly string[]).includes(decl.permission)) return 'patient_pool';
-  return /^\/api\/v1\/admin(\/|$)/.test(path) ? 'admin_pool' : 'google';
+const REALM_OF: Record<Exclude<Realm, 'none'>, PrincipalRealm> = {
+  google: 'google',
+  admin_pool: 'admin_pool',
+  patient: 'patient_pool',
+  partner: 'partner_pool',
+};
+
+/** The realms a route accepts; undefined means any. An empty list fails closed (no realm matches). */
+function expectedRealms(
+  decl: RouteDeclaration,
+  path: string,
+): readonly PrincipalRealm[] | undefined {
+  const d = decl.realm;
+  if (Array.isArray(d))
+    return (d as readonly Realm[]).flatMap((r) => (r === 'none' ? [] : [REALM_OF[r]]));
+  if (d === 'none') return undefined;
+  if (d !== undefined) return [REALM_OF[d as Exclude<Realm, 'none'>]];
+  if ((PATIENT_REALM as readonly string[]).includes(decl.permission)) return ['patient_pool'];
+  return [/^\/api\/v1\/admin(\/|$)/.test(path) ? 'admin_pool' : 'google'];
 }
 
 export class IdentityGuardPolicy implements GuardPolicy {
@@ -129,8 +132,8 @@ export class IdentityGuardPolicy implements GuardPolicy {
     contexts.set(req, ctx);
     (req as Req & { res?: Res }).res?.setHeader(IDLE_HEADER, ctx.idleExpiresAt.toISOString());
 
-    const realm = expectedRealm(decl, req.path);
-    if (realm !== undefined && ctx.session.realm !== realm)
+    const realms = expectedRealms(decl, req.path);
+    if (realms !== undefined && !realms.includes(ctx.session.realm))
       return this.deny(req, ctx, decl, 'forbidden');
     if (decl.permission === PUBLIC) return; // any session ('session' resolver)
 

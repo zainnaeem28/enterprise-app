@@ -15,6 +15,7 @@ import { APP_FILTER, APP_GUARD, NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { createLogger, Queue, syncTaskTypes } from '@ehr/kernel';
 import type { ScopeSettings } from '@ehr/kernel';
+import { createTargetResolver } from '../../../alert-target-resolver.js';
 import { clientReleaseMiddleware } from '../../../platform/client-release.js';
 import { errorMiddleware, LOGGER, ProblemFilter } from '../../../platform/filter.js';
 import { GUARD_POLICY, RouteGuard } from '../../../platform/guard.js';
@@ -921,6 +922,81 @@ describe('staff alerts and the alert stream on PostgreSQL 17 (BE-07)', () => {
       assert.equal(res.alreadyAcknowledged, false);
       assert.equal(res.acknowledgedBy, compliance.principalId);
       await k.wdb.withScope(system, (tx) => svcW.close(tx, ok.alertId));
+    });
+
+    test('INT04-F10-D: the real resolver and the realm rule: admin_pool holders only, actor excluded, admin_pool and google sessions on the routes, other realms refused', async () => {
+      const real = new AlertService({
+        queue: new Queue(k.registry, 'api'),
+        resolver: createTargetResolver(),
+      });
+      const other = await seedPrincipal(k, 'admin_pool', { email: 'compliance2@example.com' });
+      await assignRole(k, other.principalId, 'compliance_officer');
+      const disabled = await seedPrincipal(k, 'admin_pool', {
+        email: 'compliance3@example.com',
+        status: 'disabled',
+      });
+      await assignRole(k, disabled.principalId, 'compliance_on_call');
+      const targets = { kind: 'compliance_permission', permission: 'audit.btg.review' } as const;
+      const raise = (scope: ScopeSettings) =>
+        k.wdb.withScope(scope, (tx) =>
+          real.raise(tx, {
+            type: 'btg_opened',
+            severity: 'high',
+            targets,
+            resourceType: 'btg_grant',
+            resourceId: RES,
+          }),
+        );
+      // Under the worker (no actor): every active admin_pool holder of the permission, and no google principal.
+      const a = await raise(system);
+      assert.deepEqual(
+        a.targetPrincipalIds,
+        [compliance.principalId, other.principalId].sort(),
+        'active admin_pool holders only (not the disabled one, not a google staff member)',
+      );
+      const row = await q<{ patient_id: string | null }>(
+        `SELECT patient_id FROM notifications.staff_alert WHERE id = $1`,
+        [a.alertId],
+      );
+      assert.equal(row[0]?.patient_id, null, 'an admin alert never carries a patient');
+      // The actor is excluded.
+      const b = await raise({ ...system, principalId: other.principalId });
+      assert.deepEqual(b.targetPrincipalIds, [compliance.principalId]);
+      // A role target resolves google holders at the location only.
+      const c = await k.wdb.withScope(system, (tx) =>
+        createTargetResolver().roleHolders(tx, 'front_desk', [L1]),
+      );
+      assert.deepEqual(c.sort(), [dr1, dr2, oncall, desk].map((p) => p.principalId).sort());
+
+      // The routes accept admin_pool and google; patient sessions and the other realms are refused.
+      const sAdmin = await seedSession(k, compliance, 'admin_pool');
+      const list = await getH(sAdmin, '/api/v1/alerts?status=open');
+      assert.equal(list.status, 200, list.body);
+      const items = list.json()['items'] as { alertId: string; patientId: string | null }[];
+      const mine = items.find((i) => i.alertId === a.alertId);
+      assert.ok(mine);
+      assert.equal(mine.patientId, null);
+      assert.equal((await getH(sAdmin, '/api/v1/alerts/open-ids')).status, 200);
+      const ok = await ack(sAdmin, a.alertId);
+      assert.equal(ok.status, 200, ok.body);
+      assert.equal(ok.json()['acknowledgedBy'], compliance.principalId);
+      const stream = await openStream(base, { cookie: sAdmin.cookie });
+      assert.equal(stream.status, 200);
+      stream.destroy();
+      assert.equal((await getH(sDr1, '/api/v1/alerts')).status, 200, 'google still accepted');
+
+      const patient = await seedPrincipal(k, 'patient_pool', { email: 'pp@example.com' });
+      const sPatient = await seedSession(k, patient, 'patient_pool');
+      for (const path of ['/api/v1/alerts', '/api/v1/alerts/open-ids']) {
+        const r = await getH(sPatient, path);
+        assert.equal(r.status, 403, `patient session ${path}`);
+      }
+      assert.equal((await ack(sPatient, a.alertId)).status, 403);
+      assert.equal((await openStream(base, { cookie: sPatient.cookie })).status, 403);
+      await k.wdb.withScope(system, async (tx) => {
+        await real.close(tx, a.alertId);
+        await real.close(tx, b.alertId);
+      });
     });
   });
 

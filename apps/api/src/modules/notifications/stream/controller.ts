@@ -7,6 +7,7 @@ import type { Type } from '@nestjs/common';
 import type { Req } from '../../../platform/http.js';
 import { Route } from '../../../platform/route.js';
 import type { StreamHub, StreamIdentity, StreamResponse } from './hub.js';
+import { ALERT_REALMS } from '../alerts/types.js';
 
 /** Maps the authenticated request to the stream identity (identity's `requireAuthContext` in the composition root). */
 export type IdentityOf = (req: Req) => StreamIdentity;
@@ -15,7 +16,12 @@ export function createAlertStreamController(hub: StreamHub, identityOf: Identity
   @Controller('api/v1/alerts')
   class AlertStreamController {
     @Get('stream')
-    @Route({ permission: 'notifications.alert.read', resolver: 'none', routeClass: 'stream' })
+    @Route({
+      permission: 'notifications.alert.read',
+      resolver: 'none',
+      realm: [...ALERT_REALMS],
+      routeClass: 'stream',
+    })
     async stream(@ReqParam() req: Req, @ResParam() res: StreamResponse): Promise<void> {
       await hub.attach(res, identityOf(req), req.headers['last-event-id']);
     }

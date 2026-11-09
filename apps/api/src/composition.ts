@@ -33,6 +33,7 @@ import {
   ALERT_JOBS,
   createAlertsController,
 } from './modules/notifications/alerts/index.js';
+import { createTargetResolver } from './alert-target-resolver.js';
 import { createAlertStreamController, StreamHub } from './modules/notifications/stream/index.js';
 import type { ListenClient } from './modules/notifications/stream/index.js';
 import {
@@ -258,7 +259,7 @@ export function buildComposition(deps: {
 
   // Milestone M4. Order matters: the chart first (the front door and the notes build on it), the scheduling resolvers are registered
   // above (`reservation`, `chart-patient` are looked up by the front door's and the notes' routes).
-  const alerts = new AlertService({ queue, audit });
+  const alerts = new AlertService({ queue, audit, resolver: createTargetResolver() });
   const cursorKey = cursorKeyOf(env.rateKey);
   const chart = createClinicalChart({
     db: deps.db,

@@ -45,6 +45,9 @@ describe('alert routes and declarations', () => {
         'POST /api/v1/alerts/:id/acknowledge notifications.alert.acknowledge',
       ],
     );
+    // INT04-F10-D: every alert route accepts the staff and the admin realm, and no other (ARCHITECTURE 32.2 point 1).
+    for (const x of r.routes)
+      assert.deepEqual(x.declaration?.realm, ['google', 'admin_pool'], `${x.method} ${x.path}`);
     const s = r.routes.find((x) => x.path.endsWith('/stream'));
     assert.equal(s?.declaration?.routeClass, 'stream');
   });
