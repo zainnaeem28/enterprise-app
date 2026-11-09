@@ -99,7 +99,7 @@ describe('TC-API', () => {
     const p = await newPatient();
     let first;
     for (let i = 0; i < 80 && !first; i++) {
-      const r = await p.client.post(`/api/v1/patients/${p.id}/contacts`, { name: '', relationship: '', phone: 'x' });
+      const r = await p.client.post(`/api/v1/patients/${p.id}/contacts`, { kind: 'bogus' });
       if (r.status === 429) first = r;
     }
     assert.ok(first, 'a 429 appears within 80 writes (limit 60/min)');

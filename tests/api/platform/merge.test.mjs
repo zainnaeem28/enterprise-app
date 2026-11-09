@@ -119,7 +119,7 @@ describe('TC-MG', () => {
     const upd = await fd.client.patch(`/api/v1/patients/${p.merged.id}`, { preferredLanguage: 'es' }, { headers: { 'if-match': 'W/"1"' } });
     assert.equal(upd.status, 409, `staff write on the merged patient ${upd.status} ${upd.text.slice(0, 160)}`);
     assert.equal(upd.json.code, 'patient.merged');
-    const contact = await portal.post(`/api/v1/patients/${p.merged.id}/contacts`, { name: 'Stale Contact', relationship: 'friend', phone: '+15555550123' });
+    const contact = await portal.post(`/api/v1/patients/${p.merged.id}/contacts`, { kind: 'emergency', name: 'Stale Contact', relationship: 'friend', phone: '+15555550123' });
     // OBSERVATION vs TC-MG-07: the portal principal's link is re-pointed to the survivor by the merge, so a stale portal write to the
     // old ID answers 404 kernel.not_found, not 409 patient.merged. Nothing is written either way; reported in QA-REPORT as a deviation.
     assert.ok([404, 409].includes(contact.status), `portal write as the merged patient ${contact.status} ${contact.text.slice(0, 160)}`);
