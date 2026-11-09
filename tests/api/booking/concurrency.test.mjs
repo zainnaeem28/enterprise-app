@@ -71,7 +71,7 @@ describe('TC-BK concurrency (100 parallel sessions)', () => {
     assert.ok(losers.every((r) => r.alt), 'every loser receives alternatives');
   });
 
-  it('TC-BK-15 overbookable session, cap 2, 100 patients: never more than the regular booking plus the cap (ARCH 22.x: the cap counts EXTRA capacity)', async (t) => {
+  it('TC-BK-15 overbookable session, cap 2, 100 patients: exactly 2 succeed, no more (written expectation; see QA04-F07)', async (t) => {
     const svc = await newService();
     await setPolicy(svc, { overbook: 2, max: 50 });
     const doc = await newDoctor({ services: [svc], overbookable: true });
@@ -81,11 +81,9 @@ describe('TC-BK concurrency (100 parallel sessions)', () => {
     const rs = await Promise.all(pats.map((p) => bookOnce(p, slot, svc)));
     t.diagnostic(`outcomes: ${JSON.stringify(tally(rs))}`);
     const won = rs.filter((r) => r.ok).length;
-    // QA04-F01 (plan/design conflict): TEST-CASES says "exactly 2 succeed" for cap 2; ARCH 22.x/BR-02 define the cap as EXTRA capacity
-    // on top of the regular booking, so the product admits 1 + cap = 3. The hard rule asserted here: never above 1 + cap, and the cap is used.
-    assert.ok(won <= 3, `never more than the regular booking plus the cap (3); got ${won}`);
-    assert.equal(won, 3, 'the regular booking and both extra places are used');
-    assert.equal((await sql(`SELECT count(*)::int c FROM scheduling.slot_occupancy WHERE clinician_principal_id = $1 AND lower(period) = $2::timestamptz AND status IN ('held','confirmed')`, [doc.id, slot.startsAt])).rows[0].c, 3);
+    // QA04-F07: TEST-CASES TC-BK-15 says "exactly 2 succeed; no more". The product admits 1 + cap = 3 (ARCH 22.x/BR-02 read the cap as EXTRA capacity).
+    // Until the Solution Architect/Product Manager decision-log entry settles 2 vs 1+cap, this case asserts the WRITTEN expectation and is reported FAILED.
+    assert.equal(won, 2, 'TC-BK-15 written expectation: exactly 2 succeed (cap 2)');
   });
 
   it('TC-BK-16 hold expiry race: after A\'s hold expires, B and C race; exactly one wins, neither gets a false "taken" [G2 setting: hold 1 min, real wait]', async (t) => {
