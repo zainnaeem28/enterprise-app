@@ -5,18 +5,7 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { after, before, describe, test } from 'node:test';
-import {
-  A1,
-  A2,
-  B1,
-  ORG,
-  SVC,
-  adminUrl,
-  pg,
-  saWrite,
-  setupScheduling,
-  slotStart,
-} from './testkit.js';
+import { A1, A2, B1, ORG, SVC, adminUrl, pg, setupScheduling, slotStart } from './testkit.js';
 import type { SchedKit } from './testkit.js';
 import type { HoldInput } from './index.js';
 import type { ScopeSettings } from '@ehr/kernel';
