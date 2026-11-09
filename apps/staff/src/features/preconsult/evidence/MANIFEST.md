@@ -3,15 +3,15 @@
 Base commit (prerequisite merges, unchanged): f9722c7e4182f23309099052954be3b81062425b. Candidate = the commit that adds this folder; diff: `git diff f9722c7e4182f23309099052954be3b81062425b -- apps/staff/src/features/preconsult`.
 Tools: node v24.22.2, vitest vitest/5.1.0 linux-x64 node-v24.22.2, playwright Version 1.64.1, chromium headless shell 1248 (axe in specs).
 
-| Check | Command (from apps/staff unless noted) | Raw report | Result |
-| --- | --- | --- | --- |
-| Typecheck | `pnpm exec tsc -p tsconfig.json --noEmit` | raw/typecheck-staff.txt | exit 0 |
-| Unit (jsdom, whole staff app incl. desk.test.tsx, qr.test.ts) | `NODE_ENV=test pnpm exec vitest run` | raw/unit-staff.txt | 8 files, 82 tests passed (one earlier run showed a StaffApp.test failure, FE-08 file, not reproducible in 3 re-runs; treat as flaky under load) |
-| Playwright PR subset + axe on every screen, desktop 1280 and phone 390 | `pnpm exec playwright test -c src/features/preconsult/e2e/playwright.config.ts` | raw/playwright.txt, playwright-report.json | 16 passed |
-| Lint | `pnpm exec eslint apps/staff/src/features/preconsult` (root) | raw/lint.txt | exit 0 |
-| Format | prettier --check on sources | raw/format.txt | exit 0 |
-| QR independent decode | raw/qr-decode-check.mjs | raw/qr-decode-check.txt | 205/205 decoded |
-| TC-PC-15 legibility | human | n/a | PENDING (human) |
+| Check                                                                  | Command (from apps/staff unless noted)                                          | Raw report                                 | Result                                                                                                                                          |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Typecheck                                                              | `pnpm exec tsc -p tsconfig.json --noEmit`                                       | raw/typecheck-staff.txt                    | exit 0                                                                                                                                          |
+| Unit (jsdom, whole staff app incl. desk.test.tsx, qr.test.ts)          | `NODE_ENV=test pnpm exec vitest run`                                            | raw/unit-staff.txt                         | 8 files, 82 tests passed (one earlier run showed a StaffApp.test failure, FE-08 file, not reproducible in 3 re-runs; treat as flaky under load) |
+| Playwright PR subset + axe on every screen, desktop 1280 and phone 390 | `pnpm exec playwright test -c src/features/preconsult/e2e/playwright.config.ts` | raw/playwright.txt, playwright-report.json | 16 passed                                                                                                                                       |
+| Lint                                                                   | `pnpm exec eslint apps/staff/src/features/preconsult` (root)                    | raw/lint.txt                               | exit 0                                                                                                                                          |
+| Format                                                                 | prettier --check on sources                                                     | raw/format.txt                             | exit 0                                                                                                                                          |
+| QR independent decode                                                  | raw/qr-decode-check.mjs                                                         | raw/qr-decode-check.txt                    | 205/205 decoded                                                                                                                                 |
+| TC-PC-15 legibility                                                    | human                                                                           | n/a                                        | PENDING (human)                                                                                                                                 |
 
 All API traffic in these tests is contract mocks; no real API/DB was exercised. Screenshots (sha256):
 

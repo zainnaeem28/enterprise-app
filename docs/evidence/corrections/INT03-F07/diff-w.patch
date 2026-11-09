@@ -1,0 +1,140 @@
+diff --git a/apps/staff/src/features/auth/evidence/MANIFEST.md b/apps/staff/src/features/auth/evidence/MANIFEST.md
+index 01fd2fb..aa74c8b 100644
+--- a/apps/staff/src/features/auth/evidence/MANIFEST.md
++++ b/apps/staff/src/features/auth/evidence/MANIFEST.md
+@@ -3,7 +3,7 @@
+ Base: `fafd13f` (tip of FE-06 branch; contains FE-02 app shell and BE-04 identity core). Candidate commit: see the submission comment.
+ 
+ | Check                               | Tool / version                                                      | Command (from `apps/staff`)                                               | Raw report                                     | Result                                                   |
+-| --- | --- | --- | --- | --- |
++| ----------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------- | ---------------------------------------------- | -------------------------------------------------------- |
+ | Unit + jsdom axe                    | vitest 5.1.0, axe-core 4.14.0                                       | `NODE_ENV=test pnpm exec vitest run`                                      | `raw/unit-staff.txt`                           | pass                                                     |
+ | Playwright + axe (layout, contrast) | @playwright/test 1.64.1, @axe-core/playwright 4.14.0, Chromium 1248 | `pnpm exec playwright test -c src/features/auth/e2e/playwright.config.ts` | `raw/playwright.txt`, `playwright-report.json` | 10 passed (desktop and phone), rerun after round 1 fixes |
+ | Type check                          | tsc 5.9.3                                                           | `pnpm exec tsc -p tsconfig.json --noEmit`                                 | `raw/typecheck-staff.txt`                      | pass                                                     |
+diff --git a/apps/staff/src/features/auth/evidence/playwright-report.json b/apps/staff/src/features/auth/evidence/playwright-report.json
+index 1698159..e05ceed 100644
+--- a/apps/staff/src/features/auth/evidence/playwright-report.json
++++ b/apps/staff/src/features/auth/evidence/playwright-report.json
+@@ -34,9 +34,7 @@
+         "name": "desktop",
+         "testDir": "/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-93-sdlc-ticket-fe-08-staff-portal-google-sign-in-session-shell-role-navigation/apps/staff/src/features/auth/e2e",
+         "testIgnore": [],
+-        "testMatch": [
+-          "*.spec.ts"
+-        ],
++        "testMatch": ["*.spec.ts"],
+         "timeout": 30000
+       },
+       {
+@@ -50,9 +48,7 @@
+         "name": "phone",
+         "testDir": "/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-93-sdlc-ticket-fe-08-staff-portal-google-sign-in-session-shell-role-navigation/apps/staff/src/features/auth/e2e",
+         "testIgnore": [],
+-        "testMatch": [
+-          "*.spec.ts"
+-        ],
++        "testMatch": ["*.spec.ts"],
+         "timeout": 30000
+       }
+     ],
+@@ -115,10 +111,7 @@
+     ],
+     "quiet": false,
+     "reporter": [
+-      [
+-        "list",
+-        null
+-      ],
++      ["list", null],
+       [
+         "json",
+         {
+diff --git a/apps/staff/src/features/documents/evidence/playwright-report.json b/apps/staff/src/features/documents/evidence/playwright-report.json
+index f6e8f1b..9dd61d8 100644
+--- a/apps/staff/src/features/documents/evidence/playwright-report.json
++++ b/apps/staff/src/features/documents/evidence/playwright-report.json
+@@ -34,9 +34,7 @@
+         "name": "desktop",
+         "testDir": "/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-105-sdlc-ticket-fe-06-shared-documents-ui-upload-with-scan-state-classification-list-and-viewer/apps/staff/src/features/documents/e2e",
+         "testIgnore": [],
+-        "testMatch": [
+-          "*.spec.ts"
+-        ],
++        "testMatch": ["*.spec.ts"],
+         "timeout": 30000
+       },
+       {
+@@ -50,9 +48,7 @@
+         "name": "phone",
+         "testDir": "/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-105-sdlc-ticket-fe-06-shared-documents-ui-upload-with-scan-state-classification-list-and-viewer/apps/staff/src/features/documents/e2e",
+         "testIgnore": [],
+-        "testMatch": [
+-          "*.spec.ts"
+-        ],
++        "testMatch": ["*.spec.ts"],
+         "timeout": 30000
+       }
+     ],
+@@ -115,10 +111,7 @@
+     ],
+     "quiet": false,
+     "reporter": [
+-      [
+-        "list",
+-        null
+-      ],
++      ["list", null],
+       [
+         "json",
+         {
+diff --git a/apps/staff/src/features/preconsult/evidence/MANIFEST.md b/apps/staff/src/features/preconsult/evidence/MANIFEST.md
+index 1fc9b97..e855a4e 100644
+--- a/apps/staff/src/features/preconsult/evidence/MANIFEST.md
++++ b/apps/staff/src/features/preconsult/evidence/MANIFEST.md
+@@ -4,7 +4,7 @@ Base commit (prerequisite merges, unchanged): f9722c7e4182f23309099052954be3b810
+ Tools: node v24.22.2, vitest vitest/5.1.0 linux-x64 node-v24.22.2, playwright Version 1.64.1, chromium headless shell 1248 (axe in specs).
+ 
+ | Check                                                                  | Command (from apps/staff unless noted)                                          | Raw report                                 | Result                                                                                                                                          |
+-| --- | --- | --- | --- |
++| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+ | Typecheck                                                              | `pnpm exec tsc -p tsconfig.json --noEmit`                                       | raw/typecheck-staff.txt                    | exit 0                                                                                                                                          |
+ | Unit (jsdom, whole staff app incl. desk.test.tsx, qr.test.ts)          | `NODE_ENV=test pnpm exec vitest run`                                            | raw/unit-staff.txt                         | 8 files, 82 tests passed (one earlier run showed a StaffApp.test failure, FE-08 file, not reproducible in 3 re-runs; treat as flaky under load) |
+ | Playwright PR subset + axe on every screen, desktop 1280 and phone 390 | `pnpm exec playwright test -c src/features/preconsult/e2e/playwright.config.ts` | raw/playwright.txt, playwright-report.json | 16 passed                                                                                                                                       |
+diff --git a/apps/staff/src/features/preconsult/evidence/playwright-report.json b/apps/staff/src/features/preconsult/evidence/playwright-report.json
+index 38106ee..af81629 100644
+--- a/apps/staff/src/features/preconsult/evidence/playwright-report.json
++++ b/apps/staff/src/features/preconsult/evidence/playwright-report.json
+@@ -34,9 +34,7 @@
+         "name": "desktop",
+         "testDir": "/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-119-sdlc-ticket-fe-09-pre-consultation-desk-arrivals-board-check-in-forms-review-triage-panel-red-flag-bar-queues-/apps/staff/src/features/preconsult/e2e",
+         "testIgnore": [],
+-        "testMatch": [
+-          "*.spec.ts"
+-        ],
++        "testMatch": ["*.spec.ts"],
+         "timeout": 30000
+       },
+       {
+@@ -50,9 +48,7 @@
+         "name": "phone",
+         "testDir": "/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-119-sdlc-ticket-fe-09-pre-consultation-desk-arrivals-board-check-in-forms-review-triage-panel-red-flag-bar-queues-/apps/staff/src/features/preconsult/e2e",
+         "testIgnore": [],
+-        "testMatch": [
+-          "*.spec.ts"
+-        ],
++        "testMatch": ["*.spec.ts"],
+         "timeout": 30000
+       }
+     ],
+@@ -117,10 +113,7 @@
+     ],
+     "quiet": false,
+     "reporter": [
+-      [
+-        "list",
+-        null
+-      ],
++      ["list", null],
+       [
+         "json",
+         {
