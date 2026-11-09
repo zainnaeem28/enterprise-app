@@ -57,7 +57,7 @@ export class Tx implements Queryable {
   }
 
   /**
-   * `patient.lock_referral_patient(referral, patient, mode)` (ruling HEAAA-325, A-4): the root lock of an accept or decline
+   * `patient.lock_referral_patient(referral, patient, mode)` (ruling HEAAA-325, amendment A-5): the root lock of an accept or decline
    * transaction, where the receiving location has no care relationship yet. The basis is the pending referral addressed to the
    * caller's location, checked in the database. Same once-per-transaction rule as {@link lockPatients}.
    */

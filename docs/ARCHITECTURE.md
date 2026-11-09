@@ -2704,6 +2704,12 @@ Authority: HEAAA-335, assigned to the Solution Architect by the Orchestrator (HE
 
 Unchanged: topology, providers, cost, modules, data ownership, roles, audiences, trust boundaries, every API path and error code, the ERD, UX, QA and DevOps contracts. Review: Solution Architect Reviewer (independent, this exact revision). Not human-approved.
 
+### 40.13 Amendment name A-5 (HEAAA-343; naming only)
+
+Two amendments were both called A-4. **A-4** stays the messaging definers amendment (40.12; proposed by HEAAA-310, decided by HEAAA-332, folded in by HEAAA-335). The referral definers amendment, section 5 of the HEAAA-325 ruling (revisions `e3fa32f4` and later; G2 delta decision HEAAA-330; migration 2300), is **A-5** from now on. Where that ruling, the HEAAA-330 decision, the header of migration 2300 or earlier evidence say "A-4" about `patient.lock_referral_patient`, `patient.ensure_referral_care_relationship`, `patient_scope_owner` USAGE on `clinical`, or the referral exception to DF-7, read A-5. Migration files and reviewed document revisions are not edited, because the migration runner checks each applied file's sha256 and a revision is cited by its ID. Code comments and test titles in `db/tools/catalog-lists.mjs`, `db/tools/db-test.mjs` and `packages/kernel/src/scope/with-scope.ts` now say A-5. A-5 is not yet folded into 21.6; that is a separate Architect docs change, and the approved CI list in 21.6 still shows the 25 entries of A-4 while the code holds 27. The IDs A-1..A-11 in section 12 are cost assumptions, a different series.
+
+Unchanged: the content of every amendment, every section other than this one, every migration and test assertion. Decision record: HEAAA-343 `decision-log`.
+
 ### 40.10 Changes in draft 8.2 (ID-FREEZE erratum, HEAAA-66; D-35 answer and SEC-01 conditions)
 
 Authority: the owner's answer on HEAAA-66 question `997c2ce0` (2026-11-05T23:30:43Z): **D-35 path B, variant B2**, and **widen this erratum to every section that SEC-01 T-1..T-13 touches**. Inputs: SEC-01 (HEAAA-65 @ `66a29382`, Security Reviewer PASS); `design-align` rev `ea043d8d` section 2; HEAAA-13 `technical-design-review` rev `dc9d5d9a` (N-3..N-5); HEAAA-53 `architecture-draft81-review` rev `4ccbdafd` (N-9..N-11); TEST-CASES QA-AL-01.

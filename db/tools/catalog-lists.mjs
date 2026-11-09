@@ -82,7 +82,7 @@ export const patientGuardExempt = [
   // ARCHITECTURE 22.14 table row and 22.16 note (G2, bd6de63): records history; HEAAA-310 ruling.
   'privacy.incident_patient',
 ];
-/** SECURITY DEFINER functions of SHARED-BOUNDARIES 6.2 and ARCHITECTURE 21.6 (schema.name): 27 entries after the two A-4 amendments (messaging predicates; referral definers), INT-03 r3 merge. */
+/** SECURITY DEFINER functions of SHARED-BOUNDARIES 6.2 and ARCHITECTURE 21.6 (schema.name): 27 entries after amendments A-4 (messaging predicates) and A-5 (referral definers), INT-03 r3 merge. */
 export const definerInventory = [
   'integration_core.receive_inbound',
   // BE-08 (patient): owners patient_scope_owner (writes) and patient_match_owner (reads); all fix search_path.
@@ -118,14 +118,14 @@ export const definerInventory = [
   // predicates, owner patient_scope_owner, migration 2002. messaging.is_creator is refused and dropped by 2204; it must not be listed.
   'messaging.is_participant',
   'messaging.is_owner',
-  // ARCHITECTURE amendment A-4 (HEAAA-325 ruling rev e3fa32f4, G2 delta decision HEAAA-330; migration 2300): the receiving location's
+  // ARCHITECTURE amendment A-5, named A-4 in the ruling until HEAAA-343 (HEAAA-325 ruling rev e3fa32f4, G2 delta decision HEAAA-330; migration 2300): the receiving location's
   // referral accept/decline, bound to a sent internal referral with a pending inbox row (R-REF-2). Owner patient_scope_owner.
   'patient.lock_referral_patient',
   'patient.ensure_referral_care_relationship',
 ];
 
 /**
- * Exact attributes of the A-4 definers (Cybersecurity C-3, HEAAA-333 comment 5f4974c6): not only the names. `acl` is the proacl text
+ * Exact attributes of the A-4 messaging definers (Cybersecurity C-3, HEAAA-333 comment 5f4974c6): not only the names. `acl` is the proacl text
  * (no PUBLIC entry; owner, app_api and app_worker only), `config` the proconfig.
  */
 export const messagingDefinerAttributes = {
