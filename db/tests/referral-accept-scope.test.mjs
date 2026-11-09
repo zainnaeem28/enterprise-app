@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Real-database tests for the referral accept/decline scope change (INT03-F08d; ruling HEAAA-325 rev e3fa32f4, G2 delta decision
-// HEAAA-330; migrations 2300 and 2301). Test IDs T-RA-nn are the ruling's (section 3.3). PostgreSQL 17, synthetic data only.
+// Real-database tests for the referral accept/decline scope change (INT03-F08d; ruling HEAAA-325 rev 3 (cfaaf33c), G2 delta decisions
+// HEAAA-330 and HEAAA-337 (conditions C-1..C-5); migrations 2300 and 2301). Test IDs T-RA-nn are the ruling's (section 3.3). PostgreSQL 17, synthetic data only.
 //
 //   EHR_TEST_ADMIN_URL=postgres://postgres@127.0.0.1:55432/postgres  node --test db/tests/referral-accept-scope.test.mjs
 //
@@ -12,7 +12,8 @@
 // whose route-level coverage belongs to the API suites.
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { after, before, describe, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -22,6 +23,7 @@ import { runChecks } from '../tools/catalog-check.mjs';
 
 const adminUrl = requireEnv('EHR_TEST_ADMIN_URL');
 const tools = join(fileURLToPath(new URL('.', import.meta.url)), '../tools');
+const migrationsDir = join(tools, '../migrations');
 const dbName = `ehr_ra_${process.pid}_${Date.now()}`;
 const urlFor = (user, database) => {
   const u = new URL(adminUrl);
@@ -354,6 +356,15 @@ describe('migrations 2300 and 2301', () => {
         [2301, 'clinical_referral_target_read_pending'],
       ],
     );
+  });
+});
+
+describe('C-5: the 2301 file is the ruling text', () => {
+  test('2301 hashes to the sha256 fixed by ruling 3.1b (comment-only reformatting not applied)', () => {
+    const h = createHash('sha256')
+      .update(readFileSync(join(migrationsDir, '2301_clinical_referral_target_read_pending.sql')))
+      .digest('hex');
+    assert.equal(h, '52d13437413dbe3c4080594b582da1632e32a4be405c7a475d22a16cb139e387');
   });
 });
 
@@ -935,6 +946,35 @@ describe('T-RA-29: catalog', () => {
     );
   });
 
+  test('(rev 3) clinical.referral_inbox_pending: plpgsql, STABLE, invoker, search_path only, migration-role owner, EXECUTE to app_api only, body pinned', async () => {
+    const f = (
+      await admin.query(
+        `SELECT l.lanname, p.provolatile, p.prosecdef, p.proconfig, pg_get_userbyid(p.proowner) AS owner, p.prosrc, p.proacl::text AS acl,
+                (SELECT array_agg(grantee::regrole::text ORDER BY 1) FROM aclexplode(p.proacl) WHERE privilege_type = 'EXECUTE') AS grantees
+           FROM pg_proc p JOIN pg_language l ON l.oid = p.prolang
+          WHERE p.oid = 'clinical.referral_inbox_pending(uuid,uuid,uuid)'::regprocedure`,
+      )
+    ).rows[0];
+    assert.equal(f.lanname, 'plpgsql');
+    assert.equal(f.provolatile, 's');
+    assert.equal(f.prosecdef, false);
+    assert.deepEqual(f.proconfig, ['search_path=pg_catalog']);
+    assert.equal(f.owner, 'app_owner');
+    assert.ok(!definerInventory.includes('clinical.referral_inbox_pending'));
+    assert.deepEqual([...new Set(f.grantees)].sort(), ['app_api', 'app_owner'], `acl ${f.acl}`); // no PUBLIC; app_owner is the owner's implicit grant
+    const norm = (t) => t.replace(/\s+/g, ' ').trim();
+    const ruling = readFileSync(
+      join(migrationsDir, '2301_clinical_referral_target_read_pending.sql'),
+      'utf8',
+    );
+    const body = ruling.match(/AS \$\$\n([\s\S]*?)\$\$;/)[1];
+    assert.equal(norm(f.prosrc), norm(body), 'prosrc equals the ruling text (R-7)');
+    assert.equal(
+      norm(f.prosrc),
+      "BEGIN RETURN EXISTS (SELECT 1 FROM clinical.referral_inbox i WHERE i.referral_id = p_referral_id AND i.organisation_id = p_organisation_id AND i.target_location_id = p_location_id AND i.status = 'pending'); END",
+    );
+  });
+
   test('the only policies TO patient_scope_owner on the two clinical tables, and the exact column grants', async () => {
     const pol = await admin.query(
       `SELECT tablename || '.' || policyname AS n FROM pg_policies WHERE schemaname = 'clinical' AND 'patient_scope_owner' = ANY (roles) ORDER BY 1`,
@@ -995,8 +1035,60 @@ describe('T-RA-29: catalog', () => {
         ['referral_staff_update', '{app_api}', 'UPDATE'],
       ],
     );
-    for (const r of pol.rows) assert.match(r.qual, /referral_inbox/);
-    assert.match(pol.rows[1].with_check, /referral_inbox/);
+    // C-3 (rev 3): with the single call removed, each expression equals 1702's text. The 1702 baseline is built in a rolled-back
+    // transaction by re-creating the two policies from the text of 1702 itself, then read back through the same deparser.
+    const call =
+      /\s+AND clinical\.referral_inbox_pending\((?:referral\.)?id, (?:referral\.)?organisation_id, (?:referral\.)?target_location_id\)/g;
+    const norm = (t) => t.replace(/\s+/g, ' ').trim();
+    const src = readFileSync(join(migrationsDir, '1702_frontdoor_rls_and_grants.sql'), 'utf8');
+    const stmt = (name) =>
+      src.match(new RegExp(`CREATE POLICY ${name} ON clinical\\.referral\\n[\\s\\S]*?;\\n`))[0];
+    await admin.query('BEGIN');
+    let base;
+    try {
+      for (const n of ['referral_staff_select', 'referral_staff_update']) {
+        await admin.query(`DROP POLICY ${n} ON clinical.referral`);
+        await admin.query(stmt(n));
+      }
+      base = (
+        await admin.query(
+          `SELECT policyname, qual, with_check FROM pg_policies WHERE schemaname = 'clinical' AND tablename = 'referral' AND policyname IN ('referral_staff_select', 'referral_staff_update') ORDER BY 1`,
+        )
+      ).rows;
+    } finally {
+      await admin.query('ROLLBACK');
+    }
+    assert.equal(base.length, 2);
+    for (const [i, r] of pol.rows.entries()) {
+      assert.equal(
+        norm(r.qual).split('referral_inbox_pending(').length - 1,
+        1,
+        `${r.policyname} qual: the call appears once`,
+      );
+      assert.equal(
+        norm(r.qual).replace(call, ''),
+        norm(base[i].qual),
+        `${r.policyname} qual equals 1702 without the call`,
+      );
+      if (r.with_check === null) assert.equal(base[i].with_check, null);
+      else {
+        assert.equal(
+          norm(r.with_check).split('referral_inbox_pending(').length - 1,
+          1,
+          `${r.policyname} with_check: the call appears once`,
+        );
+        assert.equal(
+          norm(r.with_check).replace(call, ''),
+          norm(base[i].with_check),
+          `${r.policyname} with_check equals 1702 without the call`,
+        );
+      }
+    }
+    // no policy on clinical.referral reads clinical.referral_inbox inline
+    const inline = await admin.query(
+      `SELECT policyname FROM pg_policies WHERE schemaname = 'clinical' AND tablename = 'referral' AND (qual ~ 'FROM clinical\\.referral_inbox' OR with_check ~ 'FROM clinical\\.referral_inbox')`,
+    );
+    assert.deepEqual(inline.rows, []);
     const report = await runChecks(admin);
     const failed = report.filter((c) => c.status === 'fail');
     // M-5-definer already fails at base 8dd1f5f for messaging.is_participant/is_owner/is_creator (HEAAA-325 observation, not this change):
@@ -1269,5 +1361,152 @@ describe('T-RA-30: the referral-row read follows R-REF-9, and the deciding trans
       await c.query('ROLLBACK').catch(() => undefined);
       await c.end();
     }
+  });
+});
+
+describe('T-RA-30(f), T-RA-36..38 (rev 3, C-5)', () => {
+  test('T-RA-30(f) the send transaction passes under 2301, including a sender who also holds the target location (s12)', async () => {
+    const p = await mkPatient();
+    const a = await sendReferral(p); // s1 -> A2
+    const b = await sendReferral(p, { by: 's12' }); // s12 holds A1 and A2
+    for (const r of [a, b])
+      assert.equal(
+        (await val(admin, 'SELECT status FROM clinical.referral_inbox WHERE referral_id = $1', [r]))
+          .status,
+        'pending',
+      );
+  });
+
+  test('T-RA-36 no policy cycle on any referral write path under 2301; negative control: the rev 2 inline EXISTS raises 42P17', async () => {
+    const p = await mkPatient();
+    await sendReferral(p); // send (inbox INSERT) by the sender
+    await api('s1', async (c) => {
+      // a referral INSERT and UPDATE by the sender (a draft is still editable)
+      const id = nextId();
+      await c.query(
+        `INSERT INTO clinical.referral (id, organisation_id, patient_id, from_location_id, from_principal_id, target_kind, target_location_id, reason, created_by)
+         VALUES ($1, kernel.uuid1('app.org_id'), $2, $3, $4, 'internal_location', $5, 'draft', $4)`,
+        [id, p, A1, staffIds.s1, A2],
+      );
+      const u = await c.query(`UPDATE clinical.referral SET reason = 'edited' WHERE id = $1`, [id]);
+      assert.equal(u.rowCount, 1);
+    });
+    const toCancel = await sendReferral(p);
+    await api('s1', async (c) => {
+      const u = await c.query(`UPDATE clinical.referral SET status = 'cancelled' WHERE id = $1`, [
+        toCancel,
+      ]);
+      assert.equal(u.rowCount, 1);
+    });
+    const q = await mkPatient();
+    assert.equal(await decide('s2', await sendReferral(q), q, 'accepted'), 'ok');
+    const d = await mkPatient();
+    assert.equal(await decide('s2', await sendReferral(d), d, 'declined'), 'ok');
+    // the merge re-point of a sent referral, as app_worker / system (T-RA-16(a) statement)
+    const m1 = await mkPatient();
+    const m2 = await mkPatient();
+    const mref = await sendReferral(m1);
+    const w = await open('app_worker', {
+      'app.org_id': O1,
+      'app.audience': 'system',
+      'app.job_scope': 'patients',
+      'app.job_patient_ids': `${m1},${m2}`,
+    });
+    try {
+      await w.query('SAVEPOINT s');
+      const r = await w.query(`UPDATE clinical.referral SET patient_id = $2 WHERE id = $1`, [
+        mref,
+        m2,
+      ]);
+      assert.equal(r.rowCount, 1, 'merge re-point of a sent referral passes');
+    } finally {
+      await w.query('ROLLBACK').catch(() => undefined);
+      await w.end();
+    }
+    // negative control (this database is a throwaway one; the change is rolled back): the rev 2 inline text
+    const file = readFileSync(
+      join(migrationsDir, '2301_clinical_referral_target_read_pending.sql'),
+      'utf8',
+    );
+    const callText =
+      'clinical.referral_inbox_pending(referral.id, referral.organisation_id, referral.target_location_id)';
+    const inline = `EXISTS (SELECT 1 FROM clinical.referral_inbox i WHERE i.referral_id = referral.id AND i.organisation_id = referral.organisation_id AND i.target_location_id = referral.target_location_id AND i.status = 'pending')`;
+    const alter = file
+      .match(/ALTER POLICY referral_staff_select[\s\S]*?;\n/)[0]
+      .replace(callText, inline);
+    assert.ok(alter.includes('FROM clinical.referral_inbox i'));
+    await admin.query('BEGIN');
+    try {
+      await admin.query(alter);
+      await admin.query('SET LOCAL ROLE app_api');
+      for (const [k, v] of Object.entries(S.s1()))
+        await admin.query('SELECT set_config($1, $2, true)', [k, v]);
+      await assert.rejects(
+        admin.query(
+          `INSERT INTO clinical.referral_inbox (referral_id, organisation_id, target_location_id, patient_label_ref, created_by)
+           VALUES ($1, $2, $3, $1, $4)`,
+          [randomUUID(), O1, A2, staffIds.s1],
+        ),
+        (e) => e.code === '42P17',
+      );
+    } finally {
+      await admin.query('ROLLBACK');
+    }
+  });
+
+  test('T-RA-37 the function adds no read', async () => {
+    const p = await mkPatient();
+    const ref = await sendReferral(p);
+    const call = (c, r = ref, o = O1, l = A2) =>
+      val(c, 'SELECT clinical.referral_inbox_pending($1, $2, $3) AS v', [r, o, l]).then((x) => x.v);
+    assert.equal(await api('s2', (c) => call(c)), true);
+    assert.equal(await api('s3', (c) => call(c)), false);
+    assert.equal(await api('sO2', (c) => call(c)), false);
+    for (const args of [
+      [null, O1, A2],
+      [ref, null, A2],
+      [ref, O1, null],
+    ])
+      assert.equal(await api('s2', (c) => call(c, ...args)), false, JSON.stringify(args));
+    for (const role of ['app_worker', 'reporting_ro'])
+      await assert.rejects(
+        tx(role, { 'app.org_id': O1 }, (c) => call(c)),
+        (e) => e.code === '42501',
+        role,
+      );
+    // patient_scope_owner cannot log in: switch to it inside the seed connection's transaction
+    await admin.query('BEGIN');
+    try {
+      await admin.query('SET LOCAL ROLE patient_scope_owner');
+      await assert.rejects(call(admin), (e) => e.code === '42501');
+    } finally {
+      await admin.query('ROLLBACK');
+    }
+    assert.equal(await decide('s2', ref, p, 'declined'), 'ok');
+    assert.equal(await api('s2', (c) => call(c)), false);
+  });
+
+  test('T-RA-38 snapshot: the deciding UPDATE ... RETURNING sees its new row; after the inbox UPDATE the referral is gone', async () => {
+    const p = await mkPatient();
+    const ref = await sendReferral(p);
+    await api('s2', async (c) => {
+      const u = await c.query(
+        `UPDATE clinical.referral SET status = 'declined', decided_by = $2, decided_at = now(), decline_reason = 'x' WHERE id = $1 RETURNING id`,
+        [ref, staffIds.s2],
+      );
+      assert.equal(u.rows.length, 1);
+      assert.equal(
+        (await c.query('SELECT 1 FROM clinical.referral WHERE id = $1', [ref])).rows.length,
+        1,
+      );
+      await c.query(
+        `UPDATE clinical.referral_inbox SET status = 'declined', decided_at = now() WHERE referral_id = $1`,
+        [ref],
+      );
+      assert.equal(
+        (await c.query('SELECT 1 FROM clinical.referral WHERE id = $1', [ref])).rows.length,
+        0,
+      );
+    });
   });
 });
