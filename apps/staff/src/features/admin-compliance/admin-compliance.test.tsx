@@ -79,6 +79,37 @@ describe('Audit log (AD-01)', () => {
     expect(screen.getByText(s.system)).toBeInTheDocument();
   });
 
+  it('includes events of the current minute by default and follows the clock until a date is edited (INT04-F32)', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.setSystemTime(new Date(2026, 10, 9, 20, 44, 38, 500));
+    const { ui, seen } = portal('/admin/audit', auditRoutes());
+    render(ui);
+    const bodies = () =>
+      seen
+        .filter((x) => x.path.endsWith('/audit-events/search'))
+        .map((x) => x.body as Record<string, unknown>);
+    expect(screen.getByLabelText(s.to)).toHaveValue('2026-11-09T20:45');
+    await click(s.search);
+    expect(bodies()[0]?.['to']).toBe(new Date(2026, 10, 9, 20, 45).toISOString());
+    expect(bodies()[0]?.['from']).toBe(new Date(2026, 10, 8, 20, 45).toISOString());
+
+    // the page stays open: the next search still reaches the events written since
+    vi.setSystemTime(new Date(2026, 10, 9, 21, 2, 0, 0));
+    await click(s.search);
+    expect(bodies()[1]?.['to']).toBe(new Date(2026, 10, 9, 21, 3).toISOString());
+    expect(screen.getByLabelText(s.to)).toHaveValue('2026-11-09T21:03');
+    expect(screen.getByLabelText(s.from)).toHaveValue('2026-11-08T21:03');
+
+    // a period the user typed is sent as typed, still half-open
+    type(s.to, '2026-11-09T20:00');
+    await click(s.search);
+    expect(bodies()[2]?.['to']).toBe(new Date(2026, 10, 9, 20, 0).toISOString());
+    expect(bodies()[2]?.['from']).toBe(new Date(2026, 10, 8, 21, 3).toISOString());
+    vi.setSystemTime(new Date(2026, 10, 9, 22, 0, 0, 0));
+    await click(s.search);
+    expect(bodies()[3]?.['to']).toBe(new Date(2026, 10, 9, 20, 0).toISOString());
+  });
+
   it('refuses a period over 31 days or a malformed reference before any call', async () => {
     const { ui, seen } = portal('/admin/audit', auditRoutes());
     render(ui);

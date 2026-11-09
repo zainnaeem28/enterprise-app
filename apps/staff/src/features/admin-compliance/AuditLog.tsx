@@ -27,6 +27,12 @@ const localInput = (d: Date): string => {
   const p = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
 };
+/** End of the default period: the start of the next minute, so it includes every event so far (the range is half-open). */
+const defaultTo = (): Date => {
+  const d = new Date();
+  d.setSeconds(0, 0);
+  return new Date(d.getTime() + 60_000);
+};
 const POLL_MS = 4000;
 
 type Result =
@@ -56,9 +62,11 @@ function rowOf(e: AuditEvent): AuditRow {
 /** AD-01: the audit table with its filters and the export of the search shown (RA-R1-11, RA-R1-12). */
 export function AuditLog() {
   const { api } = useCompliance();
-  const now = useRef(new Date());
-  const [from, setFrom] = useState(() => localInput(new Date(now.current.getTime() - DAY)));
-  const [to, setTo] = useState(() => localInput(now.current));
+  const opened = useRef(defaultTo());
+  const [from, setFrom] = useState(() => localInput(new Date(opened.current.getTime() - DAY)));
+  const [to, setTo] = useState(() => localInput(opened.current));
+  // INT04-F32: until the user edits a date, the default period follows the clock and is computed again on each search.
+  const [edited, setEdited] = useState({ from: false, to: false });
   const [actor, setActor] = useState('');
   const [patient, setPatient] = useState('');
   const [action, setAction] = useState('');
@@ -66,7 +74,7 @@ export function AuditLog() {
   const [errors, setErrors] = useState<FieldError[]>([]);
   const [result, setResult] = useState<Result>({ kind: 'idle' });
 
-  const validate = (): AuditFilter | undefined => {
+  const validate = (from: string, to: string): AuditFilter | undefined => {
     const errs: FieldError[] = [];
     const f = Date.parse(from);
     const t = Date.parse(to);
@@ -110,7 +118,12 @@ export function AuditLog() {
     [api],
   );
   const apply = () => {
-    const f = validate();
+    const end = defaultTo();
+    const nextTo = edited.to ? to : localInput(end);
+    const nextFrom = edited.from ? from : localInput(new Date(end.getTime() - DAY));
+    setTo(nextTo);
+    setFrom(nextFrom);
+    const f = validate(nextFrom, nextTo);
     if (f !== undefined) void run(f);
   };
   const clear = () => {
@@ -135,7 +148,10 @@ export function AuditLog() {
           label={s.from}
           type="datetime-local"
           value={from}
-          onChange={(e) => setFrom(e.target.value)}
+          onChange={(e) => {
+            setFrom(e.target.value);
+            setEdited((x) => ({ ...x, from: true }));
+          }}
           {...(err('audit-from') === undefined ? {} : { error: err('audit-from') as string })}
         />
         <TextField
@@ -143,7 +159,10 @@ export function AuditLog() {
           label={s.to}
           type="datetime-local"
           value={to}
-          onChange={(e) => setTo(e.target.value)}
+          onChange={(e) => {
+            setTo(e.target.value);
+            setEdited((x) => ({ ...x, to: true }));
+          }}
         />
         <TextField
           id="audit-action"
