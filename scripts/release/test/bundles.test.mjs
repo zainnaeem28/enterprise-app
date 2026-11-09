@@ -1,4 +1,4 @@
-// build-bundles.mjs against a throwaway apps/staff/dist (--no-build): the embedded release must really be in the JS.
+// build-bundles.mjs against throwaway apps/staff/dist and apps/patient/dist (--no-build): the embedded release must really be in the JS of every bundle.
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -7,7 +7,7 @@ import { join, resolve } from 'node:path';
 import { afterEach, describe, test } from 'node:test';
 
 const root = resolve(import.meta.dirname, '../../..');
-const dist = join(root, 'apps/staff/dist');
+const dists = ['staff', 'patient'].map((n) => join(root, `apps/${n}/dist`));
 const sha = '3f9a1c2b7d10' + 'e'.repeat(28);
 const run = (out, n = '142') =>
   spawnSync(
@@ -26,16 +26,19 @@ const run = (out, n = '142') =>
     ],
     { encoding: 'utf8' },
   );
-const seed = (js) => {
-  rmSync(dist, { recursive: true, force: true });
-  mkdirSync(join(dist, 'assets'), { recursive: true });
-  writeFileSync(join(dist, 'index.html'), '<html></html>');
-  writeFileSync(join(dist, 'assets/index-abc.js'), js);
+const clean = () => dists.forEach((d) => rmSync(d, { recursive: true, force: true }));
+const seed = (js, only = dists) => {
+  clean();
+  for (const dist of only) {
+    mkdirSync(join(dist, 'assets'), { recursive: true });
+    writeFileSync(join(dist, 'index.html'), '<html></html>');
+    writeFileSync(join(dist, 'assets/index-abc.js'), js);
+  }
 };
-afterEach(() => rmSync(dist, { recursive: true, force: true }));
+afterEach(clean);
 
 describe('build-bundles', () => {
-  test('embeds r<n>.<sha12>, writes release.json, hashes the listing, records the optional portal as not-built', () => {
+  test('embeds r<n>.<sha12>, writes release.json, hashes the listing, for both required bundles', () => {
     seed('const r="r142.3f9a1c2b7d10";export{r}');
     const out = mkdtempSync(join(tmpdir(), 'bun-'));
     const r = run(out);
@@ -49,8 +52,12 @@ describe('build-bundles', () => {
     assert.equal(s.staff.client_release, 'r142.3f9a1c2b7d10');
     assert.match(s.staff.listing_sha256, /^[0-9a-f]{64}$/);
     assert.deepEqual(s.staff.embedded_in, ['assets/index-abc.js']);
-    assert.equal(s.patient.status, 'not-built');
-    assert.ok(s.patient.reason);
+    assert.equal(s.patient.status, 'built');
+    assert.equal(s.patient.client_release, 'r142.3f9a1c2b7d10');
+    assert.deepEqual(s.patient.embedded_in, ['assets/index-abc.js']);
+    assert.match(s.patient.listing_sha256, /^[0-9a-f]{64}$/);
+    const prel = JSON.parse(readFileSync(join(out, 'bundles/patient/release.json'), 'utf8'));
+    assert.equal(prel.release_number, 142);
     // determinism: the same inputs give the same listing hash
     const out2 = mkdtempSync(join(tmpdir(), 'bun-'));
     run(out2);
@@ -67,8 +74,18 @@ describe('build-bundles', () => {
     assert.match(r.stderr, /not embedded/);
     assert.ok(!existsSync(join(out, 'bundles.json')));
   });
+  test('fails when only one bundle lacks the release (patient not embedded)', () => {
+    seed('const r="r142.3f9a1c2b7d10";export{r}', [dists[0]]);
+    mkdirSync(join(dists[1], 'assets'), { recursive: true });
+    writeFileSync(join(dists[1], 'index.html'), '<html></html>');
+    writeFileSync(join(dists[1], 'assets/index-abc.js'), 'const r="r1.000000000000"');
+    const out = mkdtempSync(join(tmpdir(), 'bun-'));
+    const r = run(out);
+    assert.notEqual(r.status, 0);
+    assert.match(r.stderr, /bundle patient.*not embedded/);
+  });
   test('fails when a required bundle was not produced', () => {
-    rmSync(dist, { recursive: true, force: true });
+    clean();
     const r = run(mkdtempSync(join(tmpdir(), 'bun-')));
     assert.notEqual(r.status, 0);
     assert.match(r.stderr, /was not produced/);
