@@ -1,0 +1,11 @@
+200 / | Skip to main content [Product name] Visit us About Services Find a doctor Locations Contact Book appointment Care that is easy to find and easy to book Find a service, choose a doctor and a location, and start your booking in a few steps. You sign in or create
+200 /about | Skip to main content [Product name] Visit us About Services Find a doctor Locations Contact Book appointment About [Product name] We are a medical practice. You can see our services, locations, hours and doctors on this site. What we offer ! This list is not a
+200 /services | Skip to main content [Product name] Visit us About Services Find a doctor Locations Contact Book appointment Services ! This list is not available right now Please try again in a few minutes, or contact us. If this is an emergency, call 911. About Privacy Term
+200 /doctors | Skip to main content [Product name] Visit us About Services Find a doctor Locations Contact Book appointment Find a doctor ! This list is not available right now Please try again in a few minutes, or contact us. If this is an emergency, call 911. About Privacy
+200 /locations | Skip to main content [Product name] Visit us About Services Find a doctor Locations Contact Book appointment Locations ! This list is not available right now Please try again in a few minutes, or contact us. If this is an emergency, call 911. About Privacy Ter
+200 /contact | Skip to main content [Product name] Visit us About Services Find a doctor Locations Contact Book appointment Contact Choose the location nearest to you for its address and phone number. For anything urgent, call 911. Our locations ! This list is not available 
+book/hand-off links on home: ["http://127.0.0.1:4674/book","http://127.0.0.1:4674/book"]
+book links on /doctors: ["http://127.0.0.1:4674/book"]
+200 /robots.txt User-agent: * Allow: / Sitemap: http://127.0.0.1:4340/sitemap.xml 
+503 /sitemap.xml <?xml version="1.0" encoding="UTF-8"?> <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"> <url><loc>http://127.0.0.1:4340/</loc></url> <url><loc>http:
+200 /healthz ok

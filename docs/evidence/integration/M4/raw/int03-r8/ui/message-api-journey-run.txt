@@ -1,0 +1,13 @@
+login http://127.0.0.1:4674 -> session 200 csrf=string
+login http://localhost:4675 -> session 200 csrf=string
+staff roles: [{"key":"front_desk","locationId":"00000000-0000-7000-8000-000000000101"},{"key":"care_coordinator","locationId":"00000000-0000-7000-8000-000000000101"},{"key":"doctor","locationId":"00000000-0000-7000-8000-000000000101"}]
+POST /api/v1/patients/00000000-0000-7000-8000-000000000601/threads -> 201 {"id":"01a1bf38-dae4-70d1-986f-3d90bf0a5306","kind":"patient","patientId":"00000000-0000-7000-8000-000000000601","subject":"INT-03 r8 check","status":"open","lo
+GET /api/v1/threads -> 200 {"items":[],"nextCursor":null}
+GET /api/v1/threads/01a1bf38-dae4-70d1-986f-3d90bf0a5306/messages -> 404 {"type":"https://errors.invalid/kernel/not_found","title":"Not found","status":404,"code":"kernel.not_found","requestId":"bccfd3c7-bb9d-4a1d-b4be-0052bc4025f3","retryable":false}
+POST /api/v1/threads/01a1bf38-dae4-70d1-986f-3d90bf0a5306/messages -> 404 {"type":"https://errors.invalid/kernel/not_found","title":"Not found","status":404,"code":"kernel.not_found","requestId":"7c313831-c874-47c6-a613-71d989c1226a",
+GET /api/v1/patients/00000000-0000-7000-8000-000000000601/threads -> 200 {"items":[{"id":"01a1bf38-dae4-70d1-986f-3d90bf0a5306","kind":"patient","patientId":"00000000-0000-7000-8000-000000000601","subject":"INT-03 r8 check","status":"open","locationId":null,"createdAt":"2026-11-09T07:32:16.73
+POST /api/v1/threads -> 201 {"id":"01a1bf38-db39-71a7-bff6-9223e87f3ff8","kind":"staff","patientId":null,"subject":"INT-03 r8 staff thread","status":"open","locationId":null,"createdAt":"2
+POST /api/v1/threads/01a1bf38-db39-71a7-bff6-9223e87f3ff8/messages -> 201 {"id":"01a1bf38-db53-7e4e-ae78-b04ef81604ed","threadId":"01a1bf38-db39-71a7-bff6-9223e87f3ff8","authorPrincipalId":"00000000-0000-7000-8000-000000000501","body"
+GET /api/v1/threads/01a1bf38-db39-71a7-bff6-9223e87f3ff8/messages -> 200 {"items":[{"id":"01a1bf38-db3e-753c-9b9d-da6973746c05","threadId":"01a1bf38-db39-71a7-bff6-9223e87f3ff8","authorPrincipalId":"00000000-0000-7000-8000-000000000501","body":"Synthetic staff message","attachmentDocumentIds"
+GET /api/v1/threads -> 200 {"items":[{"id":"01a1bf38-db39-71a7-bff6-9223e87f3ff8","kind":"staff","patientId":null,"subject":"INT-03 r8 staff thread","status":"open","locationId":null,"createdAt":"2026-11-09T07:32:16.825Z","version":1,"me":{"role":
+boundary: patient GET /api/v1/threads -> 403

@@ -1,0 +1,11 @@
+200 / | Skip to main content [Product name] Visit us About Services Find a doctor Locations Contact Book appointment Care that is easy to find and easy to book Find a service, choose a doctor and a location, and start your booking in a few steps. You sign in or create
+200 /about | Skip to main content [Product name] Visit us About Services Find a doctor Locations Contact Book appointment About [Product name] We are a medical practice. You can see our services, locations, hours and doctors on this site. What we offer General visit Video 
+200 /services | Skip to main content [Product name] Visit us About Services Find a doctor Locations Contact Book appointment Services General visit 20 minutes · ℹ In person Book General visit Video follow-up 15 minutes · ℹ Video visit Book Video follow-up If this is an emerge
+200 /doctors | Skip to main content [Product name] Visit us About Services Find a doctor Locations Contact Book appointment Find a doctor Dr. Sample Doctor Next available: Tue, Nov 10, 2:35 AM EST (updated about a minute ago; it may change) Book with Dr. Sample Doctor If thi
+200 /locations | Skip to main content [Product name] Visit us About Services Find a doctor Locations Contact Book appointment Locations Main Clinic 1 Main St Springfield +1 555 0100 Open map (opens OpenStreetMap in a new tab) If this is an emergency, call 911. About Privacy Te
+200 /contact | Skip to main content [Product name] Visit us About Services Find a doctor Locations Contact Book appointment Contact Choose the location nearest to you for its address and phone number. For anything urgent, call 911. Our locations Main Clinic 1 Main St Springf
+book/hand-off links on home: ["http://127.0.0.1:4674/book","http://127.0.0.1:4674/book"]
+book links on /doctors: ["http://127.0.0.1:4674/book","http://127.0.0.1:4674/book?serviceId=11111111-1111-4111-8111-111111111111&clinicianId=33333333-3333-4333-8333-333333333333"]
+200 /robots.txt User-agent: * Allow: / Sitemap: http://127.0.0.1:4341/sitemap.xml 
+200 /sitemap.xml <?xml version="1.0" encoding="UTF-8"?> <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"> <url><loc>http://127.0.0.1:4341/</loc></url> <url><loc>http:
+200 /healthz ok

@@ -1,0 +1,40 @@
+landing | http://localhost:4675/sign-in | Skip to main content Clinic staff portal Sign in to the staff portal Use your clinic Google account. Continue with Google Your account is not set up for this portal. If Google accepts your sign-in but the portal does not let you in, your account has not been enrolled yet. Contact IT. Help
+after-sign-in | http://localhost:4675/schedule | Skip to main content Clinic Staff portal Synthetic Doctor Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Alerts Schedule Patients Tasks & messages Notes to sign Arrivals Triage queue Forms & consents Follow-ups Waitlist Live alerts are paused be
+path-schedule | http://localhost:4675/schedule | Skip to main content Clinic Staff portal Synthetic Doctor Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Alerts Schedule Patients Tasks & messages Notes to sign Arrivals Triage queue Forms & consents Follow-ups Waitlist Live alerts are paused be
+path-tasks | http://localhost:4675/tasks | Skip to main content Clinic Staff portal Synthetic Doctor Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Alerts Schedule Patients Tasks & messages Notes to sign Arrivals Triage queue Forms & consents Follow-ups Waitlist Tasks & messages ℹ It is 
+path-arrivals | http://localhost:4675/arrivals | Skip to main content Clinic Staff portal Synthetic Doctor Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Alerts Schedule Patients Tasks & messages Notes to sign Arrivals Triage queue Forms & consents Follow-ups Waitlist Arrivals ℹ It is part of 
+path-notes-to-sign | http://localhost:4675/notes-to-sign | Skip to main content Clinic Staff portal Synthetic Doctor Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Alerts Schedule Patients Tasks & messages Notes to sign Arrivals Triage queue Forms & consents Follow-ups Waitlist Live alerts are paused be
+path-availability | http://localhost:4675/availability | Skip to main content Clinic Staff portal Synthetic Doctor Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Alerts Schedule Patients Tasks & messages Notes to sign Arrivals Triage queue Forms & consents Follow-ups Waitlist We can't find this, or it
+path-documents | http://localhost:4675/documents | Skip to main content Clinic Staff portal Synthetic Doctor Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Alerts Schedule Patients Tasks & messages Notes to sign Arrivals Triage queue Forms & consents Follow-ups Waitlist We can't find this, or it
+
+API CALLS
+GET /api/v1/auth/session -> 401
+GET /api/v1/auth/sign-in -> 302
+GET /api/v1/auth/callback -> 302
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/alerts -> 404
+GET /api/v1/alerts/stream -> 403
+GET /api/v1/clinicians/00000000-0000-7000-8000-000000000501/schedule -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/alerts -> 404
+GET /api/v1/alerts/stream -> 403
+GET /api/v1/clinicians/00000000-0000-7000-8000-000000000501/schedule -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/alerts -> 404
+GET /api/v1/clinicians/00000000-0000-7000-8000-000000000501/notes -> 200
+GET /api/v1/clinicians/00000000-0000-7000-8000-000000000501/cosign-queue -> 200
+GET /api/v1/alerts/stream -> 403
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200

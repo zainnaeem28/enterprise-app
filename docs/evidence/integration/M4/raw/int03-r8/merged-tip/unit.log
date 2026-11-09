@@ -1,0 +1,863 @@
+
+== build prerequisites: pnpm --filter @ehr/kernel --filter @ehr/contracts run build
+Scope: 2 of 11 workspace projects
+packages/kernel build$ tsc -p tsconfig.json
+packages/contracts build$ tsc -p tsconfig.json
+packages/contracts build: Done
+packages/kernel build: Done
+
+== boundary: pnpm run test:boundary
+$ node eslint/test-boundary-fixture.mjs
+failing fixture messages: [
+  {
+    "file": "boundary/apps/api/src/modules/audit/violation.ts",
+    "ruleId": "boundaries/module-boundaries",
+    "message": "Import of module \"identity\" from module \"audit\" is not an allowed edge (BD-02: downwards only)."
+  }
+]
+passing fixture messages: []
+PASS: upward import rejected, downward import accepted
+
+== test @ehr/api: pnpm --dir /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-344-sdlc-integrate-int-03-r4-bounded-round-4-re-merge-f09a-then-journeys-screenshots-n-1-scans/apps/api run test
+$ pnpm run build && node --test --test-reporter=spec --test-reporter-destination=stdout --test-reporter=junit --test-reporter-destination="${JUNIT_DIR:-.junit}/api.xml" "dist/test/**/*.test.js" "dist/src/**/*.test.js"
+$ tsc -p tsconfig.json
+▶ M4 composition (INT03-F01)
+  ✔ every M4 module factory is wired: its controllers, routes and job types are present (2.079623ms)
+  ✔ every mounted route declares a permission and a resolver (route inventory has no failures) (0.744778ms)
+  ✔ every operation of patient.yaml and the proxy routes of identity.yaml is mounted exactly once (INT03-F13) (7.902439ms)
+  ✔ negative control: without the patient and merge controllers the inventory names the missing routes (INT03-F13) (7.800589ms)
+  ✔ no (method, path) is mounted twice (6.821751ms)
+  ✔ negative control: with one module removed from the composition the check fails and names it (2.514529ms)
+  ✔ each M4 module answers behind the identity guard: mounted (not 404) and refused without a session (46.434599ms)
+✔ M4 composition (INT03-F01) (194.691995ms)
+▶ host variables (INT02-R7-N1)
+  ✔ bare host names are accepted (1.109422ms)
+  ✔ EHR_STAFF_HOST with a port is refused by name (hostOf strips the port, so it could never match) (0.475582ms)
+  ✔ EHR_PATIENT_HOST with a port is refused by name (hostOf strips the port, so it could never match) (0.161835ms)
+✔ host variables (INT02-R7-N1) (3.053ms)
+▶ envelope
+  ✔ the action list is the 22.2 closed list (8.1 plus six additions), 27 entries (0.70885ms)
+  ✔ the actor comes from the scope; nothing the caller sends can override it (0.443342ms)
+  ✔ allowed rows carry no denial reason; denied rows carry one and the action denied (0.808688ms)
+  ✔ a missing organisation or realm in the scope fails closed (0.162826ms)
+  ✔ export and BTG need a reason; at most 500 characters; user agent at most 512 (0.330731ms)
+  ✔ a worker job uses job_id instead of request_id; neither is refused (0.167855ms)
+  ✔ ids, resource type and ip are validated; no value is echoed in the error (0.717556ms)
+  ✔ change: secrets only as version ids, bounded size and depth, objects only (0.546585ms)
+✔ envelope (5.372031ms)
+▶ filter
+  ✔ half-open range, from before to, search at most 31 days (0.431349ms)
+  ✔ optional terms are validated and parameterised, never concatenated (0.79414ms)
+✔ filter (1.425324ms)
+▶ ids
+  ✔ uuidv7 is a valid, time-ordered version 7 UUID (0.445507ms)
+✔ ids (0.532019ms)
+✔ the authorisation URL: fixed Google host, offline access, S256, exactly the two minimal scopes, no client secret (1.197798ms)
+✔ the exchange returns the refresh token and sends the PKCE verifier; failures are classes with no vendor text (25.544977ms)
+✔ route inventory (38.2 item 9): every route declares a known permission and a resolver; the five routes of 29.3 and 29.5 exist (1.984714ms)
+✔ the link routes are google-realm only; the callback and the webhook are the only release-exempt routes (28.6) (0.409999ms)
+✔ a state names the principal, expires in 10 minutes, and verifies under the current or the previous key (1.777646ms)
+✔ a tampered, truncated, extended or non-string state never verifies (0.418175ms)
+✔ PKCE: the derived verifier is stable, state-bound, key-bound, and S256 matches RFC 7636 appendix B (1.74744ms)
+✔ names and markers: the secret name is fixed by the principal; a discarded-token marker is UUID-shaped and stable (0.274846ms)
+▶ cross-checks
+  ✔ the catalogue the worker loads is exactly the catalogue the platform validates routes against (1.119161ms)
+  ✔ every permission any default role holds is a platform permission (0.796244ms)
+  ✔ the identity job types are the same on the API and worker sides (0.148609ms)
+  ✔ the session routes pass the route inventory: each declares a permission and a resolver (1.190815ms)
+✔ cross-checks (4.340385ms)
+▶ authorisation request (code + PKCE, 26.1; BQ-8)
+  ✔ S256 challenge, response_type code, nonce and state, hd hint only (33.616765ms)
+  ✔ re-authentication asks for prompt=login and max_age (8.103908ms)
+✔ authorisation request (code + PKCE, 26.1; BQ-8) (47.854322ms)
+▶ verified identity (google)
+  ✔ success: subject, lower-cased email, name, auth time (12.640852ms)
+  ✔ a stale auth_time is refused when max_age was asked for; a missing one is accepted (prompt=login forced it) (13.669121ms)
+  ✔ refused: no hd claim (4.333922ms)
+  ✔ refused: hd of another domain (5.437625ms)
+  ✔ refused: email not verified (6.087805ms)
+  ✔ refused: email_verified missing (4.96129ms)
+  ✔ refused: email domain is a lookalike (endsWith trap) (4.707384ms)
+  ✔ refused: email domain is a subdomain (3.907152ms)
+  ✔ refused: email with an extra @ part (4.730698ms)
+  ✔ refused: no email (6.691577ms)
+  ✔ email_verified as the string "true" (Google sends it so on some paths) is accepted, "false" is not (7.813752ms)
+✔ verified identity (google) (76.084228ms)
+▶ ID token checks (signature, issuer, audience, exp, nonce)
+  ✔ refused: wrong_nonce (5.362964ms)
+  ✔ refused: no_nonce (6.28816ms)
+  ✔ refused: wrong_aud (6.069419ms)
+  ✔ refused: wrong_iss (5.154733ms)
+  ✔ refused: expired (3.312456ms)
+  ✔ refused: bad_signature (3.908244ms)
+  ✔ refused: alg_none (1.610453ms)
+  ✔ refused: alg_hs256 (2.40357ms)
+  ✔ refused: wrong_azp (3.32554ms)
+  ✔ refused: future_iat (4.386351ms)
+  ✔ an unknown signing key is refused (after one JWKS refetch) (3.182021ms)
+  ✔ the token endpoint failing never leaks the IdP text (3.056066ms)
+  ✔ a code is single use and bound to its PKCE verifier (2.29127ms)
+  ✔ the JWKS is cached between sign-ins (5.883831ms)
+✔ ID token checks (signature, issuer, audience, exp, nonce) (57.288407ms)
+▶ patient realm adapter
+  ✔ a patient needs no hd and no email; the realm is the adapter, not a claim (4.633615ms)
+  ✔ an unverified patient email is dropped, a verified one is kept lower-cased (7.171838ms)
+  ✔ a patient token still has to verify (2.966908ms)
+✔ patient realm adapter (15.032779ms)
+▶ session tokens (26.2)
+  ✔ 256 random bits, only the SHA-256 is derived, hex form matches the bytes (1.633295ms)
+  ✔ a presented value that is not a token never becomes a lookup key (0.353704ms)
+  ✔ constant-time compare (0.194324ms)
+✔ session tokens (26.2) (3.927941ms)
+▶ cookies
+  ✔ __Host- cookie: Secure, HttpOnly, Path=/, no Domain, SameSite as given (0.484139ms)
+  ✔ parse: first occurrence wins (0.174227ms)
+  ✔ returnTo is a relative path on the same host (0.192221ms)
+✔ cookies (1.16714ms)
+▶ pre-authentication cookie (26.1, SEC01-F-11)
+  ✔ round trip, and it is not readable (1.093302ms)
+  ✔ tampering, truncation, wrong key and expiry are all just "no state" (0.440967ms)
+  ✔ rotation: a cookie sealed under the previous key opens; new ones use the current key (1.293948ms)
+  ✔ short keys are refused (0.206026ms)
+✔ pre-authentication cookie (26.1, SEC01-F-11) (3.406583ms)
+▶ generic signed webhook (vendor signature + 5 minute replay window)
+  ✔ a valid signature is accepted and yields the vendor event ID (2.570564ms)
+  ✔ the previous key still verifies during a rotation window (0.270478ms)
+  ✔ wrong key, tampered body, missing headers, replay outside 5 minutes and future timestamps are all 401 (0.794641ms)
+  ✔ 4 minutes old is inside the window (0.201979ms)
+  ✔ after verification: a body that is not an object, has an unknown field or lacks an event ID is 400, not 401 (0.385603ms)
+  ✔ an unverified body is never parsed (invalid JSON with a bad signature is 401, not 400) (0.412184ms)
+✔ generic signed webhook (vendor signature + 5 minute replay window) (5.775398ms)
+▶ Google Calendar push (29.5 channel token, TDR-05)
+  ✔ a valid token is accepted with no body and no table read; event ID is channel:message number (0.531758ms)
+  ✔ a token under the previous key version is accepted (rotation window); an unknown version is not (0.31382ms)
+  ✔ wrong token, token for another channel, expired token and a token valid for more than 7 days are 401 (0.329428ms)
+  ✔ an unknown resource state or a malformed message number is 400 after the token verified (4.208537ms)
+  ✔ a repeated message number gives the same event ID (the unique index de-duplicates it) (0.194726ms)
+✔ Google Calendar push (29.5 channel token, TDR-05) (5.918989ms)
+▶ canonical request (SEC-01 O2-1): identical to the worker copy
+  ✔ pinned golden vector (0.63915ms)
+✔ canonical request (SEC-01 O2-1): identical to the worker copy (0.736893ms)
+▶ credential-looking keys
+  ✔ are found at any depth (0.330571ms)
+✔ credential-looking keys (0.436499ms)
+✔ route inventory: three public GET routes and two webhook POST routes, all declared public and release-exempt (97.288549ms)
+▶ public directory over HTTP
+  ✔ answers with max-age=60, request id, no Set-Cookie, no CORS; only allow-listed fields (18.058098ms)
+  ✔ every read runs as audience public with the configured org and nothing else, read-only (1.853499ms)
+  ✔ POST, PUT, PATCH, DELETE are refused with 404/405 and reach no database (18.758192ms)
+  ✔ unknown or malformed query parameters are 400 (CN-12), and never cached (5.069172ms)
+  ✔ clinicians: only the intersection of listed, bookable at the place and eligible for the service (9.366968ms)
+✔ public directory over HTTP (53.814066ms)
+▶ webhooks over HTTP
+  ✔ the raw bytes reach the receiver unchanged (non-JSON type), the cookie header does not, the source is kind.vendor (3.731423ms)
+  ✔ status mapping: 400, 401, 404, 413, 503 from the receiver become problem responses; nothing is cached (6.109404ms)
+  ✔ a JSON body reaches the receiver as the exact raw bytes (platform keeps them for /webhooks/*) (1.345135ms)
+  ✔ a body over 256 KB is 413 before the receiver (1.694469ms)
+  ✔ GET on a webhook path is not routed (4.816339ms)
+  ✔ the host config used here is the integrations host: the release header is not required (0.801584ms)
+✔ webhooks over HTTP (19.085926ms)
+▶ alert routes and declarations
+  ✔ the alert and stream controllers declare every route: 4 routes, known permissions, no failures (2.22723ms)
+  ✔ the type and severity lists equal the CHECK constraints of migration 1200 (0.28743ms)
+  ✔ the escalation job declares scope, on_merged and attempts (TICKETS 3, 33.1) and registers (0.242004ms)
+✔ alert routes and declarations (3.741402ms)
+▶ input validation (before any query)
+  ✔ bad type, severity, resource, patient and location are refused by field name (0.936357ms)
+  ✔ list rejects a bad status, limit and cursor; a cursor round-trips (0.859172ms)
+  ✔ toView nulls escalatesAt unless the alert is open (29.3 null rule) (0.348444ms)
+✔ input validation (before any query) (2.357955ms)
+▶ the allowlist (BD-10)
+  ✔ names no service, diagnosis, medicine, test or clinician field (0.789061ms)
+  ✔ the migration lists exactly the same (name, type) pairs and value names (0.842361ms)
+  ✔ values are checked per type (14.322486ms)
+✔ the allowlist (BD-10) (16.950798ms)
+▶ PHI scan
+  ✔ flags condition-revealing text by rule name, never echoing it (1.741408ms)
+✔ PHI scan (1.87599ms)
+▶ rendering
+  ✔ substitutes declared placeholders, formats times in the given zone, and refuses anything else (0.972344ms)
+  ✔ a value cannot break out of a subject or an SMS line, or of an .ics line (0.597341ms)
+  ✔ an .ics body without the calendar structure is refused (0.315834ms)
+  ✔ long .ics lines are folded at 75 octets without splitting a character (0.252845ms)
+✔ rendering (2.40858ms)
+▶ what cannot be saved (structure)
+  ✔ a template binding a service, diagnosis, medicine or clinician name is refused (0.613311ms)
+  ✔ an undeclared placeholder, a malformed brace and a duplicate declaration are refused (0.322314ms)
+✔ what cannot be saved (structure) (1.424603ms)
+▶ render every template, every language, every channel (RA-R1-05, TC-NT-01)
+  ✔ the R1 set renders and is free of condition-revealing text in all configured languages (19.920212ms)
+  ✔ a configured language with no row, a leaking text and a hidden clinician name each fail the check (3.340418ms)
+✔ render every template, every language, every channel (RA-R1-05, TC-NT-01) (23.399951ms)
+▶ recipient reference and preferences (rule 7, TC-NT-08)
+  ✔ a recipient reference is a kind and an ID, never an address (0.310403ms)
+  ✔ SMS off and e-mail on: no SMS channel is permitted, e-mail and in-app are; no address -> withheld; reminder channel narrows reminders (0.285636ms)
+  ✔ quiet hours: inside the window gives its end, outside gives nothing, across midnight and zones (3.321613ms)
+✔ recipient reference and preferences (rule 7, TC-NT-08) (4.063405ms)
+▶ the worker keeps in step
+  ✔ shared pure files are byte-identical in apps/api and apps/worker (0.972845ms)
+  ✔ job lists are the same on both sides (0.269086ms)
+✔ the worker keeps in step (1.354332ms)
+▶ event shapes (32.1, SEC-01 ST-2)
+  ✔ an alert event carries exactly the closed field list, id: is the seq, and nothing else of the alert leaks (1.829042ms)
+  ✔ alert_closed carries alertId and seq only (0.28212ms)
+  ✔ the notification payload parser accepts IDs only and rejects anything else (0.672201ms)
+  ✔ Last-Event-ID: a number is the cursor; missing or malformed means every open alert (0.240992ms)
+✔ event shapes (32.1, SEC-01 ST-2) (4.429021ms)
+▶ the hub (32.2, 32.3)
+  ✔ a client that does not read is dropped, never buffered: nothing is written once its buffer is over 64 KB (2.383423ms)
+  ✔ 3 streams per session and 10 per principal: the oldest is closed with event: closed (1.557703ms)
+  ✔ ping every interval; drain and stop close every stream with event: closed (80.202495ms)
+  ✔ more than 200 missed alerts: one resync event and no alert events (0.668434ms)
+  ✔ a notification for a principal with no stream, and a malformed one, do nothing (0.659768ms)
+  ✔ a read that finds the alert not visible writes nothing (RLS decides; the payload is never trusted) (0.291507ms)
+✔ the hub (32.2, 32.3) (86.434781ms)
+▶ GET /api/v1/services | /locations
+  ✔ authenticated patient: 200, no-store, items from the directory readers, under the caller scope (27.575778ms)
+  ✔ no session: 401 and the database is not touched (4.195704ms)
+  ✔ a repeated locationId is a 400 (1.992258ms)
+✔ GET /api/v1/services | /locations (166.04713ms)
+▶ composition root
+  ✔ buildComposition mounts both catalogue routes, refused without a session under the identity policy (42.938217ms)
+✔ composition root (43.445538ms)
+✔ route inventory (38.2 item 9): every route declares a known permission and the booking core resolver (1.54501ms)
+✔ the host routes are google-realm only; the patient routes declare no realm of their own (the capability decides it) (0.254508ms)
+✔ the status poll of the patient is passive (26.2); the host poll is not on the closed list until it is added (README D1) (0.238207ms)
+✔ TC-TH-05: the join window opens 10 minutes before the start and closes at the end of the slot (1.074807ms)
+✔ the room is made 15 minutes before the start, or at once when that time has passed (0.139462ms)
+✔ a session is stale two hours after the end of its slot (0.127549ms)
+✔ a state is two letters in any case; nothing else is a state (0.203041ms)
+✔ a device check is camera, mic and bandwidth, each pass or fail, and nothing else (0.710443ms)
+✔ a refusal carries a code and the start time only (0.595177ms)
+✔ the job list is pinned (the worker side pins the same one) (0.180188ms)
+✔ the merge participant registers once, names its four tables and every table is a telehealth one (0.453231ms)
+✔ every declared merge participant and export contributor is registered, and nothing else (1.871573ms)
+✔ a second registration into the same registry is a RegistryError (0.991782ms)
+✔ negative control: a module left out is absent from both registries (2.383643ms)
+✔ every platform route declares a permission and a resolver (1.399737ms)
+✔ the inventory fails a route without a declaration (CI gate) (0.537989ms)
+✔ the inventory fails an empty permission, a missing resolver and an unknown permission (0.318146ms)
+✔ the catalogue holds the 27.2 permissions (spot check) and no duplicates (0.124874ms)
+▶ client-release check (28.6, 38.2 item 20; TC-API-11)
+  ✔ refused: no header -> 400 kernel.client_release_unsupported, no effect (15.367298ms)
+  ✔ refused: malformed (no r prefix) -> 400 kernel.client_release_unsupported, no effect (3.42644ms)
+  ✔ refused: malformed (short sha) -> 400 kernel.client_release_unsupported, no effect (3.317636ms)
+  ✔ refused: malformed (zero) -> 400 kernel.client_release_unsupported, no effect (2.425822ms)
+  ✔ refused: malformed (injection) -> 400 kernel.client_release_unsupported, no effect (3.147917ms)
+  ✔ refused: below min_client_release -> 400 kernel.client_release_unsupported, no effect (2.836382ms)
+  ✔ accepted: N-1, N and N+1 (15.973417ms)
+  ✔ a path in other letter case does not escape the check (2.68581ms)
+  ✔ exempt routes work without the header: four navigations, /healthz, /readyz (6.66076ms)
+  ✔ exemption is by route template and method: POST to a navigation route is still checked (0.935004ms)
+  ✔ the integrations. host is exempt as a whole, including /api/* paths and public/v1 (1.447738ms)
+  ✔ a spoofed integrations-like Host does not exempt a portal request (BR-F05-03) (1.327771ms)
+  ✔ framework exceptions map by status onto the registry, without their message (BR-F05-01) (10.289038ms)
+  ✔ a client header cannot turn the check off (0.808267ms)
+  ✔ SSE: outdated or missing clientRelease -> plain 400 before any event; current is accepted by the check (3.709932ms)
+  ✔ no Access-Control-Allow-* header on portal-host responses, and a preflight is not answered (3.14939ms)
+✔ client-release check (28.6, 38.2 item 20; TC-API-11) (173.359973ms)
+▶ guard, deny by default (27.1, 38.2 item 9)
+  ✔ a handler with no declaration is refused 403 and never runs (1.164405ms)
+  ✔ a declared permission without a session is 401 until identity supplies the policy (1.190174ms)
+  ✔ a public declaration passes (0.989697ms)
+  ✔ an unknown route is the standard 404 (1.035574ms)
+✔ guard, deny by default (27.1, 38.2 item 9) (4.683609ms)
+▶ headers (28.2)
+  ✔ every response carries X-Request-Id and Cache-Control: no-store (success, error, 404, health) (5.439428ms)
+  ✔ a caller request id is echoed when well formed and replaced when not (2.698784ms)
+  ✔ /public/v1/* is the one max-age=60 exception (1.195214ms)
+  ✔ the error body request id equals the response header (0.903035ms)
+✔ headers (28.2) (10.512377ms)
+▶ request limits (31.2)
+  ✔ JSON body over 1 MB -> 413 kernel.payload_too_large; under is accepted (16.98815ms)
+  ✔ note PATCH is limited to 256 KB (4.143095ms)
+  ✔ a chunked body with no Content-Length is limited too (6.022531ms)
+  ✔ malformed JSON -> 400 kernel.validation_failed, body never echoed (1.643394ms)
+  ✔ header block over 16 KB is refused by the server (1.537084ms)
+✔ request limits (31.2) (30.766156ms)
+▶ health (DPR-04)
+  ✔ /healthz is shallow and /readyz reports ready, with no header and no PHI (2.266984ms)
+  ✔ /readyz is 503 kernel.unavailable when draining (6.54317ms)
+  ✔ /readyz is 503 when the database is down or the a declared relation is missing (15.69857ms)
+✔ health (DPR-04) (24.769332ms)
+▶ rate limits (31.3) and timeout (31.2)
+  ✔ writes: 60/min per client, then 429 kernel.rate_limited with Retry-After; reads have their own budget (70.669437ms)
+  ✔ a request over the timeout -> 504 kernel.timeout (157.24877ms)
+✔ rate limits (31.3) and timeout (31.2) (228.188334ms)
+▶ stream shell (32)
+  ✔ an authorised client gets text/event-stream, ping framing, and event: closed on drain (8.123454ms)
+✔ stream shell (32) (8.272975ms)
+▶ raw body retention
+  ✔ /webhooks/* JSON: rawBody is byte-identical to what was sent (whitespace, key order, unicode) (27.508792ms)
+  ✔ non-webhook route does not retain raw bytes but still parses the body (4.645898ms)
+  ✔ webhook body limit is unchanged: over 256 KB -> 413 (3.438212ms)
+✔ raw body retention (149.181641ms)
+✔ validation normalises: NFC, control characters stripped, trimmed, uuid lower-cased (1.045302ms)
+✔ validation failure lists paths and reason codes and never a value (0.795043ms)
+✔ unknown fields: ignored on portal routes, refused when strict (integrations., CN-12) (0.434446ms)
+✔ body must be an object (0.152947ms)
+✔ multiline text keeps line breaks but not other control characters (0.104716ms)
+✔ body limits by route class (31.2) (0.224181ms)
+✔ release header parser: format r<n>.<sha12> (0.222477ms)
+✔ memory limiter: window resets, limit divided by instance count (0.421521ms)
+✔ platform config names bad variables, never values (0.556534ms)
+✔ memory limiter stays bounded under many distinct keys in one window (BR-F05-04) (221.930639ms)
+✔ POST /waitlist-entries request is the strict PostWaitlistEntriesRequest schema, not an opaque object (1.83853ms)
+✔ the controller refuses exactly the properties the schema does not declare (1.153585ms)
+ℹ tests 203
+ℹ suites 40
+ℹ pass 203
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2802.232125
+
+== test @ehr/patient: pnpm --dir /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-344-sdlc-integrate-int-03-r4-bounded-round-4-re-merge-f09a-then-journeys-screenshots-n-1-scans/apps/patient run test
+$ NODE_ENV=test vitest run --reporter=default --reporter=junit --outputFile.junit="${JUNIT_DIR:-.junit}/patient.xml"
+
+ RUN  v5.1.0 /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-344-sdlc-integrate-int-03-r4-bounded-round-4-re-merge-f09a-then-journeys-screenshots-n-1-scans/apps/patient
+
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+ ✓ src/features/previsit/previsit.test.tsx (22 tests) 863ms
+ ✓ src/features/telehealth/telehealth.test.tsx (15 tests) 1438ms
+   ✓ PP-23 device check and join (13)
+     ✓ F02: opens Join by itself when the join window opens 357ms
+ ✓ src/features/booking/flow.test.tsx (28 tests) 1802ms
+   ✓ PP-10..PP-14 book a visit (5)
+     ✓ walks service, doctor and place, time, confirm and booked, with step-1 and step-2 keys that differ 375ms
+ ✓ src/features/profile/profile.test.tsx (18 tests) 612ms
+ ✓ src/app/App.test.tsx (29 tests) 812ms
+ ✓ src/a11y.test.tsx (14 tests) 591ms
+ ✓ src/features/messages/messages.test.tsx (8 tests) 333ms
+ ✓ src/features/privacy/privacy.test.tsx (8 tests) 505ms
+ ✓ src/features/auth/ProblemPage.test.tsx (13 tests) 210ms
+ ✓ src/features/booking/lib.test.ts (10 tests) 25ms
+ ✓ src/features/auth/signIn.test.ts (8 tests) 11ms
+ ✓ src/features/auth/returnTo.test.ts (13 tests) 4ms
+
+ Test Files  12 passed (12)
+      Tests  186 passed (186)
+   Start at  07:24:32
+   Duration  6.54s (tests 40%, environment 39%, transform 8%, setup 7%, import 5%)
+
+Environment  jsdom was created 12 times · 6.94s total, 39% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+JUNIT report written to /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-344-sdlc-integrate-int-03-r4-bounded-round-4-re-merge-f09a-then-journeys-screenshots-n-1-scans/reports/unit/junit/_ehr_patient/patient.xml
+
+== test @ehr/site: pnpm --dir /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-344-sdlc-integrate-int-03-r4-bounded-round-4-re-merge-f09a-then-journeys-screenshots-n-1-scans/apps/site run test
+$ NODE_ENV=test vitest run --reporter=default --reporter=junit --outputFile.junit="${JUNIT_DIR:-.junit}/site.xml"
+
+ RUN  v5.1.0 /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-344-sdlc-integrate-int-03-r4-bounded-round-4-re-merge-f09a-then-journeys-screenshots-n-1-scans/apps/site
+
+ ✓ src/directory.test.ts (8 tests) 37ms
+ ✓ src/server.test.ts (19 tests) 281ms
+ ✓ src/seo.test.ts (4 tests) 6ms
+ ✓ src/consent.test.ts (7 tests) 27ms
+ ✓ src/handoff.test.ts (3 tests) 4ms
+ ✓ src/a11y.test.tsx (13 tests) 643ms
+
+ Test Files  6 passed (6)
+      Tests  54 passed (54)
+   Start at  07:24:39
+   Duration  1.82s (environment 32%, tests 27%, setup 18%, transform 15%, import 7%, worker 1%)
+
+    Isolate  6 workers spawned · ~283ms startup each (spawn + environment, per file)
+             at least ~283ms faster with isolate: false — reuses workers across files instead of one per file
+
+JUNIT report written to /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-344-sdlc-integrate-int-03-r4-bounded-round-4-re-merge-f09a-then-journeys-screenshots-n-1-scans/reports/unit/junit/_ehr_site/site.xml
+
+== test @ehr/staff: pnpm --dir /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-344-sdlc-integrate-int-03-r4-bounded-round-4-re-merge-f09a-then-journeys-screenshots-n-1-scans/apps/staff run test
+$ NODE_ENV=test vitest run --reporter=default --reporter=junit --outputFile.junit="${JUNIT_DIR:-.junit}/staff.xml"
+
+ RUN  v5.1.0 /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-344-sdlc-integrate-int-03-r4-bounded-round-4-re-merge-f09a-then-journeys-screenshots-n-1-scans/apps/staff
+
+stderr | src/features/preconsult/desk.test.tsx > merge request and approval (7.3, 8) > requests a merge only after the survivor MRN is typed, and shows the reference
+In HTML, <form> cannot be a descendant of <form>.
+This will cause a hydration error.
+
+  <PreconsultDesk runtime={{api:{...}}} path="/arrivals" navigate={function navigate}>
+    <div>
+      <Screens path="/arrivals" api={{...}} locationId="11111111-1..." permissions={[...]} navigate={function navigate}>
+        <h1>
+        <Tabs items={[...]} selected="merge" onSelect={function bound dispatchSetState} label="Pre-consul...">
+          <div className="ehr-tabs">
+            <div>
+            <div>
+            <div>
+            <div>
+            <div>
+            <div role="tabpanel" id="_r_4c_-pan..." aria-labelledby="_r_4c_-tab..." hidden={false} tabIndex={0} ...>
+              <Merge preset={{...}}>
+                <section aria-labelledby="merge-title">
+                  <h2>
+                  <MergeRequestForm preset={{...}}>
+                    <section aria-labelledby="mreq-title" className="ehr-card">
+                      <h3>
+                      <p>
+>                     <form onSubmit={function onSubmit} noValidate={true}>
+                        <ErrorSummary>
+                        <fieldset>
+                          <legend>
+                          <RecordLine>
+                          <PatientPicker idPrefix="ms" chooseLabel="Choose thi..." chosenId={null} ...>
+                            <div>
+>                             <form onSubmit={function onSubmit} noValidate={true} aria-label="Find the patient">
+                        ...
+
+<form> cannot contain a nested <form>.
+See this log for the ancestor stack trace.
+
+ ✓ src/features/preconsult/desk.test.tsx (30 tests) 1333ms
+ ✓ src/features/availability/availability.test.tsx (34 tests) 2471ms
+   ✓ weekly hours (DR-11) (11)
+     ✓ shows the appointments a change would leave outside the hours before it saves, and saves only after acknowledgement 405ms
+     ✓ stops using hours only after showing the affected appointments 1043ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+ ✓ src/app/StaffApp.test.tsx (20 tests) 2808ms
+   ✓ idle warning and sign-out (4)
+     ✓ shows the session-ended dialog when the deadline has passed and goes to sign-in 2023ms
+ ✓ src/features/messages/messages.test.tsx (12 tests) 707ms
+stderr | src/features/doctor/doctor.test.tsx > chart summary (BR-34, UI-UX 8) > shows name, date of birth, photo and the allergy block
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > chart summary (BR-34, UI-UX 8) > draws a hidden allergy part as "not shown", never as "none"
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > chart summary (BR-34, UI-UX 8) > says "No allergies recorded" when none are recorded
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > break the glass (BR-14, DR-09) > refuses access until a reason of at least 10 characters is entered, then opens the chart
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > note editor, sign dialog, addenda (DR-03, DR-05, DR-06) > starts the consultation, saves a draft with If-Match and signs after re-authentication with the same key
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > note editor, sign dialog, addenda (DR-03, DR-05, DR-06) > starts the consultation, saves a draft with If-Match and signs after re-authentication with the same key
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > note editor, sign dialog, addenda (DR-03, DR-05, DR-06) > starts the consultation, saves a draft with If-Match and signs after re-authentication with the same key
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > note editor, sign dialog, addenda (DR-03, DR-05, DR-06) > starts the consultation, saves a draft with If-Match and signs after re-authentication with the same key
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > note editor, sign dialog, addenda (DR-03, DR-05, DR-06) > starts the consultation, saves a draft with If-Match and signs after re-authentication with the same key
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > note editor, sign dialog, addenda (DR-03, DR-05, DR-06) > shows the consent gate reason and requires a reason for the emergency exception
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > note editor, sign dialog, addenda (DR-03, DR-05, DR-06) > shows the consent gate reason and requires a reason for the emergency exception
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > note editor, sign dialog, addenda (DR-03, DR-05, DR-06) > lets a trainee submit for co-signature, without a sign permission
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > note editor, sign dialog, addenda (DR-03, DR-05, DR-06) > lets a trainee submit for co-signature, without a sign permission
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > note editor, sign dialog, addenda (DR-03, DR-05, DR-06) > lets a trainee submit for co-signature, without a sign permission
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > note editor, sign dialog, addenda (DR-03, DR-05, DR-06) > keeps the dialog out of the way when the sign is refused (403) and says why
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > note editor, sign dialog, addenda (DR-03, DR-05, DR-06) > keeps the dialog out of the way when the sign is refused (403) and says why
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > video and notes side by side (DR-04) > joins through the adapter only, admits a waiting patient, and ends the call
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ✓ src/a11y.test.tsx (2 tests) 248ms
+stderr | src/features/doctor/doctor.test.tsx > video and notes side by side (DR-04) > says video is not connected when no adapter is configured, and notes still work
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ✓ src/features/doctor/doctor.test.tsx (24 tests) 934ms
+ ✓ src/app/a11y.test.tsx (5 tests) 403ms
+ ✓ src/features/availability/affected.test.ts (8 tests) 22ms
+ ✓ src/App.test.tsx (2 tests) 180ms
+ ✓ src/features/documents/DocumentsPage.test.tsx (3 tests) 246ms
+ ✓ src/features/auth/auth.test.ts (17 tests) 6ms
+ ✓ src/features/preconsult/qr.test.ts (3 tests) 6ms
+
+ Test Files  12 passed (12)
+      Tests  160 passed (160)
+   Start at  07:24:41
+   Duration  7.24s (tests 47%, environment 33%, transform 8%, setup 6%, import 5%)
+
+Environment  jsdom was created 12 times · 6.58s total, 33% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+JUNIT report written to /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-344-sdlc-integrate-int-03-r4-bounded-round-4-re-merge-f09a-then-journeys-screenshots-n-1-scans/reports/unit/junit/_ehr_staff/staff.xml
+
+== test @ehr/worker: pnpm --dir /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-344-sdlc-integrate-int-03-r4-bounded-round-4-re-merge-f09a-then-journeys-screenshots-n-1-scans/apps/worker run test
+$ pnpm run build && node --test --test-reporter=spec --test-reporter-destination=stdout --test-reporter=junit --test-reporter-destination="${JUNIT_DIR:-.junit}/worker.xml" "dist/**/*.test.js"
+$ tsc -p tsconfig.json
+▶ merkle root
+  ✔ empty is the hash of nothing; one leaf is its leaf hash (1.038688ms)
+  ✔ two and three leaves follow the 0x00 / 0x01 domain separation, an odd node is carried up (0.412415ms)
+  ✔ any change, swap, removal or addition changes the root (1.31122ms)
+  ✔ a leaf cannot be passed off as an inner node (0.268053ms)
+✔ merkle root (4.096247ms)
+▶ anchor hash
+  ✔ depends on every input (0.346911ms)
+✔ anchor hash (0.457238ms)
+✔ busy: opaque and tentative events block time; cancelled, free, declined and our own do not (BR-07: only an ID and an interval survive) (1.460611ms)
+✔ busy: malformed events are not busy time and never throw (0.322456ms)
+✔ all-day events block the local days in the event zone, else the calendar zone; daylight saving is the platform's (16.500444ms)
+✔ identifiers: deterministic, in Google's alphabet, and one secret name per doctor (0.760717ms)
+✔ push_busy writes ONE event: title "Busy", private, no description, attendee, location or reference to the patient (BR-07) (20.197292ms)
+✔ push_busy is idempotent: an existing event (409) is made equal and confirmed; delete treats 404 and 410 as done (2.508888ms)
+✔ incremental_sync: asks for no title, returns intervals only; a sync token excludes timeMin; 410 is a non-retryable gone (2.439608ms)
+✔ failures: outages and rate limits are retryable; a refusal is not; a rejected grant is token_revoked (401); no error carries a body (5.321225ms)
+✔ the access token is cached per doctor and never printed; a missing client ID is a configuration failure; arguments are validated (0.857669ms)
+✔ watch and stop_watch: the channel token travels in the body only; 404 on stop is done; the result carries the resource ID (0.559941ms)
+✔ health check: an unauthenticated read, no credential involved (0.467377ms)
+✔ the push payload must be exactly {channelId, resourceId, resourceState}: anything else is ignored (DF-3) (1.725808ms)
+✔ the channel token format of 29.5, under the 256-character limit, with a lifetime inside the verifier's 7-day ceiling (0.684715ms)
+✔ job types: patient-carrying handlers declare on_merged; everything else is organisation scope with no patient ID (0.166152ms)
+✔ the job type is organisation-scope, carries no patient and has no merge handling (0.788109ms)
+✔ a bad payload is refused before anything is read: undefined (0.667182ms)
+✔ a bad payload is refused before anything is read: {} (0.149581ms)
+✔ a bad payload is refused before anything is read: {"dataset":"cpt","version":"1"} (0.12265ms)
+✔ a bad payload is refused before anything is read: {"dataset":"rxnorm"} (0.278042ms)
+✔ a bad payload is refused before anything is read: {"dataset":"rxnorm","version":"a b"} (0.173165ms)
+✔ a bad payload is refused before anything is read: {"dataset":"rxnorm","version":""} (0.159669ms)
+✔ sniffType decides from the first bytes only (0.962746ms)
+✔ PNG rewrite drops text and metadata chunks, keeps the image, refuses a broken file (0.811723ms)
+✔ JPEG rewrite drops APPn and COM segments, keeps tables and scan data, refuses a broken file (0.849224ms)
+✔ the scan-tag adapter: unknown or missing is never clean; bad arguments and outage are failures (1.160648ms)
+✔ the OCR adapter implements classify only, passes no bytes, maps provider errors (0.681178ms)
+✔ the in-memory store refuses to read more than the declared size (0.232546ms)
+▶ the 27.2 catalogue and the 27.3 default mapping as data (a Proposal until G2)
+  ✔ 81 permissions, flags as in 27.2, and compliance slices only on the six slice permissions (2.136469ms)
+  ✔ eleven roles; privileged roles live in admin_pool only; staff roles are location-bound, admin roles are not (0.194165ms)
+  ✔ 27.3: the rows that are easy to get wrong (2.539546ms)
+  ✔ every permission a role holds is in the catalogue, and privileged ones only in privileged roles (0.95393ms)
+  ✔ the checksum is stable and changes with the data (1.84915ms)
+  ✔ expandRole refuses what the database would also refuse (0.689984ms)
+✔ the 27.2 catalogue and the 27.3 default mapping as data (a Proposal until G2) (9.749085ms)
+▶ callVendor (34.2, 34.3)
+  ✔ a good call is recorded once with IDs, outcome, status and latency only (2.858584ms)
+  ✔ the same idempotency token is used on every attempt of one call (0.688452ms)
+  ✔ retries with exponential back-off and logs every attempt; exhaustion is 503 integration.vendor_unavailable (1.287366ms)
+  ✔ a vendor 4xx is not retried, is 502 integration.vendor_rejected and does not count against the circuit (2.345121ms)
+  ✔ a timeout is enforced, aborts the adapter signal, and is logged as timeout (43.604286ms)
+  ✔ after the circuit opens, a call fails fast: adapter not called, attempt logged as rejected/circuit_open (1.244245ms)
+  ✔ disabled connection: refused before it leaves and logged as rejected/disabled (0.29853ms)
+  ✔ no connection row: fails without calling anything; no adapter installed: rejected/no_adapter (0.290195ms)
+  ✔ a vendor without an idempotency token gets a pending row first; after a timeout the vendor is asked before a repeat (34.3) (11.257306ms)
+  ✔ a failed log write after a successful call does not undo it and is reported (0.841689ms)
+  ✔ unknown kind, unknown operation and bad correlation are refused before anything happens (0.427292ms)
+  ✔ an adapter exception with a vendor message never leaks into the error or the log (0.41542ms)
+✔ callVendor (34.2, 34.3) (67.114275ms)
+▶ circuit state (34.2)
+  ✔ opens after 5 consecutive failures, and not after 4 (1.762277ms)
+  ✔ a success resets the consecutive count (0.24045ms)
+  ✔ opens at 50 % errors over 20 calls inside one minute (0.217187ms)
+  ✔ 49 % over 20 calls stays closed; 19 calls are not enough to judge (0.403859ms)
+  ✔ calls older than a minute leave the window (0.209783ms)
+  ✔ half-open after 30 s admits exactly one probe; success closes (0.655269ms)
+  ✔ a failed probe re-opens for another 30 s (0.187181ms)
+  ✔ a released probe slot (vendor 4xx) lets the next call probe (0.169888ms)
+  ✔ state is per connection (0.166994ms)
+✔ circuit state (34.2) (5.240434ms)
+▶ adapter interfaces (acceptance: one per kind)
+  ✔ the six R1 kinds each have an operation list, and the registry refuses duplicates and unknown kinds (1.275654ms)
+✔ adapter interfaces (acceptance: one per kind) (2.096224ms)
+▶ canonical request (SEC-01 O2-1)
+  ✔ is length-prefixed, versioned and stable; the challenge is its SHA-256 (0.632286ms)
+  ✔ a different value, nonce or request ID changes the fingerprint; the value itself is not in the bytes (0.260529ms)
+✔ canonical request (SEC-01 O2-1) (1.063365ms)
+▶ health derivation (34.2)
+  ✔ first failed probe degrades, the second in a row is down; a good probe restores (0.203622ms)
+  ✔ a passing probe with >= 50 % failures over >= 5 recent calls is degraded (0.108243ms)
+✔ health derivation (34.2) (0.481683ms)
+▶ secret cache (9.1: at most 5 minutes, memory only)
+  ✔ reads through once inside the TTL, again after it, and clear() drops everything (0.437701ms)
+  ✔ a TTL above 5 minutes is refused (3.4049ms)
+  ✔ the cached value does not serialise or inspect (0.203872ms)
+✔ secret cache (9.1: at most 5 minutes, memory only) (4.329385ms)
+▶ inbound handler registry
+  ✔ one handler per (source, type); a second is refused; lookup is exact (0.444124ms)
+✔ inbound handler registry (0.543961ms)
+▶ job list
+  ✔ matches ARCHITECTURE 33.1 and the API-side list (0.183866ms)
+✔ job list (0.258456ms)
+✔ privacy job types: names, merge policy and scope (1.116054ms)
+✔ every job that carries patient IDs declares on_merged, and the types register (0.426209ms)
+✔ create_meeting: recording is off, and asking for it is refused before the vendor is touched (1.895627ms)
+✔ create_meeting: the same idempotency token answers with the same room (0.167905ms)
+✔ find: a vendor without a token is asked for the room by our external ID (0.310323ms)
+✔ join_token: unique per call, bounded life, the token only in data, a participant reference that is an opaque UUID (1.251368ms)
+✔ a vendor outage is a retryable failure that carries a class and a status and no vendor text (1.426636ms)
+✔ end_meeting and lookup_meeting (0.300244ms)
+✔ the job list is pinned (the API side pins the same one) (0.175579ms)
+✔ every M4 job type is defined in the worker registry and has a handler in the composed table (3.276899ms)
+✔ negative control: a table without the M4 handlers reports them unhandled (0.423865ms)
+✔ the crontab holds the privacy expiry and the operations refresh, each with a handler (0.242766ms)
+✔ INT03-F11: graphile-worker parseCrontab accepts WORKER_CRONTAB and every entry maps to a registered task (1.104904ms)
+✔ INT03-F11 negative control: a dotted task id is rejected by the real parser (0.40006ms)
+✔ without the API ports and infrastructure the M4 handlers refuse (nothing pretends to work) (0.943841ms)
+✔ the worker's clinical.terminology_load equal the API's CLINICAL_CHART_JOBS (0.728196ms)
+✔ the worker's clinical.on_alert_unacknowledged equal the API's FRONTDOOR_JOBS (0.47435ms)
+✔ the worker's clinical.note_sign_reminder equal the API's NOTES_JOBS (0.514917ms)
+✔ the worker's notifications.escalate_alert equal the API's ALERT_JOBS (0.494969ms)
+✔ the worker's messaging.on_correction_requested equal the API's MESSAGING_JOBS (0.439143ms)
+✔ the worker's privacy.assemble_export, privacy.check_legal_holds, privacy.expire_packages equal the API's PRIVACY_JOBS (0.373771ms)
+✔ the worker's reporting.refresh_ops equal the API's REPORTING_JOBS (0.385684ms)
+✔ the worker's patient.verify_staff_scope, patient.purge_match_checks equal the API's PATIENT_JOBS (0.336862ms)
+✔ the worker's patient.execute_merge equal the API's MERGE_JOBS (0.380955ms)
+✔ every job type the API path may publish exists in the worker registry, with the same definition (F01-R1) (206.125299ms)
+✔ R8-N2: the worker entry registers job types but no handlers, so every registered type is reported unhandled (1.594343ms)
+✔ a type with a handler is not reported (0.334358ms)
+ℹ tests 96
+ℹ suites 11
+ℹ pass 96
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 616.830557
+
+== test @ehr/app-shell: pnpm --dir /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-344-sdlc-integrate-int-03-r4-bounded-round-4-re-merge-f09a-then-journeys-screenshots-n-1-scans/packages/app-shell run test
+$ NODE_ENV=test vitest run --reporter=default --reporter=junit --outputFile.junit="${JUNIT_DIR:-.junit}/app-shell.xml"
+
+ RUN  v5.1.0 /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-344-sdlc-integrate-int-03-r4-bounded-round-4-re-merge-f09a-then-journeys-screenshots-n-1-scans/packages/app-shell
+
+stderr | src/release/ReleasePrompts.test.tsx > non-blocking bar > announces politely, reloads at once without unsaved input
+The current testing environment is not configured to support act(...)
+
+stderr | src/release/ReleasePrompts.test.tsx > non-blocking bar > with unsaved input asks first, naming forms and never content
+The current testing environment is not configured to support act(...)
+
+stderr | src/release/ReleasePrompts.test.tsx > non-blocking bar > with unsaved input asks first, naming forms and never content
+The current testing environment is not configured to support act(...)
+
+stderr | src/release/ReleasePrompts.test.tsx > non-blocking bar > offers save-and-reload only where a draft route exists, and stays on failure
+The current testing environment is not configured to support act(...)
+
+stderr | src/release/ReleasePrompts.test.tsx > non-blocking bar > offers save-and-reload only where a draft route exists, and stays on failure
+The current testing environment is not configured to support act(...)
+
+stderr | src/release/ReleasePrompts.test.tsx > non-blocking bar > remind me later hides the bar
+The current testing environment is not configured to support act(...)
+
+stderr | src/release/ReleasePrompts.test.tsx > blocking dialog > pulls focus back when it escapes the dialog (backdrop click)
+The current testing environment is not configured to support act(...)
+
+stderr | src/release/ReleasePrompts.test.tsx > blocking dialog > opens on refusal with the exact text, request id and no auto reload
+The current testing environment is not configured to support act(...)
+
+stderr | src/release/ReleasePrompts.test.tsx > blocking dialog > keep-open shows the red bar and closes the dialog
+The current testing environment is not configured to support act(...)
+
+stderr | src/release/ReleasePrompts.test.tsx > blocking dialog > shows the paused-alerts bar so a refused stream never looks like no alerts
+The current testing environment is not configured to support act(...)
+
+ ✓ src/release/ReleasePrompts.test.tsx (8 tests) 343ms
+ ✓ src/session/SessionPrompts.test.tsx (11 tests) 374ms
+ ✓ src/documents/documents.test.tsx (15 tests) 723ms
+ ✓ src/realm/RealmBar.test.tsx (3 tests) 127ms
+ ✓ src/errors/errors.test.tsx (5 tests) 142ms
+ ✓ src/runtime.test.ts (5 tests) 17ms
+ ✓ src/api/client.test.ts (5 tests) 12ms
+ ✓ src/session/session-store.test.ts (12 tests) 16ms
+ ✓ src/release/release-store.test.ts (8 tests) 6ms
+
+ Test Files  9 passed (9)
+      Tests  72 passed (72)
+   Start at  07:24:51
+   Duration  3.49s (environment 57%, tests 19%, setup 11%, transform 7%, import 5%)
+
+Environment  jsdom was created 9 times · 5.14s total, 57% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+JUNIT report written to /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-344-sdlc-integrate-int-03-r4-bounded-round-4-re-merge-f09a-then-journeys-screenshots-n-1-scans/reports/unit/junit/_ehr_app-shell/app-shell.xml
+
+== test @ehr/kernel: pnpm --dir /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-344-sdlc-integrate-int-03-r4-bounded-round-4-re-merge-f09a-then-journeys-screenshots-n-1-scans/packages/kernel run test
+$ pnpm run build && node --test --test-reporter=spec --test-reporter-destination=stdout --test-reporter=junit --test-reporter-destination="${JUNIT_DIR:-.junit}/kernel.xml" "dist/**/*.test.js"
+$ tsc -p tsconfig.json
+✔ valid configuration with defaults (1.315809ms)
+✔ the worker requires the organisation for dequeue scope (0.491743ms)
+✔ errors name variables, never values (0.279315ms)
+✔ describeDatabase drops credentials (0.282529ms)
+✔ migrations load in version order and pass the rules (4.59309ms)
+✔ the runner rejects an out-of-order version instead of applying it silently (2.231669ms)
+✔ in-order pending versions are applied, once, in order (1.4339ms)
+✔ a changed or missing applied migration is rejected (0.41579ms)
+✔ the runner fails a directory that contains DML before it touches the database (SBR-17) (0.524554ms)
+✔ the owner-step post-check fails a file that leaves the grant or the role behind (A-3) (0.365977ms)
+✔ scanner ignores comments, strings, identifiers and dollar bodies (3.078887ms)
+✔ E-strings honour backslash escapes (0.31913ms)
+✔ DML ban rejects INSERT (SBR-17) (1.427629ms)
+✔ DML ban rejects UPDATE (SBR-17) (0.502633ms)
+✔ DML ban rejects DELETE (SBR-17) (0.535084ms)
+✔ DML ban rejects MERGE (SBR-17) (0.18632ms)
+✔ DML ban rejects COPY (SBR-17) (0.205566ms)
+✔ DML ban rejects psql \copy (SBR-17) (0.099858ms)
+✔ DML ban rejects TRUNCATE (SBR-17) (0.402325ms)
+✔ DML ban rejects DO block (SBR-17) (0.363893ms)
+✔ DML ban rejects CTE DML (SBR-17) (0.345478ms)
+✔ DML ban rejects SELECT INTO (SBR-17) (0.25068ms)
+✔ DML ban rejects CTAS (SBR-17) (0.221256ms)
+✔ DML ban rejects EXPLAIN ANALYZE INSERT (SBR-17) (0.100819ms)
+✔ DML ban rejects EXPLAIN (ANALYZE) DELETE (SBR-17) (0.065092ms)
+✔ DML ban rejects CREATE RULE with DML action (SBR-17) (0.121027ms)
+✔ DML ban rejects parenthesised INSERT (SBR-17) (0.135725ms)
+✔ DML ban rejects CTAS with column list (SBR-17) (0.130947ms)
+✔ DML ban rejects lower case and odd spacing (SBR-17) (0.066665ms)
+✔ DML ban does not reject DDL that mentions DML words (0.631435ms)
+✔ DML ban does not reject a generated column (F03-R1-03) (0.119213ms)
+✔ the runner owns transactions, role switching and timeouts; roles come from db/roles (0.134472ms)
+✔ a file without a class header is rejected (0.154932ms)
+✔ expand file rejects DROP TABLE (0.086843ms)
+✔ expand file rejects DROP COLUMN (0.411271ms)
+✔ expand file rejects DROP CONSTRAINT (0.299854ms)
+✔ expand file rejects RENAME COLUMN (0.166332ms)
+✔ expand file rejects RENAME TABLE (0.183325ms)
+✔ expand file rejects column type change (0.08546ms)
+✔ expand file rejects SET NOT NULL (0.077866ms)
+✔ expand file rejects NOT NULL column without default (0.115928ms)
+✔ expand file rejects non-concurrent index on an existing table (1.363408ms)
+✔ expand file rejects unique index on an existing table (0.079229ms)
+✔ expand file rejects foreign key that validates immediately (0.106641ms)
+✔ expand file rejects check that validates immediately (0.094497ms)
+✔ expand file rejects primary key built in place (0.084929ms)
+✔ expand file rejects volatile default (0.072055ms)
+✔ expand file rejects serial column (0.07487ms)
+✔ expand file accepts the safe forms (0.216006ms)
+✔ CREATE INDEX CONCURRENTLY needs "-- transaction: none" (0.118673ms)
+✔ contract file needs an approval reference and only destructive statements (0.255259ms)
+✔ owner step: the guard grant, the trigger and the revoke are accepted in an expand file (0.261752ms)
+✔ owner step: DROP FUNCTION is accepted in a contract file only (0.287148ms)
+✔ owner step refuses another role (0.122219ms)
+✔ owner step refuses a role the list does not name (0.083436ms)
+✔ owner step refuses SET ROLE without LOCAL (0.092363ms)
+✔ owner step refuses SET SESSION AUTHORIZATION (0.698631ms)
+✔ owner step refuses a guard grant as scheduling_booking_owner (0.078026ms)
+✔ owner step refuses a grant of another function (0.06913ms)
+✔ owner step refuses a grant to another role (0.066535ms)
+✔ owner step refuses a table statement (0.070313ms)
+✔ owner step refuses a statement outside a step after RESET ROLE alone (0.066605ms)
+✔ owner step refuses a nested step (0.093015ms)
+✔ owner step refuses an unterminated step (0.0745ms)
+✔ owner step refuses a grant without its revoke (0.084609ms)
+✔ owner step refuses a revoke before the last CREATE TRIGGER (0.109936ms)
+✔ owner step: a contract DROP FUNCTION step refuses CASCADE (0.11188ms)
+✔ owner step: a contract DROP FUNCTION step refuses IF EXISTS (0.071353ms)
+✔ owner step: a contract DROP FUNCTION step refuses an unqualified name (0.064321ms)
+✔ owner step: a contract DROP FUNCTION step refuses DROP TABLE (0.063398ms)
+✔ owner step needs a single-transaction file (0.120756ms)
+✔ SQLSTATE PM001 -> patient.merged, no PHI in the body (1.064657ms)
+✔ SQLSTATE PS001 -> scheduling.invalid_transition, no PHI in the body (0.147126ms)
+✔ SQLSTATE PK001 -> kernel.idempotency_conflict, no PHI in the body (0.149922ms)
+✔ SQLSTATE 23P01 -> scheduling.slot_taken, no PHI in the body (0.095579ms)
+✔ SQLSTATE 40001 -> kernel.unavailable, no PHI in the body (0.19191ms)
+✔ SQLSTATE 40P01 -> kernel.unavailable, no PHI in the body (0.104075ms)
+✔ SQLSTATE 57014 -> kernel.timeout, no PHI in the body (0.196479ms)
+✔ SQLSTATE 25P04 -> kernel.timeout, no PHI in the body (0.085891ms)
+✔ SQLSTATE 42501 -> auth.forbidden, no PHI in the body (0.290846ms)
+✔ SQLSTATE PA001 -> kernel.internal, no PHI in the body (0.174477ms)
+✔ SQLSTATE XX000 -> kernel.internal, no PHI in the body (0.095269ms)
+✔ PS002 uses the reason code of DETAIL only when it has the registry shape (0.192912ms)
+✔ 42501 is 404 for a by-ID write and audited (0.590568ms)
+✔ 40001/40P01 are retried internally first, then 503 kernel.unavailable (0.087444ms)
+✔ an unknown module cannot inject text into a code (0.107992ms)
+✔ non-object errors map to 500 without throwing (0.192891ms)
+✔ canonical JSON sorts keys and drops whitespace (0.98589ms)
+✔ same request, different key order and method case, same hash (0.860694ms)
+✔ any difference in method, route, path params, query or body changes the hash (1.349382ms)
+✔ field boundaries cannot be shifted to collide (0.195658ms)
+✔ Idempotency-Key must be a uuid v4 or v7 (0.571392ms)
+✔ first request inserts and proceeds as new (0.834146ms)
+✔ duplicate with the same hash replays the stored response (0.268004ms)
+✔ a body over 64 KB is replayed by re-reading the resource (0.163246ms)
+✔ same key with a different hash is 409 kernel.idempotency_conflict (0.477777ms)
+✔ completion drops a body over 64 KB (0.322475ms)
+✔ synthetic-PHI canary never appears in any output shape (2.454265ms)
+✔ operational fields survive (0.658696ms)
+✔ level filter, and callers cannot overwrite level/time/msg (0.204404ms)
+✔ bearer tokens and JWTs are scrubbed from messages (0.168025ms)
+✔ api path enqueues only through queue_api.enqueue on the caller transaction handle (1.71026ms)
+✔ worker path calls queue.add_job with the type attempt limit and the namespaced job key (0.264586ms)
+✔ system and data_repair types, and bad job keys, never reach the api path (0.666911ms)
+✔ syncTaskTypes upserts every registered type in a stable order and never deletes (1.026657ms)
+✔ publish fans out one job per registered handler, in a stable order (0.442591ms)
+✔ payloads are IDs and scope keys only (0.297889ms)
+✔ a PHI payload never reaches the database (0.240693ms)
+✔ job types: patient IDs require on_merged, duplicates and unknown types refused (0.363552ms)
+✔ SEC03-F07: the registry can declare on_merged = fail; a patient-carrying type must declare resolve or fail (0.231304ms)
+✔ resolve: an active ID is kept, a merged ID becomes its survivor (1.464257ms)
+✔ fail: a merged ID dead-letters the job with patient.merged; an active ID passes (1.220581ms)
+✔ undeclared on_merged on a patient-carrying type is treated as fail; unknown IDs fail under both (0.214212ms)
+✔ a type without patient IDs is untouched (0.148368ms)
+✔ merge participants: register, duplicate refused, listed in a stable order (1.899054ms)
+✔ export contributors: register, duplicate refused, listed in a stable order (1.114151ms)
+✔ merge participant declarations are validated (0.316364ms)
+✔ the two registries are independent and a participant is stored by copy (0.260047ms)
+✔ exits non-zero and names file, line and rule for a handler without lockPatients (32.223559ms)
+✔ exits zero for a compliant handler (25.816336ms)
+✔ sign-in setter outside the allowed path fails, inside it passes (50.486341ms)
+✔ scanning a directory finds the violating file (32.416602ms)
+✔ usage error exits 2 (35.705113ms)
+✔ passes when lockPatients comes first (1.880589ms)
+✔ fails a handler that calls a patient_scope_owner function without lockPatients (0.327264ms)
+✔ fails when lockPatients is after the call (0.172674ms)
+✔ fails a call outside any withScope callback (0.164859ms)
+✔ comments do not count as a lock or as a call (0.196529ms)
+✔ two handlers in one file are judged separately (0.194645ms)
+✔ generic type argument on withScope is understood (0.210305ms)
+✔ sign-in setter call sites are limited to the allowed files (0.251131ms)
+✔ accepts lockReferralPatient as the patient-root lock before the referral relationship function (0.588655ms)
+✔ fails a handler that calls patient.ensure_referral_care_relationship with no lock (0.271811ms)
+✔ scope statement sets every 21.3 setting in one statement, transaction-local, unset ones empty (1.11394ms)
+✔ scope values are validated: no SQL or list injection through a setting (0.493547ms)
+✔ withScope: BEGIN, scope, work, COMMIT; handle is dead afterwards (1.068975ms)
+✔ withScope rolls back on error and rethrows (0.313279ms)
+✔ a failed rollback destroys the connection (0.372029ms)
+✔ 40P01 is retried as a whole new transaction only when idempotent, at most twice (1.308005ms)
+✔ lockPatients sorts IDs, once only; scope-owner functions need it first and no_key_update (1.279491ms)
+✔ the sign-in setter exists only on the sign-in handle and only for audience anonymous (0.430548ms)
+ℹ tests 141
+ℹ suites 0
+ℹ pass 141
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 417.758133
+
+== test @ehr/ui: pnpm --dir /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-344-sdlc-integrate-int-03-r4-bounded-round-4-re-merge-f09a-then-journeys-screenshots-n-1-scans/packages/ui run test
+$ NODE_ENV=test vitest run --reporter=default --reporter=junit --outputFile.junit="${JUNIT_DIR:-.junit}/ui.xml"
+
+ RUN  v5.1.0 /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-344-sdlc-integrate-int-03-r4-bounded-round-4-re-merge-f09a-then-journeys-screenshots-n-1-scans/packages/ui
+
+ ✓ src/tokens.test.ts (38 tests) 11ms
+ ✓ src/copy.test.tsx (26 tests) 167ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+ ✓ src/components.test.tsx (107 tests) 1097ms
+
+ Test Files  3 passed (3)
+      Tests  171 passed (171)
+   Start at  07:24:57
+   Duration  2.01s (tests 41%, environment 35%, setup 10%, transform 8%, import 6%)
+
+JUNIT report written to /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-344-sdlc-integrate-int-03-r4-bounded-round-4-re-merge-f09a-then-journeys-screenshots-n-1-scans/reports/unit/junit/_ehr_ui/ui.xml
+boundary.xml: 1 tests, 0 skipped, 0 failed
+_ehr_api/api.xml: 203 tests, 0 skipped, 0 failed
+_ehr_app-shell/app-shell.xml: 72 tests, 0 skipped, 0 failed
+_ehr_kernel/kernel.xml: 141 tests, 0 skipped, 0 failed
+_ehr_patient/patient.xml: 186 tests, 0 skipped, 0 failed
+_ehr_site/site.xml: 54 tests, 0 skipped, 0 failed
+_ehr_staff/staff.xml: 160 tests, 0 skipped, 0 failed
+_ehr_ui/ui.xml: 171 tests, 0 skipped, 0 failed
+_ehr_worker/worker.xml: 96 tests, 0 skipped, 0 failed
+unit: 1084 tests in 9 report(s), none skipped or failed
