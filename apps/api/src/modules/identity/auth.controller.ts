@@ -268,3 +268,26 @@ export function createAuthController(d: AuthControllerDeps): Type<unknown> {
   }
   return AuthController;
 }
+
+/** `GET /api/v1/me` (29.2 row 11): the patient-realm caller and the patients linked to them, with relation and scope. */
+export function createMeController(): Type<unknown> {
+  @Controller('api/v1')
+  class MeController {
+    @Get('me')
+    @Route({ permission: 'patient', resolver: 'none', realm: 'patient' })
+    me(@ReqParam() req: Req): Record<string, unknown> {
+      const ctx = requireAuthContext(req);
+      return {
+        principalId: ctx.session.principalId,
+        realm: ctx.session.realm,
+        displayName: ctx.displayName,
+        patients: ctx.patients.map((p) => ({
+          patientId: p.patientId,
+          relation: p.relation,
+          scope: p.scope,
+        })),
+      };
+    }
+  }
+  return MeController;
+}
