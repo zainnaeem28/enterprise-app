@@ -16,7 +16,7 @@ import { newKey } from '../preconsult/http.js';
 import { docStrings as d } from './strings.js';
 import { timeOf } from './format.js';
 import { noteStore } from './workspace.js';
-import type { Addendum, Encounter, Note, Visit } from './types.js';
+import type { Addendum, Encounter, Note, NoteListItem, Visit } from './types.js';
 
 const SECTIONS = ['subjective', 'objective', 'assessment', 'plan'] as const;
 const AUTOSAVE_MS = 3000;
@@ -46,6 +46,7 @@ export function NoteEditor({
   const [sections, setSections] = useState<Record<string, string>>(resume?.sections ?? {});
   const [dirty, setDirty] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [candidates, setCandidates] = useState<NoteListItem[] | null>(null);
   const [busy, setBusy] = useState<null | 'start' | 'save' | 'sign' | 'addendum'>(null);
   const [failure, setFailure] = useState<Failure | null>(null);
   const [consentMissing, setConsentMissing] = useState(false);
@@ -85,23 +86,32 @@ export function NoteEditor({
 
   /**
    * `POST /encounters` answers 409 when the visit already has its encounter (a consultation in progress). There is no read
-   * route for an encounter by reservation, so the clinician's own draft for this patient is the way back in. False when none is found.
+   * route for an encounter by reservation, and nothing on a note ties it to this visit, so a draft is never opened on a guess:
+   * the clinician's own drafts for this patient are listed and one is opened only when the clinician picks it.
+   * False when the list cannot be read or holds no draft.
    */
-  async function resumeDraft(): Promise<boolean> {
+  async function findDrafts(): Promise<boolean> {
     if (visit === undefined) return false;
     const list = await api.myNotes(visit.clinicianId);
     if (!list.ok) return false;
     const drafts = list.data
       .filter((n) => n.status === 'draft' && n.patientId === visit.patientId)
       .sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''));
-    for (const d of drafts) {
-      const got = await api.getNote(d.noteId);
-      if (!got.ok) continue;
-      setSections(got.data.sections);
-      adopt(got.data);
-      return true;
-    }
-    return false;
+    if (drafts.length === 0) return false;
+    setCandidates(drafts);
+    return true;
+  }
+
+  async function openDraft(noteId: string) {
+    setBusy('start');
+    setFailure(null);
+    const got = await api.getNote(noteId);
+    setBusy(null);
+    if (!got.ok) return setFailure(got);
+    if (got.data.status !== 'draft' || got.data.patientId !== visit?.patientId) return;
+    setCandidates(null);
+    setSections(got.data.sections);
+    adopt(got.data);
   }
 
   async function start(reason?: string) {
@@ -112,7 +122,7 @@ export function NoteEditor({
     if (enc === null) {
       const r = await api.startEncounter(visit.reservationId, startKey.current, reason);
       if (!r.ok) {
-        if (r.status === 409 && r.code !== 'clinical.consents_missing' && (await resumeDraft())) {
+        if (r.status === 409 && r.code !== 'clinical.consents_missing' && (await findDrafts())) {
           setBusy(null);
           return;
         }
@@ -227,6 +237,24 @@ export function NoteEditor({
         ) : (
           <>
             {failure !== null && <ActionError failure={failure} />}
+            {candidates !== null && (
+              <Banner tone="warning" title={d.resumeChoiceTitle}>
+                <p>{d.resumeChoiceHelp}</p>
+                <ul>
+                  {candidates.map((c) => (
+                    <li key={c.noteId}>
+                      {d.resumeDraftLabel(c.updatedAt !== null ? timeOf(c.updatedAt) : null)}{' '}
+                      <Button
+                        onClick={() => void openDraft(c.noteId)}
+                        disabled={busy !== null || !online}
+                      >
+                        {d.resumeOpenDraft}
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              </Banner>
+            )}
             {consentMissing && (
               <Banner tone="warning" title={d.consentsMissing}>
                 <p>{d.consentsMissingHelp}</p>

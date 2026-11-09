@@ -92,6 +92,11 @@ export const docStrings = {
   noteTitle: 'Visit note',
   startConsultation: 'Start consultation',
   starting: 'Starting…',
+  resumeChoiceTitle: 'This visit already has a consultation in progress',
+  resumeChoiceHelp:
+    'Drafts of yours for this patient are listed below. Open only the draft for this visit; an older draft from a previous visit must not be signed here.',
+  resumeDraftLabel: (at: string | null) => (at === null ? 'Draft' : `Draft last saved ${at}`),
+  resumeOpenDraft: 'Open this draft',
   consentsMissing: 'Telehealth consent not signed.',
   consentsMissingHelp:
     'Ask the front desk to send or record the consent. In an emergency you can start with an exception; the reason is recorded.',

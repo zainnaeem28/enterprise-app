@@ -24,6 +24,8 @@ import {
 import type { Handler } from './testkit.js';
 import { noteStore, workspace } from './workspace.js';
 
+const OLD = '88888888-8888-4888-8888-888888888888';
+
 afterEach(() => {
   cleanup();
   workspace.set(null);
@@ -165,7 +167,7 @@ describe('note editor, sign dialog, addenda (DR-03, DR-05, DR-06)', () => {
     };
   }
 
-  it('reopens an in-progress visit: 409 on POST /encounters opens the existing draft (INT03-F20)', async () => {
+  it('in-progress visit: 409 on POST /encounters lists the drafts and opens only the one the clinician picks (INT03-F20)', async () => {
     const user = userEvent.setup();
     open({});
     const { seen } = mount(DOCTOR, '/patients', (r) => {
@@ -185,9 +187,45 @@ describe('note editor, sign dialog, addenda (DR-03, DR-05, DR-06)', () => {
       return undefined;
     });
     await user.click(await screen.findByRole('button', { name: 'Start consultation' }));
+    await user.click(await screen.findByRole('button', { name: 'Open this draft' }));
     await waitFor(() => expect(screen.getByLabelText('S: Subjective')).toHaveValue('Cough'));
     expect(seen.some((s) => s.path === `/api/v1/notes/${NOTE}`)).toBe(true);
     expect(screen.queryByText(/Something went wrong/)).toBeNull();
+  });
+
+  it('two drafts for the same patient are never opened automatically (INT03-F20-R1)', async () => {
+    const user = userEvent.setup();
+    open({});
+    const { seen } = mount(DOCTOR, '/patients', (r) => {
+      if (r.path.endsWith('/chart-summary')) return json(200, summary());
+      if (r.path === '/api/v1/encounters')
+        return json(409, { code: 'clinical.invalid_transition', requestId: 'r' });
+      if (r.path === `/api/v1/clinicians/${ME}/notes`)
+        return json(200, {
+          items: [
+            noteListItem(),
+            noteListItem({
+              noteId: OLD,
+              encounterId: 'old-enc',
+              updatedAt: '2031-05-01T09:00:00.000Z',
+            }),
+          ],
+          nextCursor: null,
+        });
+      if (r.method === 'GET' && r.path === `/api/v1/notes/${NOTE}`)
+        return json(
+          200,
+          note({
+            body: { sections: { subjective: 'Cough', objective: '', assessment: '', plan: '' } },
+          }),
+          { ETag: 'W/"1"' },
+        );
+      return undefined;
+    });
+    await user.click(await screen.findByRole('button', { name: 'Start consultation' }));
+    expect(await screen.findAllByRole('button', { name: 'Open this draft' })).toHaveLength(2);
+    expect(screen.queryByLabelText('S: Subjective')).toBeNull();
+    expect(seen.some((s) => s.method === 'GET' && s.path.startsWith('/api/v1/notes/'))).toBe(false);
   });
 
   it('starts the consultation, saves a draft with If-Match and signs after re-authentication with the same key', async () => {
