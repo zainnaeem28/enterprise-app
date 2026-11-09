@@ -911,7 +911,7 @@ describe('the single merge write guard (T1-T4 of HEAAA-190, extended by HEAAA-31
     );
     assert.equal(defs.rows[0].n, 0);
     const { definerInventory } = await import('./catalog-lists.mjs');
-    assert.equal(definerInventory.length, 23, 'definerInventory has the 23 entries of A-3');
+    assert.equal(definerInventory.length, 25, 'definerInventory has the 25 entries of A-4');
   });
 
   test('T5: privacy.incident_patient is exempt: no guard trigger, and a merged-ID link is not refused with PM001', async () => {
@@ -930,7 +930,7 @@ describe('the single merge write guard (T1-T4 of HEAAA-190, extended by HEAAA-31
     });
   });
 
-  test('T6: patient_scope_owner holds no USAGE or CREATE on clinical or privacy; the 18 M4 guard triggers keep their names', async () => {
+  test('T6: patient_scope_owner holds no CREATE on clinical or privacy and no USAGE on privacy (USAGE on clinical only by A-4); the 18 M4 guard triggers keep their names', async () => {
     for (const schema of ['clinical', 'privacy'])
       for (const priv of ['USAGE', 'CREATE']) {
         const r = await adm.query('SELECT has_schema_privilege($1, $2, $3) AS ok', [
@@ -938,7 +938,10 @@ describe('the single merge write guard (T1-T4 of HEAAA-190, extended by HEAAA-31
           schema,
           priv,
         ]);
-        assert.equal(r.rows[0].ok, false, `${schema} ${priv}`);
+        // A-4 (HEAAA-325 rev e3fa32f4, migration 2300): patient_scope_owner holds USAGE on clinical (and only USAGE, and only column
+        // SELECT on two tables, checked by the T-RA-29 test) so that its referral-scope policies and the origin guard can read them.
+        const allowed = schema === 'clinical' && priv === 'USAGE';
+        assert.equal(r.rows[0].ok, allowed, `${schema} ${priv}`);
       }
     const names = {
       'clinical.problem': 'problem_guard_open',

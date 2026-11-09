@@ -114,6 +114,10 @@ export const definerInventory = [
   // The refused module copies of the merge guard (documents/telehealth.guard_open_patient, scheduling.flow_guard_open_patient,
   // scheduling.guard_open_patient and ..._at_commit) are dropped by migrations 1604/1605 (renumbered by INT-03), and the M4 copies by 2201; none may be listed.
   'scheduling.replace_busy_blocks',
+  // ARCHITECTURE amendment A-4 (HEAAA-325 ruling rev e3fa32f4, G2 delta decision HEAAA-330; migration 2300): the receiving location's
+  // referral accept/decline, bound to a sent internal referral with a pending inbox row (R-REF-2). Owner patient_scope_owner.
+  'patient.lock_referral_patient',
+  'patient.ensure_referral_care_relationship',
 ];
 
 /** Policies that can match audience `anonymous` (ARCHITECTURE 21.3 list, kernel rows only so far). */
