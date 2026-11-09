@@ -219,6 +219,14 @@ describe('session gate and role navigation', () => {
     expect(await screen.findByRole('navigation')).toBeInTheDocument();
     expect(screen.queryByText(/Administrator sign-in\. Clinical data/)).toBeNull();
   });
+  it('a google-realm session with an admin role key still gets the staff shell, never admin UI', async () => {
+    const { runtime, assign } = setup({ roles: ['org_admin'], realm: 'google' });
+    render(<StaffApp runtime={runtime} assign={assign} />);
+    await act(async () => {});
+    expect(screen.queryByRole('heading', { level: 1, name: 'Audit log' })).toBeNull();
+    expect(screen.queryByText(/Administrator sign-in\. Clinical data/)).toBeNull();
+    expect(window.location.pathname).not.toMatch(/^\/admin/);
+  });
   it('an unknown realm renders neither the admin shell nor staff navigation', async () => {
     const { runtime, assign } = setup({ roles: ['org_admin'], realm: 'staff' });
     render(<StaffApp runtime={runtime} assign={assign} />);
