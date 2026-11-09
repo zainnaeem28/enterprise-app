@@ -14,6 +14,12 @@ export default tseslint.config(
     languageOptions: { globals: globals.node },
   },
   {
+    // CloudWatch Synthetics canary: CommonJS Lambda source running on Node.
+    files: ['infra/modules/observability/canary/**/*.js'],
+    languageOptions: { sourceType: 'commonjs', globals: globals.node },
+    rules: { '@typescript-eslint/no-require-imports': 'off' },
+  },
+  {
     files: ['apps/api/src/modules/**/*.ts'],
     plugins: { boundaries },
     rules: { 'boundaries/module-boundaries': 'error' },
