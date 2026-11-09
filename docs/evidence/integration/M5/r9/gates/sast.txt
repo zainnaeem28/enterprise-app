@@ -1,0 +1,6 @@
+non-blocking: semgrep.rules.package_managers.npm.npm-missing-minimum-release-age.npm-missing-minimum-release-age (MEDIUM) at .npmrc:1
+non-blocking: semgrep.rules.terraform.aws.security.aws-provider-static-credentials.aws-provider-static-credentials (WARNING) at infra/modules/observability/examples/plan/main.tf:22
+non-blocking: semgrep.rules.package_managers.pnpm.pnpm-block-exotic-sub-dependencies.pnpm-block-exotic-sub-dependencies (MEDIUM) at pnpm-workspace.yaml:1
+non-blocking: semgrep.rules.package_managers.pnpm.pnpm-missing-minimum-release-age.pnpm-minimum-release-age (MEDIUM) at pnpm-workspace.yaml:1
+non-blocking: semgrep.rules.package_managers.pnpm.pnpm-trust-policy.pnpm-trust-policy (MEDIUM) at pnpm-workspace.yaml:1
+semgrep: 1588 files scanned, 5 finding(s), none blocking

@@ -1,0 +1,45 @@
+{
+  "origin": "https://staff.ci.test",
+  "handle": "ci-admin",
+  "ok": false,
+  "steps": [
+    {
+      "step": "enrol the admin principal with the fixture key (token spent, second key registered)",
+      "ok": true,
+      "ms": 120
+    },
+    {
+      "step": "administrator sign-in in the browser with the security key",
+      "ok": true,
+      "ms": 839
+    },
+    {
+      "step": "admin configuration: create a service and see it saved",
+      "ok": false,
+      "ms": 8802,
+      "error": "locator.waitFor: Error: strict mode violation: getByRole('cell', { name: 'CI admin run 20261109205430' }) resolved to 3 elements:"
+    },
+    {
+      "step": "admin configuration: the service is still there after a reload (persisted)",
+      "ok": false,
+      "ms": 651,
+      "error": "locator.waitFor: Error: strict mode violation: getByRole('cell', { name: 'CI admin run 20261109205430' }) resolved to 3 elements:"
+    },
+    {
+      "step": "audit viewer: the last 24 hours show recorded entries",
+      "ok": false,
+      "ms": 63222,
+      "error": "the audit viewer returned no entries for the last 24 hours"
+    },
+    {
+      "step": "break-the-glass review: record a decision on a pending access",
+      "ok": true,
+      "ms": 3430
+    },
+    {
+      "step": "break-the-glass review: the decision is stored (shown under Justified after reload)",
+      "ok": true,
+      "ms": 3090
+    }
+  ]
+}
