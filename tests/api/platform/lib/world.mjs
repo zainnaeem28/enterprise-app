@@ -116,8 +116,8 @@ export function holdBody(patient, slot, serviceId = SVC.IN, mode = 'in_person', 
 export async function hold(patient, slot, serviceId, mode, extra, o) {
   return patient.client.post('/api/v1/holds', holdBody(patient, slot, serviceId, mode, extra), o);
 }
-export async function book(patient, slot, serviceId = SVC.IN, mode = 'in_person') {
-  const h = await hold(patient, slot, serviceId, mode);
+export async function book(patient, slot, serviceId = SVC.IN, mode = 'in_person', extra = {}) {
+  const h = await hold(patient, slot, serviceId, mode, mode === 'video' ? { patientState: 'NY', ...extra } : extra);
   if (h.status !== 201) throw new Error(`hold failed ${h.status} ${h.text}`);
   const c = await patient.client.post(`/api/v1/appointments/${h.json.reservationId}/confirm`, {});
   if (c.status !== 200) throw new Error(`confirm failed ${c.status} ${c.text}`);
@@ -231,4 +231,38 @@ export async function deskCheckIn(desk, appt) {
 export async function queueEntry(desk, locationId, id) {
   const q = await desk.client.get(`/api/v1/locations/${locationId}/queue`);
   return (q.json?.items ?? []).find((e) => e.id === id);
+}
+
+/** Runs `fn(client)` on a connection that logs in AS the given database role (trust authentication on the throwaway ci server). */
+export async function asRole(role, fn) {
+  const u = new URL(process.env.EHR_TEST_ADMIN_URL);
+  u.username = role;
+  u.password = '';
+  u.pathname = '/' + state().db;
+  const c = new pg.Client({ connectionString: u.toString() });
+  await c.connect();
+  try {
+    return await fn(c);
+  } finally {
+    await c.end();
+  }
+}
+/** Temporarily installs a fault-injection trigger on a table (superuser, throwaway database), returns the remover. */
+export async function injectFault(table, whenSql = 'true', message = 'qa05 injected fault') {
+  const name = `qa05_fault_${uuid().slice(0, 8)}`;
+  const fn = `public.${name}`;
+  await sql(`CREATE FUNCTION ${fn}() RETURNS trigger LANGUAGE plpgsql AS $f$ BEGIN IF ${whenSql} THEN RAISE EXCEPTION '${message}' USING ERRCODE = 'P0001'; END IF; RETURN NEW; END $f$`);
+  await sql(`CREATE TRIGGER ${name} BEFORE INSERT ON ${table} FOR EACH ROW EXECUTE FUNCTION ${fn}()`);
+  return async () => {
+    await sql(`DROP TRIGGER IF EXISTS ${name} ON ${table}`);
+    await sql(`DROP FUNCTION IF EXISTS ${fn}()`);
+  };
+}
+
+/** Puts a clinician on a patient's care team (the assignment rule `care_team`, BQ-5), so the chart opens for them. */
+export function assign(patientId, principalId, role = 'clinician') {
+  return sql(
+    `INSERT INTO patient.care_team_member (id, organisation_id, patient_id, principal_id, role) VALUES ($1,$2,$3,$4,$5) ON CONFLICT DO NOTHING`,
+    [uuid(), ORG, patientId, principalId, role],
+  );
 }
