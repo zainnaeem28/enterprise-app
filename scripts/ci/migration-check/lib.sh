@@ -66,7 +66,11 @@ migrate_from_previous() {
 suite_files() {
   local tree="$1"
   case "$2" in
-    db-foundation) [ -f "$tree/db/tools/db-test.mjs" ] && echo db/tools/db-test.mjs ;;
+    # db/tests/*.test.mjs: standalone real-database files (referral-accept-scope: definer pins and the patient_scope_owner USAGE-relaxation checks).
+    db-foundation)
+      [ -f "$tree/db/tools/db-test.mjs" ] && echo db/tools/db-test.mjs
+      (cd "$tree" && find db/tests -maxdepth 1 -name '*.test.mjs' 2>/dev/null | sort)
+      ;;
     kernel) (cd "$tree" && find packages/kernel/dist -name '*.dbtest.js' 2>/dev/null | sort) ;;
     api) (cd "$tree" && find apps/api/dist -name '*.dbtest.js' 2>/dev/null | sort) ;;
     worker) (cd "$tree" && find apps/worker/dist -name '*.dbtest.js' 2>/dev/null | sort) ;;
