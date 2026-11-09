@@ -1,0 +1,136 @@
+bootstrap 0001_roles.sql
+applying 0001_kernel_schema_and_helpers.sql
+applying 0002_kernel_tables.sql
+applying 0003_kernel_rls_and_grants.sql
+applying 0100_queue_schema.sql
+applying 0200_audit_event.sql
+applying 0201_audit_anchor.sql
+applying 0202_audit_btg_and_export.sql
+applying 0203_audit_rls_and_grants.sql
+applying 0300_organisation_schema_and_tables.sql
+applying 0301_organisation_rls_and_grants.sql
+applying 0302_organisation_directory_views.sql
+applying 0400_integration_core_tables.sql
+applying 0401_integration_core_rls_and_grants.sql
+applying 0402_integration_core_receive_inbound.sql
+applying 0500_identity_schema_and_tables.sql
+applying 0501_identity_triggers.sql
+applying 0502_identity_rls_and_grants.sql
+applying 0503_identity_public_clinician.sql
+applying 0600_notifications_schema_and_tables.sql
+applying 0601_notifications_rls_and_grants.sql
+applying 0602_notifications_receipt_lookup_index.sql
+applying 0700_patient_schema_and_tables.sql
+applying 0701_patient_triggers_and_guards.sql
+applying 0702_patient_rls_and_grants.sql
+applying 0703_patient_scope_functions.sql
+applying 0704_patient_matching_registration.sql
+applying 0705_patient_staff_policy_qualify.sql
+applying 0800_patient_merge_tables.sql
+applying 0801_patient_merge_triggers.sql
+applying 0802_patient_merge_rls_and_grants.sql
+applying 0803_patient_merge_functions.sql
+applying 0900_scheduling_schema_and_tables.sql
+applying 0901_scheduling_triggers.sql
+applying 0902_scheduling_rls_and_grants.sql
+applying 0903_scheduling_booking_functions.sql
+applying 0904_sec03_bind_definer_functions_to_caller.sql
+applying 0951_sec03_occupancy_column_grants.sql
+applying 0953_sec03_setting_column_grants.sql
+applying 1000_documents_schema_and_tables.sql
+applying 1001_documents_triggers.sql
+applying 1002_documents_rls_and_grants.sql
+applying 1003_documents_guard_owner.sql
+applying 1100_availability_tables.sql
+applying 1101_availability_triggers.sql
+applying 1102_availability_rls_and_grants.sql
+applying 1103_availability_directory_view.sql
+applying 1200_staff_alert_tables.sql
+applying 1201_staff_alert_rls_and_grants.sql
+applying 1300_flow_tables.sql
+applying 1301_flow_triggers.sql
+applying 1302_flow_rls_and_grants.sql
+applying 1303_flow_notification_insert_grant.sql
+applying 1400_calendar_sync_tables.sql
+applying 1401_calendar_sync_triggers.sql
+applying 1402_calendar_sync_rls_and_grants.sql
+applying 1403_scheduling_replace_busy_blocks.sql
+applying 1500_telehealth_tables.sql
+applying 1501_telehealth_triggers.sql
+applying 1502_telehealth_rls_and_grants.sql
+applying 1600_merge_guard_single.sql
+applying 1601_drop_merge_guard_copies.sql
+applying 1602_revoke_guard_drop_usage.sql
+applying 1603_identity_principal_patients_scope_read.sql
+applying 2200_identity_admin_tables.sql
+applying 2201_identity_admin_triggers.sql
+applying 2202_identity_admin_rls_and_grants.sql
+applying 2203_identity_role_assignment_fk_validate.sql
+applying 2204_identity_principal_status_not_anonymous.sql
+applying 2205_identity_admin_second_key_session.sql
+{"applied":["0001_kernel_schema_and_helpers.sql","0002_kernel_tables.sql","0003_kernel_rls_and_grants.sql","0100_queue_schema.sql","0200_audit_event.sql","0201_audit_anchor.sql","0202_audit_btg_and_export.sql","0203_audit_rls_and_grants.sql","0300_organisation_schema_and_tables.sql","0301_organisation_rls_and_grants.sql","0302_organisation_directory_views.sql","0400_integration_core_tables.sql","0401_integration_core_rls_and_grants.sql","0402_integration_core_receive_inbound.sql","0500_identity_schema_and_tables.sql","0501_identity_triggers.sql","0502_identity_rls_and_grants.sql","0503_identity_public_clinician.sql","0600_notifications_schema_and_tables.sql","0601_notifications_rls_and_grants.sql","0602_notifications_receipt_lookup_index.sql","0700_patient_schema_and_tables.sql","0701_patient_triggers_and_guards.sql","0702_patient_rls_and_grants.sql","0703_patient_scope_functions.sql","0704_patient_matching_registration.sql","0705_patient_staff_policy_qualify.sql","0800_patient_merge_tables.sql","0801_patient_merge_triggers.sql","0802_patient_merge_rls_and_grants.sql","0803_patient_merge_functions.sql","0900_scheduling_schema_and_tables.sql","0901_scheduling_triggers.sql","0902_scheduling_rls_and_grants.sql","0903_scheduling_booking_functions.sql","0904_sec03_bind_definer_functions_to_caller.sql","0951_sec03_occupancy_column_grants.sql","0953_sec03_setting_column_grants.sql","1000_documents_schema_and_tables.sql","1001_documents_triggers.sql","1002_documents_rls_and_grants.sql","1003_documents_guard_owner.sql","1100_availability_tables.sql","1101_availability_triggers.sql","1102_availability_rls_and_grants.sql","1103_availability_directory_view.sql","1200_staff_alert_tables.sql","1201_staff_alert_rls_and_grants.sql","1300_flow_tables.sql","1301_flow_triggers.sql","1302_flow_rls_and_grants.sql","1303_flow_notification_insert_grant.sql","1400_calendar_sync_tables.sql","1401_calendar_sync_triggers.sql","1402_calendar_sync_rls_and_grants.sql","1403_scheduling_replace_busy_blocks.sql","1500_telehealth_tables.sql","1501_telehealth_triggers.sql","1502_telehealth_rls_and_grants.sql","1600_merge_guard_single.sql","1601_drop_merge_guard_copies.sql","1602_revoke_guard_drop_usage.sql","1603_identity_principal_patients_scope_read.sql","2200_identity_admin_tables.sql","2201_identity_admin_triggers.sql","2202_identity_admin_rls_and_grants.sql","2203_identity_role_assignment_fk_validate.sql","2204_identity_principal_status_not_anonymous.sql","2205_identity_admin_second_key_session.sql"],"pending":["0001_kernel_schema_and_helpers.sql","0002_kernel_tables.sql","0003_kernel_rls_and_grants.sql","0100_queue_schema.sql","0200_audit_event.sql","0201_audit_anchor.sql","0202_audit_btg_and_export.sql","0203_audit_rls_and_grants.sql","0300_organisation_schema_and_tables.sql","0301_organisation_rls_and_grants.sql","0302_organisation_directory_views.sql","0400_integration_core_tables.sql","0401_integration_core_rls_and_grants.sql","0402_integration_core_receive_inbound.sql","0500_identity_schema_and_tables.sql","0501_identity_triggers.sql","0502_identity_rls_and_grants.sql","0503_identity_public_clinician.sql","0600_notifications_schema_and_tables.sql","0601_notifications_rls_and_grants.sql","0602_notifications_receipt_lookup_index.sql","0700_patient_schema_and_tables.sql","0701_patient_triggers_and_guards.sql","0702_patient_rls_and_grants.sql","0703_patient_scope_functions.sql","0704_patient_matching_registration.sql","0705_patient_staff_policy_qualify.sql","0800_patient_merge_tables.sql","0801_patient_merge_triggers.sql","0802_patient_merge_rls_and_grants.sql","0803_patient_merge_functions.sql","0900_scheduling_schema_and_tables.sql","0901_scheduling_triggers.sql","0902_scheduling_rls_and_grants.sql","0903_scheduling_booking_functions.sql","0904_sec03_bind_definer_functions_to_caller.sql","0951_sec03_occupancy_column_grants.sql","0953_sec03_setting_column_grants.sql","1000_documents_schema_and_tables.sql","1001_documents_triggers.sql","1002_documents_rls_and_grants.sql","1003_documents_guard_owner.sql","1100_availability_tables.sql","1101_availability_triggers.sql","1102_availability_rls_and_grants.sql","1103_availability_directory_view.sql","1200_staff_alert_tables.sql","1201_staff_alert_rls_and_grants.sql","1300_flow_tables.sql","1301_flow_triggers.sql","1302_flow_rls_and_grants.sql","1303_flow_notification_insert_grant.sql","1400_calendar_sync_tables.sql","1401_calendar_sync_triggers.sql","1402_calendar_sync_rls_and_grants.sql","1403_scheduling_replace_busy_blocks.sql","1500_telehealth_tables.sql","1501_telehealth_triggers.sql","1502_telehealth_rls_and_grants.sql","1600_merge_guard_single.sql","1601_drop_merge_guard_copies.sql","1602_revoke_guard_drop_usage.sql","1603_identity_principal_patients_scope_read.sql","2200_identity_admin_tables.sql","2201_identity_admin_triggers.sql","2202_identity_admin_rls_and_grants.sql","2203_identity_role_assignment_fk_validate.sql","2204_identity_principal_status_not_anonymous.sql","2205_identity_admin_second_key_session.sql"]}
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+▶ integration-core on PostgreSQL 17 (BE-02, API side)
+  ▶ webhook transaction (25.7, 38.2 item 13)
+    ✔ a verified message is stored under the vendor event ID and its dispatch job is enqueued in the same transaction (23.254004ms)
+    ✔ a duplicate gets 200 and enqueues nothing; nothing new is stored (3.301023ms)
+    ✔ concurrent duplicates: exactly one insert, one job (23.738033ms)
+    ✔ same event ID from another source is a different message (unique per organisation, source, event) (10.203687ms)
+    ✔ a bad signature is 401, is not recorded, enqueues nothing and is counted (1.569084ms)
+    ✔ malformed after a valid signature is 400; an unknown source is 404; an oversize body is 413; none stored (1.410307ms)
+    ✔ Google push: valid token accepted; a repeated message number is a duplicate; the next number is new; bad token is 401 (9.698389ms)
+    ✔ if the transaction fails the vendor gets 503 and neither the message nor the job is stored (6.12865ms)
+    ✔ a secret store failure before verification is 503 and stores nothing (0.311345ms)
+    ✔ the inbound_received event is published for registered handlers (message ID and organisation only) (0.776657ms)
+  ✔ webhook transaction (25.7, 38.2 item 13) (81.856028ms)
+  ▶ receive_inbound is a narrow door (21.6, DF-1, DF-2, DF-8)
+    ✔ refuses a signed-in audience, a missing organisation and bad arguments (9.602078ms)
+    ✔ app_api cannot read or write inbound_message directly; app_worker cannot call the function; PUBLIC has nothing (11.422674ms)
+    ✔ the function is owned by integration_receiver_owner, SECURITY DEFINER, with a fixed search_path; the table too (2.102635ms)
+  ✔ receive_inbound is a narrow door (21.6, DF-1, DF-2, DF-8) (23.411821ms)
+  ▶ connection settings (22.3, TC-AD-13)
+    ✔ an admin creates a connection; settings change is audited with before and after (22.796125ms)
+    ✔ a credential-looking key is refused in the service (422) and again by the table CHECK (4.193048ms)
+    ✔ unknown kind, bad vendor and a second connection of the same kind are refused (3.587491ms)
+    ✔ only the admin realm writes: a google-realm doctor, a patient and anonymous are refused by the service and by RLS (3.564989ms)
+    ✔ the admin cannot change health or last test (worker columns) (1.314978ms)
+    ✔ connectionSettings(kind) returns the record to the admin realm and nothing to other audiences (6.631393ms)
+  ✔ connection settings (22.3, TC-AD-13) (42.517031ms)
+  ▶ write-only secret references (BD-11, TC-AD-12)
+    ✔ an admin writes an outbound secret: the reply, the reference and the audit row carry a version ID and never the value (10.863605ms)
+    ✔ a retry with the same idempotency key writes no second version; a new key rotates (9.872396ms)
+    ✔ a store failure is a bare 503 with no vendor text and no value; the reference does not move (2.177586ms)
+    ✔ non-admin scopes cannot write; validation names fields only; unknown connection is 404 (1.996998ms)
+    ✔ the API role cannot create or take over an inbound-verification reference, by service or by SQL (4.957202ms)
+    ✔ an ARN must sit under the prefix of its class (0.872657ms)
+  ✔ write-only secret references (BD-11, TC-AD-12) (31.470682ms)
+  ▶ dual-controlled inbound secret request (25.9, SEC-01 O2)
+    ✔ the request stores canonical bytes and their hash, hands a sealed payload to the job, and puts the value in no table (6.4058ms)
+    ✔ without a job enqueuer the request fails closed; a failed enqueue rolls the request back (2.768575ms)
+    ✔ the requester cannot approve their own request (service 403 and database) (9.360615ms)
+    ✔ a different elevated admin approves once; a second decision is a state conflict; the approver is recorded; the row keeps its hash (8.175711ms)
+    ✔ approval needs an assertion; rejection does not; a non-admin cannot decide; unknown id is 404 (7.611813ms)
+    ✔ an expired request cannot be approved (409 identity.request_expired); the trigger agrees (1807.114905ms)
+    ✔ status moves only forward and terminal rows never change; rows are never deleted (2.971436ms)
+  ✔ dual-controlled inbound secret request (25.9, SEC-01 O2) (1845.20005ms)
+  ▶ RLS and grants of the five tables (behavioural)
+    ✔ every table is FORCE ROW LEVEL SECURITY, owned by a non-application role, with nothing granted to PUBLIC (1.943626ms)
+    ✔ rows are visible only to the admin realm (app_api) and to system jobs (app_worker); every other audience sees zero rows (49.108439ms)
+    ✔ app_api cannot write the call log or move health; the call log has no DELETE for anyone (6.76826ms)
+    ✔ call-log rows land in monthly partitions, none directly granted (2.438375ms)
+  ✔ RLS and grants of the five tables (behavioural) (63.196073ms)
+  ▶ job types (33.1)
+    ✔ the dispatch job is API-enqueueable; health_check is not; the list matches 33.1 (1.72087ms)
+  ✔ job types (33.1) (1.885258ms)
+  ▶ secret-in-log canary (API side)
+    ✔ the canary value appears in no table, no queue row, no audit row and no captured error (2.65945ms)
+  ✔ secret-in-log canary (API side) (2.770238ms)
+✔ integration-core on PostgreSQL 17 (BE-02, API side) (3400.73484ms)
+ℹ tests 38
+ℹ suites 9
+ℹ pass 38
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3509.349708

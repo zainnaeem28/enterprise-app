@@ -1,0 +1,139 @@
+bootstrap 0001_roles.sql
+applying 0001_kernel_schema_and_helpers.sql
+applying 0002_kernel_tables.sql
+applying 0003_kernel_rls_and_grants.sql
+applying 0100_queue_schema.sql
+applying 0200_audit_event.sql
+applying 0201_audit_anchor.sql
+applying 0202_audit_btg_and_export.sql
+applying 0203_audit_rls_and_grants.sql
+applying 0300_organisation_schema_and_tables.sql
+applying 0301_organisation_rls_and_grants.sql
+applying 0302_organisation_directory_views.sql
+applying 0400_integration_core_tables.sql
+applying 0401_integration_core_rls_and_grants.sql
+applying 0402_integration_core_receive_inbound.sql
+applying 0500_identity_schema_and_tables.sql
+applying 0501_identity_triggers.sql
+applying 0502_identity_rls_and_grants.sql
+applying 0503_identity_public_clinician.sql
+applying 0600_notifications_schema_and_tables.sql
+applying 0601_notifications_rls_and_grants.sql
+applying 0602_notifications_receipt_lookup_index.sql
+applying 0700_patient_schema_and_tables.sql
+applying 0701_patient_triggers_and_guards.sql
+applying 0702_patient_rls_and_grants.sql
+applying 0703_patient_scope_functions.sql
+applying 0704_patient_matching_registration.sql
+applying 0705_patient_staff_policy_qualify.sql
+applying 0800_patient_merge_tables.sql
+applying 0801_patient_merge_triggers.sql
+applying 0802_patient_merge_rls_and_grants.sql
+applying 0803_patient_merge_functions.sql
+applying 0900_scheduling_schema_and_tables.sql
+applying 0901_scheduling_triggers.sql
+applying 0902_scheduling_rls_and_grants.sql
+applying 0903_scheduling_booking_functions.sql
+applying 0904_sec03_bind_definer_functions_to_caller.sql
+applying 0951_sec03_occupancy_column_grants.sql
+applying 0953_sec03_setting_column_grants.sql
+applying 1000_documents_schema_and_tables.sql
+applying 1001_documents_triggers.sql
+applying 1002_documents_rls_and_grants.sql
+applying 1003_documents_guard_owner.sql
+applying 1100_availability_tables.sql
+applying 1101_availability_triggers.sql
+applying 1102_availability_rls_and_grants.sql
+applying 1103_availability_directory_view.sql
+applying 1200_staff_alert_tables.sql
+applying 1201_staff_alert_rls_and_grants.sql
+applying 1300_flow_tables.sql
+applying 1301_flow_triggers.sql
+applying 1302_flow_rls_and_grants.sql
+applying 1303_flow_notification_insert_grant.sql
+applying 1400_calendar_sync_tables.sql
+applying 1401_calendar_sync_triggers.sql
+applying 1402_calendar_sync_rls_and_grants.sql
+applying 1403_scheduling_replace_busy_blocks.sql
+applying 1500_telehealth_tables.sql
+applying 1501_telehealth_triggers.sql
+applying 1502_telehealth_rls_and_grants.sql
+applying 1600_merge_guard_single.sql
+applying 1601_drop_merge_guard_copies.sql
+applying 1602_revoke_guard_drop_usage.sql
+applying 1603_identity_principal_patients_scope_read.sql
+applying 2200_identity_admin_tables.sql
+applying 2201_identity_admin_triggers.sql
+applying 2202_identity_admin_rls_and_grants.sql
+applying 2203_identity_role_assignment_fk_validate.sql
+applying 2204_identity_principal_status_not_anonymous.sql
+applying 2205_identity_admin_second_key_session.sql
+{"applied":["0001_kernel_schema_and_helpers.sql","0002_kernel_tables.sql","0003_kernel_rls_and_grants.sql","0100_queue_schema.sql","0200_audit_event.sql","0201_audit_anchor.sql","0202_audit_btg_and_export.sql","0203_audit_rls_and_grants.sql","0300_organisation_schema_and_tables.sql","0301_organisation_rls_and_grants.sql","0302_organisation_directory_views.sql","0400_integration_core_tables.sql","0401_integration_core_rls_and_grants.sql","0402_integration_core_receive_inbound.sql","0500_identity_schema_and_tables.sql","0501_identity_triggers.sql","0502_identity_rls_and_grants.sql","0503_identity_public_clinician.sql","0600_notifications_schema_and_tables.sql","0601_notifications_rls_and_grants.sql","0602_notifications_receipt_lookup_index.sql","0700_patient_schema_and_tables.sql","0701_patient_triggers_and_guards.sql","0702_patient_rls_and_grants.sql","0703_patient_scope_functions.sql","0704_patient_matching_registration.sql","0705_patient_staff_policy_qualify.sql","0800_patient_merge_tables.sql","0801_patient_merge_triggers.sql","0802_patient_merge_rls_and_grants.sql","0803_patient_merge_functions.sql","0900_scheduling_schema_and_tables.sql","0901_scheduling_triggers.sql","0902_scheduling_rls_and_grants.sql","0903_scheduling_booking_functions.sql","0904_sec03_bind_definer_functions_to_caller.sql","0951_sec03_occupancy_column_grants.sql","0953_sec03_setting_column_grants.sql","1000_documents_schema_and_tables.sql","1001_documents_triggers.sql","1002_documents_rls_and_grants.sql","1003_documents_guard_owner.sql","1100_availability_tables.sql","1101_availability_triggers.sql","1102_availability_rls_and_grants.sql","1103_availability_directory_view.sql","1200_staff_alert_tables.sql","1201_staff_alert_rls_and_grants.sql","1300_flow_tables.sql","1301_flow_triggers.sql","1302_flow_rls_and_grants.sql","1303_flow_notification_insert_grant.sql","1400_calendar_sync_tables.sql","1401_calendar_sync_triggers.sql","1402_calendar_sync_rls_and_grants.sql","1403_scheduling_replace_busy_blocks.sql","1500_telehealth_tables.sql","1501_telehealth_triggers.sql","1502_telehealth_rls_and_grants.sql","1600_merge_guard_single.sql","1601_drop_merge_guard_copies.sql","1602_revoke_guard_drop_usage.sql","1603_identity_principal_patients_scope_read.sql","2200_identity_admin_tables.sql","2201_identity_admin_triggers.sql","2202_identity_admin_rls_and_grants.sql","2203_identity_role_assignment_fk_validate.sql","2204_identity_principal_status_not_anonymous.sql","2205_identity_admin_second_key_session.sql"],"pending":["0001_kernel_schema_and_helpers.sql","0002_kernel_tables.sql","0003_kernel_rls_and_grants.sql","0100_queue_schema.sql","0200_audit_event.sql","0201_audit_anchor.sql","0202_audit_btg_and_export.sql","0203_audit_rls_and_grants.sql","0300_organisation_schema_and_tables.sql","0301_organisation_rls_and_grants.sql","0302_organisation_directory_views.sql","0400_integration_core_tables.sql","0401_integration_core_rls_and_grants.sql","0402_integration_core_receive_inbound.sql","0500_identity_schema_and_tables.sql","0501_identity_triggers.sql","0502_identity_rls_and_grants.sql","0503_identity_public_clinician.sql","0600_notifications_schema_and_tables.sql","0601_notifications_rls_and_grants.sql","0602_notifications_receipt_lookup_index.sql","0700_patient_schema_and_tables.sql","0701_patient_triggers_and_guards.sql","0702_patient_rls_and_grants.sql","0703_patient_scope_functions.sql","0704_patient_matching_registration.sql","0705_patient_staff_policy_qualify.sql","0800_patient_merge_tables.sql","0801_patient_merge_triggers.sql","0802_patient_merge_rls_and_grants.sql","0803_patient_merge_functions.sql","0900_scheduling_schema_and_tables.sql","0901_scheduling_triggers.sql","0902_scheduling_rls_and_grants.sql","0903_scheduling_booking_functions.sql","0904_sec03_bind_definer_functions_to_caller.sql","0951_sec03_occupancy_column_grants.sql","0953_sec03_setting_column_grants.sql","1000_documents_schema_and_tables.sql","1001_documents_triggers.sql","1002_documents_rls_and_grants.sql","1003_documents_guard_owner.sql","1100_availability_tables.sql","1101_availability_triggers.sql","1102_availability_rls_and_grants.sql","1103_availability_directory_view.sql","1200_staff_alert_tables.sql","1201_staff_alert_rls_and_grants.sql","1300_flow_tables.sql","1301_flow_triggers.sql","1302_flow_rls_and_grants.sql","1303_flow_notification_insert_grant.sql","1400_calendar_sync_tables.sql","1401_calendar_sync_triggers.sql","1402_calendar_sync_rls_and_grants.sql","1403_scheduling_replace_busy_blocks.sql","1500_telehealth_tables.sql","1501_telehealth_triggers.sql","1502_telehealth_rls_and_grants.sql","1600_merge_guard_single.sql","1601_drop_merge_guard_copies.sql","1602_revoke_guard_drop_usage.sql","1603_identity_principal_patients_scope_read.sql","2200_identity_admin_tables.sql","2201_identity_admin_triggers.sql","2202_identity_admin_rls_and_grants.sql","2203_identity_role_assignment_fk_validate.sql","2204_identity_principal_status_not_anonymous.sql","2205_identity_admin_second_key_session.sql"]}
+▶ audit module on PostgreSQL 17 (BE-01)
+  ▶ TC-AU-01: record() writes the envelope in the caller transaction
+    ✔ actor, realm, audience and organisation come from the scope, not from the caller (23.115624ms)
+    ✔ rolls back with the caller: a failed business transaction leaves no audit row (5.608165ms)
+    ✔ print, search, export, download and update actions are all accepted; the closed list refuses others (8.689916ms)
+    ✔ envelope rules: reason required for export and BTG, request or job id required, secrets only as version ids (7.71704ms)
+    ✔ RLS: another organisation, the anonymous audience and a missing scope cannot write (6.130884ms)
+    ✔ concurrent writers do not wait on each other: 40 records over 6 connections all commit (31.211997ms)
+  ✔ TC-AU-01: record() writes the envelope in the caller transaction (83.564825ms)
+  ▶ TC-AU-02: an audit failure rolls the business change back
+    ✔ with injection: the change and the read both fail and nothing persists; without: both commit (7.564083ms)
+  ✔ TC-AU-02: an audit failure rolls the business change back (7.892249ms)
+  ▶ TC-AU-03: the denial path
+    ✔ a denial is written in a separate transaction with its reason (4.528258ms)
+    ✔ the business transaction can roll back first and the denial row still persists (17.301546ms)
+    ✔ if the denial write fails: no throw (fail closed), logged by class, operations alert hook called (8.44727ms)
+    ✔ an envelope that is itself invalid is reported the same way: never thrown to the denial path (0.224341ms)
+  ✔ TC-AU-03: the denial path (30.822486ms)
+  ▶ TC-AU-04 (corrected per SA-TC-06): unbounded transactions are refused
+    ✔ step 1: transaction_timeout unset (0) -> PA001, no row (9.337751ms)
+    ✔ step 2: above the bound (61 s, and 120 s) -> PA001, no row (15.944269ms)
+    ✔ step 3: app_owner -> privilege error 42501 (no INSERT grant), raised before the trigger (6.181669ms)
+    ✔ step 4 (positive control): at or below the bound -> written; the role-level 60 s of app_api works as set (26.892693ms)
+  ✔ TC-AU-04 (corrected per SA-TC-06): unbounded transactions are refused (58.674709ms)
+  ▶ TC-AU-05: nobody can UPDATE or DELETE an audit row
+    ✔ app_api cannot UPDATE or DELETE audit.event (privilege error 42501) (11.475413ms)
+    ✔ app_worker cannot UPDATE or DELETE audit.event (privilege error 42501) (10.965575ms)
+    ✔ app_owner cannot UPDATE or DELETE audit.event (privilege error 42501) (11.062629ms)
+    ✔ audit_archiver cannot UPDATE or DELETE audit.event (privilege error 42501) (10.83985ms)
+    ✔ reporting_ro cannot UPDATE or DELETE audit.event (privilege error 42501) (8.508135ms)
+    ✔ app_api cannot UPDATE or DELETE audit.anchor (privilege error 42501) (10.003551ms)
+    ✔ app_worker cannot UPDATE or DELETE audit.anchor (privilege error 42501) (11.163317ms)
+    ✔ app_owner cannot UPDATE or DELETE audit.anchor (privilege error 42501) (10.172889ms)
+    ✔ audit_archiver cannot UPDATE or DELETE audit.anchor (privilege error 42501) (10.334341ms)
+    ✔ reporting_ro cannot UPDATE or DELETE audit.anchor (privilege error 42501) (7.709847ms)
+    ✔ even a superuser is refused by the trigger: UPDATE, DELETE, TRUNCATE on the table and on a partition (59.720913ms)
+    ✔ no role has INSERT/UPDATE/DELETE/TRUNCATE on any partition; app_owner has no privilege at all on the audit tables (2.945307ms)
+    ✔ the BTG grant is never deleted and its fixed columns never change (trigger, whoever asks) (21.447515ms)
+  ✔ TC-AU-05: nobody can UPDATE or DELETE an audit row (187.250924ms)
+  ▶ BTG: grants, activeBtgGrants, review
+    ✔ openBtg writes the grant, the btg_open audit row (with reason and grant id) and publishes audit.btg_opened (5.082087ms)
+    ✔ a reason shorter than 10 characters is refused; a trainee-style scope without a person is refused (1.565197ms)
+    ✔ a principal cannot open a grant for someone else (policy WITH CHECK) (1.005868ms)
+    ✔ activeBtgGrants: the holder sees its active grants; others see none; expired and revoked are excluded (4.863025ms)
+    ✔ review: self-review refused (403 audit.self_review) in the service and by the database trigger (3.254686ms)
+    ✔ review: a staff principal without the btg_grants slice cannot review or see the grant (2.209045ms)
+    ✔ review: the compliance reviewer records the outcome once; a second review is an invalid transition (7.168161ms)
+  ✔ BTG: grants, activeBtgGrants, review (25.495121ms)
+  ▶ TC-AU-06: the compliance viewer
+    ✔ shows who, what, when, from where; no PHI columns; audits the query itself; 31-day cap; slice-only (12.254796ms)
+  ✔ TC-AU-06: the compliance viewer (12.374961ms)
+  ▶ TC-AU-07: export request is size limited, queued, audited
+    ✔ over the limit -> 422 audit.export_too_large; within -> job row, export audit row with reason, chunk 0 enqueued (8.856759ms)
+    ✔ a principal without the audit_events slice cannot create an export job; the time range is required (2.196ms)
+  ✔ TC-AU-07: export request is size limited, queued, audited (11.236484ms)
+  ▶ disclosuresFor and the schema as seen by the pipeline
+    ✔ disclosuresFor pages by (occurred_at, event_id) for a system scope and refuses bad input (31.157085ms)
+    ✔ the audit tables are partitioned by month and the default partition exists (1.649825ms)
+  ✔ disclosuresFor and the schema as seen by the pipeline (33.063432ms)
+✔ audit module on PostgreSQL 17 (BE-01) (1699.619715ms)
+ℹ tests 40
+ℹ suites 10
+ℹ pass 40
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1773.083706
