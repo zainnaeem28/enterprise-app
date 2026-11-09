@@ -45,9 +45,11 @@ export function baseImages(images) {
   return Object.keys(found).sort();
 }
 
-const tool = (cmd, args) => {
+const tool = (cmd, args, pick) => {
   try {
-    return execFileSync(cmd, args, { encoding: 'utf8' }).split('\n')[0].trim();
+    const out = execFileSync(cmd, args, { encoding: 'utf8' });
+    return pick ? (pick.exec(out)?.[1] ?? 'unavailable') : out.split('
+')[0].trim();
   } catch {
     return 'unavailable';
   }
@@ -75,7 +77,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       docker: tool('docker', ['--version']),
       syft: tool('syft', ['--version']),
       trivy: tool('trivy', ['--version']),
-      cosign: tool('cosign', ['version']),
+      cosign: tool('cosign', ['version'], /GitVersion:\s*(\S+)/),
       aws_cli: tool('aws', ['--version']),
     },
   };
