@@ -15,3 +15,104 @@ useDefault = true
 [[allowlists]]
 description = "Third-party Semgrep rule text (patterns and placeholders), not credentials"
 paths = ['''(^|/)semgrep/rules/registry-snapshot\.yml$''']
+
+# INT03-F12 (owner: Cybersecurity; reviewer: Security Reviewer). Every main..HEAD finding was triaged
+# individually (decision-log on HEAAA-359): all synthetic, no real credential. Each entry below pins
+# one exact file set AND the exact synthetic value (condition = "AND"), so a real secret in the same
+# file, or the same shape anywhere else, still fails. No expiry: re-check if the fixtures change.
+
+# F12-a: deterministic test keys/tokens/ids in test code and test kits (rule generic-api-key).
+[[allowlists]]
+description = "INT03-F12-a: synthetic test keys and ids in test files (exact file + exact value)"
+condition = "AND"
+targetRules = ["generic-api-key"]
+paths = [
+  '''^apps/api/src/modules/calendar-sync/oauth\.test\.ts$''',
+  '''^apps/api/src/modules/clinical/(chart|frontdoor|notes)/testkit\.ts$''',
+  '''^apps/api/src/modules/identity/(admin/)?testkit\.ts$''',
+  '''^apps/api/src/modules/patient/testkit\.ts$''',
+  '''^apps/api/src/modules/notifications/notifications\.dbtest\.ts$''',
+  '''^apps/api/test/platform/db\.dbtest\.ts$''',
+  '''^apps/staff/src/features/preconsult/desk\.test\.tsx$''',
+  '''^apps/staff/src/features/preconsult/e2e/preconsult\.spec\.ts$''',
+  '''^apps/worker/src/compose\.dbtest\.ts$''',
+  '''^apps/worker/src/jobs/calendar-sync/(google-adapter|push-handler)\.test\.ts$''',
+  '''^apps/worker/src/jobs/notifications/notifications\.dbtest\.ts$''',
+]
+regexes = [
+  '''^decoy-key-for-tests-0123456789abcdef$''',
+  '''^(csrf|rate|cursor|qr)-key-for-tests-0123456789abcdef(0123)?[0-9a-f]*$''',
+  '''^csecret-0123456789$''',
+  '''^RT-0123456789$''',
+  '''^tok-12345678$''',
+  '''^test-secret-0123456789$''',
+  '''^0192abcd-1234-4abc-8def-0123456789ab$''',
+  '''^q7Zk3Vn9Lw2Xc8Rb5TgYhA$''',
+  '''^A1b2C3d4E5f6G7h8I9j0K_$''',
+  '''^appointment_reminder_(48h|4h)$''',
+]
+
+# F12-b: notification template identifiers (public names, not secrets) in the template source.
+[[allowlists]]
+description = "INT03-F12-b: notification template keys in r1-templates.ts"
+condition = "AND"
+targetRules = ["generic-api-key"]
+paths = ['''^apps/api/src/modules/notifications/r1-templates\.ts$''']
+regexes = ['''^appointment_reminder_(48h|4h)$''']
+
+# F12-c: M3 UI journey evidence log; only the two template-key values appear, no credentials.
+[[allowlists]]
+description = "INT03-F12-c: template_key values in the M3 journey evidence log"
+condition = "AND"
+targetRules = ["generic-api-key"]
+paths = ['''^docs/evidence/integration/M3/raw/r(11|12)/ui/journey-run\.txt$''']
+regexes = ['''^appointment_reminder_(48h|4h)$''']
+
+# F12-d: the literal placeholder "sk_live_SUPERSECRET" used to prove error redaction (test input and
+# the evidence note describing that test). Not a Stripe token; exact value only.
+[[allowlists]]
+description = "INT03-F12-d: fake sk_live_SUPERSECRET redaction-test marker"
+condition = "AND"
+targetRules = ["stripe-access-token"]
+paths = [
+  '''^apps/worker/src/jobs/integration-core/call-vendor\.test\.ts$''',
+  '''^docs/evidence/integration/M4/INT-03-RESULT-r5\.md$''',
+]
+regexes = ['''^sk_live_SUPERSECRET$''']
+
+# F12-e: infra plan-test fixtures (placeholder origin-verify header value, never applied) and a
+# docker image sha256 digest printed in the foundation versions evidence (a public content hash).
+[[allowlists]]
+description = "INT03-F12-e: placeholder origin_verify_secret in terraform plan tests"
+condition = "AND"
+targetRules = ["generic-api-key"]
+paths = ['''^infra/modules/(compute|edge)/tests/plan\.tftest\.hcl$''']
+regexes = ['''^0123456789abcdef0123456789abcdef0123$''']
+
+[[allowlists]]
+description = "INT03-F12-e: dockerfile sha256 digest in foundation versions evidence"
+condition = "AND"
+targetRules = ["generic-api-key"]
+paths = ['''^docs/evidence/foundation/raw/00-versions\.txt$''']
+regexes = ['''^5df716024056310597bc208745349d57e88f87e86079a35b42351a4e6b2647d2$''']
+
+# F12-f: compiled (gitignored, untracked) build output of the same test files, seen only by the
+# working-tree scan after a local build. Same exact synthetic values; absent in a clean CI checkout.
+[[allowlists]]
+description = "INT03-F12-f: compiled build output of the synthetic test fixtures (exact values)"
+condition = "AND"
+targetRules = ["generic-api-key", "stripe-access-token"]
+paths = ['''^apps/(api|worker)/dist/.*\.(js|d\.ts)$''']
+regexes = [
+  '''^decoy-key-for-tests-0123456789abcdef$''',
+  '''^(csrf|rate|cursor|qr)-key-for-tests-0123456789abcdef(0123)?[0-9a-f]*$''',
+  '''^csecret-0123456789$''',
+  '''^RT-0123456789$''',
+  '''^tok-12345678$''',
+  '''^test-secret-0123456789$''',
+  '''^0192abcd-1234-4abc-8def-0123456789ab$''',
+  '''^q7Zk3Vn9Lw2Xc8Rb5TgYhA$''',
+  '''^A1b2C3d4E5f6G7h8I9j0K_$''',
+  '''^sk_live_SUPERSECRET$''',
+  '''^appointment_reminder_(48h|4h)$''',
+]
