@@ -169,7 +169,7 @@ export async function setSetting(key, value) {
  * overbookable session (the cap comes from the service's booking policy). Returns {id, key} (the id is the clinician id).
  */
 let docSeq = Math.floor(Math.random() * 1_000_000);
-export async function newDoctor({ services = [SVC.IN], overbookable = false, location = A1, allDay = false } = {}) {
+export async function newDoctor({ services = [SVC.IN], overbookable = false, location = A1, allDay = false, roleKey = 'doctor' } = {}) {
   const n = 5_000_000 + docSeq++ * 2;
   const pid = `00000000-0000-7000-8000-${String(n).padStart(12, '0')}`;
   const person = `00000000-0000-7000-8000-${String(n + 1).padStart(12, '0')}`;
@@ -181,7 +181,7 @@ export async function newDoctor({ services = [SVC.IN], overbookable = false, loc
       [pid, ORG, person, `sub-${key}`, `${key.toLowerCase()}@example.com`],
     );
     await c.query(`INSERT INTO identity.staff_profile (principal_id, organisation_id, display_name, directory_listed) VALUES ($1,$2,$3,true)`, [pid, ORG, `Synthetic ${key}`]);
-    const role = (await c.query(`SELECT id FROM identity.role WHERE key = 'doctor'`)).rows[0].id;
+    const role = (await c.query(`SELECT id FROM identity.role WHERE key = $1`, [roleKey])).rows[0].id;
     await c.query(
       `INSERT INTO identity.role_assignment (id, organisation_id, principal_id, role_id, location_id, granted_via_request_id) VALUES ($1,$2,$3,$4,$5,$6)`,
       [uuid(), ORG, pid, role, location, uuid()],
