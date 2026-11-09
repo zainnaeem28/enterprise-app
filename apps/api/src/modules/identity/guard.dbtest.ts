@@ -597,6 +597,19 @@ describe('assignment (27.4, BQ-5)', () => {
 });
 
 describe('GET /auth/session and sign-out', () => {
+  test('GET /me (INT03-obs): a patient session gets its principal and linked patients; a staff session is refused', async () => {
+    const pat = await seedPrincipal(k, 'patient_pool');
+    const ps = await seedSession(k, pat, 'patient_pool');
+    const r = await call(k.base, 'GET', '/api/v1/me', { host: PATIENT_HOST, cookie: ps.cookie });
+    assert.equal(r.status, 200);
+    const b = r.json() as Record<string, unknown>;
+    assert.equal(b['principalId'], pat.principalId);
+    assert.equal(b['realm'], 'patient_pool');
+    assert.ok(Array.isArray(b['patients']));
+    const { s } = await staff('front_desk', L1);
+    assert.equal((await get(s, '/api/v1/me')).status, 403);
+  });
+
   test('shape: principal, realm, audience, name, csrf token, idle expiry, roles with locations, permissions, patients', async () => {
     const { s } = await staff('front_desk', L1);
     const b = (await get(s, '/api/v1/auth/session')).json() as Record<string, unknown>;

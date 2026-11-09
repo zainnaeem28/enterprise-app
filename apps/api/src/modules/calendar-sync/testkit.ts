@@ -9,7 +9,7 @@ import { createServer } from 'node:http';
 import type { IncomingMessage, Server } from 'node:http';
 import { pathToFileURL } from 'node:url';
 import { KernelDb, Queue, createLogger, syncTaskTypes } from '@ehr/kernel';
-import type { ScopeSettings, Tx } from '@ehr/kernel';
+import type { JobType, ScopeSettings, Tx } from '@ehr/kernel';
 import {
   ORG,
   STAFF_HOST,
@@ -63,13 +63,13 @@ export const RETURN_URL = 'https://staff.example.test/doctor/calendar';
 const AES = randomBytes(32);
 const gcmSeal = (plain: Buffer, ctx: string): Buffer => {
   const iv = randomBytes(12);
-  const c = createCipheriv('aes-256-gcm', AES, iv);
+  const c = createCipheriv('aes-256-gcm', AES, iv, { authTagLength: 16 });
   c.setAAD(Buffer.from(ctx));
   const ct = Buffer.concat([c.update(plain), c.final()]);
   return Buffer.concat([iv, c.getAuthTag(), ct]);
 };
 const gcmOpen = (sealed: Buffer, ctx: string): Buffer => {
-  const d = createDecipheriv('aes-256-gcm', AES, sealed.subarray(0, 12));
+  const d = createDecipheriv('aes-256-gcm', AES, sealed.subarray(0, 12), { authTagLength: 16 });
   d.setAAD(Buffer.from(ctx));
   d.setAuthTag(sealed.subarray(12, 28));
   return Buffer.concat([d.update(sealed.subarray(28)), d.final()]);
@@ -283,7 +283,7 @@ export class GoogleStub {
 
 // ---- the kit --------------------------------------------------------------------------------------------------------
 export interface WorkerCalendar {
-  CALENDAR_SYNC_JOBS: readonly import('@ehr/kernel').JobType[];
+  CALENDAR_SYNC_JOBS: readonly JobType[];
   CALENDAR_SYNC_CRONTAB: string;
   GoogleCalendarAdapter: new (o?: Record<string, unknown>) => unknown;
   createCalendarSyncTasks(

@@ -13,7 +13,7 @@ import {
   createLogger,
   syncTaskTypes,
 } from '@ehr/kernel';
-import type { ScopeSettings, Tx } from '@ehr/kernel';
+import type { JobType, ScopeSettings, Tx } from '@ehr/kernel';
 import { OrganisationService } from '../../organisation/index.js';
 import { registerAllParticipants } from '../../../composition.js';
 import { NOTIFICATIONS_JOBS, NotificationService } from '../../notifications/index.js';
@@ -73,7 +73,7 @@ export type { Client, Kit, SeededSession };
 
 /** The worker's real scheduling job handlers (apps/worker/dist), loaded the way the patient kit loads the identity jobs. */
 export interface WorkerJobs {
-  SCHEDULING_FLOW_JOBS: readonly import('@ehr/kernel').JobType[];
+  SCHEDULING_FLOW_JOBS: readonly JobType[];
   SCHEDULING_FLOW_CRONTAB: string;
   runOfferWaitlist(
     deps: FlowKit['jobs'],

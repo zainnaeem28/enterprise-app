@@ -35,7 +35,7 @@ function checkKeys(keys: OidcStateKeys): void {
 export function sealOidcState(s: OidcState, keys: OidcStateKeys): string {
   checkKeys(keys);
   const iv = randomBytes(12);
-  const c = createCipheriv('aes-256-gcm', derive(keys.current), iv);
+  const c = createCipheriv('aes-256-gcm', derive(keys.current), iv, { authTagLength: 16 });
   c.setAAD(AAD);
   const ct = Buffer.concat([c.update(JSON.stringify(s), 'utf8'), c.final()]);
   return Buffer.concat([Buffer.from([1]), iv, c.getAuthTag(), ct]).toString('base64url');
@@ -62,7 +62,7 @@ export function openOidcState(
   for (const secret of [keys.current, keys.previous]) {
     if (secret === undefined) continue;
     try {
-      const d = createDecipheriv('aes-256-gcm', derive(secret), iv);
+      const d = createDecipheriv('aes-256-gcm', derive(secret), iv, { authTagLength: 16 });
       d.setAAD(AAD);
       d.setAuthTag(tag);
       const json = Buffer.concat([d.update(ct), d.final()]).toString('utf8');

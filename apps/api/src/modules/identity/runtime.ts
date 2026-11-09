@@ -4,7 +4,7 @@ import type { KernelDb, Logger, Queue } from '@ehr/kernel';
 import type { Type } from '@nestjs/common';
 import { AuditService } from '../audit/index.js';
 import { AssignmentResolver } from './assignment.js';
-import { createAuthController } from './auth.controller.js';
+import { createAuthController, createMeController } from './auth.controller.js';
 import { IdentityGuardPolicy } from './guard-policy.js';
 import type { ElevationChecker, PatientInScope } from './guard-policy.js';
 import type { OidcStateKeys } from './oidc-state.js';
@@ -109,7 +109,7 @@ export function createIdentity(deps: IdentityDeps): Identity {
   });
   return {
     policy,
-    controllers: [controller],
+    controllers: [controller, createMeController()],
     sessions,
     scopes,
     assignment,
