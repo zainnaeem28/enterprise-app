@@ -1,0 +1,13 @@
+non-blocking: semgrep.rules.package_managers.npm.npm-missing-minimum-release-age.npm-missing-minimum-release-age (MEDIUM) at .npmrc:1
+non-blocking: semgrep.rules.package_managers.pnpm.pnpm-block-exotic-sub-dependencies.pnpm-block-exotic-sub-dependencies (MEDIUM) at pnpm-workspace.yaml:1
+non-blocking: semgrep.rules.package_managers.pnpm.pnpm-missing-minimum-release-age.pnpm-minimum-release-age (MEDIUM) at pnpm-workspace.yaml:1
+non-blocking: semgrep.rules.package_managers.pnpm.pnpm-trust-policy.pnpm-trust-policy (MEDIUM) at pnpm-workspace.yaml:1
+::error::semgrep error: PartialParsing,[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object] Syntax error at line apps/api/src/modules/calendar-sync/testkit.ts:290:
+ `: unknown` was unexpected
+::error::semgrep error: PartialParsing,[object Object] Syntax error at line apps/api/src/modules/scheduling/flow/testkit.ts:76:
+ `readonly import('@ehr/kernel').JobType` was unexpected
+::error::semgrep.rules.javascript.node-crypto.security.gcm-no-tag-length.gcm-no-tag-length (ERROR) at apps/api/src/modules/calendar-sync/testkit.ts:72
+::error::semgrep.rules.javascript.node-crypto.security.gcm-no-tag-length.gcm-no-tag-length (ERROR) at apps/api/src/modules/identity/oidc-state.ts:65
+::error::semgrep.rules.javascript.node-crypto.security.gcm-no-tag-length.gcm-no-tag-length (ERROR) at apps/api/src/modules/integration-core/integration-core.dbtest.ts:105
+::error::semgrep.rules.typescript.react.security.react-insecure-request.react-insecure-request (ERROR) at apps/patient/src/features/previsit/evidence/capture.mjs:27
+::error::semgrep.rules.javascript.node-crypto.security.gcm-no-tag-length.gcm-no-tag-length (ERROR) at apps/worker/src/jobs/integration-core/integration-core.dbtest.ts:77

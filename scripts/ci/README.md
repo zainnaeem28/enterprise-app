@@ -15,7 +15,7 @@ Entry points used by `.github/workflows/ci.yml`. Each job script is runnable loc
 | `sbom`                    | `sbom.sh`, `check-sbom.mjs`                        | Syft 1.57.0, CycloneDX JSON                           | missing or empty SBOM; no npm packages                                                                                   |
 | `ci-status`               | `check-needs.mjs`                                  | none                                                  | any required job that is not `success` (skipped counts as failure)                                                       |
 
-Binaries come from `tools.lock` (version, URL, sha256; verified by `install-tools.sh`). No third-party GitHub Action is used. Semgrep is installed with `pip install semgrep==1.184.0` (version pinned; transitive Python dependencies are **not** hash-locked: limitation).
+Binaries come from `tools.lock` (version, URL, sha256; verified by `install-tools.sh`). No third-party GitHub Action is used. Semgrep is installed by `install-tools.sh semgrep`: a sha256-verified pip wheel (tools.lock) installs the transitive wheel set from `semgrep-requirements.txt` with `--require-hashes` into `$CI_TOOLS_DIR/semgrep-site` (CPython 3.13, Linux x86_64; no venv/ensurepip needed). Run: `CI_TOOLS_DIR=/tmp/ci-tools scripts/ci/install-tools.sh semgrep && CI_TOOLS_DIR=/tmp/ci-tools scripts/ci/sast.sh`.
 
 ## Pending: jobs that need application code (F-09, HEAAA-79) - NOT passing
 
