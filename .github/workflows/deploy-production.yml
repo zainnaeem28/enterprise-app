@@ -118,18 +118,27 @@ jobs:
         id: taskdefs
         env:
           MIGRATION_ARN: ${{ vars.DEPLOY_MIGRATION_TASKDEF_ARN }}
+          DEPLOY_API_FAMILY: ${{ vars.DEPLOY_API_FAMILY }}
+          DEPLOY_WORKER_FAMILY: ${{ vars.DEPLOY_WORKER_FAMILY }}
         run: |
           node scripts/deploy/resolve-taskdefs.mjs --manifest "$WORK/current/release-manifest.json" \
-            --family "api=${{ vars.DEPLOY_API_FAMILY }}" --family "worker=${{ vars.DEPLOY_WORKER_FAMILY }}" \
+            --family "api=${DEPLOY_API_FAMILY}" --family "worker=${DEPLOY_WORKER_FAMILY}" \
             --migration-arn "$MIGRATION_ARN" --migration-image api
 
       - name: Backup freshness and the named restore point (8.2 steps 2-3)
         id: backup
-        run: node scripts/deploy/backup-gate.mjs check --db "${{ vars.DEPLOY_DB_INSTANCE }}" --max-age-minutes "${{ vars.DEPLOY_BACKUP_MAX_AGE_MINUTES }}"
+        run: node scripts/deploy/backup-gate.mjs check --db "${DEPLOY_DB_INSTANCE}" --max-age-minutes "${DEPLOY_BACKUP_MAX_AGE_MINUTES}"
+        env:
+          DEPLOY_DB_INSTANCE: ${{ vars.DEPLOY_DB_INSTANCE }}
+          DEPLOY_BACKUP_MAX_AGE_MINUTES: ${{ vars.DEPLOY_BACKUP_MAX_AGE_MINUTES }}
 
       - name: Manual snapshot before a migration (must be available, else abort before migration)
         if: ${{ steps.verify.outputs.new_migrations != '0' }}
-        run: node scripts/deploy/backup-gate.mjs snapshot --db "${{ vars.DEPLOY_DB_INSTANCE }}" --sha "${{ steps.verify.outputs.git_sha }}" --timeout-minutes "${{ vars.DEPLOY_SNAPSHOT_TIMEOUT_MINUTES }}"
+        run: node scripts/deploy/backup-gate.mjs snapshot --db "${DEPLOY_DB_INSTANCE}" --sha "${STEP_VERIFY_GIT_SHA}" --timeout-minutes "${DEPLOY_SNAPSHOT_TIMEOUT_MINUTES}"
+        env:
+          DEPLOY_DB_INSTANCE: ${{ vars.DEPLOY_DB_INSTANCE }}
+          STEP_VERIFY_GIT_SHA: ${{ steps.verify.outputs.git_sha }}
+          DEPLOY_SNAPSHOT_TIMEOUT_MINUTES: ${{ vars.DEPLOY_SNAPSHOT_TIMEOUT_MINUTES }}
 
       - name: Mark that changes to the environment begin
         id: mark
@@ -138,41 +147,69 @@ jobs:
       - name: Run the migration task (one-off, pinned definition, same image digest)
         if: ${{ steps.verify.outputs.new_migrations != '0' }}
         run: |
-          node scripts/deploy/run-migration.mjs --cluster "$CLUSTER" --taskdef "${{ steps.taskdefs.outputs.taskdef_migration }}" \
-            --subnets "${{ vars.DEPLOY_SUBNETS }}" --security-groups "${{ vars.DEPLOY_SECURITY_GROUPS }}" --timeout-minutes 30
+          node scripts/deploy/run-migration.mjs --cluster "$CLUSTER" --taskdef "${STEP_TASKDEFS_TASKDEF_MIGRATION}" \
+            --subnets "${DEPLOY_SUBNETS}" --security-groups "${DEPLOY_SECURITY_GROUPS}" --timeout-minutes 30
+        env:
+          STEP_TASKDEFS_TASKDEF_MIGRATION: ${{ steps.taskdefs.outputs.taskdef_migration }}
+          DEPLOY_SUBNETS: ${{ vars.DEPLOY_SUBNETS }}
+          DEPLOY_SECURITY_GROUPS: ${{ vars.DEPLOY_SECURITY_GROUPS }}
 
       - name: min_client_release = release_number of the previous released manifest (6.2)
-        run: node scripts/deploy/set-release-config.mjs --param "${{ vars.DEPLOY_MIN_CLIENT_PARAM }}" --value "${{ steps.verify.outputs.min_client_release }}"
+        run: node scripts/deploy/set-release-config.mjs --param "${DEPLOY_MIN_CLIENT_PARAM}" --value "${STEP_VERIFY_MIN_CLIENT_RELEASE}"
+        env:
+          DEPLOY_MIN_CLIENT_PARAM: ${{ vars.DEPLOY_MIN_CLIENT_PARAM }}
+          STEP_VERIFY_MIN_CLIENT_RELEASE: ${{ steps.verify.outputs.min_client_release }}
 
       - name: Roll out worker, then api (ECS rolling, circuit breaker with rollback)
         run: |
           node scripts/deploy/rollout.mjs --cluster "$CLUSTER" \
-            --service "worker=${{ vars.DEPLOY_WORKER_SERVICE }}:${{ steps.taskdefs.outputs.taskdef_worker }}" \
-            --service "api=${{ vars.DEPLOY_API_SERVICE }}:${{ steps.taskdefs.outputs.taskdef_api }}"
+            --service "worker=${DEPLOY_WORKER_SERVICE}:${STEP_TASKDEFS_TASKDEF_WORKER}" \
+            --service "api=${DEPLOY_API_SERVICE}:${STEP_TASKDEFS_TASKDEF_API}"
+        env:
+          DEPLOY_WORKER_SERVICE: ${{ vars.DEPLOY_WORKER_SERVICE }}
+          STEP_TASKDEFS_TASKDEF_WORKER: ${{ steps.taskdefs.outputs.taskdef_worker }}
+          DEPLOY_API_SERVICE: ${{ vars.DEPLOY_API_SERVICE }}
+          STEP_TASKDEFS_TASKDEF_API: ${{ steps.taskdefs.outputs.taskdef_api }}
 
       - name: Switch portal entry documents to this release
         run: |
-          node scripts/deploy/portal-switch.mjs --bucket "${{ vars.DEPLOY_PORTAL_BUCKET }}" --sha "${{ steps.verify.outputs.git_sha }}" \
-            --portal "${{ vars.DEPLOY_PORTAL_NAME }}" --distribution "${{ vars.DEPLOY_PORTAL_DISTRIBUTION }}"
+          node scripts/deploy/portal-switch.mjs --bucket "${DEPLOY_PORTAL_BUCKET}" --sha "${STEP_VERIFY_GIT_SHA}" \
+            --portal "${DEPLOY_PORTAL_NAME}" --distribution "${DEPLOY_PORTAL_DISTRIBUTION}"
+        env:
+          DEPLOY_PORTAL_BUCKET: ${{ vars.DEPLOY_PORTAL_BUCKET }}
+          STEP_VERIFY_GIT_SHA: ${{ steps.verify.outputs.git_sha }}
+          DEPLOY_PORTAL_NAME: ${{ vars.DEPLOY_PORTAL_NAME }}
+          DEPLOY_PORTAL_DISTRIBUTION: ${{ vars.DEPLOY_PORTAL_DISTRIBUTION }}
 
       - name: Smoke checks
         run: |
-          node scripts/deploy/smoke.mjs --api-url "${{ vars.DEPLOY_API_URL }}" --portal-url "${{ vars.DEPLOY_PORTAL_URL }}" \
-            --release-number "${{ steps.verify.outputs.release_number }}"
+          node scripts/deploy/smoke.mjs --api-url "${DEPLOY_API_URL}" --portal-url "${DEPLOY_PORTAL_URL}" \
+            --release-number "${STEP_VERIFY_RELEASE_NUMBER}"
+        env:
+          DEPLOY_API_URL: ${{ vars.DEPLOY_API_URL }}
+          DEPLOY_PORTAL_URL: ${{ vars.DEPLOY_PORTAL_URL }}
+          STEP_VERIFY_RELEASE_NUMBER: ${{ steps.verify.outputs.release_number }}
 
       - name: Evidence
         if: ${{ !cancelled() }}
         env:
           MANIFEST_HASH: ${{ inputs.manifest_hash }}
+          STEP_VERIFY_RELEASE_NUMBER: ${{ steps.verify.outputs.release_number }}
+          STEP_VERIFY_GIT_SHA: ${{ steps.verify.outputs.git_sha }}
+          STEP_VERIFY_NEW_MIGRATIONS: ${{ steps.verify.outputs.new_migrations }}
+          STEP_BACKUP_RESTORE_POINT: ${{ steps.backup.outputs.restore_point }}
+          STEP_TASKDEFS_TASKDEF_API: ${{ steps.taskdefs.outputs.taskdef_api }}
+          STEP_TASKDEFS_TASKDEF_WORKER: ${{ steps.taskdefs.outputs.taskdef_worker }}
+          STEP_VERIFY_MIN_CLIENT_RELEASE: ${{ steps.verify.outputs.min_client_release }}
         run: |
           {
             echo "### deploy-production"
             echo "- manifest hash (dispatch input, unverified text): $MANIFEST_HASH"
-            echo "- release_number: ${{ steps.verify.outputs.release_number }} (git ${{ steps.verify.outputs.git_sha }})"
-            echo "- new migrations: ${{ steps.verify.outputs.new_migrations }}"
-            echo "- restore point: ${{ steps.backup.outputs.restore_point }}"
-            echo "- task definitions (pinned): api ${{ steps.taskdefs.outputs.taskdef_api }}, worker ${{ steps.taskdefs.outputs.taskdef_worker }}"
-            echo "- min_client_release: ${{ steps.verify.outputs.min_client_release }}"
+            echo "- release_number: ${STEP_VERIFY_RELEASE_NUMBER} (git ${STEP_VERIFY_GIT_SHA})"
+            echo "- new migrations: ${STEP_VERIFY_NEW_MIGRATIONS}"
+            echo "- restore point: ${STEP_BACKUP_RESTORE_POINT}"
+            echo "- task definitions (pinned): api ${STEP_TASKDEFS_TASKDEF_API}, worker ${STEP_TASKDEFS_TASKDEF_WORKER}"
+            echo "- min_client_release: ${STEP_VERIFY_MIN_CLIENT_RELEASE}"
           } >> "$GITHUB_STEP_SUMMARY"
 
   observe:
@@ -196,12 +233,19 @@ jobs:
         with:
           node-version-file: .nvmrc
       - name: Assume gh-observe-production (CloudWatch, ECS and ALB reads only)
-        run: scripts/deploy/aws-login.sh "${{ vars.DEPLOY_OBSERVE_ROLE_ARN }}" gh-observe-production 18000
+        run: scripts/deploy/aws-login.sh "${DEPLOY_OBSERVE_ROLE_ARN}" gh-observe-production 18000
+        env:
+          DEPLOY_OBSERVE_ROLE_ARN: ${{ vars.DEPLOY_OBSERVE_ROLE_ARN }}
       - name: Observe (aborts the job, never changes the environment)
         id: observe
         run: |
-          node scripts/deploy/observe.mjs --minutes "${{ vars.DEPLOY_OBSERVE_MINUTES }}" --lb "${{ vars.DEPLOY_LB }}" \
-            --tg "${{ vars.DEPLOY_TG }}" --alarm-prefix "${{ vars.DEPLOY_ALARM_PREFIX }}"
+          node scripts/deploy/observe.mjs --minutes "${DEPLOY_OBSERVE_MINUTES}" --lb "${DEPLOY_LB}" \
+            --tg "${DEPLOY_TG}" --alarm-prefix "${DEPLOY_ALARM_PREFIX}"
+        env:
+          DEPLOY_OBSERVE_MINUTES: ${{ vars.DEPLOY_OBSERVE_MINUTES }}
+          DEPLOY_LB: ${{ vars.DEPLOY_LB }}
+          DEPLOY_TG: ${{ vars.DEPLOY_TG }}
+          DEPLOY_ALARM_PREFIX: ${{ vars.DEPLOY_ALARM_PREFIX }}
 
   recover:
     name: approved recovery (rollback redeploy), only after a failure
@@ -234,7 +278,9 @@ jobs:
           mkdir -p "$WORK/previous"
           gh run download "$PREV_RUN_ID" --repo "$GITHUB_REPOSITORY" --name "release-artifacts-$PREV_RUN_ID" --dir "$WORK/previous"
       - name: Assume gh-recover-production (denied unless its own `recover` record is applied and unexpired)
-        run: scripts/deploy/aws-login.sh "${{ vars.DEPLOY_RECOVER_ROLE_ARN }}" gh-recover-production 7200
+        run: scripts/deploy/aws-login.sh "${DEPLOY_RECOVER_ROLE_ARN}" gh-recover-production 7200
+        env:
+          DEPLOY_RECOVER_ROLE_ARN: ${{ vars.DEPLOY_RECOVER_ROLE_ARN }}
       - name: Read the recover record and verify it names this previous manifest and the rollback action
         id: verify
         run: |
@@ -246,14 +292,27 @@ jobs:
         id: taskdefs
         run: |
           node scripts/deploy/resolve-taskdefs.mjs --manifest "$WORK/previous/release-manifest.json" \
-            --family "api=${{ vars.DEPLOY_API_FAMILY }}" --family "worker=${{ vars.DEPLOY_WORKER_FAMILY }}"
+            --family "api=${DEPLOY_API_FAMILY}" --family "worker=${DEPLOY_WORKER_FAMILY}"
+        env:
+          DEPLOY_API_FAMILY: ${{ vars.DEPLOY_API_FAMILY }}
+          DEPLOY_WORKER_FAMILY: ${{ vars.DEPLOY_WORKER_FAMILY }}
       - name: Portals first (restore the previous entry document), then api and worker (9.3, DPR-08)
         run: |
-          node scripts/deploy/portal-switch.mjs --bucket "${{ vars.DEPLOY_PORTAL_BUCKET }}" --sha "${{ steps.verify.outputs.git_sha }}" \
-            --portal "${{ vars.DEPLOY_PORTAL_NAME }}" --distribution "${{ vars.DEPLOY_PORTAL_DISTRIBUTION }}"
-          node scripts/deploy/rollout.mjs --rollback --cluster "${{ vars.DEPLOY_CLUSTER }}" \
-            --service "worker=${{ vars.DEPLOY_WORKER_SERVICE }}:${{ steps.taskdefs.outputs.taskdef_worker }}" \
-            --service "api=${{ vars.DEPLOY_API_SERVICE }}:${{ steps.taskdefs.outputs.taskdef_api }}"
+          node scripts/deploy/portal-switch.mjs --bucket "${DEPLOY_PORTAL_BUCKET}" --sha "${STEP_VERIFY_GIT_SHA}" \
+            --portal "${DEPLOY_PORTAL_NAME}" --distribution "${DEPLOY_PORTAL_DISTRIBUTION}"
+          node scripts/deploy/rollout.mjs --rollback --cluster "${DEPLOY_CLUSTER}" \
+            --service "worker=${DEPLOY_WORKER_SERVICE}:${STEP_TASKDEFS_TASKDEF_WORKER}" \
+            --service "api=${DEPLOY_API_SERVICE}:${STEP_TASKDEFS_TASKDEF_API}"
+        env:
+          DEPLOY_PORTAL_BUCKET: ${{ vars.DEPLOY_PORTAL_BUCKET }}
+          STEP_VERIFY_GIT_SHA: ${{ steps.verify.outputs.git_sha }}
+          DEPLOY_PORTAL_NAME: ${{ vars.DEPLOY_PORTAL_NAME }}
+          DEPLOY_PORTAL_DISTRIBUTION: ${{ vars.DEPLOY_PORTAL_DISTRIBUTION }}
+          DEPLOY_CLUSTER: ${{ vars.DEPLOY_CLUSTER }}
+          DEPLOY_WORKER_SERVICE: ${{ vars.DEPLOY_WORKER_SERVICE }}
+          STEP_TASKDEFS_TASKDEF_WORKER: ${{ steps.taskdefs.outputs.taskdef_worker }}
+          DEPLOY_API_SERVICE: ${{ vars.DEPLOY_API_SERVICE }}
+          STEP_TASKDEFS_TASKDEF_API: ${{ steps.taskdefs.outputs.taskdef_api }}
       - name: Report (an application rollback is not proof that the database is restored)
         run: |
           echo "### recovery redeploy ran: previous digests and portal pointer only. Schema state is NOT asserted; see ROLLBACK-RUNBOOK.md." >> "$GITHUB_STEP_SUMMARY"
