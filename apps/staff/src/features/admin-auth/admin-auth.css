@@ -1,0 +1,10 @@
+.ehr-elevation__facts {
+  margin: 0 0 1rem;
+}
+.ehr-elevation__facts dt {
+  font-weight: 700;
+}
+.ehr-elevation__facts dd {
+  margin: 0 0 0.5rem;
+  overflow-wrap: anywhere;
+}

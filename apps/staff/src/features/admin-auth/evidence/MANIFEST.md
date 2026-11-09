@@ -1,0 +1,17 @@
+# FE-17 evidence manifest
+
+Base: `4fe7bae` (tip of the INT-03 branch; contains FE-08 and the generated contracts with the BE-05 admin routes). Candidate commit: see the submission comment.
+Allowed path: `apps/staff/src/features/admin-auth/**` only. Nothing outside it was edited.
+
+| Check                               | Tool / version                                                      | Command                                                                                           | Raw report                                     | Result                                  |
+| ----------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ---------------------------------------------- | --------------------------------------- |
+| Unit + jsdom axe (whole staff app)  | vitest 5.1.0, axe-core 4.14.0                                       | `NODE_ENV=test pnpm exec vitest run` (in `apps/staff`)                                            | `raw/unit-staff.txt`                           | 187 passed (22 of them in `admin-auth`) |
+| Playwright + axe (layout, contrast) | @playwright/test 1.64.1, @axe-core/playwright 4.14.0, Chromium 1248 | `pnpm exec playwright test -c src/features/admin-auth/e2e/playwright.config.ts` (in `apps/staff`) | `raw/playwright.txt`, `playwright-report.json` | 14 passed (7 specs, desktop and phone)  |
+| Type check                          | tsc 5.9.3                                                           | `pnpm exec tsc -p tsconfig.json --noEmit` (in `apps/staff`)                                       | `raw/typecheck-staff.txt`                      | pass                                    |
+| Lint                                | eslint                                                              | `pnpm exec eslint apps/staff/src/features/admin-auth`                                             | `raw/lint.txt`                                 | pass                                    |
+| Format                              | prettier                                                            | `pnpm exec prettier --check apps/staff/src/features/admin-auth`                                   | `raw/format.txt`                               | pass                                    |
+| Physical security key               | n/a                                                                 | n/a                                                                                               | n/a                                            | **Pending-human** (not executed)        |
+
+All API traffic is a CONTRACT MOCK of `identity.yaml`; response bodies follow the BE-05 controller and ceremony (`{challengeId, publicKey}`, `{elevationExpiresAt}`, `{principalId, csrfToken, idleExpiresAt}`). The key is a scripted stand-in. No real API, database or authenticator ran. The Playwright harness (`e2e/harness`) mounts the real components because `StaffApp` is outside the allowed paths.
+Chromium needed system libraries and a font config that the runner lacks; they were supplied through `LD_LIBRARY_PATH` and `FONTCONFIG_FILE` from a private copy in `/tmp` (screenshots use Liberation fonts as a fallback, not the brand font).
+Screenshots (`screenshots/`, desktop and phone): admin sign-in, sign-in refused, admin banner, elevation dialog, elevated chip.

@@ -1,0 +1,19 @@
+
+Running 14 tests using 2 workers
+
+  ✓   1 [phone] › src/features/admin-auth/e2e/admin-auth.spec.ts:85:1 › administrator sign-in: handle and security key, no password, no Google (793ms)
+  ✓   2 [desktop] › src/features/admin-auth/e2e/admin-auth.spec.ts:85:1 › administrator sign-in: handle and security key, no password, no Google (794ms)
+  ✓   3 [phone] › src/features/admin-auth/e2e/admin-auth.spec.ts:104:1 › a refused sign-in reads the same whatever the cause (686ms)
+  ✓   4 [desktop] › src/features/admin-auth/e2e/admin-auth.spec.ts:104:1 › a refused sign-in reads the same whatever the cause (704ms)
+  ✓   5 [phone] › src/features/admin-auth/e2e/admin-auth.spec.ts:117:1 › a cancelled key prompt is a plain, retryable message (303ms)
+  ✓   6 [desktop] › src/features/admin-auth/e2e/admin-auth.spec.ts:117:1 › a cancelled key prompt is a plain, retryable message (303ms)
+  ✓   7 [phone] › src/features/admin-auth/e2e/admin-auth.spec.ts:125:1 › the staff sign-in page links to the separate administrator sign-in (205ms)
+  ✓   8 [desktop] › src/features/admin-auth/e2e/admin-auth.spec.ts:125:1 › the staff sign-in page links to the separate administrator sign-in (212ms)
+  ✓   9 [phone] › src/features/admin-auth/e2e/admin-auth.spec.ts:134:1 › admin screen: fixed banner, elevation dialog names action, target and approver, chip after success (1.3s)
+  ✓  10 [desktop] › src/features/admin-auth/e2e/admin-auth.spec.ts:134:1 › admin screen: fixed banner, elevation dialog names action, target and approver, chip after success (1.4s)
+  ✓  11 [phone] › src/features/admin-auth/e2e/admin-auth.spec.ts:167:1 › a grant that is gone mid-form: 403 elevation_required opens the dialog and the call is retried once (367ms)
+  ✓  12 [desktop] › src/features/admin-auth/e2e/admin-auth.spec.ts:167:1 › a grant that is gone mid-form: 403 elevation_required opens the dialog and the call is retried once (371ms)
+  ✓  13 [phone] › src/features/admin-auth/e2e/admin-auth.spec.ts:181:1 › realm switch signs out and keeps the draft where the screen supports it (260ms)
+  ✓  14 [desktop] › src/features/admin-auth/e2e/admin-auth.spec.ts:181:1 › realm switch signs out and keeps the draft where the screen supports it (261ms)
+
+  14 passed (5.2s)
