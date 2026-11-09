@@ -19,7 +19,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/deletion-requests/{id}/decide
-          catalogueRow: 29.3#101
+          catalogueRow: 29.3#102
       security:
         - sessionCookie: []
       parameters:
@@ -207,7 +207,7 @@ paths:
       summary: POST /api/v1/documents/{documentId}/download-url
       description: |-
         my.: `{url, expiresAt}` (60 s); audited `download`; `409 documents.not_available` (not clean)
-        staff.: Audited
+        staff.: Audited (INT03-F21-O1: the path has no patient; the document resolves it)
       x-access:
         my:
           permission: patient
@@ -219,12 +219,12 @@ paths:
           catalogueRow: 29.2#39
         staff:
           permission: documents.read
-          resolver: path
+          resolver: document
           realm: google
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/documents/{id}/download-url
-          catalogueRow: 29.3#98
+          catalogueRow: 29.3#99
       security:
         - sessionCookie: []
       parameters:
@@ -307,7 +307,7 @@ paths:
           idempotencyKey: false
           ifMatch: true
           pathAs: /api/v1/documents/{id}/classification
-          catalogueRow: 29.3#99
+          catalogueRow: 29.3#100
       security:
         - sessionCookie: []
       parameters:
@@ -413,7 +413,7 @@ paths:
           idempotencyKey: false
           ifMatch: true
           pathAs: /api/v1/documents/{id}/confirm
-          catalogueRow: 29.3#99
+          catalogueRow: 29.3#100
       security:
         - sessionCookie: []
       parameters:
@@ -508,7 +508,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/documents/{id}/deletion-requests
-          catalogueRow: 29.3#101
+          catalogueRow: 29.3#102
       security:
         - sessionCookie: []
       parameters:
@@ -606,7 +606,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/documents/{id}/legal-holds
-          catalogueRow: 29.3#100
+          catalogueRow: 29.3#101
       security:
         - sessionCookie: []
       parameters:
@@ -811,7 +811,7 @@ paths:
       summary: GET /api/v1/patients/{patientId}/documents
       description: |-
         my.: Own released classifications only
-        staff.: Audited
+        staff.: Audited. Response adds `patientBanner` (28.2)
       x-access:
         my:
           permission: patient
@@ -931,6 +931,9 @@ components:
         - items
         - nextCursor
       properties:
+        patientBanner:
+          $ref: common.yaml#/components/schemas/PatientBanner
+          description: Present on `staff.` only (ARCHITECTURE 28.2, BR-34); absent on `my.`.
         items:
           type: array
           items:

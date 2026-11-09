@@ -18,7 +18,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/reports/ops
-          catalogueRow: 29.4#145
+          catalogueRow: 29.4#146
       security:
         - sessionCookie: []
       parameters:

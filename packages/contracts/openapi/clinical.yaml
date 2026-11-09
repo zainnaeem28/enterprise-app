@@ -18,7 +18,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/vital-ranges
-          catalogueRow: 29.4#132
+          catalogueRow: 29.4#133
       security:
         - sessionCookie: []
       parameters:
@@ -96,7 +96,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/vital-ranges
-          catalogueRow: 29.4#132
+          catalogueRow: 29.4#133
       security:
         - sessionCookie: []
       parameters:
@@ -184,7 +184,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/vital-ranges/{id}/retire
-          catalogueRow: 29.4#132
+          catalogueRow: 29.4#133
       security:
         - sessionCookie: []
       parameters:
@@ -465,7 +465,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/clinicians/{id}/cosign-queue
-          catalogueRow: 29.3#112
+          catalogueRow: 29.3#113
       security:
         - sessionCookie: []
       parameters:
@@ -549,7 +549,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/clinicians/{id}/notes
-          catalogueRow: 29.3#111
+          catalogueRow: 29.3#112
       security:
         - sessionCookie: []
       parameters:
@@ -1036,7 +1036,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/notes/{id}
-          catalogueRow: 29.3#113
+          catalogueRow: 29.3#114
       x-banner: true
       security:
         - sessionCookie: []

@@ -2356,7 +2356,7 @@ export interface paths {
     /**
      * POST /api/v1/documents/{documentId}/download-url
      * @description my.: `{url, expiresAt}` (60 s); audited `download`; `409 documents.not_available` (not clean)
-     *     staff.: Audited
+     *     staff.: Audited (INT03-F21-O1: the path has no patient; the document resolves it)
      */
     post: operations['postDocumentsByDocumentIdDownloadUrl'];
     delete?: never;
@@ -3273,7 +3273,7 @@ export interface paths {
     /**
      * GET /api/v1/patients/{patientId}/documents
      * @description my.: Own released classifications only
-     *     staff.: Audited
+     *     staff.: Audited. Response adds `patientBanner` (28.2)
      */
     get: operations['getPatientsByPatientIdDocuments'];
     put?: never;
@@ -5052,6 +5052,8 @@ export interface components {
       expiresAt: string;
     };
     GetPatientsByPatientIdDocumentsResponse: {
+      /** @description Present on `staff.` only (ARCHITECTURE 28.2, BR-34); absent on `my.`. */
+      patientBanner?: components['schemas']['PatientBanner'];
       items: components['schemas']['OpaqueObject'][];
       nextCursor: string | null;
     };

@@ -18,7 +18,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/dead-letters
-          catalogueRow: 29.4#137
+          catalogueRow: 29.4#138
       security:
         - sessionCookie: []
       parameters:
@@ -96,7 +96,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/dead-letters/{id}/retry
-          catalogueRow: 29.4#137
+          catalogueRow: 29.4#138
       security:
         - sessionCookie: []
       parameters:
@@ -177,7 +177,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/integrations
-          catalogueRow: 29.4#133
+          catalogueRow: 29.4#134
       security:
         - sessionCookie: []
       parameters:
@@ -255,7 +255,7 @@ paths:
           ifMatch: true
           elevationRequired: true
           pathAs: /api/v1/admin/integrations/{id}
-          catalogueRow: 29.4#133
+          catalogueRow: 29.4#134
       security:
         - sessionCookie: []
       parameters:
@@ -361,7 +361,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/integrations/{id}/inbound-secret-requests
-          catalogueRow: 29.4#135
+          catalogueRow: 29.4#136
       security:
         - sessionCookie: []
       parameters:
@@ -454,7 +454,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/integrations/{id}/inbound-secret-requests/{requestId}/approve
-          catalogueRow: 29.4#135
+          catalogueRow: 29.4#136
       security:
         - sessionCookie: []
       parameters:
@@ -542,7 +542,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/integrations/{id}/secrets/{name}
-          catalogueRow: 29.4#134
+          catalogueRow: 29.4#135
       security:
         - sessionCookie: []
       parameters:
@@ -640,7 +640,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/integrations/{id}/test
-          catalogueRow: 29.4#136
+          catalogueRow: 29.4#137
       security:
         - sessionCookie: []
       parameters:
@@ -721,7 +721,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/operations/summary
-          catalogueRow: 29.4#137
+          catalogueRow: 29.4#138
       security:
         - sessionCookie: []
       parameters:
@@ -796,7 +796,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /webhooks/google/calendar
-          catalogueRow: 29.5#148
+          catalogueRow: 29.5#149
       x-max-body-bytes: 262144
       security: []
       x-authentication: Channel token, verified **without a table read** (draft 6, TDR-05; rule below)
@@ -863,7 +863,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /webhooks/messaging/{vendor}
-          catalogueRow: 29.5#150
+          catalogueRow: 29.5#151
       x-max-body-bytes: 262144
       security: []
       x-authentication: vendor signature + timestamp (for example SNS message signature)
@@ -942,7 +942,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /webhooks/video/{vendor}
-          catalogueRow: 29.5#149
+          catalogueRow: 29.5#150
       x-max-body-bytes: 262144
       security: []
       x-authentication: vendor signature + timestamp

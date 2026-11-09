@@ -1945,7 +1945,8 @@ Column guide: **Perm** = permission (27.2) or `patient`/`proxy` for the patient 
 | `GET /locations/{locationId}/referral-inbox` | clinical.referral.manage | location | — | PHI-minimal inbox (22.11) |
 | `POST /referrals/{id}/accept`, `…/decline` | clinical.referral.manage | target location | Idem | Accept creates the care relationship at the referral's own target location after the re-check in 22.11 (draft 7). `409 clinical.referral_not_pending` |
 | `POST /patients/{patientId}/document-uploads`, `…/complete` | documents.upload | path | Idem | As 29.2 |
-| `GET /patients/{patientId}/documents`, `POST /documents/{id}/download-url` | documents.read | path | — | Audited |
+| `GET /patients/{patientId}/documents` | documents.read | path | — | Audited. Response adds `patientBanner` (28.2) |
+| `POST /documents/{id}/download-url` | documents.read | document | — | Audited (INT03-F21-O1: the path has no patient; the document resolves it) |
 | `PUT /documents/{id}/classification`, `POST /documents/{id}/confirm` | documents.classify | document | If-Match | — |
 | `POST /documents/{id}/legal-holds` | documents.legal_hold.manage | document | Idem | `{action: placed|released, reason}` |
 | `POST /documents/{id}/deletion-requests`, `POST /deletion-requests/{id}/decide` | documents.upload / .deletion.decide | document | Idem | `refused_legal_hold` (AC-31), `refused_retention` |

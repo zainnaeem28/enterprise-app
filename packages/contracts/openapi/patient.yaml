@@ -18,7 +18,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/consents
-          catalogueRow: 29.4#143
+          catalogueRow: 29.4#144
       security:
         - sessionCookie: []
       parameters:
@@ -105,7 +105,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/patient-labels
-          catalogueRow: 29.4#144
+          catalogueRow: 29.4#145
       security:
         - sessionCookie: []
       parameters:
@@ -2827,7 +2827,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/patients/lookup
-          catalogueRow: 29.3#109
+          catalogueRow: 29.3#110
       security:
         - sessionCookie: []
       parameters:

@@ -133,10 +133,6 @@ export const EXPANSIONS = {
     'POST /patients/{patientId}/document-uploads',
     'POST /document-uploads/{documentId}/complete',
   ],
-  '`GET /patients/{patientId}/documents`, `POST /documents/{id}/download-url`': [
-    'GET /patients/{patientId}/documents',
-    'POST /documents/{id}/download-url',
-  ],
   '`PUT /documents/{id}/classification`, `POST /documents/{id}/confirm`': [
     'PUT /documents/{id}/classification',
     'POST /documents/{id}/confirm',

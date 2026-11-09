@@ -18,7 +18,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/clinicians/{id}/availability-templates
-          catalogueRow: 29.4#124
+          catalogueRow: 29.4#125
       security:
         - sessionCookie: []
       parameters:
@@ -100,7 +100,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/clinicians/{id}/availability-templates
-          catalogueRow: 29.4#124
+          catalogueRow: 29.4#125
       security:
         - sessionCookie: []
       parameters:
@@ -192,7 +192,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/clinicians/{id}/availability-templates/{templateId}
-          catalogueRow: 29.4#124
+          catalogueRow: 29.4#125
       security:
         - sessionCookie: []
       parameters:
@@ -274,7 +274,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/clinicians/{id}/availability-templates/{templateId}
-          catalogueRow: 29.4#124
+          catalogueRow: 29.4#125
       security:
         - sessionCookie: []
       parameters:
@@ -373,7 +373,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/clinicians/{id}/blocked-times
-          catalogueRow: 29.4#124
+          catalogueRow: 29.4#125
       x-catalogue-gap: The catalogue lists DELETE on the collection and names no identifier of the blocked time to delete
       security:
         - sessionCookie: []
@@ -451,7 +451,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/clinicians/{id}/blocked-times
-          catalogueRow: 29.4#124
+          catalogueRow: 29.4#125
       security:
         - sessionCookie: []
       parameters:
@@ -534,7 +534,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/clinicians/{id}/blocked-times
-          catalogueRow: 29.4#124
+          catalogueRow: 29.4#125
       security:
         - sessionCookie: []
       parameters:
@@ -627,7 +627,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/locations/{id}/roster
-          catalogueRow: 29.4#125
+          catalogueRow: 29.4#126
       x-catalogue-gap: The catalogue lists DELETE on the collection and names no identifier of the roster entry to delete
       security:
         - sessionCookie: []
@@ -705,7 +705,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/locations/{id}/roster
-          catalogueRow: 29.4#125
+          catalogueRow: 29.4#126
       security:
         - sessionCookie: []
       parameters:
@@ -788,7 +788,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/locations/{id}/roster
-          catalogueRow: 29.4#125
+          catalogueRow: 29.4#126
       security:
         - sessionCookie: []
       parameters:
@@ -2718,7 +2718,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/clinicians/{id}/schedule
-          catalogueRow: 29.3#110
+          catalogueRow: 29.3#111
       security:
         - sessionCookie: []
       parameters:
@@ -4006,7 +4006,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /public/v1/clinicians/{id}/next-available
-          catalogueRow: 29.5#147
+          catalogueRow: 29.5#148
       security: []
       x-authentication: none
       parameters:

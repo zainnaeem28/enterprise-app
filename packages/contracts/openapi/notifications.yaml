@@ -19,7 +19,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/alert-settings
-          catalogueRow: 29.4#131
+          catalogueRow: 29.4#132
       security:
         - sessionCookie: []
       parameters:
@@ -94,7 +94,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/alert-settings
-          catalogueRow: 29.4#131
+          catalogueRow: 29.4#132
       security:
         - sessionCookie: []
       parameters:
@@ -180,7 +180,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/message-templates
-          catalogueRow: 29.4#130
+          catalogueRow: 29.4#131
       security:
         - sessionCookie: []
       parameters:
@@ -261,7 +261,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/message-templates
-          catalogueRow: 29.4#130
+          catalogueRow: 29.4#131
       security:
         - sessionCookie: []
       parameters:
@@ -353,7 +353,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/message-templates/{id}/publish
-          catalogueRow: 29.4#130
+          catalogueRow: 29.4#131
       security:
         - sessionCookie: []
       parameters:
@@ -439,7 +439,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/message-templates/{id}/render-check
-          catalogueRow: 29.4#130
+          catalogueRow: 29.4#131
       security:
         - sessionCookie: []
       parameters:
@@ -537,7 +537,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/alerts
-          catalogueRow: 29.3#104
+          catalogueRow: 29.3#105
       security:
         - sessionCookie: []
       parameters:
@@ -618,7 +618,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/alerts/{id}/acknowledge
-          catalogueRow: 29.3#106
+          catalogueRow: 29.3#107
       security:
         - sessionCookie: []
       parameters:
@@ -706,7 +706,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/alerts/open-ids
-          catalogueRow: 29.3#105
+          catalogueRow: 29.3#106
       x-passive: true
       security:
         - sessionCookie: []
@@ -783,7 +783,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/alerts/stream
-          catalogueRow: 29.3#107
+          catalogueRow: 29.3#108
       x-passive: true
       security:
         - sessionCookie: []
