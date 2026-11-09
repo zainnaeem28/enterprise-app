@@ -162,6 +162,21 @@ export class DocumentsService {
     return (r.rows as Row[]).map((x) => this.toView(tx, x));
   }
 
+  /** `GET /patients/{id}/documents` for staff: the list, with one `view` audit row (patient and action only, no file names). */
+  async listAudited(tx: Tx, meta: RequestMeta, patientId: string): Promise<DocumentView[]> {
+    const items = await this.list(tx, patientId);
+    await this.deps.audit.record(tx, {
+      requestId: meta.requestId,
+      action: 'view',
+      resourceType: 'documents.document',
+      resourceId: patientId,
+      patientId,
+      ip: meta.ip ?? null,
+      userAgent: meta.userAgent ?? null,
+    });
+    return items;
+  }
+
   // ===== upload (25.10) =============================================================================================
   /**
    * `POST /patients/{patientId}/document-uploads`: one `document` (`awaiting_upload`) and its version 1 with a random key in the

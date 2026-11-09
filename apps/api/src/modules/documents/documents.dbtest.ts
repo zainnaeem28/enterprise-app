@@ -21,6 +21,7 @@ import {
   ORG,
   PDF,
   PNG_WITH_TEXT,
+  call,
   keyOfUrl,
   repoRoot,
   setupDocuments,
@@ -198,30 +199,17 @@ describe('documents (BE-10) on PostgreSQL 17', () => {
     );
     assert.equal(item?.['status'], 'clean');
     assert.equal(item?.['suggestedClassification'], undefined, 'the suggestion is staff-only');
-    assert.equal(
-      (
-        await t.pcall(
-          session,
-          'PUT',
-          `/api/v1/documents/${u.documentId}/classification`,
-          { classification: 'consent' },
-          { 'if-match': await etag(u.documentId) },
-        )
-      ).status,
-      403,
-    );
-    assert.equal(
-      (
-        await t.pcall(
-          session,
-          'POST',
-          `/api/v1/documents/${u.documentId}/confirm`,
-          {},
-          { 'if-match': await etag(u.documentId) },
-        )
-      ).status,
-      403,
-    );
+    // Staff-only routes exist on the staff host only (INT03-F21-O1): the patient host has no such route (404) and a patient session
+    // sent to the staff host fails the realm check (403).
+    const cls = [
+      ['PUT', `/api/v1/documents/${u.documentId}/classification`, { classification: 'consent' }],
+      ['POST', `/api/v1/documents/${u.documentId}/confirm`, {}],
+    ] as const;
+    for (const [m, path, b] of cls) {
+      const h = { 'if-match': await etag(u.documentId) };
+      assert.equal((await t.pcall(session, m, path, b, h)).status, 404, `${m} ${path} on my.`);
+      assert.equal((await t.scall(session, m, path, b, h)).status, 403, `${m} ${path} as patient`);
+    }
 
     // Staff classify (stale If-Match is 412), then confirm; a confirmed document is not re-classified.
     const stale = await t.scall(
@@ -274,6 +262,91 @@ describe('documents (BE-10) on PostgreSQL 17', () => {
       [u.documentId],
     );
     assert.ok(Number(audited[0]?.['n']) >= 2);
+  });
+
+  test('INT03-F21-O1: the staff variants of the four shared paths are served on the staff host, audited, and never cross hosts', async () => {
+    const { patientId, session } = await t.mkPatient(31);
+    const up = `/api/v1/patients/${patientId}/document-uploads`;
+    const body = {
+      contentType: 'application/pdf',
+      sizeBytes: PDF.length,
+      classification: 'consent',
+    };
+    // No session: 401. A staff role without documents.upload: 403. Staff of another location (patient not in scope): 404 (CN-04).
+    const anon = await t.scall({ ...t.desk, cookie: '' } as SeededSession, 'POST', up, body);
+    assert.equal(anon.status, 401);
+    assert.equal((await t.scall(t.records, 'POST', up, body)).status, 403);
+    assert.equal(
+      (await t.scall(t.mr2, 'GET', `/api/v1/patients/${patientId}/documents`)).status,
+      404,
+    );
+
+    // Front desk (documents.upload + documents.read) uploads for the patient on the staff host.
+    const c = await t.scall(t.desk, 'POST', up, body);
+    assert.equal(c.status, 201, c.body);
+    const ticket = c.json();
+    const documentId = String(ticket['documentId']);
+    const { key } = keyOfUrl(String(ticket['uploadUrl']));
+    t.store.upload(key, PDF, 'application/pdf');
+    const done = await t.scall(
+      t.desk,
+      'POST',
+      `/api/v1/document-uploads/${documentId}/complete`,
+      {},
+    );
+    assert.equal(done.status, 202, done.body);
+    assert.equal((await doc(documentId))['upload_channel'], 'staff');
+
+    // Not downloadable until scanned clean (409), then 200 and audited as download.
+    const dl = `/api/v1/documents/${documentId}/download-url`;
+    assert.equal((await t.scall(t.desk, 'POST', dl)).status, 409);
+    t.scanner.release(key);
+    assert.equal(await t.worker.runAwaitScan({ documentId, version: 1, patientId }), 'clean');
+    const ok = await t.scall(t.desk, 'POST', dl);
+    assert.equal(ok.status, 200, ok.body);
+    assert.match(String(ok.json()['url']), /\/clean\/c\/[0-9a-f]{32}\?exp=\d+&sig=/);
+    const downloads = await t.k.q(
+      `SELECT count(*)::int AS n FROM audit.event WHERE action = 'download' AND resource_type = 'documents.document' AND resource_id = $1`,
+      [documentId],
+    );
+    assert.equal(Number(downloads[0]?.['n']), 1);
+
+    // The staff list carries the staff-only fields and is audited (patient and action only).
+    const before = await t.k.q(
+      `SELECT count(*)::int AS n FROM audit.event WHERE action = 'view' AND resource_type = 'documents.document' AND patient_id = $1`,
+      [patientId],
+    );
+    const list = await t.scall(t.records, 'GET', `/api/v1/patients/${patientId}/documents`);
+    assert.equal(list.status, 200, list.body);
+    const item = (list.json()['items'] as Record<string, unknown>[]).find(
+      (x) => x['id'] === documentId,
+    );
+    assert.equal(item?.['status'], 'clean');
+    assert.ok(item !== undefined && 'onLegalHold' in item && 'retentionUntil' in item);
+    const after = await t.k.q(
+      `SELECT count(*)::int AS n FROM audit.event WHERE action = 'view' AND resource_type = 'documents.document' AND patient_id = $1`,
+      [patientId],
+    );
+    assert.equal(Number(after[0]?.['n']), Number(before[0]?.['n']) + 1);
+
+    // Cross-host: a staff session sent to the patient host and a patient session on the staff host are refused (403);
+    // the patient's own list stays the patient variant (no staff-only fields); an unknown host reaches no route (404).
+    const listPath = `/api/v1/patients/${patientId}/documents`;
+    assert.equal((await t.pcall(t.desk, 'GET', listPath)).status, 403);
+    assert.equal((await t.scall(session, 'GET', listPath)).status, 403);
+    assert.equal((await t.scall(session, 'POST', up, body)).status, 403);
+    assert.equal((await t.scall(session, 'POST', dl)).status, 403);
+    const mine = await t.pcall(session, 'GET', listPath);
+    assert.equal(mine.status, 200);
+    assert.equal(
+      (mine.json()['items'] as Record<string, unknown>[]).every((x) => !('onLegalHold' in x)),
+      true,
+    );
+    const stray = await call(t.k.base, 'GET', listPath, {
+      host: 'other.example.test',
+      cookie: t.desk.cookie,
+    });
+    assert.equal(stray.status, 404);
   });
 
   test('an upload request is idempotent: the same key is the same document and one row', async () => {

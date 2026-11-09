@@ -375,7 +375,11 @@ export function buildComposition(deps: {
       ...privacy.controllers,
       ...reporting.controllers,
       ...alertControllers,
-      ...createDocumentsControllers({ db: deps.db, documents }),
+      ...createDocumentsControllers({
+        db: deps.db,
+        documents,
+        hosts: { staff: env.staffHost, patient: env.patientHost },
+      }),
       ...integrationsHost,
     ],
   };

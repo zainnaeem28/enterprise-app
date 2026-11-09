@@ -3,11 +3,11 @@
 // transaction under the caller's scope, so row-level security is the second line. A document the caller cannot see is 404 (CN-04,
 // TC-DOC-06). No handler reads, returns or logs a file name; nothing here sees file content (the browser talks to the object store).
 //
-// Mounted: the patient-portal routes (29.2) at the paths they share with staff, and every staff-only route (29.3). The staff variants
-// of the five shared paths (`POST /patients/{id}/document-uploads`, `POST /document-uploads/{id}/complete`,
-// `GET /patients/{id}/documents`, `POST /documents/{id}/download-url`) are not mounted: the guard derives a route's realm from its
-// permission and the framework has one handler per path, so the same path cannot carry both declarations (README, open item O-1,
-// the same question BE-11 raised). The service is realm-neutral and is tested for staff.
+// Mounted: the patient-portal routes (29.2) and the staff routes (29.3). The four paths both audiences use
+// (`POST /patients/{id}/document-uploads`, `POST /document-uploads/{id}/complete`, `GET /patients/{id}/documents`,
+// `POST /documents/{id}/download-url`) are served by one controller per host: the patient controller is bound to the patient host and
+// the staff controller to the staff host, each with its own declaration (INT03-F21-O1, ARCHITECTURE 27.1). The host only selects the
+// declaration; the guard's realm check stays the gate. An unbound controller on a shared path is forbidden.
 import {
   Controller,
   Get,
@@ -40,6 +40,8 @@ import type {
 export interface DocumentsControllerDeps {
   db: KernelDb;
   documents: DocumentsService;
+  /** The configured hosts (EHR_STAFF_HOST, EHR_PATIENT_HOST); both are required. */
+  hosts: { staff: string; patient: string };
 }
 
 const metaOf = (req: Req): RequestMeta => ({
@@ -114,6 +116,8 @@ export function documentsResolvers(): Record<string, ResourceResolver> {
 }
 
 export function createDocumentsControllers(d: DocumentsControllerDeps): Type<unknown>[] {
+  if (!d.hosts?.staff || !d.hosts.patient || d.hosts.staff === d.hosts.patient)
+    throw new Error('documents controllers need two distinct, non-empty staff and patient hosts');
   const run = <T>(req: Req, fn: (tx: Tx) => Promise<T>): Promise<T> =>
     d.db.withScope(requireAuthContext(req).scope, fn);
   const staffOf = (req: Req): boolean => requireAuthContext(req).scope.audience === 'staff';
@@ -172,7 +176,7 @@ export function createDocumentsControllers(d: DocumentsControllerDeps): Type<unk
     return { status: err.status, body: problemBody(err, req.requestId ?? 'unknown') };
   };
 
-  @Controller('api/v1')
+  @Controller({ path: 'api/v1', host: d.hosts.patient })
   class DocumentsPatientController {
     @Post('patients/:patientId/document-uploads')
     @Route({ permission: 'patient', resolver: 'documents-patient' })
@@ -247,8 +251,79 @@ export function createDocumentsControllers(d: DocumentsControllerDeps): Type<unk
     }
   }
 
-  @Controller('api/v1')
+  @Controller({ path: 'api/v1', host: d.hosts.staff })
   class DocumentsStaffController {
+    @Post('patients/:patientId/document-uploads')
+    @Route({ permission: 'documents.upload', resolver: 'documents-patient' })
+    async createUpload(
+      @Param('patientId') patientId: string,
+      @ReqParam() req: Req,
+      @ResParam() res: Res,
+    ): Promise<void> {
+      await idempotent(
+        req,
+        res,
+        'POST /patients/{patientId}/document-uploads',
+        [patientId.toLowerCase()],
+        req.body,
+        async (tx) => {
+          const b = (req.body ?? {}) as Record<string, unknown>;
+          const t = await d.documents.createUpload(tx, metaOf(req), {
+            patientId,
+            contentType: b['contentType'] as string,
+            sizeBytes: b['sizeBytes'] as number,
+            ...(typeof b['fileName'] === 'string' ? { fileName: b['fileName'] } : {}),
+            ...(typeof b['classification'] === 'string'
+              ? { classification: b['classification'] as Classification }
+              : {}),
+          });
+          return { status: 201, body: t, location: `/api/v1/documents/${t.documentId}` };
+        },
+      );
+    }
+
+    @Post('document-uploads/:documentId/complete')
+    @Route({ permission: 'documents.upload', resolver: 'document' })
+    async complete(
+      @Param('documentId') documentId: string,
+      @ReqParam() req: Req,
+      @ResParam() res: Res,
+    ): Promise<void> {
+      await idempotent(
+        req,
+        res,
+        'POST /document-uploads/{documentId}/complete',
+        [documentId.toLowerCase()],
+        req.body,
+        async (tx) => ({
+          status: 202,
+          body: await d.documents.completeUpload(tx, metaOf(req), documentId),
+        }),
+      );
+    }
+
+    @Get('patients/:patientId/documents')
+    @Route({ permission: 'documents.read', resolver: 'documents-patient' })
+    async list(
+      @Param('patientId') patientId: string,
+      @ReqParam() req: Req,
+      @ResParam() res: Res,
+    ): Promise<void> {
+      const items = await run(req, (tx) => d.documents.listAudited(tx, metaOf(req), patientId));
+      send(res, 200, { items: items.map((x) => docBody(x, true)), nextCursor: null });
+    }
+
+    @Post('documents/:documentId/download-url')
+    @Route({ permission: 'documents.read', resolver: 'document' })
+    async downloadUrl(
+      @Param('documentId') documentId: string,
+      @ReqParam() req: Req,
+      @ResParam() res: Res,
+    ): Promise<void> {
+      const u = await run(req, (tx) => d.documents.downloadUrl(tx, metaOf(req), documentId));
+      send(res, 200, u);
+    }
+
     @Put('documents/:id/classification')
     @Route({ permission: 'documents.classify', resolver: 'document' })
     async classify(

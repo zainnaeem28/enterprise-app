@@ -247,7 +247,11 @@ export async function setupDocuments(name: string): Promise<DocKit> {
       },
       controllers: [
         ...createMergeControllers({ db: lazyDb, merges }),
-        ...createDocumentsControllers({ db: lazyDb, documents: lazySvc }),
+        ...createDocumentsControllers({
+          db: lazyDb,
+          documents: lazySvc,
+          hosts: { staff: STAFF_HOST, patient: PATIENT_HOST },
+        }),
       ],
       beforeStart: ({ identity }) => {
         for (const [n, fn] of Object.entries({ ...mergeResolvers(), ...documentsResolvers() }))

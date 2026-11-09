@@ -78,11 +78,10 @@ a store_, not in S3.
   `deletion_request.decided_by` (listed at the top of `1000`).
 - **D3. `documents.invalid_transition`** (409) is used for a step the state does not allow and for a repeated hold in the same state; it is
   not in the error registry (30) yet (O-3).
-- **D4. Staff and patient on one path (O-1).** The staff variants of `POST /patients/{id}/document-uploads`,
-  `POST /document-uploads/{id}/complete`, `GET /patients/{id}/documents` and `POST /documents/{id}/download-url` are not mounted: the guard
-  derives a route's realm from its permission and the framework has one handler per path (the question BE-11 raised). The service is
-  realm-neutral and is tested for staff (the RLS test uses staff scopes for upload, completion, download and attach). The staff-only routes
-  (classification, confirm, legal holds, deletion requests and decisions) are mounted.
+- **D4. Staff and patient on one path (O-1, closed).** The four shared paths are served by one host-bound controller per host: the patient
+  controller on `EHR_PATIENT_HOST`, the staff controller on `EHR_STAFF_HOST`, each with its own declaration; every staff-only route is on the
+  staff host too. Host selects the declaration only; the guard's realm check is the gate. Decision: `docs/evidence/corrections/INT03-F21/O-1-decision-log.md`.
+  The staff list is audited (`view`, patient and action only).
 - **D5. Deletion-request permission.** The contract row reads `documents.upload / .deletion.decide`; the request route needs
   `documents.upload` and the decision `documents.deletion.decide`. The `medical_records` role holds the second but not the first (BE-04's
   catalogue), so a records officer cannot open a request themselves; a front desk member opens it and records decides. TC-DOC-04's actor
@@ -96,7 +95,7 @@ a store_, not in S3.
 
 ## Open items for the Orchestrator and other owners
 
-- **O-1.** Staff variants on the four shared paths (guard decision, Architect / BE-04).
+- **O-1.** Closed (INT03-F21-O1, host-bound controllers; see D4).
 - **O-2.** Apply `catalog-lists.requested.patch` (definer inventory) in `db/tools`. Until then `db/tools/db-test.mjs` reports
   `documents.guard_open_patient` (and the BE-09 and BE-11 functions, which are in the same state) as missing from the inventory.
 - **O-3.** Add `documents.invalid_transition` to the error registry (ARCHITECTURE 30) and the OpenAPI `x-error-codes` of the documents routes.

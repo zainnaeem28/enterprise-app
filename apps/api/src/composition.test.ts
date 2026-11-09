@@ -202,9 +202,34 @@ describe('M4 composition (INT03-F01)', () => {
     assert.ok(missing.includes('POST /api/v1/patient-merges'), missing.join(', '));
   });
 
-  test('no (method, path) is mounted twice', () => {
-    const keys = inventory(c.controllers as never).routes.map((r) => `${r.method} ${r.path}`);
+  test('no (method, path, host) is mounted twice; a shared path is host-bound on both sides (INT03-F21-O1)', () => {
+    const routes = inventory(c.controllers as never).routes;
+    const keys = routes.map((r) => `${r.method} ${r.host ?? '*'} ${r.path}`);
     assert.equal(new Set(keys).size, keys.length);
+    const shared = routes.filter(
+      (r) => routes.filter((o) => o.method === r.method && o.path === r.path).length > 1,
+    );
+    assert.equal(shared.length, 8, 'four shared documents paths, two controllers each');
+    assert.ok(shared.every((r) => r.host !== undefined));
+  });
+
+  test('inventory: an unbound duplicate of a host-bound path is a failure (INT03-F21-O1)', async () => {
+    const { Controller, Get } = await import('@nestjs/common');
+    const { Route } = await import('./platform/route.js');
+    const make = (host?: string) => {
+      class Dup {
+        h(): void {}
+      }
+      if (host === undefined) Controller('x')(Dup);
+      else Controller({ path: 'x', host })(Dup);
+      const d = Object.getOwnPropertyDescriptor(Dup.prototype, 'h')!;
+      Get('y')(Dup.prototype, 'h', d);
+      Route({ permission: 'patient', resolver: 'r' })(Dup.prototype, 'h', d);
+      return Dup;
+    };
+    assert.deepEqual(inventory([make('a.test'), make('b.test')] as never).failures, []);
+    assert.equal(inventory([make('a.test'), make()] as never).failures.length, 1);
+    assert.equal(inventory([make('a.test'), make('a.test')] as never).failures.length, 1);
   });
 
   test('negative control: with one module removed from the composition the check fails and names it', () => {
@@ -312,12 +337,21 @@ describe('documents and alerts composition (INT03-F21)', () => {
     const run = await start({ controllers: comp.controllers, policy: comp.policy });
     try {
       for (const [m, p] of routes) {
-        const r = await fetch(`${run.base}${p}`, {
-          method: m,
-          headers: { 'x-client-release': R(MIN_RELEASE) },
-        });
-        assert.equal(r.status, 401, `${m} ${p}`);
+        for (const host of ['staff.example.test', 'my.example.test']) {
+          const r = await fetch(`${run.base}${p}`, {
+            method: m,
+            headers: { 'x-client-release': R(MIN_RELEASE), 'x-forwarded-host': host },
+          });
+          // The staff-only route exists on the staff host only (INT03-F21-O1).
+          const want = p.endsWith('/confirm') && host === 'my.example.test' ? 404 : 401;
+          assert.equal(r.status, want, `${m} ${p} on ${host}`);
+        }
       }
+      // A host that is neither configured host reaches no host-bound documents route (404).
+      const other = await fetch(`${run.base}/api/v1/patients/${P}/documents`, {
+        headers: { 'x-client-release': R(MIN_RELEASE), 'x-forwarded-host': 'other.example.test' },
+      });
+      assert.equal(other.status, 404);
     } finally {
       await run.close();
     }
@@ -339,7 +373,7 @@ describe('documents and alerts composition (INT03-F21)', () => {
       });
       assert.equal(r.status, 404);
       const d = await fetch(`${run.base}/api/v1/patients/${P}/documents`, {
-        headers: { 'x-client-release': R(MIN_RELEASE) },
+        headers: { 'x-client-release': R(MIN_RELEASE), 'x-forwarded-host': 'staff.example.test' },
       });
       assert.equal(d.status, 404);
     } finally {
