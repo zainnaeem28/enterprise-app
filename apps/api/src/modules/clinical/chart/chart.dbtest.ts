@@ -1640,12 +1640,14 @@ describe('clinical chart (BE-16) on PostgreSQL 17', () => {
         relforcerowsecurity: boolean;
         owner: string;
       }>(
-        `SELECT c.relname, c.relrowsecurity, c.relforcerowsecurity, pg_get_userbyid(c.relowner) AS owner FROM pg_class c WHERE c.relnamespace = 'clinical'::regnamespace AND c.relkind = 'r' ORDER BY 1`,
+        `SELECT c.relname, c.relrowsecurity, c.relforcerowsecurity, pg_get_userbyid(c.relowner) AS owner FROM pg_class c WHERE c.relnamespace = 'clinical'::regnamespace AND c.relkind IN ('r', 'p') ORDER BY 1`,
       );
-      assert.deepEqual(
-        r.map((x) => x.relname),
-        [...TABLES].sort(),
-      );
+      // The expected set is the catalog itself (every ordinary or partitioned table in schema clinical, whichever module
+      // added it), so a new clinical table cannot escape the RLS check by being missing from a hand-kept list. The chart
+      // module's own tables must still be present, and the loop below fails any table without forced RLS.
+      assert.ok(r.length >= TABLES.length, 'the clinical schema lists tables');
+      const present = new Set(r.map((x) => x.relname));
+      for (const own of TABLES) assert.ok(present.has(own), `chart table ${own} exists`);
       for (const x of r)
         assert.deepEqual(
           [x.relrowsecurity, x.relforcerowsecurity, x.owner],
