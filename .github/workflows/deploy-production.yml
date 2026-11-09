@@ -1,0 +1,254 @@
+# Production release (DO-06, HEAAA-97; DEVOPS-PLAN 4.2, 7.2, 7.4, 8.2, 9, 15.3).
+#
+# AUTHORED DISABLED (C-01). Nothing here can run against an environment until, in this order: DPR-37..39 are fixed,
+# the staging proofs of 7.5 pass, a human applies the `release` approved-release record (approvals root), a human sets the
+# repository variable DEPLOY_PRODUCTION_ENABLED=true and enables this workflow, and G3 for `production` is valid. The
+# file holds no secret and no account identifier: every environment value is a GitHub *environment variable* of `production`.
+#
+# MANUAL DISPATCH ONLY. The input is a manifest hash; the first job re-derives it from the manifest bytes AND compares it
+# with the manifest_hash in the approved-release record read from the production account (the input alone is not trusted).
+# Sequence: verify -> backup/snapshot -> migrate -> worker -> api -> portals -> smoke -> [observe, read-only] -> [recover,
+# only on failure after rollout began, only as the `recover` record allows].
+name: deploy-production
+
+on:
+  workflow_dispatch:
+    inputs:
+      manifest_hash:
+        description: 'sha256 of release-manifest.json (the hash named in G3 and in the approved-release record)'
+        required: true
+        type: string
+      build_run_id:
+        description: 'build-release run that produced the manifest artifact (release-artifacts-<run id>)'
+        required: true
+        type: string
+      previous_build_run_id:
+        description: 'build-release run of the previous RELEASED manifest (rollback target). Leave empty only for the first production release'
+        required: false
+        type: string
+
+permissions: {}
+
+# One production release at a time; a running release is never cancelled (DPR-02, 4.2).
+concurrency:
+  group: production-release
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CI: 'true'
+  WORK: ${{ github.workspace }}/deploy-work
+  AWS_REGION: ${{ vars.DEPLOY_AWS_REGION }}
+  AWS_DEFAULT_REGION: ${{ vars.DEPLOY_AWS_REGION }}
+
+jobs:
+  enabled:
+    name: enabled and on main
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Refuse unless deliberately enabled, from main
+        env:
+          ENABLED: ${{ vars.DEPLOY_PRODUCTION_ENABLED }}
+          REF: ${{ github.ref }}
+        run: |
+          [ "$REF" = "refs/heads/main" ] || { echo "::error::production deploys run from refs/heads/main only (got $REF)"; exit 1; }
+          [ "$ENABLED" = "true" ] || { echo "::error::deploy-production is authored but not enabled (repository variable DEPLOY_PRODUCTION_ENABLED is not 'true'). A person enables it after G2/G3 and the DPR-37..39 conditions (C-01)."; exit 1; }
+
+  deploy:
+    name: verify, migrate, roll out, switch portals, smoke
+    needs: [enabled]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    environment: production
+    permissions:
+      contents: read
+      actions: read # download the manifest artifact of the named build-release run
+      id-token: write
+    outputs:
+      rollout_started: ${{ steps.mark.outputs.rollout_started }}
+      git_sha: ${{ steps.verify.outputs.git_sha }}
+      release_number: ${{ steps.verify.outputs.release_number }}
+    env:
+      DEPLOY_ROLE_ARN: ${{ vars.DEPLOY_ROLE_ARN }}
+      CLUSTER: ${{ vars.DEPLOY_CLUSTER }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Fetch the release manifests (exact bytes)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ inputs.build_run_id }}
+          PREV_RUN_ID: ${{ inputs.previous_build_run_id }}
+        run: |
+          mkdir -p "$WORK/current" "$WORK/previous"
+          gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" --name "release-artifacts-$RUN_ID" --dir "$WORK/current"
+          if [ -n "$PREV_RUN_ID" ]; then
+            gh run download "$PREV_RUN_ID" --repo "$GITHUB_REPOSITORY" --name "release-artifacts-$PREV_RUN_ID" --dir "$WORK/previous"
+          fi
+
+      - name: Assume gh-deploy-production (OIDC; denied by AWS unless the release record is applied and unexpired)
+        run: scripts/deploy/aws-login.sh "$DEPLOY_ROLE_ARN" gh-deploy-production 7200
+
+      - name: Read the approved-release record from the production account
+        run: |
+          aws ssm get-parameter --name /approved/release --with-decryption --query Parameter.Value --output text > "$WORK/record.json"
+
+      - name: Verify manifest = dispatch hash = record (refuse on any mismatch)
+        id: verify
+        env:
+          MANIFEST_HASH: ${{ inputs.manifest_hash }}
+          PREV_RUN_ID: ${{ inputs.previous_build_run_id }}
+        run: |
+          prev=()
+          if [ -n "$PREV_RUN_ID" ]; then prev=(--previous-manifest "$WORK/previous/release-manifest.json"); fi
+          node scripts/deploy/verify-release.mjs --manifest "$WORK/current/release-manifest.json" --manifest-hash "$MANIFEST_HASH" \
+            --record "$WORK/record.json" --environment production --actions rollout,smoke,portal-switch "${prev[@]}"
+
+      - name: Task definitions registered for this manifest (pinned by ARN; never registered here)
+        id: taskdefs
+        env:
+          MIGRATION_ARN: ${{ vars.DEPLOY_MIGRATION_TASKDEF_ARN }}
+        run: |
+          node scripts/deploy/resolve-taskdefs.mjs --manifest "$WORK/current/release-manifest.json" \
+            --family "api=${{ vars.DEPLOY_API_FAMILY }}" --family "worker=${{ vars.DEPLOY_WORKER_FAMILY }}" \
+            --migration-arn "$MIGRATION_ARN" --migration-image api
+
+      - name: Backup freshness and the named restore point (8.2 steps 2-3)
+        id: backup
+        run: node scripts/deploy/backup-gate.mjs check --db "${{ vars.DEPLOY_DB_INSTANCE }}" --max-age-minutes "${{ vars.DEPLOY_BACKUP_MAX_AGE_MINUTES }}"
+
+      - name: Manual snapshot before a migration (must be available, else abort before migration)
+        if: ${{ steps.verify.outputs.new_migrations != '0' }}
+        run: node scripts/deploy/backup-gate.mjs snapshot --db "${{ vars.DEPLOY_DB_INSTANCE }}" --sha "${{ steps.verify.outputs.git_sha }}" --timeout-minutes "${{ vars.DEPLOY_SNAPSHOT_TIMEOUT_MINUTES }}"
+
+      - name: Mark that changes to the environment begin
+        id: mark
+        run: echo "rollout_started=true" >> "$GITHUB_OUTPUT"
+
+      - name: Run the migration task (one-off, pinned definition, same image digest)
+        if: ${{ steps.verify.outputs.new_migrations != '0' }}
+        run: |
+          node scripts/deploy/run-migration.mjs --cluster "$CLUSTER" --taskdef "${{ steps.taskdefs.outputs.taskdef_migration }}" \
+            --subnets "${{ vars.DEPLOY_SUBNETS }}" --security-groups "${{ vars.DEPLOY_SECURITY_GROUPS }}" --timeout-minutes 30
+
+      - name: min_client_release = release_number of the previous released manifest (6.2)
+        run: node scripts/deploy/set-release-config.mjs --param "${{ vars.DEPLOY_MIN_CLIENT_PARAM }}" --value "${{ steps.verify.outputs.min_client_release }}"
+
+      - name: Roll out worker, then api (ECS rolling, circuit breaker with rollback)
+        run: |
+          node scripts/deploy/rollout.mjs --cluster "$CLUSTER" \
+            --service "worker=${{ vars.DEPLOY_WORKER_SERVICE }}:${{ steps.taskdefs.outputs.taskdef_worker }}" \
+            --service "api=${{ vars.DEPLOY_API_SERVICE }}:${{ steps.taskdefs.outputs.taskdef_api }}"
+
+      - name: Switch portal entry documents to this release
+        run: |
+          node scripts/deploy/portal-switch.mjs --bucket "${{ vars.DEPLOY_PORTAL_BUCKET }}" --sha "${{ steps.verify.outputs.git_sha }}" \
+            --portal "${{ vars.DEPLOY_PORTAL_NAME }}" --distribution "${{ vars.DEPLOY_PORTAL_DISTRIBUTION }}"
+
+      - name: Smoke checks
+        run: |
+          node scripts/deploy/smoke.mjs --api-url "${{ vars.DEPLOY_API_URL }}" --portal-url "${{ vars.DEPLOY_PORTAL_URL }}" \
+            --release-number "${{ steps.verify.outputs.release_number }}"
+
+      - name: Evidence
+        if: ${{ !cancelled() }}
+        run: |
+          {
+            echo "### deploy-production"
+            echo "- manifest hash: ${{ inputs.manifest_hash }}"
+            echo "- release_number: ${{ steps.verify.outputs.release_number }} (git ${{ steps.verify.outputs.git_sha }})"
+            echo "- new migrations: ${{ steps.verify.outputs.new_migrations }}"
+            echo "- restore point: ${{ steps.backup.outputs.restore_point }}"
+            echo "- task definitions (pinned): api ${{ steps.taskdefs.outputs.taskdef_api }}, worker ${{ steps.taskdefs.outputs.taskdef_worker }}"
+            echo "- min_client_release: ${{ steps.verify.outputs.min_client_release }}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  observe:
+    name: observation window (read-only)
+    needs: [deploy]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 330
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      DEPLOY_READ_ONLY: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Assume gh-observe-production (CloudWatch, ECS and ALB reads only)
+        run: scripts/deploy/aws-login.sh "${{ vars.DEPLOY_OBSERVE_ROLE_ARN }}" gh-observe-production 18000
+      - name: Observe (aborts the job, never changes the environment)
+        run: |
+          node scripts/deploy/observe.mjs --minutes "${{ vars.DEPLOY_OBSERVE_MINUTES }}" --lb "${{ vars.DEPLOY_LB }}" \
+            --tg "${{ vars.DEPLOY_TG }}" --alarm-prefix "${{ vars.DEPLOY_ALARM_PREFIX }}"
+
+  recover:
+    name: approved recovery (rollback redeploy), only after a failure
+    needs: [deploy, observe]
+    if: ${{ always() && needs.deploy.outputs.rollout_started == 'true' && (needs.deploy.result == 'failure' || needs.observe.result == 'failure') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    environment: production
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Refuse when there is no previous release (first release - a person decides, see the runbook)
+        env:
+          PREV_RUN_ID: ${{ inputs.previous_build_run_id }}
+        run: |
+          [ -n "$PREV_RUN_ID" ] || { echo "::error::no previous release was named: nothing to redeploy. Follow ROLLBACK-RUNBOOK.md (take-down or pre-release snapshot); a person decides."; exit 1; }
+      - name: Fetch the previous manifest
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PREV_RUN_ID: ${{ inputs.previous_build_run_id }}
+        run: |
+          mkdir -p "$WORK/previous"
+          gh run download "$PREV_RUN_ID" --repo "$GITHUB_REPOSITORY" --name "release-artifacts-$PREV_RUN_ID" --dir "$WORK/previous"
+      - name: Assume gh-recover-production (denied unless its own `recover` record is applied and unexpired)
+        run: scripts/deploy/aws-login.sh "${{ vars.DEPLOY_RECOVER_ROLE_ARN }}" gh-recover-production 7200
+      - name: Read the recover record and verify it names this previous manifest and the rollback action
+        id: verify
+        run: |
+          aws ssm get-parameter --name /approved/recover --with-decryption --query Parameter.Value --output text > "$WORK/record.json"
+          prev_hash="$(sha256sum "$WORK/previous/release-manifest.json" | cut -d' ' -f1)"
+          node scripts/deploy/verify-release.mjs --manifest "$WORK/previous/release-manifest.json" --manifest-hash "$prev_hash" \
+            --record "$WORK/record.json" --environment production --actions rollback-redeploy --no-rollback-target --skip-min-client
+      - name: Task definitions of the previous manifest
+        id: taskdefs
+        run: |
+          node scripts/deploy/resolve-taskdefs.mjs --manifest "$WORK/previous/release-manifest.json" \
+            --family "api=${{ vars.DEPLOY_API_FAMILY }}" --family "worker=${{ vars.DEPLOY_WORKER_FAMILY }}"
+      - name: Portals first (restore the previous entry document), then api and worker (9.3, DPR-08)
+        run: |
+          node scripts/deploy/portal-switch.mjs --bucket "${{ vars.DEPLOY_PORTAL_BUCKET }}" --sha "${{ steps.verify.outputs.git_sha }}" \
+            --portal "${{ vars.DEPLOY_PORTAL_NAME }}" --distribution "${{ vars.DEPLOY_PORTAL_DISTRIBUTION }}"
+          node scripts/deploy/rollout.mjs --rollback --cluster "${{ vars.DEPLOY_CLUSTER }}" \
+            --service "worker=${{ vars.DEPLOY_WORKER_SERVICE }}:${{ steps.taskdefs.outputs.taskdef_worker }}" \
+            --service "api=${{ vars.DEPLOY_API_SERVICE }}:${{ steps.taskdefs.outputs.taskdef_api }}"
+      - name: Report (an application rollback is not proof that the database is restored)
+        run: |
+          echo "### recovery redeploy ran: previous digests and portal pointer only. Schema state is NOT asserted; see ROLLBACK-RUNBOOK.md." >> "$GITHUB_STEP_SUMMARY"
