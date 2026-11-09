@@ -1,0 +1,129 @@
+# Marketing site publish (DO-06, HEAAA-97; DEVOPS-PLAN 4.2, 9.1, DPR-12). SEPARATE from the product release sequence:
+# own workflow, own environments (`marketing-staging`, `marketing-production`), own roles `gh-deploy-marketing-<env>` in
+# the `marketing` account, own approved-release record `marketing-<env>`, own G3 for `marketing-production`. No PHI, no
+# migration, no task definition.
+#
+# AUTHORED DISABLED (C-01): nothing runs until a person applies the `marketing-<env>` record, sets
+# DEPLOY_MARKETING_ENABLED=true and enables the workflow. No secret and no account identifier is in this file.
+# The site has no browser build yet (apps/site has only a tsc build); publish refuses an empty/missing build directory.
+name: deploy-marketing
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'marketing environment'
+        required: true
+        type: choice
+        options:
+          - marketing-staging
+          - marketing-production
+      manifest_hash:
+        description: 'sha256 of the release-manifest.json of the commit being published'
+        required: true
+        type: string
+      build_run_id:
+        description: 'build-release run that produced the manifest artifact'
+        required: true
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: marketing-release
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CI: 'true'
+  WORK: ${{ github.workspace }}/deploy-work
+  AWS_REGION: ${{ vars.DEPLOY_AWS_REGION }}
+  AWS_DEFAULT_REGION: ${{ vars.DEPLOY_AWS_REGION }}
+
+jobs:
+  enabled:
+    name: enabled and on main
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Refuse unless deliberately enabled, from main
+        env:
+          ENABLED: ${{ vars.DEPLOY_MARKETING_ENABLED }}
+          REF: ${{ github.ref }}
+        run: |
+          [ "$REF" = "refs/heads/main" ] || { echo "::error::marketing deploys run from refs/heads/main only (got $REF)"; exit 1; }
+          [ "$ENABLED" = "true" ] || { echo "::error::deploy-marketing is authored but not enabled (DEPLOY_MARKETING_ENABLED is not 'true')."; exit 1; }
+
+  publish:
+    name: verify and publish
+    needs: [enabled]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    environment: ${{ inputs.target }}
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+    env:
+      TARGET: ${{ inputs.target }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Fetch the release manifest (exact bytes)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ inputs.build_run_id }}
+        run: |
+          mkdir -p "$WORK/current"
+          gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" --name "release-artifacts-$RUN_ID" --dir "$WORK/current"
+
+      - name: Assume gh-deploy-marketing-<env> (OIDC; denied unless the marketing-<env> record is applied and unexpired)
+        run: scripts/deploy/aws-login.sh "${{ vars.DEPLOY_ROLE_ARN }}" "gh-deploy-$TARGET" 7200
+
+      - name: Read the approved-release record and verify
+        id: verify
+        env:
+          MANIFEST_HASH: ${{ inputs.manifest_hash }}
+        run: |
+          aws ssm get-parameter --name "/approved/$TARGET" --with-decryption --query Parameter.Value --output text > "$WORK/record.json"
+          node scripts/deploy/verify-release.mjs --manifest "$WORK/current/release-manifest.json" --manifest-hash "$MANIFEST_HASH" \
+            --record "$WORK/record.json" --environment "$TARGET" --actions publish --no-rollback-target --skip-min-client
+
+      - name: Check out the commit named by the verified manifest
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ steps.verify.outputs.git_sha }}
+          path: site-src
+          persist-credentials: false
+
+      - name: Install and build the site (cloud credentials and the OIDC token are removed from the build environment)
+        working-directory: site-src
+        run: |
+          corepack enable
+          ../scripts/deploy/without-cloud.sh pnpm install --frozen-lockfile
+          ../scripts/deploy/without-cloud.sh pnpm --filter "${{ vars.DEPLOY_SITE_FILTER }}" build
+
+      - name: Publish to the marketing bucket and invalidate the cache
+        run: |
+          node scripts/deploy/publish-marketing.mjs --dir "site-src/${{ vars.DEPLOY_SITE_DIR }}" --bucket "${{ vars.DEPLOY_SITE_BUCKET }}" \
+            --distribution "${{ vars.DEPLOY_SITE_DISTRIBUTION }}"
+
+      - name: Evidence
+        if: ${{ !cancelled() }}
+        env:
+          MANIFEST_HASH: ${{ inputs.manifest_hash }}
+        run: |
+          {
+            echo "### deploy-marketing ($TARGET)"
+            echo "- manifest hash (dispatch input, unverified text): $MANIFEST_HASH"
+            echo "- git: ${{ steps.verify.outputs.git_sha }}"
+          } >> "$GITHUB_STEP_SUMMARY"

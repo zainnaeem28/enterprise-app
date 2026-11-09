@@ -1,0 +1,5 @@
+readyz={"status":"ready"} http=200
+healthz={"status":"ok"} http=200
+whoami=1000
+worker_running=true
+worker_exit_code_after_SIGTERM=0

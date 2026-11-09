@@ -41,6 +41,7 @@ export const expectedMemberships = {
     'patient_match_owner',
     'integration_receiver_owner',
     'directory_ro',
+    'queue_owner',
   ],
   app_api: ['identity_signin_ro'],
 };

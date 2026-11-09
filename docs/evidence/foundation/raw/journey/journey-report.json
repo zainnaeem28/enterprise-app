@@ -1,0 +1,226 @@
+{
+  "config": {
+    "argv": [
+      "/opt/hostedtoolcache/node/24.22.2/x64/bin/node",
+      "/home/runner/work/enterprise-app/enterprise-app/node_modules/.pnpm/@playwright+test@1.64.1/node_modules/@playwright/test/cli.js",
+      "test",
+      "-c",
+      "../../docs/evidence/foundation/journey/playwright.config.ts"
+    ],
+    "configFile": "/home/runner/work/enterprise-app/enterprise-app/docs/evidence/foundation/journey/playwright.config.ts",
+    "rootDir": "/home/runner/work/enterprise-app/enterprise-app/docs/evidence/foundation/journey",
+    "failOnFlakyTests": false,
+    "forbidOnly": true,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "ci": {
+        "commitHref": "https://github.com/zainnaeem28/enterprise-app/commit/e24d08693eb59ae79d42e07d7eea01e865cbdbd6",
+        "commitHash": "e24d08693eb59ae79d42e07d7eea01e865cbdbd6",
+        "buildHref": "https://github.com/zainnaeem28/enterprise-app/actions/runs/42147074492"
+      },
+      "gitCommit": {
+        "shortHash": "e24d086",
+        "hash": "e24d08693eb59ae79d42e07d7eea01e865cbdbd6",
+        "subject": "ci: throwaway foundation-proof trigger for HEAAA-81 (not for merge)",
+        "body": "ci: throwaway foundation-proof trigger for HEAAA-81 (not for merge)\n",
+        "author": {
+          "name": "zainnaeem28",
+          "email": "194086586+zainnaeem28@users.noreply.github.com",
+          "time": 1793930172000
+        },
+        "committer": {
+          "name": "zainnaeem28",
+          "email": "194086586+zainnaeem28@users.noreply.github.com",
+          "time": 1793930172000
+        },
+        "branch": "ci/HEAAA-81-9593424-b"
+      },
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/home/runner/work/enterprise-app/enterprise-app/reports/foundation/journey/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "ci": {
+            "commitHref": "https://github.com/zainnaeem28/enterprise-app/commit/e24d08693eb59ae79d42e07d7eea01e865cbdbd6",
+            "commitHash": "e24d08693eb59ae79d42e07d7eea01e865cbdbd6",
+            "buildHref": "https://github.com/zainnaeem28/enterprise-app/actions/runs/42147074492"
+          },
+          "gitCommit": {
+            "shortHash": "e24d086",
+            "hash": "e24d08693eb59ae79d42e07d7eea01e865cbdbd6",
+            "subject": "ci: throwaway foundation-proof trigger for HEAAA-81 (not for merge)",
+            "body": "ci: throwaway foundation-proof trigger for HEAAA-81 (not for merge)\n",
+            "author": {
+              "name": "zainnaeem28",
+              "email": "194086586+zainnaeem28@users.noreply.github.com",
+              "time": 1793930172000
+            },
+            "committer": {
+              "name": "zainnaeem28",
+              "email": "194086586+zainnaeem28@users.noreply.github.com",
+              "time": 1793930172000
+            },
+            "branch": "ci/HEAAA-81-9593424-b"
+          },
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/home/runner/work/enterprise-app/enterprise-app/docs/evidence/foundation/journey",
+        "testIgnore": [],
+        "testMatch": [
+          "/journey\\.spec\\.ts/"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/home/runner/work/enterprise-app/enterprise-app/reports/foundation/journey/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "ci": {
+            "commitHref": "https://github.com/zainnaeem28/enterprise-app/commit/e24d08693eb59ae79d42e07d7eea01e865cbdbd6",
+            "commitHash": "e24d08693eb59ae79d42e07d7eea01e865cbdbd6",
+            "buildHref": "https://github.com/zainnaeem28/enterprise-app/actions/runs/42147074492"
+          },
+          "gitCommit": {
+            "shortHash": "e24d086",
+            "hash": "e24d08693eb59ae79d42e07d7eea01e865cbdbd6",
+            "subject": "ci: throwaway foundation-proof trigger for HEAAA-81 (not for merge)",
+            "body": "ci: throwaway foundation-proof trigger for HEAAA-81 (not for merge)\n",
+            "author": {
+              "name": "zainnaeem28",
+              "email": "194086586+zainnaeem28@users.noreply.github.com",
+              "time": 1793930172000
+            },
+            "committer": {
+              "name": "zainnaeem28",
+              "email": "194086586+zainnaeem28@users.noreply.github.com",
+              "time": 1793930172000
+            },
+            "branch": "ci/HEAAA-81-9593424-b"
+          },
+          "actualWorkers": 1
+        },
+        "name": "",
+        "testDir": "/home/runner/work/enterprise-app/enterprise-app/docs/evidence/foundation/journey",
+        "snapshotDir": "/home/runner/work/enterprise-app/enterprise-app/docs/evidence/foundation/journey",
+        "testIgnore": [],
+        "testMatch": {},
+        "timeout": 30000,
+        "use": {
+          "baseURL": "http://127.0.0.1:4173"
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": ""
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "/home/runner/work/enterprise-app/enterprise-app/reports/foundation/journey/journey-report.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.1",
+    "workers": 1,
+    "webServer": {
+      "command": "pnpm --filter @ehr/staff exec vite preview --host 127.0.0.1 --port 4173 --strictPort --outDir /home/runner/work/enterprise-app/enterprise-app/apps/staff/dist",
+      "cwd": "/home/runner/work/enterprise-app/enterprise-app",
+      "url": "http://127.0.0.1:4173",
+      "reuseExistingServer": false,
+      "env": {
+        "API_ORIGIN": "http://127.0.0.1:3000"
+      }
+    }
+  },
+  "suites": [
+    {
+      "title": "journey.spec.ts",
+      "file": "journey.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "browser shell -> same-origin API -> PostgreSQL (scope setter, RLS) -> rendered result",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 259,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "RENDERED_BODY_TEXT<<Skip to main content\n\nStaff portal\n\nPlaceholder identity\nStaff portal\nServer connection\n\nNot found Reference for support: 3d95dae5-5927-49c3-b011-8a2162d9382b\n\nCheck again>>\n"
+                    },
+                    {
+                      "text": "API_CALLS [{\"path\":\"/api/v1/auth/session\",\"status\":404,\"release\":\"r1.000000000000\"}]\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-06T01:58:32.370Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "bf222bad70f76648f722-36b204d32ec215e24fcc",
+          "file": "journey.spec.ts",
+          "line": 6,
+          "column": 5
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-06T01:58:31.681Z",
+    "duration": 1256.977,
+    "expected": 1,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

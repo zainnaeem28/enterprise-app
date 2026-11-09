@@ -1,0 +1,38 @@
+{
+  "_comment": "What one build of main produces (DEVOPS-PLAN 6.1). 'required' items fail the build when they cannot be built; optional items are recorded in the manifest as not-built with the reason, never silently omitted.",
+  "images": [
+    { "name": "api", "dockerfile": "docker/Dockerfile.api", "required": true },
+    { "name": "worker", "dockerfile": "docker/Dockerfile.worker", "required": true },
+    {
+      "name": "site",
+      "dockerfile": "docker/Dockerfile.site",
+      "required": false,
+      "reason": "no Dockerfile in the repository yet (site/CMS images arrive with their tickets)"
+    },
+    {
+      "name": "cms",
+      "dockerfile": "docker/Dockerfile.cms",
+      "required": false,
+      "reason": "no Dockerfile in the repository yet (site/CMS images arrive with their tickets)"
+    }
+  ],
+  "bundles": [
+    {
+      "name": "staff",
+      "dir": "apps/staff",
+      "filter": "@ehr/staff",
+      "out": "dist",
+      "required": true
+    },
+    {
+      "name": "patient",
+      "dir": "apps/patient",
+      "filter": "@ehr/patient",
+      "out": "dist",
+      "required": false,
+      "reason": "apps/patient has no browser build (index.html + vite.config.ts) in this candidate; the patient portal bundle arrives with FE-03/FE-04"
+    }
+  ],
+  "lockfiles": ["pnpm-lock.yaml", "scripts/ci/tools.lock", "scripts/release/tools.lock"],
+  "migrationsDir": "db/migrations"
+}

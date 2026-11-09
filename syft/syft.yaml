@@ -1,0 +1,6 @@
+# Syft configuration: the repository SBOM covers lockfile-resolved packages, not build output.
+check-for-app-update: false
+exclude:
+  - '**/node_modules/**'
+  - '**/dist/**'
+  - './reports/**'

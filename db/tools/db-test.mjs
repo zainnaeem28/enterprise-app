@@ -355,10 +355,10 @@ describe('spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role 
         'no CREATE on schema',
       );
       await c.query('ROLLBACK TO s');
-      await c.query('GRANT CREATE ON SCHEMA f03_fn TO patient_scope_owner, queue_owner');
+      await c.query('GRANT CREATE ON SCHEMA f03_fn TO patient_scope_owner, identity_signin_ro');
       await c.query('SAVEPOINT s');
       await rejectsCode(
-        c.query('ALTER FUNCTION f03_fn.f() OWNER TO queue_owner'),
+        c.query('ALTER FUNCTION f03_fn.f() OWNER TO identity_signin_ro'),
         '42501',
         'no SET membership',
       );

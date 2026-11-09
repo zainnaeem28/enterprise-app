@@ -1,0 +1,7 @@
+# Any Semgrep finding (any severity) under a path containing one of these fragments blocks the
+# build unless a reviewed suppression exists (DEVOPS-PLAN 5.1: authentication, authorization and
+# prescribing paths). ERROR findings block everywhere. Extend as the modules land.
+apps/api/src/modules/identity/
+apps/api/src/modules/authz/
+apps/api/src/modules/prescribing/
+packages/kernel/src/
