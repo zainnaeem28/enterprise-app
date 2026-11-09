@@ -82,7 +82,7 @@ export const patientGuardExempt = [
   // ARCHITECTURE 22.14 table row and 22.16 note (G2, bd6de63): records history; HEAAA-310 ruling.
   'privacy.incident_patient',
 ];
-/** SECURITY DEFINER functions of SHARED-BOUNDARIES 6.2 and ARCHITECTURE 21.6 (schema.name). Empty: none exist yet. */
+/** SECURITY DEFINER functions of SHARED-BOUNDARIES 6.2 and ARCHITECTURE 21.6 (schema.name): 25 entries after A-4. */
 export const definerInventory = [
   'integration_core.receive_inbound',
   // BE-08 (patient): owners patient_scope_owner (writes) and patient_match_owner (reads); all fix search_path.
@@ -114,7 +114,40 @@ export const definerInventory = [
   // The refused module copies of the merge guard (documents/telehealth.guard_open_patient, scheduling.flow_guard_open_patient,
   // scheduling.guard_open_patient and ..._at_commit) are dropped by migrations 1604/1605 (renumbered by INT-03), and the M4 copies by 2201; none may be listed.
   'scheduling.replace_busy_blocks',
+  // ARCHITECTURE amendment A-4 / SHARED-BOUNDARIES SB-A3 (HEAAA-332 decision-log rev bf854c3a, HEAAA-310 ruling rev d9504db5): the two messaging
+  // predicates, owner patient_scope_owner, migration 2002. messaging.is_creator is refused and dropped by 2204; it must not be listed.
+  'messaging.is_participant',
+  'messaging.is_owner',
 ];
+
+/**
+ * Exact attributes of the A-4 definers (Cybersecurity C-3, HEAAA-333 comment 5f4974c6): not only the names. `acl` is the proacl text
+ * (no PUBLIC entry; owner, app_api and app_worker only), `config` the proconfig.
+ */
+export const messagingDefinerAttributes = {
+  'messaging.is_participant(uuid)': {
+    owner: 'patient_scope_owner',
+    secdef: true,
+    volatile: 's',
+    config: ['search_path=pg_catalog'],
+    acl: [
+      'app_api=X/patient_scope_owner',
+      'app_worker=X/patient_scope_owner',
+      'patient_scope_owner=X/patient_scope_owner',
+    ],
+  },
+  'messaging.is_owner(uuid)': {
+    owner: 'patient_scope_owner',
+    secdef: true,
+    volatile: 's',
+    config: ['search_path=pg_catalog'],
+    acl: [
+      'app_api=X/patient_scope_owner',
+      'app_worker=X/patient_scope_owner',
+      'patient_scope_owner=X/patient_scope_owner',
+    ],
+  },
+};
 
 /** Policies that can match audience `anonymous` (ARCHITECTURE 21.3 list, kernel rows only so far). */
 export const anonymousPolicies = [

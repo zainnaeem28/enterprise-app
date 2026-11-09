@@ -141,6 +141,49 @@ export const checks = {
                  OR NOT coalesce((SELECT bool_or(c LIKE 'search_path=%') FROM unnest(p.proconfig) c), false)
                  OR (SELECT rolcanlogin FROM pg_roles WHERE oid = p.proowner))`,
   },
+  'M-5-messaging-definer': {
+    title:
+      'the A-4 messaging definers carry exactly the pinned attributes; patient_scope_owner is NOLOGIN, not superuser/BYPASSRLS, without GRANT OPTION, and holds only the four thread_participant columns (A4-3, A4-4, C-1..C-3)',
+    sql: `WITH want(sig, owner, config, acl) AS (VALUES ${Object.entries(
+      L.messagingDefinerAttributes,
+    )
+      .map(([sig, a]) => `('${sig}', '${a.owner}', ${q(a.config)}, ${q([...a.acl].sort())})`)
+      .join(',')}),
+          have AS (SELECT p.oid::regprocedure::text AS sig, pg_get_userbyid(p.proowner) AS owner, p.prosecdef, p.provolatile, p.proconfig,
+                          coalesce((SELECT array_agg(a::text ORDER BY a::text) FROM unnest(p.proacl) a), ARRAY[]::text[]) AS acl,
+                          p.proacl::text LIKE '%{=%' OR p.proacl IS NULL AS public_or_default
+                     FROM pg_proc p WHERE p.pronamespace = 'messaging'::regnamespace AND (p.prosecdef OR p.proname IN ('is_participant','is_owner','is_creator')))
+          SELECT 'attribute-mismatch' AS problem, w.sig AS object FROM want w
+            WHERE NOT EXISTS (SELECT 1 FROM have h WHERE h.sig = w.sig AND h.owner = w.owner AND h.prosecdef AND h.provolatile = 's'
+                                AND h.proconfig = w.config AND h.acl = w.acl AND NOT h.public_or_default)
+          UNION ALL SELECT 'unexpected-messaging-function', h.sig FROM have h WHERE h.sig <> ALL (${q(Object.keys(L.messagingDefinerAttributes))})
+          UNION ALL SELECT 'owner-role-state', rolname FROM pg_roles
+            WHERE rolname = 'patient_scope_owner' AND (rolsuper OR rolbypassrls OR rolcanlogin OR rolcreaterole OR rolcreatedb OR rolreplication)
+          UNION ALL SELECT 'owner-role-membership', m.rolname FROM pg_auth_members am JOIN pg_roles m ON m.oid = am.member
+            WHERE am.roleid = 'patient_scope_owner'::regrole AND m.rolname <> session_user AND (m.rolname <> 'app_owner' OR NOT am.set_option OR am.inherit_option OR am.admin_option)
+          UNION ALL SELECT 'owner-role-member-of', r.rolname FROM pg_auth_members am JOIN pg_roles r ON r.oid = am.roleid
+            WHERE am.member = 'patient_scope_owner'::regrole
+          UNION ALL SELECT 'grant-option', c.oid::regclass::text FROM pg_class c CROSS JOIN LATERAL aclexplode(c.relacl) a
+            WHERE c.relnamespace = 'messaging'::regnamespace AND a.is_grantable AND a.grantee = 'patient_scope_owner'::regrole
+          UNION ALL SELECT 'grant-option-column', a.attrelid::regclass::text || '.' || a.attname FROM pg_attribute a CROSS JOIN LATERAL aclexplode(a.attacl) x
+            WHERE a.attrelid IN (SELECT oid FROM pg_class WHERE relnamespace = 'messaging'::regnamespace) AND x.is_grantable AND x.grantee = 'patient_scope_owner'::regrole
+          UNION ALL SELECT 'table-privilege', c.oid::regclass::text FROM pg_class c
+            WHERE c.relnamespace = 'messaging'::regnamespace AND c.relkind IN ('r','p','v','m','S','f')
+              AND has_table_privilege('patient_scope_owner', c.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
+          UNION ALL SELECT 'column-privilege', c.oid::regclass::text || '.' || a.attname FROM pg_class c JOIN pg_attribute a ON a.attrelid = c.oid AND a.attnum > 0 AND NOT a.attisdropped
+            WHERE c.relnamespace = 'messaging'::regnamespace AND c.relkind IN ('r','p')
+              AND (has_column_privilege('patient_scope_owner', c.oid, a.attnum, 'INSERT,UPDATE,REFERENCES')
+                   OR (has_column_privilege('patient_scope_owner', c.oid, a.attnum, 'SELECT')
+                       <> (c.oid = 'messaging.thread_participant'::regclass AND a.attname IN ('thread_id','organisation_id','principal_id','role'))))
+          UNION ALL SELECT 'schema-privilege', 'messaging' WHERE has_schema_privilege('patient_scope_owner', 'messaging', 'CREATE') OR NOT has_schema_privilege('patient_scope_owner', 'messaging', 'USAGE')
+          UNION ALL SELECT 'policy-on-thread', policyname FROM pg_policies
+            WHERE schemaname = 'messaging' AND tablename = 'thread' AND 'patient_scope_owner' = ANY (roles)
+          UNION ALL SELECT 'participant-policy-shape', policyname FROM pg_policies
+            WHERE schemaname = 'messaging' AND tablename = 'thread_participant' AND 'patient_scope_owner' = ANY (roles)
+              AND (policyname <> 'participant_definer_select' OR cmd <> 'SELECT' OR qual NOT LIKE '%(principal_id = ( SELECT kernel.uuid1(%app.principal_id%')
+          UNION ALL SELECT 'participant-policy-count', 'thread_participant' WHERE (SELECT count(*) FROM pg_policies
+            WHERE schemaname = 'messaging' AND tablename = 'thread_participant' AND 'patient_scope_owner' = ANY (roles)) <> 1`,
+  },
   'M-5-anonymous': {
     title: 'the policies that can match audience anonymous are exactly the ARCHITECTURE 21.3 list',
     sql: policySetSql('anonymous', L.anonymousPolicies),
