@@ -27,7 +27,10 @@ const localInput = (d: Date): string => {
   const p = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
 };
+const MINUTE = 60_000;
 const POLL_MS = 4000;
+/** D5-ext: the untouched default To is the next minute boundary at submit, so current-minute rows are included. */
+const nextMinute = (ms: number): number => (Math.floor(ms / MINUTE) + 1) * MINUTE;
 
 type Result =
   | { kind: 'idle' }
@@ -59,6 +62,7 @@ export function AuditLog() {
   const now = useRef(new Date());
   const [from, setFrom] = useState(() => localInput(new Date(now.current.getTime() - DAY)));
   const [to, setTo] = useState(() => localInput(now.current));
+  const [toEdited, setToEdited] = useState(false);
   const [actor, setActor] = useState('');
   const [patient, setPatient] = useState('');
   const [action, setAction] = useState('');
@@ -69,7 +73,7 @@ export function AuditLog() {
   const validate = (): AuditFilter | undefined => {
     const errs: FieldError[] = [];
     const f = Date.parse(from);
-    const t = Date.parse(to);
+    const t = toEdited ? Date.parse(to) : nextMinute(Date.now());
     if (Number.isNaN(f) || Number.isNaN(t)) {
       errs.push({ fieldId: 'audit-from', message: s.rangeMissing });
     } else if (f >= t) errs.push({ fieldId: 'audit-from', message: s.rangeOrder });
@@ -143,7 +147,10 @@ export function AuditLog() {
           label={s.to}
           type="datetime-local"
           value={to}
-          onChange={(e) => setTo(e.target.value)}
+          onChange={(e) => {
+            setToEdited(true);
+            setTo(e.target.value);
+          }}
         />
         <TextField
           id="audit-action"
