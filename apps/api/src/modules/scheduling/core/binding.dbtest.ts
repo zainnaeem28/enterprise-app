@@ -5,7 +5,18 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { after, before, describe, test } from 'node:test';
-import { A1, A2, B1, ORG, SVC, adminUrl, pg, setupScheduling, slotStart } from './testkit.js';
+import {
+  A1,
+  A2,
+  B1,
+  ORG,
+  SVC,
+  adminUrl,
+  pg,
+  saWrite,
+  setupScheduling,
+  slotStart,
+} from './testkit.js';
 import type { SchedKit } from './testkit.js';
 import type { HoldInput } from './index.js';
 import type { ScopeSettings } from '@ehr/kernel';
@@ -313,9 +324,34 @@ describe('F04: patient.ensure_care_relationship needs a real event (BR-32, D-7, 
     const a = await t.bare(7203);
     await confirmedAt(a, await t.patientScope(a));
     const staffA = await t.staffScope([A1, A2]);
-    await rejectsSql(ensure(staffA, a, B1, 'referral'), '42501', 'staff of another location');
-    await ensure(staffA, a, A2, 'referral');
-    assert.equal(
+    // F08d (migration 2300): a referral relationship exists only for a sent internal referral with a pending inbox row at the
+    // location, accepted through the referral-bound path (lock_referral_patient, ensure_referral_care_relationship).
+    const referralId = randomUUID();
+    // the sender, a staff member of A1 only, writes the referral as the front-door flow does: draft, sent, then the inbox row
+    const sender = await t.staffScope([A1]);
+    await t.as(sender, async (tx) => {
+      await tx.query(
+        `INSERT INTO clinical.referral (id, organisation_id, patient_id, from_location_id, from_principal_id, target_kind, target_location_id, reason, created_by)
+         VALUES ($1, $2, $3, $4, $5, 'internal_location', $6, 'binding dbtest referral', $5)`,
+        [referralId, ORG, a, A1, sender.principalId, A2],
+      );
+      await tx.query(`UPDATE clinical.referral SET status = 'sent' WHERE id = $1`, [referralId]);
+      await tx.query(
+        `INSERT INTO clinical.referral_inbox (referral_id, organisation_id, target_location_id, patient_label_ref, created_by)
+         VALUES ($1, $2, $3, $1, $4)`,
+        [referralId, ORG, A2, sender.principalId],
+      );
+    });
+    const accept = (scope: ScopeSettings): Promise<unknown> =>
+      t.as(scope, async (tx) => {
+        await tx.lockReferralPatient(referralId, a, 'no_key_update');
+        await tx.callScopeOwner(
+          'patient.ensure_referral_care_relationship',
+          [randomUUID(), referralId],
+          [a],
+        );
+      });
+    const referralRows = async (): Promise<number> =>
       Number(
         (
           (
@@ -325,9 +361,22 @@ describe('F04: patient.ensure_care_relationship needs a real event (BR-32, D-7, 
             )
           )[0] as { n: string }
         ).n,
-      ),
-      1,
+      );
+    // staff of another location, and staff of A1 only (not the receiving A2), cannot accept; nothing is written
+    await rejectsSql(ensure(staffA, a, B1, 'referral'), '42501', 'staff of another location');
+    await rejectsSql(
+      accept(await t.staffScope([A1])),
+      'PM008',
+      'staff not at the receiving location',
     );
+    await rejectsSql(
+      accept(await t.staffScope([B1])),
+      'PM008',
+      'staff of another location, bound path',
+    );
+    assert.equal(await referralRows(), 0);
+    await accept(staffA);
+    assert.equal(await referralRows(), 1);
   });
 });
 

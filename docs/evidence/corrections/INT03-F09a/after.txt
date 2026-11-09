@@ -1,0 +1,28 @@
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+▶ F02: scheduling.set_status acts only on the caller's own reservation (TC-BK-11, TC-AZ-07)
+  ✔ P1c: patient B cannot cancel patient A's appointment, though B can read its occupancy row and id (58.428428ms)
+  ✔ P1d: staff of another location cannot cancel another clinic's appointment (30.356698ms)
+  ✔ a proxy of another patient and a patients-scope job for another patient are refused the same way (36.778857ms)
+  ✔ own-reservation flows are unchanged: the patient, a proxy of the patient, the staff of the location and the organisation job (90.279649ms)
+  ✔ a stale hold of somebody else is still expired by the next booking of that doctor (SAR-09) (23.28573ms)
+✔ F02: scheduling.set_status acts only on the caller's own reservation (TC-BK-11, TC-AZ-07) (2196.591661ms)
+▶ F03: scheduling.occupy does not trust the caller's overbook flag and cap
+  ✔ P2: with no stored policy that allows overbooking, a made-up session and cap 100 end refused (23P01) (16.712278ms)
+  ✔ with a stored cap of 1 at the location, the arguments cannot raise it: a second row under another invented key is refused (6.168163ms)
+✔ F03: scheduling.occupy does not trust the caller's overbook flag and cap (23.218595ms)
+▶ F04: patient.ensure_care_relationship needs a real event (BR-32, D-7, SBR-02)
+  ✔ P4: patient A cannot add clinic B as a referral; the staff of B still see nothing (25.649035ms)
+  ✔ a booking relationship needs a confirmed appointment of that patient at that location (43.141996ms)
+  ✔ staff accept a referral at their own location only (44.487572ms)
+✔ F04: patient.ensure_care_relationship needs a real event (BR-32, D-7, SBR-02) (113.647504ms)
+▶ F05: the scheduling merge guard holds for a writer that skipped patient.lock_patients (SBR-12, TC-MG-09)
+  ✔ P3: a reservation written while a merge is uncommitted ends PM001 and leaves no row on the merged patient (515.891473ms)
+✔ F05: the scheduling merge guard holds for a writer that skipped patient.lock_patients (SBR-12, TC-MG-09) (516.090697ms)
+ℹ tests 11
+ℹ suites 4
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3258.93711

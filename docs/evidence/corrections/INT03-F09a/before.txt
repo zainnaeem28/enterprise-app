@@ -1,0 +1,60 @@
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+▶ F02: scheduling.set_status acts only on the caller's own reservation (TC-BK-11, TC-AZ-07)
+  ✔ P1c: patient B cannot cancel patient A's appointment, though B can read its occupancy row and id (57.630889ms)
+  ✔ P1d: staff of another location cannot cancel another clinic's appointment (30.536564ms)
+  ✔ a proxy of another patient and a patients-scope job for another patient are refused the same way (31.978829ms)
+  ✔ own-reservation flows are unchanged: the patient, a proxy of the patient, the staff of the location and the organisation job (83.622685ms)
+  ✔ a stale hold of somebody else is still expired by the next booking of that doctor (SAR-09) (22.276347ms)
+✔ F02: scheduling.set_status acts only on the caller's own reservation (TC-BK-11, TC-AZ-07) (2094.277741ms)
+▶ F03: scheduling.occupy does not trust the caller's overbook flag and cap
+  ✔ P2: with no stored policy that allows overbooking, a made-up session and cap 100 end refused (23P01) (15.85614ms)
+  ✔ with a stored cap of 1 at the location, the arguments cannot raise it: a second row under another invented key is refused (6.231993ms)
+✔ F03: scheduling.occupy does not trust the caller's overbook flag and cap (22.460592ms)
+▶ F04: patient.ensure_care_relationship needs a real event (BR-32, D-7, SBR-02)
+  ✔ P4: patient A cannot add clinic B as a referral; the staff of B still see nothing (25.317511ms)
+  ✔ a booking relationship needs a confirmed appointment of that patient at that location (42.699214ms)
+  ✖ staff accept a referral at their own location only (27.093975ms)
+✖ F04: patient.ensure_care_relationship needs a real event (BR-32, D-7, SBR-02) (96.521326ms)
+▶ F05: the scheduling merge guard holds for a writer that skipped patient.lock_patients (SBR-12, TC-MG-09)
+  ✔ P3: a reservation written while a merge is uncommitted ends PM001 and leaves no row on the merged patient (517.530556ms)
+✔ F05: the scheduling merge guard holds for a writer that skipped patient.lock_patients (SBR-12, TC-MG-09) (517.75682ms)
+ℹ tests 11
+ℹ suites 4
+ℹ pass 10
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3197.756299
+
+✖ failing tests:
+
+test at dist/src/modules/scheduling/core/binding.dbtest.js:172:5
+✖ staff accept a referral at their own location only (27.093975ms)
+  error: no pending referral of this patient to this location
+      at /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-339-sdlc-correction-int03-f09a-fix-stale-referral-fixture-in-scheduling-binding-dbtest-f08d-contract/node_modules/.pnpm/pg@8.23.1/node_modules/pg/lib/client.js:694:17
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-339-sdlc-correction-int03-f09a-fix-stale-referral-fixture-in-scheduling-binding-dbtest-f08d-contract/apps/api/dist/src/modules/scheduling/core/binding.dbtest.js:148:9
+      at async KernelDb.once (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-339-sdlc-correction-int03-f09a-fix-stale-referral-fixture-in-scheduling-binding-dbtest-f08d-contract/packages/kernel/dist/scope/with-scope.js:130:28)
+      at async KernelDb.run (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-339-sdlc-correction-int03-f09a-fix-stale-referral-fixture-in-scheduling-binding-dbtest-f08d-contract/packages/kernel/dist/scope/with-scope.js:108:24)
+      at async TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-339-sdlc-correction-int03-f09a-fix-stale-referral-fixture-in-scheduling-binding-dbtest-f08d-contract/apps/api/dist/src/modules/scheduling/core/binding.dbtest.js:177:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    length: 499,
+    severity: 'ERROR',
+    code: '42501',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: `PL/pgSQL function patient.guard_care_relationship_origin() line 13 at RAISE\nSQL statement "INSERT INTO patient.care_relationship (id, organisation_id, patient_id, location_id, reason, created_by)\n  VALUES (v_id, v_org, p_patient, p_location, p_reason, kernel.uuid1('app.principal_id'))"\nPL/pgSQL function patient.ensure_care_relationship(uuid,uuid,uuid,text) line 29 at SQL statement`,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'pl_exec.c',
+    line: '3897',
+    routine: 'exec_stmt_raise'
+  }
