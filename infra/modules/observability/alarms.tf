@@ -115,6 +115,10 @@ locals {
         enabled = local.core, catalog = "audit_anchor_late", route = "security", ns = local.app_ns, metric = "AuditAnchorLateSeconds"
         period  = 60, evals = 3, dp = 3, threshold = var.audit_anchor_late_threshold_seconds, missing = "breaching"
       }
+      "audit-anchor-archive-late" = {
+        enabled = local.core, catalog = "audit_anchor_archive_late", route = "security", ns = local.app_ns, metric = "AuditAnchorArchiveLagSeconds"
+        period  = 60, evals = 3, dp = 3, threshold = 900, missing = "breaching"
+      }
       "audit-anchor-mismatch" = {
         enabled = local.core, catalog = "audit_anchor_mismatch", route = "security", ns = local.app_ns, metric = "AuditAnchorVerificationMismatch"
         stat    = "Sum", period = 300, threshold = 0

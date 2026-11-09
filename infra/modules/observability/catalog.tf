@@ -109,6 +109,12 @@ locals {
       first    = "Follow the security runbook; check the anchoring job in worker logs. Do not alter data."
       severity = "security", source = "alarm"
     }
+    audit_anchor_archive_late = {
+      owner    = local.owners.security
+      impact   = "Audit anchors are not reaching the Object Lock archive; a database-level rewrite of recent anchors would go undetected until they are archived."
+      first    = "Follow the security runbook; check the archive_anchors job and its access to the archive bucket (anchors/ prefix) in worker logs. Do not alter data."
+      severity = "security", source = "alarm"
+    }
     audit_anchor_mismatch = {
       owner    = local.owners.security
       impact   = "Anchor verification mismatch: the audit record may have been altered or lost."

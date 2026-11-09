@@ -59,6 +59,7 @@ locals {
           region = var.region, view = "timeSeries", stat = "Maximum", period = 300
           metrics = [
             [local.app_ns, "AuditAnchorLateSeconds"],
+            [local.app_ns, "AuditAnchorArchiveLagSeconds"],
             [local.app_ns, "AuditAnchorVerificationMismatch", { stat = "Sum" }],
             [local.app_ns, "AuditInsertErrors", { stat = "Sum" }],
           ]

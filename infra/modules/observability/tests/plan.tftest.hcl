@@ -128,7 +128,7 @@ run "plan_thresholds_from_devops_plan_11_3" {
     error_message = "Free storage alarm is 20 percent."
   }
   assert {
-    condition     = aws_cloudwatch_metric_alarm.simple["queue-oldest-job"].threshold == 300 && aws_cloudwatch_metric_alarm.simple["backup-stale"].evaluation_periods == 26 && aws_cloudwatch_metric_alarm.simple["backup-replica-lag"].threshold == 600
+    condition     = aws_cloudwatch_metric_alarm.simple["queue-oldest-job"].threshold == 300 && aws_cloudwatch_metric_alarm.simple["backup-stale"].evaluation_periods == 26 && aws_cloudwatch_metric_alarm.simple["backup-replica-lag"].threshold == 600 && aws_cloudwatch_metric_alarm.simple["audit-anchor-archive-late"].threshold == 900 && aws_cloudwatch_metric_alarm.simple["audit-anchor-archive-late"].treat_missing_data == "breaching"
     error_message = "Queue 5 min, backup 26 h and replica lag 600 s."
   }
   assert {
@@ -163,7 +163,7 @@ run "vendor_criticality_routes_to_page_or_ticket" {
   command = plan
 
   assert {
-    condition     = output.alarm_routes["t-integration-circuit-sms"] == "page" && output.alarm_routes["t-integration-circuit-video"] == "ticket" && output.alarm_routes["t-audit-anchor-mismatch"] == "security" && output.alarm_routes["t-queue-dead-letter-growth"] == "page"
+    condition     = output.alarm_routes["t-integration-circuit-sms"] == "page" && output.alarm_routes["t-integration-circuit-video"] == "ticket" && output.alarm_routes["t-audit-anchor-mismatch"] == "security" && output.alarm_routes["t-audit-anchor-archive-late"] == "security" && output.alarm_routes["t-queue-dead-letter-growth"] == "page"
     error_message = "Vendor routing by criticality."
   }
 }
