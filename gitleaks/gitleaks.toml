@@ -193,3 +193,21 @@ regexes = [
   '''^qr-key-for-tests-0123456789abcdef0123$''',
   '''^appointment_reminder_(48h|4h)$''',
 ]
+
+# INT04-F36 (owner: DevOps Engineer; reviewers: DevOps Reviewer, Security Reviewer). Same false
+# positive as INT04-F18/F33: the r11 raw integration-db and prepare-db logs (commit f59c330) print the
+# applied/pending migration file names as JSON, and rule generic-api-key reads migration 2406's file
+# name as a key (130 findings). A public file name, not a secret. The logs are already in history and
+# history may not be rewritten, so replacing them with summaries would not clear the scan. Pinned to
+# these exact files AND the exact value (condition = "AND") and to this rule only: any other value in
+# these files, this name elsewhere, or any non-evidence path still fails. Covers history and the
+# tree. No expiry: the logs are frozen evidence.
+[[allowlists]]
+description = "INT04-F36: migration file name in the r11 raw integration-db and prepare-db evidence logs"
+condition = "AND"
+targetRules = ["generic-api-key"]
+paths = [
+  '''(^|/)docs/evidence/integration/M5/r11/gates/integration-db-run[1-4]\.txt$''',
+  '''(^|/)docs/evidence/integration/M5/r11/prepare-db[2-6]?\.txt$''',
+]
+regexes = ['''^2406_notifications_staff_scope_allows_patient\.sql$''']

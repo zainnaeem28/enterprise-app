@@ -1,0 +1,21 @@
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+▶ POST /patients/lookup (HEAAA-286, draft 8.3) on PostgreSQL 17
+  ✔ (a) an L1 doctor finds an L1 patient by name, MRN and patientIds; the item has exactly the six fields (37.821553ms)
+  ✔ (b) a patient registered only at L2 is absent for every form, with 200 and the same shape (37.171524ms)
+  ✔ (c) phone, email, dateOfBirth alone, a one-character name word, more than four words, mixed forms and unknown members are kernel.validation_failed (71.945341ms)
+  ✔ (d) more than 25 matches give 25 items and truncated: true, ordered by family and given name (469.972936ms)
+  ✔ (e) the 31st call in a minute is 429 kernel.rate_limited with retryAfterSeconds; the counter is per principal and its own (209.169464ms)
+  ✔ (f) the audit search event has form, results and patientIds and no criteria values (24.791078ms)
+  ✔ (g) an in-scope unassigned patient: chart-summary is 403 clinical.not_assigned, then 200 after break-the-glass (103.136947ms)
+  ✔ (h) the doctor still cannot call POST /patients/search or read /patients/{id}, /consents, /contacts: 403 auth.forbidden (30.391886ms)
+  ✔ (i) a chart-summary for a patient out of the doctor location scope is 404 kernel.not_found (7.15878ms)
+  ✔ the lookup is refused to roles that do not hold patient.lookup (front desk, nurse): 403 (12.536759ms)
+✔ POST /patients/lookup (HEAAA-286, draft 8.3) on PostgreSQL 17 (2702.075893ms)
+ℹ tests 10
+ℹ suites 1
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3109.519933

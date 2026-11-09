@@ -1,0 +1,3 @@
+2026-11-09T22:25:40Z	INFO	Detected config files	num=23
+trivy config: 23 target(s) scanned, no blocking misconfigurations
+::error::required tool 'docker' is not installed (run scripts/ci/install-tools.sh docker)

@@ -1,0 +1,37 @@
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+▶ enrolment (26.3, B2-3)
+  ✔ a key registered with an approved token creates credential, session and the notice jobs (75.611568ms)
+  ✔ an unknown handle, a wrong token, a token of another principal and malformed input all give the same 401 (29.931872ms)
+  ✔ an expired token and a used token are refused (69.924078ms)
+  ✔ a holder of the token cannot add a key from a fresh client, with or without a session (BE05-R3-S01) (65.580039ms)
+  ✔ concurrent verifies on one token register exactly one credential (BE05-R3-S01) (49.864586ms)
+  ✔ an AAGUID that is not on the list, a BE or BS credential and a missing UV flag are refused (68.556472ms)
+  ✔ a replayed challenge and a challenge signed for another origin or RP ID do not enrol (20.66074ms)
+✔ enrolment (26.3, B2-3) (1895.754036ms)
+▶ sign-in (26.1, B2-2, B2-4, B2-5)
+  ✔ options answer a real and an unknown handle with the same shape, and the decoy list is stable (42.220385ms)
+  ✔ a suspended handle, a handle with no live credential and a disabled handle look like an unknown one (37.314371ms)
+  ✔ a good assertion signs in; the same assertion again, a wrong origin, a wrong RP ID and a missing UV flag are refused with one code (84.210008ms)
+  ✔ a counter regression revokes the credential and queues the alert; the next sign-in with that key fails (60.19724ms)
+  ✔ two concurrent presentations of one assertion: one session, no false revocation (37.236286ms)
+  ✔ an assertion made with a credential of another principal is refused (66.360973ms)
+  ✔ a disabled principal cannot sign in; an unknown handle fails like a wrong key (37.053262ms)
+✔ sign-in (26.1, B2-2, B2-4, B2-5) (365.279513ms)
+▶ rate limits (31.3)
+  ✔ the options counter refuses the 31st call from one address before any identity read, and 429 carries Retry-After data (157.401255ms)
+  ✔ the failure counter refuses at 50 failures before verification, and a success never counts (221.144607ms)
+✔ rate limits (31.3) (378.815257ms)
+▶ elevation (26.3, C1)
+  ✔ a privileged route is refused without a grant, allowed with one, refused again when it is stale (137.903547ms)
+  ✔ a grant dies with its credential: revoking the key makes a live grant stale at once (101.957652ms)
+  ✔ B2-8: with one live key only the enrolment session can elevate; a later sign-in cannot (70.54381ms)
+  ✔ an elevation challenge belongs to its session and is single use; a replayed or wrong-origin assertion is refused (106.724314ms)
+✔ elevation (26.3, C1) (417.522772ms)
+ℹ tests 20
+ℹ suites 4
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3548.786889

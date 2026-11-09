@@ -1,0 +1,4 @@
+init=0
+Success! The configuration is valid.
+
+Success! 10 passed, 0 failed.

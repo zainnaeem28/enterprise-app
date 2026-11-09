@@ -1,0 +1,2 @@
+::error::no needs recorded; the aggregate gate must depend on every required job
+needs rc=1

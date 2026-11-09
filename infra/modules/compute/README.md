@@ -1,11 +1,11 @@
 # compute module (DO-03, authored, not applied)
 
-ECS Fargate cluster, `api` and `worker` services, public ALB with host routing, target group, auto-scaling.
+ECS Fargate cluster, `api` and `worker` services, internal ALB (private subnets, no internet path) with host routing, target group, auto-scaling.
 
 - Rolling deployment 100 % / 150 %, circuit breaker with rollback (DEVOPS-PLAN 9.1). `desired_count` is ignored after creation (auto-scaling owns it).
 - Ceilings validated from the database connection budget: `api` max 8, `worker` max 4; floor 2 (DEVOPS-PLAN 12).
 - Images must be `repo@sha256:<digest>` (build once, promote the digest).
-- ALB: portal hosts reach `/api/*` only with the origin-verify header that CloudFront adds; `integrations.` is routed by host only (cookies are rejected by the WAF in `edge`); anything else gets 403. Target group health check is liveness `/healthz`.
+- ALB: internal, HTTPS 443 only (no port 80 listener). The only ingress is 443 from the CloudFront VPC-origin service group, added by the `edge` module; the security group has no CIDR ingress. Portal hosts reach `/api/*` and `integrations.` reaches its host only with the origin-verify header that CloudFront adds; cookies on `integrations.` are rejected by the CLOUDFRONT-scope web ACL in `edge`; anything else gets 403. Target group health check is liveness `/healthz`.
 - SSE: ALB idle timeout 60 s, heartbeat 15 s, deregistration delay 120 s, long scale-in cooldown. A precondition fails the plan if the heartbeat is not shorter than the ALB idle and CloudFront origin read timeouts.
 - IAM roles, ECR, secrets, the database security group and DNS are inputs or later tickets (DO-04 and others).
 
