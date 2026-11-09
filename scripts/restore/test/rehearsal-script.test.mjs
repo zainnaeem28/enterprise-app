@@ -1,16 +1,19 @@
 // dr-rehearsal.sh against stub `tofu` and `aws` binaries: the account guard, destroy on every exit path, and the timeline.
-import { test } from 'node:test';
+import { after, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { chmodSync, existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
 const script = resolve(import.meta.dirname, '../dr-rehearsal.sh');
 const jq = spawnSync('jq', ['--version']);
+const made = [];
+after(() => made.forEach((d) => rmSync(d, { recursive: true, force: true })));
 
 function sandbox({ account = '333333333333', applyFails = false, destroyFails = false } = {}) {
   const dir = mkdtempSync(join(tmpdir(), 'dr-test-'));
+  made.push(dir);
   const bin = join(dir, 'bin');
   spawnSync('mkdir', ['-p', bin]);
   const log = join(dir, 'calls.log');
@@ -70,10 +73,10 @@ test('run applies, runs the steps, destroys, and writes a timeline without claim
 });
 
 test('failing steps and a failing apply both still destroy; a failing destroy fails loudly', { skip: jq.status !== 0 && 'jq missing' }, () => {
-  const failing = join(tmpdir(), 'dr-failing-steps.sh');
+  let sb = sandbox();
+  const failing = join(sb.dir, 'failing-steps.sh');
   writeFileSync(failing, '#!/usr/bin/env bash\nexit 3\n');
   chmodSync(failing, 0o755);
-  let sb = sandbox();
   let r = run(sb, ['run', '--root', sb.root, '--var-file', sb.vars, '--steps', failing, '--out', join(sb.dir, 'o')]);
   assert.notEqual(r.status, 0);
   assert.match(calls(sb), / destroy /);
