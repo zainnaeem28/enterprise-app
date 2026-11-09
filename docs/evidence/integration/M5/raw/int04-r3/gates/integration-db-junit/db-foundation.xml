@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testsuite name="migrations 2300 and 2301" time="2.927938" disabled="0" errors="0" tests="1" failures="0" skipped="0" timestamp="2026-11-09T14:08:40.994Z" hostname="314866be9867">
+		<testcase name="both are applied, in order, exactly once" time="0.003938" classname="migrations 2300 and 2301" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+	</testsuite>
+	<testsuite name="C-5: the 2301 file is the ruling text" time="0.000776" disabled="0" errors="0" tests="1" failures="0" skipped="0" timestamp="2026-11-09T14:08:43.926Z" hostname="314866be9867">
+		<testcase name="2301 hashes to the sha256 fixed by ruling 3.1b (comment-only reformatting not applied)" time="0.000630" classname="C-5: the 2301 file is the ruling text" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+	</testsuite>
+	<testsuite name="T-RA-01..04: the receiving location locks, creates the relationship, and reads nothing else before" time="0.763789" disabled="0" errors="0" tests="4" failures="0" skipped="0" timestamp="2026-11-09T14:08:43.920Z" hostname="314866be9867">
+		<testcase name="T-RA-01 lock_referral_patient takes the root lock and holds it to commit" time="0.401515" classname="T-RA-01..04: the receiving location locks, creates the relationship, and reads nothing else before" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="T-RA-02 ensure_referral_care_relationship creates the relationship, scope rows, one audit row, and caller_sees becomes true" time="0.134463" classname="T-RA-01..04: the receiving location locks, creates the relationship, and reads nothing else before" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="T-RA-03 idempotent: an open relationship is returned; no new row, no new audit row" time="0.109790" classname="T-RA-01..04: the receiving location locks, creates the relationship, and reads nothing else before" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="T-RA-04 before any call, s2 reads no patient, chart row or demographics (R-REF-1: no read widening)" time="0.117486" classname="T-RA-01..04: the receiving location locks, creates the relationship, and reads nothing else before" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+	</testsuite>
+	<testsuite name="T-RA-05..16: refusals (all through refused(): no audit, relationship or scope row changes: T-RA-31)" time="2.085769" disabled="0" errors="0" tests="15" failures="0" skipped="0" timestamp="2026-11-09T14:08:44.683Z" hostname="314866be9867">
+		<testcase name="T-RA-05 cross-clinic: s3 (A3) is refused by both functions with PM008" time="0.079717" classname="T-RA-05..16: refusals (all through refused(): no audit, relationship or scope row changes: T-RA-31)" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="T-RA-06 cross-organisation: sO2 is refused by both functions with PM008" time="0.082435" classname="T-RA-05..16: refusals (all through refused(): no audit, relationship or scope row changes: T-RA-31)" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="T-RA-07 draft: PM008 from both functions" time="0.093484" classname="T-RA-05..16: refusals (all through refused(): no audit, relationship or scope row changes: T-RA-31)" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="T-RA-08 declined (inbox declined): PM008 from both functions" time="0.047204" classname="T-RA-05..16: refusals (all through refused(): no audit, relationship or scope row changes: T-RA-31)" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="T-RA-09 cancelled by the sender after sending (inbox still pending): PM008 from both functions" time="0.168277" classname="T-RA-05..16: refusals (all through refused(): no audit, relationship or scope row changes: T-RA-31)" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="T-RA-10 accepted: PM008 from both functions" time="0.190331" classname="T-RA-05..16: refusals (all through refused(): no audit, relationship or scope row changes: T-RA-31)" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="T-RA-10 completed: PM008 from both functions" time="0.116030" classname="T-RA-05..16: refusals (all through refused(): no audit, relationship or scope row changes: T-RA-31)" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="T-RA-11 external referral: PM008" time="0.117932" classname="T-RA-05..16: refusals (all through refused(): no audit, relationship or scope row changes: T-RA-31)" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="T-RA-12 &quot;expired&quot; is not a referral state in the approved design (R-REF-4); covered by T-RA-07..11, no expiry is fabricated" time="0.001468" classname="T-RA-05..16: refusals (all through refused(): no audit, relationship or scope row changes: T-RA-31)" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="T-RA-13 patient mismatch and unknown referral give the same PM008 message (no probe)" time="0.170833" classname="T-RA-05..16: refusals (all through refused(): no audit, relationship or scope row changes: T-RA-31)" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="T-RA-14 audiences other than google staff: 42501 (own check or no EXECUTE)" time="0.214689" classname="T-RA-05..16: refusals (all through refused(): no audit, relationship or scope row changes: T-RA-31)" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="T-RA-15 bad mode and NULL arguments: 22023" time="0.112123" classname="T-RA-05..16: refusals (all through refused(): no audit, relationship or scope row changes: T-RA-31)" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="T-RA-16(a) merge: a sent referral is re-pointed to the survivor; P is refused, S succeeds, one relationship (S, A2)" time="0.160229" classname="T-RA-05..16: refusals (all through refused(): no audit, relationship or scope row changes: T-RA-31)" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="T-RA-16(b) synthetic state: P merged while the sent referral still names P: PM001, no relationship, no audit row" time="0.039653" classname="T-RA-05..16: refusals (all through refused(): no audit, relationship or scope row changes: T-RA-31)" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="T-RA-16(c) interleaving (decision-log OBS-1): a merge commits between the predicate and the patient lock: PM001" time="0.490146" classname="T-RA-05..16: refusals (all through refused(): no audit, relationship or scope row changes: T-RA-31)" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+	</testsuite>
+	<testsuite name="T-RA-17..20, 27, 28, 32: the origin guard (R-REF-6) and the old function" time="1.212012" disabled="0" errors="0" tests="12" failures="0" skipped="0" timestamp="2026-11-09T14:08:46.768Z" hostname="314866be9867">
+		<testcase name="T-RA-17 s12 sees P at A1 and holds A2: the old function refuses a referral relationship with no referral, and allows it with a pending one" time="0.099418" classname="T-RA-17..20, 27, 28, 32: the origin guard (R-REF-6) and the old function" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="T-RA-18 regressions: a patient caller with reason referral is refused; the old function with reason booking and no appointment is refused" time="0.101928" classname="T-RA-17..20, 27, 28, 32: the origin guard (R-REF-6) and the old function" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="T-RA-27 bound to the location: s13 (sees P at A1, holds A3) cannot add A3 while the pending referral goes to A2" time="0.085811" classname="T-RA-17..20, 27, 28, 32: the origin guard (R-REF-6) and the old function" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="T-RA-28 (a) inbox pending but referral accepted: PM008 from both new functions, 42501 from the trigger path" time="0.105755" classname="T-RA-17..20, 27, 28, 32: the origin guard (R-REF-6) and the old function" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="T-RA-28 (a) inbox pending but referral declined: PM008 from both new functions, 42501 from the trigger path" time="0.107662" classname="T-RA-17..20, 27, 28, 32: the origin guard (R-REF-6) and the old function" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="T-RA-28 (a) inbox pending but referral cancelled: PM008 from both new functions, 42501 from the trigger path" time="0.112150" classname="T-RA-17..20, 27, 28, 32: the origin guard (R-REF-6) and the old function" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="T-RA-28 (a) inbox pending but referral completed: PM008 from both new functions, 42501 from the trigger path" time="0.104524" classname="T-RA-17..20, 27, 28, 32: the origin guard (R-REF-6) and the old function" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="T-RA-28 (b) referral sent to A2 but its inbox row at A3: PM008 from both new functions, 42501 from the trigger path" time="0.157942" classname="T-RA-17..20, 27, 28, 32: the origin guard (R-REF-6) and the old function" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="T-RA-28 (c) referral sent to A2 with no inbox row: PM008 from both new functions, 42501 from the trigger path" time="0.113793" classname="T-RA-17..20, 27, 28, 32: the origin guard (R-REF-6) and the old function" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="T-RA-28(d) internal_service referral with a NULL target location cannot be sent: the 1700 CHECK refuses it (asserted instead)" time="0.003412" classname="T-RA-17..20, 27, 28, 32: the origin guard (R-REF-6) and the old function" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="T-RA-32(a) other realms: sB (admin_pool with BTG on P) is refused by the old function and both new ones with 42501" time="0.113271" classname="T-RA-17..20, 27, 28, 32: the origin guard (R-REF-6) and the old function" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="T-RA-32(b) booking path: a pending referral does not let a booking relationship be created; a referral relationship cannot come from patient or system" time="0.105487" classname="T-RA-17..20, 27, 28, 32: the origin guard (R-REF-6) and the old function" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+	</testsuite>
+	<testsuite name="T-RA-29: catalog" time="0.773943" disabled="0" errors="0" tests="4" failures="1" skipped="0" timestamp="2026-11-09T14:08:47.981Z" hostname="314866be9867">
+		<testcase name="owners, SECURITY DEFINER, search_path, EXECUTE lists and inventory" time="0.004044" classname="T-RA-29: catalog" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs" failure="Expected values to be strictly equal:&#10;&#10;28 !== 27&#10;">
+			<failure type="testCodeFailure" message="Expected values to be strictly equal:&#10;&#10;28 !== 27">
+Error [ERR_TEST_FAILURE]: Expected values to be strictly equal:
+
+28 !== 27
+
+    at async Promise.all (index 0) {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  28 !== 27
+  
+      at TestContext.&lt;anonymous> (file:///tmp/int04-r3/db/tests/referral-accept-scope.test.mjs:930:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 28,
+    expected: 27,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+}
+			</failure>
+		</testcase>
+		<testcase name="(rev 3) clinical.referral_inbox_pending: plpgsql, STABLE, invoker, search_path only, migration-role owner, EXECUTE to app_api only, body pinned" time="0.001236" classname="T-RA-29: catalog" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="the only policies TO patient_scope_owner on the two clinical tables, and the exact column grants" time="0.076108" classname="T-RA-29: catalog" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="after 2301 the two altered policies keep name, role, command, and the catalog checks pass (C-3)" time="0.692169" classname="T-RA-29: catalog" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+	</testsuite>
+	<testsuite name="T-RA-30: the referral-row read follows R-REF-9, and the deciding transactions pass under 2301 (also T-RA-21..26 at the SQL level)" time="1.626804" disabled="0" errors="0" tests="9" failures="0" skipped="0" timestamp="2026-11-09T14:08:48.755Z" hostname="314866be9867">
+		<testcase name="(a) before a decision s2 reads the referral row including reason; the sender does too" time="0.034511" classname="T-RA-30: the referral-row read follows R-REF-9, and the deciding transactions pass under 2301 (also T-RA-21..26 at the SQL level)" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="(b) T-RA-22 decline: succeeds; afterwards s2 has 0 rows, cannot update, keeps the inbox row; the sender still reads it; no relationship" time="0.179358" classname="T-RA-30: the referral-row read follows R-REF-9, and the deciding transactions pass under 2301 (also T-RA-21..26 at the SQL level)" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="(c) after a sender cancel of a sent referral: s2 reads 0 rows (unchanged); the inbox row stays visible" time="0.095171" classname="T-RA-30: the referral-row read follows R-REF-9, and the deciding transactions pass under 2301 (also T-RA-21..26 at the SQL level)" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="(d) T-RA-21 accept: succeeds (e); s2 then reads the referral and patient; after end_care_relationship the referral read is gone" time="0.196869" classname="T-RA-30: the referral-row read follows R-REF-9, and the deciding transactions pass under 2301 (also T-RA-21..26 at the SQL level)" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="T-RA-23 a coordinator at A3 cannot decide: PM008, nothing changes" time="0.097590" classname="T-RA-30: the referral-row read follows R-REF-9, and the deciding transactions pass under 2301 (also T-RA-21..26 at the SQL level)" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="T-RA-24 accept after a decline, after a cancel, and twice: not pending, exactly one relationship" time="0.213743" classname="T-RA-30: the referral-row read follows R-REF-9, and the deciding transactions pass under 2301 (also T-RA-21..26 at the SQL level)" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="T-RA-25 two concurrent accepts: exactly one succeeds; accept racing the sender cancel: never both" time="0.674217" classname="T-RA-30: the referral-row read follows R-REF-9, and the deciding transactions pass under 2301 (also T-RA-21..26 at the SQL level)" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="T-RA-33/35 safety net: creating the relationship after the status updates fails closed (PM008), nothing remains" time="0.096624" classname="T-RA-30: the referral-row read follows R-REF-9, and the deciding transactions pass under 2301 (also T-RA-21..26 at the SQL level)" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="R-REF-8 point 2: with the inbox updated BEFORE the referral, the deciding referral UPDATE is refused (the ordering is security-relevant)" time="0.038003" classname="T-RA-30: the referral-row read follows R-REF-9, and the deciding transactions pass under 2301 (also T-RA-21..26 at the SQL level)" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+	</testsuite>
+	<testsuite name="T-RA-30(f), T-RA-36..38 (rev 3, C-5)" time="0.880380" disabled="0" errors="0" tests="4" failures="0" skipped="0" timestamp="2026-11-09T14:08:50.382Z" hostname="314866be9867">
+		<testcase name="T-RA-30(f) the send transaction passes under 2301, including a sender who also holds the target location (s12)" time="0.099267" classname="T-RA-30(f), T-RA-36..38 (rev 3, C-5)" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="T-RA-36 no policy cycle on any referral write path under 2301; negative control: the rev 2 inline EXISTS raises 42P17" time="0.485168" classname="T-RA-30(f), T-RA-36..38 (rev 3, C-5)" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="T-RA-37 the function adds no read" time="0.204749" classname="T-RA-30(f), T-RA-36..38 (rev 3, C-5)" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+		<testcase name="T-RA-38 snapshot: the deciding UPDATE ... RETURNING sees its new row; after the inbox UPDATE the referral is gone" time="0.090801" classname="T-RA-30(f), T-RA-36..38 (rev 3, C-5)" file="/tmp/int04-r3/db/tests/referral-accept-scope.test.mjs"/>
+	</testsuite>
+	<testsuite name="migrations from empty on PostgreSQL 17" time="3.678180" disabled="0" errors="0" tests="4" failures="0" skipped="0" timestamp="2026-11-09T14:08:48.241Z" hostname="314866be9867">
+		<testcase name="a second run applies nothing" time="0.264630" classname="migrations from empty on PostgreSQL 17" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="catalog checks M-1..M-5 and the role checks all pass" time="0.502811" classname="migrations from empty on PostgreSQL 17" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="role-level settings are stored and visible to a new session" time="0.022281" classname="migrations from empty on PostgreSQL 17" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="the runner tracker is not reachable by application roles" time="0.006052" classname="migrations from empty on PostgreSQL 17" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+	</testsuite>
+	<testsuite name="spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics)" time="1.807817" disabled="0" errors="0" tests="13" failures="0" skipped="0" timestamp="2026-11-09T14:08:50.113Z" hostname="314866be9867">
+		<testcase name="FORCE RLS: the table owner cannot insert, and its UPDATE changes 0 rows (SBR-17)" time="0.014658" classname="spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="a missing setting returns 0 rows on every kernel table (fail closed)" time="0.053516" classname="spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="setting: admin_pool staff reads and writes its organisation; WITH CHECK refuses everything else" time="0.022867" classname="spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="audience anonymous reads only pre_auth settings and nothing in idempotency_key" time="0.008739" classname="spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="app_api cannot act as audience system; app_worker can, within its job scope" time="0.056859" classname="spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="idempotency_key: a principal sees only its own keys; updates bump row_version" time="0.016001" classname="spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="reporting_ro is refused on the kernel tables (M-4)" time="0.004746" classname="spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="role switching: app_api reaches only identity_signin_ro, which holds no table right" time="0.012235" classname="spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="app_owner holds SET but not INHERIT on directory_ro: it can switch but gains no rights" time="0.004675" classname="spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="function ownership transfer needs SET membership and CREATE on the schema (21.2 point 1)" time="0.007764" classname="spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="SELECT ... FOR KEY SHARE needs UPDATE rights: a SELECT-only role is refused" time="0.012106" classname="spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="an owner-rights view returns 0 rows under FORCE; a security_invoker view returns the caller rows (M-4)" time="0.951207" classname="spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="negative control: the catalog checks fail on a table without FORCE and on a policy TO PUBLIC" time="0.634022" classname="spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+	</testsuite>
+	<testsuite name="SEC03-F13 / F09 catalog negative controls" time="8.268738" disabled="0" errors="0" tests="7" failures="0" skipped="0" timestamp="2026-11-09T14:08:46.481Z" hostname="314866be9867">
+		<testcase name="the positive baseline: the four new checks pass on the migrated database" time="0.406279" classname="SEC03-F13 / F09 catalog negative controls" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="M-5-staff-scope-stub passes on the migrated database and fails on a literal false body (SEC05-F04)" time="2.681476" classname="SEC03-F13 / F09 catalog negative controls" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="M-5-policy-tautology fails on a policy comparing a column with itself (F01)" time="0.788620" classname="SEC03-F13 / F09 catalog negative controls" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="M-5-patient-guard fails when the guard trigger is disabled, AFTER, or INSERT-only (patient.patient_contact)" time="1.561595" classname="SEC03-F13 / F09 catalog negative controls" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="M-5-patient-guard fails when the guard trigger is disabled, AFTER, or INSERT-only (clinical.note)" time="1.119863" classname="SEC03-F13 / F09 catalog negative controls" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="M-5-setting-grants fails when app_api can write pre_auth or UPDATE every column (N-3)" time="1.098456" classname="SEC03-F13 / F09 catalog negative controls" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="M-5-hidden-columns fails when an application role can read occupancy created_by (F09)" time="0.611722" classname="SEC03-F13 / F09 catalog negative controls" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+	</testsuite>
+	<testsuite name="INT04-F02b: identity_bootstrap_owner and app_bootstrap (decision log tests 9 and 10)" time="8.336327" disabled="0" errors="0" tests="15" failures="0" skipped="0" timestamp="2026-11-09T14:08:54.749Z" hostname="314866be9867">
+		<testcase name="the exact check passes on the migrated database, and the roles have the pinned attributes" time="0.379524" classname="INT04-F02b: identity_bootstrap_owner and app_bootstrap (decision log tests 9 and 10)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="M-5-bootstrap-owner fails on an extra table privilege" time="0.588019" classname="INT04-F02b: identity_bootstrap_owner and app_bootstrap (decision log tests 9 and 10)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="M-5-bootstrap-owner fails on an extra column privilege" time="0.614716" classname="INT04-F02b: identity_bootstrap_owner and app_bootstrap (decision log tests 9 and 10)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="M-5-bootstrap-owner fails on CREATE on a schema" time="0.607437" classname="INT04-F02b: identity_bootstrap_owner and app_bootstrap (decision log tests 9 and 10)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="M-5-bootstrap-owner fails on EXECUTE on a trigger function" time="0.648535" classname="INT04-F02b: identity_bootstrap_owner and app_bootstrap (decision log tests 9 and 10)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="M-5-bootstrap-owner fails on a privilege on kernel.setting" time="0.607906" classname="INT04-F02b: identity_bootstrap_owner and app_bootstrap (decision log tests 9 and 10)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="M-5-bootstrap-owner fails on a GRANT OPTION" time="0.603564" classname="INT04-F02b: identity_bootstrap_owner and app_bootstrap (decision log tests 9 and 10)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="M-5-bootstrap-owner fails on an extra policy" time="0.610315" classname="INT04-F02b: identity_bootstrap_owner and app_bootstrap (decision log tests 9 and 10)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="M-5-bootstrap-owner fails on a missing privilege" time="0.571930" classname="INT04-F02b: identity_bootstrap_owner and app_bootstrap (decision log tests 9 and 10)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="M-5-bootstrap-owner fails on app_bootstrap with a table privilege" time="0.613048" classname="INT04-F02b: identity_bootstrap_owner and app_bootstrap (decision log tests 9 and 10)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="M-5-bootstrap-owner fails on app_bootstrap with a column privilege" time="0.618180" classname="INT04-F02b: identity_bootstrap_owner and app_bootstrap (decision log tests 9 and 10)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="M-5-bootstrap-owner fails on app_bootstrap with EXECUTE on another function" time="0.613099" classname="INT04-F02b: identity_bootstrap_owner and app_bootstrap (decision log tests 9 and 10)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="M-5-bootstrap-owner fails on app_bootstrap with CREATE on public" time="0.627028" classname="INT04-F02b: identity_bootstrap_owner and app_bootstrap (decision log tests 9 and 10)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="M-5-bootstrap-owner fails on app_bootstrap a member of another role" time="0.608366" classname="INT04-F02b: identity_bootstrap_owner and app_bootstrap (decision log tests 9 and 10)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="test 10: app_bootstrap cannot execute any function except identity.bootstrap_admins (extension and trigger functions aside), has no CREATE, no role, and the superuser-only functions stay refused" time="0.023512" classname="INT04-F02b: identity_bootstrap_owner and app_bootstrap (decision log tests 9 and 10)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+	</testsuite>
+	<testsuite name="R-timeouts negative control (F03-R1-02)" time="1.782499" disabled="0" errors="0" tests="5" failures="0" skipped="0" timestamp="2026-11-09T14:09:03.086Z" hostname="314866be9867">
+		<testcase name="R-timeouts fails when an audit-writing role has transaction_timeout = 0s" time="0.367129" classname="R-timeouts negative control (F03-R1-02)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="R-timeouts fails when an audit-writing role has transaction_timeout = 0ms" time="0.348574" classname="R-timeouts negative control (F03-R1-02)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="R-timeouts fails when an audit-writing role has transaction_timeout = 0000ms" time="0.352028" classname="R-timeouts negative control (F03-R1-02)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="R-timeouts fails when an audit-writing role has transaction_timeout = 61s" time="0.347110" classname="R-timeouts negative control (F03-R1-02)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="R-timeouts fails when an audit-writing role has transaction_timeout = 120s" time="0.367185" classname="R-timeouts negative control (F03-R1-02)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+	</testsuite>
+	<testsuite name="TC-AU-04 (ARCHITECTURE 21.5, SAR-10; step 2 per SA-TC-06)" time="0.060275" disabled="0" errors="0" tests="5" failures="0" skipped="0" timestamp="2026-11-09T14:09:04.938Z" hostname="314866be9867">
+		<testcase name="step 1: transaction_timeout unset (0) -> refused PA001, no row" time="0.006966" classname="TC-AU-04 (ARCHITECTURE 21.5, SAR-10; step 2 per SA-TC-06)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="step 2 (SA-TC-06): B + 1 s -> refused PA001, no row" time="0.005452" classname="TC-AU-04 (ARCHITECTURE 21.5, SAR-10; step 2 per SA-TC-06)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="step 3: app_owner -> privilege error 42501 raised before the trigger, no row" time="0.004635" classname="TC-AU-04 (ARCHITECTURE 21.5, SAR-10; step 2 per SA-TC-06)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="step 4 (positive control): at or below the bound -> accepted and written" time="0.005274" classname="TC-AU-04 (ARCHITECTURE 21.5, SAR-10; step 2 per SA-TC-06)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="production shape: the role-level 60 s of app_api and app_worker is accepted, 120 s is refused" time="0.022082" classname="TC-AU-04 (ARCHITECTURE 21.5, SAR-10; step 2 per SA-TC-06)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+	</testsuite>
+	<testsuite name="the runner against a real database" time="0.102522" disabled="0" errors="0" tests="2" failures="0" skipped="0" timestamp="2026-11-09T14:09:04.929Z" hostname="314866be9867">
+		<testcase name="applies 0001 and 0003, then rejects 0002 as out of order and leaves the schema untouched" time="0.023693" classname="the runner against a real database" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="a migration that fails at run time rolls back with its tracker row" time="0.003730" classname="the runner against a real database" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+	</testsuite>
+	<testsuite name="the single merge write guard (T1-T4 of HEAAA-190, extended by HEAAA-310)" time="1.204035" disabled="0" errors="0" tests="8" failures="0" skipped="0" timestamp="2026-11-09T14:09:05.031Z" hostname="314866be9867">
+		<testcase name="T1: a write naming a merged patient is refused with PM001 on every guarded table" time="0.169964" classname="the single merge write guard (T1-T4 of HEAAA-190, extended by HEAAA-310)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="T1: an open patient passes the guard (any later refusal is another check) on every guarded table" time="0.106140" classname="the single merge write guard (T1-T4 of HEAAA-190, extended by HEAAA-310)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="T1: a write naming a patient of another organisation is refused (42501 or PM008)" time="0.096809" classname="the single merge write guard (T1-T4 of HEAAA-190, extended by HEAAA-310)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="T2: app_owner holds no EXECUTE on the guard, the ten refused functions are gone, all 33 tables carry the trigger" time="0.081550" classname="the single merge write guard (T1-T4 of HEAAA-190, extended by HEAAA-310)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="T5: privacy.incident_patient is exempt: no guard trigger, and a merged-ID link is not refused with PM001" time="0.074282" classname="the single merge write guard (T1-T4 of HEAAA-190, extended by HEAAA-310)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="T6: patient_scope_owner holds no CREATE on clinical or privacy and no USAGE on privacy (USAGE on clinical only by A-4); the 18 M4 guard triggers keep their names" time="0.004758" classname="the single merge write guard (T1-T4 of HEAAA-190, extended by HEAAA-310)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="T3: a merge holding the root lock makes a concurrent reservation write wait; after the commit it gets PM001" time="0.518020" classname="the single merge write guard (T1-T4 of HEAAA-190, extended by HEAAA-310)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="T4: a file that leaves the guard granted to app_owner is rolled back by the runner post-check, with its tracker row" time="0.102251" classname="the single merge write guard (T1-T4 of HEAAA-190, extended by HEAAA-310)" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+	</testsuite>
+	<testsuite name="A-4 messaging definers (migrations 2203/2204): T-1..T-10 of Cybersecurity, I-10, I-11" time="3.789867" disabled="0" errors="0" tests="11" failures="0" skipped="0" timestamp="2026-11-09T14:09:06.236Z" hostname="314866be9867">
+		<testcase name="I-10: M-5-definer passes with 28 entries (25 of F03B, the two referral definers of F08d and identity.bootstrap_admins of A-6); is_creator does not exist; patient_scope_owner holds only the four participant columns" time="0.348276" classname="A-4 messaging definers (migrations 2203/2204): T-1..T-10 of Cybersecurity, I-10, I-11" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="T-1: under system, anonymous, public, webhook or an unset audience the definers return false for a real owner and never raise; the owner role reads no row" time="0.105625" classname="A-4 messaging definers (migrations 2203/2204): T-1..T-10 of Cybersecurity, I-10, I-11" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="T-2: the caller comes only from the settings; a foreign, random, NULL or unset input gives false/NULL, never an error or true" time="0.035492" classname="A-4 messaging definers (migrations 2203/2204): T-1..T-10 of Cybersecurity, I-10, I-11" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="T-3: patient_scope_owner as SET ROLE: no thread right, only the four participant columns, no write right anywhere, one policy with the principal clause" time="0.012531" classname="A-4 messaging definers (migrations 2203/2204): T-1..T-10 of Cybersecurity, I-10, I-11" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="T-4: membership alone does not widen scope; a removed member loses access at once" time="0.048999" classname="A-4 messaging definers (migrations 2203/2204): T-1..T-10 of Cybersecurity, I-10, I-11" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="T-5: the creator path (replacement of is_creator): invoker EXISTS under the thread's own policy" time="0.155250" classname="A-4 messaging definers (migrations 2203/2204): T-1..T-10 of Cybersecurity, I-10, I-11" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="T-6: patient and proxy: a proxy reads and updates nothing; a patient cannot add a staff owner to a staff thread; ineligible participants are refused" time="0.040063" classname="A-4 messaging definers (migrations 2203/2204): T-1..T-10 of Cybersecurity, I-10, I-11" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="T-7: owner and member rules; no cross-thread, no cross-organisation power" time="0.048291" classname="A-4 messaging definers (migrations 2203/2204): T-1..T-10 of Cybersecurity, I-10, I-11" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="T-8: every messaging statement class under staff, patient and system runs without &quot;infinite recursion detected in policy&quot;; the definers are not inlined; row_security on as the table owner" time="0.079020" classname="A-4 messaging definers (migrations 2203/2204): T-1..T-10 of Cybersecurity, I-10, I-11" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="T-9: catalog guards: is_creator absent (also from pg_depend and pg_policies), exactly two definers in messaging, attributes pinned, search_path not overridable" time="0.013287" classname="A-4 messaging definers (migrations 2203/2204): T-1..T-10 of Cybersecurity, I-10, I-11" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+		<testcase name="T-10 upgrade path: with 2203 applied and 2204 not, nothing depends on is_creator and messaging works; 2204 then applies; 2204 without 2203 fails (no CASCADE) and leaves the function" time="2.867763" classname="A-4 messaging definers (migrations 2203/2204): T-1..T-10 of Cybersecurity, I-10, I-11" file="/tmp/int04-r3/db/tools/db-test.mjs"/>
+	</testsuite>
+	<!-- tests 120 -->
+	<!-- suites 17 -->
+	<!-- pass 119 -->
+	<!-- fail 1 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 0 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 29127.737328 -->
+</testsuites>
