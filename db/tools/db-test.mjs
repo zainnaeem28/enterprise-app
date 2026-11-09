@@ -486,35 +486,40 @@ describe('SEC03-F13 / F09 catalog negative controls', () => {
       }
     });
   });
-  test('M-5-patient-guard fails when the guard trigger is disabled, AFTER, or INSERT-only', async () => {
-    await withAdmin(async (a) => {
-      const t = 'patient.patient_contact';
-      await a.query(`ALTER TABLE ${t} DISABLE TRIGGER patient_contact_guard_open`);
-      try {
-        assert.equal(status(await runChecks(a), 'M-5-patient-guard'), 'fail', 'disabled');
-      } finally {
-        await a.query(`ALTER TABLE ${t} ENABLE TRIGGER patient_contact_guard_open`);
-      }
-      for (const [name, def] of [
-        ['AFTER', 'AFTER INSERT OR UPDATE'],
-        ['INSERT-only', 'BEFORE INSERT'],
-      ]) {
-        await a.query(`DROP TRIGGER patient_contact_guard_open ON ${t}`);
-        await a.query(
-          `CREATE TRIGGER patient_contact_guard_open ${def} ON ${t} FOR EACH ROW EXECUTE FUNCTION patient.guard_open_patient()`,
-        );
+  // HEAAA-310 A5: the three mutations run on the original table and on clinical.note (a table moved to the single guard by 2200).
+  for (const [t, trg] of [
+    ['patient.patient_contact', 'patient_contact_guard_open'],
+    ['clinical.note', 'note_guard_open'],
+  ]) {
+    test(`M-5-patient-guard fails when the guard trigger is disabled, AFTER, or INSERT-only (${t})`, async () => {
+      await withAdmin(async (a) => {
+        await a.query(`ALTER TABLE ${t} DISABLE TRIGGER ${trg}`);
         try {
-          assert.equal(status(await runChecks(a), 'M-5-patient-guard'), 'fail', name);
+          assert.equal(status(await runChecks(a), 'M-5-patient-guard'), 'fail', 'disabled');
         } finally {
-          await a.query(`DROP TRIGGER patient_contact_guard_open ON ${t}`);
-          await a.query(
-            `CREATE TRIGGER patient_contact_guard_open BEFORE INSERT OR UPDATE ON ${t} FOR EACH ROW EXECUTE FUNCTION patient.guard_open_patient()`,
-          );
+          await a.query(`ALTER TABLE ${t} ENABLE TRIGGER ${trg}`);
         }
-      }
-      assert.equal(status(await runChecks(a), 'M-5-patient-guard'), 'pass', 'restored');
+        for (const [name, def] of [
+          ['AFTER', 'AFTER INSERT OR UPDATE'],
+          ['INSERT-only', 'BEFORE INSERT'],
+        ]) {
+          await a.query(`DROP TRIGGER ${trg} ON ${t}`);
+          await a.query(
+            `CREATE TRIGGER ${trg} ${def} ON ${t} FOR EACH ROW EXECUTE FUNCTION patient.guard_open_patient()`,
+          );
+          try {
+            assert.equal(status(await runChecks(a), 'M-5-patient-guard'), 'fail', name);
+          } finally {
+            await a.query(`DROP TRIGGER ${trg} ON ${t}`);
+            await a.query(
+              `CREATE TRIGGER ${trg} BEFORE INSERT OR UPDATE ON ${t} FOR EACH ROW EXECUTE FUNCTION patient.guard_open_patient()`,
+            );
+          }
+        }
+        assert.equal(status(await runChecks(a), 'M-5-patient-guard'), 'pass', 'restored');
+      });
     });
-  });
+  }
   test('M-5-setting-grants fails when app_api can write pre_auth or UPDATE every column (N-3)', async () => {
     await withAdmin(async (a) => {
       for (const grant of ['INSERT (pre_auth)', 'UPDATE (pre_auth)', 'UPDATE']) {
@@ -720,7 +725,7 @@ describe('the runner against a real database', () => {
 });
 
 // INT02-F02 (HEAAA-186), ruling HEAAA-190, ARCHITECTURE 21.2 point 5 and 21.6 (A-3): one merge write guard for every module.
-describe('the single merge write guard (T1-T4 of the HEAAA-190 ruling)', () => {
+describe('the single merge write guard (T1-T4 of HEAAA-190, extended by HEAAA-310)', () => {
   const MERGED = '00000000-0000-7000-8000-0000000000c1';
   const OPEN = '00000000-0000-7000-8000-0000000000c2';
   const RACE = '00000000-0000-7000-8000-0000000000c3';
@@ -742,6 +747,25 @@ describe('the single merge write guard (T1-T4 of the HEAAA-190 ruling)', () => {
     'telehealth.location_confirmation',
     'notifications.staff_alert',
     'notifications.staff_alert_event',
+    // HEAAA-310 (INT03-F03): the 18 M4 tables, moved to the single guard by 2200.
+    'clinical.problem',
+    'clinical.allergy',
+    'clinical.medication_statement',
+    'clinical.vital_sign',
+    'clinical.questionnaire_response',
+    'clinical.triage_assessment',
+    'clinical.referral',
+    'clinical.consent_exception',
+    'clinical.follow_up',
+    'clinical.encounter',
+    'clinical.note',
+    'clinical.note_cosign',
+    'clinical.note_addendum',
+    'privacy.request',
+    'privacy.export_package',
+    'messaging.thread',
+    'messaging.message',
+    'messaging.task',
   ];
   const insertPatient = (c, id, org, extra = '') =>
     c.query(
@@ -851,7 +875,7 @@ describe('the single merge write guard (T1-T4 of the HEAAA-190 ruling)', () => {
     );
   });
 
-  test('T2: app_owner holds no EXECUTE on the guard, the five refused functions are gone, all 15 tables carry the trigger', async () => {
+  test('T2: app_owner holds no EXECUTE on the guard, the ten refused functions are gone, all 33 tables carry the trigger', async () => {
     const acl = await adm.query(
       `SELECT count(*)::int AS n FROM pg_proc p CROSS JOIN LATERAL aclexplode(p.proacl) a JOIN pg_roles r ON r.oid = a.grantee
        WHERE p.oid = 'patient.guard_open_patient()'::regprocedure AND r.rolname = 'app_owner'`,
@@ -863,6 +887,11 @@ describe('the single merge write guard (T1-T4 of the HEAAA-190 ruling)', () => {
       'scheduling.flow_guard_open_patient',
       'scheduling.guard_open_patient',
       'scheduling.guard_open_patient_at_commit',
+      'clinical.guard_open_patient',
+      'clinical.frontdoor_guard_open_patient',
+      'clinical.notes_guard_open_patient',
+      'privacy.guard_open_patient',
+      'messaging.guard_open_patient',
     ]) {
       const f = await adm.query(
         "SELECT count(*)::int AS n FROM pg_proc WHERE oid::regproc::text = $1 OR (pronamespace::regnamespace::text || '.' || proname) = $1",
@@ -878,11 +907,71 @@ describe('the single merge write guard (T1-T4 of the HEAAA-190 ruling)', () => {
     const have = new Set(trig.rows.map((r) => r.tbl));
     for (const t of guarded) assert.ok(have.has(t), `${t} lacks the trigger`);
     const defs = await adm.query(
-      `SELECT count(*)::int AS n FROM pg_proc WHERE prosecdef AND pronamespace::regnamespace::text IN ('scheduling','documents','telehealth') AND proname LIKE '%guard_open_patient%'`,
+      `SELECT count(*)::int AS n FROM pg_proc WHERE prosecdef AND pronamespace::regnamespace::text IN ('scheduling','documents','telehealth','clinical','privacy','messaging') AND proname LIKE '%guard_open_patient%'`,
     );
     assert.equal(defs.rows[0].n, 0);
     const { definerInventory } = await import('./catalog-lists.mjs');
     assert.equal(definerInventory.length, 23, 'definerInventory has the 23 entries of A-3');
+  });
+
+  test('T5: privacy.incident_patient is exempt: no guard trigger, and a merged-ID link is not refused with PM001', async () => {
+    const { patientGuardExempt } = await import('./catalog-lists.mjs');
+    assert.ok(patientGuardExempt.includes('privacy.incident_patient'));
+    const trig = await adm.query(
+      `SELECT count(*)::int AS n FROM pg_trigger WHERE tgrelid = 'privacy.incident_patient'::regclass AND NOT tgisinternal
+         AND tgfoid = 'patient.guard_open_patient()'::regprocedure`,
+    );
+    assert.equal(trig.rows[0].n, 0);
+    // inGuardTxn only disables triggers on `guarded`, so disable incident_patient_guard (its only BEFORE INSERT trigger) here.
+    await inGuardTxn(async (c) => {
+      await c.query('ALTER TABLE privacy.incident_patient DISABLE TRIGGER incident_patient_guard');
+      const code = await attempt(c, 'privacy.incident_patient', MERGED);
+      assert.notEqual(code, 'PM001', 'a merged ID is not refused by the merge guard');
+    });
+  });
+
+  test('T6: patient_scope_owner holds no USAGE or CREATE on clinical or privacy; the 18 M4 guard triggers keep their names', async () => {
+    for (const schema of ['clinical', 'privacy'])
+      for (const priv of ['USAGE', 'CREATE']) {
+        const r = await adm.query('SELECT has_schema_privilege($1, $2, $3) AS ok', [
+          'patient_scope_owner',
+          schema,
+          priv,
+        ]);
+        assert.equal(r.rows[0].ok, false, `${schema} ${priv}`);
+      }
+    const names = {
+      'clinical.problem': 'problem_guard_open',
+      'clinical.allergy': 'allergy_guard_open',
+      'clinical.medication_statement': 'medication_guard_open',
+      'clinical.vital_sign': 'vital_sign_guard_open',
+      'clinical.questionnaire_response': 'questionnaire_response_guard_open',
+      'clinical.triage_assessment': 'triage_assessment_guard_open',
+      'clinical.referral': 'referral_guard_open',
+      'clinical.consent_exception': 'consent_exception_guard_open',
+      'clinical.follow_up': 'follow_up_guard_open',
+      'clinical.encounter': 'encounter_guard_open',
+      'clinical.note': 'note_guard_open',
+      'clinical.note_cosign': 'note_cosign_guard_open',
+      'clinical.note_addendum': 'note_addendum_guard_open',
+      'privacy.request': 'request_guard_open',
+      'privacy.export_package': 'export_package_guard_open',
+      'messaging.thread': 'thread_guard_open',
+      'messaging.message': 'message_guard_open',
+      'messaging.task': 'task_guard_open',
+    };
+    for (const [tbl, name] of Object.entries(names)) {
+      const r = await adm.query(
+        `SELECT t.tgname FROM pg_trigger t WHERE t.tgrelid = $1::regclass AND NOT t.tgisinternal
+           AND t.tgfoid = 'patient.guard_open_patient()'::regprocedure`,
+        [tbl],
+      );
+      assert.deepEqual(
+        r.rows.map((x) => x.tgname),
+        [name],
+        tbl,
+      );
+    }
   });
 
   test('T3: a merge holding the root lock makes a concurrent reservation write wait; after the commit it gets PM001', async () => {

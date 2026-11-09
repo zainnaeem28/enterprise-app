@@ -72,6 +72,7 @@ merge). Test: `notes.dbtest.ts` "merge participant and export part".
 4. `note.submitted_for_cosign_at` is new; `cosign_required_from` holds the supervisor's principal ID.
 5. A trainee note waiting for co-signature counts as "submitted" for completing the encounter and for the reminder. Decision for the
    Architect to confirm (ST-01 says "note signed or deferral recorded").
+6. `clinical.notes_guard_open_patient` (own copy of the merge guard) is superseded by the HEAAA-310 ruling: migrations 2200–2202 attach `patient.guard_open_patient` and drop the copy.
 
 ## Limitations and requests to other owners (not changed here: outside the allowed paths)
 

@@ -69,6 +69,8 @@ export const patientGuardExempt = [
   'audit.btg_grant',
   // BE-08: derived, definer-written; the derivation must work for merged IDs too (SHARED-BOUNDARIES 6.6).
   'patient.staff_scope',
+  // ARCHITECTURE 22.14 table row and 22.16 note (G2, bd6de63): records history; HEAAA-310 ruling.
+  'privacy.incident_patient',
 ];
 /** SECURITY DEFINER functions of SHARED-BOUNDARIES 6.2 and ARCHITECTURE 21.6 (schema.name). Empty: none exist yet. */
 export const definerInventory = [
@@ -100,7 +102,7 @@ export const definerInventory = [
   'scheduling.expire_holds',
   // ARCHITECTURE amendment A-3 / SHARED-BOUNDARIES SB-A2 (HEAAA-190): BE-14 (migration 1403) is accepted. check_twin is above.
   // The refused module copies of the merge guard (documents/telehealth.guard_open_patient, scheduling.flow_guard_open_patient,
-  // scheduling.guard_open_patient and ..._at_commit) are dropped by migrations 1600/1601 and must not be listed.
+  // scheduling.guard_open_patient and ..._at_commit) are dropped by migrations 1604/1605 (renumbered by INT-03), and the M4 copies by 2201; none may be listed.
   'scheduling.replace_busy_blocks',
 ];
 
@@ -147,7 +149,7 @@ export const publicPolicies = [
 
 /**
  * SEC03-F13 item 1: the functions that may serve as the merge write guard. Only patient.guard_open_patient (A-2/A-3: one
- * function for every module; the scheduling copy is removed by migration 1600/1601).
+ * function for every module; the scheduling copy is removed by migrations 1604/1605 (renumbered by INT-03), and the M4 copies by 2201).
  */
 export const patientGuardFunctions = ['patient.guard_open_patient'];
 
