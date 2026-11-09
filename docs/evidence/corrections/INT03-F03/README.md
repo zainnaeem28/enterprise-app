@@ -22,3 +22,14 @@ Base: `1cd3cbc` (HEAAA-133 evidence commit, candidate `c48db50`). Design: HEAAA-
 
 ## Not run (needs PostgreSQL 17)
 `integration-db.sh` db-foundation suite, `node --test db/tools/db-test.mjs`, kernel rules/plan tests against a DB, clinical/privacy/messaging api DB suites; the before/after failing list. Expected per ruling: `M-5-patient-guard` and the SEC03-F13 baseline pass; `M-5-definer` still lists the three `messaging.is_*` functions until Part B (I-9). These are predictions, not results.
+
+## DB verification (added after PostgreSQL 17 became reachable via EHR_TEST_ADMIN_URL)
+
+Command: `INTEGRATION_SKIP_N_MINUS_1=true bash scripts/ci/migration-check/integration-db.sh` on candidate `08a2a4b`; base `1cd3cbc` run in a separate worktree (api rebuilt from base).
+
+- Migrations from empty: all 88 apply, including 2200-2202.
+- db-foundation: 43 tests, 1 failure (catalog checks). Base: M-3, M-4-reporting, M-5-patient-guard, M-5-definer fail. After: **M-5-patient-guard passes**; the five `*.guard_open_patient` copies no longer appear in M-5-definer. Remaining failures are not guard-related: M-3 and M-4-reporting (reporting.ops_* views for reporting_ro) and M-5-definer for `messaging.is_participant/is_owner/is_creator` (not in the definer inventory). **M-5-definer therefore does not fully pass**; those need a catalog-list/inventory owner outside this ticket's ruling.
+- kernel 23/23, worker 78/78 pass.
+- api: 878 tests, 58 failures **identical to base** (raw/api-failing-before.txt vs api-failing-after.txt; no fixed, no new). Causes seen: patient.merge_participant_missing, privacy.contributor_missing (composition, other findings).
+- Negative control and T5/T6 run inside db-foundation and passed (only the catalog test failed).
+- n-minus-1 upgrade path not run (skipped).
