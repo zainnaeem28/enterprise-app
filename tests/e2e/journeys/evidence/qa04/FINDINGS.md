@@ -1,8 +1,8 @@
 # QA-04 findings (automated cases, ENV-INT/ci, fresh stack)
 
 Run: `node --test --test-concurrency=1 tests/api/booking/*.test.mjs tests/api/clinical/*.test.mjs` on the exact commit named in the
-submission comment. Raw: `run-spec.txt`, `run-junit.xml` in this folder. 53 tests: 47 pass, 6 fail. Every failure is a product
-defect with a root cause below (none is a test defect). Stable IDs `QA04-F01..F06`; round 1 (cumulative round count = 1).
+submission comment. Raw: `run-spec.txt`, `run-junit.xml` in this folder. 53 tests: 46 pass, 7 fail. Every failure is a product
+defect or an unresolved spec conflict with a cause below (none is a test defect). Stable IDs `QA04-F01..F07` (F06 was an observation; its evidence is now only this note). Tests at commit `41700c4`; round 2 (cumulative round count = 2; reviewer round 1 findings QA04-R01..R03 addressed).
 
 | ID | Cases | Sev | Defect (root cause) | Evidence |
 | --- | --- | --- | --- | --- |
@@ -11,9 +11,9 @@ defect with a root cause below (none is a test defect). Stable IDs `QA04-F01..F0
 | QA04-F03 | TC-BK-11 (RA-R1-02, J-04) | P1 | Front desk cannot book for a patient: `POST /holds` answers `403` for a `front_desk` session with `scheduling.booking.manage`. The staff variants of the booking routes are not mounted (`scheduling/core/controller.ts` header, "open item O-1"). | `403`, audit `denied proxy.route`. |
 | QA04-F04 | TC-BK-01a (RA-R1-02, AC-01) | P1 | `GET /appointments/{reservationId}/calendar.ics` (documented in ARCHITECTURE 29.3) is not implemented: `404`. The `.ics` template exists but nothing serves it. | `404 kernel.not_found`. |
 | QA04-F05 | TC-CAL-05 (RA-R1-04) | P1 | The calendar-sync controllers are not mounted in the API: `POST /webhooks/google/calendar` answers `404` (a bad token should be `401`) and `GET /calendar-link` answers `404` unauthenticated (no `/calendar-link*` routes). `createCalendarControllers` is exported but not referenced by `composition.ts`. A doctor cannot link a calendar. | `404` on both; grep of composition. |
-| QA04-F06 | (TC-BK-13 observation) | P3 | On the long-running stack (many thousand rows) one of 100 parallel holds by the same patient answered `404 kernel.not_found` instead of `409 slot_taken` (2 of 3 runs). Not reproduced on a fresh stack (0 of 4 runs). Logged, not blocking; to be re-checked under TC-NFR load. | earlier run output (not retained) |
+| QA04-F07 | TC-BK-15 (SAR-09, BR-02) | P1 | TEST-CASES says "exactly 2 succeed; no more" for cap 2; the product admits 1 + cap = 3 (ARCH 22.x reads the cap as EXTRA capacity). Spec conflict, not settled by any decision-log entry, so the case asserts the written expectation and is reported FAILED, not passed. Needs a Solution Architect/Product Manager decision (2 vs 1+cap), independently reviewed, then either the test text or the product changes. | `TC-BK-15 ... exactly 2 succeed` fails with 3 winners in `run-spec.txt`. |
 
-(F06 is an observation, not one of the 6 failing tests.)
+Note (no ID): on the long-running stack one of 100 parallel same-patient holds answered 404 instead of 409 in 2 of 3 earlier runs; 0 of 4 on a fresh stack and not reproduced in the latest fresh run. Output of the earlier runs was not retained; not a finding, to be re-checked under TC-NFR load.
 
 ## Not executed here, and why (never counted as passed)
 
