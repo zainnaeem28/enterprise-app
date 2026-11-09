@@ -2,13 +2,16 @@
 // (ARCHITECTURE 22.16, 25.4, 38.2 items 2 and 11; SHARED-BOUNDARIES 9.2; TC-MG-02..07, 11..13).
 //   EHR_TEST_ADMIN_URL=postgres://postgres@host:5432/postgres node --test dist/src/modules/patient/merge/merge.dbtest.js
 // The URL names a superuser on a throwaway server (synthetic data only). Missing configuration FAILS; nothing skips.
+import {
+  REGISTERED_MERGE_MODULES,
+  newRegisteredRegistries,
+} from '../../../register-participants.js';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { after, before, describe, test } from 'node:test';
 import { ParticipantRegistries } from '@ehr/kernel';
 import type { MergeParticipant, ScopeSettings } from '@ehr/kernel';
 import { registerAllParticipants } from '../../../composition.js';
-import { registerIdentityParticipants } from '../../identity/index.js';
 import { PATIENT_HOST, confirmedBooking, patientAccount, seedPrincipal } from '../testkit.js';
 import {
   A1,
@@ -601,8 +604,7 @@ describe('the execute job and the conflict rules (22.16, 38.2 items 2 and 11; TC
     const S = await patient();
     const D = await patient();
     await notification(D, 'queued', 'tc-missing');
-    const regs = new ParticipantRegistries();
-    registerIdentityParticipants(regs); // notifications is NOT registered
+    const regs = newRegisteredRegistries({ without: ['notifications'] }); // negative control: notifications alone is missing
     const rid = (await m.request(m.lead, S, D)).json()['id'] as string;
     await m.approve(m.mr, rid);
     const res = await m.run(rid, { registries: regs });
@@ -765,7 +767,7 @@ describe('the execute job and the conflict rules (22.16, 38.2 items 2 and 11; TC
         .mergeParticipants()
         .map((p) => p.module)
         .sort(),
-      ['documents', 'identity', 'notifications', 'scheduling', 'telehealth'],
+      [...REGISTERED_MERGE_MODULES].sort(),
     );
     const r = await m.request(m.lead, S, D);
     const rid = r.json()['id'] as string;
@@ -782,7 +784,16 @@ describe('the execute job and the conflict rules (22.16, 38.2 items 2 and 11; TC
       'patient.duplicate_flag',
       ...regs.mergeParticipants().flatMap((p) => [...p.tables]),
     ];
-    for (const t of expected) assert.ok(c[t], `${t} reports counts`);
+    for (const t of expected) {
+      assert.ok(c[t], `${t} reports counts`);
+      // INT03-F04: across every registered participant, every row found is re-pointed, resolved or kept - none is lost.
+      const k = c[t] as Record<string, number>;
+      assert.equal(
+        k['found'],
+        (k['repointed'] ?? 0) + (k['resolved'] ?? 0) + (k['kept'] ?? 0),
+        `${t}: found = repointed + resolved + kept`,
+      );
+    }
     assert.deepEqual(c['notifications.staff_alert'], {
       found: 3,
       repointed: 2,

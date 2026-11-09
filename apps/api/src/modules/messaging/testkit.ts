@@ -3,13 +3,10 @@
 // 2000-2002), the real Nest application with the identity guard, the messaging, merge and privacy controllers, the real audit service,
 // the real queue, seeded sessions and the REAL participants of identity, notifications, documents, scheduling, clinical, privacy and
 // messaging for the merge. Synthetic data only.
+import { newRegisteredRegistries } from '../../register-participants.js';
 import { randomUUID } from 'node:crypto';
 import { JobRegistry, KernelDb, ParticipantRegistries, Queue, syncTaskTypes } from '@ehr/kernel';
 import type { ScopeSettings, Tx } from '@ehr/kernel';
-import { registerNotesParticipants } from '../clinical/notes/index.js';
-import { registerDocumentsParticipants } from '../documents/index.js';
-import { registerIdentityParticipants } from '../identity/index.js';
-import { registerNotificationsParticipants } from '../notifications/index.js';
 import { OrganisationService } from '../organisation/index.js';
 import {
   createMergeControllers,
@@ -41,12 +38,9 @@ import {
 } from '../patient/testkit.js';
 import type { Kit, Resp, SeededSession } from '../patient/testkit.js';
 import { PRIVACY_JOBS } from '../privacy/jobs.js';
-import { registerPrivacyParticipants } from '../privacy/merge.js';
 import { createPrivacy } from '../privacy/runtime.js';
 import { SignedPackageUrls } from '../privacy/ports.js';
-import { registerSchedulingFlowParticipants } from '../scheduling/flow/merge.js';
 import { MESSAGING_JOBS, registerMessagingHandlers } from './jobs.js';
-import { registerMessagingParticipants } from './merge.js';
 import { createMessaging } from './runtime.js';
 import type { Messaging } from './runtime.js';
 import { uuidv7 } from './ids.js';
@@ -113,15 +107,7 @@ export interface MessagingKit {
 }
 
 export function buildRegistries(): ParticipantRegistries {
-  const r = new ParticipantRegistries();
-  registerIdentityParticipants(r);
-  registerNotificationsParticipants(r);
-  registerDocumentsParticipants(r);
-  registerSchedulingFlowParticipants(r);
-  registerNotesParticipants(r);
-  registerPrivacyParticipants(r);
-  registerMessagingParticipants(r);
-  return r;
+  return newRegisteredRegistries();
 }
 
 export async function setupMessaging(name: string): Promise<MessagingKit> {

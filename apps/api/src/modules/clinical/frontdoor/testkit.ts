@@ -3,16 +3,11 @@
 // pipeline (including 1700-1702), the real Nest application with the identity guard, the chart's, the booking core's, the flow's and
 // this module's controllers, the real alert service, the real queue (task types synced), seeded sessions and a real PostgreSQL 17.
 // Synthetic data only. The ports are `createFrontdoorPorts` over the real services: no fake stands in for another module.
+import { newRegisteredRegistries } from '../../../register-participants.js';
 import { randomUUID } from 'node:crypto';
 import { JobRegistry, KernelDb, ParticipantRegistries, Queue, syncTaskTypes } from '@ehr/kernel';
 import type { ScopeSettings, Tx } from '@ehr/kernel';
-import { registerDocumentsParticipants } from '../../documents/index.js';
-import { registerIdentityParticipants } from '../../identity/index.js';
-import {
-  NOTIFICATIONS_JOBS,
-  NotificationService,
-  registerNotificationsParticipants,
-} from '../../notifications/index.js';
+import { NOTIFICATIONS_JOBS, NotificationService } from '../../notifications/index.js';
 import { ALERT_JOBS } from '../../notifications/alerts/jobs.js';
 import { AlertService } from '../../notifications/alerts/service.js';
 import { createAlertsController } from '../../notifications/alerts/controller.js';
@@ -69,7 +64,6 @@ import type { ChartAuditPort } from '../chart/audit-port.js';
 import { createFrontdoorPorts } from './adapters.js';
 import type { FrontdoorPorts } from './ports.js';
 import { FRONTDOOR_JOBS, registerFrontdoorHandlers } from './jobs.js';
-import { registerFrontdoorParticipants } from './index.js';
 import { createClinicalFrontdoor } from './runtime.js';
 import type { ClinicalFrontdoor } from './runtime.js';
 
@@ -384,14 +378,7 @@ async function finish(
   };
   await worker.withScope(workerScope, (tx) => org.applySettingDefaults(tx, undefined));
 
-  const regs = new ParticipantRegistries();
-  registerIdentityParticipants(regs);
-  registerNotificationsParticipants(regs);
-  registerDocumentsParticipants(regs);
-  // The flow's participant covers the booking core's table as well; the clinical one composes the chart's part and this ticket's.
-  const { registerSchedulingFlowParticipants } = await import('../../scheduling/flow/merge.js');
-  registerSchedulingFlowParticipants(regs);
-  registerFrontdoorParticipants(regs);
+  const regs = newRegisteredRegistries();
 
   const lead = await (async () => {
     const p = await seedPrincipal(k, 'google', {

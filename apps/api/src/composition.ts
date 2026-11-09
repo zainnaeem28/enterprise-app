@@ -3,8 +3,8 @@
 // patient_id is covered by none. The patient module's own participant is not registered: the executor runs it first.
 // Scheduling registers through the flow participant INSTEAD of the booking core's (it covers the core's tables too).
 import { createHmac } from 'node:crypto';
-import { defaultRegistries, JobRegistry, Queue } from '@ehr/kernel';
-import type { JobType, KernelDb, Logger, ParticipantRegistries, ScopeSettings } from '@ehr/kernel';
+import { JobRegistry, Queue } from '@ehr/kernel';
+import type { JobType, KernelDb, Logger, ScopeSettings } from '@ehr/kernel';
 import type { Type } from '@nestjs/common';
 import { createPatientCliniciansControllers } from './clinicians.controller.js';
 import type { IdentityEnv } from './identity-env.js';
@@ -32,13 +32,11 @@ import { AlertService, ALERT_JOBS } from './modules/notifications/alerts/index.j
 import { createPrivacy, PRIVACY_JOBS } from './modules/privacy/index.js';
 import type { PackageStorePort } from './modules/privacy/index.js';
 import { createReporting, REPORTING_JOBS } from './modules/reporting/index.js';
-import { registerDocumentsParticipants } from './modules/documents/index.js';
 import {
   createIdentity,
   GoogleRealmAdapter,
   IDENTITY_JOBS,
   OidcPatientAdapter,
-  registerIdentityParticipants,
   requireAuthContext,
 } from './modules/identity/index.js';
 import { createPatient, MERGE_JOBS, patientInScope } from './modules/patient/index.js';
@@ -66,20 +64,8 @@ import type { PrevisitPort } from './modules/scheduling/flow/types.js';
 import type { ClinicalFrontdoor } from './modules/clinical/frontdoor/index.js';
 import { createCatalogueControllers, OrganisationService } from './modules/organisation/index.js';
 import { isConsentTemplatePublished } from './modules/organisation/consent-template-port.js';
-import { registerNotificationsParticipants } from './modules/notifications/index.js';
-import { registerSchedulingFlowParticipants } from './modules/scheduling/flow/index.js';
-import { registerTelehealthParticipants } from './modules/telehealth/index.js';
 
-/** Called once per registry; a second call is a RegistryError. */
-export function registerAllParticipants(
-  registries: ParticipantRegistries = defaultRegistries,
-): void {
-  registerIdentityParticipants(registries);
-  registerNotificationsParticipants(registries);
-  registerSchedulingFlowParticipants(registries);
-  registerTelehealthParticipants(registries);
-  registerDocumentsParticipants(registries);
-}
+export { registerAllParticipants } from './register-participants.js';
 
 /** The package store's presigner is delivered with the bucket and the KMS key (C-01); until then a download link is refused, never faked. */
 export const refusingPackageStore: PackageStorePort = {

@@ -1,0 +1,8 @@
+api.xml | TODO (BE-08/INT-02): the real accept path without any stand-in
+api.xml | every clinical table forces RLS and names its roles; no application role owns one
+api.xml | the catalogue has the expected shape and every patient table holds a row for patient A and
+api.xml | the feed carries no patient data: no patient ID of any alert or grant appears
+api.xml | the repository catalog check passes, or fails only on the allow-lists/M-3 clause db/tools 
+db-foundation.xml | M-5-patient-guard fails when the guard trigger is disabled, AFTER, or INSERT-only
+db-foundation.xml | catalog checks M-1..M-5 and the role checks all pass
+db-foundation.xml | the positive baseline: the four new checks pass on the migrated database

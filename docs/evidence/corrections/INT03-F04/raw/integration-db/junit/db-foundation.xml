@@ -1,0 +1,815 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testsuite name="migrations from empty on PostgreSQL 17" time="1.977178" disabled="0" errors="0" tests="4" failures="1" skipped="0" timestamp="2026-11-09T02:35:37.792Z" hostname="314866be9867">
+		<testcase name="a second run applies nothing" time="0.138503" classname="migrations from empty on PostgreSQL 17" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs"/>
+		<testcase name="catalog checks M-1..M-5 and the role checks all pass" time="0.272434" classname="migrations from empty on PostgreSQL 17" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs" failure="[&#10;  {&#10;    &quot;id&quot;: &quot;M-3&quot;,&#10;    &quot;title&quot;: &quot;policies target only known roles; identity_signin_ro and directory_ro hold no table-level SELECT (column grants only)&quot;,&#10;    &quot;status&quot;: &quot;fail&quot;,&#10;    &quot;violations&quot;: [&#10;      {&#10;        &quot;table&quot;: &quot;reporting.ops_integration_health&quot;,&#10;        &quot;policyname&quot;: &quot;ops_integration_health_ro_select&quot;,&#10;        &quot;role&quot;: &quot;reporting_ro&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;reporting.ops_queue&quot;,&#10;        &quot;policyname&quot;: &quot;ops_queue_ro_select&quot;,&#10;        &quot;role&quot;: &quot;reporting_ro&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;reporting.ops_calendar_staleness&quot;,&#10;        &quot;policyname&quot;: &quot;ops_calendar_staleness_ro_select&quot;,&#10;        &quot;role&quot;: &quot;reporting_ro&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;reporting.ops_alert_backlog&quot;,&#10;        &quot;policyname&quot;: &quot;ops_alert_backlog_ro_select&quot;,&#10;        &quot;role&quot;: &quot;reporting_ro&quot;&#10;      }&#10;    ]&#10;  },&#10;  {&#10;    &quot;id&quot;: &quot;M-4-reporting&quot;,&#10;    &quot;title&quot;: &quot;reporting_ro holds a privilege on nothing outside the C0/C1 list (tables, views, columns)&quot;,&#10;    &quot;status&quot;: &quot;fail&quot;,&#10;    &quot;violations&quot;: [&#10;      {&#10;        &quot;object&quot;: &quot;reporting.ops_integration_health&quot;&#10;      },&#10;      {&#10;        &quot;object&quot;: &quot;reporting.ops_queue&quot;&#10;      },&#10;      {&#10;        &quot;object&quot;: &quot;reporting.ops_calendar_staleness&quot;&#10;      },&#10;      {&#10;        &quot;object&quot;: &quot;reporting.ops_alert_backlog&quot;&#10;      }&#10;    ]&#10;  },&#10;  {&#10;    &quot;id&quot;: &quot;M-5-patient-guard&quot;,&#10;    &quot;title&quot;: &quot;every table with a patient_id column has the merge write guard (an enabled BEFORE INSERT OR UPDATE row trigger on a listed guard function) or is exempt&quot;,&#10;    &quot;status&quot;: &quot;fail&quot;,&#10;    &quot;violations&quot;: [&#10;      {&#10;        &quot;table&quot;: &quot;clinical.problem&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;clinical.allergy&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;clinical.medication_statement&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;clinical.vital_sign&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;clinical.questionnaire_response&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;clinical.triage_assessment&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;clinical.referral&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;clinical.consent_exception&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;clinical.follow_up&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;clinical.encounter&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;clinical.note&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;clinical.note_cosign&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;clinical.note_addendum&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;privacy.request&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;privacy.export_package&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;privacy.incident_patient&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;messaging.thread&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;messaging.message&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;messaging.task&quot;&#10;      }&#10;    ]&#10;  },&#10;  {&#10;    &quot;id&quot;: &quot;M-5-definer&quot;,&#10;    &quot;title&quot;: &quot;every SECURITY DEFINER function is in the inventory, has a fixed search_path and a NOLOGIN owner&quot;,&#10;    &quot;status&quot;: &quot;fail&quot;,&#10;    &quot;violations&quot;: [&#10;      {&#10;        &quot;function&quot;: &quot;messaging.is_participant(uuid)&quot;,&#10;        &quot;in_inventory&quot;: false,&#10;        &quot;fixed_search_path&quot;: true,&#10;        &quot;owner&quot;: &quot;patient_scope_owner&quot;&#10;      },&#10;      {&#10;        &quot;function&quot;: &quot;messaging.is_owner(uuid)&quot;,&#10;        &quot;in_inventory&quot;: false,&#10;        &quot;fixed_search_path&quot;: true,&#10;        &quot;owner&quot;: &quot;patient_scope_owner&quot;&#10;      },&#10;      {&#10;        &quot;function&quot;: &quot;messaging.is_creator(uuid)&quot;,&#10;        &quot;in_inventory&quot;: false,&#10;        &quot;fixed_search_path&quot;: true,&#10;        &quot;owner&quot;: &quot;patient_scope_owner&quot;&#10;      },&#10;      {&#10;        &quot;function&quot;: &quot;messaging.guard_open_patient()&quot;,&#10;        &quot;in_inventory&quot;: false,&#10;        &quot;fixed_search_path&quot;: true,&#10;        &quot;owner&quot;: &quot;patient_scope_owner&quot;&#10;      },&#10;      {&#10;        &quot;function&quot;: &quot;clinical.guard_open_patient()&quot;,&#10;        &quot;in_inventory&quot;: false,&#10;        &quot;fixed_search_path&quot;: true,&#10;        &quot;owner&quot;: &quot;patient_scope_owner&quot;&#10;      },&#10;      {&#10;        &quot;function&quot;: &quot;clinical.frontdoor_guard_open_patient()&quot;,&#10;        &quot;in_inventory&quot;: false,&#10;        &quot;fixed_search_path&quot;: true,&#10;        &quot;owner&quot;: &quot;patient_scope_owner&quot;&#10;      },&#10;      {&#10;        &quot;function&quot;: &quot;clinical.notes_guard_open_patient()&quot;,&#10;        &quot;in_inventory&quot;: false,&#10;        &quot;fixed_search_path&quot;: true,&#10;        &quot;owner&quot;: &quot;patient_scope_owner&quot;&#10;      },&#10;      {&#10;        &quot;function&quot;: &quot;privacy.guard_open_patient()&quot;,&#10;        &quot;in_inventory&quot;: false,&#10;        &quot;fixed_search_path&quot;: true,&#10;        &quot;owner&quot;: &quot;patient_scope_owner&quot;&#10;      }&#10;    ]&#10;  }&#10;]&#10;+ actual - expected&#10;&#10;+ [&#10;+   {&#10;+     id: 'M-3',&#10;+     status: 'fail',&#10;+     title: 'policies target only known roles; identity_signin_ro and directory_ro hold no table-level SELECT (column grants only)',&#10;+     violations: [&#10;+       {&#10;+         policyname: 'ops_integration_health_ro_select',&#10;+         role: 'reporting_ro',&#10;+         table: 'reporting.ops_integration_health'&#10;+       },&#10;+       {&#10;+         policyname: 'ops_queue_ro_select',&#10;+         role: 'reporting_ro',&#10;+         table: 'reporting.ops_queue'&#10;+       },&#10;+       {&#10;+         policyname: 'ops_calendar_staleness_ro_select',&#10;+         role: 'reporting_ro',&#10;+         table: 'reporting.ops_calendar_staleness'&#10;+       },&#10;+       {&#10;+         policyname: 'ops_alert_backlog_ro_select',&#10;+         role: 'reporting_ro',&#10;+         table: 'reporting.ops_alert_backlog'&#10;+       }&#10;+     ]&#10;+   },&#10;+   {&#10;+     id: 'M-4-reporting',&#10;+     status: 'fail',&#10;+     title: 'reporting_ro holds a privilege on nothing outside the C0/C1 list (tables, views, columns)',&#10;+     violations: [&#10;+       {&#10;+         object: 'reporting.ops_integration_health'&#10;+       },&#10;+       {&#10;+         object: 'reporting.ops_queue'&#10;+       },&#10;+       {&#10;+         object: 'reporting.ops_calendar_staleness'&#10;+       },&#10;+       {&#10;+         object: 'reporting.ops_alert_backlog'&#10;+       }&#10;+     ]&#10;+   },&#10;+   {&#10;+     id: 'M-5-patient-guard',&#10;+     status: 'fail',&#10;+     title: 'every table with a patient_id column has the merge write guard (an enabled BEFORE INSERT OR UPDATE row trigger on a listed guard function) or is exempt',&#10;+     violations: [&#10;+       {&#10;+         table: 'clinical.problem'&#10;+       },&#10;+       {&#10;+         table: 'clinical.allergy'&#10;+       },&#10;+       {&#10;+         table: 'clinical.medication_statement'&#10;+       },&#10;+       {&#10;+         table: 'clinical.vital_sign'&#10;+       },&#10;+       {&#10;+         table: 'clinical.questionnaire_response'&#10;+       },&#10;+       {&#10;+         table: 'clinical.triage_assessment'&#10;+       },&#10;+       {&#10;+         table: 'clinical.referral'&#10;+       },&#10;+       {&#10;+         table: 'clinical.consent_exception'&#10;+       },&#10;+       {&#10;+         table: 'clinical.follow_up'&#10;+       },&#10;+       {&#10;+         table: 'clinical.encounter'&#10;+       },&#10;+       {&#10;+         table: 'clinical.note'&#10;+       },&#10;+       {&#10;+         table: 'clinical.note_cosign'&#10;+       },&#10;+       {&#10;+         table: 'clinical.note_addendum'&#10;+       },&#10;+       {&#10;+         table: 'privacy.request'&#10;+       },&#10;+       {&#10;+         table: 'privacy.export_package'&#10;+       },&#10;+       {&#10;+         table: 'privacy.incident_patient'&#10;+       },&#10;+       {&#10;+         table: 'messaging.thread'&#10;+       },&#10;+       {&#10;+         table: 'messaging.message'&#10;+       },&#10;+       {&#10;+         table: 'messaging.task'&#10;+       }&#10;+     ]&#10;+   },&#10;+   {&#10;+     id: 'M-5-definer',&#10;+     status: 'fail',&#10;+     title: 'every SECURITY DEFINER function is in the inventory, has a fixed search_path and a NOLOGIN owner',&#10;+     violations: [&#10;+       {&#10;+         fixed_search_path: true,&#10;+         function: 'messaging.is_participant(uuid)',&#10;+         in_inventory: false,&#10;+         owner: 'patient_scope_owner'&#10;+       },&#10;+       {&#10;+         fixed_search_path: true,&#10;+         function: 'messaging.is_owner(uuid)',&#10;+         in_inventory: false,&#10;+         owner: 'patient_scope_owner'&#10;+       },&#10;+       {&#10;+         fixed_search_path: true,&#10;+         function: 'messaging.is_creator(uuid)',&#10;+         in_inventory: false,&#10;+         owner: 'patient_scope_owner'&#10;+       },&#10;+       {&#10;+         fixed_search_path: true,&#10;+         function: 'messaging.guard_open_patient()',&#10;+         in_inventory: false,&#10;+         owner: 'patient_scope_owner'&#10;+       },&#10;+       {&#10;+         fixed_search_path: true,&#10;+         function: 'clinical.guard_open_patient()',&#10;+         in_inventory: false,&#10;+         owner: 'patient_scope_owner'&#10;+       },&#10;+       {&#10;+         fixed_search_path: true,&#10;+         function: 'clinical.frontdoor_guard_open_patient()',&#10;+         in_inventory: false,&#10;+         owner: 'patient_scope_owner'&#10;+       },&#10;+       {&#10;+         fixed_search_path: true,&#10;+         function: 'clinical.notes_guard_open_patient()',&#10;+         in_inventory: false,&#10;+         owner: 'patient_scope_owner'&#10;+       },&#10;+       {&#10;+         fixed_search_path: true,&#10;+         function: 'privacy.guard_open_patient()',&#10;+         in_inventory: false,&#10;+         owner: 'patient_scope_owner'&#10;+       }&#10;+     ]&#10;+   }&#10;+ ]&#10;- []&#10;">
+			<failure type="testCodeFailure" message="[&#10;  {&#10;    &quot;id&quot;: &quot;M-3&quot;,&#10;    &quot;title&quot;: &quot;policies target only known roles; identity_signin_ro and directory_ro hold no table-level SELECT (column grants only)&quot;,&#10;    &quot;status&quot;: &quot;fail&quot;,&#10;    &quot;violations&quot;: [&#10;      {&#10;        &quot;table&quot;: &quot;reporting.ops_integration_health&quot;,&#10;        &quot;policyname&quot;: &quot;ops_integration_health_ro_select&quot;,&#10;        &quot;role&quot;: &quot;reporting_ro&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;reporting.ops_queue&quot;,&#10;        &quot;policyname&quot;: &quot;ops_queue_ro_select&quot;,&#10;        &quot;role&quot;: &quot;reporting_ro&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;reporting.ops_calendar_staleness&quot;,&#10;        &quot;policyname&quot;: &quot;ops_calendar_staleness_ro_select&quot;,&#10;        &quot;role&quot;: &quot;reporting_ro&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;reporting.ops_alert_backlog&quot;,&#10;        &quot;policyname&quot;: &quot;ops_alert_backlog_ro_select&quot;,&#10;        &quot;role&quot;: &quot;reporting_ro&quot;&#10;      }&#10;    ]&#10;  },&#10;  {&#10;    &quot;id&quot;: &quot;M-4-reporting&quot;,&#10;    &quot;title&quot;: &quot;reporting_ro holds a privilege on nothing outside the C0/C1 list (tables, views, columns)&quot;,&#10;    &quot;status&quot;: &quot;fail&quot;,&#10;    &quot;violations&quot;: [&#10;      {&#10;        &quot;object&quot;: &quot;reporting.ops_integration_health&quot;&#10;      },&#10;      {&#10;        &quot;object&quot;: &quot;reporting.ops_queue&quot;&#10;      },&#10;      {&#10;        &quot;object&quot;: &quot;reporting.ops_calendar_staleness&quot;&#10;      },&#10;      {&#10;        &quot;object&quot;: &quot;reporting.ops_alert_backlog&quot;&#10;      }&#10;    ]&#10;  },&#10;  {&#10;    &quot;id&quot;: &quot;M-5-patient-guard&quot;,&#10;    &quot;title&quot;: &quot;every table with a patient_id column has the merge write guard (an enabled BEFORE INSERT OR UPDATE row trigger on a listed guard function) or is exempt&quot;,&#10;    &quot;status&quot;: &quot;fail&quot;,&#10;    &quot;violations&quot;: [&#10;      {&#10;        &quot;table&quot;: &quot;clinical.problem&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;clinical.allergy&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;clinical.medication_statement&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;clinical.vital_sign&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;clinical.questionnaire_response&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;clinical.triage_assessment&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;clinical.referral&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;clinical.consent_exception&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;clinical.follow_up&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;clinical.encounter&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;clinical.note&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;clinical.note_cosign&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;clinical.note_addendum&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;privacy.request&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;privacy.export_package&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;privacy.incident_patient&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;messaging.thread&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;messaging.message&quot;&#10;      },&#10;      {&#10;        &quot;table&quot;: &quot;messaging.task&quot;&#10;      }&#10;    ]&#10;  },&#10;  {&#10;    &quot;id&quot;: &quot;M-5-definer&quot;,&#10;    &quot;title&quot;: &quot;every SECURITY DEFINER function is in the inventory, has a fixed search_path and a NOLOGIN owner&quot;,&#10;    &quot;status&quot;: &quot;fail&quot;,&#10;    &quot;violations&quot;: [&#10;      {&#10;        &quot;function&quot;: &quot;messaging.is_participant(uuid)&quot;,&#10;        &quot;in_inventory&quot;: false,&#10;        &quot;fixed_search_path&quot;: true,&#10;        &quot;owner&quot;: &quot;patient_scope_owner&quot;&#10;      },&#10;      {&#10;        &quot;function&quot;: &quot;messaging.is_owner(uuid)&quot;,&#10;        &quot;in_inventory&quot;: false,&#10;        &quot;fixed_search_path&quot;: true,&#10;        &quot;owner&quot;: &quot;patient_scope_owner&quot;&#10;      },&#10;      {&#10;        &quot;function&quot;: &quot;messaging.is_creator(uuid)&quot;,&#10;        &quot;in_inventory&quot;: false,&#10;        &quot;fixed_search_path&quot;: true,&#10;        &quot;owner&quot;: &quot;patient_scope_owner&quot;&#10;      },&#10;      {&#10;        &quot;function&quot;: &quot;messaging.guard_open_patient()&quot;,&#10;        &quot;in_inventory&quot;: false,&#10;        &quot;fixed_search_path&quot;: true,&#10;        &quot;owner&quot;: &quot;patient_scope_owner&quot;&#10;      },&#10;      {&#10;        &quot;function&quot;: &quot;clinical.guard_open_patient()&quot;,&#10;        &quot;in_inventory&quot;: false,&#10;        &quot;fixed_search_path&quot;: true,&#10;        &quot;owner&quot;: &quot;patient_scope_owner&quot;&#10;      },&#10;      {&#10;        &quot;function&quot;: &quot;clinical.frontdoor_guard_open_patient()&quot;,&#10;        &quot;in_inventory&quot;: false,&#10;        &quot;fixed_search_path&quot;: true,&#10;        &quot;owner&quot;: &quot;patient_scope_owner&quot;&#10;      },&#10;      {&#10;        &quot;function&quot;: &quot;clinical.notes_guard_open_patient()&quot;,&#10;        &quot;in_inventory&quot;: false,&#10;        &quot;fixed_search_path&quot;: true,&#10;        &quot;owner&quot;: &quot;patient_scope_owner&quot;&#10;      },&#10;      {&#10;        &quot;function&quot;: &quot;privacy.guard_open_patient()&quot;,&#10;        &quot;in_inventory&quot;: false,&#10;        &quot;fixed_search_path&quot;: true,&#10;        &quot;owner&quot;: &quot;patient_scope_owner&quot;&#10;      }&#10;    ]&#10;  }&#10;]&#10;+ actual - expected&#10;&#10;+ [&#10;+   {&#10;+     id: 'M-3',&#10;+     status: 'fail',&#10;+     title: 'policies target only known roles; identity_signin_ro and directory_ro hold no table-level SELECT (column grants only)',&#10;+     violations: [&#10;+       {&#10;+         policyname: 'ops_integration_health_ro_select',&#10;+         role: 'reporting_ro',&#10;+         table: 'reporting.ops_integration_health'&#10;+       },&#10;+       {&#10;+         policyname: 'ops_queue_ro_select',&#10;+         role: 'reporting_ro',&#10;+         table: 'reporting.ops_queue'&#10;+       },&#10;+       {&#10;+         policyname: 'ops_calendar_staleness_ro_select',&#10;+         role: 'reporting_ro',&#10;+         table: 'reporting.ops_calendar_staleness'&#10;+       },&#10;+       {&#10;+         policyname: 'ops_alert_backlog_ro_select',&#10;+         role: 'reporting_ro',&#10;+         table: 'reporting.ops_alert_backlog'&#10;+       }&#10;+     ]&#10;+   },&#10;+   {&#10;+     id: 'M-4-reporting',&#10;+     status: 'fail',&#10;+     title: 'reporting_ro holds a privilege on nothing outside the C0/C1 list (tables, views, columns)',&#10;+     violations: [&#10;+       {&#10;+         object: 'reporting.ops_integration_health'&#10;+       },&#10;+       {&#10;+         object: 'reporting.ops_queue'&#10;+       },&#10;+       {&#10;+         object: 'reporting.ops_calendar_staleness'&#10;+       },&#10;+       {&#10;+         object: 'reporting.ops_alert_backlog'&#10;+       }&#10;+     ]&#10;+   },&#10;+   {&#10;+     id: 'M-5-patient-guard',&#10;+     status: 'fail',&#10;+     title: 'every table with a patient_id column has the merge write guard (an enabled BEFORE INSERT OR UPDATE row trigger on a listed guard function) or is exempt',&#10;+     violations: [&#10;+       {&#10;+         table: 'clinical.problem'&#10;+       },&#10;+       {&#10;+         table: 'clinical.allergy'&#10;+       },&#10;+       {&#10;+         table: 'clinical.medication_statement'&#10;+       },&#10;+       {&#10;+         table: 'clinical.vital_sign'&#10;+       },&#10;+       {&#10;+         table: 'clinical.questionnaire_response'&#10;+       },&#10;+       {&#10;+         table: 'clinical.triage_assessment'&#10;+       },&#10;+       {&#10;+         table: 'clinical.referral'&#10;+       },&#10;+       {&#10;+         table: 'clinical.consent_exception'&#10;+       },&#10;+       {&#10;+         table: 'clinical.follow_up'&#10;+       },&#10;+       {&#10;+         table: 'clinical.encounter'&#10;+       },&#10;+       {&#10;+         table: 'clinical.note'&#10;+       },&#10;+       {&#10;+         table: 'clinical.note_cosign'&#10;+       },&#10;+       {&#10;+         table: 'clinical.note_addendum'&#10;+       },&#10;+       {&#10;+         table: 'privacy.request'&#10;+       },&#10;+       {&#10;+         table: 'privacy.export_package'&#10;+       },&#10;+       {&#10;+         table: 'privacy.incident_patient'&#10;+       },&#10;+       {&#10;+         table: 'messaging.thread'&#10;+       },&#10;+       {&#10;+         table: 'messaging.message'&#10;+       },&#10;+       {&#10;+         table: 'messaging.task'&#10;+       }&#10;+     ]&#10;+   },&#10;+   {&#10;+     id: 'M-5-definer',&#10;+     status: 'fail',&#10;+     title: 'every SECURITY DEFINER function is in the inventory, has a fixed search_path and a NOLOGIN owner',&#10;+     violations: [&#10;+       {&#10;+         fixed_search_path: true,&#10;+         function: 'messaging.is_participant(uuid)',&#10;+         in_inventory: false,&#10;+         owner: 'patient_scope_owner'&#10;+       },&#10;+       {&#10;+         fixed_search_path: true,&#10;+         function: 'messaging.is_owner(uuid)',&#10;+         in_inventory: false,&#10;+         owner: 'patient_scope_owner'&#10;+       },&#10;+       {&#10;+         fixed_search_path: true,&#10;+         function: 'messaging.is_creator(uuid)',&#10;+         in_inventory: false,&#10;+         owner: 'patient_scope_owner'&#10;+       },&#10;+       {&#10;+         fixed_search_path: true,&#10;+         function: 'messaging.guard_open_patient()',&#10;+         in_inventory: false,&#10;+         owner: 'patient_scope_owner'&#10;+       },&#10;+       {&#10;+         fixed_search_path: true,&#10;+         function: 'clinical.guard_open_patient()',&#10;+         in_inventory: false,&#10;+         owner: 'patient_scope_owner'&#10;+       },&#10;+       {&#10;+         fixed_search_path: true,&#10;+         function: 'clinical.frontdoor_guard_open_patient()',&#10;+         in_inventory: false,&#10;+         owner: 'patient_scope_owner'&#10;+       },&#10;+       {&#10;+         fixed_search_path: true,&#10;+         function: 'clinical.notes_guard_open_patient()',&#10;+         in_inventory: false,&#10;+         owner: 'patient_scope_owner'&#10;+       },&#10;+       {&#10;+         fixed_search_path: true,&#10;+         function: 'privacy.guard_open_patient()',&#10;+         in_inventory: false,&#10;+         owner: 'patient_scope_owner'&#10;+       }&#10;+     ]&#10;+   }&#10;+ ]&#10;- []">
+[Error [ERR_TEST_FAILURE]: [
+  {
+    "id": "M-3",
+    "title": "policies target only known roles; identity_signin_ro and directory_ro hold no table-level SELECT (column grants only)",
+    "status": "fail",
+    "violations": [
+      {
+        "table": "reporting.ops_integration_health",
+        "policyname": "ops_integration_health_ro_select",
+        "role": "reporting_ro"
+      },
+      {
+        "table": "reporting.ops_queue",
+        "policyname": "ops_queue_ro_select",
+        "role": "reporting_ro"
+      },
+      {
+        "table": "reporting.ops_calendar_staleness",
+        "policyname": "ops_calendar_staleness_ro_select",
+        "role": "reporting_ro"
+      },
+      {
+        "table": "reporting.ops_alert_backlog",
+        "policyname": "ops_alert_backlog_ro_select",
+        "role": "reporting_ro"
+      }
+    ]
+  },
+  {
+    "id": "M-4-reporting",
+    "title": "reporting_ro holds a privilege on nothing outside the C0/C1 list (tables, views, columns)",
+    "status": "fail",
+    "violations": [
+      {
+        "object": "reporting.ops_integration_health"
+      },
+      {
+        "object": "reporting.ops_queue"
+      },
+      {
+        "object": "reporting.ops_calendar_staleness"
+      },
+      {
+        "object": "reporting.ops_alert_backlog"
+      }
+    ]
+  },
+  {
+    "id": "M-5-patient-guard",
+    "title": "every table with a patient_id column has the merge write guard (an enabled BEFORE INSERT OR UPDATE row trigger on a listed guard function) or is exempt",
+    "status": "fail",
+    "violations": [
+      {
+        "table": "clinical.problem"
+      },
+      {
+        "table": "clinical.allergy"
+      },
+      {
+        "table": "clinical.medication_statement"
+      },
+      {
+        "table": "clinical.vital_sign"
+      },
+      {
+        "table": "clinical.questionnaire_response"
+      },
+      {
+        "table": "clinical.triage_assessment"
+      },
+      {
+        "table": "clinical.referral"
+      },
+      {
+        "table": "clinical.consent_exception"
+      },
+      {
+        "table": "clinical.follow_up"
+      },
+      {
+        "table": "clinical.encounter"
+      },
+      {
+        "table": "clinical.note"
+      },
+      {
+        "table": "clinical.note_cosign"
+      },
+      {
+        "table": "clinical.note_addendum"
+      },
+      {
+        "table": "privacy.request"
+      },
+      {
+        "table": "privacy.export_package"
+      },
+      {
+        "table": "privacy.incident_patient"
+      },
+      {
+        "table": "messaging.thread"
+      },
+      {
+        "table": "messaging.message"
+      },
+      {
+        "table": "messaging.task"
+      }
+    ]
+  },
+  {
+    "id": "M-5-definer",
+    "title": "every SECURITY DEFINER function is in the inventory, has a fixed search_path and a NOLOGIN owner",
+    "status": "fail",
+    "violations": [
+      {
+        "function": "messaging.is_participant(uuid)",
+        "in_inventory": false,
+        "fixed_search_path": true,
+        "owner": "patient_scope_owner"
+      },
+      {
+        "function": "messaging.is_owner(uuid)",
+        "in_inventory": false,
+        "fixed_search_path": true,
+        "owner": "patient_scope_owner"
+      },
+      {
+        "function": "messaging.is_creator(uuid)",
+        "in_inventory": false,
+        "fixed_search_path": true,
+        "owner": "patient_scope_owner"
+      },
+      {
+        "function": "messaging.guard_open_patient()",
+        "in_inventory": false,
+        "fixed_search_path": true,
+        "owner": "patient_scope_owner"
+      },
+      {
+        "function": "clinical.guard_open_patient()",
+        "in_inventory": false,
+        "fixed_search_path": true,
+        "owner": "patient_scope_owner"
+      },
+      {
+        "function": "clinical.frontdoor_guard_open_patient()",
+        "in_inventory": false,
+        "fixed_search_path": true,
+        "owner": "patient_scope_owner"
+      },
+      {
+        "function": "clinical.notes_guard_open_patient()",
+        "in_inventory": false,
+        "fixed_search_path": true,
+        "owner": "patient_scope_owner"
+      },
+      {
+        "function": "privacy.guard_open_patient()",
+        "in_inventory": false,
+        "fixed_search_path": true,
+        "owner": "patient_scope_owner"
+      }
+    ]
+  }
+]
++ actual - expected
+
++ [
++   {
++     id: 'M-3',
++     status: 'fail',
++     title: 'policies target only known roles; identity_signin_ro and directory_ro hold no table-level SELECT (column grants only)',
++     violations: [
++       {
++         policyname: 'ops_integration_health_ro_select',
++         role: 'reporting_ro',
++         table: 'reporting.ops_integration_health'
++       },
++       {
++         policyname: 'ops_queue_ro_select',
++         role: 'reporting_ro',
++         table: 'reporting.ops_queue'
++       },
++       {
++         policyname: 'ops_calendar_staleness_ro_select',
++         role: 'reporting_ro',
++         table: 'reporting.ops_calendar_staleness'
++       },
++       {
++         policyname: 'ops_alert_backlog_ro_select',
++         role: 'reporting_ro',
++         table: 'reporting.ops_alert_backlog'
++       }
++     ]
++   },
++   {
++     id: 'M-4-reporting',
++     status: 'fail',
++     title: 'reporting_ro holds a privilege on nothing outside the C0/C1 list (tables, views, columns)',
++     violations: [
++       {
++         object: 'reporting.ops_integration_health'
++       },
++       {
++         object: 'reporting.ops_queue'
++       },
++       {
++         object: 'reporting.ops_calendar_staleness'
++       },
++       {
++         object: 'reporting.ops_alert_backlog'
++       }
++     ]
++   },
++   {
++     id: 'M-5-patient-guard',
++     status: 'fail',
++     title: 'every table with a patient_id column has the merge write guard (an enabled BEFORE INSERT OR UPDATE row trigger on a listed guard function) or is exempt',
++     violations: [
++       {
++         table: 'clinical.problem'
++       },
++       {
++         table: 'clinical.allergy'
++       },
++       {
++         table: 'clinical.medication_statement'
++       },
++       {
++         table: 'clinical.vital_sign'
++       },
++       {
++         table: 'clinical.questionnaire_response'
++       },
++       {
++         table: 'clinical.triage_assessment'
++       },
++       {
++         table: 'clinical.referral'
++       },
++       {
++         table: 'clinical.consent_exception'
++       },
++       {
++         table: 'clinical.follow_up'
++       },
++       {
++         table: 'clinical.encounter'
++       },
++       {
++         table: 'clinical.note'
++       },
++       {
++         table: 'clinical.note_cosign'
++       },
++       {
++         table: 'clinical.note_addendum'
++       },
++       {
++         table: 'privacy.request'
++       },
++       {
++         table: 'privacy.export_package'
++       },
++       {
++         table: 'privacy.incident_patient'
++       },
++       {
++         table: 'messaging.thread'
++       },
++       {
++         table: 'messaging.message'
++       },
++       {
++         table: 'messaging.task'
++       }
++     ]
++   },
++   {
++     id: 'M-5-definer',
++     status: 'fail',
++     title: 'every SECURITY DEFINER function is in the inventory, has a fixed search_path and a NOLOGIN owner',
++     violations: [
++       {
++         fixed_search_path: true,
++         function: 'messaging.is_participant(uuid)',
++         in_inventory: false,
++         owner: 'patient_scope_owner'
++       },
++       {
++         fixed_search_path: true,
++         function: 'messaging.is_owner(uuid)',
++         in_inventory: false,
++         owner: 'patient_scope_owner'
++       },
++       {
++         fixed_search_path: true,
++         function: 'messaging.is_creator(uuid)',
++         in_inventory: false,
++         owner: 'patient_scope_owner'
++       },
++       {
++         fixed_search_path: true,
++         function: 'messaging.guard_open_patient()',
++         in_inventory: false,
++         owner: 'patient_scope_owner'
++       },
++       {
++         fixed_search_path: true,
++         function: 'clinical.guard_open_patient()',
++         in_inventory: false,
++         owner: 'patient_scope_owner'
++       },
++       {
++         fixed_search_path: true,
++         function: 'clinical.frontdoor_guard_open_patient()',
++         in_inventory: false,
++         owner: 'patient_scope_owner'
++       },
++       {
++         fixed_search_path: true,
++         function: 'clinical.notes_guard_open_patient()',
++         in_inventory: false,
++         owner: 'patient_scope_owner'
++       },
++       {
++         fixed_search_path: true,
++         function: 'privacy.guard_open_patient()',
++         in_inventory: false,
++         owner: 'patient_scope_owner'
++       }
++     ]
++   }
++ ]
+- []
+] {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: AssertionError [ERR_ASSERTION]: [
+    {
+      "id": "M-3",
+      "title": "policies target only known roles; identity_signin_ro and directory_ro hold no table-level SELECT (column grants only)",
+      "status": "fail",
+      "violations": [
+        {
+          "table": "reporting.ops_integration_health",
+          "policyname": "ops_integration_health_ro_select",
+          "role": "reporting_ro"
+        },
+        {
+          "table": "reporting.ops_queue",
+          "policyname": "ops_queue_ro_select",
+          "role": "reporting_ro"
+        },
+        {
+          "table": "reporting.ops_calendar_staleness",
+          "policyname": "ops_calendar_staleness_ro_select",
+          "role": "reporting_ro"
+        },
+        {
+          "table": "reporting.ops_alert_backlog",
+          "policyname": "ops_alert_backlog_ro_select",
+          "role": "reporting_ro"
+        }
+      ]
+    },
+    {
+      "id": "M-4-reporting",
+      "title": "reporting_ro holds a privilege on nothing outside the C0/C1 list (tables, views, columns)",
+      "status": "fail",
+      "violations": [
+        {
+          "object": "reporting.ops_integration_health"
+        },
+        {
+          "object": "reporting.ops_queue"
+        },
+        {
+          "object": "reporting.ops_calendar_staleness"
+        },
+        {
+          "object": "reporting.ops_alert_backlog"
+        }
+      ]
+    },
+    {
+      "id": "M-5-patient-guard",
+      "title": "every table with a patient_id column has the merge write guard (an enabled BEFORE INSERT OR UPDATE row trigger on a listed guard function) or is exempt",
+      "status": "fail",
+      "violations": [
+        {
+          "table": "clinical.problem"
+        },
+        {
+          "table": "clinical.allergy"
+        },
+        {
+          "table": "clinical.medication_statement"
+        },
+        {
+          "table": "clinical.vital_sign"
+        },
+        {
+          "table": "clinical.questionnaire_response"
+        },
+        {
+          "table": "clinical.triage_assessment"
+        },
+        {
+          "table": "clinical.referral"
+        },
+        {
+          "table": "clinical.consent_exception"
+        },
+        {
+          "table": "clinical.follow_up"
+        },
+        {
+          "table": "clinical.encounter"
+        },
+        {
+          "table": "clinical.note"
+        },
+        {
+          "table": "clinical.note_cosign"
+        },
+        {
+          "table": "clinical.note_addendum"
+        },
+        {
+          "table": "privacy.request"
+        },
+        {
+          "table": "privacy.export_package"
+        },
+        {
+          "table": "privacy.incident_patient"
+        },
+        {
+          "table": "messaging.thread"
+        },
+        {
+          "table": "messaging.message"
+        },
+        {
+          "table": "messaging.task"
+        }
+      ]
+    },
+    {
+      "id": "M-5-definer",
+      "title": "every SECURITY DEFINER function is in the inventory, has a fixed search_path and a NOLOGIN owner",
+      "status": "fail",
+      "violations": [
+        {
+          "function": "messaging.is_participant(uuid)",
+          "in_inventory": false,
+          "fixed_search_path": true,
+          "owner": "patient_scope_owner"
+        },
+        {
+          "function": "messaging.is_owner(uuid)",
+          "in_inventory": false,
+          "fixed_search_path": true,
+          "owner": "patient_scope_owner"
+        },
+        {
+          "function": "messaging.is_creator(uuid)",
+          "in_inventory": false,
+          "fixed_search_path": true,
+          "owner": "patient_scope_owner"
+        },
+        {
+          "function": "messaging.guard_open_patient()",
+          "in_inventory": false,
+          "fixed_search_path": true,
+          "owner": "patient_scope_owner"
+        },
+        {
+          "function": "clinical.guard_open_patient()",
+          "in_inventory": false,
+          "fixed_search_path": true,
+          "owner": "patient_scope_owner"
+        },
+        {
+          "function": "clinical.frontdoor_guard_open_patient()",
+          "in_inventory": false,
+          "fixed_search_path": true,
+          "owner": "patient_scope_owner"
+        },
+        {
+          "function": "clinical.notes_guard_open_patient()",
+          "in_inventory": false,
+          "fixed_search_path": true,
+          "owner": "patient_scope_owner"
+        },
+        {
+          "function": "privacy.guard_open_patient()",
+          "in_inventory": false,
+          "fixed_search_path": true,
+          "owner": "patient_scope_owner"
+        }
+      ]
+    }
+  ]
+  + actual - expected
+  
+  + [
+  +   {
+  +     id: 'M-3',
+  +     status: 'fail',
+  +     title: 'policies target only known roles; identity_signin_ro and directory_ro hold no table-level SELECT (column grants only)',
+  +     violations: [
+  +       {
+  +         policyname: 'ops_integration_health_ro_select',
+  +         role: 'reporting_ro',
+  +         table: 'reporting.ops_integration_health'
+  +       },
+  +       {
+  +         policyname: 'ops_queue_ro_select',
+  +         role: 'reporting_ro',
+  +         table: 'reporting.ops_queue'
+  +       },
+  +       {
+  +         policyname: 'ops_calendar_staleness_ro_select',
+  +         role: 'reporting_ro',
+  +         table: 'reporting.ops_calendar_staleness'
+  +       },
+  +       {
+  +         policyname: 'ops_alert_backlog_ro_select',
+  +         role: 'reporting_ro',
+  +         table: 'reporting.ops_alert_backlog'
+  +       }
+  +     ]
+  +   },
+  +   {
+  +     id: 'M-4-reporting',
+  +     status: 'fail',
+  +     title: 'reporting_ro holds a privilege on nothing outside the C0/C1 list (tables, views, columns)',
+  +     violations: [
+  +       {
+  +         object: 'reporting.ops_integration_health'
+  +       },
+  +       {
+  +         object: 'reporting.ops_queue'
+  +       },
+  +       {
+  +         object: 'reporting.ops_calendar_staleness'
+  +       },
+  +       {
+  +         object: 'reporting.ops_alert_backlog'
+  +       }
+  +     ]
+  +   },
+  +   {
+  +     id: 'M-5-patient-guard',
+  +     status: 'fail',
+  +     title: 'every table with a patient_id column has the merge write guard (an enabled BEFORE INSERT OR UPDATE row trigger on a listed guard function) or is exempt',
+  +     violations: [
+  +       {
+  +         table: 'clinical.problem'
+  +       },
+  +       {
+  +         table: 'clinical.allergy'
+  +       },
+  +       {
+  +         table: 'clinical.medication_statement'
+  +       },
+  +       {
+  +         table: 'clinical.vital_sign'
+  +       },
+  +       {
+  +         table: 'clinical.questionnaire_response'
+  +       },
+  +       {
+  +         table: 'clinical.triage_assessment'
+  +       },
+  +       {
+  +         table: 'clinical.referral'
+  +       },
+  +       {
+  +         table: 'clinical.consent_exception'
+  +       },
+  +       {
+  +         table: 'clinical.follow_up'
+  +       },
+  +       {
+  +         table: 'clinical.encounter'
+  +       },
+  +       {
+  +         table: 'clinical.note'
+  +       },
+  +       {
+  +         table: 'clinical.note_cosign'
+  +       },
+  +       {
+  +         table: 'clinical.note_addendum'
+  +       },
+  +       {
+  +         table: 'privacy.request'
+  +       },
+  +       {
+  +         table: 'privacy.export_package'
+  +       },
+  +       {
+  +         table: 'privacy.incident_patient'
+  +       },
+  +       {
+  +         table: 'messaging.thread'
+  +       },
+  +       {
+  +         table: 'messaging.message'
+  +       },
+  +       {
+  +         table: 'messaging.task'
+  +       }
+  +     ]
+  +   },
+  +   {
+  +     id: 'M-5-definer',
+  +     status: 'fail',
+  +     title: 'every SECURITY DEFINER function is in the inventory, has a fixed search_path and a NOLOGIN owner',
+  +     violations: [
+  +       {
+  +         fixed_search_path: true,
+  +         function: 'messaging.is_participant(uuid)',
+  +         in_inventory: false,
+  +         owner: 'patient_scope_owner'
+  +       },
+  +       {
+  +         fixed_search_path: true,
+  +         function: 'messaging.is_owner(uuid)',
+  +         in_inventory: false,
+  +         owner: 'patient_scope_owner'
+  +       },
+  +       {
+  +         fixed_search_path: true,
+  +         function: 'messaging.is_creator(uuid)',
+  +         in_inventory: false,
+  +         owner: 'patient_scope_owner'
+  +       },
+  +       {
+  +         fixed_search_path: true,
+  +         function: 'messaging.guard_open_patient()',
+  +         in_inventory: false,
+  +         owner: 'patient_scope_owner'
+  +       },
+  +       {
+  +         fixed_search_path: true,
+  +         function: 'clinical.guard_open_patient()',
+  +         in_inventory: false,
+  +         owner: 'patient_scope_owner'
+  +       },
+  +       {
+  +         fixed_search_path: true,
+  +         function: 'clinical.frontdoor_guard_open_patient()',
+  +         in_inventory: false,
+  +         owner: 'patient_scope_owner'
+  +       },
+  +       {
+  +         fixed_search_path: true,
+  +         function: 'clinical.notes_guard_open_patient()',
+  +         in_inventory: false,
+  +         owner: 'patient_scope_owner'
+  +       },
+  +       {
+  +         fixed_search_path: true,
+  +         function: 'privacy.guard_open_patient()',
+  +         in_inventory: false,
+  +         owner: 'patient_scope_owner'
+  +       }
+  +     ]
+  +   }
+  + ]
+  - []
+  
+      at TestContext.&lt;anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs:103:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ [Object], [Object], [Object], [Object] ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+}
+			</failure>
+		</testcase>
+		<testcase name="role-level settings are stored and visible to a new session" time="0.023545" classname="migrations from empty on PostgreSQL 17" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs"/>
+		<testcase name="the runner tracker is not reachable by application roles" time="0.005815" classname="migrations from empty on PostgreSQL 17" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs"/>
+	</testsuite>
+	<testsuite name="spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics)" time="0.765152" disabled="0" errors="0" tests="13" failures="0" skipped="0" timestamp="2026-11-09T02:35:39.769Z" hostname="314866be9867">
+		<testcase name="FORCE RLS: the table owner cannot insert, and its UPDATE changes 0 rows (SBR-17)" time="0.015992" classname="spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs"/>
+		<testcase name="a missing setting returns 0 rows on every kernel table (fail closed)" time="0.021446" classname="spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs"/>
+		<testcase name="setting: admin_pool staff reads and writes its organisation; WITH CHECK refuses everything else" time="0.027867" classname="spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs"/>
+		<testcase name="audience anonymous reads only pre_auth settings and nothing in idempotency_key" time="0.010740" classname="spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs"/>
+		<testcase name="app_api cannot act as audience system; app_worker can, within its job scope" time="0.029106" classname="spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs"/>
+		<testcase name="idempotency_key: a principal sees only its own keys; updates bump row_version" time="0.019347" classname="spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs"/>
+		<testcase name="reporting_ro is refused on the kernel tables (M-4)" time="0.006427" classname="spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs"/>
+		<testcase name="role switching: app_api reaches only identity_signin_ro, which holds no table right" time="0.015469" classname="spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs"/>
+		<testcase name="app_owner holds SET but not INHERIT on directory_ro: it can switch but gains no rights" time="0.006171" classname="spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs"/>
+		<testcase name="function ownership transfer needs SET membership and CREATE on the schema (21.2 point 1)" time="0.010088" classname="spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs"/>
+		<testcase name="SELECT ... FOR KEY SHARE needs UPDATE rights: a SELECT-only role is refused" time="0.015962" classname="spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs"/>
+		<testcase name="an owner-rights view returns 0 rows under FORCE; a security_invoker view returns the caller rows (M-4)" time="0.268210" classname="spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs"/>
+		<testcase name="negative control: the catalog checks fail on a table without FORCE and on a policy TO PUBLIC" time="0.307938" classname="spike-style checks of ARCHITECTURE 38.1 (FORCE RLS, fail closed, role mechanics)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs"/>
+	</testsuite>
+	<testsuite name="SEC03-F13 / F09 catalog negative controls" time="2.736403" disabled="0" errors="0" tests="5" failures="2" skipped="0" timestamp="2026-11-09T02:35:40.534Z" hostname="314866be9867">
+		<testcase name="the positive baseline: the four new checks pass on the migrated database" time="0.266139" classname="SEC03-F13 / F09 catalog negative controls" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs" failure="[{&quot;table&quot;:&quot;clinical.problem&quot;},{&quot;table&quot;:&quot;clinical.allergy&quot;},{&quot;table&quot;:&quot;clinical.medication_statement&quot;},{&quot;table&quot;:&quot;clinical.vital_sign&quot;},{&quot;table&quot;:&quot;clinical.questionnaire_response&quot;},{&quot;table&quot;:&quot;clinical.triage_assessment&quot;},{&quot;table&quot;:&quot;clinical.referral&quot;},{&quot;table&quot;:&quot;clinical.consent_exception&quot;},{&quot;table&quot;:&quot;clinical.follow_up&quot;},{&quot;table&quot;:&quot;clinical.encounter&quot;},{&quot;table&quot;:&quot;clinical.note&quot;},{&quot;table&quot;:&quot;clinical.note_cosign&quot;},{&quot;table&quot;:&quot;clinical.note_addendum&quot;},{&quot;table&quot;:&quot;privacy.request&quot;},{&quot;table&quot;:&quot;privacy.export_package&quot;},{&quot;table&quot;:&quot;privacy.incident_patient&quot;},{&quot;table&quot;:&quot;messaging.thread&quot;},{&quot;table&quot;:&quot;messaging.message&quot;},{&quot;table&quot;:&quot;messaging.task&quot;}]&#10;&#10;'fail' !== 'pass'&#10;">
+			<failure type="testCodeFailure" message="[{&quot;table&quot;:&quot;clinical.problem&quot;},{&quot;table&quot;:&quot;clinical.allergy&quot;},{&quot;table&quot;:&quot;clinical.medication_statement&quot;},{&quot;table&quot;:&quot;clinical.vital_sign&quot;},{&quot;table&quot;:&quot;clinical.questionnaire_response&quot;},{&quot;table&quot;:&quot;clinical.triage_assessment&quot;},{&quot;table&quot;:&quot;clinical.referral&quot;},{&quot;table&quot;:&quot;clinical.consent_exception&quot;},{&quot;table&quot;:&quot;clinical.follow_up&quot;},{&quot;table&quot;:&quot;clinical.encounter&quot;},{&quot;table&quot;:&quot;clinical.note&quot;},{&quot;table&quot;:&quot;clinical.note_cosign&quot;},{&quot;table&quot;:&quot;clinical.note_addendum&quot;},{&quot;table&quot;:&quot;privacy.request&quot;},{&quot;table&quot;:&quot;privacy.export_package&quot;},{&quot;table&quot;:&quot;privacy.incident_patient&quot;},{&quot;table&quot;:&quot;messaging.thread&quot;},{&quot;table&quot;:&quot;messaging.message&quot;},{&quot;table&quot;:&quot;messaging.task&quot;}]&#10;&#10;'fail' !== 'pass'">
+Error [ERR_TEST_FAILURE]: [{"table":"clinical.problem"},{"table":"clinical.allergy"},{"table":"clinical.medication_statement"},{"table":"clinical.vital_sign"},{"table":"clinical.questionnaire_response"},{"table":"clinical.triage_assessment"},{"table":"clinical.referral"},{"table":"clinical.consent_exception"},{"table":"clinical.follow_up"},{"table":"clinical.encounter"},{"table":"clinical.note"},{"table":"clinical.note_cosign"},{"table":"clinical.note_addendum"},{"table":"privacy.request"},{"table":"privacy.export_package"},{"table":"privacy.incident_patient"},{"table":"messaging.thread"},{"table":"messaging.message"},{"table":"messaging.task"}]
+
+'fail' !== 'pass'
+
+    at async Promise.all (index 0) {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: AssertionError [ERR_ASSERTION]: [{"table":"clinical.problem"},{"table":"clinical.allergy"},{"table":"clinical.medication_statement"},{"table":"clinical.vital_sign"},{"table":"clinical.questionnaire_response"},{"table":"clinical.triage_assessment"},{"table":"clinical.referral"},{"table":"clinical.consent_exception"},{"table":"clinical.follow_up"},{"table":"clinical.encounter"},{"table":"clinical.note"},{"table":"clinical.note_cosign"},{"table":"clinical.note_addendum"},{"table":"privacy.request"},{"table":"privacy.export_package"},{"table":"privacy.incident_patient"},{"table":"messaging.thread"},{"table":"messaging.message"},{"table":"messaging.task"}]
+  
+  'fail' !== 'pass'
+  
+      at file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs:472:16
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async withAdmin (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs:458:14)
+      at async TestContext.&lt;anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs:464:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'fail',
+    expected: 'pass',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+}
+			</failure>
+		</testcase>
+		<testcase name="M-5-policy-tautology fails on a policy comparing a column with itself (F01)" time="0.248378" classname="SEC03-F13 / F09 catalog negative controls" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs"/>
+		<testcase name="M-5-patient-guard fails when the guard trigger is disabled, AFTER, or INSERT-only" time="0.874047" classname="SEC03-F13 / F09 catalog negative controls" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs" failure="restored&#10;&#10;'fail' !== 'pass'&#10;">
+			<failure type="testCodeFailure" message="restored&#10;&#10;'fail' !== 'pass'">
+[Error [ERR_TEST_FAILURE]: restored
+
+'fail' !== 'pass'
+] {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: AssertionError [ERR_ASSERTION]: restored
+  
+  'fail' !== 'pass'
+  
+      at file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs:515:14
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async withAdmin (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs:458:14)
+      at async TestContext.&lt;anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs:490:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'fail',
+    expected: 'pass',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+}
+			</failure>
+		</testcase>
+		<testcase name="M-5-setting-grants fails when app_api can write pre_auth or UPDATE every column (N-3)" time="0.879667" classname="SEC03-F13 / F09 catalog negative controls" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs"/>
+		<testcase name="M-5-hidden-columns fails when an application role can read occupancy created_by (F09)" time="0.467651" classname="SEC03-F13 / F09 catalog negative controls" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs"/>
+	</testsuite>
+	<testsuite name="R-timeouts negative control (F03-R1-02)" time="1.335243" disabled="0" errors="0" tests="5" failures="0" skipped="0" timestamp="2026-11-09T02:35:43.273Z" hostname="314866be9867">
+		<testcase name="R-timeouts fails when an audit-writing role has transaction_timeout = 0s" time="0.266324" classname="R-timeouts negative control (F03-R1-02)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs"/>
+		<testcase name="R-timeouts fails when an audit-writing role has transaction_timeout = 0ms" time="0.258688" classname="R-timeouts negative control (F03-R1-02)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs"/>
+		<testcase name="R-timeouts fails when an audit-writing role has transaction_timeout = 0000ms" time="0.277964" classname="R-timeouts negative control (F03-R1-02)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs"/>
+		<testcase name="R-timeouts fails when an audit-writing role has transaction_timeout = 61s" time="0.261203" classname="R-timeouts negative control (F03-R1-02)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs"/>
+		<testcase name="R-timeouts fails when an audit-writing role has transaction_timeout = 120s" time="0.270536" classname="R-timeouts negative control (F03-R1-02)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs"/>
+	</testsuite>
+	<testsuite name="TC-AU-04 (ARCHITECTURE 21.5, SAR-10; step 2 per SA-TC-06)" time="0.063918" disabled="0" errors="0" tests="5" failures="0" skipped="0" timestamp="2026-11-09T02:35:44.681Z" hostname="314866be9867">
+		<testcase name="step 1: transaction_timeout unset (0) -> refused PA001, no row" time="0.006737" classname="TC-AU-04 (ARCHITECTURE 21.5, SAR-10; step 2 per SA-TC-06)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs"/>
+		<testcase name="step 2 (SA-TC-06): B + 1 s -> refused PA001, no row" time="0.006088" classname="TC-AU-04 (ARCHITECTURE 21.5, SAR-10; step 2 per SA-TC-06)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs"/>
+		<testcase name="step 3: app_owner -> privilege error 42501 raised before the trigger, no row" time="0.004836" classname="TC-AU-04 (ARCHITECTURE 21.5, SAR-10; step 2 per SA-TC-06)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs"/>
+		<testcase name="step 4 (positive control): at or below the bound -> accepted and written" time="0.005600" classname="TC-AU-04 (ARCHITECTURE 21.5, SAR-10; step 2 per SA-TC-06)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs"/>
+		<testcase name="production shape: the role-level 60 s of app_api and app_worker is accepted, 120 s is refused" time="0.024744" classname="TC-AU-04 (ARCHITECTURE 21.5, SAR-10; step 2 per SA-TC-06)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs"/>
+	</testsuite>
+	<testsuite name="the runner against a real database" time="0.108390" disabled="0" errors="0" tests="2" failures="0" skipped="0" timestamp="2026-11-09T02:35:44.670Z" hostname="314866be9867">
+		<testcase name="applies 0001 and 0003, then rejects 0002 as out of order and leaves the schema untouched" time="0.022859" classname="the runner against a real database" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs"/>
+		<testcase name="a migration that fails at run time rolls back with its tracker row" time="0.005034" classname="the runner against a real database" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs"/>
+	</testsuite>
+	<testsuite name="the single merge write guard (T1-T4 of the HEAAA-190 ruling)" time="0.992266" disabled="0" errors="0" tests="6" failures="0" skipped="0" timestamp="2026-11-09T02:35:44.778Z" hostname="314866be9867">
+		<testcase name="T1: a write naming a merged patient is refused with PM001 on every guarded table" time="0.093839" classname="the single merge write guard (T1-T4 of the HEAAA-190 ruling)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs"/>
+		<testcase name="T1: an open patient passes the guard (any later refusal is another check) on every guarded table" time="0.059959" classname="the single merge write guard (T1-T4 of the HEAAA-190 ruling)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs"/>
+		<testcase name="T1: a write naming a patient of another organisation is refused (42501 or PM008)" time="0.055010" classname="the single merge write guard (T1-T4 of the HEAAA-190 ruling)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs"/>
+		<testcase name="T2: app_owner holds no EXECUTE on the guard, the five refused functions are gone, all 15 tables carry the trigger" time="0.074986" classname="the single merge write guard (T1-T4 of the HEAAA-190 ruling)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs"/>
+		<testcase name="T3: a merge holding the root lock makes a concurrent reservation write wait; after the commit it gets PM001" time="0.521439" classname="the single merge write guard (T1-T4 of the HEAAA-190 ruling)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs"/>
+		<testcase name="T4: a file that leaves the guard granted to app_owner is rolled back by the runner post-check, with its tracker row" time="0.119186" classname="the single merge write guard (T1-T4 of the HEAAA-190 ruling)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-309-sdlc-correction-int03-f04-one-shared-registration-of-merge-participants-and-privacy-contributors-for-compositi/db/tools/db-test.mjs"/>
+	</testsuite>
+	<!-- tests 40 -->
+	<!-- suites 7 -->
+	<!-- pass 37 -->
+	<!-- fail 3 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 0 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 8081.999236 -->
+</testsuites>

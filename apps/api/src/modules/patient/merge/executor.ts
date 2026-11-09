@@ -29,6 +29,7 @@ export const NOT_PARTICIPANT_TABLES: Readonly<Record<string, string>> = {
   'patient.care_relationship':
     "handled by complete_merge (moved to the survivor, the merged patient's own ended)",
   'patient.merge_residue': 'append-only residue of the merge (K for every row)',
+  'privacy.incident_patient': 'records history; exempt from the guard (22.14, 22.16)',
 };
 
 export interface ExecuteDeps {

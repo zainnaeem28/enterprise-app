@@ -1,18 +1,13 @@
-/* eslint-disable boundaries/module-boundaries -- test: builds a registry without the module under test, from the other modules' participants (as the flow kit does) */
 // Real-database tests of telehealth (BE-15): the licensing check at booking and at join, the session and its room, the waiting room, join
 // tokens (single use, short life, never stored), the device check, the end of a visit, stale sessions, the merge and export participant,
 // and the database rules under them (ARCHITECTURE 22.10, 22.16, 25.x, 29.2, 29.3, 38.2 items 2 and 11; TC-TH-03..08).
 // PostgreSQL 17, the real migrations, the real booking core, the worker's real jobs and video adapter behind integration-core's real
 // gateway. The VENDOR is an in-memory contract stub: TC-TH-01, 02, 04 and 05 against a real vendor sandbox are BLOCKED (C-10, C-11).
 //   EHR_TEST_ADMIN_URL=postgres://postgres@host:5432/postgres node --test dist/src/modules/telehealth/telehealth.dbtest.js
+import { newRegisteredRegistries } from '../../register-participants.js';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { after, before, describe, test } from 'node:test';
-import { ParticipantRegistries } from '@ehr/kernel';
-import { registerDocumentsParticipants } from '../documents/index.js';
-import { registerIdentityParticipants } from '../identity/index.js';
-import { registerNotificationsParticipants } from '../notifications/index.js';
-import { registerSchedulingFlowParticipants } from '../scheduling/flow/merge.js';
 import { A1, ORG, SVC, setupTelehealth, slotStart } from './testkit.js';
 import type { Doctor, PatientKit, TelehealthKit } from './testkit.js';
 import { TelehealthService } from './service.js';
@@ -1082,11 +1077,7 @@ describe('merge participant and export (22.16, 38.2 item 11; HEAAA-88 registry)'
     const merged = await t.f.patient(++seq);
     const survivor = await t.f.patient(++seq);
     const rid = await t.video_visit(merged, d, inMin(5));
-    const regs = new ParticipantRegistries();
-    registerIdentityParticipants(regs);
-    registerNotificationsParticipants(regs);
-    registerDocumentsParticipants(regs);
-    registerSchedulingFlowParticipants(regs);
+    const regs = newRegisteredRegistries({ without: ['telehealth'] }); // negative control: telehealth alone is missing
     const { result } = await t.f.merge(survivor.patientId, merged.patientId, { registries: regs });
     assert.equal(result.status, 'failed');
     if (result.status === 'failed') assert.equal(result.code, 'patient.merge_participant_missing');
