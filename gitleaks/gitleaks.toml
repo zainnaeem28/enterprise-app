@@ -156,3 +156,22 @@ paths = [
   '''(^|/)docs/evidence/integration/M5/raw/int04-r3/gates/integration-db\.txt$''',
 ]
 regexes = ['''^2406_notifications_staff_scope_allows_patient\.sql$''']
+
+# INT04-F33 (owner: DevOps Engineer; reviewer: DevOps Reviewer). Same false positive as INT04-F18:
+# the round-4 integration evidence logs (gates/integration-db.txt and the per-package reports) print
+# the applied/pending migration file names as JSON, and the r9 result note quotes the same name;
+# rule generic-api-key reads migration 2406's file name as a key (60 findings, commit fccc299, plus
+# the r9 note). A public file name, not a secret. Pinned to these exact files AND the exact value
+# (condition = "AND") and to this rule only: any other value in these files, or this name anywhere
+# else, still fails. Covers history (fccc299, 5abb480) and the tree, so no history rewrite. No expiry:
+# the logs are frozen evidence.
+[[allowlists]]
+description = "INT04-F33: migration file name in the r4 integration-db evidence logs and the r9 result note"
+condition = "AND"
+targetRules = ["generic-api-key"]
+paths = [
+  '''(^|/)docs/evidence/integration/M5/raw/int04-r4/gates/integration-db\.txt$''',
+  '''(^|/)docs/evidence/integration/M5/raw/int04-r4/gates/integration-db-reports/(api|kernel|worker)\.txt$''',
+  '''(^|/)docs/evidence/integration/M5/INT-04-RESULT-r9\.md$''',
+]
+regexes = ['''^2406_notifications_staff_scope_allows_patient\.sql$''']
