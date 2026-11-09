@@ -1,6 +1,6 @@
 # INT03-F12 decision-log: gitleaks allowlist (Cybersecurity)
 
-Question: 115 findings (r5 count; 116 full / 110 main..HEAD when re-run on a6d2b44, the extra one being the r5 result note quoting `sk_live_SUPERSECRET`). True secrets or test fixtures?
+Question: 115 findings (r5 count; 116 full / 110 main..HEAD when re-run on a6d2b44, the extra one being the r5 result note quoting `Stripe-style live-key prefix + SUPERSECRET marker`). True secrets or test fixtures?
 Method: gitleaks 8.30.1 re-run un-redacted locally; every finding's file, line and value inspected (list: `raw/r6/triage-before.tsv`, 116 rows). Values never copied into evidence beyond synthetic literals.
 
 | Class | Count (main..HEAD) | Files | Verdict |
@@ -8,7 +8,7 @@ Method: gitleaks 8.30.1 re-run un-redacted locally; every finding's file, line a
 | Deterministic test keys (`csrf/rate/cursor/qr/decoy-key-for-tests-0123…`, `csecret-0123456789`, `RT-0123456789`, `tok-12345678`, `test-secret-0123456789`, uuid `0192abcd-…-0123456789ab`) | 22 | test/testkit/dbtest files | Synthetic: sequential digits, "for-tests" names, injected into test fixtures; no real service |
 | Random-looking check-in QR tokens (`q7Zk…`, `A1b2…`) | 2 | preconsult.spec.ts, desk.test.tsx | Synthetic: mocked network replies in UI tests |
 | Notification template identifiers `appointment_reminder_48h/4h` | 4 source + 82 in M3 journey log | r1-templates.ts, notifications dbtests, M3 r12 journey-run.txt | Not secrets: public template names matched by `key:` heuristic |
-| `sk_live_SUPERSECRET` | 2 | call-vendor.test.ts, M4 r5 result note | Fake marker proving error redaction; not a Stripe token (invalid form) |
+| `Stripe-style live-key prefix + SUPERSECRET marker` | 2 | call-vendor.test.ts, M4 r5 result note | Fake marker proving error redaction; not a Stripe token (invalid form) |
 | Older history (in main, not main..HEAD) | 6 | terraform plan tests (`0123456789abcdef…` placeholder origin-verify value), identity/admin testkit decoy key, M3 r11 journey log (template names), docker image sha256 digest in foundation versions note | Synthetic / public hash |
 
 Result: 0 true secrets. No rotation needed. Nothing allowlisted blindly.
