@@ -439,6 +439,13 @@ describe('reporting (BE-21) on PostgreSQL 17', () => {
     });
 
     test('the feed carries no patient data: no patient ID of any alert or grant appears', async () => {
+      // The alert carries a real, registered patient (the merge write guard refuses an unknown one); the canary is that patient's ID.
+      await saWrite(
+        t.k,
+        `INSERT INTO patient.patient (id, organisation_id, mrn, given_name, family_name, date_of_birth, state_code, created_via)
+         VALUES ($1, $2, 'MRN-9908001', 'Canary', 'Patient', '1970-01-01', 'NY', 'front_desk')`,
+        [CANARY_PATIENT, ORG],
+      );
       await saWrite(
         t.k,
         `INSERT INTO notifications.staff_alert (id, organisation_id, type, severity, patient_id, resource_type, resource_id, target_kind, target_principal_ids, status)
