@@ -5,6 +5,7 @@
 import { chromium } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { spawn } from 'node:child_process';
+import { connect } from 'node:net';
 import { mkdirSync, writeFileSync } from 'node:fs';
 
 const OUT = new URL('./screens/', import.meta.url).pathname;
@@ -24,7 +25,15 @@ const server = spawn(
 );
 for (let i = 0; i < 50; i++) {
   try {
-    if ((await fetch(`http://127.0.0.1:${PORT}/`)).ok) break;
+    // TCP readiness probe of the loopback preview server (no HTTP request issued here).
+    await new Promise((resolve, reject) => {
+      const s = connect(PORT, '127.0.0.1', () => {
+        s.end();
+        resolve();
+      });
+      s.on('error', reject);
+    });
+    break;
   } catch {
     /* wait */
   }
