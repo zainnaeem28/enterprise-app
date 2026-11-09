@@ -1113,6 +1113,8 @@ describe('TC-AZ-06: SET ROLE to each function-owner role and select every patien
     'queue_owner',
     'identity_signin_ro',
     'directory_ro',
+    // INT04-F02b (HEAAA-466): owns identity.bootstrap_admins; its policies are gated on current_user and audience `system`.
+    'identity_bootstrap_owner',
   ];
   const ownerSettings: ScopeSettings = {
     audience: 'system',
@@ -1169,6 +1171,34 @@ describe('TC-AZ-06: SET ROLE to each function-owner role and select every patien
         (s) => !(allowedFor[role] ?? []).some((a) => s.startsWith(a + '=')),
       );
       assert.deepEqual(unexpected, [], `${role} reads: ${unexpected.join(', ')}`);
+    });
+  // INT04-F02b (decision log test 9, "the M-5 behavioural check is extended with app_bootstrap and sees no rows"): the login role of the
+  // bootstrap command holds no table privilege, so in the system audience, as every other, every table refuses or returns nothing.
+  for (const audience of ['system', 'staff'] as const)
+    test(`as the app_bootstrap login (audience ${audience}): no table of the matrix returns a row`, async () => {
+      const settings: ScopeSettings =
+        audience === 'system'
+          ? ownerSettings
+          : {
+              audience: 'staff',
+              realm: 'admin_pool',
+              orgId: ORG,
+              principalId: id(9901),
+              phiAccess: 'limited',
+              complianceScopes: [],
+            };
+      const c = await new Caller(t, 'app_bootstrap', settings).open();
+      const seen: string[] = [];
+      try {
+        for (const tb of tables) {
+          const r = await c.run(`SELECT count(*) AS n FROM ${tb.q}`);
+          if (!('error' in r) && Number((r.rows[0] as Row)['n']) > 0)
+            seen.push(`${tb.q}=${(r.rows[0] as Row)['n']}`);
+        }
+      } finally {
+        await c.close();
+      }
+      assert.deepEqual(seen, []);
     });
 });
 

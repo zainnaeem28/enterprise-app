@@ -184,6 +184,11 @@ export const checks = {
           UNION ALL SELECT 'participant-policy-count', 'thread_participant' WHERE (SELECT count(*) FROM pg_policies
             WHERE schemaname = 'messaging' AND tablename = 'thread_participant' AND 'patient_scope_owner' = ANY (roles)) <> 1`,
   },
+  'M-5-bootstrap-owner': {
+    title:
+      'identity_bootstrap_owner holds exactly G-1..G-14 of the INT04-F02b decision (schema, table, column and function privileges, policies), owns exactly identity.bootstrap_admins, is a member of nothing and has only app_owner as a SET-only member; app_bootstrap holds no table, column or schema CREATE right and EXECUTE on identity.bootstrap_admins only',
+    sql: bootstrapOwnerSql(),
+  },
   'M-5-anonymous': {
     title: 'the policies that can match audience anonymous are exactly the ARCHITECTURE 21.3 list',
     sql: policySetSql('anonymous', L.anonymousPolicies),
@@ -245,6 +250,81 @@ export const checks = {
             AND NOT (c.relkind = 'v' AND c.oid::regclass::text = ANY (${q(L.ownerRightsViews)}))`,
   },
 };
+
+/** INT04-F02b (decision log test 9 and 10): the catalog compared with catalog-lists.bootstrapOwner in both directions. */
+function bootstrapOwnerSql() {
+  const o = L.bootstrapOwner;
+  const exp = [
+    ...o.schemaUsage.map((n) => ['schema', n, 'USAGE']),
+    ...o.tablePrivileges.map(([t, p]) => ['table', t, p]),
+    ...Object.entries(o.columnPrivileges).flatMap(([t, byPriv]) =>
+      Object.entries(byPriv).flatMap(([p, cols]) => cols.map((c) => ['column', `${t}.${c}`, p])),
+    ),
+    ...o.functions.map((f) => ['function', f, 'EXECUTE']),
+    ...o.policies.map((p) => ['policy', p, 'policy']),
+  ];
+  const values = exp.map(([k, n, p]) => `('${k}','${n}','${p}')`).join(',');
+  return `WITH r AS (SELECT oid FROM pg_roles WHERE rolname = '${o.role}'),
+    expected(kind, object, priv) AS (VALUES ${values}),
+    actual AS (
+      SELECT 'schema' AS kind, n.nspname::text AS object, x.privilege_type AS priv FROM pg_namespace n, aclexplode(n.nspacl) x, r WHERE x.grantee = r.oid
+      UNION ALL SELECT 'table', c.oid::regclass::text, x.privilege_type FROM pg_class c, aclexplode(c.relacl) x, r WHERE x.grantee = r.oid
+      UNION ALL SELECT 'column', a.attrelid::regclass::text || '.' || a.attname, x.privilege_type
+                 FROM pg_attribute a, aclexplode(a.attacl) x, r WHERE x.grantee = r.oid
+      UNION ALL SELECT 'function', p.oid::regprocedure::text, x.privilege_type FROM pg_proc p, aclexplode(p.proacl) x, r WHERE x.grantee = r.oid
+      UNION ALL SELECT 'policy', n.nspname || '.' || c.relname || '.' || po.polname, 'policy'
+                 FROM pg_policy po JOIN pg_class c ON c.oid = po.polrelid JOIN pg_namespace n ON n.oid = c.relnamespace, r WHERE r.oid = ANY (po.polroles)),
+    problems AS (
+      SELECT 'unexpected' AS problem, kind, object, priv FROM actual a
+        WHERE NOT EXISTS (SELECT 1 FROM expected e WHERE (e.kind, e.object, e.priv) = (a.kind, a.object, a.priv))
+      -- queue_api exists only after the queue install (21.8), which runs after the migrations and grants on its first run through PUBLIC
+      -- until its second run (harden.sql re-runs as queue_owner): its rows are checked when present and not required here.
+      UNION ALL SELECT 'missing', kind, object, priv FROM expected e
+        WHERE e.object NOT LIKE 'queue_api%' AND NOT EXISTS (SELECT 1 FROM actual a WHERE (e.kind, e.object, e.priv) = (a.kind, a.object, a.priv))
+      -- no GRANT OPTION anywhere
+      UNION ALL SELECT 'grant-option', 'table', c.oid::regclass::text, x.privilege_type FROM pg_class c, aclexplode(c.relacl) x, r WHERE x.grantee = r.oid AND x.is_grantable
+      UNION ALL SELECT 'grant-option', 'column', a.attrelid::regclass::text || '.' || a.attname, x.privilege_type FROM pg_attribute a, aclexplode(a.attacl) x, r WHERE x.grantee = r.oid AND x.is_grantable
+      UNION ALL SELECT 'grant-option', 'function', p.oid::regprocedure::text, x.privilege_type FROM pg_proc p, aclexplode(p.proacl) x, r WHERE x.grantee = r.oid AND x.is_grantable
+      UNION ALL SELECT 'grant-option', 'schema', n.nspname::text, x.privilege_type FROM pg_namespace n, aclexplode(n.nspacl) x, r WHERE x.grantee = r.oid AND x.is_grantable
+      -- no CREATE on any schema, no EXECUTE on any trigger function, no privilege on the table kernel.setting
+      UNION ALL SELECT 'schema-create', 'schema', n.nspname::text, 'CREATE' FROM pg_namespace n WHERE has_schema_privilege('${o.role}', n.oid, 'CREATE') AND n.nspname !~ '^pg_'
+      UNION ALL SELECT 'trigger-function-execute', 'function', p.oid::regprocedure::text, 'EXECUTE' FROM pg_proc p, r
+        WHERE p.prorettype = 'trigger'::regtype AND p.proacl IS NOT NULL AND EXISTS (SELECT 1 FROM aclexplode(p.proacl) x WHERE x.grantee = r.oid)
+      UNION ALL SELECT 'setting-table', 'table', 'kernel.setting', 'any' WHERE has_table_privilege('${o.role}', 'kernel.setting', 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
+        OR EXISTS (SELECT 1 FROM pg_attribute a, aclexplode(a.attacl) x, r WHERE a.attrelid = 'kernel.setting'::regclass AND x.grantee = r.oid)
+      -- owns exactly one function and no table, view, sequence, schema or type
+      UNION ALL SELECT 'owns', 'function', p.oid::regprocedure::text, 'owner' FROM pg_proc p, r WHERE p.proowner = r.oid AND p.oid::regprocedure::text <> '${o.ownedFunction}'
+      UNION ALL SELECT 'owns-missing', 'function', '${o.ownedFunction}', 'owner' WHERE NOT EXISTS
+        (SELECT 1 FROM pg_proc p, r WHERE p.proowner = r.oid AND p.oid::regprocedure::text = '${o.ownedFunction}')
+      UNION ALL SELECT 'owns', 'relation', c.oid::regclass::text, 'owner' FROM pg_class c, r WHERE c.relowner = r.oid
+      UNION ALL SELECT 'owns', 'schema', n.nspname::text, 'owner' FROM pg_namespace n, r WHERE n.nspowner = r.oid
+      UNION ALL SELECT 'owns', 'type', t.typname::text, 'owner' FROM pg_type t, r WHERE t.typowner = r.oid
+      -- memberships: a member of nothing; app_owner (SET only) is its only member
+      UNION ALL SELECT 'member-of', 'role', g.rolname::text, 'member' FROM pg_auth_members am JOIN pg_roles g ON g.oid = am.roleid, r WHERE am.member = r.oid
+      UNION ALL SELECT 'member', 'role', m.rolname::text, 'member' FROM pg_auth_members am JOIN pg_roles m ON m.oid = am.member, r
+        WHERE am.roleid = r.oid AND m.rolname <> session_user AND (m.rolname <> 'app_owner' OR NOT am.set_option OR am.inherit_option OR am.admin_option)
+      -- app_bootstrap: no membership, no schema CREATE, no table or column privilege, EXECUTE on the one function only
+      UNION ALL SELECT 'app_bootstrap-member-of', 'role', g.rolname::text, 'member' FROM pg_auth_members am JOIN pg_roles g ON g.oid = am.roleid
+        WHERE am.member = 'app_bootstrap'::regrole
+      UNION ALL SELECT 'app_bootstrap-schema-create', 'schema', n.nspname::text, 'CREATE' FROM pg_namespace n WHERE has_schema_privilege('app_bootstrap', n.oid, 'CREATE')
+      UNION ALL SELECT 'app_bootstrap-table', 'table', c.oid::regclass::text, 'any' FROM pg_class c
+        WHERE c.relkind IN ('r','p','v','m','S','f') AND c.relnamespace NOT IN ('pg_catalog'::regnamespace, 'information_schema'::regnamespace)
+          AND (has_table_privilege('app_bootstrap', c.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
+               OR EXISTS (SELECT 1 FROM pg_attribute a WHERE a.attrelid = c.oid AND a.attnum > 0 AND NOT a.attisdropped
+                            AND has_column_privilege('app_bootstrap', c.oid, a.attnum, 'SELECT,INSERT,UPDATE,REFERENCES')))
+      UNION ALL SELECT 'app_bootstrap-function', 'function', p.oid::regprocedure::text, 'EXECUTE' FROM pg_proc p
+        WHERE p.pronamespace NOT IN ('pg_catalog'::regnamespace, 'information_schema'::regnamespace)
+          AND has_function_privilege('app_bootstrap', p.oid, 'EXECUTE') AND p.oid::regprocedure::text <> '${o.ownedFunction}'
+          -- not counted: extension members (btree_gist, pg_trgm: PUBLIC EXECUTE by installation) and trigger functions (cannot be called
+          -- directly); queue_api.enqueue is PUBLIC-executable until the second queue install (above) and is the same function app_api calls
+          AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.objid = p.oid AND d.classid = 'pg_proc'::regclass AND d.deptype = 'e')
+          AND p.prorettype <> 'trigger'::regtype AND p.oid::regprocedure::text <> 'queue_api.enqueue(text,jsonb,timestamp with time zone,text,smallint)'
+      UNION ALL SELECT 'app_bootstrap-no-execute', 'function', '${o.ownedFunction}', 'EXECUTE'
+        WHERE NOT has_function_privilege('app_bootstrap', '${o.ownedFunction}'::regprocedure, 'EXECUTE')
+      UNION ALL SELECT 'app_bootstrap-attributes', 'role', rolname::text, 'attr' FROM pg_roles
+        WHERE rolname = 'app_bootstrap' AND (rolsuper OR rolbypassrls OR rolcreaterole OR rolcreatedb OR rolreplication OR NOT rolcanlogin OR rolconnlimit <> 1))
+    SELECT * FROM problems`;
+}
 
 /**
  * A policy "can match" an audience when its USING/WITH CHECK text does not mention app.audience at all

@@ -20,12 +20,24 @@ export interface ComplianceAlertPort {
   raise(tx: Tx, input: ComplianceAlertInput, jobId: string): Promise<unknown>;
 }
 
-/** The PHI-free notice to the security contact mailbox: a kind and IDs, never a name, address or credential detail. */
-export interface SecurityNotice {
-  kind: AdminEventKind;
-  principalId: string;
-  jobRef: string;
-}
+/**
+ * The PHI-free notice to the security contact mailbox: a kind and IDs, never a name, address or credential detail. The run-level
+ * `bootstrap_run` notice (INT04-F02b) holds the mode, run ID, CI run reference, ticket reference, token expiry and the two principal IDs.
+ */
+export type SecurityNotice =
+  | { kind: Exclude<AdminEventKind, 'bootstrap_run'>; principalId: string; jobRef: string }
+  | {
+      kind: 'bootstrap_run';
+      jobRef: string;
+      run: {
+        mode: 'create' | 'reissue';
+        runId: string;
+        runRef: string;
+        ticketRef: string;
+        tokenExpiresAt: string;
+        principalIds: string[];
+      };
+    };
 export interface SecurityNoticePort {
   notify(notice: SecurityNotice): Promise<void>;
 }
@@ -76,8 +88,9 @@ export async function runAdminEvent(
   const principalId = payload['principalId'];
   if (typeof kind !== 'string' || !(ADMIN_EVENT_KINDS as readonly string[]).includes(kind))
     throw new Error('identity.admin_event: bad kind');
+  if (kind === 'bootstrap_run') return runBootstrapRunEvent(deps, payload['runId'], jobId, jobRef);
   if (!isUuid(principalId)) throw new Error('identity.admin_event: bad principalId');
-  const k = kind as AdminEventKind;
+  const k = kind as Exclude<AdminEventKind, 'bootstrap_run'>;
   const principal = principalId.toLowerCase();
   const sessionId = isUuid(payload['sessionId']) ? payload['sessionId'].toLowerCase() : undefined;
 
@@ -142,5 +155,55 @@ export async function runAdminEvent(
       await deps.notice.notify({ kind: k, principalId: principal, jobRef });
     }
     return { audited: action !== undefined, alerted, activeCredentials: active };
+  });
+}
+
+/**
+ * The run-level event of `identity.bootstrap_admins` (INT04-F02b, decision log section 3 step 4): reads the run row, raises a `privileged_change`
+ * alert of severity `high` and sends one notice. It writes no audit row: the function did. With no compliance officer assigned yet, the
+ * notice to the security contact mailbox is the detection layer (a precondition of the run).
+ */
+async function runBootstrapRunEvent(
+  deps: AdminEventDeps,
+  runId: unknown,
+  jobId: string,
+  jobRef: string,
+): Promise<AdminEventResult> {
+  if (!isUuid(runId)) throw new Error('identity.admin_event: bad runId');
+  const id = runId.toLowerCase();
+  return deps.db.withScope(systemScope(deps.orgId), async (tx) => {
+    const row = (
+      await tx.query(
+        `SELECT mode, run_ref, ticket_ref, token_expires_at, principal_ids::text[] AS principal_ids
+           FROM identity.bootstrap_run WHERE id = $1::uuid`,
+        [id],
+      )
+    ).rows[0];
+    if (row === undefined) throw new Error('identity.admin_event: bootstrap run not found');
+    await deps.alerts.raise(
+      tx,
+      {
+        type: 'privileged_change',
+        severity: 'high',
+        resourceType: 'bootstrap_run',
+        resourceId: id,
+        permission: COMPLIANCE_PERMISSION,
+      },
+      jobId,
+    );
+    const expires = row['token_expires_at'];
+    await deps.notice.notify({
+      kind: 'bootstrap_run',
+      jobRef,
+      run: {
+        mode: row['mode'] === 'reissue' ? 'reissue' : 'create',
+        runId: id,
+        runRef: String(row['run_ref']),
+        ticketRef: String(row['ticket_ref']),
+        tokenExpiresAt: expires instanceof Date ? expires.toISOString() : String(expires),
+        principalIds: row['principal_ids'] as string[],
+      },
+    });
+    return { audited: false, alerted: true, activeCredentials: null };
   });
 }

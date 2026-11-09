@@ -50,6 +50,7 @@ export const ADMIN_EVENT_KINDS = [
   'role_change_requested',
   'role_change_decided',
   'handle_failures',
+  'bootstrap_run',
 ] as const;
 export type AdminEventKind = (typeof ADMIN_EVENT_KINDS)[number];
 

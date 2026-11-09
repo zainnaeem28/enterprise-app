@@ -1,0 +1,48 @@
+▶ refusals before any secret or database call
+  ✔ notice channel unset (2.071386ms)
+  ✔ security-contact check missing, without a test reference, older than 72 hours, or in the future (2.211328ms)
+  ✔ an invalid approved record (0.40527ms)
+✔ refusals before any secret or database call (5.675847ms)
+▶ the successful run
+  ✔ inputs come from the approved record only; the secrets are created before the call; the hash is of the token string; the output holds no token or hash (1.537855ms)
+  ✔ a custodian who is an enrollee is passed as the enrollee slot (0.409068ms)
+✔ the successful run (2.155925ms)
+▶ failures delete both secrets and end non-zero
+  ✔ a failed or refused database call (1.657129ms)
+  ✔ a failed secret creation stops before the database call and deletes what exists (0.46392ms)
+  ✔ a secret that cannot be deleted is named by ARN (0.550604ms)
+✔ failures delete both secrets and end non-zero (2.975883ms)
+▶ reissue: an enrollee the function skipped
+  ✔ the skipped slot secret is force-deleted before any output; only the issued slot ARN is printed (0.606628ms)
+  ✔ a failed deletion of the skipped secret exits non-zero naming it, with the slot as skipped (0.441688ms)
+  ✔ a skipped entry is honoured even when the function also returns a token_id (the command uses result, not token_id) (0.237516ms)
+✔ reissue: an enrollee the function skipped (1.448107ms)
+▶ a malformed function result fails closed (F02B-SEC-09 (a))
+  ✔ one entry (0.300875ms)
+  ✔ a duplicated slot (0.152756ms)
+  ✔ slots in the wrong order (0.139281ms)
+  ✔ an unknown result (0.311834ms)
+  ✔ a missing result (0.280567ms)
+  ✔ a bad principal id (0.280526ms)
+  ✔ no enrollees (0.175759ms)
+  ✔ null (0.143831ms)
+  ✔ a string (0.142107ms)
+✔ a malformed function result fails closed (F02B-SEC-09 (a)) (2.318129ms)
+✔ credential_enrolled: audit row, alert and notice (2.016332ms)
+✔ counter_regression with one key left is critical (0.241394ms)
+✔ credential_revoked with two live keys stays high; with fewer than two it is critical (0.242765ms)
+✔ a role_change_requested is neither audited nor alerted here (the API wrote its audit row) (0.160581ms)
+✔ handle_failures writes a denied audit row (0.323417ms)
+✔ a failing notice fails the job (retry, then dead-letter) instead of passing silently (0.602321ms)
+✔ bad payloads are refused (0.313097ms)
+✔ bootstrap_run (INT04-F02b): reads the run row, raises one high privileged_change alert, sends one notice with the run facts, writes no audit row (0.512061ms)
+✔ bootstrap_run: a missing run row or a bad run id throws, so the job retries and nothing is sent (1.293877ms)
+✔ the worker's ADMIN_EVENT_KINDS equal the API's (apps/api/dist must be built) (1.468906ms)
+ℹ tests 30
+ℹ suites 5
+ℹ pass 30
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 91.067854

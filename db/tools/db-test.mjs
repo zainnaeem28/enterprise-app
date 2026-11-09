@@ -569,6 +569,211 @@ describe('SEC03-F13 / F09 catalog negative controls', () => {
   });
 });
 
+describe('INT04-F02b: identity_bootstrap_owner and app_bootstrap (decision log tests 9 and 10)', () => {
+  const status = (r, id) => r.find((x) => x.id === id).status;
+  const withAdmin = async (fn) => {
+    const a = await connect(adminUrl.replace(/\/[^/]*$/, `/${dbName}`), 'test-f02b');
+    try {
+      return await fn(a);
+    } finally {
+      await a.end();
+    }
+  };
+  test('the exact check passes on the migrated database, and the roles have the pinned attributes', async () => {
+    await withAdmin(async (a) => {
+      const r = await runChecks(a);
+      assert.equal(
+        status(r, 'M-5-bootstrap-owner'),
+        'pass',
+        JSON.stringify(r.find((x) => x.id === 'M-5-bootstrap-owner')),
+      );
+      const roles = (
+        await a.query(
+          `SELECT rolname, rolcanlogin, rolsuper, rolbypassrls, rolconnlimit, rolconfig FROM pg_roles WHERE rolname IN ('app_bootstrap', 'identity_bootstrap_owner') ORDER BY 1`,
+        )
+      ).rows;
+      assert.equal(roles[0].rolname, 'app_bootstrap');
+      assert.equal(roles[0].rolcanlogin, true);
+      assert.equal(roles[0].rolconnlimit, 1);
+      assert.ok(!roles[0].rolsuper && !roles[0].rolbypassrls);
+      assert.deepEqual([...roles[0].rolconfig].sort(), [
+        'idle_in_transaction_session_timeout=30s',
+        'lock_timeout=5s',
+        'statement_timeout=50s',
+        'transaction_timeout=60s',
+      ]);
+      assert.equal(roles[1].rolname, 'identity_bootstrap_owner');
+      assert.equal(roles[1].rolcanlogin, false);
+      assert.ok(!roles[1].rolsuper && !roles[1].rolbypassrls);
+      const owned = (
+        await a.query(
+          `SELECT p.oid::regprocedure::text AS f FROM pg_proc p WHERE p.proowner = 'identity_bootstrap_owner'::regrole`,
+        )
+      ).rows;
+      assert.deepEqual(
+        owned.map((x) => x.f),
+        ['identity.bootstrap_admins(text,text,jsonb,jsonb,bytea[])'],
+      );
+      const member = (
+        await a.query(
+          `SELECT m.rolname AS member, am.set_option, am.inherit_option, am.admin_option FROM pg_auth_members am JOIN pg_roles m ON m.oid = am.member
+            WHERE am.roleid = 'identity_bootstrap_owner'::regrole AND m.rolname <> session_user`,
+        )
+      ).rows;
+      assert.deepEqual(member, [
+        { member: 'app_owner', set_option: true, inherit_option: false, admin_option: false },
+      ]);
+      const prop = (
+        await a.query(
+          `SELECT prosecdef, proconfig, proacl::text AS acl FROM pg_proc WHERE oid = 'identity.bootstrap_admins(text,text,jsonb,jsonb,bytea[])'::regprocedure`,
+        )
+      ).rows[0];
+      assert.equal(prop.prosecdef, true);
+      assert.deepEqual(prop.proconfig, ['search_path=pg_catalog']);
+      assert.ok(!prop.acl.includes('{='), 'no PUBLIC execute');
+      assert.match(prop.acl, /app_bootstrap=X\/identity_bootstrap_owner/);
+    });
+  });
+
+  const mutations = [
+    [
+      'an extra table privilege',
+      'GRANT SELECT ON identity.session TO identity_bootstrap_owner',
+      'REVOKE SELECT ON identity.session FROM identity_bootstrap_owner',
+    ],
+    [
+      'an extra column privilege',
+      'GRANT UPDATE (status) ON identity.principal TO identity_bootstrap_owner',
+      'REVOKE UPDATE (status) ON identity.principal FROM identity_bootstrap_owner',
+    ],
+    [
+      'CREATE on a schema',
+      'GRANT CREATE ON SCHEMA identity TO identity_bootstrap_owner',
+      'REVOKE CREATE ON SCHEMA identity FROM identity_bootstrap_owner',
+    ],
+    [
+      'EXECUTE on a trigger function',
+      'GRANT EXECUTE ON FUNCTION identity.guard_principal() TO identity_bootstrap_owner',
+      'REVOKE EXECUTE ON FUNCTION identity.guard_principal() FROM identity_bootstrap_owner',
+    ],
+    [
+      'a privilege on kernel.setting',
+      'GRANT SELECT (key) ON kernel.setting TO identity_bootstrap_owner',
+      'REVOKE SELECT (key) ON kernel.setting FROM identity_bootstrap_owner',
+    ],
+    [
+      'a GRANT OPTION',
+      'GRANT INSERT ON identity.bootstrap_run TO identity_bootstrap_owner WITH GRANT OPTION',
+      'REVOKE GRANT OPTION FOR INSERT ON identity.bootstrap_run FROM identity_bootstrap_owner',
+    ],
+    [
+      'an extra policy',
+      'CREATE POLICY zz_extra ON identity.person FOR SELECT TO identity_bootstrap_owner USING (true)',
+      'DROP POLICY zz_extra ON identity.person',
+    ],
+    [
+      'a missing privilege',
+      'REVOKE INSERT ON audit.event FROM identity_bootstrap_owner',
+      'GRANT INSERT ON audit.event TO identity_bootstrap_owner',
+    ],
+    [
+      'app_bootstrap with a table privilege',
+      'GRANT SELECT ON identity.person TO app_bootstrap',
+      'REVOKE SELECT ON identity.person FROM app_bootstrap',
+    ],
+    [
+      'app_bootstrap with a column privilege',
+      'GRANT SELECT (id) ON identity.person TO app_bootstrap',
+      'REVOKE SELECT (id) ON identity.person FROM app_bootstrap',
+    ],
+    [
+      'app_bootstrap with EXECUTE on another function',
+      'GRANT EXECUTE ON FUNCTION kernel.setting(text) TO app_bootstrap',
+      'REVOKE EXECUTE ON FUNCTION kernel.setting(text) FROM app_bootstrap',
+    ],
+    [
+      'app_bootstrap with CREATE on public',
+      'GRANT CREATE ON SCHEMA public TO app_bootstrap',
+      'REVOKE CREATE ON SCHEMA public FROM app_bootstrap',
+    ],
+    [
+      'app_bootstrap a member of another role',
+      'GRANT app_api TO app_bootstrap',
+      'REVOKE app_api FROM app_bootstrap',
+    ],
+  ];
+  for (const [what, bad, restore] of mutations)
+    test(`M-5-bootstrap-owner fails on ${what}`, async () => {
+      await withAdmin(async (a) => {
+        await a.query(bad);
+        try {
+          assert.equal(status(await runChecks(a), 'M-5-bootstrap-owner'), 'fail', what);
+        } finally {
+          await a.query(restore);
+        }
+        assert.equal(status(await runChecks(a), 'M-5-bootstrap-owner'), 'pass', 'restored');
+      });
+    });
+
+  test('test 10: app_bootstrap cannot execute any function except identity.bootstrap_admins (extension and trigger functions aside), has no CREATE, no role, and the superuser-only functions stay refused', async () => {
+    await withAdmin(async (a) => {
+      const fns = (
+        await a.query(
+          `SELECT p.oid::regprocedure::text AS f FROM pg_proc p
+            WHERE p.pronamespace NOT IN ('pg_catalog'::regnamespace, 'information_schema'::regnamespace)
+              AND has_function_privilege('app_bootstrap', p.oid, 'EXECUTE')
+              AND p.prorettype <> 'trigger'::regtype
+              AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.objid = p.oid AND d.classid = 'pg_proc'::regclass AND d.deptype = 'e')`,
+        )
+      ).rows.map((r) => r.f);
+      assert.deepEqual(fns, ['identity.bootstrap_admins(text,text,jsonb,jsonb,bytea[])']);
+      const create = (
+        await a.query(
+          `SELECT n.nspname FROM pg_namespace n WHERE has_schema_privilege('app_bootstrap', n.oid, 'CREATE')`,
+        )
+      ).rows;
+      assert.deepEqual(create, [], 'no CREATE on any schema, public included');
+      assert.equal(
+        (
+          await a.query(
+            `SELECT count(*)::int AS n FROM pg_auth_members WHERE member = 'app_bootstrap'::regrole`,
+          )
+        ).rows[0].n,
+        0,
+        'a member of no role, no pg_* predefined role',
+      );
+      for (const f of [
+        'pg_read_file(text)',
+        'pg_read_binary_file(text)',
+        'pg_ls_dir(text)',
+        'lo_import(text)',
+        'lo_export(oid,text)',
+      ])
+        assert.equal(
+          (await a.query(`SELECT has_function_privilege('app_bootstrap', $1, 'EXECUTE') AS x`, [f]))
+            .rows[0].x,
+          false,
+          f,
+        );
+    });
+    await rejectsCode(
+      as('app_bootstrap', {}, (c) => c.query(`SELECT pg_read_file('/etc/hostname')`)),
+      '42501',
+      'pg_read_file',
+    );
+    await rejectsCode(
+      as('app_bootstrap', {}, (c) => c.query(`SELECT lo_import('/etc/hostname')`)),
+      '42501',
+      'lo_import',
+    );
+    await rejectsCode(
+      as('app_bootstrap', {}, (c) => c.query(`CREATE TABLE public.zz (a int)`)),
+      '42501',
+      'create table',
+    );
+  });
+});
+
 describe('R-timeouts negative control (F03-R1-02)', () => {
   for (const bad of ['0s', '0ms', '0000ms', '61s', '120s']) {
     test(`R-timeouts fails when an audit-writing role has transaction_timeout = ${bad}`, async () => {
@@ -936,8 +1141,8 @@ describe('the single merge write guard (T1-T4 of HEAAA-190, extended by HEAAA-31
     const { definerInventory } = await import('./catalog-lists.mjs');
     assert.equal(
       definerInventory.length,
-      27,
-      'definerInventory has the 23 entries of A-3, the two messaging predicates and the two referral definers of the two A-4 amendments',
+      28,
+      'definerInventory has the 23 entries of A-3, the two messaging predicates, the two referral definers of the two A-4 amendments and identity.bootstrap_admins (A-6)',
     );
   });
 
@@ -1252,12 +1457,12 @@ describe('A-4 messaging definers (migrations 2203/2204): T-1..T-10 of Cybersecur
   });
   after(() => adm?.end());
 
-  test('I-10: M-5-definer passes with 27 entries (25 of F03B plus the two referral definers of F08d); is_creator does not exist; patient_scope_owner holds only the four participant columns', async () => {
+  test('I-10: M-5-definer passes with 28 entries (25 of F03B, the two referral definers of F08d and identity.bootstrap_admins of A-6); is_creator does not exist; patient_scope_owner holds only the four participant columns', async () => {
     const report = await runChecks(adm);
     for (const id_ of ['M-5-definer', 'M-5-messaging-definer'])
       assert.equal(report.find((r) => r.id === id_)?.status, 'pass', id_);
     const { definerInventory } = await import('./catalog-lists.mjs');
-    assert.equal(definerInventory.length, 27);
+    assert.equal(definerInventory.length, 28);
     const gone = await adm.query(
       "SELECT count(*)::int AS n FROM pg_proc WHERE pronamespace = 'messaging'::regnamespace AND proname = 'is_creator'",
     );

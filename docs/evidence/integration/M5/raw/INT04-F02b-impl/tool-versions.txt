@@ -1,0 +1,7 @@
+date: 2026-11-09T13:29:31Z
+node: v24.22.2
+pnpm: 12.16.1 (not used for runs; the worktree node_modules is a symlink, so tools are run directly)
+typescript: Version 5.9.3
+postgres: postgres (PostgreSQL) 17.11 (embedded-postgres 17.11 binaries, local cluster, trust auth)
+base commit: f9274d724f9411d6ad6915ce6f056e4be5c94ead
+pending-diff sha256: 1685c5daa98aaee5 + untracked new files

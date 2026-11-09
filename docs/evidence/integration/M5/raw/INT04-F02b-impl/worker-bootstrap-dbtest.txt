@@ -1,0 +1,46 @@
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+▶ test 1: create mode, a real commit from the app_bootstrap login
+  ✔ (i) two custodians who are not enrollees (87.144704ms)
+  ✔ (ii) the custodians are the enrollees, crossed (67.124937ms)
+  ✔ (iii) one of each (60.527199ms)
+  ✔ after the call the three settings equal their values before it; person_requires_principal is deferred again (109.200001ms)
+✔ test 1: create mode, a real commit from the app_bootstrap login (1640.496034ms)
+▶ test 2: the latch
+  ✔ a second create-mode call refuses with no write; a non-bootstrap admin_pool principal refuses with no write (98.337213ms)
+✔ test 2: the latch (98.612158ms)
+▶ test 3: reissue
+  ✔ two consecutive reissues, the skipped enrolled slot, the cap, the age bound, target state (142.848555ms)
+  ✔ neither/one enrolled issues as the result says; both enrolled refuses; different handles refuse (89.997236ms)
+  ✔ past first run + 7 days refuses (reissue_expired); a suspended or disabled target refuses even when the other is active; a revoked org_admin refuses; a reissue row with other principals refuses (203.568677ms)
+✔ test 3: reissue (436.945133ms)
+▶ test 4: bad input and the deferred person check
+  ✔ custodian i = enrollee i, identical custodians, duplicate handles or hashes and a missing org_admin role each refuse with no write (121.127055ms)
+  ✔ a function variant that inserts a person without a principal refuses at the deferred check, inside the call, with PS001 (38.506108ms)
+✔ test 4: bad input and the deferred person check (159.952222ms)
+▶ test 5: two concurrent calls
+  ✔ exactly one succeeds (64.447374ms)
+✔ test 5: two concurrent calls (64.742206ms)
+▶ test 6: caller binding
+  ✔ app_worker and app_api get permission denied on EXECUTE (24.136391ms)
+  ✔ app_bootstrap gets permission denied on a direct SELECT or INSERT on every identity table and on audit.event (57.389984ms)
+  ✔ a call from a session whose session_user is not app_bootstrap refuses; an organisation with no row refuses with no write (36.405016ms)
+  ✔ a direct insert as identity_bootstrap_owner outside the two G-6 branches and the G-13 list is refused by its policy; the allowed shapes pass (80.422262ms)
+✔ test 6: caller binding (198.850936ms)
+▶ test 7: hashes and stored shapes, with the command and the API helpers
+  ✔ the generated token hashes to what the enrolment path derives, the lookup finds it, a hash of the raw bytes does not; request_hash and the stored shapes equal the API (78.677961ms)
+✔ test 7: hashes and stored shapes, with the command and the API helpers (78.870802ms)
+▶ test 11: the admin_event task type
+  ✔ identity.admin_event has api_enqueue = true and job class job; the migration added no task_type row and changed no flag (0.978175ms)
+✔ test 11: the admin_event task type (1.110533ms)
+▶ the run-level admin event, read by the worker under audience system
+  ✔ identity.admin_event bootstrap_run reads the run row as app_worker, raises one high alert and sends one notice (57.826444ms)
+✔ the run-level admin event, read by the worker under audience system (58.024314ms)
+ℹ tests 18
+ℹ suites 9
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2885.857202

@@ -1,7 +1,13 @@
 // The allow-lists the catalog checks compare against. Each later ticket that adds an object of one of
 // these kinds adds it here in the same change; a review of this file is the review of the exception.
 
-export const appRoles = ['app_api', 'app_worker', 'reporting_ro', 'audit_archiver'];
+export const appRoles = [
+  'app_api',
+  'app_worker',
+  'reporting_ro',
+  'audit_archiver',
+  'app_bootstrap',
+];
 export const loginRoles = ['app_owner', ...appRoles];
 export const noLoginRoles = [
   'scheduling_booking_owner',
@@ -11,12 +17,15 @@ export const noLoginRoles = [
   'queue_owner',
   'identity_signin_ro',
   'directory_ro',
+  // INT04-F02b (HEAAA-466): owns identity.bootstrap_admins only.
+  'identity_bootstrap_owner',
 ];
 export const functionOwnerRoles = [
   'scheduling_booking_owner',
   'patient_scope_owner',
   'patient_match_owner',
   'integration_receiver_owner',
+  'identity_bootstrap_owner',
 ];
 /** Roles that may be the target of a policy (M-2, M-3). */
 export const policyRoles = [
@@ -31,7 +40,7 @@ export const policyRoles = [
   ...functionOwnerRoles,
 ];
 /** audit-writing roles: role-level transaction_timeout must be 1..60 s (SAR-10). */
-export const auditWritingRoles = ['app_api', 'app_worker', 'audit_archiver'];
+export const auditWritingRoles = ['app_api', 'app_worker', 'audit_archiver', 'app_bootstrap'];
 
 /** Schemas the table checks skip: system schemas, `public` (empty) and the runner's tracker. */
 export const skippedSchemas = ['public', 'migration'];
@@ -45,6 +54,7 @@ export const expectedMemberships = {
     'integration_receiver_owner',
     'directory_ro',
     'queue_owner',
+    'identity_bootstrap_owner',
   ],
   app_api: ['identity_signin_ro'],
 };
@@ -82,8 +92,10 @@ export const patientGuardExempt = [
   // ARCHITECTURE 22.14 table row and 22.16 note (G2, bd6de63): records history; HEAAA-310 ruling.
   'privacy.incident_patient',
 ];
-/** SECURITY DEFINER functions of SHARED-BOUNDARIES 6.2 and ARCHITECTURE 21.6 (schema.name): 27 entries after the two A-4 amendments (messaging predicates; referral definers), INT-03 r3 merge. */
+/** SECURITY DEFINER functions of SHARED-BOUNDARIES 6.2 and ARCHITECTURE 21.6 (schema.name): 28 entries after the two A-4 amendments (messaging predicates; referral definers), INT-03 r3 merge, and identity.bootstrap_admins (A-6, INT04-F02b). */
 export const definerInventory = [
+  // INT04-F02b (HEAAA-466, A-6): the first-admin bootstrap; owner identity_bootstrap_owner, EXECUTE to app_bootstrap only.
+  'identity.bootstrap_admins',
   'integration_core.receive_inbound',
   // BE-08 (patient): owners patient_scope_owner (writes) and patient_match_owner (reads); all fix search_path.
   'patient.guard_open_patient',
@@ -245,4 +257,116 @@ export const settingColumnGrants = {
 /** SEC03-F09: columns of the PHI-free occupancy twin that no application role may read (the twin names no principal). */
 export const hiddenColumns = {
   'scheduling.slot_occupancy': ['created_by', 'created_by_job', 'session_key'],
+};
+
+/**
+ * INT04-F02b (decision log 2.1, G-1..G-14): the COMPLETE privilege set of identity_bootstrap_owner. The check M-5-bootstrap-owner
+ * compares the catalog with these lists in both directions, so a privilege added later without a review of this file fails the check.
+ */
+export const bootstrapOwner = {
+  role: 'identity_bootstrap_owner',
+  schemaUsage: ['audit', 'identity', 'kernel', 'organisation', 'queue_api'],
+  tablePrivileges: [
+    ['identity.bootstrap_run', 'INSERT'],
+    ['identity.bootstrap_run', 'SELECT'],
+    ['audit.event', 'INSERT'],
+  ],
+  columnPrivileges: {
+    'identity.person': {
+      INSERT: ['id', 'organisation_id', 'display_name', 'status', 'created_by_job'],
+    },
+    'identity.principal': {
+      INSERT: [
+        'id',
+        'organisation_id',
+        'person_id',
+        'realm',
+        'subject',
+        'status',
+        'disabled_reason',
+        'created_by_job',
+      ],
+      SELECT: ['id', 'organisation_id', 'person_id', 'realm', 'subject', 'status'],
+    },
+    'identity.role': {
+      SELECT: ['id', 'organisation_id', 'key', 'realm', 'privileged', 'location_bound'],
+    },
+    'identity.role_change_request': {
+      INSERT: [
+        'id',
+        'organisation_id',
+        'requester_person_id',
+        'subject_principal_id',
+        'change',
+        'before',
+        'request_hash',
+        'status',
+        'expires_at',
+        'created_by_job',
+      ],
+      UPDATE: ['status', 'approver_person_id', 'decided_at'],
+      SELECT: ['id', 'organisation_id', 'subject_principal_id', 'status'],
+    },
+    'identity.role_assignment': {
+      INSERT: [
+        'id',
+        'organisation_id',
+        'role_id',
+        'principal_id',
+        'granted_via_request_id',
+        'created_by_job',
+      ],
+      SELECT: [
+        'id',
+        'organisation_id',
+        'principal_id',
+        'role_id',
+        'granted_via_request_id',
+        'revoked_at',
+      ],
+    },
+    'identity.enrolment_token': {
+      INSERT: [
+        'id',
+        'organisation_id',
+        'principal_id',
+        'requested_by_person_id',
+        'expires_at',
+        'status',
+        'created_by_job',
+      ],
+      UPDATE: ['token_hash', 'approved_by_person_id', 'expires_at', 'status'],
+      SELECT: ['id', 'organisation_id', 'principal_id', 'status'],
+    },
+    'identity.admin_credential': { SELECT: ['organisation_id', 'principal_id'] },
+    'organisation.organisation': { SELECT: ['organisation_id'] },
+  },
+  functions: [
+    'kernel.setting(text)',
+    'kernel.uuid1(text)',
+    'kernel.uuids(text)',
+    'queue_api.enqueue(text,jsonb,timestamp with time zone,text,smallint)',
+    // its own function (the owner's entry in the ACL)
+    'identity.bootstrap_admins(text,text,jsonb,jsonb,bytea[])',
+  ],
+  ownedFunction: 'identity.bootstrap_admins(text,text,jsonb,jsonb,bytea[])',
+  policies: [
+    'identity.bootstrap_run.bootstrap_run_bootstrap_insert',
+    'identity.bootstrap_run.bootstrap_run_bootstrap_select',
+    'organisation.organisation.organisation_bootstrap_select',
+    'identity.person.person_bootstrap_insert',
+    'identity.principal.principal_bootstrap_insert',
+    'identity.principal.principal_bootstrap_select',
+    'identity.role.role_bootstrap_select',
+    'identity.role_change_request.role_change_request_bootstrap_insert',
+    'identity.role_change_request.role_change_request_bootstrap_update',
+    'identity.role_change_request.role_change_request_bootstrap_select',
+    'identity.role_assignment.role_assignment_bootstrap_insert',
+    'identity.role_assignment.role_assignment_bootstrap_select',
+    'identity.enrolment_token.enrolment_token_bootstrap_insert',
+    'identity.enrolment_token.enrolment_token_bootstrap_update',
+    'identity.enrolment_token.enrolment_token_bootstrap_select',
+    'identity.admin_credential.admin_credential_bootstrap_select',
+    'audit.event.event_insert_bootstrap',
+  ],
 };

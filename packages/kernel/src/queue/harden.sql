@@ -35,7 +35,7 @@ BEGIN
     CREATE SCHEMA queue_api;
   END IF;
   REVOKE ALL ON SCHEMA queue_api FROM PUBLIC;
-  GRANT USAGE ON SCHEMA queue_api TO app_api, app_worker;
+  GRANT USAGE ON SCHEMA queue_api TO app_api, app_worker, identity_bootstrap_owner;
   ALTER DEFAULT PRIVILEGES IN SCHEMA queue_api REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC;
   CREATE TABLE IF NOT EXISTS queue_api.task_type (
     task_identifier text PRIMARY KEY CHECK (task_identifier ~ '^[a-z][a-z0-9_]{0,40}\.[a-z][a-z0-9_]{0,60}$'),
@@ -123,7 +123,7 @@ END
 $enqueue$;
 ALTER FUNCTION queue_api.enqueue(text, jsonb, timestamptz, text, smallint) OWNER TO queue_owner;
 REVOKE ALL ON FUNCTION queue_api.enqueue(text, jsonb, timestamptz, text, smallint) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION queue_api.enqueue(text, jsonb, timestamptz, text, smallint) TO app_api, app_worker;
+GRANT EXECUTE ON FUNCTION queue_api.enqueue(text, jsonb, timestamptz, text, smallint) TO app_api, app_worker, identity_bootstrap_owner;
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA queue_api FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION queue_api.enqueue(text, jsonb, timestamptz, text, smallint) TO app_api, app_worker;
+GRANT EXECUTE ON FUNCTION queue_api.enqueue(text, jsonb, timestamptz, text, smallint) TO app_api, app_worker, identity_bootstrap_owner;
 ALTER SCHEMA queue_api OWNER TO queue_owner;

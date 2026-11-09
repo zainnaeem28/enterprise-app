@@ -32,7 +32,7 @@ const checks = {
           WHERE (r.rolsuper OR r.rolname IN ('rds_superuser','rdsadmin'))
             AND m.rolname = ANY (ARRAY['app_owner','app_api','app_worker','reporting_ro','audit_archiver',
               'scheduling_booking_owner','patient_scope_owner','patient_match_owner','integration_receiver_owner',
-              'queue_owner','identity_signin_ro','directory_ro'])`,
+              'queue_owner','identity_signin_ro','directory_ro','app_bootstrap','identity_bootstrap_owner'])`,
   },
 };
 const db = new pg.Client({ connectionString: url, application_name: 'extra-checks' });

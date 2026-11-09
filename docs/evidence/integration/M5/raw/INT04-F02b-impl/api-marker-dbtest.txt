@@ -1,0 +1,16 @@
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+▶ custodian marker principals (decision log D-2)
+  ✔ each marker has exactly the values of D-2 (2.475594ms)
+  ✔ the sign-in path with the marker subject does not sign in as the marker (48.35232ms)
+  ✔ sign-in with the custodian's e-mail and another subject never finds the marker: it creates an unrelated principal (21.34923ms)
+  ✔ an org_admin assignment to a marker is refused by guard_role_assignment (3.409987ms)
+  ✔ the marker subject is immutable (guard_principal): it can never be re-pointed at a real account (0.935455ms)
+✔ custodian marker principals (decision log D-2) (1698.580134ms)
+ℹ tests 5
+ℹ suites 1
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2141.778368

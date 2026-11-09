@@ -121,6 +121,8 @@ const TABLES = [
   'enrolment_token',
   'role_change_request',
   'webauthn_challenge',
+  // INT04-F02b (A-6): the insert-only record of the first-admin bootstrap runs
+  'bootstrap_run',
 ];
 
 describe('catalog (M-1, M-2, M-3, M-5, 21.3 lists)', () => {
@@ -153,6 +155,7 @@ describe('catalog (M-1, M-2, M-3, M-5, 21.3 lists)', () => {
       'app_api',
       'app_worker',
       'directory_ro',
+      'identity_bootstrap_owner', // the first-admin bootstrap definer (INT04-F02b, A-6)
       'identity_signin_ro', // the admin claim read (BE-05)
       'patient_scope_owner',
     ]);
