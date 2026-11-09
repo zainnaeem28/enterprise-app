@@ -2,7 +2,9 @@
 // the approved AAGUIDs or the decoy key, and nothing here accepts a test value; a missing or malformed variable stops the start with
 // its NAME. The admin WebAuthn port in `chain` mode is the only mode this loader can produce (`self_for_tests` is reachable only by
 // injecting a port in a test).
+import { X509Certificate } from 'node:crypto';
 import { ConfigError } from '@ehr/kernel';
+import { CI_FIXTURE_AAGUID, CI_FIXTURE_ROOT_CN } from './ci-fixture/attestation-ca.js';
 import type { IdentityEnv } from './identity-env.js';
 
 export interface AdminEnv {
@@ -17,6 +19,15 @@ export interface AdminEnv {
 const AAGUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const NIL_AAGUID = '00000000-0000-0000-0000-000000000000';
 const PEM = /-----BEGIN CERTIFICATE-----[A-Za-z0-9+/=\s]+-----END CERTIFICATE-----/g;
+
+/** Does this PEM parse as a certificate whose subject is the CI fixture root? An unparsable block is left to the WebAuthn library. */
+function isFixtureRoot(pem: string): boolean {
+  try {
+    return new X509Certificate(pem).subject.includes(CI_FIXTURE_ROOT_CN);
+  } catch {
+    return false;
+  }
+}
 
 export function loadAdminEnv(
   env: Readonly<Record<string, string | undefined>>,
@@ -40,6 +51,20 @@ export function loadAdminEnv(
   // The all-zero AAGUID is what an authenticator reports when it hides its model: it can never identify an approved one.
   if (aaguidsRaw.some((a) => !AAGUID.test(a) || a === NIL_AAGUID))
     problems.push('EHR_ADMIN_ALLOWED_AAGUIDS must be a list of non-zero AAGUIDs');
+
+  // INT04-F21: the CI fixture (ci-fixture/attestation-ca.ts) is accepted only in a CI run that asked for it by name. Anywhere else
+  // (dev, staging, production, or EHR_ENV unset) a fixture root or the fixture AAGUID stops the start. Only ever stricter.
+  const fixtureAllowed = env['EHR_ENV'] === 'ci' && env['EHR_ADMIN_CI_FIXTURE'] === '1';
+  if (!fixtureAllowed) {
+    if (roots.some(isFixtureRoot))
+      problems.push(
+        'EHR_ADMIN_ATTESTATION_ROOTS_PEM holds a CI fixture root; allowed only with EHR_ENV=ci and EHR_ADMIN_CI_FIXTURE=1',
+      );
+    if (aaguidsRaw.includes(CI_FIXTURE_AAGUID))
+      problems.push(
+        'EHR_ADMIN_ALLOWED_AAGUIDS holds the CI fixture AAGUID; allowed only with EHR_ENV=ci and EHR_ADMIN_CI_FIXTURE=1',
+      );
+  }
 
   const decoyKey = env['EHR_ADMIN_DECOY_KEY'] ?? '';
   if (decoyKey === '') problems.push('EHR_ADMIN_DECOY_KEY is required');
