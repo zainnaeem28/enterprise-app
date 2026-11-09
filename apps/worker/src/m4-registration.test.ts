@@ -66,6 +66,7 @@ test('the crontab holds the privacy expiry, the operations refresh and the audit
     '50 3 * * * privacy/expire_packages',
     '* * * * * reporting/refresh_ops',
     '* * * * * audit/anchor',
+    '* * * * * audit/archive_anchors',
     '10 3 * * * audit/verify_anchors',
   ]);
   for (const e of entries)
@@ -75,7 +76,7 @@ test('the crontab holds the privacy expiry, the operations refresh and the audit
 test('INT03-F11: graphile-worker parseCrontab accepts WORKER_CRONTAB and every entry maps to a registered task', () => {
   const { registry, tasks } = table();
   const items = parseCrontab(WORKER_CRONTAB);
-  assert.equal(items.length, 4);
+  assert.equal(items.length, 5);
   const registered = registry.list().map((j) => j.name);
   for (const item of items) {
     const name = fromCrontabTaskId(item.task);
@@ -157,6 +158,7 @@ test('every admin job is registered with a handler in the composed table (INT04-
   for (const n of [
     'identity.admin_event',
     'audit.anchor',
+    'audit.archive_anchors',
     'audit.verify_anchors',
     'audit.export',
     'integration_core.apply_secret',

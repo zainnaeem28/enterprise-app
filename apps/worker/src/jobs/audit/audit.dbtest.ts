@@ -545,6 +545,7 @@ describe('audit jobs on PostgreSQL 17 (BE-01)', () => {
         db,
         queue,
         sink,
+        archive: {} as never,
         orgId: ORG,
         log: { warn() {}, error() {}, info() {} } as never,
       });
@@ -567,7 +568,12 @@ describe('audit jobs on PostgreSQL 17 (BE-01)', () => {
       ).rows;
       assert.deepEqual(
         r.map((x) => `${x.name}:${x.job_class}:${x.api_enqueue}`),
-        ['audit.anchor:system:false', 'audit.export:job:true', 'audit.verify_anchors:system:false'],
+        [
+          'audit.anchor:system:false',
+          'audit.archive_anchors:system:false',
+          'audit.export:job:true',
+          'audit.verify_anchors:system:false',
+        ],
       );
     });
   });

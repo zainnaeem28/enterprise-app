@@ -12,6 +12,14 @@ export const AUDIT_JOBS: readonly JobType[] = [
     jobClass: 'system',
   },
   {
+    name: 'audit.archive_anchors',
+    maxAttempts: 3,
+    onMerged: 'none',
+    carriesPatientIds: false,
+    jobScope: 'org',
+    jobClass: 'system',
+  },
+  {
     name: 'audit.verify_anchors',
     maxAttempts: 3,
     onMerged: 'none',

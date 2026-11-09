@@ -19,7 +19,7 @@ import { createReportingTasks } from './jobs/reporting/index.js';
 import type { ReportingWorkerPort } from './jobs/reporting/index.js';
 import { createAuditTasks, emfMetricSink } from './jobs/audit/index.js';
 import type { MetricSink } from './jobs/audit/index.js';
-import type { ExportSink } from './jobs/audit/index.js';
+import type { AnchorArchiveStore, ExportSink } from './jobs/audit/index.js';
 import { createCalendarSyncTasks, registerGooglePushHandler } from './jobs/calendar-sync/index.js';
 import type { CalendarJobDeps } from './jobs/calendar-sync/index.js';
 import {
@@ -78,6 +78,15 @@ function refusingPort<T extends object>(port: string): T {
   });
 }
 
+/** The anchor archive until the log-archive bucket adapter exists: puts fail (the lag metric grows), verification reports the archive unavailable. */
+const refusingAnchorArchive: AnchorArchiveStore = {
+  putAnchor: () => Promise.reject(new PortNotConfiguredError('audit_anchor_archive.putAnchor')),
+  listVersions: () => {
+    throw new PortNotConfiguredError('audit_anchor_archive.listVersions');
+  },
+  getVersion: () => Promise.reject(new PortNotConfiguredError('audit_anchor_archive.getVersion')),
+};
+
 /** The service-backed ports, built by the API's composition (`apps/api/src/worker-ports.ts`). */
 export interface ApiPorts {
   scheduling: SchedulingFlowPort;
@@ -112,6 +121,8 @@ export interface ComposeOptions {
   /** Infrastructure adapters; each defaults to a refusing port. */
   infra?: {
     exportSink?: ExportSink;
+    /** Object Lock archive of audit anchors (log-archive bucket, SEC05-F02); refusing until the bucket adapter exists. */
+    anchorArchive?: AnchorArchiveStore;
     objectStore?: WorkerObjectStore;
     secretReader?: SecretReader;
     secretWriter?: InboundSecretWriter;
@@ -228,6 +239,7 @@ export function composeTasks(opts: ComposeOptions & { queue: Queue }): TaskTable
       orgId,
       log,
       sink: infra.exportSink ?? refusingPort<ExportSink>('audit_export_sink'),
+      archive: infra.anchorArchive ?? refusingAnchorArchive,
       metrics: infra.metrics ?? emfMetricSink(),
     }),
     ...createSchedulingFlowTasks({

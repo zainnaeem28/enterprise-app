@@ -15,7 +15,7 @@ Design: ARCHITECTURE 6 (audit store), 21.5, 22.2, 24, 25, 33.1; SHARED-BOUNDARIE
 | `requestExport`                     | Size limit (`audit_export_max_rows`, default 1,000,000, 422 `audit.export_too_large`), job row, `export` audit row with reason, enqueues `audit.export` chunk 0.                                                  |
 | `disclosuresFor(tx, patientIds)`    | Keyset-paged events about patients, for the privacy export.                                                                                                                                                       |
 
-Worker: `audit.anchor` (every minute), `audit.verify_anchors` (daily), `audit.export` (chunked). `AUDIT_CRONTAB` holds the
+Worker: `audit.anchor` (every minute), `audit.archive_anchors` (every minute; copies each anchor to the Object Lock archive and writes `audit.anchor_archive_receipt`, migration 0204), `audit.verify_anchors` (daily; the archive is the authority: `db_differs_from_archive`, `not_archived`, `archive_extra_version`; INT04-F10 D-2), `audit.export` (chunked). `AUDIT_CRONTAB` holds the
 schedules; the F-05 runner does not pass a crontab yet (integration step).
 
 ## Database rules (migrations 0200-0203)

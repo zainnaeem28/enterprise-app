@@ -50,6 +50,7 @@ function run(outcome: 'anchored' | 'up_to_date' | 'locked') {
     db,
     queue: {} as Queue,
     sink: {} as never,
+    archive: {} as never,
     orgId: '00000000-0000-7000-8000-0000000000a1',
     log: { warn: () => undefined, error: () => undefined } as unknown as Logger,
     metrics: { gauge: (n, v) => gauges.push([n, v]) },
