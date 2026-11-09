@@ -1,0 +1,48 @@
+/* Admin configuration screens (FE-14). Tokens only. Targets are at least 44 px (UI-UX 10, WCAG 2.5.8). Layout classes the
+   administrator realm already uses (.ehr-subnav, .ehr-panel, .ehr-admin tables) come from admin-compliance.css; they are repeated here
+   so this feature does not depend on that file being loaded. */
+.ehr-admin-config .ehr-subnav ul {
+  list-style: none;
+  margin: 0 0 var(--space-4, 1rem);
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2, 0.5rem);
+}
+.ehr-admin-config .ehr-subnav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--space-3, 0.75rem);
+}
+.ehr-admin-config .ehr-subnav a[aria-current='page'] {
+  font-weight: 700;
+  text-decoration: underline;
+}
+.ehr-admin-config .ehr-panel {
+  margin-block: var(--space-4, 1rem);
+  padding: var(--space-3, 0.75rem);
+  border: 1px solid currentColor;
+  border-radius: var(--radius-2, 0.5rem);
+}
+.ehr-admin-config .ehr-table {
+  min-width: 40rem;
+}
+.ehr-admin-config .ehr-table th,
+.ehr-admin-config .ehr-table .ehr-btn,
+.ehr-admin-config .ehr-chip {
+  white-space: nowrap;
+}
+.ehr-admin-config .ehr-table td {
+  overflow-wrap: anywhere;
+}
+.ehr-admin-config .ehr-check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  min-height: 44px;
+}
+.ehr-admin-config .ehr-check input {
+  width: 1.5rem;
+  height: 1.5rem;
+}

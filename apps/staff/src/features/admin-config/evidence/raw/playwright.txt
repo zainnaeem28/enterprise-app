@@ -1,0 +1,16 @@
+
+Running 10 tests using 2 workers
+
+  ✓   1 [phone] › src/features/admin-config/e2e/admin-config.spec.ts:189:1 › clinics: locations and opening hours load after the key, and the hours change with If-Match (1.1s)
+  ✓   2 [desktop] › src/features/admin-config/e2e/admin-config.spec.ts:189:1 › clinics: locations and opening hours load after the key, and the hours change with If-Match (1.1s)
+  ✓   3 [phone] › src/features/admin-config/e2e/admin-config.spec.ts:208:1 › services: a condition-revealing service needs a neutral patient name (1.1s)
+  ✓   4 [desktop] › src/features/admin-config/e2e/admin-config.spec.ts:208:1 › services: a condition-revealing service needs a neutral patient name (1.2s)
+  ✓   5 [phone] › src/features/admin-config/e2e/admin-config.spec.ts:233:1 › policies: late changes are blocked, not charged (993ms)
+  ✓   6 [desktop] › src/features/admin-config/e2e/admin-config.spec.ts:233:1 › policies: late changes are blocked, not charged (989ms)
+  ✓   7 [phone] › src/features/admin-config/e2e/admin-config.spec.ts:244:1 › integrations: health, test, and a write-only secret that is never shown (1.1s)
+  ✓   8 [desktop] › src/features/admin-config/e2e/admin-config.spec.ts:244:1 › integrations: health, test, and a write-only secret that is never shown (1.2s)
+  ✓   9 [phone] › src/features/admin-config/e2e/admin-config.spec.ts:268:1 › flags: patient messaging cannot be turned on; vital ranges list (1.5s)
+  ✓  10 [desktop] › src/features/admin-config/e2e/admin-config.spec.ts:268:1 › flags: patient messaging cannot be turned on; vital ranges list (1.5s)
+
+  10 passed (7.0s)
+exit 0
