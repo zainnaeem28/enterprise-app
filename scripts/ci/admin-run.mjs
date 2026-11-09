@@ -94,12 +94,13 @@ function selftest() {
   console.log('admin-run self-test: configuration, redaction and screenshot naming ok');
 }
 
-async function main() {
+/** `fixture`: the fixture the API was started with (admin-stack.mjs). Without it a fresh one is made, which only fits an API started by hand. */
+export async function main(fixture) {
   const cfg = readConfig(process.env);
   const secrets = [cfg.token];
   const log = (m) => console.log(redact(m, secrets));
   const { createAdminFixture } = await import('./admin-fixture/index.mjs');
-  const fx = createAdminFixture(); // refuses unless CI=true and EHR_ADMIN_CI_FIXTURE=1
+  const fx = fixture ?? createAdminFixture(); // refuses unless CI=true and EHR_ADMIN_CI_FIXTURE=1
   const { chromium } = createRequire(`${process.cwd()}/apps/staff/package.json`)(
     '@playwright/test',
   );
@@ -329,16 +330,18 @@ async function main() {
       ? 'admin run FAILED'
       : `admin run passed (${results.length} steps), screenshots in ${cfg.out}`,
   );
-  process.exit(failed ? 1 : 0);
+  return failed ? 1 : 0;
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   if (process.argv.includes('--selftest')) selftest();
   else {
-    main().catch((e) => {
-      const secrets = SECRET_VARS.map((n) => process.env[n] ?? '');
-      console.error(redact(e instanceof Error ? e.message : String(e), secrets));
-      process.exit(1);
-    });
+    main()
+      .then((code) => process.exit(code))
+      .catch((e) => {
+        const secrets = SECRET_VARS.map((n) => process.env[n] ?? '');
+        console.error(redact(e instanceof Error ? e.message : String(e), secrets));
+        process.exit(1);
+      });
   }
 }

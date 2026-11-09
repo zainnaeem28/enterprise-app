@@ -56,6 +56,10 @@ jobs:
           "$CI_TOOLS_DIR/bin/actionlint" -color -verbose 2>&1 | tee reports/workflow-hygiene/actionlint.txt
       - name: SHA pins, allow-list, permissions, no swallowed failures
         run: node scripts/ci/check-workflow-hygiene.mjs 2>&1 | tee reports/workflow-hygiene/hygiene.txt
+      - name: CI admin fixture is set only in the admin-run job (never in a deploy workflow, infra or docker file)
+        run: |
+          node scripts/ci/check-ci-fixture-isolation.mjs --selftest 2>&1 | tee reports/workflow-hygiene/fixture-isolation.txt
+          node scripts/ci/check-ci-fixture-isolation.mjs 2>&1 | tee -a reports/workflow-hygiene/fixture-isolation.txt
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ !cancelled() }}
         with:
@@ -642,6 +646,69 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+  # INT04-F22b: the real API, worker, PostgreSQL 17 and the BUILT staff app, driven by headless Chromium as an administrator
+  # (sign-in with the CI WebAuthn fixture, admin configuration, audit viewer, break-the-glass review). The ONLY place EHR_ENV=ci
+  # and EHR_ADMIN_CI_FIXTURE are set; scripts/ci/check-ci-fixture-isolation.mjs (workflow-hygiene) fails if they appear anywhere else.
+  admin-run:
+    name: admin-run
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    services:
+      postgres:
+        # PostgreSQL 17 (SHARED-BOUNDARIES 4.1), pinned by the multi-arch index digest of postgres:17 (Docker Hub, 2026-11-06).
+        image: postgres:17@sha256:748a18a54d3842d43bc156f0840d78029b8d349e0feca98c12b9c4ce3404a6b3
+        env:
+          # Trust authentication: throwaway container on the runner, loopback only, synthetic data (docker/compose.ci.yml).
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: postgres
+        ports:
+          - 127.0.0.1:55432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    env:
+      EHR_TEST_ADMIN_URL: postgres://postgres@127.0.0.1:55432/postgres
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Install (frozen lockfile)
+        run: corepack enable && pnpm install --frozen-lockfile
+      - name: Build
+        run: pnpm build
+      - name: Install Chromium for Playwright
+        run: pnpm --filter @ehr/staff exec playwright install --with-deps chromium
+      - name: Driver and stack self-tests (no stack, no browser)
+        run: |
+          node scripts/ci/admin-run.mjs --selftest
+          node scripts/ci/admin-stack.mjs --selftest
+      - name: Migrate a database for the stack
+        run: scripts/ci/migration-check/prepare-db.sh ehr
+      - name: Start the stack and run the administrator path
+        env:
+          EHR_ENV: ci
+          EHR_ADMIN_CI_FIXTURE: '1'
+          ADMIN_RUN_OUT: ${{ github.workspace }}/artifacts/admin-run
+          ADMIN_STACK_LOGS: ${{ github.workspace }}/reports/admin-run
+          NODE_PATH: ${{ github.workspace }}/apps/staff/node_modules
+        run: node scripts/ci/admin-stack.mjs
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: admin-run-screenshots
+          path: |
+            artifacts/admin-run
+            reports/admin-run
+          if-no-files-found: error
+          retention-days: 30
+
   # Single required check for the branch ruleset (when the plan can enforce one). A skipped or
   # cancelled job is a failure here.
   ci-status:
@@ -665,6 +732,7 @@ jobs:
         e2e-smoke,
         bundle-budget,
         patient-e2e-a11y,
+        admin-run,
       ]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
