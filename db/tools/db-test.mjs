@@ -8,7 +8,7 @@
 // data only). Each run creates and drops its own databases. Missing configuration FAILS the run; nothing skips.
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { cpSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, before, describe, test } from 'node:test';
@@ -892,6 +892,7 @@ describe('the single merge write guard (T1-T4 of HEAAA-190, extended by HEAAA-31
       'clinical.notes_guard_open_patient',
       'privacy.guard_open_patient',
       'messaging.guard_open_patient',
+      'messaging.is_creator',
     ]) {
       const f = await adm.query(
         "SELECT count(*)::int AS n FROM pg_proc WHERE oid::regproc::text = $1 OR (pronamespace::regnamespace::text || '.' || proname) = $1",
@@ -911,7 +912,11 @@ describe('the single merge write guard (T1-T4 of HEAAA-190, extended by HEAAA-31
     );
     assert.equal(defs.rows[0].n, 0);
     const { definerInventory } = await import('./catalog-lists.mjs');
-    assert.equal(definerInventory.length, 23, 'definerInventory has the 23 entries of A-3');
+    assert.equal(
+      definerInventory.length,
+      25,
+      'definerInventory has the 23 entries of A-3 and the two of A-4',
+    );
   });
 
   test('T5: privacy.incident_patient is exempt: no guard trigger, and a merged-ID link is not refused with PM001', async () => {
@@ -1080,6 +1085,853 @@ RESET ROLE;
       await owner.end();
       await a.end();
       rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+// INT03-F03 Part B (HEAAA-334), amendment A-4 (HEAAA-332 decision-log rev bf854c3a, ruling HEAAA-310 rev d9504db5): migrations 2203/2204.
+// I-10 and I-11 of the ruling and the Cybersecurity tests T-1..T-10 (HEAAA-333 comment 5f4974c6). Seeds are committed (several sessions read
+// them) and not removed: this block is last and the database is dropped at the end of the run.
+describe('A-4 messaging definers (migrations 2203/2204): T-1..T-10 of Cybersecurity, I-10, I-11', () => {
+  const id = (n) => `00000000-0000-7000-8000-0000000a4${String(n).padStart(3, '0')}`;
+  const O2 = id(900); // a second organisation
+  const LOC = id(1);
+  const PAT1 = id(2);
+  const S_CREATOR = id(10);
+  const S_OWNER = id(11);
+  const S_MEMBER = id(12);
+  const S_OTHER = id(13);
+  const S_ORG2 = id(14);
+  const PT_USER = id(15); // patient_pool principal of PAT1
+  const PT_PROXY = id(16); // patient_pool principal acting as proxy for PAT1
+  const TH_STAFF = id(20); // patient-linked staff thread: owners CREATOR, OWNER; member MEMBER
+  const TH_EMPTY = id(21); // staff thread without patient, created by CREATOR, no participant row yet
+  const TH_PATSCOPE = id(22); // staff thread about PAT1, created by CREATOR, no participant row yet
+  const TH_PATIENT = id(23); // patient thread of PAT1, created by PT_USER; owner PT_USER; proxy has a row
+  const TH_ORG2 = id(24); // thread of the other organisation
+  const TH_ONE = id(25); // sole owner CREATOR, member MEMBER
+  const TH_PXY = id(27); // patient thread created by PT_USER, no participant row yet
+  const TH_STAFF2 = id(26); // same organisation, owner S_OTHER only
+  const adminName = () => new URL(adminUrl).username;
+  let adm;
+  const base = (over = {}) => ({
+    'app.org_id': ORG,
+    'app.audience': 'staff',
+    'app.realm': 'google',
+    'app.location_ids': LOC,
+    ...over,
+  });
+  const staff = (principal, over = {}) => base({ 'app.principal_id': principal, ...over });
+  const code = async (c, sql, params = []) => {
+    await c.query('SAVEPOINT a4');
+    try {
+      const r = await c.query(sql, params);
+      return { ok: true, rows: r.rows, rowCount: r.rowCount };
+    } catch (e) {
+      return { ok: false, code: e.code, message: e.message };
+    } finally {
+      await c.query('ROLLBACK TO SAVEPOINT a4');
+    }
+  };
+  const setCtx = async (c, settings) => {
+    for (const k of [
+      'app.org_id',
+      'app.principal_id',
+      'app.audience',
+      'app.realm',
+      'app.location_ids',
+      'app.patient_ids',
+      'app.proxy_patient_ids',
+      'app.btg_patient_ids',
+    ])
+      await c.query('SELECT set_config($1, $2, true)', [k, settings[k] ?? '']);
+  };
+  const ins = (thread, principal, role, by, org = ORG) =>
+    code(
+      c_(),
+      `INSERT INTO messaging.thread_participant (thread_id, principal_id, organisation_id, role, added_by) VALUES ($1, $2, $3, $4, $5)`,
+      [thread, principal, org, role, by],
+    );
+  let cur;
+  const c_ = () => cur;
+  const within = async (role, settings, fn) => as(role, settings, async (c) => ((cur = c), fn(c)));
+
+  before(async () => {
+    adm = await connect(urlFor(adminName(), dbName), 'test-a4-admin');
+    await adm.query('BEGIN');
+    await adm.query('SET LOCAL session_replication_role = replica'); // seed rows without the application's triggers and FKs
+    await adm.query(
+      "INSERT INTO organisation.jurisdiction (code, organisation_id, name) VALUES ('NY', $1, 'New York') ON CONFLICT DO NOTHING",
+      [ORG],
+    );
+    await adm.query(
+      `INSERT INTO organisation.location (id, organisation_id, name, kind, time_zone, state_code) VALUES ($1, $2, 'A4 clinic', 'clinic', 'America/New_York', 'NY')`,
+      [LOC, ORG],
+    );
+    await adm.query(
+      `INSERT INTO patient.patient (id, organisation_id, mrn, given_name, family_name, date_of_birth, state_code, created_via)
+       VALUES ($1, $2, 'MRN-4000001', 'A4', 'Patient', '1980-01-01', 'NY', 'front_desk')`,
+      [PAT1, ORG],
+    );
+    await adm.query(
+      'INSERT INTO patient.staff_scope (patient_id, location_id, organisation_id) VALUES ($1, $2, $3)',
+      [PAT1, LOC, ORG],
+    );
+    for (const [pid, org, realm] of [
+      [S_CREATOR, ORG, 'google'],
+      [S_OWNER, ORG, 'google'],
+      [S_MEMBER, ORG, 'google'],
+      [S_OTHER, ORG, 'google'],
+      [S_ORG2, O2, 'google'],
+      [PT_USER, ORG, 'patient_pool'],
+      [PT_PROXY, ORG, 'patient_pool'],
+    ]) {
+      await adm.query(
+        `INSERT INTO identity.person (id, organisation_id, display_name) VALUES ($1, $2, 'A4 person')`,
+        [pid, org],
+      );
+      await adm.query(
+        `INSERT INTO identity.principal (id, organisation_id, person_id, realm, subject) VALUES ($1, $2, $1, $3, $4)`,
+        [pid, org, realm, `a4-${pid}`],
+      );
+    }
+    const th = (tid, org, kind, patient, by, subject) =>
+      adm.query(
+        `INSERT INTO messaging.thread (id, organisation_id, kind, patient_id, subject, created_by) VALUES ($1, $2, $3, $4, $5, $6)`,
+        [tid, org, kind, patient, subject, by],
+      );
+    await th(TH_STAFF, ORG, 'staff', PAT1, S_CREATOR, 'A4 staff thread');
+    await th(TH_EMPTY, ORG, 'staff', null, S_CREATOR, 'A4 empty thread');
+    await th(TH_PATSCOPE, ORG, 'staff', PAT1, S_CREATOR, 'A4 patient-scope thread');
+    await th(TH_PATIENT, ORG, 'patient', PAT1, PT_USER, 'A4 patient thread');
+    await th(TH_ORG2, O2, 'staff', null, S_ORG2, 'A4 other organisation');
+    await th(TH_ONE, ORG, 'staff', null, S_CREATOR, 'A4 one owner');
+    await th(TH_PXY, ORG, 'patient', PAT1, PT_USER, 'A4 proxy-creator thread');
+    await th(TH_STAFF2, ORG, 'staff', null, S_OTHER, 'A4 other owner');
+    const part = (tid, pr, role, by, org = ORG) =>
+      adm.query(
+        `INSERT INTO messaging.thread_participant (thread_id, principal_id, organisation_id, role, added_by) VALUES ($1, $2, $3, $4, $5)`,
+        [tid, pr, org, role, by],
+      );
+    await part(TH_STAFF, S_CREATOR, 'owner', S_CREATOR);
+    await part(TH_STAFF, S_OWNER, 'owner', S_CREATOR);
+    await part(TH_STAFF, S_MEMBER, 'member', S_CREATOR);
+    await part(TH_PATIENT, PT_USER, 'owner', PT_USER);
+    await part(TH_PATIENT, PT_PROXY, 'member', PT_USER);
+    await part(TH_PATIENT, S_CREATOR, 'member', PT_USER);
+    await part(TH_ORG2, S_ORG2, 'owner', S_ORG2, O2);
+    await part(TH_ONE, S_CREATOR, 'owner', S_CREATOR);
+    await part(TH_ONE, S_MEMBER, 'member', S_CREATOR);
+    await part(TH_STAFF2, S_OTHER, 'owner', S_OTHER);
+    await adm.query('COMMIT');
+  });
+  after(() => adm?.end());
+
+  test('I-10: M-5-definer passes with 25 entries; is_creator does not exist; patient_scope_owner holds only the four participant columns', async () => {
+    const report = await runChecks(adm);
+    for (const id_ of ['M-5-definer', 'M-5-messaging-definer'])
+      assert.equal(report.find((r) => r.id === id_)?.status, 'pass', id_);
+    const { definerInventory } = await import('./catalog-lists.mjs');
+    assert.equal(definerInventory.length, 25);
+    const gone = await adm.query(
+      "SELECT count(*)::int AS n FROM pg_proc WHERE pronamespace = 'messaging'::regnamespace AND proname = 'is_creator'",
+    );
+    assert.equal(gone.rows[0].n, 0);
+  });
+
+  test('T-1: under system, anonymous, public, webhook or an unset audience the definers return false for a real owner and never raise; the owner role reads no row', async () => {
+    for (const audience of ['system', 'anonymous', 'public', 'webhook', '']) {
+      for (const role of ['app_api', 'app_worker']) {
+        await within(role, staff(S_OWNER, { 'app.audience': audience }), async (c) => {
+          const r = await code(
+            c,
+            'SELECT messaging.is_participant($1) AS p, messaging.is_owner($1) AS o',
+            [TH_STAFF],
+          );
+          assert.ok(r.ok, `${role}/${audience}: raised ${r.message}`);
+          assert.deepEqual(r.rows[0], { p: false, o: false }, `${role}/${audience}`);
+        });
+      }
+      await within(adminName(), staff(S_OWNER, { 'app.audience': audience }), async (c) => {
+        await c.query('SET LOCAL ROLE patient_scope_owner');
+        const r = await c.query('SELECT count(*)::int AS n FROM messaging.thread_participant');
+        assert.equal(r.rows[0].n, 0, `participant_definer_select under audience "${audience}"`);
+      });
+    }
+    // control: the same call under staff is true, so the false above is the audience and not the data
+    await within('app_api', staff(S_OWNER), async (c) => {
+      const r = await c.query(
+        'SELECT messaging.is_participant($1) AS p, messaging.is_owner($1) AS o',
+        [TH_STAFF],
+      );
+      assert.deepEqual(r.rows[0], { p: true, o: true });
+    });
+  });
+
+  test('T-2: the caller comes only from the settings; a foreign, random, NULL or unset input gives false/NULL, never an error or true', async () => {
+    await within('app_api', staff(S_MEMBER), async (c) => {
+      const r = await c.query(
+        'SELECT messaging.is_participant($1) AS p, messaging.is_owner($1) AS o',
+        [TH_STAFF],
+      );
+      assert.deepEqual(r.rows[0], { p: true, o: false }, 'B is a member, A is the owner');
+    });
+    await within('app_api', staff(S_OTHER), async (c) => {
+      const r = await c.query(
+        'SELECT messaging.is_participant($1) AS p, messaging.is_owner($1) AS o',
+        [TH_STAFF],
+      );
+      assert.deepEqual(r.rows[0], { p: false, o: false }, 'an outsider of the same organisation');
+    });
+    await within('app_api', staff(S_OWNER, { 'app.principal_id': '' }), async (c) => {
+      const r = await c.query(
+        'SELECT messaging.is_participant($1) AS p, messaging.is_owner($1) AS o',
+        [TH_STAFF],
+      );
+      assert.notEqual(r.rows[0].p, true);
+      assert.notEqual(r.rows[0].o, true);
+    });
+    await within('app_api', staff(S_OWNER, { 'app.org_id': '' }), async (c) => {
+      const r = await c.query(
+        'SELECT messaging.is_participant($1) AS p, messaging.is_owner($1) AS o',
+        [TH_STAFF],
+      );
+      assert.notEqual(r.rows[0].p, true);
+      assert.notEqual(r.rows[0].o, true);
+    });
+    // a participant of organisation 1 asking for a thread of organisation 2 gets exactly what a random UUID gets
+    await within('app_api', staff(S_OWNER), async (c) => {
+      const foreign = (
+        await c.query('SELECT messaging.is_participant($1) AS p, messaging.is_owner($1) AS o', [
+          TH_ORG2,
+        ])
+      ).rows[0];
+      const random = (
+        await c.query('SELECT messaging.is_participant($1) AS p, messaging.is_owner($1) AS o', [
+          id(999),
+        ])
+      ).rows[0];
+      assert.deepEqual(foreign, { p: false, o: false });
+      assert.deepEqual(foreign, random);
+      const n = (
+        await c.query('SELECT messaging.is_participant(NULL) AS p, messaging.is_owner(NULL) AS o')
+      ).rows[0];
+      assert.notEqual(n.p, true);
+      assert.notEqual(n.o, true);
+    });
+  });
+
+  test('T-3: patient_scope_owner as SET ROLE: no thread right, only the four participant columns, no write right anywhere, one policy with the principal clause', async () => {
+    await within(adminName(), staff(S_OWNER), async (c) => {
+      await c.query('SET LOCAL ROLE patient_scope_owner');
+      for (const sql of [
+        'SELECT * FROM messaging.thread',
+        'SELECT subject FROM messaging.thread',
+        'SELECT * FROM messaging.thread_participant',
+        'SELECT last_read_at FROM messaging.thread_participant',
+        'SELECT added_by FROM messaging.thread_participant',
+      ]) {
+        const r = await code(c, sql);
+        assert.equal(r.code, '42501', sql);
+      }
+      // C-1: the four columns are readable, and only the caller's own rows come back (S_OWNER has two memberships in the seed: none besides TH_STAFF)
+      const own = await c.query(
+        'SELECT thread_id, principal_id, role FROM messaging.thread_participant ORDER BY thread_id',
+      );
+      assert.ok(own.rows.length >= 1);
+      for (const r of own.rows)
+        assert.equal(r.principal_id, S_OWNER, "only the caller's own membership is visible");
+      await c.query('RESET ROLE');
+    });
+    const cols = await adm.query(
+      `SELECT a.attname::text AS col FROM pg_attribute a WHERE a.attrelid = 'messaging.thread_participant'::regclass AND a.attnum > 0 AND NOT a.attisdropped
+         AND has_column_privilege('patient_scope_owner', a.attrelid, a.attnum, 'SELECT') ORDER BY 1`,
+    );
+    assert.deepEqual(
+      cols.rows.map((r) => r.col),
+      ['organisation_id', 'principal_id', 'role', 'thread_id'],
+    );
+    const tbl = await adm.query(
+      `SELECT c.oid::regclass::text AS t, p AS priv FROM pg_class c CROSS JOIN unnest(ARRAY['SELECT','INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER']) p
+        WHERE c.relnamespace = 'messaging'::regnamespace AND c.relkind IN ('r','p') AND has_table_privilege('patient_scope_owner', c.oid, p)`,
+    );
+    assert.deepEqual(tbl.rows, [], 'no table-level privilege remains');
+    const colw = await adm.query(
+      `SELECT c.oid::regclass::text || '.' || a.attname AS col FROM pg_class c JOIN pg_attribute a ON a.attrelid = c.oid AND a.attnum > 0 AND NOT a.attisdropped
+        WHERE c.relnamespace = 'messaging'::regnamespace AND c.relkind IN ('r','p') AND has_column_privilege('patient_scope_owner', c.oid, a.attnum, 'INSERT,UPDATE,REFERENCES')`,
+    );
+    assert.deepEqual(colw.rows, [], 'no INSERT/UPDATE/REFERENCES on any messaging column');
+    const pol = await adm.query(
+      `SELECT tablename, policyname, cmd, qual FROM pg_policies WHERE schemaname = 'messaging' AND 'patient_scope_owner' = ANY (roles) ORDER BY 1, 2`,
+    );
+    assert.equal(pol.rows.length, 1);
+    assert.equal(pol.rows[0].tablename, 'thread_participant');
+    assert.equal(pol.rows[0].policyname, 'participant_definer_select');
+    assert.match(pol.rows[0].qual, /principal_id = \( SELECT kernel\.uuid1\('app\.principal_id'/);
+    const opt = await adm.query(
+      `SELECT count(*)::int AS n FROM (SELECT (aclexplode(relacl)).* FROM pg_class WHERE relnamespace = 'messaging'::regnamespace) x WHERE is_grantable
+       AND grantee = 'patient_scope_owner'::regrole`,
+    );
+    assert.equal(opt.rows[0].n, 0, 'no GRANT OPTION');
+    const role = await adm.query(
+      "SELECT rolsuper, rolbypassrls, rolcanlogin FROM pg_roles WHERE rolname = 'patient_scope_owner'",
+    );
+    assert.deepEqual(role.rows[0], { rolsuper: false, rolbypassrls: false, rolcanlogin: false });
+  });
+
+  test('T-4: membership alone does not widen scope; a removed member loses access at once', async () => {
+    // MEMBER has lost staff_scope to PAT1 (location_ids names no location of the patient) and has no break-the-glass grant
+    await within('app_api', staff(S_MEMBER, { 'app.location_ids': id(777) }), async (c) => {
+      assert.equal(
+        (await c.query('SELECT 1 FROM messaging.thread WHERE id = $1', [TH_STAFF])).rowCount,
+        0,
+      );
+      const u = await code(c, "UPDATE messaging.thread SET status = 'closed' WHERE id = $1", [
+        TH_STAFF,
+      ]);
+      assert.equal(u.rowCount, 0);
+    });
+    await within('app_api', staff(S_OWNER, { 'app.location_ids': id(777) }), async (c) => {
+      assert.equal(
+        (await c.query('SELECT 1 FROM messaging.thread WHERE id = $1', [TH_STAFF])).rowCount,
+        0,
+        'an owner out of scope sees nothing',
+      );
+      const u = await code(c, "UPDATE messaging.thread SET status = 'closed' WHERE id = $1", [
+        TH_STAFF,
+      ]);
+      assert.equal(u.rowCount, 0);
+    });
+    // with scope it works (control); then MEMBER's row is removed (as the administrator: under participant_principal_select an owner sees,
+    // so can delete, only their own row, at the base as well) and MEMBER is out in the next statement
+    await within(adminName(), staff(S_MEMBER), async (c) => {
+      await c.query('SET LOCAL ROLE app_api');
+      const p1 = await c.query('SELECT messaging.is_participant($1) AS p', [TH_STAFF]);
+      assert.equal(p1.rows[0].p, true);
+      const t1 = await c.query('SELECT 1 FROM messaging.thread WHERE id = $1', [TH_STAFF]);
+      assert.equal(t1.rowCount, 1, 'control: a member in scope reads the thread');
+      await c.query('RESET ROLE');
+      const d = await c.query(
+        'DELETE FROM messaging.thread_participant WHERE thread_id = $1 AND principal_id = $2',
+        [TH_STAFF, S_MEMBER],
+      );
+      assert.equal(d.rowCount, 1);
+      await c.query('SET LOCAL ROLE app_api');
+      const p2 = await c.query('SELECT messaging.is_participant($1) AS p', [TH_STAFF]);
+      assert.equal(p2.rows[0].p, false);
+      const t2 = await c.query('SELECT 1 FROM messaging.thread WHERE id = $1', [TH_STAFF]);
+      assert.equal(t2.rowCount, 0);
+      const m = await code(
+        c,
+        `INSERT INTO messaging.message (id, organisation_id, thread_id, patient_id, author_principal_id, body) VALUES ($1, $2, $3, $4, $5, 'after removal')`,
+        [id(500), ORG, TH_STAFF, PAT1, S_MEMBER],
+      );
+      assert.equal(m.code, 'PS001', 'message insert after removal is refused by the trigger');
+    });
+    await within(adminName(), staff(S_MEMBER), async (c) => {
+      await c.query(
+        'DELETE FROM messaging.thread_participant WHERE thread_id = $1 AND principal_id = $2',
+        [TH_STAFF, S_MEMBER],
+      );
+      await c.query('ALTER TABLE messaging.message DISABLE TRIGGER message_guard');
+      await c.query('SET LOCAL ROLE app_api');
+      const m = await code(
+        c,
+        `INSERT INTO messaging.message (id, organisation_id, thread_id, patient_id, author_principal_id, body) VALUES ($1, $2, $3, $4, $5, 'after removal')`,
+        [id(500), ORG, TH_STAFF, PAT1, S_MEMBER],
+      );
+      assert.equal(
+        m.code,
+        '42501',
+        'with the trigger off, message_staff_insert (is_participant) refuses',
+      );
+    });
+  });
+
+  test("T-5: the creator path (replacement of is_creator): invoker EXISTS under the thread's own policy", async () => {
+    await within('app_api', staff(S_CREATOR), async (c) => {
+      cur = c;
+      const ok = await ins(TH_EMPTY, S_CREATOR, 'owner', S_CREATOR);
+      assert.ok(ok.ok, `creator adds own owner row: ${ok.message}`);
+      assert.equal(
+        (await ins(TH_PATSCOPE, S_CREATOR, 'owner', S_CREATOR)).ok,
+        true,
+        'creator in scope of the patient',
+      );
+      assert.equal(
+        (await ins(TH_EMPTY, S_CREATOR, 'member', S_CREATOR)).code,
+        '42501',
+        'role member for self is refused',
+      );
+      assert.equal(
+        (await ins(TH_EMPTY, S_OWNER, 'owner', S_CREATOR)).code,
+        '42501',
+        'owner row for another principal by a creator who is not yet an owner',
+      );
+      assert.equal(
+        (await ins(TH_ORG2, S_CREATOR, 'owner', S_CREATOR)).code,
+        '42501',
+        'thread of another organisation',
+      );
+    });
+    // a creator who lost patient scope to the thread's patient is refused (intended: ARCHITECTURE 22.12 (a); is_creator skipped this)
+    await within('app_api', staff(S_CREATOR, { 'app.location_ids': id(777) }), async (c) => {
+      cur = c;
+      assert.equal(
+        (await ins(TH_PATSCOPE, S_CREATOR, 'owner', S_CREATOR)).code,
+        '42501',
+        'lost scope',
+      );
+    });
+    // a creator outside the google realm is refused
+    await within('app_api', staff(S_CREATOR, { 'app.realm': 'admin_pool' }), async (c) => {
+      cur = c;
+      assert.equal(
+        (await ins(TH_EMPTY, S_CREATOR, 'owner', S_CREATOR)).code,
+        '42501',
+        'realm is not google',
+      );
+    });
+    // The same three refusals at the POLICY (the guard_participant trigger also refuses most of them, because it reads the thread under the
+    // caller's rights; with it off, only participant_owner_insert stands). With is_creator (base) the first two were allowed: it skipped the
+    // thread's own policy. Intended change, Cybersecurity Q4.
+    await within(adminName(), staff(S_CREATOR, { 'app.location_ids': id(777) }), async (c) => {
+      await c.query(
+        'ALTER TABLE messaging.thread_participant DISABLE TRIGGER thread_participant_guard',
+      );
+      await c.query('SET LOCAL ROLE app_api');
+      cur = c;
+      assert.equal(
+        (await ins(TH_PATSCOPE, S_CREATOR, 'owner', S_CREATOR)).code,
+        '42501',
+        'policy: creator lost patient scope',
+      );
+      await setCtx(c, staff(S_CREATOR, { 'app.realm': 'admin_pool' }));
+      assert.equal(
+        (await ins(TH_EMPTY, S_CREATOR, 'owner', S_CREATOR)).code,
+        '42501',
+        'policy: creator outside realm google',
+      );
+      await setCtx(c, staff(S_CREATOR));
+      assert.equal(
+        (await ins(TH_PATSCOPE, S_CREATOR, 'owner', S_CREATOR)).ok,
+        true,
+        'control: with scope the policy passes',
+      );
+      const pat = {
+        'app.org_id': ORG,
+        'app.audience': 'patient',
+        'app.realm': 'patient_pool',
+        'app.principal_id': PT_USER,
+        'app.patient_ids': PAT1,
+      };
+      await setCtx(c, pat);
+      assert.equal(
+        (await ins(TH_PXY, PT_USER, 'owner', PT_USER)).ok,
+        true,
+        'control: the patient creator passes',
+      );
+      await setCtx(c, { ...pat, 'app.proxy_patient_ids': PAT1 });
+      assert.equal(
+        (await ins(TH_PXY, PT_USER, 'owner', PT_USER)).code,
+        '42501',
+        'policy: a proxy-audience creator',
+      );
+    });
+    // a non-creator who guesses the thread ID cannot add themselves, with or without a visible creator row
+    await within('app_api', staff(S_OTHER), async (c) => {
+      cur = c;
+      assert.equal((await ins(TH_EMPTY, S_OTHER, 'owner', S_OTHER)).code, '42501');
+      assert.equal((await ins(TH_STAFF, S_OTHER, 'owner', S_OTHER)).code, '42501');
+      assert.equal((await ins(TH_STAFF, S_OTHER, 'member', S_OTHER)).code, '42501');
+    });
+    // the creator of a thread in another organisation cannot act on this one
+    await within('app_api', staff(S_ORG2, { 'app.org_id': O2 }), async (c) => {
+      cur = c;
+      assert.equal((await ins(TH_EMPTY, S_ORG2, 'owner', S_ORG2, O2)).code, '42501');
+      assert.equal((await ins(TH_EMPTY, S_ORG2, 'owner', S_ORG2, ORG)).code, '42501');
+    });
+    // the created_by spoof on a thread INSERT is refused by the trigger (PS001) and, with the trigger off, by thread_staff_insert (42501)
+    const spoof = `INSERT INTO messaging.thread (id, organisation_id, kind, subject, status, created_by) VALUES ($1, $2, 'staff', 'spoof', 'open', $3)`;
+    await within('app_api', staff(S_OTHER), async (c) => {
+      assert.equal((await code(c, spoof, [id(501), ORG, S_CREATOR])).code, 'PS001');
+    });
+    await within(adminName(), staff(S_OTHER), async (c) => {
+      await c.query('ALTER TABLE messaging.thread DISABLE TRIGGER thread_guard');
+      await c.query('SET LOCAL ROLE app_api');
+      assert.equal((await code(c, spoof, [id(501), ORG, S_CREATOR])).code, '42501');
+      const ok = await code(c, spoof, [id(501), ORG, S_OTHER]);
+      assert.equal(ok.ok, true, 'control: the honest insert passes the policy');
+    });
+    // DELETE. The trigger messaging.guard_participant reads the thread's owners under the caller's own rights and sees only the caller's row, so
+    // through app_api an owner always meets "the last owner stays" (PS001): the same at the base, not changed by 2203. The policy itself is
+    // proved with that trigger off: the creator-owner deletes own row (policy true), a member deletes nothing.
+    await within('app_api', staff(S_CREATOR), async (c) => {
+      const last = await code(
+        c,
+        'DELETE FROM messaging.thread_participant WHERE thread_id = $1 AND principal_id = $2',
+        [TH_ONE, S_CREATOR],
+      );
+      assert.equal(last.code, 'PS001', 'the last owner stays');
+    });
+    await within(adminName(), staff(S_CREATOR), async (c) => {
+      await c.query(
+        'ALTER TABLE messaging.thread_participant DISABLE TRIGGER thread_participant_guard',
+      );
+      await c.query('SET LOCAL ROLE app_api');
+      const del = `DELETE FROM messaging.thread_participant WHERE thread_id = $1 AND principal_id = $2`;
+      assert.equal(
+        (await code(c, del, [TH_STAFF, S_CREATOR])).rowCount,
+        1,
+        'policy: owner row of the creator',
+      );
+      await setCtx(c, staff(S_MEMBER));
+      assert.equal(
+        (await code(c, del, [TH_STAFF, S_MEMBER])).rowCount,
+        0,
+        'policy: a member deletes nothing',
+      );
+      await setCtx(c, staff(S_OTHER));
+      assert.equal(
+        (await code(c, del, [TH_STAFF2, S_OTHER])).rowCount,
+        1,
+        'policy: an owner who is the creator of another thread',
+      );
+      await setCtx(c, staff(S_CREATOR, { 'app.realm': 'admin_pool' }));
+      assert.equal(
+        (await code(c, del, [TH_ONE, S_CREATOR])).rowCount,
+        1,
+        'is_owner path does not check realm (unchanged)',
+      );
+    });
+  });
+
+  test('T-6: patient and proxy: a proxy reads and updates nothing; a patient cannot add a staff owner to a staff thread; ineligible participants are refused', async () => {
+    const pat = (principal, over = {}) => ({
+      'app.org_id': ORG,
+      'app.audience': 'patient',
+      'app.realm': 'patient_pool',
+      'app.principal_id': principal,
+      'app.patient_ids': PAT1,
+      ...over,
+    });
+    await within('app_api', pat(PT_USER), async (c) => {
+      assert.equal(
+        (await c.query('SELECT 1 FROM messaging.thread WHERE id = $1', [TH_PATIENT])).rowCount,
+        1,
+        'the patient reads own thread',
+      );
+    });
+    await within('app_api', pat(PT_PROXY, { 'app.proxy_patient_ids': PAT1 }), async (c) => {
+      assert.equal(
+        (await c.query('SELECT 1 FROM messaging.thread WHERE id = $1', [TH_PATIENT])).rowCount,
+        0,
+        'proxy has a participant row but reads nothing',
+      );
+      assert.equal(
+        (await c.query('SELECT messaging.is_participant($1) AS p', [TH_PATIENT])).rows[0].p,
+        true,
+        'the row exists; the thread policy denies',
+      );
+      const u = await code(c, "UPDATE messaging.thread SET status = 'closed' WHERE id = $1", [
+        TH_PATIENT,
+      ]);
+      assert.equal(u.rowCount, 0);
+    });
+    await within('app_api', pat(PT_USER), async (c) => {
+      cur = c;
+      assert.equal(
+        (await ins(TH_STAFF, S_OTHER, 'owner', PT_USER)).code,
+        '42501',
+        'a patient adds a staff owner to a staff thread',
+      );
+      const kind = await ins(TH_PATIENT, S_OTHER, 'member', PT_USER);
+      assert.equal(
+        kind.code,
+        'PS001',
+        'S_OTHER is not a listed clinician (participant not eligible)',
+      );
+    });
+  });
+
+  test('T-7: owner and member rules; no cross-thread, no cross-organisation power', async () => {
+    await within('app_api', staff(S_MEMBER), async (c) => {
+      cur = c;
+      assert.equal(
+        (await ins(TH_STAFF, S_OTHER, 'member', S_MEMBER)).code,
+        '42501',
+        'a member cannot add',
+      );
+      const d = await code(
+        c,
+        'DELETE FROM messaging.thread_participant WHERE thread_id = $1 AND principal_id = $2',
+        [TH_STAFF, S_OWNER],
+      );
+      assert.equal(d.rowCount, 0, 'a member cannot delete');
+      const p = await code(
+        c,
+        "UPDATE messaging.thread_participant SET role = 'owner' WHERE thread_id = $1 AND principal_id = $2",
+        [TH_STAFF, S_MEMBER],
+      );
+      assert.equal(p.code, '42501', 'a member cannot promote (no UPDATE grant on role)');
+      const last = await code(
+        c,
+        'DELETE FROM messaging.thread_participant WHERE thread_id = $1 AND principal_id = $2',
+        [TH_ONE, S_CREATOR],
+      );
+      assert.equal(last.rowCount, 0, 'a member cannot delete the last owner');
+    });
+    await within('app_api', staff(S_OWNER), async (c) => {
+      cur = c;
+      assert.equal((await ins(TH_STAFF, S_OTHER, 'member', S_OWNER)).ok, true, 'an owner adds');
+      assert.equal(
+        (await ins(TH_STAFF2, S_MEMBER, 'member', S_OWNER)).code,
+        '42501',
+        'an owner of X adds on Y (same organisation)',
+      );
+      const d = await code(
+        c,
+        'DELETE FROM messaging.thread_participant WHERE thread_id = $1 AND principal_id = $2',
+        [TH_STAFF2, S_OTHER],
+      );
+      assert.equal(d.rowCount, 0, 'an owner of X deletes on Y');
+    });
+    await within('app_api', staff(S_ORG2, { 'app.org_id': O2 }), async (c) => {
+      cur = c;
+      assert.equal(
+        (await ins(TH_STAFF, S_OTHER, 'member', S_ORG2, ORG)).code,
+        '42501',
+        'cross-organisation owner',
+      );
+      const d = await code(c, 'DELETE FROM messaging.thread_participant WHERE thread_id = $1', [
+        TH_STAFF,
+      ]);
+      assert.equal(d.rowCount, 0);
+    });
+  });
+
+  test('T-8: every messaging statement class under staff, patient and system runs without "infinite recursion detected in policy"; the definers are not inlined; row_security on as the table owner', async () => {
+    const errors = [];
+    const classes = (th) => [
+      ['thread select', 'SELECT id FROM messaging.thread'],
+      [
+        'thread insert',
+        `INSERT INTO messaging.thread (id, organisation_id, kind, subject, status, created_by) VALUES ('${id(600)}', '${ORG}', 'staff', 's', 'open', current_setting('app.principal_id', true)::uuid)`,
+      ],
+      ['thread update', `UPDATE messaging.thread SET status = 'closed' WHERE id = '${th}'`],
+      ['participant select', 'SELECT thread_id FROM messaging.thread_participant'],
+      [
+        'participant insert',
+        `INSERT INTO messaging.thread_participant (thread_id, principal_id, organisation_id, role, added_by) VALUES ('${th}', '${S_OTHER}', '${ORG}', 'member', current_setting('app.principal_id', true)::uuid)`,
+      ],
+      [
+        'participant delete',
+        `DELETE FROM messaging.thread_participant WHERE thread_id = '${th}' AND principal_id = '${S_MEMBER}'`,
+      ],
+      [
+        'message insert',
+        `INSERT INTO messaging.message (id, organisation_id, thread_id, patient_id, author_principal_id, body) VALUES ('${id(601)}', '${ORG}', '${th}', NULL, current_setting('app.principal_id', true)::uuid, 'x')`,
+      ],
+      ['message select', 'SELECT id FROM messaging.message'],
+    ];
+    const audiences = [
+      ['app_api', staff(S_OWNER), TH_STAFF2],
+      [
+        'app_api',
+        {
+          'app.org_id': ORG,
+          'app.audience': 'patient',
+          'app.realm': 'patient_pool',
+          'app.principal_id': PT_USER,
+          'app.patient_ids': PAT1,
+        },
+        TH_PATIENT,
+      ],
+      [
+        'app_worker',
+        { 'app.org_id': ORG, 'app.audience': 'system', 'app.job_scope': 'org' },
+        TH_STAFF,
+      ],
+    ];
+    let ran = 0;
+    for (const [role, settings, th] of audiences)
+      await within(role, settings, async (c) => {
+        for (const [name, sql] of classes(th)) {
+          const r = await code(c, sql);
+          ran += 1;
+          if (!r.ok && /infinite recursion/i.test(r.message))
+            errors.push(`${role}/${settings['app.audience']}/${name}: ${r.message}`);
+        }
+      });
+    assert.equal(ran, 24);
+    assert.deepEqual(errors, []);
+    await within('app_api', staff(S_OWNER), async (c) => {
+      const plan = (
+        await c.query('EXPLAIN (VERBOSE, COSTS OFF) SELECT id FROM messaging.thread')
+      ).rows
+        .map((r) => r['QUERY PLAN'])
+        .join('\n');
+      assert.match(
+        plan,
+        /messaging\.is_participant\(/,
+        'the definer appears as a function call in the plan, not expanded',
+      );
+      assert.doesNotMatch(
+        plan,
+        /Seq Scan on messaging\.thread_participant/,
+        "its body is not expanded into the caller's plan",
+      );
+    });
+    // forced as the table owner: FORCE ROW LEVEL SECURITY applies to it, and no recursion arises
+    await within('app_owner', staff(S_OWNER), async (c) => {
+      await c.query('SET LOCAL row_security = on');
+      const r = await code(c, 'SELECT id FROM messaging.thread');
+      assert.ok(r.ok || !/infinite recursion/i.test(r.message), r.message);
+      const p = await code(c, 'SELECT thread_id FROM messaging.thread_participant');
+      assert.ok(p.ok || !/infinite recursion/i.test(p.message), p.message);
+    });
+  });
+
+  test('T-9: catalog guards: is_creator absent (also from pg_depend and pg_policies), exactly two definers in messaging, attributes pinned, search_path not overridable', async () => {
+    const f = await adm.query(
+      "SELECT count(*)::int AS n FROM pg_proc WHERE proname = 'is_creator'",
+    );
+    assert.equal(f.rows[0].n, 0);
+    const dangling = await adm.query(
+      `SELECT count(*)::int AS n FROM pg_depend d WHERE d.refclassid = 'pg_proc'::regclass AND NOT EXISTS (SELECT 1 FROM pg_proc p WHERE p.oid = d.refobjid)`,
+    );
+    assert.equal(dangling.rows[0].n, 0);
+    const pol = await adm.query(
+      "SELECT count(*)::int AS n FROM pg_policies WHERE schemaname = 'messaging' AND (qual LIKE '%is_creator%' OR with_check LIKE '%is_creator%')",
+    );
+    assert.equal(pol.rows[0].n, 0);
+    const defs = await adm.query(
+      `SELECT p.oid::regprocedure::text AS f FROM pg_proc p WHERE p.pronamespace = 'messaging'::regnamespace AND p.prosecdef ORDER BY 1`,
+    );
+    assert.deepEqual(
+      defs.rows.map((r) => r.f),
+      ['messaging.is_owner(uuid)', 'messaging.is_participant(uuid)'],
+    );
+    const { messagingDefinerAttributes } = await import('./catalog-lists.mjs');
+    for (const [sig, want] of Object.entries(messagingDefinerAttributes)) {
+      const r = await adm.query(
+        `SELECT pg_get_userbyid(proowner) AS owner, prosecdef, provolatile, proconfig, (SELECT array_agg(a::text ORDER BY a::text) FROM unnest(proacl) a) AS acl,
+                pg_get_function_arguments(oid) AS args, prorettype::regtype::text AS ret
+           FROM pg_proc WHERE oid = $1::regprocedure`,
+        [sig],
+      );
+      assert.deepEqual(
+        {
+          owner: r.rows[0].owner,
+          secdef: r.rows[0].prosecdef,
+          volatile: r.rows[0].provolatile,
+          config: r.rows[0].proconfig,
+          acl: r.rows[0].acl,
+        },
+        { ...want, acl: [...want.acl].sort() },
+        sig,
+      );
+      assert.match(r.rows[0].args, /^p_thread uuid$/);
+      assert.equal(r.rows[0].ret, 'boolean');
+    }
+    await within('app_api', staff(S_OWNER), async (c) => {
+      const before = (
+        await c.query('SELECT messaging.is_participant($1) AS p, messaging.is_owner($1) AS o', [
+          TH_STAFF,
+        ])
+      ).rows[0];
+      await c.query('SET LOCAL search_path = public');
+      await code(
+        c,
+        'CREATE TEMP TABLE thread_participant (thread_id uuid, organisation_id uuid, principal_id uuid, role text)',
+      );
+      const after = (
+        await c.query('SELECT messaging.is_participant($1) AS p, messaging.is_owner($1) AS o', [
+          TH_STAFF,
+        ])
+      ).rows[0];
+      assert.deepEqual(after, before);
+      assert.deepEqual(after, { p: true, o: true });
+    });
+  });
+
+  test('T-10 upgrade path: with 2203 applied and 2204 not, nothing depends on is_creator and messaging works; 2204 then applies; 2204 without 2203 fails (no CASCADE) and leaves the function', async () => {
+    const all = readdirSync(join(here, '../migrations'))
+      .filter((f) => f.endsWith('.sql'))
+      .sort();
+    const mk = (files) => {
+      const d = mkdtempSync(join(tmpdir(), 'a4-mig-'));
+      for (const f of files) cpSync(join(here, '../migrations', f), join(d, f));
+      return d;
+    };
+    const upto2202 = all.filter((f) => f < '2203');
+    const dbs = [`${dbName}_a4a`, `${dbName}_a4b`];
+    const dirs = [];
+    try {
+      for (const d of dbs) {
+        await admin.query(`CREATE DATABASE ${d}`);
+        run('bootstrap', d);
+      }
+      // (a) 2203 only
+      const dirA = mk([...upto2202, '2203_messaging_participant_policies_invoker_creator.sql']);
+      dirs.push(dirA);
+      const ownerA = await connect(urlFor('app_owner', dbs[0]), 'test-a4a');
+      try {
+        const r1 = await migrate(ownerA, { dir: dirA });
+        assert.ok(r1.applied.includes('2203_messaging_participant_policies_invoker_creator.sql'));
+        const still = await ownerA.query(
+          "SELECT count(*)::int AS n FROM pg_proc WHERE proname = 'is_creator'",
+        );
+        assert.equal(
+          still.rows[0].n,
+          1,
+          'is_creator still exists after 2203 (contract comes later)',
+        );
+        const dep = await ownerA.query(
+          `SELECT count(*)::int AS n FROM pg_depend d WHERE d.refobjid = 'messaging.is_creator(uuid)'::regprocedure AND d.classid = 'pg_policy'::regclass`,
+        );
+        assert.equal(dep.rows[0].n, 0, 'no policy depends on is_creator after 2203');
+        const pol = await ownerA.query(
+          "SELECT count(*)::int AS n FROM pg_policies WHERE schemaname = 'messaging' AND (qual LIKE '%is_creator%' OR with_check LIKE '%is_creator%')",
+        );
+        assert.equal(pol.rows[0].n, 0);
+        cpSync(
+          join(here, '../migrations/2204_drop_messaging_is_creator.sql'),
+          join(dirA, '2204_drop_messaging_is_creator.sql'),
+        );
+        const r2 = await migrate(ownerA, { dir: dirA });
+        assert.deepEqual(r2.applied, ['2204_drop_messaging_is_creator.sql']);
+        const gone = await ownerA.query(
+          "SELECT count(*)::int AS n FROM pg_proc WHERE proname = 'is_creator'",
+        );
+        assert.equal(gone.rows[0].n, 0);
+      } finally {
+        await ownerA.end();
+      }
+      // (b) 2204 on a database where two policies still reference the function
+      const dirB = mk([...upto2202, '2204_drop_messaging_is_creator.sql']);
+      dirs.push(dirB);
+      const ownerB = await connect(urlFor('app_owner', dbs[1]), 'test-a4b');
+      try {
+        await rejectsCode(
+          migrate(ownerB, { dir: dirB }),
+          '2BP01',
+          '2204 without 2203 (dependent policies, no CASCADE)',
+        );
+        const stays = await ownerB.query(
+          "SELECT count(*)::int AS n FROM pg_proc WHERE proname = 'is_creator'",
+        );
+        assert.equal(stays.rows[0].n, 1, 'the function is still there');
+        const tracked = await ownerB.query(
+          'SELECT count(*)::int AS n FROM migration.schema_migration WHERE version = 2204',
+        );
+        assert.equal(tracked.rows[0].n, 0, 'the tracker row rolled back with the file');
+      } finally {
+        await ownerB.end();
+      }
+    } finally {
+      for (const d of dirs) rmSync(d, { recursive: true, force: true });
+      for (const d of dbs) await admin.query(`DROP DATABASE IF EXISTS ${d} WITH (FORCE)`);
     }
   });
 });

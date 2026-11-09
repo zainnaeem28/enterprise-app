@@ -1,0 +1,23 @@
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+▶ messaging (BE-19) on PostgreSQL 17
+  ✔ TC-MSG-01: a task and a secure message are delivered in the task/thread area, audited, with no notice and no text in audit (163.286852ms)
+  ✔ TC-MSG-02: staff cannot send a message to, or assign a task to, a user of another organisation (route and database) (45.166548ms)
+  ✔ 38.2 item 16: a principal cannot insert itself as owner or member of a thread it did not create; the creator can (75.391632ms)
+  ✔ a staff member without the messaging permission, or in the wrong realm, reaches none of the routes (74.075812ms)
+  ✔ threads: validation, closing (owner only, final), posting rules, paging (136.301259ms)
+  ✔ a thread about a patient needs the patient in the caller's scope; the thread is audited against the patient (99.755776ms)
+  ✔ TC-MSG-03: patient messaging is off by default (404, and the database refuses a patient thread); on, it works (270.505732ms)
+  ✔ TC-MSG-04: a script string is stored and returned as data, never as markup (100.553313ms)
+  ✔ tasks: create, complete, cancel, edit; If-Match; roles; who may do what; the database refuses the rest (336.634845ms)
+  ✔ TC-MSG-05 (merge participant, 38.2 item 11): open threads and tasks follow the survivor, closed/done/messages stay, counts add up, no R row is left (316.390508ms)
+  ✔ TC-MSG-06 (ticket acceptance): a privacy correction request becomes a task, once, for the staff who care for the patient (163.967119ms)
+  ✔ row-level security: every messaging table is forced, the worker reads only its scope, no role can delete a thread, task or message (62.487809ms)
+✔ messaging (BE-19) on PostgreSQL 17 (3505.767557ms)
+ℹ tests 12
+ℹ suites 1
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4001.203888
