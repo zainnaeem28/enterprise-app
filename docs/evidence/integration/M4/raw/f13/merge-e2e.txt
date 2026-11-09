@@ -1,0 +1,8 @@
+  ✔ 9: the registries the worker receives hold every merge participant and export contributor of the single registration site (1.279431ms)
+  ✔ 8 negative control (a): a worker task table without patient.execute_merge leaves the request approved, never completed (4377.954275ms)
+  ✔ 8 negative control (b): registries without the documents participant end the request failed with patient.merge_participant_missing (88.630323ms)
+  ✔ 8: request, second-approver approval and the production worker run the merge: completed, merged patient resolves to the survivor, appointment re-pointed (410.045766ms)
+✔ INT03-F13 / D-F13-5: the approved merge executes in the composed worker (6673.360696ms)
+ℹ tests 4
+ℹ pass 4
+ℹ fail 0

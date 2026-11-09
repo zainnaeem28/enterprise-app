@@ -1,0 +1,9 @@
+  ✔ 2: the self patient reaches profile, communication preferences (read and write) and proxies; proxy requests are refused until D-7 (88.630715ms)
+  ✔ 3: another patient is a 404 on profile, communication preferences and contacts, and the guard audits not_visible (58.907055ms)
+  ✔ 4: without a session every newly mounted route is 401 (not 404); a wrong-realm session is refused (34.712474ms)
+  ✔ 5: a proxy (scope appointments) cannot read or change the principal patient profile (23.343014ms)
+  ✔ 6: the 31st POST /patients/lookup within a minute from one staff principal is 429 kernel.rate_limited with Retry-After (PgRateLimiter) (256.766636ms)
+✔ INT03-F13: the patient routes through the composition root (2429.061449ms)
+ℹ tests 5
+ℹ pass 5
+ℹ fail 0

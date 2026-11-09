@@ -83,6 +83,11 @@ export interface ApiPorts {
   messaging: MessagingWorkerPort;
   alerts: AlertWorkerPort;
   reporting: ReportingWorkerPort;
+  /** `patient.execute_merge`: the API's `executeMerge` with every participant registered (INT03-F13). */
+  executeMerge(
+    payload: Record<string, unknown>,
+    ctx: { jobId: string; attempt: number; maxAttempts: number },
+  ): Promise<unknown>;
   /** `privacy.assemble_export`: the API's `assembleExport` with the worker's package writer. */
   assembleExport(
     payload: Record<string, unknown>,
@@ -192,7 +197,13 @@ export function composeTasks(opts: ComposeOptions & { queue: Queue }): TaskTable
 
   const tasks: Record<string, Task> = {
     ...createIdentityTasks({ db, orgId, queue }),
-    ...createPatientTasks({ db, orgId }),
+    ...createPatientTasks({
+      db,
+      orgId,
+      executeMerge:
+        opts.api?.executeMerge ??
+        (() => Promise.reject(new PortNotConfiguredError('patient_execute_merge'))),
+    }),
     ...createAuditTasks({
       db,
       queue,

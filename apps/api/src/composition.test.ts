@@ -2,6 +2,9 @@
 // A fake database is enough: this proves wiring (route inventory, job registry, guard in front of each route), not persistence.
 // Negative control: the same checks run against the composition with one module's controllers removed and must fail.
 import assert from 'node:assert/strict';
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { after, before, describe, test } from 'node:test';
 import { createLogger } from '@ehr/kernel';
 import type { KernelDb } from '@ehr/kernel';
@@ -120,6 +123,39 @@ function unwired(c: Pick<Composition, 'controllers' | 'registry'>): string[] {
   return out;
 }
 
+/** `METHOD /path` (parameter names erased) of every operation of an OpenAPI file, read from its two-level `paths:` layout. */
+function contractOperations(file: string): string[] {
+  // The test runs from dist/src and from src: walk up to the directory that holds packages/contracts.
+  let dir = dirname(fileURLToPath(import.meta.url));
+  while (!existsSync(join(dir, 'packages/contracts/openapi', file))) dir = dirname(dir);
+  const text = readFileSync(join(dir, 'packages/contracts/openapi', file), 'utf8');
+  const out: string[] = [];
+  let path: string | undefined;
+  for (const line of text.split('\n')) {
+    const p = /^ {2}(\/\S+):\s*$/.exec(line);
+    if (p !== null) path = p[1];
+    else if (/^\S/.test(line)) path = undefined;
+    const m = /^ {4}(get|put|post|patch|delete):\s*$/.exec(line);
+    if (m !== null && path !== undefined)
+      out.push(`${(m[1] as string).toUpperCase()} ${path.replace(/\{[^}]+\}/g, ':p')}`);
+  }
+  return out;
+}
+const PROXY_OPS = [
+  'GET /api/v1/patients/:p/proxies',
+  'DELETE /api/v1/patients/:p/proxies/:p',
+  'POST /api/v1/patients/:p/proxy-requests',
+];
+/** The contract operations of the patient module (INT03-F13): patient.yaml and the 3 proxy operations of identity.yaml. */
+const patientContract = (): string[] => [
+  ...contractOperations('patient.yaml'),
+  ...contractOperations('identity.yaml').filter((o) => PROXY_OPS.includes(o)),
+];
+const mountedKeys = (controllers: Composition['controllers']): string[] =>
+  inventory(controllers as never).routes.map(
+    (r) => `${r.method} ${r.path.replace(/:[A-Za-z]+/g, ':p')}`,
+  );
+
 let c: Composition;
 let t: Running;
 before(async () => {
@@ -141,6 +177,29 @@ describe('M4 composition (INT03-F01)', () => {
 
   test('every mounted route declares a permission and a resolver (route inventory has no failures)', () => {
     assert.deepEqual(inventory(c.controllers as never).failures, []);
+  });
+
+  test('every operation of patient.yaml and the proxy routes of identity.yaml is mounted exactly once (INT03-F13)', () => {
+    const want = patientContract();
+    assert.equal(want.length, 34 + 3, 'the contract operations counted');
+    const mounted = mountedKeys(c.controllers);
+    const bad = want.filter((o) => mounted.filter((m) => m === o).length !== 1);
+    assert.deepEqual(bad, []);
+    assert.deepEqual(inventory(c.controllers as never).failures, []);
+  });
+
+  test('negative control: without the patient and merge controllers the inventory names the missing routes (INT03-F13)', () => {
+    const patientNames = new Set([
+      'PatientPortalController',
+      'PatientStaffController',
+      'PatientAdminController',
+    ]);
+    const kept = c.controllers.filter((x) => !patientNames.has(x.name) && !/Merge/.test(x.name));
+    assert.ok(kept.length < c.controllers.length, 'some controllers were removed');
+    const mounted = mountedKeys(kept);
+    const missing = patientContract().filter((o) => !mounted.includes(o));
+    assert.ok(missing.includes('GET /api/v1/patients/:p/profile'), missing.join(', '));
+    assert.ok(missing.includes('POST /api/v1/patient-merges'), missing.join(', '));
   });
 
   test('no (method, path) is mounted twice', () => {
@@ -173,6 +232,14 @@ describe('M4 composition (INT03-F01)', () => {
       '/api/v1/threads',
       '/api/v1/privacy-requests',
       '/api/v1/admin/reports/ops',
+      // INT03-F13: the patient module's portal, staff, admin and merge routes
+      '/api/v1/patients/00000000-0000-7000-8000-000000000001/profile',
+      '/api/v1/patients/00000000-0000-7000-8000-000000000001/communication-preferences',
+      '/api/v1/patients/00000000-0000-7000-8000-000000000001/proxies',
+      '/api/v1/patients/00000000-0000-7000-8000-000000000001',
+      '/api/v1/patient-merges/00000000-0000-7000-8000-000000000001',
+      '/api/v1/duplicate-flags',
+      '/api/v1/admin/consents',
     ];
     for (const p of probes) {
       const r = await fetch(`${t.base}${p}`, { headers: { 'x-client-release': R(MIN_RELEASE) } });

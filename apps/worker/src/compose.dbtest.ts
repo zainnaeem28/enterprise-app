@@ -185,10 +185,8 @@ describe('every registered worker job type has a handler in the composed task ta
       const apiRegistry = new JobRegistry();
       for (const j of api) apiRegistry.defineJob(j);
       const queue = new Queue(apiRegistry, 'api');
-      // patient.execute_merge is an INT-02 gap (no worker registration), reported separately; every other API-publishable type must be accepted.
-      const publishable = apiRegistry
-        .list()
-        .filter((j) => j.apiEnqueue && j.name !== 'patient.execute_merge');
+      const publishable = apiRegistry.list().filter((j) => j.apiEnqueue);
+      assert.ok(publishable.some((j) => j.name === 'patient.execute_merge'));
       assert.ok(publishable.some((j) => j.name === 'notifications.escalate_alert'));
       // Control: a type absent from the table is refused by the database.
       const ghost = new JobRegistry();

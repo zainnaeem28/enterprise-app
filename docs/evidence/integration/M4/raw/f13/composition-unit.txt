@@ -1,0 +1,11 @@
+  ✔ every M4 module factory is wired: its controllers, routes and job types are present (1.816118ms)
+  ✔ every mounted route declares a permission and a resolver (route inventory has no failures) (0.422233ms)
+  ✔ every operation of patient.yaml and the proxy routes of identity.yaml is mounted exactly once (INT03-F13) (3.872519ms)
+  ✔ negative control: without the patient and merge controllers the inventory names the missing routes (INT03-F13) (4.798416ms)
+  ✔ no (method, path) is mounted twice (0.460785ms)
+  ✔ negative control: with one module removed from the composition the check fails and names it (2.026935ms)
+  ✔ each M4 module answers behind the identity guard: mounted (not 404) and refused without a session (34.523279ms)
+✔ M4 composition (INT03-F01) (148.520766ms)
+ℹ tests 7
+ℹ pass 7
+ℹ fail 0

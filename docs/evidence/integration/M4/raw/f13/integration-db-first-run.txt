@@ -1,0 +1,12 @@
+== suite db-foundation
+ℹ pass 104
+ℹ fail 0
+== suite kernel
+ℹ pass 23
+ℹ fail 0
+== suite api
+ℹ pass 793
+ℹ fail 18
+== suite worker
+ℹ pass 84
+ℹ fail 0

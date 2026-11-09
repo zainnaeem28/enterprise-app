@@ -1,6 +1,6 @@
 // Task handlers of the patient module (ARCHITECTURE 33.1). `createPatientTasks` returns a task table for the worker's
 // `startWorker({ tasks })`; `definePatientJobs` registers the types with the JobRegistry. PATIENT_CRONTAB is wired at integration
-// (the runner does not pass a crontab yet, as for identity). `patient.execute_merge` is BE-09's.
+// (the runner does not pass a crontab yet, as for identity). `patient.execute_merge` is BE-09's, wired through the API ports.
 import type { Task } from 'graphile-worker';
 import type { JobRegistry, KernelDb } from '@ehr/kernel';
 import { PATIENT_JOBS } from './jobs.js';
@@ -22,6 +22,11 @@ export interface PatientTaskDeps {
   db: KernelDb;
   orgId: string;
   onDrift?: VerifyDeps['onDrift'];
+  /** The API's merge executor (`patient.execute_merge`); the composition supplies a refusing one when the API ports are absent. */
+  executeMerge(
+    payload: Record<string, unknown>,
+    ctx: { jobId: string; attempt: number; maxAttempts: number },
+  ): Promise<unknown>;
 }
 
 export function createPatientTasks(deps: PatientTaskDeps): Record<string, Task> {
@@ -32,6 +37,13 @@ export function createPatientTasks(deps: PatientTaskDeps): Record<string, Task> 
         orgId: deps.orgId,
         jobId: `patient.verify_staff_scope:${helpers.job.id}`,
         ...(deps.onDrift === undefined ? {} : { onDrift: deps.onDrift }),
+      });
+    },
+    'patient.execute_merge': async (payload, helpers) => {
+      await deps.executeMerge(payload as Record<string, unknown>, {
+        jobId: `patient.execute_merge:${helpers.job.id}`,
+        attempt: helpers.job.attempts,
+        maxAttempts: helpers.job.max_attempts,
       });
     },
     'patient.purge_match_checks': async () => {

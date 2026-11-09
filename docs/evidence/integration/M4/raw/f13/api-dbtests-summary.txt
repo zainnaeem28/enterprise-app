@@ -1,0 +1,5 @@
+ℹ tests 889
+ℹ pass 888
+ℹ fail 1
+ℹ cancelled 0
+1 failure on first pass: notes.dbtest.js 'a signed note racing the merge' (412); passes alone (21/21). Earlier full integration-db run failed 18 api tests with ENOSPC (disk 100% full), not rerun as one script.

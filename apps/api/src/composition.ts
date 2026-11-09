@@ -9,7 +9,7 @@ import type { Type } from '@nestjs/common';
 import { createPatientCliniciansControllers } from './clinicians.controller.js';
 import type { IdentityEnv } from './identity-env.js';
 import type { GuardPolicy } from './platform/guard.js';
-import { MemoryRateLimiter } from './platform/rate-limit.js';
+import { MemoryRateLimiter, PgRateLimiter } from './platform/rate-limit.js';
 import { AUDIT_JOBS, AuditService } from './modules/audit/index.js';
 import { createClinicalChart, CLINICAL_CHART_JOBS } from './modules/clinical/chart/index.js';
 import {
@@ -39,7 +39,14 @@ import {
   OidcPatientAdapter,
   requireAuthContext,
 } from './modules/identity/index.js';
-import { createPatient, MERGE_JOBS, patientInScope } from './modules/patient/index.js';
+import {
+  createMergeControllers,
+  createPatient,
+  MERGE_JOBS,
+  MergeService,
+  mergeResolvers,
+  patientInScope,
+} from './modules/patient/index.js';
 import { NOTIFICATIONS_JOBS, NotificationService } from './modules/notifications/index.js';
 import {
   AvailabilitySearch,
@@ -107,7 +114,7 @@ export const API_PATH_JOBS: readonly JobType[] = [
  * The HTTP surface of the API process and its guard. Mounted: identity (sign-in, callback, session), the patient catalogue reads
  * (`GET /api/v1/services|locations`), the patient clinician list (`GET /api/v1/clinicians`), scheduling availability (search and
  * the staff/admin management routes), the booking core (holds, confirm, appointments) and the flow (check-in, queue, waitlist,
- * pre-visit), and milestone M4: the clinical chart, front door and notes, messaging, privacy and reporting. A route that is not listed
+ * pre-visit), the patient module (portal, staff and admin routes, merges), and milestone M4: the clinical chart, front door and notes, messaging, privacy and reporting. A route that is not listed
  * is not served. `main.ts` and the composition tests call this one function.
  */
 export function buildComposition(deps: {
@@ -157,12 +164,13 @@ export function buildComposition(deps: {
     ...(deps.now === undefined ? {} : { now: deps.now }),
   });
   // The patient module registers its scope contributor and resolvers with identity; its records service is the flow's consent probe.
-  // Its own controllers are not part of this cycle's surface and are not mounted.
+  // Its portal, staff and admin controllers and the merge controllers are mounted below (INT03-F13). The label and lookup limits are
+  // compliance controls (6.7, 31.3), so the limiter is the shared one: a per-process counter would multiply them by the replica count.
   const patient = createPatient({
     db: deps.db,
     audit,
     identity,
-    limiter: new MemoryRateLimiter(1),
+    limiter: new PgRateLimiter(deps.db, env.orgId, env.rateKey),
     matchKey: env.matchKey,
     consentTemplates: { isPublished: isConsentTemplatePublished },
     staff: {
@@ -177,6 +185,11 @@ export function buildComposition(deps: {
     queue,
     ...(deps.now === undefined ? {} : { now: deps.now }),
   });
+
+  // The merge routes are served only together with the worker's `patient.execute_merge` task (apps/worker, D-F13-5).
+  const merges = new MergeService({ queue });
+  for (const [name, fn] of Object.entries(mergeResolvers()))
+    identity.policy.registerResolver(name, fn);
 
   const search = new AvailabilitySearch({ organisation });
   const availability = new AvailabilityService({ audit });
@@ -276,6 +289,8 @@ export function buildComposition(deps: {
         scheduling: availability,
         scopeOf,
       }),
+      ...patient.controllers,
+      ...createMergeControllers({ db: deps.db, merges }),
       ...createAvailabilityControllers({ db: deps.db, audit, availability, search }),
       ...createSchedulingControllers({ db: deps.db, scheduling: core }),
       ...createFlowControllers({ db: deps.db, flow, limiter: new MemoryRateLimiter(1) }),

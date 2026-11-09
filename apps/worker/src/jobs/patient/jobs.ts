@@ -1,4 +1,4 @@
-// Job types of the patient module (ARCHITECTURE 33.1). `patient.execute_merge` belongs to BE-09. Keep
+// Job types of the patient module (ARCHITECTURE 33.1). `patient.execute_merge` is BE-09's job, run here (INT03-F13). Keep
 // apps/api/src/modules/patient/jobs.ts in step (each side's test pins the same list).
 import type { JobType } from '@ehr/kernel';
 
@@ -18,6 +18,15 @@ export const PATIENT_JOBS: readonly JobType[] = [
     carriesPatientIds: false,
     jobScope: 'org',
     jobClass: 'system',
+  },
+  // Field for field equal to MERGE_JOBS in apps/api/src/modules/patient/merge/jobs.ts (pinned by m4-registration.test.ts).
+  {
+    name: 'patient.execute_merge',
+    maxAttempts: 3,
+    onMerged: 'none',
+    carriesPatientIds: false,
+    jobScope: 'patients',
+    jobClass: 'job',
   },
 ];
 

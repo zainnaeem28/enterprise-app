@@ -113,6 +113,8 @@ const API_JOB_LISTS: [string, string, readonly string[]][] = [
     ['privacy.assemble_export', 'privacy.check_legal_holds', 'privacy.expire_packages'],
   ],
   ['reporting/jobs.js', 'REPORTING_JOBS', ['reporting.refresh_ops']],
+  ['patient/jobs.js', 'PATIENT_JOBS', ['patient.verify_staff_scope', 'patient.purge_match_checks']],
+  ['patient/merge/jobs.js', 'MERGE_JOBS', ['patient.execute_merge']],
 ];
 
 for (const [file, exportName, names] of API_JOB_LISTS)
@@ -141,11 +143,11 @@ test('every job type the API path may publish exists in the worker registry, wit
       .map((j) => j.name),
   );
   const mine = new Map(WORKER_JOBS.map((j) => [j.name, j]));
-  // Known INT-02 gap, not M4 and not this ticket: patient.execute_merge has no worker registration (reported to Orchestrator).
   const missing = api
     .filter((j) => publishable.has(j.name) && !mine.has(j.name))
     .map((j) => j.name);
-  assert.deepEqual(missing, ['patient.execute_merge']);
+  assert.deepEqual(missing, []);
+  assert.ok(publishable.has('patient.execute_merge'));
   assert.ok(publishable.has('notifications.escalate_alert'));
   for (const j of api) if (mine.has(j.name)) assert.deepEqual(mine.get(j.name), j, j.name);
 });

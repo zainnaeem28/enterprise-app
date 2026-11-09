@@ -12,6 +12,8 @@ import { NoteReminderService, runNoteSignReminder } from './modules/clinical/not
 import { AlertService, escalateAlert } from './modules/notifications/alerts/index.js';
 import { registerMessagingHandlers, runOnCorrectionRequested } from './modules/messaging/index.js';
 import { assembleExport } from './modules/privacy/index.js';
+import { executeMerge } from './modules/patient/index.js';
+import { newRegisteredRegistries } from './register-participants.js';
 import type { PackageWriterPort } from './modules/privacy/index.js';
 import { runRefreshOps } from './modules/reporting/index.js';
 import { NotificationService } from './modules/notifications/index.js';
@@ -53,6 +55,9 @@ export function buildWorkerPorts(deps: WorkerPortsDeps) {
   registerTelehealthHandlers(deps.registry);
   registerFrontdoorHandlers(deps.registry);
   registerMessagingHandlers(deps.registry);
+  // One explicit registry object for the jobs that run here (merge executor, export assembly): the same registration site as the
+  // API process and the dbtests (INT03-F04), and no dependence on the process-wide default being filled (INT03-F13, D-F13-5).
+  const registries = newRegisteredRegistries();
   const audit = new AuditService({ logger: deps.logger, queue: deps.queue });
   const organisation = new OrganisationService();
   const records = new PatientRecordsService({
@@ -114,6 +119,8 @@ export function buildWorkerPorts(deps: WorkerPortsDeps) {
     },
   });
   return {
+    /** The participant registries handed to `executeMerge` and `assembleExport` (exposed for the worker-registries test). */
+    registries,
     scheduling: flowPort(flow),
     telehealth: telehealthPort(new TelehealthJobService({ audit })),
     clinical: {
@@ -150,6 +157,32 @@ export function buildWorkerPorts(deps: WorkerPortsDeps) {
           deps.orgId,
         ),
     },
+    executeMerge: (
+      payload: Record<string, unknown>,
+      ctx: { jobId: string; attempt: number; maxAttempts: number },
+    ) =>
+      executeMerge(
+        {
+          db: deps.db,
+          orgId: deps.orgId,
+          registries,
+          queue: deps.queue,
+          // Request ID, code, error class and SQL state only: no patient data (the executor passes none).
+          onFailure: (info) =>
+            deps.logger.error('patient merge failed', {
+              requestId: info.requestId,
+              code: info.code,
+              errorName: info.errorName,
+              ...(info.sqlState === undefined ? {} : { sqlState: info.sqlState }),
+            }),
+        },
+        {
+          requestId: payload['mergeRequestId'] as string,
+          jobId: ctx.jobId,
+          attempt: ctx.attempt,
+          maxAttempts: ctx.maxAttempts,
+        },
+      ),
     assembleExport: (
       payload: Record<string, unknown>,
       ctx: { jobId: string; attempt: number; maxAttempts: number },
@@ -160,6 +193,7 @@ export function buildWorkerPorts(deps: WorkerPortsDeps) {
           orgId: deps.orgId,
           audit,
           writer: deps.packageWriter,
+          registries,
           closureOf: deps.closureOf,
           queue: deps.queue,
           ...(deps.now === undefined ? {} : { now: deps.now }),

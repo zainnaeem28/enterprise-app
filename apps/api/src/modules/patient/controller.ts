@@ -566,18 +566,6 @@ export function createPatientControllers(d: PatientControllerDeps): Type<unknown
       );
     }
 
-    @Get('patients/:patientId/banner')
-    @Route({ permission: 'patient.read', resolver: 'patient' })
-    async banner(
-      @Param('patientId') id: string,
-      @ReqParam() req: Req,
-      @ResParam() res: Res,
-    ): Promise<void> {
-      const b = await run(req, (tx) => d.patients.patientBanner(tx, id));
-      if (b === undefined) throw new PatientNotFoundError();
-      send(res, 200, { patientBanner: b });
-    }
-
     @Patch('patients/:patientId')
     @Route({ permission: 'patient.update', resolver: 'patient' })
     async patch(

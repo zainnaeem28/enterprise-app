@@ -188,14 +188,13 @@ describe('POST /patients/lookup (HEAAA-286, draft 8.3) on PostgreSQL 17', () => 
     assert.equal(ok.status, 200, ok.body);
   });
 
-  test('(h) the doctor still cannot call POST /patients/search or read /patients/{id}, /banner, /consents, /contacts: 403 auth.forbidden', async () => {
+  test('(h) the doctor still cannot call POST /patients/search or read /patients/{id}, /consents, /contacts: 403 auth.forbidden', async () => {
     const pid = inA1.patientId;
     const search = await t.scall(doctor, 'POST', '/api/v1/patients/search', { name: 'Given' });
     assert.equal(search.status, 403, search.body);
     assert.equal(code(search), 'auth.forbidden');
     for (const path of [
       `/api/v1/patients/${pid}`,
-      `/api/v1/patients/${pid}/banner`,
       `/api/v1/patients/${pid}/consents`,
       `/api/v1/patients/${pid}/contacts`,
       `/api/v1/patients/${pid}/insurance-coverages`,
