@@ -1,0 +1,5 @@
+session roles []
+POST /api/v1/availability/search -> 200 {"slots":[{"startsAt":"2026-11-09T14:00:00.000Z","endsAt":"2026-11-09T14:30:00.000Z","clinicianId":"00000000-0000-7000-8000-000000000501","locationId":"00000000-0000-7000-8000-000000000101","mode":"in
+first slot {"startsAt":"2026-11-09T14:00:00.000Z","endsAt":"2026-11-09T14:30:00.000Z","clinicianId":"00000000-0000-7000-8000-000000000501","locationId":"00000000-0000-7000-8000-000000000101","mode":"in_person"}
+POST /api/v1/holds -> 201 {"reservationId":"01a1bf73-8b5c-7016-bce3-f84d233620fc","expiresAt":"2026-11-09T08:46:22.987Z"}
+POST /api/v1/appointments/01a1bf73-8b5c-7016-bce3-f84d233620fc/confirm -> 200 {"id":"01a1bf73-8b5c-7016-bce3-f84d233620fc","patientId":"00000000-0000-7000-8000-000000000601","serviceId":"00000000-0000-7000-8000-000000000301","locationId":"00000000-0000-7000-8000-000000000101","

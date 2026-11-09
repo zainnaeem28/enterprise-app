@@ -1,0 +1,57 @@
+PASS sign-in | http://localhost:4675/schedule | api: GET /api/v1/auth/sign-in -> 302 ; GET /api/v1/auth/callback -> 302 ; GET /api/v1/alerts/stream -> 200 ; GET /api/v1/clinicians/00000000-0000-7000-8000-000000000501/schedule -> 200 ; GET /api/v1/alerts -> 200
+      page: Skip to main content Clinic Staff portal Synthetic Doctor Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Alerts Schedule Patients Tasks & messages Notes to sign Availability Arrivals Triage queue Forms & consents Follow-ups Waitlist Schedule today Updated at 8:39 AM Refresh Your visits 02:00 PM to 02:30 PM Sam Synthetic (MRN-9100001) · In pers
+PASS schedule | http://localhost:4675/schedule | api: GET /api/v1/alerts/stream -> 200 ; GET /api/v1/alerts -> 200 ; GET /api/v1/clinicians/00000000-0000-7000-8000-000000000501/schedule -> 200
+      page: Skip to main content Clinic Staff portal Synthetic Doctor Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Alerts Schedule Patients Tasks & messages Notes to sign Availability Arrivals Triage queue Forms & consents Follow-ups Waitlist Schedule today Updated at 8:39 AM Refresh Your visits 02:00 PM to 02:30 PM Sam Synthetic (MRN-9100001) · In person · Arrived Help
+PASS open-visit-and-start-consultation | http://localhost:4675/patients | api: GET /api/v1/patients/00000000-0000-7000-8000-000000000601/documents -> 200 ; GET /api/v1/patients/00000000-0000-7000-8000-000000000601/chart-summary -> 200 ; POST /api/v1/encounters -> 201 ; POST /api/v1/encounters/01a1bf76-a9ea-75ea-a6bb-9405af6763ce/notes -> 201
+      page: Skip to main content Clinic Staff portal Synthetic Doctor Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Alerts Schedule Patients Tasks & messages Notes to sign Availability Arrivals Triage queue Forms & consents Follow-ups Waitlist Chart summary: Sam Synthetic Back to the list Chart summary SS Sam Synthetic DOB 1980-01-01 (46 y) Allergies No allergies recorded MRN MRN-9100001 Problems Nothing listed. Medicines Nothing listed. Allergies Noth
+PASS write-and-save-draft | http://localhost:4675/patients | api: PATCH /api/v1/notes/01a1bf76-aa1a-735b-97aa-7680e193a99e -> 200
+      page: Skip to main content Clinic Staff portal Synthetic Doctor Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Alerts Schedule Patients Tasks & messages Notes to sign Availability Arrivals Triage queue Forms & consents Follow-ups Waitlist Chart summary: Sam Synthetic Back to the list Chart summary SS Sam Synthetic DOB 1980-01-01 (46 y) Allergies No allergies recorded MRN MRN-9100001 Problems Nothing listed. Medicines Nothing listed. Allergies Noth
+PASS back-to-schedule | http://localhost:4675/schedule | api: GET /api/v1/alerts -> 200 ; GET /api/v1/alerts/stream -> 200 ; GET /api/v1/clinicians/00000000-0000-7000-8000-000000000501/schedule -> 200
+      page: Skip to main content Clinic Staff portal Synthetic Doctor Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Alerts Schedule Patients Tasks & messages Notes to sign Availability Arrivals Triage queue Forms & consents Follow-ups Waitlist Schedule today Updated at 8:39 AM Refresh Your visits 02:00 PM to 02:30 PM Sam Synthetic (MRN-9100001) · In person · In consultation Help
+PASS reopen-same-visit-409-picker | http://localhost:4675/patients | api: GET /api/v1/patients/00000000-0000-7000-8000-000000000601/documents -> 200 ; GET /api/v1/patients/00000000-0000-7000-8000-000000000601/chart-summary -> 200
+      page: Skip to main content Clinic Staff portal Synthetic Doctor Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Alerts Schedule Patients Tasks & messages Notes to sign Availability Arrivals Triage queue Forms & consents Follow-ups Waitlist Chart summary: Sam Synthetic Back to the list Chart summary SS Sam Synthetic DOB 1980-01-01 (46 y) Allergies No allergies recorded MRN MRN-9100001 Problems Nothing listed. Medicines Nothing listed. Allergies Nothing listed. Recent vitals Nothing listed. Documents Upload a document Document type Not sure (staff will choose) Insurance card Identity document Consent Referral letter External record Clinical photo Other patient upload Questionnaire attachment Choose a file PDF, JPEG or PNG. Each file is scanned before anyone can open it. No documents yet. Visit note Start consultation Help
+FAIL locator.click: Timeout 15000ms exceeded. pick-draft | http://localhost:4675/patients | api: 
+      page: Skip to main content Clinic Staff portal Synthetic Doctor Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Alerts Schedule Patients Tasks & messages Notes to sign Availability Arrivals Triage queue Forms & consents Follow-ups Waitlist Chart summary: Sam Synthetic Back to the list Chart summary SS Sam Synthetic DOB 1980-01-01 (46 y) Allergies No allergies recorded MRN MRN-9100001 Problems Nothing listed. Medicines Nothing listed. Allergies Nothing listed. Recent vitals Nothing listed. Documents Upload a document Document type Not sure (staff will choose) Insurance card Identity document Consent Referral letter External record Clinical photo
+PASS documents-panel-in-chart | http://localhost:4675/patients | api: GET /api/v1/alerts -> 200 ; GET /api/v1/alerts/stream -> 200
+      page: Skip to main content Clinic Staff portal Synthetic Doctor Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Alerts Schedule Patients Tasks & messages Notes to sign Availability Arrivals Triage queue Forms & consents Follow-ups Waitlist Patients Find a patient Search by MRN, or by name with an optional date of birth (YYYY-MM-DD). You see patients you are allowed to see. Name Date of birth YYYY-MM-DD MRN Search Help
+PASS alerts-page | http://localhost:4675/alerts | api: GET /api/v1/alerts/stream -> 200 ; GET /api/v1/alerts -> 200
+      page: Skip to main content Clinic Staff portal Synthetic Doctor Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Alerts Schedule Patients Tasks & messages Notes to sign Availability Arrivals Triage queue Forms & consents Follow-ups Waitlist Alerts No open alerts. Help
+
+API CALLS
+GET /api/v1/auth/sign-in -> 302
+GET /api/v1/auth/callback -> 302
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/alerts/stream -> 200
+GET /api/v1/clinicians/00000000-0000-7000-8000-000000000501/schedule -> 200
+GET /api/v1/alerts -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/alerts/stream -> 200
+GET /api/v1/alerts -> 200
+GET /api/v1/clinicians/00000000-0000-7000-8000-000000000501/schedule -> 200
+GET /api/v1/patients/00000000-0000-7000-8000-000000000601/documents -> 200
+GET /api/v1/patients/00000000-0000-7000-8000-000000000601/chart-summary -> 200
+POST /api/v1/encounters -> 201
+POST /api/v1/encounters/01a1bf76-a9ea-75ea-a6bb-9405af6763ce/notes -> 201
+PATCH /api/v1/notes/01a1bf76-aa1a-735b-97aa-7680e193a99e -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/alerts -> 200
+GET /api/v1/alerts/stream -> 200
+GET /api/v1/clinicians/00000000-0000-7000-8000-000000000501/schedule -> 200
+GET /api/v1/patients/00000000-0000-7000-8000-000000000601/documents -> 200
+GET /api/v1/patients/00000000-0000-7000-8000-000000000601/chart-summary -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/alerts -> 200
+GET /api/v1/alerts/stream -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/alerts/stream -> 200
+GET /api/v1/alerts -> 200

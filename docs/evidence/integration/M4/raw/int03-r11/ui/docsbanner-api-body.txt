@@ -1,0 +1,5 @@
+documents list for the chart patient: HTTP 200
+keys: items,nextCursor,patientBanner
+patientBanner: {"patientId":"00000000-0000-7000-8000-000000000601","displayName":"Sam Synthetic","dateOfBirth":"1980-01-01","mrn":"MRN-9100001","allergies":{"state":"none_recorded","items":[],"moreCount":0,"uncodedCount":0,"lastChangedAt":null}}
+items: []
+unknown patient id: HTTP 404
