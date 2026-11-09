@@ -1,0 +1,6 @@
+Starting filesystem walk for root: /
+Scanned /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-344-sdlc-integrate-int-03-r4-bounded-round-4-re-merge-f09a-then-journeys-screenshots-n-1-scans/pnpm-lock.yaml file and found 416 packages
+End status: 0 dirs visited, 1 inodes visited, 1 Extract calls, 9.320421ms elapsed, 9.320481ms wall time
+non-blocking: minimatch@10.2.6 GHSA-g3hv-75wg-m249 (minimatch has potential denial of service via globparts amplification): severity 6.9, fix available
+non-blocking: yaml@2.8.1 GHSA-48c2-rrv3-qjmp (yaml is vulnerable to Stack Overflow via deeply nested YAML collections): severity 4.3, fix available
+osv: 2 package(s) with findings, 2 vulnerabilities, none blocking

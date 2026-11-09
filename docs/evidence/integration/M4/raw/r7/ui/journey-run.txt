@@ -1,0 +1,55 @@
+PASS  landing | 
+      page: Skip to main content Patient portal Placeholder identity Patient portal Sign in to see your visits and messages, or create an account. Sign in Create account
+PASS  sign-in | GET /api/v1/auth/sign-in -> 302 ; GET /api/v1/auth/sign-in -> 302 ; GET /api/v1/auth/callback -> 302 ; GET /api/v1/auth/session -> 200 ; GET /api/v1/me -> 404
+      page: Skip to main content Patient portal Placeholder identity This page is not part of the patient portal Use the sign-in button to start again. Reference for support: a3bfc08b-37e2-449a-b154-607f3c932d37 Sign in again
+PASS  profile | GET /api/v1/auth/session -> 200 ; GET /api/v1/auth/session -> 200 ; GET /api/v1/patients/00000000-0000-7000-8000-000000000601/profile -> 200
+      page: Skip to main content Patient portal Placeholder identity Your details Name Sam Synthetic Date of birth 1980-01-01 To change your name or date of birth, please contact the clinic. They need to check it with you. Phone number Email address Address Address line 1 Address line 2 City State ZIP code Pref
+PASS  profile-notifications | GET /api/v1/auth/session -> 200 ; GET /api/v1/auth/session -> 200 ; GET /api/v1/patients/00000000-0000-7000-8000-000000000601/communication-preferences -> 200 ; GET /api/v1/patients/00000000-0000-7000-8000-000000000601/profile -> 200
+      page: Skip to main content Patient portal Placeholder identity Notification preferences Contact me by In the patient portal Always on. Safety and security notices are always shown in the portal and cannot be switched off. Email Add an email address under Your details to use email. Text message (SMS) Add a
+PASS  messages-list | GET /api/v1/auth/session -> 200 ; GET /api/v1/auth/session -> 200 ; GET /api/v1/patients/00000000-0000-7000-8000-000000000601/threads -> 200
+      page: Skip to main content Patient portal Placeholder identity Messages ! Messages are not for emergencies. If you need urgent help, call emergency services. Write a message No messages yet.
+PASS  messages-new | GET /api/v1/auth/session -> 200 ; GET /api/v1/auth/session -> 200 ; GET /api/v1/patients/00000000-0000-7000-8000-000000000601/threads -> 200
+      page: Skip to main content Patient portal Placeholder identity Write a message ! Messages are not for emergencies. If you need urgent help, call emergency services. Writing a new message is not available yet. Back to messages
+PASS  privacy | GET /api/v1/auth/session -> 200 ; GET /api/v1/auth/session -> 200 ; GET /api/v1/privacy-requests -> 200
+      page: Skip to main content Patient portal Placeholder identity My privacy Download my data Ask for a copy of the data we hold about you. We check your identity first. The copy is not sent by email: you download it here. Request a copy of my data Delete my account You can ask for your account to be deleted
+PASS  appointments | GET /api/v1/auth/session -> 200 ; GET /api/v1/auth/session -> 200 ; GET /api/v1/locations -> 200 ; GET /api/v1/services -> 200 ; GET /api/v1/patients/00000000-0000-7000-8000-000000000601/appointments -> 200
+      page: Skip to main content Patient portal Placeholder identity Your appointments Book an appointment No appointments yet. Book your first visit. Book an appointment
+      fields on new-message form: 0
+FAIL  messages-send: locator.click: Timeout 15000ms exceeded. | GET /api/v1/auth/session -> 200 ; GET /api/v1/auth/session -> 200 ; GET /api/v1/patients/00000000-0000-7000-8000-000000000601/threads -> 200
+      url: http://127.0.0.1:4674/messages/new page: Skip to main content Patient portal Placeholder identity Write a message ! Messages are not for emergencies. If you need urgent help, call emergency services. Writing a new message is not available yet. Back to messages
+PASS  messages-list-after | GET /api/v1/auth/session -> 200 ; GET /api/v1/auth/session -> 200 ; GET /api/v1/patients/00000000-0000-7000-8000-000000000601/threads -> 200
+      page: Skip to main content Patient portal Placeholder identity Messages ! Messages are not for emergencies. If you need urgent help, call emergency services. Write a message No messages yet.
+
+API CALLS
+GET /api/v1/auth/sign-in -> 302
+GET /api/v1/auth/sign-in -> 302
+GET /api/v1/auth/callback -> 302
+GET /api/v1/auth/session -> 200
+GET /api/v1/me -> 404
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/patients/00000000-0000-7000-8000-000000000601/profile -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/patients/00000000-0000-7000-8000-000000000601/communication-preferences -> 200
+GET /api/v1/patients/00000000-0000-7000-8000-000000000601/profile -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/patients/00000000-0000-7000-8000-000000000601/threads -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/patients/00000000-0000-7000-8000-000000000601/threads -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/privacy-requests -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/locations -> 200
+GET /api/v1/services -> 200
+GET /api/v1/patients/00000000-0000-7000-8000-000000000601/appointments -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/patients/00000000-0000-7000-8000-000000000601/threads -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/patients/00000000-0000-7000-8000-000000000601/threads -> 200

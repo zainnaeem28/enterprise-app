@@ -1,0 +1,21 @@
+// Patient asks for a copy of their data in the real UI; the real worker process must pick up the queued job. usage: node privacy-journey.mjs <root> <outDir>
+import { createRequire } from 'node:module'; import { writeFileSync } from 'node:fs';
+const [root, out] = process.argv.slice(2);
+const { chromium } = createRequire(root + '/apps/patient/package.json')('@playwright/test');
+const B = 'http://127.0.0.1:4674'; const log = [], calls = [];
+const b = await chromium.launch({ channel: 'chromium', args: ['--no-sandbox', '--disable-gpu'] });
+const p = await (await b.newContext({ viewport: { width: 1280, height: 900 } })).newPage();
+p.on('response', (r) => { const u = new URL(r.url()); if (u.pathname.startsWith('/api/') && r.request().method() !== 'GET') calls.push(`${r.request().method()} ${u.pathname} -> ${r.status()}`); });
+await p.goto(B + '/'); await p.waitForTimeout(3000);
+await p.getByRole('button', { name: /sign in/i }).or(p.getByRole('link', { name: /sign in/i })).first().click({ timeout: 15000 });
+const c = p.getByRole('button', { name: /continue/i }).or(p.getByRole('link', { name: /continue/i })); if (await c.count()) await c.first().click({ timeout: 15000 });
+await p.waitForTimeout(3000);
+await p.goto(B + '/privacy'); await p.waitForTimeout(2500);
+await p.getByRole('button', { name: /request a copy of my data/i }).click({ timeout: 15000 }); await p.waitForTimeout(3000);
+log.push('page after request: ' + (await p.innerText('body')).replace(/\s+/g, ' ').slice(0, 400));
+await p.screenshot({ path: out + '/11-privacy-copy-requested.png', fullPage: true });
+await p.waitForTimeout(5000);
+log.push('page 5s later: ' + (await p.innerText('body')).replace(/\s+/g, ' ').slice(0, 400));
+await p.screenshot({ path: out + '/12-privacy-after-worker.png', fullPage: true });
+writeFileSync(out + '/privacy-journey-run.txt', log.join('\n') + '\n\nNON-GET API CALLS\n' + calls.join('\n') + '\n'); console.log(log.join('\n')); console.log(calls.join('\n'));
+await b.close();

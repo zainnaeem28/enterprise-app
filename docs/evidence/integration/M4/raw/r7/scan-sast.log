@@ -1,0 +1,1 @@
+::error::required tool 'semgrep' is not installed (run scripts/ci/install-tools.sh semgrep)

@@ -1,0 +1,5 @@
+page after request: Skip to main content Patient portal Placeholder identity My privacy Download my data Ask for a copy of the data we hold about you. We check your identity first. The copy is not sent by email: you download it here. Request a copy of my data Delete my account You can ask for your account to be deleted. We record your request and send it to the privacy team. This does not delete anything today: healt
+page 5s later: Skip to main content Patient portal Placeholder identity My privacy Download my data Ask for a copy of the data we hold about you. We check your identity first. The copy is not sent by email: you download it here. Request a copy of my data Delete my account You can ask for your account to be deleted. We record your request and send it to the privacy team. This does not delete anything today: healt
+
+NON-GET API CALLS
+
