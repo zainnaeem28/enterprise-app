@@ -84,10 +84,29 @@ export async function addPatient(sa, n, over = {}) {
   const given = over.given ?? 'Test';
   const family = over.family ?? `Patient ${String(n).padStart(2, '0')}`;
   await sa.query(
-    `INSERT INTO patient.patient (id, organisation_id, mrn, given_name, family_name, date_of_birth, state_code, created_via)
-     VALUES ($1,$2,$3,$4,$5,$6,'NY','front_desk')`,
-    [patientId(n), ORG, `MRN-${String(9100000 + n)}`, given, family, over.dob ?? '1980-01-01'],
+    `INSERT INTO patient.patient (id, organisation_id, mrn, given_name, family_name, date_of_birth, state_code, created_via, email, phone_e164)
+     VALUES ($1,$2,$3,$4,$5,$6,'NY','front_desk',$7,$8)`,
+    [
+      patientId(n),
+      ORG,
+      `MRN-${String(9100000 + n)}`,
+      given,
+      family,
+      over.dob ?? '1980-01-01',
+      `${patientKey(n).toLowerCase()}@patient.qa-test.invalid`,
+      `+1555555${String(1000 + (n % 9000)).padStart(4, '0')}`, // reserved 555 test range
+    ],
   );
+  // Staff see a patient through an open care relationship at their location (the registration location).
+  for (const loc of over.locations ?? [A1])
+  {
+    // The definer functions need a staff scope; the fixture writes the two rows they would write (care relationship, derived scope).
+    await sa.query(
+      `INSERT INTO patient.care_relationship (id, organisation_id, patient_id, location_id, reason) VALUES ($1,$2,$3,$4,'registration')`,
+      [randomUUID(), ORG, patientId(n), loc],
+    );
+    await sa.query(`INSERT INTO patient.staff_scope (patient_id, location_id, organisation_id) VALUES ($1,$2,$3)`, [patientId(n), loc, ORG]);
+  }
   await sa.query(`INSERT INTO identity.person (id, organisation_id, display_name) VALUES ($1,$2,$3)`, [
     patientPersonId(n),
     ORG,

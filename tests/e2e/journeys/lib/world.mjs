@@ -200,3 +200,43 @@ export async function newDoctor({ services = [SVC.IN], overbookable = false, loc
   });
   return { id: pid, key };
 }
+
+/** A fresh staff principal holding the given roles ([[roleKey, locationId], ...]); returns {key, id, personId, client} (signed in). */
+let staffSeq = Math.floor(Math.random() * 1_000_000);
+export async function newStaff(grants, { name = 'STF-X' } = {}) {
+  const n = 6_000_000 + staffSeq++ * 2;
+  const pid = `00000000-0000-7000-8000-${String(n).padStart(12, '0')}`;
+  const person = `00000000-0000-7000-8000-${String(n + 1).padStart(12, '0')}`;
+  const key = `${name}-${n}`;
+  await sqlTx(async (c) => {
+    await c.query(`INSERT INTO identity.person (id, organisation_id, display_name) VALUES ($1,$2,$3)`, [person, ORG, `Synthetic ${key}`]);
+    await c.query(
+      `INSERT INTO identity.principal (id, organisation_id, person_id, realm, subject, email, status) VALUES ($1,$2,$3,'google',$4,$5,'active')`,
+      [pid, ORG, person, `sub-${key}`, `${key.toLowerCase()}@example.com`],
+    );
+    await c.query(`INSERT INTO identity.staff_profile (principal_id, organisation_id, display_name, directory_listed) VALUES ($1,$2,$3,false)`, [pid, ORG, `Synthetic ${key}`]);
+    for (const [role, loc] of grants) {
+      const r = await c.query(`SELECT id FROM identity.role WHERE key = $1`, [role]);
+      if (!r.rows[0]) throw new Error(`role ${role} missing`);
+      await c.query(
+        `INSERT INTO identity.role_assignment (id, organisation_id, principal_id, role_id, location_id, granted_via_request_id) VALUES ($1,$2,$3,$4,$5,$6)`,
+        [uuid(), ORG, pid, r.rows[0].id, loc, uuid()],
+      );
+    }
+  });
+  return { key, id: pid, personId: person, client: await login('staff', key) };
+}
+
+/** A window starting `fromH` hours from now and `spanH` long, for tests that need a visit today (all-day doctors only). */
+export const soon = (fromH = 1, spanH = 5) => {
+  const now = Date.now();
+  return { from: new Date(now + fromH * 3600e3).toISOString(), to: new Date(now + (fromH + spanH) * 3600e3).toISOString(), date: 'rolling' };
+};
+/** Front desk checks the appointment in; returns the check-in response (the queue entry id equals the reservation id). */
+export async function deskCheckIn(desk, appt) {
+  return desk.client.post(`/api/v1/appointments/${appt.id}/check-in`, {}, { headers: { 'if-match': `W/"${appt.version}"` } });
+}
+export async function queueEntry(desk, locationId, id) {
+  const q = await desk.client.get(`/api/v1/locations/${locationId}/queue`);
+  return (q.json?.items ?? []).find((e) => e.id === id);
+}
