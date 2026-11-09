@@ -79,6 +79,26 @@ describe('Audit log (AD-01)', () => {
     expect(screen.getByText(s.system)).toBeInTheDocument();
   });
 
+  it('includes a row from the current minute when To is left at its default', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: false, toFake: ['Date'] });
+    try {
+      vi.setSystemTime(new Date('2026-11-09T10:15:00.000Z'));
+      const { ui, seen } = portal('/admin/audit', auditRoutes());
+      render(ui);
+      vi.setSystemTime(new Date('2026-11-09T10:25:30.000Z'));
+      const rowTime = Date.parse('2026-11-09T10:25:10.000Z');
+      await click(s.search);
+      const body = seen.find((x) => x.path.endsWith('/audit-events/search'))?.body as Record<
+        string,
+        unknown
+      >;
+      expect(Date.parse(String(body['to']))).toBe(Date.parse('2026-11-09T10:26:00.000Z'));
+      expect(Date.parse(String(body['to']))).toBeGreaterThan(rowTime);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('refuses a period over 31 days or a malformed reference before any call', async () => {
     const { ui, seen } = portal('/admin/audit', auditRoutes());
     render(ui);
