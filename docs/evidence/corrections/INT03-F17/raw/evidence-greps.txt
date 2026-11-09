@@ -1,0 +1,62 @@
+# HEAAA-384 evidence greps, run 2026-11-09T07:38:17Z at 7a2fca00b73ce4755e309541af5c518ba7d7c339
+
+$ grep -n 'F-PP-09\|^| D-5\|RA-R1-25\|F-DR-12' docs/PRD.md
+112:| Patient-facing messaging (G-14, F-PP-09) | S/R1 | Scope of staff vs patient messaging | D-5 | Staff tasks and messages (F-DR-12, M) in R1; patient messaging stays S and may slip without blocking R1 |
+127:- S items in R1: F-PP-09 (patient secure messaging), F-PC-05 manual eligibility, F-PC-09, F-AD-11.
+134:- Patient messaging F-PP-09 (S) (G-14, D-5).
+142:| R1 | all features listed in 4.5 "confirmed" marked M, plus the Contested-M items as resolved by D-3..D-6 (default in 4.4) | F-BS-06, F-PP-09, F-PC-05 (manual), F-PC-09, F-AD-11 | none |
+260:| RA-R1-25 | Staff create tasks and send secure messages to other staff. Patient messaging (F-PP-09, S) is accepted only if D-5 retains it. | F-DR-12, F-PP-09 |
+394:| D-5 | R1 patient-facing messaging (S) or only staff messaging (M)? | G-14, POR-02 | Staff messaging R1; patient messaging stays S | Staff only; patient messaging may slip | R1 scope |
+695:| F-PP-09 | Secure messaging with care team, attachments | S | R1 |
+731:| F-DR-12 | Tasks and secure messages with staff and patients | M | R1 |
+[exit 0]
+
+$ grep -n 'patient_messaging\|messaging.thread.patient\|D-5' docs/ARCHITECTURE.md
+191:| `messaging` | Threads, messages, tasks | Staff tasks and messages; patient messaging per D-5 | R1 |
+613:| Defer patient messaging (D-5) and visit summaries (D-6) | Medium | Patients phone the clinic |
+1389:**O-1 (open, found while verifying A-4; not caused or changed by it).** Rule (b) lets an owner delete another principal's row, but through `app_api` that does not happen. The SELECT policy T-PRINCIPAL shows an owner only their own participant row, so `DELETE … WHERE principal_id = <member>` matches 0 rows. The trigger `messaging.guard_participant` (2001) runs as invoker, so its "the last owner stays" check sees only the caller's own row, and an owner who removes their own row is always refused with `PS001`, even when other owners exist. Verified identical at 2202 and after 2204 (`docs/e
+1721:| `messaging` | `messaging.thread.staff`, `messaging.thread.patient` (flag D-5), `messaging.task.manage` |
+1890:| `GET/POST /patients/{patientId}/threads`, `POST /threads/{id}/messages` | patient | path | Idem | **Only if flag `patient_messaging`** (D-5); else `404` |
+[exit 0]
+
+$ grep -n 'D-5' docs/DELIVERY-PLAN.md docs/UI-UX.md docs/TEST-CASES.md docs/SHARED-BOUNDARIES.md docs/TICKETS.md
+docs/DELIVERY-PLAN.md:46:**Built as defaults, rerun if the owner decides differently (PRD 4.4):** block-only booking policy, nothing charged (D-3); no lab sample booking (D-4); patient messaging behind a flag, off (D-5); no patient visit summary (D-6).
+docs/DELIVERY-PLAN.md:64:| C-07 | PRD defaults D-3, D-4, D-5, D-6 | Block-only booking policy (nothing charged), no lab sample booking, no patient visit summary, patient messaging behind a flag and off. The default is built and tested; a different owner answer reopens the affected tickets and tests. | Owner; PM | BE-03, BE-11, BE-18, BE-19, FE-04, FE-05, FE-12. Also: BE-03, BE-11, BE-18, BE-19, FE-04, FE-05, FE-12 |
+docs/DELIVERY-PLAN.md:236:| Patient messaging (F-PP-09) | Built behind a flag, off unless D-5 retains it | In BE-19/FE-05, flagged |
+docs/UI-UX.md:61:| Patient portal | Home · Appointments · Messages (if D-5 retains it) · Documents · Profile & family · **R2:** Health record · Prescriptions · Payments · **R3:** Medicines · Results | Bottom tab bar, four items: Home · Visits · Records · More. "More" holds the rest |
+docs/UI-UX.md:89:| Profile and settings (F-PP-02, F-PP-16, F-PP-09) | R1/S | PP-35 Profile and contact details, PP-36 Notification preferences (channel per message type; safety-critical notices cannot be switched off), PP-37 Messages thread list and thread **(optional until D-5 is decided)**. Pattern: form field set + list-detail (sections 6, 12). Not in a mockup |
+docs/UI-UX.md:342:| UX-P-02 | Confirm whether fees/deposits (D-3), patient messaging (D-5), visit summary (D-6) stay in R1; designs for them are marked optional | PM | PP-13, messages, visit summary |
+docs/UI-UX.md:405:| 1 | PMR-02 Nav items without screens | Addressed, review pending | Three rows added to section 4 (PP-35..37, DR-11..13, PC-07/08); messaging marked optional until D-5 |
+docs/TEST-CASES.md:489:| TC-MSG-03 | RA-R1-25, D-5 | `PAT-01` | D-5 decision known (retains F-PP-09 or not) | Patient messaging | Tested only if D-5 retains F-PP-09. Otherwise the case is `N/A` and recorded as such | P2 | P | AUTO |
+docs/TEST-CASES.md:622:| D-3, D-4, D-6, D-5 | TC-AD-03, TC-PC-11, visit summary (not built in R1), TC-MSG-03 | PRD defaults tested; rerun if changed |
+docs/TEST-CASES.md:689:| RA-R1-25 | TC-MSG-01..04 | D-5 |
+docs/SHARED-BOUNDARIES.md:50:| D-5 patient messaging | Staff messaging R1; patient messaging S | `messaging` designs both thread types; patient threads can be switched off by flag |
+docs/SHARED-BOUNDARIES.md:250:| `my.` | `/api/v1/*` | Patient or proxy browser | `__Host-` session, audience `patient`, realm `patient_pool` | patient (including communication preferences), scheduling, telehealth, documents, messaging (if D-5), privacy; R2 prescribing (status read), billing; R3 labs (released results), pharmacy-network (delivery status read) |
+docs/TICKETS.md:52:| BE-19 | HEAAA-116 | messaging: staff threads and tasks (patient messaging behind flag D-5) | HEAAA-23 | Backend Engineer | Backend Reviewer | M | M4 | BE-08, BE-06, BE-09 | Blocked |
+docs/TICKETS.md:1509:#### BE-19 — messaging: staff threads and tasks (patient messaging behind flag D-5)  (HEAAA-116)
+docs/TICKETS.md:1536:- Patient messaging is behind a feature flag and ships off unless D-5 retains it.
+[exit 0]
+
+$ sed -n 9,12p apps/api/src/modules/messaging/controller.ts
+//   GET/POST /patients/{patientId}/threads   patient                  Idem; ONLY while the organisation flag `patient_messaging` is on (D-5); else 404
+//
+// Known limit (README O-2): 29.2 also lists `POST /threads/{id}/messages` for the patient host. One handler cannot carry two
+// permissions in the route inventory, so a patient's reply on an existing thread is not served until the platform allows it;
+[exit 0]
+
+$ grep -n 'Messages' apps/patient/src/features/profile/README.md
+13:| PP-37 Messages (flag `patient_messaging`, D-5)                 | `messages/MessagesRoutes.tsx`                 | `/messages`, `/messages/new`, `/messages/:id` |
+22:import { isMessagesPath, MessagesRoutes } from '../features/messages/index.js';
+28:} else if (isMessagesPath(location.path)) {
+29:  page = <MessagesRoutes runtime={runtime} path={location.path} go={go} />;
+33:plus links to them from the landing page. Show the Messages link only when `GET /patients/{id}/threads` is not a 404 (the flag is off otherwise).
+65:5. **Messages:** a patient thread needs `recipientPrincipalIds` and no patient route lists recipients (care team is staff only), and a reply on an existing
+[exit 0]
+
+$ grep -rn "href=.*/messages\|go('/messages" apps/patient/src/app
+[exit 1]
+
+$ grep -n 'F17\|Message send' docs/evidence/integration/M4/INT-03-RESULT-r8.md
+22:| Message send (`message-api-journey-run.txt`) | **PASS at the API, FAIL in the UI**: patient `POST /patients/{id}/threads` 201 and listed back; staff `POST /threads` 201, `POST /threads/{id}/messages` 201 and read back (note-to-self thread: only one staff principal in the fixture); patient on staff route 403. The patient UI says "Writing a new message is not available yet" (no compose form). The staff does NOT see the patient's thread: `GET /threads` is empty and `GET/POST /threads/{id}/messages` on it 404 (documented README O-2: staff routes list `kind='staff'` threads only). |
+30:- **INT03-F17 (medium)**: no UI to send or answer a message: patient compose screen absent; staff cannot see or reply to a patient thread (O-2). Acceptance journey "messaging" is only met at the API.
+[exit 0]
