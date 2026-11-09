@@ -1,0 +1,29 @@
+{
+  "comment": "Span, log and metric attribute keys that may leave the API process. Mirrored in apps/api/src/telemetry/allowlist.ts; a test compares the two. Anything else is dropped by the application exporter wrapper and again by the collector.",
+  "allowed_keys": [
+    "service.name",
+    "service.version",
+    "deployment.environment.name",
+    "cloud.provider",
+    "cloud.region",
+    "http.request.method",
+    "http.response.status_code",
+    "http.route",
+    "url.scheme",
+    "network.protocol.version",
+    "error.type",
+    "exception.type",
+    "db.system",
+    "db.operation.name",
+    "messaging.system",
+    "messaging.operation.type",
+    "ehr.request_id",
+    "ehr.release_number",
+    "ehr.route_permission",
+    "ehr.job_type",
+    "ehr.queue",
+    "ehr.outbox_event_type",
+    "ehr.integration_vendor",
+    "ehr.audience"
+  ]
+}
