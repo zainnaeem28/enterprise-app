@@ -131,7 +131,7 @@ regexes = [
 # observability PHI-canary fixture deliberately holds one JWT-shaped string (header {"alg":"none"},
 # payload {"sub":"CANARY"}, signature "CANARYSIGNATURE01"). It is unsigned and fake by construction;
 # the telemetry tests assert it never reaches telemetry output, so its shape must stay realistic.
-# Pinned to this one file AND the exact value (condition = "AND") and to rule jwt only: a different
+# Pinned to these two files AND the exact value (condition = "AND") and to rule jwt only: a different
 # JWT in the same file, or this value anywhere else, still fails. Applies to history (commit
 # 0bf3894) as well as the tree, so no history rewrite. No expiry: re-check if the fixture changes.
 [[allowlists]]
@@ -140,3 +140,19 @@ condition = "AND"
 targetRules = ["jwt"]
 paths = ['''(^|/)infra/modules/observability/tests/phi-canaries\.json$''']
 regexes = ['''^eyJhbGciOiJub25lIn0\.eyJzdWIiOiJDQU5BUlkifQ\.CANARYSIGNATURE01$''']
+
+# INT04-F18 (owner: Cybersecurity; reviewer: Security Reviewer). The round-2 and round-3 integration
+# evidence logs print the applied/pending migration file names as JSON; rule generic-api-key reads the name of
+# migration 2406 as a key (r2 lines 251 and 397, commit f9274d7; the r3 log, commit 4360d7e, has the same value). It is a public file name, not a
+# secret. Pinned to these two files AND the exact value (condition = "AND") and to this rule only:
+# any other value in the file, or this name anywhere else, still fails. Covers history (commit
+# f9274d7) and the tree, so no history rewrite. No expiry: the log is frozen evidence.
+[[allowlists]]
+description = "INT04-F18: migration file name in the r2 and r3 integration-db evidence logs"
+condition = "AND"
+targetRules = ["generic-api-key"]
+paths = [
+  '''(^|/)docs/evidence/integration/M5/raw/int04-r2/gates/integration-db-partial-aborted\.txt$''',
+  '''(^|/)docs/evidence/integration/M5/raw/int04-r3/gates/integration-db\.txt$''',
+]
+regexes = ['''^2406_notifications_staff_scope_allows_patient\.sql$''']
