@@ -761,7 +761,7 @@ Authority: HEAAA-460, assigned to the Solution Architect; revision 3 of its `dec
 
 | Item | Change | Where |
 | --- | --- | --- |
-| SB-A4.1 | Accepted as a definer function: `identity.bootstrap_admins`, owned by the new `NOLOGIN` role `identity_bootstrap_owner`, executable only by the new login role `app_bootstrap`. Its grant list, conditions and the 26-entry CI list are in ARCHITECTURE 21.2 and 21.6 amendment A-6 and the HEAAA-460 decision log, section 2.1 | 6.2 inventory |
+| SB-A4.1 | Accepted as a definer function: `identity.bootstrap_admins`, owned by the new `NOLOGIN` role `identity_bootstrap_owner`, executable only by the new login role `app_bootstrap`. Its grant list, conditions and the CI list (the base `definerInventory` plus this one entry; no fixed count, revision 5, F02B-SA-09) are in ARCHITECTURE 21.2 and 21.6 amendment A-6 and the HEAAA-460 decision log, section 2.1 | 6.2 inventory |
 
 Not changed: modules, data ownership, scope settings, audiences, the C4 rules, and every API, UX and QA contract. The two new roles are recorded in ARCHITECTURE 21.2 and fold into 6.2's role list at this document's next revision, like the other 21.2 roles. Review: Solution Architect Reviewer and Security Reviewer (with A-6). Not human-approved.
 
