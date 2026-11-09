@@ -57,3 +57,18 @@ resource "aws_cloudwatch_log_data_protection_policy" "app" {
   log_group_name  = each.value
   policy_document = jsonencode(local.data_protection_policy)
 }
+
+# Counts every finding event so the phi_pattern_in_logs alarm has a metric with known dimensions (none).
+resource "aws_cloudwatch_log_metric_filter" "phi_findings" {
+  count          = var.enable_core ? 1 : 0
+  name           = "${var.name}-phi-findings"
+  log_group_name = aws_cloudwatch_log_group.findings.name
+  pattern        = ""
+
+  metric_transformation {
+    name          = "PhiFindingEvents"
+    namespace     = var.app_metric_namespace
+    value         = "1"
+    default_value = null
+  }
+}

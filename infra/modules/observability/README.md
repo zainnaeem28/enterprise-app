@@ -23,7 +23,7 @@ Application side: `apps/api/src/telemetry/` (config, allowlist, scrubbing export
 - Every alarm, rule and subscription takes its description from the catalogue, so owner, impact, first diagnostic step and runbook link exist for every alert. Test: `every_alert_has_owner_impact_first_step_runbook`.
 - SLO targets are constants (99.9 %, p95 500 ms, slot search p95 1 s, LCP 2.5 s, RPO 15 min, RTO 4 h). No variable lowers them. Burn thresholds derive from the availability target.
 - No canary writes data. There is no input or code path for a write canary, so production writes stay off until DEVOPS-PLAN 16 item 12 is decided; staging write journeys belong to the QA harness. Canary URLs are validated as https with no query string; frequency is 1, 5 or 15 minutes.
-- No telemetry attribute outside the allowlist leaves the API process (exporter wrapper) or the task (collector). Values shaped like canaries, emails, SSNs, phone numbers, card numbers, tokens or dates of birth are redacted. PHI canary test: `tests/phi-canary-scan.mjs`.
+- No telemetry attribute outside the allowlist leaves the API process (span exporter wrapper; spans only) or the task (collector). Values shaped like canaries, emails, SSNs, phone numbers, card numbers, tokens or dates of birth are redacted. PHI canary test: `tests/phi-canary-scan.mjs`.
 - No paid paging service is selected. Delivery is SNS email to named people. `paging_status` reports `availability_claimed = false` until a rota is named (C-18, D-29).
 - Backup-lag alarm actions are disabled until the first replica reports (`backup_replica_first_report_seen`), as DEVOPS-PLAN 11.3 requires.
 
@@ -38,7 +38,7 @@ tofu test
 node tests/phi-canary-scan.mjs examples/plan/observability.plan.json --self-test
 checkov -d . --framework terraform --skip-path examples --skip-path tests
 trivy config examples/plan
-PYTHONPATH=lambda python3 -I -m unittest test_backup_lag    # from lambda/, with sys.path set
+(cd lambda && python3 -m unittest test_backup_lag)
 ```
 
 ## Wiring requests (outside this ticket's allowed paths; through the Orchestrator)
@@ -49,7 +49,8 @@ PYTHONPATH=lambda python3 -I -m unittest test_backup_lag    # from lambda/, with
 4. **KMS (DO-01)**: the key policy must allow CloudWatch, EventBridge, Budgets and RDS to use the key for the SNS topics (`kms_key_policy_requirements`).
 5. **Runbooks**: catalogue links point at anchors in `docs/runbooks/OPERATIONS-RUNBOOKS.md` (`runbook_base`). That document does not exist yet; each anchor is the catalogue id.
 6. **Application metrics**: queue age, dead letters, outbox age, audit, scope drift, vendor circuit/failure rate, slot search and restore test metrics under `EHR/Application` must be emitted by the application and jobs. Names and dimensions are in `alarms.tf`.
-7. **WAF for CloudFront** lives in `us-east-1`: instantiate the module a second time there with `enable_core = false` (the plan precondition enforces the Region).
+7. **us-east-1 instance**: instantiate the module a second time there with `enable_core = false`. It holds the CloudFront-scope WAF alarm (the plan precondition enforces the Region) and the `root-login`, `break-glass-use` and `cloudtrail-change` rules, because CloudTrail records root console sign-in and global-endpoint STS events in us-east-1. Whether break-glass `AssumeRole` calls through a regional STS endpoint appear in the workload Region is Unverified; the primary instance keeps its own copy of the same rules.
+8. **Silent emitters**: the `metrics-silent-*` alarms need the application to publish `QueueOldestJobAgeSeconds`, `OutboxOldestUnsentAgeSeconds`, `StaffScopeDriftCount` and `QueueDeadLetterJobs` every period (zero when idle). They are created inactive; set `app_metrics_heartbeat_enabled = true` once that is wired.
 
 ## Unverified (stated, not assumed)
 
@@ -60,4 +61,6 @@ PYTHONPATH=lambda python3 -I -m unittest test_backup_lag    # from lambda/, with
 - Thresholds the plan leaves open are placeholders with variables: outbox age (300 s), integration failure rate (25 %), audit anchor lateness (300 s), WAF spike (500 per 5 minutes), trace sampling (10 %).
 - Alert delivery: SNS email subscriptions must be confirmed and a named person must acknowledge a test alert. Not executed; blocks the go-live claim, not the build (C-18).
 - The Workspace admin change alert and the release-workflow-failure alert are catalogue entries raised outside AWS (`source = external:...`); this module cannot create them.
+- The `phi_pattern_in_logs` alarm reads a metric filter on the findings log group (`PhiFindingEvents`, no dimensions) instead of the service metric `AWS/Logs LogEventsWithFindings`, whose dimension set was not confirmed. That the data-protection policy actually writes findings to that group is Unverified until staging.
+- Telemetry scrubbing in the API process covers spans (names, attributes, events, links, resource, status message). Metrics and logs are covered by the collector allowlist, the log data-protection policy and the logger allowlist (NFR-18), not by this wrapper.
 - Nothing in this module has run against AWS.

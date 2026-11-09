@@ -5,7 +5,8 @@
 locals {
   canaries_enabled = var.enable_core && var.canary_artifacts_bucket != "" ? var.canaries : {}
   # Names are limited to 21 characters, lower-case, digits, hyphen, underscore.
-  canary_names = { for k, v in local.canaries_enabled : k => substr(replace(lower("${var.name}-${k}"), "/[^a-z0-9_-]/", "-"), 0, 21) }
+  # Unique by construction: a readable prefix of the name plus an 8-character hash of "<name>/<key>" (21 = 12 + 1 + 8).
+  canary_names = { for k, v in local.canaries_enabled : k => "${substr(replace(lower(var.name), "/[^a-z0-9_-]/", "-"), 0, 12)}-${substr(sha256("${var.name}/${k}"), 0, 8)}" }
 
 
   canary_runs_per_month = { for k, v in var.canaries : k => (60 / v.every_minutes) * 24 * 30 }

@@ -262,8 +262,61 @@ run "second_instance_holds_only_non_core_alarms" {
   }
 
   assert {
-    condition     = length(aws_cloudwatch_metric_alarm.simple) == 1 && length(aws_cloudwatch_metric_alarm.math) == 0 && length(aws_cloudwatch_event_rule.alert) == 0
+    condition     = length(aws_cloudwatch_metric_alarm.simple) == 1 && length(aws_cloudwatch_metric_alarm.math) == 0
     error_message = "enable_core = false creates only the WAF alarm."
+  }
+  assert {
+    condition     = toset(keys(aws_cloudwatch_event_rule.alert)) == toset(["cloudtrail-change", "root-login", "break-glass-use"])
+    error_message = "The us-east-1 instance must hold the root-login, break-glass and CloudTrail-change rules (global events are recorded there)."
+  }
+}
+
+run "primary_instance_keeps_security_rules" {
+  command = plan
+
+  assert {
+    condition     = contains(keys(aws_cloudwatch_event_rule.alert), "root-login") && contains(keys(aws_cloudwatch_event_rule.alert), "guardduty-high")
+    error_message = "The primary instance keeps its own security rules."
+  }
+}
+
+run "canary_names_unique_and_within_limit" {
+  command = plan
+  variables {
+    name = "ehr-production"
+  }
+
+  assert {
+    condition     = length(distinct(values(local.canary_names))) == length(local.canary_names) && length(local.canary_names) == 8
+    error_message = "Canary names must be unique for the eight plan canaries."
+  }
+  assert {
+    condition     = alltrue([for k, n in local.canary_names : length(n) <= 21 && can(regex("^[a-z0-9_-]+$", n))])
+    error_message = "Canary names must be at most 21 characters of lower-case letters, digits, hyphen and underscore."
+  }
+}
+
+run "silent_emitter_alarms_breach_on_missing_data" {
+  command = plan
+  variables {
+    app_metrics_heartbeat_enabled = true
+  }
+
+  assert {
+    condition = alltrue([
+      for k, a in aws_cloudwatch_metric_alarm.simple : a.treat_missing_data == "breaching" && a.actions_enabled
+      if startswith(k, "metrics-silent-")
+    ]) && length([for k, a in aws_cloudwatch_metric_alarm.simple : k if startswith(k, "metrics-silent-")]) == 4
+    error_message = "Each application emitter needs a silent-emitter alarm that breaches on missing data."
+  }
+}
+
+run "phi_alarm_uses_findings_metric_filter" {
+  command = plan
+
+  assert {
+    condition     = aws_cloudwatch_metric_alarm.simple["phi-in-logs"].metric_name == "PhiFindingEvents" && length(aws_cloudwatch_log_metric_filter.phi_findings) == 1
+    error_message = "The PHI-in-logs alarm must read the metric produced from the findings log group."
   }
 }
 

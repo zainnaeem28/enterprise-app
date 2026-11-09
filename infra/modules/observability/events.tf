@@ -6,7 +6,10 @@ locals {
   break_glass = length(var.break_glass_role_arns) > 0
   migration   = var.migration_task_family != ""
   ct_trail    = "AWS API Call via CloudTrail"
-  cluster_arn = var.ecs_cluster_name == "" ? [] : ["arn:aws:ecs:${var.region}:${var.account_id}:cluster/${var.ecs_cluster_name}"]
+  # Root console sign-in and global-endpoint STS events are recorded by CloudTrail in us-east-1, whatever Region the
+  # workload runs in. These three rules therefore also exist in the us-east-1 instance (enable_core = false).
+  global_events = var.region == "us-east-1"
+  cluster_arn   = var.ecs_cluster_name == "" ? [] : ["arn:aws:ecs:${var.region}:${var.account_id}:cluster/${var.ecs_cluster_name}"]
 
   event_rules = {
     for k, v in {
@@ -15,18 +18,18 @@ locals {
         pattern = { source = ["aws.guardduty"], "detail-type" = ["GuardDuty Finding"], detail = { severity = [{ numeric = [">=", 7] }] } }
       }
       cloudtrail-change = {
-        enabled = local.core, catalog = "cloudtrail_change", route = "security"
+        enabled = local.core || local.global_events, catalog = "cloudtrail_change", route = "security"
         pattern = {
           source = ["aws.cloudtrail"], "detail-type" = [local.ct_trail]
           detail = { eventSource = ["cloudtrail.amazonaws.com"], eventName = ["StopLogging", "DeleteTrail", "UpdateTrail", "PutEventSelectors", "PutInsightSelectors"] }
         }
       }
       root-login = {
-        enabled = local.core, catalog = "root_login", route = "security"
+        enabled = local.core || local.global_events, catalog = "root_login", route = "security"
         pattern = { source = ["aws.signin"], "detail-type" = ["AWS Console Sign In via CloudTrail"], detail = { userIdentity = { type = ["Root"] } } }
       }
       break-glass-use = {
-        enabled = local.core && local.break_glass, catalog = "break_glass_use", route = "security"
+        enabled = (local.core || local.global_events) && local.break_glass, catalog = "break_glass_use", route = "security"
         pattern = {
           source = ["aws.sts"], "detail-type" = [local.ct_trail]
           detail = { eventSource = ["sts.amazonaws.com"], eventName = ["AssumeRole"], requestParameters = { roleArn = var.break_glass_role_arns } }

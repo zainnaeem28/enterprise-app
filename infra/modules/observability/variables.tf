@@ -312,3 +312,9 @@ variable "backup_replica_first_report_seen" {
   type        = bool
   default     = false
 }
+
+variable "app_metrics_heartbeat_enabled" {
+  description = "Turn on the silent-emitter alarms. Leave false until the application publishes the metrics every period (zero when idle); otherwise they would alarm from the start."
+  type        = bool
+  default     = false
+}

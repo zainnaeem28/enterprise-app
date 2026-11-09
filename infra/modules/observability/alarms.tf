@@ -10,6 +10,13 @@ locals {
   core    = var.enable_core
   gib     = 1073741824
 
+  heartbeat_metrics = {
+    queue-oldest-job = { metric = "QueueOldestJobAgeSeconds", route = "page" }
+    outbox-backlog   = { metric = "OutboxOldestUnsentAgeSeconds", route = "page" }
+    staff-scope      = { metric = "StaffScopeDriftCount", route = "security" }
+    dead-letter      = { metric = "QueueDeadLetterJobs", route = "page" }
+  }
+
   simple_defaults = {
     dims    = {}
     stat    = "Maximum"
@@ -53,10 +60,20 @@ locals {
       dims    = { WebACL = w, Rule = "ALL", Region = cfg.scope == "CLOUDFRONT" ? "Global" : var.region }
       stat    = "Sum", period = 300, evals = 2, dp = 2, threshold = var.waf_blocked_requests_threshold
     } },
-    # PHI-like pattern found in application logs by the data-protection policy.
-    { for lg in var.log_group_names : "phi-in-logs-${replace(trimprefix(lg, "/"), "/", "-")}" => {
-      enabled = local.core, catalog = "phi_pattern_in_logs", route = "security", ns = "AWS/Logs", metric = "LogEventsWithFindings"
-      dims    = { LogGroupName = lg }, stat = "Sum", period = 60, threshold = 0
+    # PHI-like pattern found in application logs by the data-protection policy. Counted from the findings log group
+    # by a metric filter (dataprotection.tf), so the alarm does not depend on the dimensions of the service's own metric.
+    {
+      "phi-in-logs" = {
+        enabled = local.core, catalog = "phi_pattern_in_logs", route = "security", ns = local.app_ns, metric = "PhiFindingEvents"
+        stat    = "Sum", period = 60, threshold = 0
+      }
+    },
+    # Silent emitters: each application metric below must be published every period (zero when idle). If it stops,
+    # the sample count drops and the alarm fires, so a dead worker or broken emission cannot look healthy.
+    { for m, cfg in local.heartbeat_metrics : "metrics-silent-${m}" => {
+      enabled = local.core, catalog = "app_metrics_silent", route = cfg.route, ns = local.app_ns, metric = cfg.metric
+      stat    = "SampleCount", period = 300, evals = 2, dp = 2, threshold = 1, op = "LessThanThreshold", missing = "breaching"
+      active  = var.app_metrics_heartbeat_enabled
     } },
     # Canary failures (ticket or page by host).
     { for c, cfg in local.canaries_enabled : "canary-${c}" => {

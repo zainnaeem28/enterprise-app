@@ -79,6 +79,12 @@ locals {
       first    = "Check worker logs and running worker tasks; check integration status for stuck retries."
       severity = "page", source = "alarm"
     }
+    app_metrics_silent = {
+      owner    = local.owners.backend
+      impact   = "An application metric used for queue, outbox, dead-letter or staff-scope alarms stopped arriving; those alarms are blind."
+      first    = "Check that the worker and API tasks are running and the metric emitter logs; the matching alarm name says which metric."
+      severity = "page", source = "alarm"
+    }
     queue_dead_letter = {
       owner    = local.owners.backend
       impact   = "Jobs are failing permanently (dead-letter growth)."

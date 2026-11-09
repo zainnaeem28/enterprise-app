@@ -1,6 +1,6 @@
 // What may leave the API process as telemetry (DEVOPS-PLAN 11.1, NFR-18). Anything not listed is dropped.
 // The key list is mirrored in infra/modules/observability/adot/allowed-attributes.json (the collector's allowlist);
-// allowlist.test.ts fails if the two differ.
+// telemetry.test.ts fails if the two differ.
 
 export const ALLOWED_ATTRIBUTE_KEYS: ReadonlySet<string> = new Set([
   'service.name',
