@@ -1,0 +1,55 @@
+/* Admin compliance screens (FE-13). Tokens only. Targets are at least 44 px (UI-UX 10, WCAG 2.5.8). */
+.ehr-subnav ul {
+  list-style: none;
+  margin: 0 0 var(--space-4, 1rem);
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2, 0.5rem);
+}
+.ehr-subnav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--space-3, 0.75rem);
+}
+.ehr-subnav a[aria-current='page'] {
+  font-weight: 700;
+  text-decoration: underline;
+}
+.ehr-panel {
+  margin-block: var(--space-4, 1rem);
+  padding: var(--space-3, 0.75rem);
+  border: 1px solid currentColor;
+  border-radius: var(--radius-2, 0.5rem);
+}
+.ehr-panel dl {
+  display: grid;
+  grid-template-columns: minmax(8rem, max-content) minmax(0, 1fr);
+  gap: var(--space-1, 0.25rem) var(--space-3, 0.75rem);
+}
+.ehr-panel dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.ehr-panel code {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 40rem) {
+  .ehr-panel dl {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+/* Tables keep readable columns and scroll sideways inside their labelled region (1.4.10) instead of crushing words. */
+.ehr-admin .ehr-table {
+  min-width: 44rem;
+}
+.ehr-admin .ehr-table th,
+.ehr-admin .ehr-table .ehr-btn,
+.ehr-admin .ehr-chip {
+  white-space: nowrap;
+}
+.ehr-admin .ehr-table td code,
+.ehr-admin .ehr-table td {
+  overflow-wrap: anywhere;
+}

@@ -1,0 +1,18 @@
+
+Running 12 tests using 2 workers
+
+  ✓   1 [phone] › src/features/admin-compliance/e2e/admin-compliance.spec.ts:191:1 › audit log: filters, allowed and denied in words, export with job state and the ready notice (10.1s)
+  ✓   2 [desktop] › src/features/admin-compliance/e2e/admin-compliance.spec.ts:191:1 › audit log: filters, allowed and denied in words, export with job state and the ready notice (10.1s)
+  ✓   3 [phone] › src/features/admin-compliance/e2e/admin-compliance.spec.ts:222:1 › audit log: a period over 31 days is refused before any call (746ms)
+  ✓   4 [desktop] › src/features/admin-compliance/e2e/admin-compliance.spec.ts:222:1 › audit log: a period over 31 days is refused before any call (747ms)
+  ✓   5 [phone] › src/features/admin-compliance/e2e/admin-compliance.spec.ts:235:1 › break-the-glass review: decision needs a note, the key, and a second person (1.0s)
+  ✓   6 [desktop] › src/features/admin-compliance/e2e/admin-compliance.spec.ts:235:1 › break-the-glass review: decision needs a note, the key, and a second person (1.1s)
+  ✓   7 [phone] › src/features/admin-compliance/e2e/admin-compliance.spec.ts:254:1 › break-the-glass review: the holder is told they cannot review their own access (928ms)
+  ✓   8 [desktop] › src/features/admin-compliance/e2e/admin-compliance.spec.ts:254:1 › break-the-glass review: the holder is told they cannot review their own access (917ms)
+  ✓   9 [phone] › src/features/admin-compliance/e2e/admin-compliance.spec.ts:268:1 › users & roles: request a change, then the approval screen blocks your own request (1.5s)
+  ✓  10 [desktop] › src/features/admin-compliance/e2e/admin-compliance.spec.ts:268:1 › users & roles: request a change, then the approval screen blocks your own request (1.5s)
+  ✓  11 [phone] › src/features/admin-compliance/e2e/admin-compliance.spec.ts:305:1 › privacy requests: queue and decision panel (818ms)
+  ✓  12 [desktop] › src/features/admin-compliance/e2e/admin-compliance.spec.ts:305:1 › privacy requests: queue and decision panel (818ms)
+
+  12 passed (16.4s)
+exit 0

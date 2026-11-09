@@ -1,0 +1,40 @@
+
+ RUN  v5.1.0 /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-132-sdlc-ticket-fe-13-admin-portal-audit-log-btg-review-users-and-roles-with-approvals-privacy-requests/apps/staff
+
+ ✓ src/features/admin-compliance/admin-compliance.test.tsx > Audit log (AD-01) > searches with the period and filters, and shows allowed and denied in words 153ms
+ ✓ src/features/admin-compliance/admin-compliance.test.tsx > Audit log (AD-01) > refuses a period over 31 days or a malformed reference before any call 27ms
+ ✓ src/features/admin-compliance/admin-compliance.test.tsx > Audit log (AD-01) > says so when nothing matches the filters, and when the answer was cut short 45ms
+ ✓ src/features/admin-compliance/admin-compliance.test.tsx > Audit log (AD-01) > shows the server error with its reference and a retry 25ms
+ ✓ src/features/admin-compliance/admin-compliance.test.tsx > Audit log (AD-01) > exports: needs a reason, follows the job from queued to ready, announces it, and opens the download 106ms
+ ✓ src/features/admin-compliance/admin-compliance.test.tsx > Audit log (AD-01) > translates audit.export_too_large and failed or expired jobs 26ms
+ ✓ src/features/admin-compliance/admin-compliance.test.tsx > Audit log (AD-01) > asks for the security key when no grant is live, then goes on 34ms
+ ✓ src/features/admin-compliance/admin-compliance.test.tsx > Break-the-glass review (AD-02) > lists pending access and asks for the pending filter 15ms
+ ✓ src/features/admin-compliance/admin-compliance.test.tsx > Break-the-glass review (AD-02) > needs an outcome and a note, then records the decision with the outcome and the note 55ms
+ ✓ src/features/admin-compliance/admin-compliance.test.tsx > Break-the-glass review (AD-02) > tells the holder they cannot review their own access, and a second review that it was done 73ms
+ ✓ src/features/admin-compliance/admin-compliance.test.tsx > Break-the-glass review (AD-02) > shows a reviewed grant read-only with its reviewer and note 19ms
+ ✓ src/features/admin-compliance/admin-compliance.test.tsx > Break-the-glass review (AD-02) > has an empty state 8ms
+ ✓ src/features/admin-compliance/admin-compliance.test.tsx > Users & roles with approvals (AD-03) > requests a role change, saying a different administrator must approve it 56ms
+ ✓ src/features/admin-compliance/admin-compliance.test.tsx > Users & roles with approvals (AD-03) > only offers roles of the same sign-in type and asks for a location on a location role 47ms
+ ✓ src/features/admin-compliance/admin-compliance.test.tsx > Users & roles with approvals (AD-03) > blocks approving your own request before the click, and the server refusals read plainly 72ms
+ ✓ src/features/admin-compliance/admin-compliance.test.tsx > Users & roles with approvals (AD-03) > approves a request by its reference, and cancels one of your own 58ms
+ ✓ src/features/admin-compliance/admin-compliance.test.tsx > Users & roles with approvals (AD-03) > maps a privileged role for a staff account to one plain sentence 32ms
+ ✓ src/features/admin-compliance/admin-compliance.test.tsx > Privacy requests (AD-05) > lists requests and filters by status 15ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+ ✓ src/features/admin-compliance/admin-compliance.test.tsx > Privacy requests (AD-05) > records the identity check before approval is offered 35ms
+ ✓ src/features/admin-compliance/admin-compliance.test.tsx > Privacy requests (AD-05) > needs a reason to refuse, then sends the decision 31ms
+ ✓ src/features/admin-compliance/admin-compliance.test.tsx > Privacy requests (AD-05) > explains a held deletion and shows the legal-hold count, never content 18ms
+ ✓ src/features/admin-compliance/admin-compliance.test.tsx > Privacy requests (AD-05) > offers the retry only when the package failed, and says why on a conflict 23ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+ ✓ src/features/admin-compliance/admin-compliance.test.tsx > Accessibility (axe, WCAG 2.2 AA) > /admin/audit has no serious violations 123ms
+ ✓ src/features/admin-compliance/admin-compliance.test.tsx > Accessibility (axe, WCAG 2.2 AA) > /admin/btg has no serious violations 44ms
+ ✓ src/features/admin-compliance/admin-compliance.test.tsx > Accessibility (axe, WCAG 2.2 AA) > /admin/privacy has no serious violations 42ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+ ✓ src/features/admin-compliance/admin-compliance.test.tsx > Accessibility (axe, WCAG 2.2 AA) > users & roles has no serious violations with the form open 86ms
+
+ Test Files  1 passed (1)
+      Tests  26 passed (26)
+   Start at  10:35:36
+   Duration  2.20s (tests 60%, environment 24%, import 7%, transform 5%, setup 5%)
+
+exit 0
