@@ -308,3 +308,19 @@ export async function fixtureDocument({ patientId, uploadedBy, status = 'confirm
   });
   return id;
 }
+
+/** ORG-2 (TEST-CASES 3.1): a second organisation with one location, one staff principal and one patient. For isolation cases only. */
+export const ORG2 = '00000000-0000-7000-8000-0000000000b2';
+export async function ensureOrg2() {
+  const has = await sql(`SELECT 1 FROM organisation.organisation WHERE id = $1`, [ORG2]);
+  if (has.rowCount) return org2Ids();
+  const ids = org2Ids();
+  await sqlTx(async (c) => {
+    await c.query(`SELECT set_config('app.org_id', $1, true)`, [ORG2]);
+    await c.query(`INSERT INTO organisation.organisation (id, organisation_id, name, default_time_zone) VALUES ($1,$1,'QA second clinic','UTC')`, [ORG2]);
+    await c.query(`INSERT INTO identity.person (id, organisation_id, display_name) VALUES ($1,$2,'Synthetic ORG2 staff')`, [ids.person, ORG2]);
+    await c.query(`INSERT INTO identity.principal (id, organisation_id, person_id, realm, subject, email, status) VALUES ($1,$2,$3,'google','sub-org2-staff','org2-staff@example.com','active')`, [ids.principal, ORG2, ids.person]);
+  });
+  return ids;
+}
+export const org2Ids = () => ({ principal: '00000000-0000-7000-8000-0000000b2001', person: '00000000-0000-7000-8000-0000000b2002' });
