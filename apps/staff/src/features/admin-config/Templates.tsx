@@ -145,22 +145,26 @@ export const CONSENT: ResourceSpec = {
       maxLength: 35,
       check: (v) => (v.length >= 2 ? undefined : s.invalid),
     },
+    { name: 'title', label: s.consentTitle, type: 'text', required: true, maxLength: 200 },
     {
-      name: 'bodyDocumentId',
-      label: s.bodyDocument,
-      type: 'text',
+      name: 'bodyText',
+      label: s.consentBody,
+      type: 'textarea',
       required: true,
-      hint: s.bodyDocumentHint,
-      check: (v) =>
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v)
-          ? undefined
-          : s.invalid,
+      hint: s.consentBodyHint,
+      maxLength: 20000,
     },
   ],
   columns: () => [
     { key: 'key', header: 'Key', render: (r) => text(r, 'key') },
     { key: 'ver', header: 'Version', render: (r) => String(r['version'] ?? s.none) },
     { key: 'lang', header: 'Language', render: (r) => text(r, 'language') },
+    { key: 'title', header: 'Title', render: (r) => text(r, 'title') },
+    {
+      key: 'body',
+      header: 'Consent text',
+      render: (r) => <span style={{ whiteSpace: 'pre-wrap' }}>{text(r, 'bodyText')}</span>,
+    },
     { key: 'status', header: 'State', render: statusChip },
   ],
   rowLabel: (r) => `${text(r, 'key')} ${String(r['version'] ?? '')}`,

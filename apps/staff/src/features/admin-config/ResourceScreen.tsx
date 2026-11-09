@@ -211,7 +211,10 @@ export function ResourceScreen({
   };
   const fieldErrors: FieldError[] = spec.fields
     .filter((f) => errors[f.name] !== undefined)
-    .map((f) => ({ fieldId: `${id}-${f.name}`, message: `${f.label}: ${errors[f.name] ?? ''}` }));
+    .map((f) => ({
+      fieldId: `${id}-field-${f.name}`,
+      message: `${f.label}: ${errors[f.name] ?? ''}`,
+    }));
 
   const submit = async () => {
     const found = check(spec, values, row !== undefined);
@@ -377,7 +380,7 @@ export function ResourceScreen({
           {spec.fields.map((f) => {
             if (!isNew && f.createOnly === true) return null;
             const common = {
-              id: `${id}-${f.name}`,
+              id: `${id}-field-${f.name}`,
               label: f.label,
               ...(f.hint === undefined ? {} : { hint: f.hint }),
               ...(errors[f.name] === undefined ? {} : { error: errors[f.name] }),

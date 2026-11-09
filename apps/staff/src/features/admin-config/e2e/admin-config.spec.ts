@@ -170,10 +170,24 @@ async function mock(page: Page) {
         path.endsWith('/rooms') ||
         path.endsWith('/holidays') ||
         path.endsWith('/banners') ||
-        path.endsWith('/consent-templates') ||
         path.endsWith('/questionnaire-templates')
       )
         return route.fulfill(list([]));
+      if (path.endsWith('/consent-templates'))
+        return route.fulfill(
+          list([
+            {
+              id: id(60),
+              key: 'telehealth',
+              version: 1,
+              language: 'en',
+              title: 'Telehealth consent',
+              bodyText: 'Line one\nLine two',
+              status: 'draft',
+              rowVersion: 1,
+            },
+          ]),
+        );
     }
     if (path.endsWith('/test'))
       return route.fulfill(ok({ health: 'ok', checkedAt: '2026-11-09T09:00:00.000Z' }));
