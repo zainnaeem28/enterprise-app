@@ -136,6 +136,22 @@ const seedVisit = async (
   }
   return rid;
 };
+/** A superuser write with user triggers off for that statement only: the fixture states a mid-lifecycle row that a guard admits only through several role-specific steps. */
+const replicaWrite = async (sql: string, p: unknown[] = []): Promise<void> => {
+  await t.k.sa.query('BEGIN');
+  try {
+    await t.k.sa.query(
+      `SELECT set_config('app.org_id', $1, true), set_config('app.audience', 'system', true)`,
+      [ORG],
+    );
+    await t.k.sa.query(`SET LOCAL session_replication_role = replica`);
+    await t.k.sa.query(sql, p);
+    await t.k.sa.query('COMMIT');
+  } catch (e) {
+    await t.k.sa.query('ROLLBACK');
+    throw e;
+  }
+};
 const saStaffWrite = async (principalId: string, sql: string, p: unknown[] = []): Promise<void> => {
   await t.k.sa.query(
     `SELECT set_config('app.org_id', $1, false), set_config('app.audience', 'staff', false), set_config('app.realm', 'google', false), set_config('app.principal_id', $2, false)`,
@@ -373,6 +389,127 @@ before(async () => {
       `INSERT INTO telehealth.location_confirmation (id, organisation_id, reservation_id, patient_id, principal_id, stated_state, result)
             VALUES ($1,$2,$3,$4,$5,'NY','allowed')`,
       [uid(), ORG, videoId, pid, account.principalId],
+    );
+  }
+
+  // INT03-F08c: the M4 tables (clinical chart, front door, notes, messaging, privacy) for patient A and patient B, so that no matrix cell is
+  // vacuous. Written by the superuser; one row per table per patient. Where a guard trigger only admits the state through a multi-step,
+  // role-specific path (privacy requests and export packages), the fixture writes the final state with user triggers off for that one
+  // statement (session_replication_role = replica, superuser only); the table's constraints and row-level security still apply to every read.
+  for (const [tag, pid, account, loc] of [
+    ['A', A, linkA, A1],
+    ['B', B, linkB, B1],
+  ] as const) {
+    const clin = await t.doctor();
+    const cp = clin.principalId;
+    await sa(
+      `INSERT INTO clinical.problem (id, organisation_id, patient_id, display, coded, recorded_by) VALUES ($1,$2,$3,'Problem ${tag}',false,$4)`,
+      [uid(), ORG, pid, cp],
+    );
+    await sa(
+      `INSERT INTO clinical.allergy (id, organisation_id, patient_id, display, coded, category, recorded_by) VALUES ($1,$2,$3,'Allergy ${tag}',false,'drug',$4)`,
+      [uid(), ORG, pid, cp],
+    );
+    await sa(
+      `INSERT INTO clinical.medication_statement (id, organisation_id, patient_id, display, coded, recorded_by) VALUES ($1,$2,$3,'Medication ${tag}',false,$4)`,
+      [uid(), ORG, pid, cp],
+    );
+    await sa(
+      `INSERT INTO clinical.vital_sign (id, organisation_id, patient_id, loinc_code, value, unit, range_status, measured_at, by_principal_id)
+            VALUES ($1,$2,$3,'8867-4',72,'/min','no_range',now(),$4)`,
+      [uid(), ORG, pid, cp],
+    );
+    const encId = uid();
+    await sa(
+      `INSERT INTO clinical.encounter (id, organisation_id, patient_id, location_id, clinician_principal_id, mode, status, started_at) VALUES ($1,$2,$3,$4,$5,'in_person','in_consultation',now())`,
+      [encId, ORG, pid, loc, cp],
+    );
+    await sa(
+      `INSERT INTO clinical.consent_exception (id, organisation_id, encounter_id, patient_id, missing_templates, reason, by_principal_id)
+            VALUES ($1,$2,$3,$4,ARRAY['privacy_notice'],'Consent deferred for the matrix, synthetic',$5)`,
+      [uid(), ORG, encId, pid, cp],
+    );
+    // A co-signed note and its addendum: the guards admit these only through the sign and co-sign steps of two roles, so the final state is written directly.
+    const noteId = uid();
+    const supervisor = await t.doctor();
+    await replicaWrite(
+      `INSERT INTO clinical.note (id, organisation_id, encounter_id, patient_id, author_principal_id, template_id, body, status, submitted_for_cosign_at, cosign_required_from, signed_at, signed_by)
+            VALUES ($1,$2,$3,$4,$5,'soap','{}'::jsonb,'signed',now(),$6,now(),$6)`,
+      [noteId, ORG, encId, pid, cp, supervisor.principalId],
+    );
+    await replicaWrite(
+      `INSERT INTO clinical.note_cosign (note_id, organisation_id, patient_id, supervisor_principal_id) VALUES ($1,$2,$3,$4)`,
+      [noteId, ORG, pid, supervisor.principalId],
+    );
+    await replicaWrite(
+      `INSERT INTO clinical.note_addendum (id, organisation_id, note_id, patient_id, author_principal_id, body) VALUES ($1,$2,$3,$4,$5,'Addendum for the matrix, synthetic')`,
+      [uid(), ORG, noteId, pid, cp],
+    );
+    await sa(
+      `INSERT INTO clinical.follow_up (id, organisation_id, patient_id, location_id, requested_by, due_on, reason)
+            VALUES ($1,$2,$3,$4,$5,current_date + 14,'Follow-up for the matrix, synthetic')`,
+      [uid(), ORG, pid, loc, cp],
+    );
+    await sa(
+      `INSERT INTO clinical.questionnaire_response (id, organisation_id, patient_id, template_key, template_version, answers) VALUES ($1,$2,$3,'previsit',1,'{}'::jsonb)`,
+      [uid(), ORG, pid],
+    );
+    await sa(
+      `INSERT INTO clinical.referral (id, organisation_id, patient_id, from_location_id, from_principal_id, target_kind, target_external_text, reason)
+            VALUES ($1,$2,$3,$4,$5,'external','External clinic, synthetic','Referral for the matrix, synthetic')`,
+      [uid(), ORG, pid, loc, cp],
+    );
+    const triageVisit = await seedVisit(
+      pid,
+      cp,
+      'checked_in',
+      'in_person',
+      60 + (tag === 'A' ? 0 : 1),
+    );
+    await sa(
+      `INSERT INTO clinical.triage_assessment (id, organisation_id, check_in_id, patient_id, location_id, category, by_principal_id)
+            VALUES ($1,$2,$3,$4,$5,'standard',$6)`,
+      [uid(), ORG, triageVisit, pid, loc, cp],
+    );
+    // Messaging guards bind a thread, message and task to the calling principal's session; the fixture states the rows directly.
+    const threadId = uid();
+    await replicaWrite(
+      `INSERT INTO messaging.thread (id, organisation_id, kind, patient_id, subject, location_id, created_by) VALUES ($1,$2,'patient',$3,'Thread ${tag}',$4,$5)`,
+      [threadId, ORG, pid, loc, cp],
+    );
+    await replicaWrite(
+      `INSERT INTO messaging.message (id, organisation_id, thread_id, patient_id, author_principal_id, body) VALUES ($1,$2,$3,$4,$5,'Message for the matrix, synthetic')`,
+      [uid(), ORG, threadId, pid, cp],
+    );
+    await replicaWrite(
+      `INSERT INTO messaging.task (id, organisation_id, patient_id, title, assignee_kind, assignee_principal_id, created_by)
+            VALUES ($1,$2,$3,'Task ${tag}','principal',$4,$4)`,
+      [uid(), ORG, pid, cp],
+    );
+    const reqId = uid();
+    await sa(
+      `INSERT INTO privacy.request (id, organisation_id, patient_id, kind, requested_by_principal_id, channel, due_at)
+            VALUES ($1,$2,$3,'access',$4,'portal',now() + interval '30 days')`,
+      [reqId, ORG, pid, account.principalId],
+    );
+    await replicaWrite(
+      `UPDATE privacy.request SET status = 'in_progress', verification_method = 'synthetic check', verified_by_person_id = $2, verified_at = now(),
+              decided_by_person_id = $2, decided_at = now() WHERE id = $1`,
+      [reqId, clin.personId],
+    );
+    await sa(
+      `INSERT INTO privacy.export_package (id, organisation_id, request_id, patient_id) VALUES ($1,$2,$3,$4)`,
+      [uid(), ORG, reqId, pid],
+    );
+    const incId = uid();
+    await sa(
+      `INSERT INTO privacy.incident (id, organisation_id, title, description, severity, discovered_at)
+            VALUES ($1,$2,'Incident ${tag}','Incident for the matrix, synthetic','low',now())`,
+      [incId, ORG],
+    );
+    await sa(
+      `INSERT INTO privacy.incident_patient (incident_id, patient_id, organisation_id) VALUES ($1,$2,$3)`,
+      [incId, pid, ORG],
     );
   }
 
