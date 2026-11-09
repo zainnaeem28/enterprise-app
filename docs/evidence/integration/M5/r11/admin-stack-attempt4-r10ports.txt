@@ -1,0 +1,6 @@
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+chromium 156.0.8078.4
+ok   enrol the admin principal with the fixture key (token spent, second key registered)
+FAIL administrator sign-in in the browser with the security key: locator.waitFor: Target page, context or browser has been closed
+run stopped: fatal step failed: administrator sign-in in the browser with the security key
+admin run FAILED

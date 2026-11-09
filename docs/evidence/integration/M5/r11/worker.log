@@ -1,0 +1,41 @@
+{"count":52,"level":"info","time":"2026-11-09T21:54:37.157Z","msg":"task types synced"}
+{"tasks":57,"level":"info","time":"2026-11-09T21:54:37.163Z","msg":"worker started"}
+{"database":"[redacted]","level":"info","time":"2026-11-09T21:54:37.164Z","msg":"worker booted"}
+{"level":"info","time":"2026-11-09T21:54:37.167Z","msg":"Worker connected and looking for jobs... (task names: 'identity.record_sign_in', 'identity.admin_event', 'identity.admin_event_notice', 'identity.apply_reference_data', 'identity.purge_sessions', 'patient.verify_staff_scope', 'patient.execute_merge', 'patient.purge_match_checks', 'audit.anchor', 'audit.archive_anchors', 'audit.verify_anchors', 'audit.export', 'scheduling.on_slot_freed', 'scheduling.offer_waitlist', 'scheduling.expire_offer', 'scheduling.no_show_sweep', 'scheduling.on_reservation_confirmed', 'scheduling.on_reservation_cancelled', 'scheduling.on_reservation_rescheduled', 'scheduling.send_previsit', 'telehealth.on_reservation_confirmed', 'telehealth.create_meeting', 'telehealth.end_stale', 'calendar_sync.on_reservation_confirmed', 'calendar_sync.on_reservation_cancelled', 'calendar_sync.on_reservation_rescheduled', 'calendar_sync.push_busy', 'calendar_sync.delete_busy', 'calendar_sync.incremental_sync', 'calendar_sync.full_resync', 'calendar_sync.renew_watch', 'calendar_sync.unlink_cleanup', 'notifications.send_message', 'notifications.send_staff_message', 'documents.await_scan', 'documents.ocr_suggest', 'documents.retention_sweep', 'integration_core.dispatch_inbound', 'integration_core.health_check', 'integration_core.apply_inbound_secret', 'clinical.terminology_load', 'clinical.on_alert_unacknowledged', 'clinical.note_sign_reminder', 'notifications.on_btg_opened', 'notifications.on_anchor_mismatch', 'notifications.on_kill_switch_used', 'notifications.escalate_alert', 'messaging.on_correction_requested', 'reporting.refresh_ops', 'privacy.assemble_export', 'privacy.check_legal_holds', 'privacy.expire_packages', 'privacy/expire_packages', 'reporting/refresh_ops', 'audit/anchor', 'audit/archive_anchors', 'audit/verify_anchors')"}
+{"job":"1","jobType":"identity.record_sign_in","attempt":1,"level":"info","time":"2026-11-09T21:54:38.270Z","msg":"job started"}
+{"job":"2","jobType":"identity.admin_event","attempt":1,"level":"info","time":"2026-11-09T21:54:38.270Z","msg":"job started"}
+{"job":"1","jobType":"identity.record_sign_in","attempt":1,"level":"info","time":"2026-11-09T21:54:38.283Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T21:54:38.283Z","msg":"Completed task 1 (identity.record_sign_in, 13.22ms) with success"}
+{"job":"2","jobType":"identity.admin_event","attempt":1,"errorName":"[redacted]","sqlstate":"kernel.validation_failed","level":"error","time":"2026-11-09T21:54:38.287Z","msg":"job failed"}
+{"worker":"[redacted]","label":"[redacted]","level":"error","time":"2026-11-09T21:54:38.288Z","msg":"worker library reported a problem"}
+{"job":"3","jobType":"identity.admin_event","attempt":1,"level":"info","time":"2026-11-09T21:54:38.305Z","msg":"job started"}
+{"job":"3","jobType":"identity.admin_event","attempt":1,"errorName":"[redacted]","sqlstate":"kernel.validation_failed","level":"error","time":"2026-11-09T21:54:38.321Z","msg":"job failed"}
+{"worker":"[redacted]","label":"[redacted]","level":"error","time":"2026-11-09T21:54:38.321Z","msg":"worker library reported a problem"}
+{"job":"4","jobType":"identity.record_sign_in","attempt":1,"level":"info","time":"2026-11-09T21:54:38.520Z","msg":"job started"}
+{"job":"4","jobType":"identity.record_sign_in","attempt":1,"level":"info","time":"2026-11-09T21:54:38.527Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T21:54:38.527Z","msg":"Completed task 4 (identity.record_sign_in, 6.96ms) with success"}
+{"job":"3","jobType":"identity.admin_event","attempt":2,"level":"info","time":"2026-11-09T21:54:41.179Z","msg":"job started"}
+{"job":"2","jobType":"identity.admin_event","attempt":2,"level":"info","time":"2026-11-09T21:54:41.180Z","msg":"job started"}
+{"job":"2","jobType":"identity.admin_event","attempt":2,"errorName":"[redacted]","sqlstate":"kernel.validation_failed","level":"error","time":"2026-11-09T21:54:41.187Z","msg":"job failed"}
+{"worker":"[redacted]","label":"[redacted]","level":"error","time":"2026-11-09T21:54:41.187Z","msg":"worker library reported a problem"}
+{"job":"3","jobType":"identity.admin_event","attempt":2,"errorName":"[redacted]","sqlstate":"kernel.validation_failed","level":"error","time":"2026-11-09T21:54:41.188Z","msg":"job failed"}
+{"worker":"[redacted]","label":"[redacted]","level":"error","time":"2026-11-09T21:54:41.188Z","msg":"worker library reported a problem"}
+{"job":"2","jobType":"identity.admin_event","attempt":3,"level":"info","time":"2026-11-09T21:54:49.187Z","msg":"job started"}
+{"job":"3","jobType":"identity.admin_event","attempt":3,"level":"info","time":"2026-11-09T21:54:49.188Z","msg":"job started"}
+{"job":"2","jobType":"identity.admin_event","attempt":3,"errorName":"[redacted]","sqlstate":"kernel.validation_failed","level":"error","time":"2026-11-09T21:54:49.194Z","msg":"job failed"}
+{"worker":"[redacted]","label":"[redacted]","level":"error","time":"2026-11-09T21:54:49.194Z","msg":"worker library reported a problem"}
+{"job":"3","jobType":"identity.admin_event","attempt":3,"errorName":"[redacted]","sqlstate":"kernel.validation_failed","level":"error","time":"2026-11-09T21:54:49.195Z","msg":"job failed"}
+{"worker":"[redacted]","label":"[redacted]","level":"error","time":"2026-11-09T21:54:49.195Z","msg":"worker library reported a problem"}
+{"job":"5","jobType":"reporting.refresh_ops","attempt":1,"level":"info","time":"2026-11-09T21:55:00.007Z","msg":"job started"}
+{"job":"6","jobType":"audit.anchor","attempt":1,"level":"info","time":"2026-11-09T21:55:00.008Z","msg":"job started"}
+{"job":"7","jobType":"audit.archive_anchors","attempt":1,"level":"info","time":"2026-11-09T21:55:00.008Z","msg":"job started"}
+{"job":"5","jobType":"reporting.refresh_ops","attempt":1,"errorName":"[redacted]","sqlstate":"kernel.unavailable","level":"error","time":"2026-11-09T21:55:00.015Z","msg":"job failed"}
+{"worker":"[redacted]","label":"[redacted]","level":"error","time":"2026-11-09T21:55:00.015Z","msg":"worker library reported a problem"}
+{"_aws":{"Timestamp":1794261300031,"CloudWatchMetrics":[{"Namespace":"EHR/App","Dimensions":[[]],"Metrics":[{"Name":"AuditAnchorArchiveLagSeconds","Unit":"None"}]}]},"AuditAnchorArchiveLagSeconds":0}
+{"job":"7","jobType":"audit.archive_anchors","attempt":1,"level":"info","time":"2026-11-09T21:55:00.031Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T21:55:00.031Z","msg":"Completed task 7 (audit/archive_anchors, 22.84ms) with success"}
+{"_aws":{"Timestamp":1794261300050,"CloudWatchMetrics":[{"Namespace":"EHR/App","Dimensions":[[]],"Metrics":[{"Name":"AuditAnchorLateSeconds","Unit":"None"}]}]},"AuditAnchorLateSeconds":23.268734}
+{"_aws":{"Timestamp":1794261300052,"CloudWatchMetrics":[{"Namespace":"EHR/App","Dimensions":[[]],"Metrics":[{"Name":"AdminEventDeadLettered","Unit":"None"}]}]},"AdminEventDeadLettered":0}
+{"job":"6","jobType":"audit.anchor","attempt":1,"level":"info","time":"2026-11-09T21:55:00.052Z","msg":"job finished"}
+{"worker":"[redacted]","label":"[redacted]","level":"info","time":"2026-11-09T21:55:00.052Z","msg":"Completed task 6 (audit/anchor, 44.38ms) with success"}
+{"level":"info","time":"2026-11-09T21:55:01.317Z","msg":"worker stopped"}
