@@ -13,14 +13,30 @@
 //   ADMIN_RUN_ENROLMENT_TOKEN      approved single-use enrolment token for that handle (seeded by the start script). Required. Secret.
 //   ADMIN_RUN_OUT                  screenshot/summary directory. Default: artifacts/admin-run.
 //   ADMIN_RUN_RP_ID                WebAuthn RP id. Default: host name of ADMIN_RUN_STAFF_URL.
+//   ADMIN_RUN_CONNECT              <loopback ipv4>:<port> of the CI TLS front (F27). Needs an https ADMIN_RUN_STAFF_URL without a port
+//                                  and ADMIN_RUN_TLS_CERT_PEM. Chromium then maps the staff host to it and trusts only that certificate.
+//   ADMIN_RUN_TLS_CERT_PEM         PEM of the front's public certificate (required with ADMIN_RUN_CONNECT; never unverified TLS).
+//   ADMIN_RUN_CLIENT_RELEASE       X-Client-Release value, r<number>.<12 hex>. Default: r1.000000000000.
 // The principal must hold the roles that read/write configuration and review break-the-glass, and the database must hold at least
 // one PENDING break-the-glass grant opened by someone else. A missing prerequisite is a failed step, never a silent skip.
 import { createRequire } from 'node:module';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { request as httpsRequest } from 'node:https';
+import { createHash, X509Certificate } from 'node:crypto';
 import assert from 'node:assert/strict';
 
 const SECRET_VARS = ['ADMIN_RUN_ENROLMENT_TOKEN'];
+const CLIENT_RELEASE = /^r[1-9][0-9]*\.[0-9a-f]{12}$/;
+
+/** SPKI pin (base64 sha256) of a certificate, the form Chromium's --ignore-certificate-errors-spki-list takes. */
+export const spkiPin = (certPem) =>
+  createHash('sha256')
+    .update(new X509Certificate(certPem).publicKey.export({ type: 'spki', format: 'der' }))
+    .digest('base64');
 
 /** Reads and validates the configuration. Problems name the variable, never its value. */
 export function readConfig(env) {
@@ -46,11 +62,44 @@ export function readConfig(env) {
   const staffUrl = staff === '' ? undefined : url('ADMIN_RUN_STAFF_URL', staff);
   const apiRaw = env.ADMIN_RUN_API_URL?.trim() || staff;
   const apiUrl = apiRaw === '' ? undefined : url('ADMIN_RUN_API_URL', apiRaw);
+  const connectRaw = env.ADMIN_RUN_CONNECT?.trim() ?? '';
+  const certPem = env.ADMIN_RUN_TLS_CERT_PEM?.trim() ?? '';
+  let connect;
+  if (connectRaw !== '') {
+    const m = /^(127(?:\.\d{1,3}){3}):(\d{1,5})$/.exec(connectRaw);
+    const octets = m?.[1].split('.').map(Number) ?? [];
+    const port = Number(m?.[2]);
+    if (!m || octets.some((o) => o > 255) || port < 1 || port > 65535) {
+      problems.push('ADMIN_RUN_CONNECT must be a loopback IPv4 address and port (127.x.x.x:port)');
+    } else {
+      connect = { host: m[1], port };
+      if (staffUrl !== undefined && (staffUrl.protocol !== 'https:' || staffUrl.port !== '')) {
+        problems.push('ADMIN_RUN_CONNECT needs an https ADMIN_RUN_STAFF_URL without a port');
+      }
+      if (certPem === '')
+        problems.push('ADMIN_RUN_TLS_CERT_PEM is required with ADMIN_RUN_CONNECT');
+      else {
+        try {
+          spkiPin(certPem);
+        } catch {
+          problems.push('ADMIN_RUN_TLS_CERT_PEM is not a valid certificate');
+        }
+      }
+    }
+  }
+  const clientRelease = env.ADMIN_RUN_CLIENT_RELEASE?.trim() || 'r1.000000000000';
+  if (!CLIENT_RELEASE.test(clientRelease)) {
+    problems.push('ADMIN_RUN_CLIENT_RELEASE must look like r<number>.<12 hex>');
+  }
   if (problems.length > 0) throw new Error(`invalid configuration: ${problems.join('; ')}`);
   return {
+    connect,
+    certPem,
+    clientRelease,
     origin: staffUrl.origin,
     apiOrigin: apiUrl.origin,
     rpId: env.ADMIN_RUN_RP_ID?.trim() || staffUrl.hostname,
+    staffHost: staffUrl.hostname,
     handle,
     token,
     out: env.ADMIN_RUN_OUT?.trim() || 'artifacts/admin-run',
@@ -91,6 +140,74 @@ function selftest() {
   const leaked = redact(`failed with tok-secret-value in body`, [cfg.token]);
   assert.ok(!leaked.includes('tok-secret-value') && leaked.includes('[redacted]'));
   assert.equal(shotName(3, 'Audit log: results'), '03-audit-log-results.png');
+  assert.equal(cfg.connect, undefined);
+  assert.equal(cfg.clientRelease, 'r1.000000000000');
+  // F26/F27 configuration; the valid case uses a throwaway certificate made here (temp dir removed at once)
+  const base = {
+    ADMIN_RUN_STAFF_URL: 'https://staff.ci.test',
+    ADMIN_RUN_HANDLE: 'ci-admin',
+    ADMIN_RUN_ENROLMENT_TOKEN: 'tok-secret-value',
+  };
+  const dir = mkdtempSync(join(tmpdir(), 'admin-run-selftest-'));
+  let certPem;
+  try {
+    execFileSync(
+      'openssl',
+      [
+        'req',
+        '-x509',
+        '-newkey',
+        'ec',
+        '-pkeyopt',
+        'ec_paramgen_curve:P-256',
+        '-nodes',
+        '-days',
+        '1',
+      ]
+        .concat(['-subj', '/CN=staff.ci.test', '-addext', 'subjectAltName=DNS:staff.ci.test'])
+        .concat(['-keyout', join(dir, 'k.pem'), '-out', join(dir, 'c.pem')]),
+      { stdio: 'ignore' },
+    );
+    certPem = readFileSync(join(dir, 'c.pem'), 'utf8');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+  const tls = readConfig({
+    ...base,
+    ADMIN_RUN_CONNECT: '127.0.0.1:4443',
+    ADMIN_RUN_TLS_CERT_PEM: certPem,
+  });
+  assert.deepEqual(tls.connect, { host: '127.0.0.1', port: 4443 });
+  assert.equal(tls.origin, 'https://staff.ci.test');
+  assert.equal(tls.rpId, 'staff.ci.test');
+  assert.match(spkiPin(certPem), /^[A-Za-z0-9+/]{43}=$/);
+  assert.throws(
+    () => readConfig({ ...base, ADMIN_RUN_CONNECT: '127.0.0.1:4443' }),
+    /ADMIN_RUN_TLS_CERT_PEM is required/,
+  );
+  assert.throws(
+    () =>
+      readConfig({ ...base, ADMIN_RUN_CONNECT: '10.0.0.5:4443', ADMIN_RUN_TLS_CERT_PEM: certPem }),
+    /ADMIN_RUN_CONNECT must be a loopback/,
+  );
+  assert.throws(
+    () =>
+      readConfig({
+        ...base,
+        ADMIN_RUN_STAFF_URL: 'https://staff.ci.test:8443',
+        ADMIN_RUN_CONNECT: '127.0.0.1:4443',
+        ADMIN_RUN_TLS_CERT_PEM: certPem,
+      }),
+    /without a port/,
+  );
+  assert.throws(
+    () => readConfig({ ...base, ADMIN_RUN_CLIENT_RELEASE: 'r1.xyz' }),
+    /ADMIN_RUN_CLIENT_RELEASE/,
+  );
+  assert.equal(
+    readConfig({ ...base, ADMIN_RUN_CLIENT_RELEASE: 'r142.3f9a1c2b7d10' }).clientRelease,
+    'r142.3f9a1c2b7d10',
+  );
   console.log('admin-run self-test: configuration, redaction and screenshot naming ok');
 }
 
@@ -134,21 +251,68 @@ export async function main(fixture) {
 
   /** Server-side enrolment of the seeded principal with the fixture key (the staff UI has no enrolment screen). */
   const post = async (path, body, session) => {
-    const r = await fetch(`${cfg.apiOrigin}/api/v1/admin${path}`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        origin: cfg.origin,
-        ...(session === undefined ? {} : { cookie: session.cookie, 'x-csrf-token': session.csrf }),
-      },
-      body: JSON.stringify(body),
-    });
-    const text = await r.text();
-    if (r.status !== 200) throw new Error(`${path} answered ${r.status}`);
-    return { json: JSON.parse(text), setCookies: r.headers.getSetCookie() };
+    const payload = JSON.stringify(body);
+    const headers = {
+      'content-type': 'application/json',
+      origin: cfg.origin,
+      'x-client-release': cfg.clientRelease,
+      ...(session === undefined ? {} : { cookie: session.cookie, 'x-csrf-token': session.csrf }),
+    };
+    const url = `/api/v1/admin${path}`;
+    let status;
+    let text;
+    let setCookies;
+    if (cfg.connect === undefined) {
+      const r = await fetch(`${cfg.apiOrigin}${url}`, { method: 'POST', headers, body: payload });
+      status = r.status;
+      text = await r.text();
+      setCookies = r.headers.getSetCookie();
+    } else {
+      // Through the CI TLS front: pinned to this run's certificate, host name still checked (servername), never unverified.
+      ({ status, text, setCookies } = await new Promise((resolve, reject) => {
+        const req = httpsRequest(
+          {
+            host: cfg.connect.host,
+            port: cfg.connect.port,
+            servername: cfg.staffHost,
+            ca: cfg.certPem,
+            method: 'POST',
+            path: url,
+            headers: {
+              ...headers,
+              host: cfg.staffHost,
+              'content-length': Buffer.byteLength(payload),
+            },
+          },
+          (res) => {
+            const chunks = [];
+            res.on('data', (c) => chunks.push(c));
+            res.on('end', () =>
+              resolve({
+                status: res.statusCode,
+                text: Buffer.concat(chunks).toString('utf8'),
+                setCookies: res.headers['set-cookie'] ?? [],
+              }),
+            );
+          },
+        );
+        req.on('error', reject);
+        req.end(payload);
+      }));
+    }
+    if (status !== 200) throw new Error(`${path} answered ${status}`);
+    return { json: JSON.parse(text), setCookies };
   };
 
-  const browser = await chromium.launch({ args: ['--no-sandbox'] });
+  // F27: with the CI TLS front, map exactly the staff host to it and trust only its certificate (SPKI pin). Nothing broader.
+  const browserArgs = ['--no-sandbox'];
+  if (cfg.connect !== undefined) {
+    browserArgs.push(
+      `--host-resolver-rules=MAP ${cfg.staffHost}:443 ${cfg.connect.host}:${cfg.connect.port}`,
+      `--ignore-certificate-errors-spki-list=${spkiPin(cfg.certPem)}`,
+    );
+  }
+  const browser = await chromium.launch({ args: browserArgs });
   let failed = true;
   try {
     log(`chromium ${browser.version()}`);

@@ -1,7 +1,7 @@
 // Start script of the real-stack admin run (INT04-F22b). In ONE process it: creates the CI admin fixture (in memory), prepares the
 // already-migrated database (queue library, task types, organisation, reference data, one admin principal with an approved
 // enrolment token, one pending break-the-glass grant opened by someone else), starts the real API, the real worker and the BUILT
-// staff app (`vite preview`, proxying /api), runs scripts/ci/admin-run.mjs against them with the same fixture, and stops everything.
+// staff app (`vite preview`, static files only) behind a per-run self-signed TLS front (https://staff.ci.test), runs scripts/ci/admin-run.mjs against them with the same fixture, and stops everything.
 // The fixture must be shared with the driver: its attestation root is generated per run and only this process knows the leaf key.
 //
 // Usage (CI job `admin-run`, after `pnpm build` and scripts/ci/migration-check/prepare-db.sh ehr):
@@ -10,13 +10,16 @@
 //   node scripts/ci/admin-stack.mjs --selftest        (no database, no browser: checks the environment builders)
 // Environment (names only):
 //   EHR_TEST_ADMIN_URL    superuser URL of the job's throwaway PostgreSQL (required); database name from ADMIN_STACK_DB (default ehr).
-//   ADMIN_STACK_PORT_API / _STAFF   default 3000 / 4173.   ADMIN_RUN_OUT   screenshots (default artifacts/admin-run).
+//   ADMIN_STACK_PORT_API / _STAFF / _TLS   default 3000 / 4173 / 4443.   ADMIN_RUN_OUT   screenshots (default artifacts/admin-run).
 //   ADMIN_STACK_LOGS      logs of the API, worker and preview (default reports/admin-run).
 // Every key and token below is random per run, lives in this process and the children's environments only, and is never printed.
 import { spawn, spawnSync } from 'node:child_process';
-import { createHash, randomBytes, randomUUID } from 'node:crypto';
-import { createWriteStream, mkdirSync } from 'node:fs';
-import { createRequire } from 'node:module';
+import { X509Certificate, createHash, randomBytes, randomUUID } from 'node:crypto';
+import { createWriteStream, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import http from 'node:http';
+import https from 'node:https';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import assert from 'node:assert/strict';
 
@@ -24,6 +27,10 @@ const root = new URL('../../', import.meta.url);
 const path = (p) => new URL(p, root).pathname;
 const ORG = '00000000-0000-7000-8000-0000000000a1'; // the organisation of the API tests; any UUID would do
 const HANDLE = 'ci-admin';
+// F27 (decision on HEAAA-513): the admin realm only accepts https://<EHR_STAFF_HOST>. The run serves exactly that origin (port 443)
+// through a TLS front on loopback; the browser maps the name to the front (see scripts/ci/README.md, "Admin run").
+export const CI_STAFF_HOST = 'staff.ci.test';
+const CI_STAFF_ORIGIN = `https://${CI_STAFF_HOST}`;
 
 /** Connection string for `role` on `database`, derived from the superuser URL (trust authentication, no password). */
 export function urlFor(adminUrl, role, database) {
@@ -36,8 +43,8 @@ export function urlFor(adminUrl, role, database) {
 
 /** Environment of the API and worker processes. `fixtureEnv` is `adminFixtureEnv()`; `keys` are random secrets. */
 export function apiEnv({ adminUrl, database, apiPort, staffPort, fixtureEnv, keys, deployable }) {
-  const staffHost = '127.0.0.1';
-  const staffOrigin = `http://${staffHost}:${staffPort}`;
+  const staffHost = CI_STAFF_HOST;
+  const staffOrigin = CI_STAFF_ORIGIN;
   const idp = 'http://127.0.0.1:9'; // nothing listens: staff and patient sign-in are not used by this run
   return {
     PATH: process.env.PATH ?? '',
@@ -50,7 +57,7 @@ export function apiEnv({ adminUrl, database, apiPort, staffPort, fixtureEnv, key
     EHR_PORT: String(apiPort),
     EHR_STAFF_HOST: staffHost,
     EHR_PATIENT_HOST: 'localhost',
-    EHR_ALLOWED_ORIGINS: `${staffOrigin},http://localhost:${staffPort}`,
+    EHR_ALLOWED_ORIGINS: staffOrigin,
     EHR_OIDC_STATE_KEY: keys.oidc,
     EHR_CSRF_KEY: keys.csrf,
     EHR_RATE_KEY: keys.rate,
@@ -98,7 +105,11 @@ function selftest() {
   assert.equal(e.EHR_DATABASE_URL, 'postgres://app_api@127.0.0.1:55432/ehr');
   assert.equal(e.EHR_ADMIN_CI_FIXTURE, '1');
   assert.equal(e.EHR_ENV, 'ci');
-  assert.ok(e.EHR_ALLOWED_ORIGINS.includes('http://127.0.0.1:4173'));
+  assert.equal(e.EHR_STAFF_HOST, 'staff.ci.test');
+  assert.equal(e.EHR_ALLOWED_ORIGINS, 'https://staff.ci.test');
+  assert.ok(!e.EHR_ALLOWED_ORIGINS.includes('http://'), 'no http origin is allowed');
+  assert.equal(e.EHR_STAFF_OIDC_REDIRECT_URI, 'https://staff.ci.test/api/v1/auth/callback');
+  assert.notEqual(e.EHR_STAFF_HOST, e.EHR_PATIENT_HOST);
   const w = apiEnv({
     adminUrl: 'postgres://postgres@127.0.0.1:55432/postgres',
     database: 'ehr',
@@ -126,12 +137,134 @@ async function waitFor(what, probe, seconds = 90) {
   throw new Error(`${what} did not become ready within ${seconds} s`);
 }
 
+/** Per-run self-signed certificate for staff.ci.test (SAN only that name, 1 day). The key lives in memory; the temp dir is removed at once. */
+export function generateCert() {
+  const dir = mkdtempSync(join(tmpdir(), 'admin-tls-'));
+  try {
+    const r = spawnSync(
+      'openssl',
+      [
+        'req',
+        '-x509',
+        '-newkey',
+        'ec',
+        '-pkeyopt',
+        'ec_paramgen_curve:P-256',
+        '-nodes',
+        '-days',
+        '1',
+        '-subj',
+        `/CN=${CI_STAFF_HOST}`,
+        '-addext',
+        `subjectAltName=DNS:${CI_STAFF_HOST}`,
+        '-keyout',
+        join(dir, 'key.pem'),
+        '-out',
+        join(dir, 'cert.pem'),
+      ],
+      { encoding: 'utf8' },
+    );
+    if (r.status !== 0)
+      throw new Error(
+        `openssl failed (exit ${r.status}): ${(r.stderr || '').trim().split('\n').pop()}`,
+      );
+    const key = readFileSync(join(dir, 'key.pem'), 'utf8');
+    const cert = readFileSync(join(dir, 'cert.pem'), 'utf8');
+    const spki = createHash('sha256')
+      .update(new X509Certificate(cert).publicKey.export({ type: 'spki', format: 'der' }))
+      .digest('base64');
+    return { key, cert, spki };
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+const STRIP = ['x-forwarded-host', 'x-forwarded-proto', 'x-forwarded-for', 'forwarded'];
+
+/** The TLS front: /api and /api/* go to the API (Host kept), everything else to vite preview (Host rewritten). Loopback only. */
+export function startTlsFront({ key, cert, tlsPort, apiPort, staffPort, logFile }) {
+  const log = createWriteStream(logFile);
+  const server = https.createServer({ key, cert, minVersion: 'TLSv1.2' }, (req, res) => {
+    const started = Date.now();
+    const pathOnly = (req.url ?? '/').split('?')[0];
+    const isApi = pathOnly === '/api' || pathOnly.startsWith('/api/');
+    const headers = { ...req.headers };
+    for (const h of STRIP) delete headers[h];
+    headers['x-forwarded-proto'] = 'https';
+    headers['x-forwarded-for'] = req.socket.remoteAddress ?? '127.0.0.1';
+    if (!isApi) headers.host = `127.0.0.1:${staffPort}`;
+    const up = http.request(
+      {
+        host: '127.0.0.1',
+        port: isApi ? apiPort : staffPort,
+        method: req.method,
+        path: req.url,
+        headers,
+      },
+      (ur) => {
+        res.writeHead(ur.statusCode ?? 502, ur.headers);
+        ur.pipe(res);
+        res.on('close', () =>
+          log.write(`${req.method} ${pathOnly} ${ur.statusCode} ${Date.now() - started}ms\n`),
+        );
+      },
+    );
+    up.on('error', () => {
+      log.write(`${req.method} ${pathOnly} 502 ${Date.now() - started}ms\n`);
+      if (!res.headersSent) res.writeHead(502, { 'content-type': 'text/plain' });
+      res.end('bad gateway');
+    });
+    req.pipe(up);
+  });
+  return new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(tlsPort, '127.0.0.1', () =>
+      resolve({
+        server,
+        close: () =>
+          new Promise((r) => {
+            server.close(() => r());
+            log.end();
+            server.closeAllConnections?.();
+          }),
+      }),
+    );
+  });
+}
+
+/** One GET through the front, trusting only this run's certificate; returns { status, body }. */
+function frontGet(path, { cert, tlsPort }) {
+  return new Promise((resolve, reject) => {
+    https
+      .get(
+        {
+          host: '127.0.0.1',
+          port: tlsPort,
+          servername: CI_STAFF_HOST,
+          ca: cert,
+          path,
+          headers: { host: CI_STAFF_HOST },
+        },
+        (r) => {
+          let body = '';
+          r.setEncoding('utf8');
+          r.on('data', (d) => {
+            if (body.length < 4096) body += d;
+          });
+          r.on('end', () => resolve({ status: r.statusCode, body }));
+        },
+      )
+      .on('error', reject);
+  });
+}
+
 async function main() {
   const adminUrl = process.env.EHR_TEST_ADMIN_URL;
   if (!adminUrl) throw new Error('EHR_TEST_ADMIN_URL is required');
   const database = process.env.ADMIN_STACK_DB || 'ehr';
   const apiPort = Number(process.env.ADMIN_STACK_PORT_API || 3000);
   const staffPort = Number(process.env.ADMIN_STACK_PORT_STAFF || 4173);
+  const tlsPort = Number(process.env.ADMIN_STACK_PORT_TLS || 4443);
   const logs = process.env.ADMIN_STACK_LOGS || 'reports/admin-run';
   mkdirSync(logs, { recursive: true });
 
@@ -160,8 +293,10 @@ async function main() {
       );
   };
 
-  let code = 1;
+  let code;
+  let front;
   try {
+    const tls = generateCert();
     const pg = (await import('pg')).default;
     const sa = new pg.Client({
       connectionString: urlFor(adminUrl, new URL(adminUrl).username, database),
@@ -198,14 +333,22 @@ async function main() {
       const person = async (subject, realm = 'admin_pool') => {
         const personId = randomUUID();
         const principalId = randomUUID();
-        await sa.query(
-          `INSERT INTO identity.person (id, organisation_id, display_name) VALUES ($1,$2,$3)`,
-          [personId, ORG, `CI ${subject}`],
-        );
-        await sa.query(
-          `INSERT INTO identity.principal (id, organisation_id, person_id, realm, subject, status) VALUES ($1,$2,$3,$4,$5,'active')`,
-          [principalId, ORG, personId, realm, subject],
-        );
+        // one transaction: the deferred trigger person_requires_principal checks at COMMIT
+        await sa.query('BEGIN');
+        try {
+          await sa.query(
+            `INSERT INTO identity.person (id, organisation_id, display_name) VALUES ($1,$2,$3)`,
+            [personId, ORG, `CI ${subject}`],
+          );
+          await sa.query(
+            `INSERT INTO identity.principal (id, organisation_id, person_id, realm, subject, status) VALUES ($1,$2,$3,$4,$5,'active')`,
+            [principalId, ORG, personId, realm, subject],
+          );
+          await sa.query('COMMIT');
+        } catch (e) {
+          await sa.query('ROLLBACK');
+          throw e;
+        }
         return { personId, principalId };
       };
       const requester = await person('ci-requester');
@@ -285,7 +428,7 @@ async function main() {
       'staff-preview',
       process.execPath,
       [
-        createRequire(path('apps/staff/package.json')).resolve('vite/bin/vite.js'),
+        path('apps/staff/node_modules/vite/bin/vite.js'),
         'preview',
         '--host',
         '127.0.0.1',
@@ -326,10 +469,30 @@ async function main() {
       guard,
     ]);
 
-    // 5. the driver, with the same fixture
+    // 4b. the TLS front (https://staff.ci.test -> 127.0.0.1:<tlsPort>), checked with the pinned client
+    front = await startTlsFront({
+      key: tls.key,
+      cert: tls.cert,
+      tlsPort,
+      apiPort,
+      staffPort,
+      logFile: `${logs}/tls-front.log`,
+    });
+    const page = await frontGet('/', { cert: tls.cert, tlsPort });
+    if (page.status !== 200)
+      throw new Error(`TLS front: GET / answered ${page.status}, expected 200`);
+    const sess = await frontGet('/api/v1/auth/session', { cert: tls.cert, tlsPort });
+    if (sess.status === 502 || (sess.status === 403 && /Blocked request/i.test(sess.body)))
+      throw new Error(
+        `TLS front: /api/v1/auth/session did not reach the API (status ${sess.status})`,
+      );
+
+    // 5. the driver, with the same fixture (ADMIN_RUN_API_URL stays unset: enrolment goes through the front too)
+    delete process.env.ADMIN_RUN_API_URL;
     Object.assign(process.env, {
-      ADMIN_RUN_STAFF_URL: `http://127.0.0.1:${staffPort}`,
-      ADMIN_RUN_API_URL: `http://127.0.0.1:${staffPort}`,
+      ADMIN_RUN_STAFF_URL: CI_STAFF_ORIGIN,
+      ADMIN_RUN_CONNECT: `127.0.0.1:${tlsPort}`,
+      ADMIN_RUN_TLS_CERT_PEM: tls.cert, // public certificate only; the key never leaves this process
       ADMIN_RUN_HANDLE: HANDLE,
       ADMIN_RUN_ENROLMENT_TOKEN: keys.enrolment,
     });
@@ -339,11 +502,12 @@ async function main() {
     console.error(`admin stack: ${e instanceof Error ? e.message : String(e)}`);
     code = 1;
   } finally {
+    if (front) await front.close();
     for (const c of children) c.kill('SIGTERM');
     await Promise.race([Promise.all(children.map((c) => c.exited)), sleep(10000)]);
     for (const c of children) if (c.exitCode === null) c.kill('SIGKILL');
   }
-  process.exit(code);
+  process.exit(code ?? 1);
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
