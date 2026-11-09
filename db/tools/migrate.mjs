@@ -21,7 +21,19 @@ try {
         .filter((x) => x.endsWith('.sql'))
         .sort()) {
         console.log(`bootstrap ${f}`);
-        await db.query(readFileSync(join(root, 'roles', f), 'utf8'));
+        const sql = readFileSync(join(root, 'roles', f), 'utf8');
+        // Roles are cluster-global: bootstraps from other databases on the same server (parallel CI jobs, suites)
+        // can race on ALTER ROLE ("tuple concurrently updated", XX000). The role files are idempotent, so retry.
+        for (let attempt = 1; ; attempt++) {
+          try {
+            await db.query(sql);
+            break;
+          } catch (e) {
+            if (attempt >= 8 || !/tuple concurrently updated/.test(String(e?.message))) throw e;
+            console.log(`bootstrap ${f}: concurrent role update, retry ${attempt}`);
+            await new Promise((r) => setTimeout(r, 50 * attempt + Math.floor(Math.random() * 100)));
+          }
+        }
       }
     } finally {
       await db.end();
