@@ -382,11 +382,14 @@ export async function main(fixture) {
         await page.getByRole('button', { name: 'Sign in with security key' }).click();
         await page.waitForURL((u) => !u.pathname.endsWith('/admin/sign-in'), { timeout: 20000 });
         await page.waitForLoadState('networkidle').catch(() => {});
-        const session = await page.evaluate(async () => {
-          const r = await fetch('/api/v1/auth/session', { credentials: 'include' });
+        const session = await page.evaluate(async (release) => {
+          const r = await fetch('/api/v1/auth/session', {
+            credentials: 'include',
+            headers: { 'x-client-release': release },
+          });
           const b = r.ok ? await r.json() : {};
           return { status: r.status, realm: b.realm, audience: b.audience };
-        });
+        }, cfg.clientRelease);
         assert.equal(session.status, 200, `session answered ${session.status}`);
         assert.equal(session.realm, 'admin', 'session is not in the admin realm');
         await shot('signed in landing');
