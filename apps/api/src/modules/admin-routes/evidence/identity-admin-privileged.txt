@@ -1,0 +1,31 @@
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+▶ enrolment tokens: request and approve are two persons (26.3, P-4)
+  ✔ the requester cannot approve, a second admin can, the token is shown once and stored only as a hash (427.304818ms)
+  ✔ an unapproved request cannot be used, and a request that is not approved in time expires (251.865859ms)
+  ✔ only an active admin-realm principal can be enrolled (96.16654ms)
+  ✔ database: the approver of a token is never its requester, and a token hash is set once (3.015659ms)
+✔ enrolment tokens: request and approve are two persons (26.3, P-4) (2282.205015ms)
+▶ role changes need a second approver (C4, 25.8)
+  ✔ request, self-approval refused, subject-approval refused, a third admin applies it; everything is audited (338.592255ms)
+  ✔ a request expires after the configured hours and can no longer be approved (340.046675ms)
+  ✔ removing a role ends the subject’s sessions and elevation at once (291.50516ms)
+  ✔ two approvers deciding at once: exactly one applies the change, the other gets 409, one assignment exists (279.406969ms)
+  ✔ realm rules: a privileged role never goes to a staff-realm principal, roles must match the realm, an unbound principal gets none (151.688864ms)
+  ✔ approval re-checks the subject and the locations at apply time (BE05-R1-F05) (279.774989ms)
+  ✔ GET /admin/principals pages with a cursor and never truncates silently (BE05-R1-F06) (130.698347ms)
+  ✔ database: self-approval, a decision by someone else’s name and approval by the subject are refused below the API (5.919908ms)
+  ✔ an unelevated or unprivileged session cannot touch the role-change routes (124.860914ms)
+✔ role changes need a second approver (C4, 25.8) (1943.375986ms)
+▶ kill switch (C6, 25.8)
+  ✔ one transaction ends every session and elevation of the target, disables it and closes its streams (224.52656ms)
+  ✔ without elevation the kill switch is refused; with a bad reason or an unknown target it is a clean error (97.936863ms)
+  ✔ deprovisioning: the same-day path is the kill switch plus the removal of the roles; both are one request each (268.85587ms)
+✔ kill switch (C6, 25.8) (591.651695ms)
+ℹ tests 16
+ℹ suites 3
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5289.870139

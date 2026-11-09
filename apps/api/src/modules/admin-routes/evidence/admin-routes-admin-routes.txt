@@ -1,0 +1,40 @@
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+▶ audit viewer (RA-R1-12): search is bounded and itself audited
+  ✔ a compliance officer searches; one view row per query; the range is at most 31 days; unknown fields are refused (41.640766ms)
+  ✔ an org_admin (no audit permission) is refused; so is an unauthenticated caller (8.155404ms)
+✔ audit viewer (RA-R1-12): search is bounded and itself audited (2041.365683ms)
+▶ audit export: asynchronous, size limited, itself audited, elevation gated
+  ✔ a request returns at once with a queued job, an export audit row with the reason, and the elevation it ran under (17.330089ms)
+  ✔ status never carries content; download is refused until the export is ready, then only for the requester, audited (51.1711ms)
+  ✔ over the size limit: 422 audit.export_too_large, no job, no export row (10.628183ms)
+  ✔ a reason is required; an unelevated caller cannot export or download (79.365133ms)
+✔ audit export: asynchronous, size limited, itself audited, elevation gated (158.985086ms)
+▶ BTG review decisions are elevation gated, by someone other than the holder, once
+  ✔ the list shows pending grants (and is itself a view row); a bad status filter is 400 (16.106242ms)
+  ✔ the holder cannot review their own grant: 403 audit.self_review, grant unchanged, the denial is audited (13.314193ms)
+  ✔ without an elevation grant the decision is refused (68.682999ms)
+  ✔ another elevated reviewer decides once; it is audited; a second decision is 409; bad outcomes are 400 (33.503487ms)
+  ✔ two reviewers deciding at once: exactly one decision is stored (113.771835ms)
+✔ BTG review decisions are elevation gated, by someone other than the holder, once (247.533191ms)
+▶ integration settings: save, test, health (TC-AD-11, TC-AD-13, TC-AD-15)
+  ✔ list shows settings, health and secret metadata only (9.171279ms)
+  ✔ PATCH needs If-Match (428 / 412), saves, audits who/what/before/after, and a credential-looking setting is refused (57.406088ms)
+  ✔ an unelevated org_admin and an officer without the permission are refused (83.685912ms)
+  ✔ test shows health from a real check, a failure shows as down, an unreachable probe is 503, each check is audited (47.348817ms)
+  ✔ disabling an integration is saved and audited; the list shows it disabled (dependent features see it through the connection) (20.543269ms)
+✔ integration settings: save, test, health (TC-AD-11, TC-AD-13, TC-AD-15) (220.408171ms)
+▶ secrets are write-only and every secret change is audited (TC-AD-12, TC-AD-13, TC-AD-14)
+  ✔ write returns only a version ID; the value is in no response, audit row, table, queue payload or error; list shows the version (32.771494ms)
+  ✔ a retry with the same idempotency key writes no second version; a new key rotates (39.676981ms)
+  ✔ refusals never echo the value: store failure (503), short value, unknown field, bad name, unknown connection, org_admin without elevation (100.522875ms)
+  ✔ inbound-verification secret: requested by one admin, approved by a different one; approval alone applies nothing (the worker does) (55.172247ms)
+  ✔ without the sealed-payload enqueuer the request fails closed and stores nothing (INT-N4) (8.063701ms)
+✔ secrets are write-only and every secret change is audited (TC-AD-12, TC-AD-13, TC-AD-14) (237.178621ms)
+ℹ tests 21
+ℹ suites 5
+ℹ pass 21
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3381.048812
