@@ -11,6 +11,7 @@ import {
   call,
   id,
   pg,
+  repoRoot,
   saWrite,
   seedPrincipal,
   seedSession,
@@ -22,7 +23,7 @@ import type { Kit, Resp, SeededSession } from '../patient/testkit.js';
 import { createReporting } from './runtime.js';
 import { REPORTING_JOBS } from './jobs.js';
 
-export { ORG, STAFF_HOST, call, id, pg, saWrite };
+export { ORG, STAFF_HOST, call, id, pg, repoRoot, saWrite };
 export type { Kit, Resp, SeededSession };
 export const ORG2 = '00000000-0000-7000-8000-0000000000a2';
 export const A1 = id(101);

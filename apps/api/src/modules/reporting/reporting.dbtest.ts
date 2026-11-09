@@ -5,13 +5,14 @@
 //   EHR_TEST_ADMIN_URL=postgres://postgres@127.0.0.1:5432/postgres node --test dist/src/modules/reporting/reporting.dbtest.js
 // The URL names a superuser on a throwaway server (synthetic data only). Missing configuration FAILS; nothing skips.
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { after, before, describe, test } from 'node:test';
 import type { ScopeSettings } from '@ehr/kernel';
 import { FEED_STALE_AFTER_S, readOpsFeed } from './feed.js';
 import type { OpsFeed } from './feed.js';
 import { REFRESH_OPS_JOB, REPORTING_JOBS } from './jobs.js';
 import { refreshScope, runRefreshOps } from './refresh.js';
-import { ORG, ORG2, pg, saWrite, setupReporting, uuid } from './testkit.js';
+import { ORG, ORG2, pg, repoRoot, saWrite, setupReporting, uuid } from './testkit.js';
 import type { ReportingKit } from './testkit.js';
 
 const OPS_TABLES = [
@@ -616,6 +617,12 @@ describe('reporting (BE-21) on PostgreSQL 17', () => {
         'scheduling.busy_block',
         'kernel.setting',
         'queue.jobs',
+        // INT03-F05 T-9: the M4 PHI tables
+        'clinical.note',
+        'clinical.encounter',
+        'messaging.message',
+        'privacy.export_package',
+        'privacy.request',
       ];
       for (const tbl of refused)
         await assert.rejects(
@@ -649,6 +656,148 @@ describe('reporting (BE-21) on PostgreSQL 17', () => {
         rows.map((r) => r.object),
         OPS_TABLES.map((n) => `reporting.${n}`).sort(),
       );
+    });
+
+    // --- INT03-F05 (ruling HEAAA-311) -------------------------------------------------------------------------------------------
+    test('T-10: no cell of the four operations tables, read as reporting_ro, holds the canary ID of an alert (resource and target columns)', async () => {
+      // patient_id stays NULL here: a canary patient needs a registered patient (merge write guard, INT03-F03/F08); the canary rides in the
+      // columns the refresh must never select (resource_id, target_principal_ids is a real principal, so only resource_id carries it).
+      await saWrite(
+        t.k,
+        `INSERT INTO notifications.staff_alert (id, organisation_id, type, severity, patient_id, resource_type, resource_id, target_kind, target_principal_ids, status)
+         VALUES ($1, $2, 'integration_down', 'critical', NULL, 'thing', $3, 'principal', ARRAY[$4::uuid], 'open')`,
+        [uuid(), ORG, CANARY_PATIENT, t.doctor.seeded.principalId],
+      );
+      await refresh();
+      for (const n of OPS_TABLES) {
+        const rows = await asReportingRo(
+          ORG,
+          async (c) =>
+            (await c.query(`SELECT row_to_json(r)::text AS j FROM reporting.${n} r`)).rows,
+        );
+        assert.ok(rows.length > 0, n);
+        for (const r of rows) assert.ok(!String(r['j']).includes(CANARY_PATIENT), n);
+      }
+      assert.ok(
+        (
+          await asReportingRo(
+            ORG,
+            async (c) => (await c.query(`SELECT * FROM reporting.ops_alert_backlog`)).rows,
+          )
+        ).some((r) => r['alert_type'] === 'integration_down'),
+      );
+    });
+
+    test('T-5: reporting_ro has USAGE on the reporting schema only, no CREATE, no function reach, no BYPASSRLS or superuser', async () => {
+      const usage = await q<{ nspname: string }>(
+        `SELECT nspname FROM pg_namespace WHERE nspname !~ '^(pg_|information_schema)' AND has_schema_privilege('reporting_ro', oid, 'USAGE')
+          ORDER BY 1`,
+      );
+      assert.deepEqual(
+        usage.map((r) => r.nspname),
+        ['reporting'],
+      );
+      const create = await q<{ nspname: string }>(
+        `SELECT nspname FROM pg_namespace WHERE has_schema_privilege('reporting_ro', oid, 'CREATE') ORDER BY 1`,
+      );
+      assert.deepEqual(create, []);
+      const fns = await q<{ fn: string }>(
+        `SELECT p.oid::regprocedure::text AS fn FROM pg_proc p
+          WHERE p.prosecdef AND p.pronamespace::regnamespace::text !~ '^(pg_|information_schema)'
+            AND has_function_privilege('reporting_ro', p.oid, 'EXECUTE') AND has_schema_privilege('reporting_ro', p.pronamespace, 'USAGE')`,
+      );
+      assert.deepEqual(fns, []);
+      const [role] = await q<{ rolbypassrls: boolean; rolsuper: boolean }>(
+        `SELECT rolbypassrls, rolsuper FROM pg_roles WHERE rolname = 'reporting_ro'`,
+      );
+      assert.deepEqual(role, { rolbypassrls: false, rolsuper: false });
+    });
+
+    test('T-6: the policies for reporting_ro are exactly the four ops_*_ro_select SELECT policies', async () => {
+      const rows = await q<{ id: string; cmd: string }>(
+        `SELECT schemaname || '.' || tablename || '.' || policyname AS id, cmd FROM pg_policies WHERE 'reporting_ro' = ANY(roles) ORDER BY 1`,
+      );
+      assert.deepEqual(
+        rows,
+        OPS_TABLES.map((n) => ({ id: `reporting.${n}.${n}_ro_select`, cmd: 'SELECT' })).sort(
+          (a, b) => a.id.localeCompare(b.id),
+        ),
+      );
+    });
+
+    test('T-7: alert_type is a code token (constraint added NOT VALID in 2102, validated in 2103)', async () => {
+      const [con] = await q<{ contype: string; convalidated: boolean }>(
+        `SELECT contype, convalidated FROM pg_constraint
+          WHERE conname = 'ops_alert_backlog_alert_type_format' AND conrelid = 'reporting.ops_alert_backlog'::regclass`,
+      );
+      assert.deepEqual(con, { contype: 'c', convalidated: true });
+      const insert = (alertType: string): Promise<unknown> =>
+        t.k.wdb.withScope(refreshScope(ORG), (tx) =>
+          tx.query(
+            `INSERT INTO reporting.ops_alert_backlog (organisation_id, alert_type, severity, status, alerts, oldest_age_s, refreshed_at)
+               VALUES ($1, $2, 'high', 'open', 1, 1, now())`,
+            [ORG, alertType],
+          ),
+        );
+      await assert.rejects(
+        insert('Red flag: Jane Doe'),
+        (e: { code?: string }) => e.code === '23514',
+      );
+      // a refused statement rolled back its own transaction; the accepted one is removed again
+      await t.k.wdb.withScope(refreshScope(ORG), async (tx) => {
+        await tx.query(
+          `INSERT INTO reporting.ops_alert_backlog (organisation_id, alert_type, severity, status, alerts, oldest_age_s, refreshed_at)
+           VALUES ($1, 'red_flag_probe', 'high', 'open', 1, 1, now())`,
+          [ORG],
+        );
+        await tx.query(
+          `DELETE FROM reporting.ops_alert_backlog WHERE alert_type = 'red_flag_probe'`,
+        );
+      });
+      await refresh();
+      const types = await q<{ alert_type: string }>(
+        `SELECT DISTINCT alert_type FROM reporting.ops_alert_backlog`,
+      );
+      assert.ok(types.length >= 2);
+      const src = await q<{ type: string }>(`SELECT DISTINCT type FROM notifications.staff_alert`);
+      for (const r of types)
+        assert.ok(
+          src.some((s) => s.type === r.alert_type),
+          r.alert_type,
+        );
+    });
+
+    test('T-8 negative control: a grant on a PHI table to reporting_ro makes M-4-reporting fail naming it', async () => {
+      const run = (): { id: string; status: string; violations: Record<string, string>[] }[] => {
+        let out: string;
+        try {
+          out = execFileSync(process.execPath, [`${repoRoot}db/tools/catalog-check.mjs`], {
+            env: {
+              PATH: process.env['PATH'],
+              EHR_DB_ADMIN_URL: t.k.urlFor(
+                new URL(process.env['EHR_TEST_ADMIN_URL'] ?? '').username,
+              ),
+            },
+            encoding: 'utf8',
+            stdio: ['ignore', 'pipe', 'pipe'],
+          });
+        } catch (e) {
+          out = (e as { stdout: string }).stdout;
+        }
+        return (JSON.parse(out) as { checks: ReturnType<typeof run> }).checks;
+      };
+      const m4 = (): ReturnType<typeof run>[number] | undefined =>
+        run().find((c) => c.id === 'M-4-reporting');
+      assert.equal(m4()?.status, 'pass');
+      await q(`GRANT SELECT ON clinical.note TO reporting_ro`);
+      try {
+        const bad = m4();
+        assert.equal(bad?.status, 'fail');
+        assert.ok(JSON.stringify(bad?.violations).includes('clinical.note'));
+      } finally {
+        await q(`REVOKE SELECT ON clinical.note FROM reporting_ro`);
+      }
+      assert.equal(m4()?.status, 'pass');
     });
   });
 });

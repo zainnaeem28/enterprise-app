@@ -1,0 +1,78 @@
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+▶ reporting (BE-21) on PostgreSQL 17
+  ✔ job type: system job, org scope, every minute, not enqueueable by the API (1.926967ms)
+  ✔ before the first refresh the feed is empty and marked stale (13.816803ms)
+  ▶ refresh from real sources
+    ✔ the integration health model shows circuit state, error rates, last success and dead letters (31.852714ms)
+    ✔ the queue model counts ready, running, failed and dead per job type (0.900129ms)
+    ✔ the calendar model flags the stale clinician by calendar_stale_minutes (0.835218ms)
+    ✔ the alert backlog groups open and escalated alerts and leaves acknowledged ones out (1.08178ms)
+    ✔ the compliance summary always has its six zero-or-more rows (0.692441ms)
+    ✔ break-the-glass grants are counted by state and age (14.863517ms)
+    ✔ the models are replaced as a whole: what no longer exists disappears, what changed is updated (15.641699ms)
+    ✔ concurrent refreshes serialise and leave one consistent set (122.015532ms)
+    ✔ a failed refresh (missing or invalid setting) rolls back and leaves the previous models untouched (4.251259ms)
+  ✔ refresh from real sources (230.836161ms)
+  ▶ the operations feed (GET /api/v1/admin/reports/ops)
+    ✔ an org admin sees dead letters, circuit state and the alert backlog; no compliance section (30.046404ms)
+    ✔ a compliance officer also gets the break-the-glass summary (16.083817ms)
+    ✔ the feed turns stale when the models are older than three minutes (41.907897ms)
+    ✔ refused without a session (401), for a staff doctor (403), and for an admin role without reporting.ops.read (403) (30.42205ms)
+    ✖ the feed carries no patient data: no patient ID of any alert or grant appears (3.270839ms)
+  ✖ the operations feed (GET /api/v1/admin/reports/ops) (132.88796ms)
+  ▶ row-level security and grants (M-1..M-4)
+    ✔ every reporting table is under FORCE ROW LEVEL SECURITY and owned by app_owner (5.245986ms)
+    ✔ no policy is for PUBLIC and none matches the anonymous or public audience (4.197208ms)
+(node:2351754) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+    ✔ app_api: a staff caller outside the admin realm, an unscoped caller and another organisation read nothing (14.32155ms)
+    ✔ app_api cannot write any model (2.84029ms)
+    ✔ app_worker writes only as an organisation-scope system job of its own organisation (3.596ms)
+    ✔ reporting_ro reads the four operations tables of its organisation only (212.086279ms)
+    ✔ reporting_ro is refused on the compliance summary, on every PHI and operational source table and on writes (187.920892ms)
+    ✔ reporting_ro holds nothing outside the reporting operations tables (privilege listing) (26.963197ms)
+    ✔ T-10: no cell of the four operations tables, read as reporting_ro, holds the canary ID of an alert (resource and target columns) (46.659596ms)
+    ✔ T-5: reporting_ro has USAGE on the reporting schema only, no CREATE, no function reach, no BYPASSRLS or superuser (2.810244ms)
+    ✔ T-6: the policies for reporting_ro are exactly the four ops_*_ro_select SELECT policies (4.406581ms)
+    ✔ T-7: alert_type is a code token (constraint added NOT VALID in 2102, validated in 2103) (13.293049ms)
+    ✔ T-8 negative control: a grant on a PHI table to reporting_ro makes M-4-reporting fail naming it (998.121651ms)
+  ✔ row-level security and grants (M-1..M-4) (1523.881688ms)
+✖ reporting (BE-21) on PostgreSQL 17 (4102.692736ms)
+ℹ tests 29
+ℹ suites 4
+ℹ pass 28
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4442.398967
+
+✖ failing tests:
+
+test at dist/src/modules/reporting/reporting.dbtest.js:293:9
+✖ the feed carries no patient data: no patient ID of any alert or grant appears (3.270839ms)
+  error: patient not found
+      at /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-313-sdlc-correction-int03-f05-apply-reporting_ro-catalog-policy-fix-per-the-architect-ruling/node_modules/.pnpm/pg@8.23.1/node_modules/pg/lib/client.js:694:17
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async saWrite (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-313-sdlc-correction-int03-f05-apply-reporting_ro-catalog-policy-fix-per-the-architect-ruling/apps/api/dist/src/modules/patient/testkit.js:337:9)
+      at async TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-313-sdlc-correction-int03-f05-apply-reporting_ro-catalog-policy-fix-per-the-architect-ruling/apps/api/dist/src/modules/reporting/reporting.dbtest.js:294:13)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    length: 144,
+    severity: 'ERROR',
+    code: 'PM008',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: 'PL/pgSQL function patient.guard_open_patient() line 19 at RAISE',
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'pl_exec.c',
+    line: '3897',
+    routine: 'exec_stmt_raise'
+  }

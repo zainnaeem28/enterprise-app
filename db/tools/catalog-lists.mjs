@@ -25,6 +25,9 @@ export const policyRoles = [
   'identity_signin_ro',
   'directory_ro',
   'queue_owner',
+  // BE-21 / INT03-F05 ruling (HEAAA-311): the reporting read models carry one SELECT policy TO reporting_ro each
+  // (organisation only; C0/C1 operations tables of ARCHITECTURE 22.15). M-4-reporting bounds what it can read.
+  'reporting_ro',
   ...functionOwnerRoles,
 ];
 /** audit-writing roles: role-level transaction_timeout must be 1..60 s (SAR-10). */
@@ -59,8 +62,15 @@ export const ownerRightsViews = [
   // ARCHITECTURE 22.5.1 (TDR-14), the ninth C0 directory view; migration 1103, owner directory_ro (HEAAA-186 triage item 1).
   'scheduling.public_clinician_location',
 ];
-/** Views reporting_ro may read (C0/C1 only, M-4). */
-export const reportingViews = [];
+/** Relations (views and read-model tables) reporting_ro may hold any privilege on: C0/C1 only (M-4). */
+export const reportingViews = [
+  // BE-21 / INT03-F05 ruling (HEAAA-311): the C1 operations read models of ARCHITECTURE 22.15 (ops_alert_backlog by
+  // amendment F05-1). compliance_btg_summary is NOT listed: reporting_ro has no right on it.
+  'reporting.ops_integration_health',
+  'reporting.ops_queue',
+  'reporting.ops_calendar_staleness',
+  'reporting.ops_alert_backlog',
+];
 /** INT01-F6 interim exemptions: emptied by BE-08 (all five tables now carry the guard). */
 export const interimGuardExempt = [];
 /** Tables with a patient_id column that are exempt from the merge write guard (SHARED-BOUNDARIES 9.2). */
