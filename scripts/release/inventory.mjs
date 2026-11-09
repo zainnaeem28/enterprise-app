@@ -48,8 +48,7 @@ export function baseImages(images) {
 const tool = (cmd, args, pick) => {
   try {
     const out = execFileSync(cmd, args, { encoding: 'utf8' });
-    return pick ? (pick.exec(out)?.[1] ?? 'unavailable') : out.split('
-')[0].trim();
+    return pick ? (pick.exec(out)?.[1] ?? 'unavailable') : out.split('\n')[0].trim();
   } catch {
     return 'unavailable';
   }
