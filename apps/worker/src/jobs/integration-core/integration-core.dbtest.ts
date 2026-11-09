@@ -66,7 +66,7 @@ const refused = (code: string) => (e: { code?: string }) => {
 const KEY = randomBytes(32);
 const gcmSeal = (plain: Buffer, ctx: string): Buffer => {
   const iv = randomBytes(12);
-  const c = createCipheriv('aes-256-gcm', KEY, iv);
+  const c = createCipheriv('aes-256-gcm', KEY, iv, { authTagLength: 16 });
   c.setAAD(Buffer.from(ctx));
   const ct = Buffer.concat([c.update(plain), c.final()]);
   return Buffer.concat([iv, c.getAuthTag(), ct]);
@@ -74,7 +74,7 @@ const gcmSeal = (plain: Buffer, ctx: string): Buffer => {
 const opener: PayloadOpener = {
   open: (sealed, ctx) => {
     try {
-      const d = createDecipheriv('aes-256-gcm', KEY, sealed.subarray(0, 12));
+      const d = createDecipheriv('aes-256-gcm', KEY, sealed.subarray(0, 12), { authTagLength: 16 });
       d.setAAD(Buffer.from(ctx));
       d.setAuthTag(sealed.subarray(12, 28));
       return Promise.resolve(Buffer.concat([d.update(sealed.subarray(28)), d.final()]));
