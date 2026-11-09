@@ -172,6 +172,24 @@ export const anonymousPolicies = [
   'identity.principal.principal_signin_select',
   'identity.principal.principal_signin_insert',
   'identity.principal.principal_signin_update',
+  // BE-05 (ARCHITECTURE 21.3 items (2) to (5), B2 admin realm). Each is gated on audience = 'anonymous' and on a setting the
+  // API sets only for its own check: app.auth_claim_handle (TO identity_signin_ro only), app.auth_enrolment_token_hash,
+  // app.webauthn_challenge_id, or app.auth_realm + app.auth_subject after the assertion or attestation verified.
+  // (2) T-SIGNIN: the admin-realm session insert; admin_credential insert, select and update; enrolment_token update to used
+  'identity.session.session_signin_insert_admin',
+  'identity.admin_credential.admin_credential_signin_insert',
+  'identity.admin_credential.admin_credential_signin_select',
+  'identity.admin_credential.admin_credential_signin_update',
+  'identity.enrolment_token.enrolment_token_signin_update',
+  // (3) T-SIGNIN-CLAIM: the pre-verification read, TO identity_signin_ro, column grants only
+  'identity.principal.principal_signin_claim',
+  'identity.admin_credential.admin_credential_signin_claim',
+  // (4) the enrolment token by the hash of the presented token
+  'identity.enrolment_token.enrolment_token_lookup',
+  // (5) webauthn_challenge by id; INSERT for purposes sign_in and enrol only, never bound to a session
+  'identity.webauthn_challenge.webauthn_challenge_anon_select',
+  'identity.webauthn_challenge.webauthn_challenge_anon_update',
+  'identity.webauthn_challenge.webauthn_challenge_anon_insert',
 ];
 /**
  * Policies that can match audience `public`: must be exactly the T-DIRECTORY policies. Accepted exception,

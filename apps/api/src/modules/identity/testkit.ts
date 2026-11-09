@@ -337,7 +337,7 @@ export interface Seeded {
 }
 
 export async function seedPrincipal(
-  k: Kit,
+  k: GrantKit,
   realm: 'google' | 'patient_pool' | 'admin_pool',
   o: {
     subject?: string | null;
@@ -379,17 +379,62 @@ export async function seedPrincipal(
   return { personId, principalId };
 }
 
+/**
+ * Two admin-realm principals that stand in for "the requester and the approver" of the role-change request every
+ * assignment now cites (BE-05 added the foreign key `role_assignment.granted_via_request_id`, ARCHITECTURE 22.4).
+ */
+/** What the role helpers need of a kit: the database name and the superuser client (the patient kit has both). */
+export interface GrantKit {
+  dbName: string;
+  sa: Kit['sa'];
+}
+const grantors = new Map<string, { requester: string; approver: string }>();
+async function grantorsOf(k: GrantKit): Promise<{ requester: string; approver: string }> {
+  const have = grantors.get(k.dbName);
+  if (have !== undefined) return have;
+  const requester = (await seedPrincipal(k, 'admin_pool', { subject: 'fixture-requester' }))
+    .personId;
+  const approver = (await seedPrincipal(k, 'admin_pool', { subject: 'fixture-approver' })).personId;
+  const g = { requester, approver };
+  grantors.set(k.dbName, g);
+  return g;
+}
+
 export async function assignRole(
-  k: Kit,
+  k: GrantKit,
   principalId: string,
   roleKey: string,
   locationId?: string,
 ): Promise<void> {
-  await k.sa.query(
-    `INSERT INTO identity.role_assignment (id, organisation_id, principal_id, role_id, location_id, granted_via_request_id)
-     SELECT $1, $2, $3, r.id, $4, $5 FROM identity.role r WHERE r.organisation_id = $2 AND r.key = $6`,
-    [uuidv7(), ORG, principalId, locationId ?? null, randomUUID(), roleKey],
-  );
+  const g = await grantorsOf(k);
+  const requestId = randomUUID();
+  await k.sa.query('BEGIN');
+  try {
+    // The request goes through its real states; the triggers read the acting person from the session setting.
+    await k.sa.query(`SELECT set_config('app.person_id', $1, true)`, [g.requester]);
+    await k.sa.query(
+      `INSERT INTO identity.role_change_request (id, organisation_id, requester_person_id, subject_principal_id, change, before, request_hash, status, expires_at)
+       VALUES ($1, $2, $3, $4, '{"add":[],"remove":[]}'::jsonb, '[]'::jsonb, decode(repeat('ab', 32), 'hex'), 'requested', now() + interval '1 day')`,
+      [requestId, ORG, g.requester, principalId],
+    );
+    await k.sa.query(`SELECT set_config('app.person_id', $1, true)`, [g.approver]);
+    await k.sa.query(
+      `UPDATE identity.role_change_request SET status = 'approved', approver_person_id = $2, decided_at = now() WHERE id = $1`,
+      [requestId, g.approver],
+    );
+    await k.sa.query(
+      `INSERT INTO identity.role_assignment (id, organisation_id, principal_id, role_id, location_id, granted_via_request_id)
+       SELECT $1, $2, $3, r.id, $4, $5 FROM identity.role r WHERE r.organisation_id = $2 AND r.key = $6`,
+      [uuidv7(), ORG, principalId, locationId ?? null, requestId, roleKey],
+    );
+    await k.sa.query(`UPDATE identity.role_change_request SET status = 'applied' WHERE id = $1`, [
+      requestId,
+    ]);
+    await k.sa.query('COMMIT');
+  } catch (e) {
+    await k.sa.query('ROLLBACK');
+    throw e;
+  }
 }
 
 export interface SeededSession {

@@ -253,28 +253,23 @@ describe('identity.purge_sessions', () => {
   });
 
   test('a session with an unused, unexpired challenge row is kept until the challenge is gone (SAR-IDF-05)', async () => {
-    // BE-05 creates the table; a stand-in with the same columns lets this job be tested before and after it exists.
-    await sa.query(
-      `CREATE TABLE identity.webauthn_challenge (id uuid PRIMARY KEY, session_id uuid, used_at timestamptz, expires_at timestamptz)`,
-    );
-    await sa.query(`GRANT SELECT ON identity.webauthn_challenge TO app_worker`);
     const held = await seed('held', { revokedAgo: 30, idleAgo: -5, absoluteAgo: -50 });
     const free = await seed('free', { revokedAgo: 30, idleAgo: -5, absoluteAgo: -50 });
     const usedUp = await seed('used', { revokedAgo: 30, idleAgo: -5, absoluteAgo: -50 });
     await sa.query(
-      `INSERT INTO identity.webauthn_challenge VALUES ($1, $2, NULL, now() + interval '20 minutes'), ($3, $4, now(), now() + interval '20 minutes')`,
-      [uuidv7(), held, uuidv7(), usedUp],
+      `INSERT INTO identity.webauthn_challenge (id, organisation_id, purpose, session_id, challenge, expires_at, used_at)
+       VALUES ($1, $5, 'elevation', $2, decode(repeat('ab', 32), 'hex'), now() + interval '20 minutes', NULL),
+              ($3, $5, 'elevation', $4, decode(repeat('cd', 32), 'hex'), now() + interval '20 minutes', now())`,
+      [uuidv7(), held, uuidv7(), usedUp, ORG],
     );
     const r = await runPurgeSessions({ db: wdb, orgId: ORG });
     assert.equal(r.deleted, 2);
     assert.equal(await exists(held), true);
     assert.equal(await exists(free), false);
     assert.equal(await exists(usedUp), false);
-    await sa.query(
-      `UPDATE identity.webauthn_challenge SET expires_at = now() - interval '1 minute'`,
-    );
+    // a challenge keeps its expiry (trigger), so "gone" is the row being removed, as the challenge purge does
+    await sa.query(`DELETE FROM identity.webauthn_challenge`);
     assert.equal((await runPurgeSessions({ db: wdb, orgId: ORG })).deleted, 1);
     assert.equal(await exists(held), false);
-    await sa.query(`DROP TABLE identity.webauthn_challenge`);
   });
 });
