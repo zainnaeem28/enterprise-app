@@ -173,9 +173,19 @@ data "aws_iam_policy_document" "archive" {
 }
 
 resource "aws_s3_bucket_policy" "archive" {
-  bucket     = aws_s3_bucket.archive.id
-  policy     = data.aws_iam_policy_document.archive.json
-  depends_on = [aws_s3_bucket_public_access_block.archive]
+  bucket = aws_s3_bucket.archive.id
+  policy = data.aws_iam_policy_document.archive.json
+  # The policy denies PutBucketObjectLockConfiguration, PutLifecycleConfiguration
+  # and DeleteBucketPolicy to everyone, including the applying role, so every
+  # other bucket setting must exist before it. Those settings are therefore
+  # immutable after the first apply (see README).
+  depends_on = [
+    aws_s3_bucket_public_access_block.archive,
+    aws_s3_bucket_versioning.archive,
+    aws_s3_bucket_object_lock_configuration.archive,
+    aws_s3_bucket_server_side_encryption_configuration.archive,
+    aws_s3_bucket_ownership_controls.archive,
+  ]
 }
 
 # ---------- audit archive replica (recovery Region, Object Lock also on) ----------
@@ -289,10 +299,17 @@ data "aws_iam_policy_document" "replica" {
 }
 
 resource "aws_s3_bucket_policy" "replica" {
-  provider   = aws.recovery
-  bucket     = aws_s3_bucket.replica.id
-  policy     = data.aws_iam_policy_document.replica.json
-  depends_on = [aws_s3_bucket_public_access_block.replica]
+  provider = aws.recovery
+  bucket   = aws_s3_bucket.replica.id
+  policy   = data.aws_iam_policy_document.replica.json
+  # Same ordering rule as the primary bucket policy.
+  depends_on = [
+    aws_s3_bucket_public_access_block.replica,
+    aws_s3_bucket_versioning.replica,
+    aws_s3_bucket_object_lock_configuration.replica,
+    aws_s3_bucket_server_side_encryption_configuration.replica,
+    aws_s3_bucket_ownership_controls.replica,
+  ]
 }
 
 data "aws_iam_policy_document" "replication_assume" {
@@ -418,9 +435,6 @@ data "aws_iam_policy_document" "vault_primary" {
     actions = [
       "backup:DeleteRecoveryPoint",
       "backup:UpdateRecoveryPointLifecycle",
-      "backup:PutBackupVaultAccessPolicy",
-      "backup:DeleteBackupVaultAccessPolicy",
-      "backup:DeleteBackupVault",
     ]
     resources = ["*"]
     principals {
@@ -430,6 +444,9 @@ data "aws_iam_policy_document" "vault_primary" {
   }
 }
 
+# Policy-change and vault-delete actions are deliberately NOT denied: the vault
+# lock is the immutability control, and a policy nobody can change could not be
+# corrected by IaC or removed when a throwaway environment is destroyed.
 resource "aws_backup_vault" "primary" {
   name        = "${var.name_prefix}-db-vault"
   kms_key_arn = var.kms_key_arn
@@ -480,9 +497,6 @@ data "aws_iam_policy_document" "vault_recovery" {
     actions = [
       "backup:DeleteRecoveryPoint",
       "backup:UpdateRecoveryPointLifecycle",
-      "backup:PutBackupVaultAccessPolicy",
-      "backup:DeleteBackupVaultAccessPolicy",
-      "backup:DeleteBackupVault",
     ]
     resources = ["*"]
     principals {

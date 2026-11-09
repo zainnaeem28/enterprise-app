@@ -25,9 +25,15 @@ variable "replication_enabled" {
 }
 
 variable "clean_writer_principal_arns" {
-  description = "Only these principals (the scan-promotion role) may write to the clean bucket. Empty list leaves the bucket policy without the restriction (not for production)."
+  description = "Only these principals (the scan-promotion role) may write to the clean bucket. Empty is rejected unless allow_unrestricted_clean_writers is true."
   type        = list(string)
   default     = []
+}
+
+variable "allow_unrestricted_clean_writers" {
+  description = "Explicit opt-out of the clean-bucket writer restriction, for throwaway environments only. Never true in production."
+  type        = bool
+  default     = false
 }
 
 variable "quarantine_expiry_days" {

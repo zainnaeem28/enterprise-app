@@ -211,8 +211,6 @@ data "aws_iam_policy_document" "local_vault" {
     actions = [
       "backup:DeleteRecoveryPoint",
       "backup:UpdateRecoveryPointLifecycle",
-      "backup:PutBackupVaultAccessPolicy",
-      "backup:DeleteBackupVaultAccessPolicy",
     ]
     resources = ["*"]
     principals {
@@ -246,17 +244,41 @@ resource "aws_iam_role" "backup" {
 }
 
 resource "aws_iam_role_policy_attachment" "backup" {
-  for_each = local.backup_enabled ? toset([
-    "arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup",
-    "arn:aws:iam::aws:policy/AWSBackupServiceRolePolicyForRestores",
-  ]) : toset([])
+  count      = local.backup_enabled ? 1 : 0
   role       = aws_iam_role.backup[0].name
-  policy_arn = each.value
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup"
+}
+
+# Restore permissions live on a separate role used only by the restore runbook.
+resource "aws_iam_role" "restore" {
+  count              = local.backup_enabled ? 1 : 0
+  name               = "${local.identifier}-restore"
+  assume_role_policy = data.aws_iam_policy_document.backup_assume.json
+  tags               = var.tags
+}
+
+resource "aws_iam_role_policy_attachment" "restore" {
+  count      = local.backup_enabled ? 1 : 0
+  role       = aws_iam_role.restore[0].name
+  policy_arn = "arn:aws:iam::aws:policy/AWSBackupServiceRolePolicyForRestores"
 }
 
 resource "aws_backup_plan" "database" {
   count = local.backup_enabled ? 1 : 0
   name  = "${local.identifier}-copy-to-log-archive"
+
+  # Copies into the locked log-archive vaults are rejected by AWS Backup when
+  # retention falls outside the vault lock bounds; catch that before apply.
+  lifecycle {
+    precondition {
+      condition     = var.backup_retention_days >= var.copy_vault_min_retention_days && var.backup_retention_days <= var.copy_vault_max_retention_days
+      error_message = "backup_retention_days must lie within the log-archive vault lock bounds (copy_vault_min_retention_days..copy_vault_max_retention_days)."
+    }
+    precondition {
+      condition     = var.monthly_retention_days >= var.copy_vault_min_retention_days && var.monthly_retention_days <= var.copy_vault_max_retention_days
+      error_message = "monthly_retention_days must lie within the log-archive vault lock bounds (copy_vault_min_retention_days..copy_vault_max_retention_days)."
+    }
+  }
 
   rule {
     rule_name         = "daily"

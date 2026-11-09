@@ -101,3 +101,25 @@ run "nobody_can_delete_or_shorten_retention" {
     error_message = "backup vault policy denies recovery point deletion"
   }
 }
+
+run "bucket_policies_wait_for_every_bucket_setting" {
+  command = plan
+  assert {
+    condition = alltrue([for r in ["archive", "replica"] :
+      alltrue([for dep in ["public_access_block", "versioning", "object_lock_configuration", "server_side_encryption_configuration", "ownership_controls"] :
+        can(regex("resource \"aws_s3_bucket_policy\" \"${r}\" \\{[^}]*?depends_on = \\[[^\\]]*aws_s3_bucket_${dep}\\.${r}", file("${path.module}/main.tf")))
+      ])
+    ])
+    error_message = "each Object Lock bucket policy must depend on every bucket setting it later forbids changing"
+  }
+}
+
+run "vault_policies_keep_a_repair_path" {
+  command = plan
+  assert {
+    condition = !anytrue([for s in data.aws_iam_policy_document.vault_primary.statement :
+      anytrue([for a in s.actions : contains(["backup:PutBackupVaultAccessPolicy", "backup:DeleteBackupVaultAccessPolicy", "backup:DeleteBackupVault"], a)])
+    ])
+    error_message = "vault policy must not deny its own repair or vault deletion; the vault lock provides immutability"
+  }
+}

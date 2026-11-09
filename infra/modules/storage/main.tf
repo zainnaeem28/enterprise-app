@@ -237,6 +237,13 @@ resource "aws_s3_bucket_policy" "clean" {
   bucket     = aws_s3_bucket.clean.id
   policy     = data.aws_iam_policy_document.clean.json
   depends_on = [aws_s3_bucket_public_access_block.clean]
+
+  lifecycle {
+    precondition {
+      condition     = length(var.clean_writer_principal_arns) > 0 || var.allow_unrestricted_clean_writers
+      error_message = "clean_writer_principal_arns must name the scan-promotion role, or set allow_unrestricted_clean_writers for a throwaway environment."
+    }
+  }
 }
 
 # ---------- cross-Region replication of the clean bucket (RTC) ----------

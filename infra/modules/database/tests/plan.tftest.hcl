@@ -116,3 +116,27 @@ run "single_subnet_rejected" {
   }
   expect_failures = [var.data_subnet_ids]
 }
+
+run "backup_retention_below_vault_lock_minimum_rejected" {
+  command = plan
+  variables {
+    backup_retention_days = 14
+  }
+  expect_failures = [aws_backup_plan.database]
+}
+
+run "monthly_retention_above_vault_lock_maximum_rejected" {
+  command = plan
+  variables {
+    monthly_retention_days = 500
+  }
+  expect_failures = [aws_backup_plan.database]
+}
+
+run "backup_role_has_no_restore_policy" {
+  command = plan
+  assert {
+    condition     = aws_iam_role_policy_attachment.backup[0].policy_arn != aws_iam_role_policy_attachment.restore[0].policy_arn && length(aws_iam_role.restore) == 1
+    error_message = "restore permissions belong to a separate restore role"
+  }
+}

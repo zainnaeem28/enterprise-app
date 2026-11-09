@@ -94,3 +94,19 @@ run "bucket_policies_enforce_tls_and_single_clean_writer" {
     error_message = "TLS-only on quarantine"
   }
 }
+
+run "unrestricted_clean_writers_need_explicit_opt_in" {
+  command = plan
+  variables {
+    clean_writer_principal_arns = []
+  }
+  expect_failures = [aws_s3_bucket_policy.clean]
+}
+
+run "unrestricted_clean_writers_allowed_when_opted_in" {
+  command = plan
+  variables {
+    clean_writer_principal_arns      = []
+    allow_unrestricted_clean_writers = true
+  }
+}

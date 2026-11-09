@@ -133,6 +133,18 @@ variable "monthly_retention_days" {
   default     = 365
 }
 
+variable "copy_vault_min_retention_days" {
+  description = "Vault lock minimum of the log-archive vaults (archive module vault_min_retention_days). Backup copy retention below this is rejected by AWS Backup."
+  type        = number
+  default     = 35
+}
+
+variable "copy_vault_max_retention_days" {
+  description = "Vault lock maximum of the log-archive vaults (archive module vault_max_retention_days)."
+  type        = number
+  default     = 400
+}
+
 variable "tags" {
   type    = map(string)
   default = {}
