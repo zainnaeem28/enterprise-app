@@ -1,0 +1,142 @@
+bootstrap 0001_roles.sql
+applying 0001_kernel_schema_and_helpers.sql
+applying 0002_kernel_tables.sql
+applying 0003_kernel_rls_and_grants.sql
+applying 0100_queue_schema.sql
+applying 0200_audit_event.sql
+applying 0201_audit_anchor.sql
+applying 0202_audit_btg_and_export.sql
+applying 0203_audit_rls_and_grants.sql
+applying 0204_audit_anchor_archive_receipt.sql
+applying 0300_organisation_schema_and_tables.sql
+applying 0301_organisation_rls_and_grants.sql
+applying 0302_organisation_directory_views.sql
+applying 0400_integration_core_tables.sql
+applying 0401_integration_core_rls_and_grants.sql
+applying 0402_integration_core_receive_inbound.sql
+applying 0500_identity_schema_and_tables.sql
+applying 0501_identity_triggers.sql
+applying 0502_identity_rls_and_grants.sql
+applying 0503_identity_public_clinician.sql
+applying 0600_notifications_schema_and_tables.sql
+applying 0601_notifications_rls_and_grants.sql
+applying 0602_notifications_receipt_lookup_index.sql
+applying 0700_patient_schema_and_tables.sql
+applying 0701_patient_triggers_and_guards.sql
+applying 0702_patient_rls_and_grants.sql
+applying 0703_patient_scope_functions.sql
+applying 0704_patient_matching_registration.sql
+applying 0705_patient_staff_policy_qualify.sql
+applying 0800_patient_merge_tables.sql
+applying 0801_patient_merge_triggers.sql
+applying 0802_patient_merge_rls_and_grants.sql
+applying 0803_patient_merge_functions.sql
+applying 0900_scheduling_schema_and_tables.sql
+applying 0901_scheduling_triggers.sql
+applying 0902_scheduling_rls_and_grants.sql
+applying 0903_scheduling_booking_functions.sql
+applying 0904_sec03_bind_definer_functions_to_caller.sql
+applying 0951_sec03_occupancy_column_grants.sql
+applying 0953_sec03_setting_column_grants.sql
+applying 1000_documents_schema_and_tables.sql
+applying 1001_documents_triggers.sql
+applying 1002_documents_rls_and_grants.sql
+applying 1003_documents_guard_owner.sql
+applying 1100_availability_tables.sql
+applying 1101_availability_triggers.sql
+applying 1102_availability_rls_and_grants.sql
+applying 1103_availability_directory_view.sql
+applying 1200_staff_alert_tables.sql
+applying 1201_staff_alert_rls_and_grants.sql
+applying 1300_flow_tables.sql
+applying 1301_flow_triggers.sql
+applying 1302_flow_rls_and_grants.sql
+applying 1303_flow_notification_insert_grant.sql
+applying 1400_calendar_sync_tables.sql
+applying 1401_calendar_sync_triggers.sql
+applying 1402_calendar_sync_rls_and_grants.sql
+applying 1403_scheduling_replace_busy_blocks.sql
+applying 1500_telehealth_tables.sql
+applying 1501_telehealth_triggers.sql
+applying 1502_telehealth_rls_and_grants.sql
+applying 1600_clinical_schema_and_chart_tables.sql
+applying 1601_clinical_chart_triggers.sql
+applying 1602_clinical_chart_rls_and_grants.sql
+applying 1603_clinical_guard_owner.sql
+applying 1604_merge_guard_single.sql
+applying 1605_drop_merge_guard_copies.sql
+applying 1606_revoke_guard_drop_usage.sql
+applying 1607_identity_principal_patients_scope_read.sql
+applying 1700_frontdoor_tables.sql
+applying 1701_frontdoor_triggers.sql
+applying 1702_frontdoor_rls_and_grants.sql
+applying 1800_notes_tables.sql
+applying 1801_notes_triggers.sql
+applying 1802_notes_rls_and_grants.sql
+applying 1803_notes_cosign_queue_index.sql
+applying 1900_privacy_schema_and_tables.sql
+applying 1901_privacy_triggers.sql
+applying 1902_privacy_rls_and_grants.sql
+applying 1903_privacy_review_round1_fixes.sql
+applying 2000_messaging_schema_and_tables.sql
+applying 2001_messaging_triggers.sql
+applying 2002_messaging_rls_and_grants.sql
+applying 2003_consent_template_text.sql
+applying 2004_consent_template_text_validate.sql
+applying 2100_reporting_schema_and_tables.sql
+applying 2101_reporting_rls_and_grants.sql
+applying 2102_reporting_alert_type_format.sql
+applying 2103_reporting_alert_type_format_validate.sql
+applying 2200_merge_guard_single_m4.sql
+applying 2201_drop_merge_guard_copies_m4.sql
+applying 2202_revoke_guard_drop_usage_m4.sql
+applying 2203_messaging_participant_policies_invoker_creator.sql
+applying 2204_drop_messaging_is_creator.sql
+applying 2300_patient_referral_accept_scope.sql
+applying 2301_clinical_referral_target_read_pending.sql
+applying 2400_identity_admin_tables.sql
+applying 2401_identity_admin_triggers.sql
+applying 2402_identity_admin_rls_and_grants.sql
+applying 2403_identity_role_assignment_fk_validate.sql
+applying 2404_identity_principal_status_not_anonymous.sql
+applying 2405_identity_admin_second_key_session.sql
+applying 2406_notifications_staff_scope_allows_patient.sql
+applying 2407_identity_bootstrap_admins.sql
+{"applied":["0001_kernel_schema_and_helpers.sql","0002_kernel_tables.sql","0003_kernel_rls_and_grants.sql","0100_queue_schema.sql","0200_audit_event.sql","0201_audit_anchor.sql","0202_audit_btg_and_export.sql","0203_audit_rls_and_grants.sql","0204_audit_anchor_archive_receipt.sql","0300_organisation_schema_and_tables.sql","0301_organisation_rls_and_grants.sql","0302_organisation_directory_views.sql","0400_integration_core_tables.sql","0401_integration_core_rls_and_grants.sql","0402_integration_core_receive_inbound.sql","0500_identity_schema_and_tables.sql","0501_identity_triggers.sql","0502_identity_rls_and_grants.sql","0503_identity_public_clinician.sql","0600_notifications_schema_and_tables.sql","0601_notifications_rls_and_grants.sql","0602_notifications_receipt_lookup_index.sql","0700_patient_schema_and_tables.sql","0701_patient_triggers_and_guards.sql","0702_patient_rls_and_grants.sql","0703_patient_scope_functions.sql","0704_patient_matching_registration.sql","0705_patient_staff_policy_qualify.sql","0800_patient_merge_tables.sql","0801_patient_merge_triggers.sql","0802_patient_merge_rls_and_grants.sql","0803_patient_merge_functions.sql","0900_scheduling_schema_and_tables.sql","0901_scheduling_triggers.sql","0902_scheduling_rls_and_grants.sql","0903_scheduling_booking_functions.sql","0904_sec03_bind_definer_functions_to_caller.sql","0951_sec03_occupancy_column_grants.sql","0953_sec03_setting_column_grants.sql","1000_documents_schema_and_tables.sql","1001_documents_triggers.sql","1002_documents_rls_and_grants.sql","1003_documents_guard_owner.sql","1100_availability_tables.sql","1101_availability_triggers.sql","1102_availability_rls_and_grants.sql","1103_availability_directory_view.sql","1200_staff_alert_tables.sql","1201_staff_alert_rls_and_grants.sql","1300_flow_tables.sql","1301_flow_triggers.sql","1302_flow_rls_and_grants.sql","1303_flow_notification_insert_grant.sql","1400_calendar_sync_tables.sql","1401_calendar_sync_triggers.sql","1402_calendar_sync_rls_and_grants.sql","1403_scheduling_replace_busy_blocks.sql","1500_telehealth_tables.sql","1501_telehealth_triggers.sql","1502_telehealth_rls_and_grants.sql","1600_clinical_schema_and_chart_tables.sql","1601_clinical_chart_triggers.sql","1602_clinical_chart_rls_and_grants.sql","1603_clinical_guard_owner.sql","1604_merge_guard_single.sql","1605_drop_merge_guard_copies.sql","1606_revoke_guard_drop_usage.sql","1607_identity_principal_patients_scope_read.sql","1700_frontdoor_tables.sql","1701_frontdoor_triggers.sql","1702_frontdoor_rls_and_grants.sql","1800_notes_tables.sql","1801_notes_triggers.sql","1802_notes_rls_and_grants.sql","1803_notes_cosign_queue_index.sql","1900_privacy_schema_and_tables.sql","1901_privacy_triggers.sql","1902_privacy_rls_and_grants.sql","1903_privacy_review_round1_fixes.sql","2000_messaging_schema_and_tables.sql","2001_messaging_triggers.sql","2002_messaging_rls_and_grants.sql","2003_consent_template_text.sql","2004_consent_template_text_validate.sql","2100_reporting_schema_and_tables.sql","2101_reporting_rls_and_grants.sql","2102_reporting_alert_type_format.sql","2103_reporting_alert_type_format_validate.sql","2200_merge_guard_single_m4.sql","2201_drop_merge_guard_copies_m4.sql","2202_revoke_guard_drop_usage_m4.sql","2203_messaging_participant_policies_invoker_creator.sql","2204_drop_messaging_is_creator.sql","2300_patient_referral_accept_scope.sql","2301_clinical_referral_target_read_pending.sql","2400_identity_admin_tables.sql","2401_identity_admin_triggers.sql","2402_identity_admin_rls_and_grants.sql","2403_identity_role_assignment_fk_validate.sql","2404_identity_principal_status_not_anonymous.sql","2405_identity_admin_second_key_session.sql","2406_notifications_staff_scope_allows_patient.sql","2407_identity_bootstrap_admins.sql"],"pending":["0001_kernel_schema_and_helpers.sql","0002_kernel_tables.sql","0003_kernel_rls_and_grants.sql","0100_queue_schema.sql","0200_audit_event.sql","0201_audit_anchor.sql","0202_audit_btg_and_export.sql","0203_audit_rls_and_grants.sql","0204_audit_anchor_archive_receipt.sql","0300_organisation_schema_and_tables.sql","0301_organisation_rls_and_grants.sql","0302_organisation_directory_views.sql","0400_integration_core_tables.sql","0401_integration_core_rls_and_grants.sql","0402_integration_core_receive_inbound.sql","0500_identity_schema_and_tables.sql","0501_identity_triggers.sql","0502_identity_rls_and_grants.sql","0503_identity_public_clinician.sql","0600_notifications_schema_and_tables.sql","0601_notifications_rls_and_grants.sql","0602_notifications_receipt_lookup_index.sql","0700_patient_schema_and_tables.sql","0701_patient_triggers_and_guards.sql","0702_patient_rls_and_grants.sql","0703_patient_scope_functions.sql","0704_patient_matching_registration.sql","0705_patient_staff_policy_qualify.sql","0800_patient_merge_tables.sql","0801_patient_merge_triggers.sql","0802_patient_merge_rls_and_grants.sql","0803_patient_merge_functions.sql","0900_scheduling_schema_and_tables.sql","0901_scheduling_triggers.sql","0902_scheduling_rls_and_grants.sql","0903_scheduling_booking_functions.sql","0904_sec03_bind_definer_functions_to_caller.sql","0951_sec03_occupancy_column_grants.sql","0953_sec03_setting_column_grants.sql","1000_documents_schema_and_tables.sql","1001_documents_triggers.sql","1002_documents_rls_and_grants.sql","1003_documents_guard_owner.sql","1100_availability_tables.sql","1101_availability_triggers.sql","1102_availability_rls_and_grants.sql","1103_availability_directory_view.sql","1200_staff_alert_tables.sql","1201_staff_alert_rls_and_grants.sql","1300_flow_tables.sql","1301_flow_triggers.sql","1302_flow_rls_and_grants.sql","1303_flow_notification_insert_grant.sql","1400_calendar_sync_tables.sql","1401_calendar_sync_triggers.sql","1402_calendar_sync_rls_and_grants.sql","1403_scheduling_replace_busy_blocks.sql","1500_telehealth_tables.sql","1501_telehealth_triggers.sql","1502_telehealth_rls_and_grants.sql","1600_clinical_schema_and_chart_tables.sql","1601_clinical_chart_triggers.sql","1602_clinical_chart_rls_and_grants.sql","1603_clinical_guard_owner.sql","1604_merge_guard_single.sql","1605_drop_merge_guard_copies.sql","1606_revoke_guard_drop_usage.sql","1607_identity_principal_patients_scope_read.sql","1700_frontdoor_tables.sql","1701_frontdoor_triggers.sql","1702_frontdoor_rls_and_grants.sql","1800_notes_tables.sql","1801_notes_triggers.sql","1802_notes_rls_and_grants.sql","1803_notes_cosign_queue_index.sql","1900_privacy_schema_and_tables.sql","1901_privacy_triggers.sql","1902_privacy_rls_and_grants.sql","1903_privacy_review_round1_fixes.sql","2000_messaging_schema_and_tables.sql","2001_messaging_triggers.sql","2002_messaging_rls_and_grants.sql","2003_consent_template_text.sql","2004_consent_template_text_validate.sql","2100_reporting_schema_and_tables.sql","2101_reporting_rls_and_grants.sql","2102_reporting_alert_type_format.sql","2103_reporting_alert_type_format_validate.sql","2200_merge_guard_single_m4.sql","2201_drop_merge_guard_copies_m4.sql","2202_revoke_guard_drop_usage_m4.sql","2203_messaging_participant_policies_invoker_creator.sql","2204_drop_messaging_is_creator.sql","2300_patient_referral_accept_scope.sql","2301_clinical_referral_target_read_pending.sql","2400_identity_admin_tables.sql","2401_identity_admin_triggers.sql","2402_identity_admin_rls_and_grants.sql","2403_identity_role_assignment_fk_validate.sql","2404_identity_principal_status_not_anonymous.sql","2405_identity_admin_second_key_session.sql","2406_notifications_staff_scope_allows_patient.sql","2407_identity_bootstrap_admins.sql"]}
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+▶ notifications on PostgreSQL 17 (BE-06, worker side)
+  ▶ the send job
+    ✔ e-mail: renders the published version in the person's language, attaches the .ics, stores the vendor reference and no address or text (46.119894ms)
+    ✔ language: the person's language when published, else the default; SMS and push render without a subject/with a title (29.975046ms)
+    ✔ TC-NT-08: SMS off and e-mail on - the SMS is suppressed with its reason and the provider is never called; e-mail is sent (15.152156ms)
+    ✔ suppression reasons: no address, unknown recipient, inactive patient, no contributor, no template (32.221761ms)
+    ✔ in-app notices need no vendor and are sent even when every external channel is off (TC-NT-04) (4.986194ms)
+    ✔ TC-NT-04: a failing provider is retried by the queue; the failure is an error CLASS; the last attempt publishes delivery_failed; recovery sends with the same token (36.034705ms)
+    ✔ a vendor refusal (4xx) is final: failed, no queue retry, delivery_failed published (9.715567ms)
+    ✔ quiet hours defer the send to when they end, restore the attempt count and queue the job (19.661648ms)
+    ✔ a template that leaks text is stopped at send time by the output scan; the provider is never called (8.143989ms)
+    ✔ a render error (a declared value missing) is a final failure, not a retry (7.212511ms)
+    ✔ BE06-F1: a merge that re-points the row during the vendor call - sent, failed and deferred outcomes are still recorded (under the survivor) (29.825185ms)
+    ✔ a patient merged while the job waited: the job follows the survivor and sends to the survivor's contacts (on_merged = resolve) (10.103665ms)
+    ✔ a staff notice runs under the organisation scope and resolves through the principal contributor (6.915433ms)
+    ✔ no address, message text or canary reaches a log line (0.164979ms)
+  ✔ the send job (257.697785ms)
+  ▶ delivery receipts (33.1 notifications.on_receipt, SBR-16)
+    ✔ a receipt for a kept notification of a merged patient attaches to the SURVIVOR; a repeat of the event is a no-op (10.423937ms)
+    ✔ untrusted payloads: unknown reference, bad shape, bad status, oversized and ambiguous references record nothing (7.314423ms)
+    ✔ the inbound handler records through the same path (2.634392ms)
+    ✔ the worker role cannot update or delete a receipt, or write one for a patient outside its job scope (2.521792ms)
+  ✔ delivery receipts (33.1 notifications.on_receipt, SBR-16) (24.763649ms)
+  ▶ channel adapters implement the BE-02 interface
+    ✔ argument checks reject header injection, malformed addresses and oversize text without echoing them (0.63458ms)
+    ✔ provider errors map to AdapterFailure with the provider's retryability; any other exception is retryable; health never throws (0.355408ms)
+  ✔ channel adapters implement the BE-02 interface (1.083483ms)
+✔ notifications on PostgreSQL 17 (BE-06, worker side) (1651.684227ms)
+ℹ tests 20
+ℹ suites 4
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1765.173304

@@ -1,0 +1,51 @@
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+▶ catalog (M-1, M-2, M-3, M-5, 21.3 lists)
+  ✔ every identity table has ENABLE and FORCE row level security, a data class and no PUBLIC policy (12.119116ms)
+  ✔ the identity policies that can match audience anonymous are exactly the T-SIGNIN list and the session lookup (21.3) (86.264053ms)
+  ✔ the identity policies that can match audience public are exactly the T-DIRECTORY policies (60.413597ms)
+  ✔ app_api has no UPDATE of identity columns beyond the 21.2 list; app_worker none on principal or person (2.99531ms)
+  ✔ identity_signin_ro and directory_ro hold no table-level SELECT on the identity base tables; directory_ro has exactly the 22.5.1 columns (7.093077ms)
+✔ catalog (M-1, M-2, M-3, M-5, 21.3 lists) (1561.515981ms)
+▶ audience anonymous (21.3): the sign-in path and nothing else
+  ✔ with no settings an anonymous transaction sees no row of any identity table, and no non-pre_auth setting (29.2858ms)
+  ✔ only the presented token hash reveals a session, and only that one (11.264592ms)
+  ✔ T-SIGNIN: nothing is writable until app.auth_subject is set; then only the verified subject, only in patient and google realms (22.179299ms)
+  ✔ a person without a principal cannot be committed (deferred constraint trigger) (6.2257ms)
+  ✔ the session insert needs the new token hash in the setting and the verified principal (19.002057ms)
+  ✔ column grants: an anonymous sign-in cannot change anything of a principal but subject and last_sign_in_at (12.245914ms)
+✔ audience anonymous (21.3): the sign-in path and nothing else (100.895582ms)
+▶ triggers (21.5, 22.4)
+  ✔ principal: subject binds once and never changes; person, realm and organisation never change (3.698419ms)
+  ✔ principal constraints: subject or a google pre-registration email; one principal per realm and person; unique email while unbound (3.543257ms)
+  ✔ session: revocation is monotonic; a revoked row accepts no change; identity columns never change (5.076675ms)
+  ✔ session: idle never beyond absolute (CHECK); audience must match realm (2.748816ms)
+  ✔ role_assignment: realm, privileged-in-admin-only, location binding, signed-in principal; assignments are only ever revoked (21.278779ms)
+  ✔ proxy_grant: legal transitions only; revoked and expired are K and never change again; the proxy and scope are fixed (8.910366ms)
+  ✔ staff_support links two google principals only (4.809563ms)
+✔ triggers (21.5, 22.4) (50.537529ms)
+▶ isolation between principals (T-PRINCIPAL, T-PAT-OWN)
+  ✔ a staff principal reads its own sessions and not another principal's; it cannot revoke another's session (10.547858ms)
+  ✔ a patient reads only its own links and its own principal; links cannot be inserted through the API role (12.058462ms)
+  ✔ patient_link INSERT works only for patient_scope_owner (patient.register), in a patient or staff transaction (16.775591ms)
+  ✔ proxy_grant: a proxy sees its own grants; the patient sees its proxies; a proxy never reads the grants of the patient it serves (21.826667ms)
+  ✔ proxy requests and revocation through the service: only a requested row for itself; only the patient revokes; a proxy cannot (26.90771ms)
+✔ isolation between principals (T-PRINCIPAL, T-PAT-OWN) (88.573516ms)
+▶ identity.public_clinician (22.5.1, TDR-14, 38.2 item 17)
+  ✔ public and patient audiences see listed, active google clinicians (display name only); nothing else, and no sensitive column (37.383712ms)
+  ✔ directory_ro cannot be used to write, and app_api cannot switch to it (5.958699ms)
+✔ identity.public_clinician (22.5.1, TDR-14, 38.2 item 17) (43.621976ms)
+▶ merge participant: identity.repointPatient (22.16, 38.2 item 11)
+  ✔ registered with the kernel registries with its tables and conflict rules; exportPart is published; double registration is refused (0.523031ms)
+  ✔ both patients linked from one portal principal, an open grant to the same proxy on both, K rows kept: counts add up and the rules win as 22.16 says (25.65542ms)
+  ✔ it refuses to run outside a patients-scope system job that names both IDs (6.148265ms)
+  ✔ a failing count rolls the merge transaction back whole (5.786997ms)
+  ✔ exportPart: what identity holds about the patients, with no email, subject or token; refuses IDs outside the job (4.357434ms)
+✔ merge participant: identity.repointPatient (22.16, 38.2 item 11) (42.835339ms)
+ℹ tests 30
+ℹ suites 6
+ℹ pass 30
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2243.403684

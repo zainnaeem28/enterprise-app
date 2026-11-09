@@ -1,0 +1,40 @@
+▶ admin realm configuration is fail-closed (INT04-F01, SEC02-F01)
+  ✔ a complete configuration is accepted; AAGUIDs are lower-cased and roots split (6.69502ms)
+  ✔ an empty environment names every missing variable and starts nothing (0.190748ms)
+  ✔ EHR_ADMIN_ATTESTATION_ROOTS_PEM missing is refused by name (0.163025ms)
+  ✔ EHR_ADMIN_ALLOWED_AAGUIDS missing is refused by name (0.171473ms)
+  ✔ EHR_ADMIN_DECOY_KEY missing is refused by name (0.146615ms)
+  ✔ roots that are not PEM certificates are refused (no value in the message) (0.186961ms)
+  ✔ malformed and all-zero AAGUIDs are refused (0.347361ms)
+  ✔ the decoy key is long and distinct from the rate and CSRF keys (0.209684ms)
+✔ admin realm configuration is fail-closed (INT04-F01, SEC02-F01) (9.309535ms)
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+▶ the CI attestation fixture cannot be configured outside a CI run (INT04-F21)
+  ✔ EHR_ENV=production refuses the fixture root and AAGUID, even with the flag (0.735058ms)
+  ✔ EHR_ENV=staging refuses the fixture root and AAGUID, even with the flag (0.280567ms)
+  ✔ EHR_ENV=dev refuses the fixture root and AAGUID, even with the flag (0.216416ms)
+  ✔ EHR_ENV=undefined refuses the fixture root and AAGUID, even with the flag (0.239028ms)
+  ✔ EHR_ENV=ci without the explicit flag refuses it (0.171551ms)
+  ✔ the flag alone, outside ci, refuses it (0.167064ms)
+  ✔ EHR_ENV=ci with EHR_ADMIN_CI_FIXTURE=1 accepts it (0.095109ms)
+  ✔ a fixture root hidden among real-looking roots is still refused in production (0.221776ms)
+  ✔ production config with ordinary values is unchanged (0.12251ms)
+✔ the CI attestation fixture cannot be configured outside a CI run (INT04-F21) (1835.342453ms)
+▶ admin routes behind the realm guard, composed (INT04-F01, BE-23 N-2)
+  ✔ no session: 401 on an organisation, an audit and an integration route (5.204052ms)
+  ✔ a staff (google realm) session is refused on every admin route: wrong realm (16.445151ms)
+  ✔ an admin session without a live elevation grant is refused with identity.elevation_required (79.181265ms)
+  ✔ an elevated admin with the permission is served: organisation (BE-23) and integration (BE-24) routes (15.870212ms)
+  ✔ an elevated admin WITHOUT the route permission is refused (elevation is not authority) (13.76919ms)
+  ✔ the audit route (BE-24) answers the compliance officer and is itself audited (9.105201ms)
+  ✔ the elevation grant is checked on every request: a revoked grant stops the next call at once (89.438637ms)
+  ✔ ports not configured are refused, not faked: the connection test is 503 (no tester) and a secret write fails closed (19.843877ms)
+✔ admin routes behind the realm guard, composed (INT04-F01, BE-23 N-2) (249.454417ms)
+ℹ tests 25
+ℹ suites 3
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2669.106796

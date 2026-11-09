@@ -1,0 +1,25 @@
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+▶ audience anonymous (21.3 list)
+  ✔ with no key setting, every admin-realm table and the identity tables show nothing (8.230872ms)
+  ✔ a challenge is visible only by its ID and only for sign_in and enrol (2.888569ms)
+  ✔ an enrolment token is visible only by the hash of the presented token (2.060496ms)
+  ✔ anonymous cannot insert a request, a grant, an elevation challenge or a session-bound challenge (5.742633ms)
+✔ audience anonymous (21.3 list) (1697.62433ms)
+▶ role identity_signin_ro (21.2, T-SIGNIN-CLAIM)
+  ✔ no claim: nothing; a claim: exactly that admin principal and its live credentials, public columns only (5.234549ms)
+  ✔ anything outside the column grants, and every other table, is refused (11.807261ms)
+  ✔ a suspended or disabled principal is not returned by the claim (it looks like an unknown handle) (3.306462ms)
+✔ role identity_signin_ro (21.2, T-SIGNIN-CLAIM) (20.768973ms)
+▶ staff scope
+  ✔ a google-realm staff scope sees none of the admin-realm tables (5.136185ms)
+  ✔ an admin scope reads requests and tokens but cannot write a role assignment without an approved request of its own (4.127493ms)
+  ✔ revocation reaches only the principal named in app.revoke_principal_id (2.960764ms)
+✔ staff scope (12.505981ms)
+ℹ tests 10
+ℹ suites 3
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2232.340442

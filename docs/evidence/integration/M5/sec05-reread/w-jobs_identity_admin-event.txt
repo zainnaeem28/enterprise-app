@@ -1,0 +1,15 @@
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+▶ identity.admin_event (real database, app_worker)
+  ✔ S1/S4: with no compliance recipient the alert step fails, the audit row stays and a retry writes no second row (42.909943ms)
+  ✔ credential_enrolled: audit row names the requester and approver, the alert excludes the subject even when they hold audit.btg.review (S3) (18.659055ms)
+  ✔ counter_regression: critical alert, audit row, and the notice is a separate job that carries a kind and an ID only (17.425682ms)
+  ✔ S1: a job that exhausts its attempts is counted by the dead-letter gauge source (5.588695ms)
+✔ identity.admin_event (real database, app_worker) (1609.299184ms)
+ℹ tests 4
+ℹ suites 1
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1778.262884

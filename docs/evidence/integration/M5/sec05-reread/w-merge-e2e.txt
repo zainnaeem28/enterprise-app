@@ -1,0 +1,15 @@
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+▶ INT03-F13 / D-F13-5: the approved merge executes in the composed worker
+  ✔ 9: the registries the worker receives hold every merge participant and export contributor of the single registration site (1.226861ms)
+  ✔ 8 negative control (a): a worker task table without patient.execute_merge leaves the request approved, never completed (4401.562337ms)
+  ✔ 8 negative control (b): registries without the documents participant end the request failed with patient.merge_participant_missing (90.470963ms)
+  ✔ 8: request, second-approver approval and the production worker run the merge: completed, merged patient resolves to the survivor, appointment re-pointed (423.272153ms)
+✔ INT03-F13 / D-F13-5: the approved merge executes in the composed worker (6472.362695ms)
+ℹ tests 4
+ℹ suites 1
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7091.795131
