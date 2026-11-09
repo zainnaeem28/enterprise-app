@@ -327,3 +327,118 @@ describe("SEC03-F01: T-STAFF policies scope child rows to the staff member's loc
     );
   });
 });
+
+// SEC05-F04 / INT04-F10 D-5 (HEAAA-432): `notifications.staff_scope_allows_patient` is the T-STAFF predicate (migration 2406),
+// not the 1201 stub. Run on the migrations exactly as shipped: nothing in this file replaces the function.
+describe('SEC05-F04: red-flag alerts follow patient.staff_scope on the unmodified migrations', () => {
+  const DOC_IN = u(0xd1); // doctor at location A, targeted
+  const DOC_OUT = u(0xd2); // doctor at location B, also targeted by the same alert
+  const NURSE = u(0xd3); // nurse at location A, creates a red flag
+  const ALERT = u(0xe1);
+
+  async function asPrincipal(principal, locations, fn, btg = []) {
+    const c = await connect(urlFor('app_api', dbName), 'test-alert');
+    try {
+      await c.query('BEGIN');
+      for (const [k, v] of Object.entries({
+        'app.audience': 'staff',
+        'app.realm': 'google',
+        'app.org_id': ORG,
+        'app.principal_id': principal,
+        'app.location_ids': locations.join(','),
+        'app.btg_patient_ids': btg.join(','),
+      }))
+        await c.query('SELECT set_config($1, $2, true)', [k, v]);
+      return await fn(c);
+    } finally {
+      await c.query('ROLLBACK').catch(() => undefined);
+      await c.end();
+    }
+  }
+  const visible = async (c) =>
+    (await c.query(`SELECT id FROM notifications.staff_alert WHERE id = $1`, [ALERT])).rowCount;
+  const acknowledge = (c, principal) =>
+    c.query(
+      `UPDATE notifications.staff_alert SET status = 'acknowledged', acknowledged_by = $2, acknowledged_at = now(), escalate_at = NULL
+        WHERE id = $1`,
+      [ALERT, principal],
+    );
+
+  before(async () => {
+    await db.query(
+      `INSERT INTO notifications.staff_alert (id, organisation_id, type, severity, patient_id, resource_type, resource_id,
+         target_kind, target_principal_ids, created_by)
+       VALUES ($1, $2, 'red_flag', 'critical', $3, 'triage_assessment', $4, 'principal', $5, $6)`,
+      [ALERT, ORG, PAT_A, u(0xe2), [DOC_IN, DOC_OUT], NURSE],
+    );
+  });
+
+  test('the function body is not the literal false stub and is the T-STAFF template', async () => {
+    const r = await db.query(
+      `SELECT prosrc, prosecdef FROM pg_proc WHERE oid = 'notifications.staff_scope_allows_patient(uuid)'::regprocedure`,
+    );
+    assert.equal(r.rows.length, 1);
+    assert.ok(!/^\s*select\s+false\s*;?\s*$/i.test(r.rows[0].prosrc), 'literal false body');
+    assert.match(r.rows[0].prosrc, /patient\.staff_scope/);
+    assert.equal(r.rows[0].prosecdef, false, 'stays SECURITY INVOKER');
+  });
+
+  test('the in-scope doctor sees the red flag and acknowledges it', async () => {
+    await asPrincipal(DOC_IN, [LOC_A], async (c) => {
+      assert.equal(await visible(c), 1);
+      assert.equal((await acknowledge(c, DOC_IN)).rowCount, 1);
+      const r = await c.query(
+        `SELECT status, acknowledged_by FROM notifications.staff_alert WHERE id = $1`,
+        [ALERT],
+      );
+      assert.deepEqual(r.rows[0], { status: 'acknowledged', acknowledged_by: DOC_IN });
+    });
+  });
+
+  test('the out-of-scope doctor, although targeted, does not see it and cannot acknowledge it', async () => {
+    await asPrincipal(DOC_OUT, [LOC_B], async (c) => {
+      assert.equal(await visible(c), 0);
+      assert.equal((await acknowledge(c, DOC_OUT)).rowCount, 0);
+    });
+    const r = await db.query(`SELECT status FROM notifications.staff_alert WHERE id = $1`, [ALERT]);
+    assert.equal(r.rows[0].status, 'open', 'no acknowledgement leaked through');
+  });
+
+  test('a break-the-glass grant on the patient brings the alert into scope', async () => {
+    await asPrincipal(DOC_OUT, [LOC_B], async (c) => assert.equal(await visible(c), 1), [PAT_A]);
+  });
+
+  test('realm other than google is not in scope even at the right location', async () => {
+    const c = await connect(urlFor('app_api', dbName), 'test-alert-realm');
+    try {
+      await c.query('BEGIN');
+      for (const [k, v] of Object.entries({
+        'app.audience': 'staff',
+        'app.realm': 'admin_pool',
+        'app.org_id': ORG,
+        'app.principal_id': DOC_IN,
+        'app.location_ids': LOC_A,
+      }))
+        await c.query('SELECT set_config($1, $2, true)', [k, v]);
+      assert.equal(await visible(c), 0);
+    } finally {
+      await c.query('ROLLBACK').catch(() => undefined);
+      await c.end();
+    }
+  });
+
+  test('a nurse creates a red flag for a patient in scope and is refused for one out of scope', async () => {
+    const insert = (c, id, patient) =>
+      c.query(
+        `INSERT INTO notifications.staff_alert (id, organisation_id, type, severity, patient_id, resource_type, resource_id,
+           target_kind, target_principal_ids, created_by)
+         VALUES ($1, $2, 'red_flag', 'critical', $3, 'triage_assessment', $4, 'principal', $5, $6)`,
+        [id, ORG, patient, u(0xe3), [DOC_IN], NURSE],
+      );
+    await asPrincipal(NURSE, [LOC_A], async (c) => {
+      assert.equal((await insert(c, u(0xe4), PAT_A)).rowCount, 1);
+      await c.query('SAVEPOINT s');
+      await assert.rejects(insert(c, u(0xe5), PAT_B), (e) => e.code === '42501');
+    });
+  });
+});

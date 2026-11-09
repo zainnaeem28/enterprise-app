@@ -472,6 +472,28 @@ describe('SEC03-F13 / F09 catalog negative controls', () => {
         assert.equal(status(r, id), 'pass', JSON.stringify(r.find((x) => x.id === id).violations));
     });
   });
+  test('M-5-staff-scope-stub passes on the migrated database and fails on a literal false body (SEC05-F04)', async () => {
+    await withAdmin(async (a) => {
+      assert.equal(status(await runChecks(a), 'M-5-staff-scope-stub'), 'pass');
+      const fn = `notifications.staff_scope_allows_patient(patient uuid) RETURNS boolean LANGUAGE sql STABLE PARALLEL SAFE SET search_path = pg_catalog`;
+      const original = (
+        await a.query(
+          `SELECT prosrc FROM pg_proc WHERE oid = 'notifications.staff_scope_allows_patient(uuid)'::regprocedure`,
+        )
+      ).rows[0].prosrc;
+      try {
+        await a.query(`CREATE OR REPLACE FUNCTION ${fn} AS $b$ SELECT false $b$`);
+        assert.equal(status(await runChecks(a), 'M-5-staff-scope-stub'), 'fail', 'SELECT false');
+        await a.query(`CREATE OR REPLACE FUNCTION ${fn} AS $b$ SELECT false; $b$`);
+        assert.equal(status(await runChecks(a), 'M-5-staff-scope-stub'), 'fail', 'SELECT false;');
+        await a.query(`CREATE OR REPLACE FUNCTION ${fn} AS $b$ SELECT (false) $b$`);
+        assert.equal(status(await runChecks(a), 'M-5-staff-scope-stub'), 'fail', 'SELECT (false)');
+      } finally {
+        await a.query(`CREATE OR REPLACE FUNCTION ${fn} AS $b$${original}$b$`);
+      }
+      assert.equal(status(await runChecks(a), 'M-5-staff-scope-stub'), 'pass', 'restored');
+    });
+  });
   test('M-5-policy-tautology fails on a policy comparing a column with itself (F01)', async () => {
     await withAdmin(async (a) => {
       await a.query('CREATE SCHEMA f13_neg');

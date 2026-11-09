@@ -229,6 +229,16 @@ export const checks = {
           WHERE schemaname NOT LIKE 'pg\\_%' AND schemaname <> ALL (${q(L.skippedSchemas)})
             AND coalesce(qual, '') || ' ' || coalesce(with_check, '') ~ '\\m([a-z_]+\\.[a-z_]+) = \\1\\M'`,
   },
+  'M-5-staff-scope-stub': {
+    title:
+      'notifications.staff_scope_allows_patient exists and its body is not a literal false (SEC05-F04: the 1201 fail-closed stub stays replaced)',
+    sql: `SELECT 'literal false body' AS problem, p.oid::regprocedure::text AS function FROM pg_proc p
+          WHERE p.pronamespace = 'notifications'::regnamespace AND p.proname = 'staff_scope_allows_patient'
+            AND regexp_replace(regexp_replace(lower(p.prosrc), '^[[:space:]]*select', ''), '[[:space:];()]+', '', 'g') = 'false'
+          UNION ALL
+          SELECT 'missing', 'notifications.staff_scope_allows_patient(uuid)'
+          WHERE NOT EXISTS (SELECT 1 FROM pg_proc p WHERE p.pronamespace = 'notifications'::regnamespace AND p.proname = 'staff_scope_allows_patient')`,
+  },
   'M-5-directory': {
     title: 'every object owned by directory_ro is a view on the C0 list',
     sql: `SELECT c.oid::regclass::text AS object FROM pg_class c WHERE pg_get_userbyid(c.relowner) = 'directory_ro'
