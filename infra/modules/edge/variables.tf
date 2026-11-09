@@ -15,7 +15,28 @@ variable "portals" {
 }
 
 variable "integrations_host" {
-  description = "Machine-client host. Not behind CloudFront (DEVOPS-PLAN 3.2, 'no CDN'); protected by the regional WAF on the ALB."
+  description = "Machine-client host. Own CloudFront distribution with a CLOUDFRONT-scope web ACL, VPC origin to the same internal ALB (ARCHITECTURE 8.1 TB1, DEVOPS-PLAN 3.2)."
+  type        = string
+}
+
+variable "integrations_certificate_arn" {
+  description = "ACM certificate in us-east-1 covering the integrations host."
+  type        = string
+}
+
+variable "route53_zone_id" {
+  description = "Hosted zone for the integrations alias records. Null leaves the DNS records to the caller (as for the portal hosts)."
+  type        = string
+  default     = null
+}
+
+variable "vpc_id" {
+  description = "VPC of the internal ALB; the CloudFront-VPCOrigins-Service-SG is looked up here."
+  type        = string
+}
+
+variable "alb_security_group_id" {
+  description = "ALB security group (compute module). This module adds its only ingress rule, 443 from the CloudFront VPC origin service group."
   type        = string
 }
 
@@ -25,7 +46,8 @@ variable "cloudfront_certificate_arn" {
 }
 
 variable "alb_arn" {
-  type = string
+  description = "ARN of the internal ALB; the target of the CloudFront VPC origin."
+  type        = string
 }
 
 variable "alb_dns_name" {
@@ -67,8 +89,8 @@ variable "waf_log_group_arn_cloudfront" {
   type        = string
 }
 
-variable "waf_log_group_arn_regional" {
-  description = "CloudWatch log group (name starts aws-waf-logs-) in the ALB Region for the regional web ACL."
+variable "waf_log_group_arn_integrations" {
+  description = "CloudWatch log group (name starts aws-waf-logs-) in us-east-1 for the integrations CloudFront web ACL."
   type        = string
 }
 

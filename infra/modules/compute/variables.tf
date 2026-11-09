@@ -7,17 +7,8 @@ variable "vpc_id" {
   type = string
 }
 
-variable "public_subnet_ids" {
-  description = "ALB subnets (at least two AZs)."
-  type        = list(string)
-  validation {
-    condition     = length(var.public_subnet_ids) >= 2
-    error_message = "The ALB needs subnets in at least two AZs."
-  }
-}
-
 variable "private_subnet_ids" {
-  description = "Fargate task subnets (at least two AZs)."
+  description = "Private subnets (at least two AZs) for the internal ALB and the Fargate tasks."
   type        = list(string)
   validation {
     condition     = length(var.private_subnet_ids) >= 2
@@ -45,7 +36,7 @@ variable "portal_hosts" {
 }
 
 variable "integrations_host" {
-  description = "Machine-client host, served by the ALB directly (no CDN, no cookies)."
+  description = "Machine-client host. Served through its own CloudFront distribution (edge module) to the same internal ALB; no cookies."
   type        = string
 }
 
@@ -55,7 +46,7 @@ variable "origin_verify_header_name" {
 }
 
 variable "origin_verify_secret" {
-  description = "Shared value CloudFront adds to origin requests; portal hosts without it get 403 at the ALB. Supplied from the secret store by the pipeline; it is held in state, so rotate it as a secret. Never commit a value."
+  description = "Shared value CloudFront adds to origin requests; every forwarding rule (portal and integrations hosts) requires it, so requests without it get 403 at the ALB. Defence in depth behind the VPC-origin network path. Supplied from the secret store by the pipeline; it is held in state, so rotate it as a secret. Never commit a value."
   type        = string
   sensitive   = true
   validation {

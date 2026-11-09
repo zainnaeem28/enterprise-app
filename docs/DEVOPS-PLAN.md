@@ -150,7 +150,7 @@ Scope is exactly the residual items below, taken from HEAAA-58 (`devops-plan-dra
 | `api` | ECS Fargate, 2 min – 8 max tasks across ≥ 2 AZs | 2 tasks | Max from the connection budget (ARCHITECTURE 9.2): 8 × 20 pool + 8 `LISTEN` |
 | `worker` | ECS Fargate, 2 min – 4 max | 1–2 | Jobs are leased; scaled on queue depth and age |
 | Portals (`my.`, `staff.`, `pharmacy.`) | S3 + CloudFront, `/api/*` to ALB, no caching of API | same, separate distribution | Versioned prefix per release (section 6.2) |
-| `integrations.` | Same ALB, separate WAF rule groups, no cookies | same | `/public/v1/*` has its own rule group and rate limits (SHARED-BOUNDARIES 10.2) |
+| `integrations.` | Own CloudFront distribution + CLOUDFRONT-scope WAF (integrations rule groups), VPC origin to the same internal ALB, no cookies | same | `/public/v1/*` has its own rule group and rate limits (SHARED-BOUNDARIES 10.2). The ALB is internal (private subnets) and admits only the CloudFront VPC-origin service group on 443 (HEAAA-573 D-F37-2; ARCHITECTURE 8.1 TB1). Behaviour **Unverified until staging** (DELIVERY-PLAN C-01) |
 | Database | RDS PostgreSQL 17+, Multi-AZ, 4 vCPU / 32 GB, 1 TB autoscaling start | Smaller class, Multi-AZ off | Resize after load test |
 | Documents | S3 quarantine and clean buckets, SSE-KMS | same, synthetic | CRR with RTC to recovery region in production |
 | Marketing | Fargate (1–2 small tasks) + small PostgreSQL | same | Or static export plus SaaS CMS (decided on cost at G2, ARCHITECTURE 7) |
@@ -630,7 +630,7 @@ CloudWatch Synthetics canaries, priced at **US$0.0012 per canary run** (verified
 | `staff.` shallow | 1 min | same | 51.84 |
 | `my.` journey | 5 min | Sign-in page loads, `GET /public/v1` slot lookup (PHI-free) | 10.37 |
 | `staff.` journey | 5 min | Sign-in page loads | 10.37 |
-| `integrations.` | 5 min | `/public/v1` health | 10.37 |
+| `integrations.` | 5 min | `/public/v1` health, through its own CloudFront distribution, the VPC origin and the internal ALB (HEAAA-573 D-F37-2) | 10.37 |
 | `pharmacy.` | 5 min | Sign-in page loads | 10.37 |
 | `www.` / `cms.` | 5 min each | Page loads (best effort per SAR-11) | 20.74 |
 | Staging (`my.`, `staff.`, `integrations.`) | 15 min | Shallow | 10.38 |
@@ -665,6 +665,7 @@ All figures are US$/month at list prices, planning estimates, not quotes.
 | GitHub Actions minutes beyond the plan's included minutes | 0 | 40 | 150 | About 8,000–20,000 Linux minutes/month (150 PR runs × 25 min, 100 main builds × 30 min, nightly e2e) less included minutes; per-minute price **Unverified** |
 | Paging / on-call service | 0 | 40 | 150 | Per-user price of a paging product × 2–6 on-call people (**Unverified**); 0 if SNS email only (weak) |
 | SAST, secrets, dependency, container scanning | 0 | 0 | 0 | Open-source tools run in CI. SonarQube is not selected (14) |
+| `integrations.` own CloudFront distribution and CLOUDFRONT-scope web ACL (HEAAA-573 D-F37-2), replacing the regional ACL on the ALB | 5 | 15 | 40 | A distribution and a VPC origin have no fixed monthly charge (VPC origins add no AWS charge: **Unverified**, recalled). Web ACL and rule charges replace those of the regional ACL (about the same rule count). CloudFront request and transfer charges for webhook and `site` read-API traffic are low-volume estimates, **Unverified**; the canary is already in 11.4. Inside the ARCHITECTURE "cloud infrastructure" line; not additive to the G1 total |
 | Extra observability (log volume, traces, **canaries ≈ 176**, 11.4) | 200 | 300 | 550 | Canaries alone are about US$176 (listed, 11.4); the low value rises accordingly. Inside ARCHITECTURE "cloud infrastructure" and "tooling" lines; shown for visibility, **not additive** to the G1 total |
 | Test Google Workspace tenant and domain (3.5, AL-05) | 40 | 60 | 150 | 4–10 users at a recalled per-user list price plus domain registration. **Unverified**; price, trial and edition not checked. Needs the owner's decision (16 item 19) |
 | Vendor sandbox usage: email, SMS, video (3.5, AL-05) | 0 | 50 | 200 | **Unverified**; vendors not chosen. E-prescribing sandbox **not estimated** (out of scope) |

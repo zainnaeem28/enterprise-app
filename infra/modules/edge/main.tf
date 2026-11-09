@@ -9,6 +9,10 @@ locals {
   s3_origin_id  = "portal-bucket"
   alb_origin_id = "api-alb"
 
+  # Every host reaches the one internal ALB through CloudFront and the VPC origin below
+  # (ARCHITECTURE 8.1 TB1, ADR-005). Nothing reaches the ALB from the internet.
+  integrations_origin_id = "api-alb"
+
   integrations_host_match = {
     search_string = lower(var.integrations_host)
   }
@@ -238,6 +242,59 @@ resource "aws_cloudfront_origin_request_policy" "api" {
   }
 }
 
+# integrations.: every viewer header (Host, Authorization, vendor signature and timestamp headers,
+# the X-Goog-* headers of ARCHITECTURE 29.5) and every query string reach the ALB; no cookie does.
+# The host accepts none, and the web ACL also refuses any request that carries one.
+resource "aws_cloudfront_origin_request_policy" "integrations" {
+  name = "${var.name}-integrations-all-viewer-no-cookies"
+
+  cookies_config {
+    cookie_behavior = "none"
+  }
+  headers_config {
+    header_behavior = "allViewer"
+  }
+  query_strings_config {
+    query_string_behavior = "all"
+  }
+}
+
+# One VPC origin for the internal ALB, shared by the portal and integrations distributions.
+# CloudFront creates the AWS-managed CloudFront-VPCOrigins-Service-SG in the VPC when the first VPC
+# origin exists; the ALB admits only that group.
+resource "aws_cloudfront_vpc_origin" "alb" {
+  tags = local.tags
+
+  vpc_origin_endpoint_config {
+    name                   = "${var.name}-alb"
+    arn                    = var.alb_arn
+    http_port              = 80
+    https_port             = 443
+    origin_protocol_policy = "https-only"
+
+    origin_ssl_protocols {
+      items    = ["TLSv1.2"]
+      quantity = 1
+    }
+  }
+}
+
+data "aws_security_group" "vpc_origin_service" {
+  name   = "CloudFront-VPCOrigins-Service-SG"
+  vpc_id = var.vpc_id
+
+  depends_on = [aws_cloudfront_vpc_origin.alb]
+}
+
+resource "aws_vpc_security_group_ingress_rule" "alb_from_vpc_origin" {
+  security_group_id            = var.alb_security_group_id
+  description                  = "HTTPS from the CloudFront VPC origin service group"
+  ip_protocol                  = "tcp"
+  from_port                    = 443
+  to_port                      = 443
+  referenced_security_group_id = data.aws_security_group.vpc_origin_service.id
+}
+
 resource "aws_cloudfront_response_headers_policy" "portal" {
   # checkov:skip=CKV_AWS_259:HSTS max-age 2 years with includeSubDomains is set; the preload flag is deliberately off because browser preload lists are hard to undo. Owner decision.
   name = "${var.name}-portal-security"
@@ -263,6 +320,29 @@ resource "aws_cloudfront_response_headers_policy" "portal" {
     content_security_policy {
       content_security_policy = var.content_security_policy
       override                = true
+    }
+  }
+}
+
+# integrations.: API responses. Security headers only where the origin sets none (override = false);
+# no Cache-Control or CSP is touched, the API controls its own caching.
+resource "aws_cloudfront_response_headers_policy" "integrations" {
+  # checkov:skip=CKV_AWS_259:HSTS max-age 2 years with includeSubDomains is set; the preload flag is deliberately off because browser preload lists are hard to undo. Owner decision.
+  name = "${var.name}-integrations-security"
+
+  security_headers_config {
+    strict_transport_security {
+      access_control_max_age_sec = 63072000
+      include_subdomains         = true
+      preload                    = false
+      override                   = false
+    }
+    content_type_options {
+      override = true
+    }
+    referrer_policy {
+      referrer_policy = "no-referrer"
+      override        = false
     }
   }
 }
@@ -293,17 +373,15 @@ resource "aws_cloudfront_distribution" "portal" {
     origin_access_control_id = aws_cloudfront_origin_access_control.portal.id
   }
 
-  # CloudFront sends the viewer Host to the ALB (origin request policy), so the ALB certificate
-  # must cover the portal hosts. HTTPS only, TLS 1.2+.
+  # The ALB is internal and is reached through the VPC origin. CloudFront sends the viewer Host to
+  # it (origin request policy), so the ALB certificate must cover the portal hosts and the
+  # integrations host. HTTPS only, TLS 1.2+. The origin-verify header stays as defence in depth.
   origin {
     origin_id   = local.alb_origin_id
     domain_name = var.alb_dns_name
 
-    custom_origin_config {
-      http_port                = 80
-      https_port               = 443
-      origin_protocol_policy   = "https-only"
-      origin_ssl_protocols     = ["TLSv1.2"]
+    vpc_origin_config {
+      vpc_origin_id            = aws_cloudfront_vpc_origin.alb.id
       origin_read_timeout      = var.origin_read_timeout_seconds
       origin_keepalive_timeout = 5
     }
@@ -382,6 +460,86 @@ resource "aws_cloudfront_distribution" "portal" {
     acm_certificate_arn      = var.cloudfront_certificate_arn
     ssl_support_method       = "sni-only"
     minimum_protocol_version = "TLSv1.2_2021"
+  }
+}
+
+# ---------------------------------------------------------------------------
+# integrations. distribution (machine clients: partners, vendor webhooks, public read API)
+# ---------------------------------------------------------------------------
+
+resource "aws_cloudfront_distribution" "integrations" {
+  # checkov:skip=CKV_AWS_310:No secondary origin exists; the API has one ALB. Regional failure is handled by the region-loss runbook.
+  # checkov:skip=CKV_AWS_374:Partner and vendor systems may call from outside the US; geo blocking is a product/security decision not made here.
+  # checkov:skip=CKV_AWS_305:API host (HEAAA-573 D-F37-2): a default root object would rewrite "/" to /index.html at the origin; the API serves no static document.
+  # checkov:skip=CKV2_AWS_47:The check also demands AWSManagedRulesAnonymousIpList; vendor webhooks (for example Google) come from hosting ranges that list may cover. KnownBadInputs (Log4j) is present. Needs a Security decision.
+  enabled         = true
+  is_ipv6_enabled = true
+  http_version    = "http2and3"
+  comment         = "${var.name} integrations"
+  aliases         = [var.integrations_host]
+  price_class     = "PriceClass_100"
+  web_acl_id      = aws_wafv2_web_acl.integrations.arn
+  tags            = local.tags
+
+  origin {
+    origin_id   = local.integrations_origin_id
+    domain_name = var.alb_dns_name
+
+    vpc_origin_config {
+      vpc_origin_id            = aws_cloudfront_vpc_origin.alb.id
+      origin_read_timeout      = var.origin_read_timeout_seconds
+      origin_keepalive_timeout = 5
+    }
+
+    custom_header {
+      name  = var.origin_verify_header_name
+      value = var.origin_verify_secret
+    }
+  }
+
+  # Single behaviour: nothing is cached, no cookie is forwarded, the request body and method pass.
+  default_cache_behavior {
+    target_origin_id           = local.integrations_origin_id
+    viewer_protocol_policy     = "redirect-to-https"
+    allowed_methods            = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+    cached_methods             = ["GET", "HEAD"]
+    compress                   = false
+    cache_policy_id            = local.caching_disabled_policy_id
+    origin_request_policy_id   = aws_cloudfront_origin_request_policy.integrations.id
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.integrations.id
+  }
+
+  logging_config {
+    bucket          = var.cloudfront_logs_bucket_domain
+    prefix          = "cloudfront/integrations/"
+    include_cookies = false
+  }
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  viewer_certificate {
+    acm_certificate_arn      = var.integrations_certificate_arn
+    ssl_support_method       = "sni-only"
+    minimum_protocol_version = "TLSv1.2_2021"
+  }
+}
+
+# Portal DNS is managed outside this module; the integrations alias is created here when a zone is given.
+resource "aws_route53_record" "integrations" {
+  for_each = var.route53_zone_id == null ? toset([]) : toset(["A", "AAAA"])
+
+  zone_id = var.route53_zone_id
+  name    = var.integrations_host
+  type    = each.key
+
+  alias {
+    name                   = aws_cloudfront_distribution.integrations.domain_name
+    zone_id                = aws_cloudfront_distribution.integrations.hosted_zone_id
+    evaluate_target_health = false
   }
 }
 
@@ -570,13 +728,14 @@ resource "aws_wafv2_web_acl_logging_configuration" "cloudfront" {
 }
 
 # ---------------------------------------------------------------------------
-# WAF: regional (ALB; integrations host)
+# WAF: CloudFront scope (integrations. distribution)
 # ---------------------------------------------------------------------------
 
-resource "aws_wafv2_web_acl" "regional" {
+resource "aws_wafv2_web_acl" "integrations" {
+  provider    = aws.us_east_1
   name        = "${var.name}-integrations"
-  description = "ALB: integrations host rules (no cookies, /public/v1 limits). Portal traffic is inspected at CloudFront."
-  scope       = "REGIONAL"
+  description = "integrations. distribution: no cookies, /public/v1 limits, IP reputation, known bad inputs"
+  scope       = "CLOUDFRONT"
   tags        = local.tags
 
   default_action {
@@ -792,14 +951,10 @@ resource "aws_wafv2_web_acl" "regional" {
   }
 }
 
-resource "aws_wafv2_web_acl_association" "alb" {
-  resource_arn = var.alb_arn
-  web_acl_arn  = aws_wafv2_web_acl.regional.arn
-}
-
-resource "aws_wafv2_web_acl_logging_configuration" "regional" {
-  resource_arn            = aws_wafv2_web_acl.regional.arn
-  log_destination_configs = [var.waf_log_group_arn_regional]
+resource "aws_wafv2_web_acl_logging_configuration" "integrations" {
+  provider                = aws.us_east_1
+  resource_arn            = aws_wafv2_web_acl.integrations.arn
+  log_destination_configs = [var.waf_log_group_arn_integrations]
 
   redacted_fields {
     single_header {

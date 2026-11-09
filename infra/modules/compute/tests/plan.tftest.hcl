@@ -25,7 +25,6 @@ mock_provider "aws" {
 variables {
   name                 = "t"
   vpc_id               = "vpc-1"
-  public_subnet_ids    = ["subnet-a", "subnet-b"]
   private_subnet_ids   = ["subnet-c", "subnet-d"]
   kms_key_arn          = "arn:aws:kms:us-east-2:111111111111:key/11111111-1111-1111-1111-111111111111"
   alb_certificate_arn  = "arn:aws:acm:us-east-2:111111111111:certificate/11111111-1111-1111-1111-111111111111"
@@ -87,11 +86,34 @@ run "rollout_and_network_posture" {
   }
 }
 
-run "integrations_rule_has_no_path_or_header_dependency" {
+run "alb_is_internal_with_no_internet_path" {
+  command = plan
+  assert {
+    condition     = aws_lb.this.internal == true && toset(aws_lb.this.subnets) == toset(["subnet-c", "subnet-d"])
+    error_message = "the ALB must be internal and in the private subnets (AWS-0053, HEAAA-573)"
+  }
+  assert {
+    condition     = length(aws_security_group.alb.ingress) == 0
+    error_message = "the ALB security group has no inline ingress; the only ingress rule is added by the edge module"
+  }
+  assert {
+    condition     = aws_lb_listener.https.port == 443 && aws_lb_listener.https.default_action[0].fixed_response[0].status_code == "403"
+    error_message = "HTTPS only with a default 403; there is no port 80 listener"
+  }
+}
+
+run "every_forwarding_rule_needs_the_origin_verify_header" {
   command = plan
   assert {
     condition     = aws_lb_listener_rule.integrations.priority == 20 && aws_lb_listener_rule.portal_api.priority == 10
     error_message = "rule order"
+  }
+  assert {
+    condition = alltrue([
+      for r in [aws_lb_listener_rule.integrations, aws_lb_listener_rule.portal_api] :
+      length([for c in r.condition : c if length(c.http_header) == 1 && c.http_header[0].http_header_name == "X-Origin-Verify"]) == 1
+    ])
+    error_message = "portal and integrations rules both require the origin-verify header"
   }
 }
 
