@@ -30,8 +30,8 @@ function make(handler: (r: Request) => Response) {
 
 const session = {
   principalId: '8d3c1c52-7a56-4a5b-8a2f-3c9a1f0a1111',
-  realm: 'staff',
-  audience: 'google',
+  realm: 'google',
+  audience: 'staff',
   displayName: 'Dr Sample',
   csrfToken: 'csrf-1',
   idleExpiresAt: new Date(T0 + 15 * MIN).toISOString(),
@@ -48,7 +48,7 @@ describe('shell runtime', () => {
         : json(200, { idleExpiresAt: session.idleExpiresAt }),
     );
     const info = await rt.loadSession();
-    expect(info).toMatchObject({ displayName: 'Dr Sample', audience: 'google' });
+    expect(info).toMatchObject({ displayName: 'Dr Sample', audience: 'staff' });
     expect(JSON.stringify(info)).not.toContain('csrf-1');
     vi.advanceTimersByTime(13 * MIN);
     expect(rt.session.getSnapshot().phase).toBe('warning');
