@@ -1,0 +1,29 @@
+PASS sign-in | http://localhost:4675/arrivals | api: GET /api/v1/auth/sign-in -> 302 ; GET /api/v1/auth/callback -> 302 ; GET /api/v1/locations/00000000-0000-7000-8000-000000000101/arrivals -> 200
+      page: Skip to main content Clinic Staff portal Synthetic Receptionist Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Arrivals Triage queue Forms & consents Follow-ups Waitlist Pre-consultation desk Arrivals board Check in Register a patient Possible duplicates Arrivals today Updated at 07:53 AM Refresh Arrivals today Time Patient Status Pre-visit it
+PASS new-patient-form-filled | http://localhost:4675/arrivals | api: GET /api/v1/locations/00000000-0000-7000-8000-000000000101/arrivals -> 200
+      page: Skip to main content Clinic Staff portal Synthetic Receptionist Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Arrivals Triage queue Forms & consents Follow-ups Waitlist Pre-consultation desk Arrivals board Check in Register a patient Possible duplicates Register a patient Given name Family name Date of birth Year-month-day, for example 1984-03-27. State Two letters, for example NY. Phone Email Check for an existing record Help
+PASS new-patient-check-existing | http://localhost:4675/arrivals | api: POST /api/v1/patients/match -> 200
+      page: Skip to main content Clinic Staff portal Synthetic Receptionist Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Arrivals Triage queue Forms & consents Follow-ups Waitlist Pre-consultation desk Arrivals board Check in Register a patient Possible duplicates Register a patient Given name Family name Date of birth Year-month-day, for example 1984-03-27. State Two letters, for example NY. Phone Email Check for an existing record ℹ No existing record matches. You can register this patient. Register patient Help
+PASS new-patient-create | http://localhost:4675/arrivals | api: POST /api/v1/patients -> 201
+      page: Skip to main content Clinic Staff portal Synthetic Receptionist Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Arrivals Triage queue Forms & consents Follow-ups Waitlist Pre-consultation desk Arrivals board Check in Register a patient Possible duplicates Register a patient Given name Family name Date of birth Year-month-day, for example 1984-03-27. State Two letters, for example NY. Phone Email Check for an existing record ℹ Patient registered. MRN MRN-1000001. Help
+PASS duplicate-patient-warning | http://localhost:4675/arrivals | api: GET /api/v1/locations/00000000-0000-7000-8000-000000000101/arrivals -> 200 ; POST /api/v1/patients/match -> 200
+      page: Skip to main content Clinic Staff portal Synthetic Receptionist Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Arrivals Triage queue Forms & consents Follow-ups Waitlist Pre-consultation desk Arrivals board Check in Register a patient Possible duplicates Register a patient Given name Family name Date of birth Year-month-day, for example 1984-03-27. State Two letters, for example NY. Phone Email Check for an existing record A record may already exist. Check before creating a new one. ! Possible match Sam Synthetic MRN-9100001 · 1980-01-01 Matched on: given_name, family_name, date_of_birth Open existing record Create anyway (reason required) Help
+
+API CALLS
+GET /api/v1/auth/sign-in -> 302
+GET /api/v1/auth/callback -> 302
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/locations/00000000-0000-7000-8000-000000000101/arrivals -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/locations/00000000-0000-7000-8000-000000000101/arrivals -> 200
+POST /api/v1/patients/match -> 200
+POST /api/v1/patients -> 201
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/locations/00000000-0000-7000-8000-000000000101/arrivals -> 200
+POST /api/v1/patients/match -> 200

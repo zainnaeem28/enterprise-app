@@ -1,0 +1,48 @@
+PASS sign-in | http://localhost:4675/arrivals | api: GET /api/v1/auth/sign-in -> 302 ; GET /api/v1/auth/callback -> 302 ; GET /api/v1/locations/00000000-0000-7000-8000-000000000101/arrivals -> 200
+      page: Skip to main content Clinic Staff portal Synthetic Receptionist Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Arrivals Triage queue Forms & consents Follow-ups Waitlist Pre-consultation desk Arrivals board Check in Register a patient Possible duplicates Arrivals today Updated at 07:52 AM Refresh Arrivals today Time Patient Status Pre-visit it
+PASS arrivals-board | http://localhost:4675/arrivals | api: GET /api/v1/locations/00000000-0000-7000-8000-000000000101/arrivals -> 200
+      page: Skip to main content Clinic Staff portal Synthetic Receptionist Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Arrivals Triage queue Forms & consents Follow-ups Waitlist Pre-consultation desk Arrivals board Check in Register a patient Possible duplicates Arrivals today Updated at 07:52 AM Refresh Arrivals today Time Patient Status Pre-visit items Actions 02:00 PM Sam Synthetic · MRN-9100001 ℹ In consultation • Questionnaire: not known • Consents: not known • Insurance: not known Review forms Open triage 02:30 PM Sam Synthetic · MRN-9100001 ✓ Checked in (at the desk) ! Questionnaire: to do ✓ Consents: done ! Insurance: to do Review forms Open triage 03:00 PM Sam Synthetic · MRN-9100001 • Not arrived ! Questionnaire: to do ✓ Consents: done ! Insurance: to do Check in Help
+PASS check-in-visit | http://localhost:4675/arrivals | api: POST /api/v1/appointments/01a1bf4b-bc91-73c6-bf40-23cbef191a40/check-in -> 200 ; GET /api/v1/locations/00000000-0000-7000-8000-000000000101/arrivals -> 200
+      page: Skip to main content Clinic Staff portal Synthetic Receptionist Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Arrivals Triage queue Forms & consents Follow-ups Waitlist Pre-consultation desk Arrivals board Check in Register a patient Possible duplicates Arrivals today Updated at 07:53 AM Refresh ℹ Sam Synthetic is checked in and in the queue. Arrivals today Time Patient Status Pre-visit items Actions 02:00 PM Sam Synthetic · MRN-9100001 ℹ In consultation • Questionnaire: not known • Consents: not known • Insurance: not known Review forms Open triage 02:30 PM Sam Synthetic · MRN-9100001 ✓ Checked in (at the desk) ! Questionnaire: to do ✓ Consents: done ! Insurance: to do Review forms Open triage 03:00 PM Sam Synthetic · MRN-9100001 ✓ Checked in (at the desk) ! Questionnaire: to do ✓ Consents: done ! Insurance: to do Review forms Open
+PASS triage-queue | http://localhost:4675/triage | api: GET /api/v1/locations/00000000-0000-7000-8000-000000000101/queue -> 200
+      page: Skip to main content Clinic Staff portal Synthetic Receptionist Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Arrivals Triage queue Forms & consents Follow-ups Waitlist Pre-consultation desk Queue Triage Queue Updated at 07:53 AM Refresh Waiting time is counted from arrival. Queue Patient Stage Waiting Doctor assigned Actions Sam Synthetic • Waiting 3 min No doctor assigned Move to Waiting Vitals Triage Ready for the doctor With the doctor Done Move Sam Synthetic • Waiting 2 min No doctor assigned Move to Waiting Vitals Triage Ready for the doctor With the doctor Done Move Sam Synthetic • Waiting 0 min No doctor assigned Move to Waiting
+PASS forms-review | http://localhost:4675/forms | api: GET /api/v1/locations/00000000-0000-7000-8000-000000000101/arrivals -> 200
+      page: Skip to main content Clinic Staff portal Synthetic Receptionist Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Arrivals Triage queue Forms & consents Follow-ups Waitlist Pre-consultation desk Forms, consents and insurance Choose a visit to review. Sam Synthetic 02:00 PM Review forms Sam Synthetic 02:30 PM Review forms Sam Synthetic 03:00 PM Review forms Help
+PASS register-patient | http://localhost:4675/arrivals | api: GET /api/v1/locations/00000000-0000-7000-8000-000000000101/arrivals -> 200
+      page: Skip to main content Clinic Staff portal Synthetic Receptionist Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Arrivals Triage queue Forms & consents Follow-ups Waitlist Pre-consultation desk Arrivals board Check in Register a patient Possible duplicates Register a patient Given name Family name Date of birth Year-month-day, for example 1984-03-27. State Two letters, for example NY. Phone Email Check for an existing record Help
+PASS follow-ups | http://localhost:4675/follow-ups | api: GET /api/v1/locations/00000000-0000-7000-8000-000000000101/follow-ups -> 200
+      page: Skip to main content Clinic Staff portal Synthetic Receptionist Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Arrivals Triage queue Forms & consents Follow-ups Waitlist Pre-consultation desk Follow-ups No-shows Follow-up and referral tasks Updated at 07:53 AM Refresh No open follow-ups. New ones appear here. Create a follow-up Search by name, date of birth, MRN or phone. Fill in at least one. Name Date of birth Year-month-day, for example 1984-03-27. MRN Phone Search Help
+PASS tasks-route-for-front-desk | http://localhost:4675/tasks | api: 
+      page: Skip to main content Clinic Staff portal Synthetic Receptionist Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Arrivals Triage queue Forms & consents Follow-ups Waitlist We can't find this, or it isn't available to you. Go to your home page Help
+
+API CALLS
+GET /api/v1/auth/sign-in -> 302
+GET /api/v1/auth/callback -> 302
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/locations/00000000-0000-7000-8000-000000000101/arrivals -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/locations/00000000-0000-7000-8000-000000000101/arrivals -> 200
+POST /api/v1/appointments/01a1bf4b-bc91-73c6-bf40-23cbef191a40/check-in -> 200
+GET /api/v1/locations/00000000-0000-7000-8000-000000000101/arrivals -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/locations/00000000-0000-7000-8000-000000000101/queue -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/locations/00000000-0000-7000-8000-000000000101/arrivals -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/locations/00000000-0000-7000-8000-000000000101/arrivals -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/locations/00000000-0000-7000-8000-000000000101/follow-ups -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200

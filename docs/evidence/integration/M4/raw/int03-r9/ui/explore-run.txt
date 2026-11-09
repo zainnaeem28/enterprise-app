@@ -1,0 +1,76 @@
+PASS sign-in | http://localhost:4675/schedule | api: GET /api/v1/auth/sign-in -> 302 ; GET /api/v1/auth/callback -> 302 ; GET /api/v1/alerts -> 404 ; GET /api/v1/alerts/stream -> 403 ; GET /api/v1/clinicians/00000000-0000-7000-8000-000000000501/schedule -> 200
+      page: Skip to main content Clinic Staff portal Synthetic Doctor Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Alerts Schedule Patients Tasks & messages Notes to sign Availability Arrivals Triage queue Forms & consents Follow-ups Waitlist Live alerts are paused because this page is out of date. Reload now. Reload Schedule today Updated at 7:47 AM Re
+PASS path-schedule | http://localhost:4675/schedule | api: GET /api/v1/alerts -> 404 ; GET /api/v1/alerts/stream -> 403 ; GET /api/v1/clinicians/00000000-0000-7000-8000-000000000501/schedule -> 200
+      page: Skip to main content Clinic Staff portal Synthetic Doctor Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Alerts Schedule Patients Tasks & messages Notes to sign Availability Arrivals Triage queue Forms & consents Follow-ups Waitlist Live alerts are paused because this page is out of date. Reload now. Reload Schedule today Updated at 7:47 AM Refresh You have no visits at this location today. Help
+PASS path-patients | http://localhost:4675/patients | api: GET /api/v1/alerts -> 404 ; GET /api/v1/alerts/stream -> 403
+      page: Skip to main content Clinic Staff portal Synthetic Doctor Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Alerts Schedule Patients Tasks & messages Notes to sign Availability Arrivals Triage queue Forms & consents Follow-ups Waitlist Live alerts are paused because this page is out of date. Reload now. Reload Patients Find a patient Search by MRN, or by name with an optional date of birth (YYYY-MM-DD). You see patients you are allowed to see. Name Date of birth YYYY-MM-DD MRN Search Help
+PASS path-notes-to-sign | http://localhost:4675/notes-to-sign | api: GET /api/v1/alerts -> 404 ; GET /api/v1/clinicians/00000000-0000-7000-8000-000000000501/notes -> 200 ; GET /api/v1/alerts/stream -> 403 ; GET /api/v1/clinicians/00000000-0000-7000-8000-000000000501/cosign-queue -> 200
+      page: Skip to main content Clinic Staff portal Synthetic Doctor Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Alerts Schedule Patients Tasks & messages Notes to sign Availability Arrivals Triage queue Forms & consents Follow-ups Waitlist Live alerts are paused because this page is out of date. Reload now. Reload Notes to sign To sign (0) Co-sign queue (0) You have no draft notes. Open a visit to write a note. Help
+PASS path-arrivals | http://localhost:4675/arrivals | api: GET /api/v1/locations/00000000-0000-7000-8000-000000000101/arrivals -> 200
+      page: Skip to main content Clinic Staff portal Synthetic Doctor Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Alerts Schedule Patients Tasks & messages Notes to sign Availability Arrivals Triage queue Forms & consents Follow-ups Waitlist Pre-consultation desk Arrivals board Check in Register a patient Possible duplicates Arrivals today Updated at 07:47 AM Refresh No visits are booked at this location today. Help
+PASS path-triage | http://localhost:4675/triage | api: GET /api/v1/locations/00000000-0000-7000-8000-000000000101/queue -> 200
+      page: Skip to main content Clinic Staff portal Synthetic Doctor Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Alerts Schedule Patients Tasks & messages Notes to sign Availability Arrivals Triage queue Forms & consents Follow-ups Waitlist Pre-consultation desk Queue Triage Queue Updated at 07:47 AM Refresh Waiting time is counted from arrival. Nobody is waiting. New arrivals appear here. Help
+PASS path-forms | http://localhost:4675/forms | api: GET /api/v1/locations/00000000-0000-7000-8000-000000000101/arrivals -> 200
+      page: Skip to main content Clinic Staff portal Synthetic Doctor Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Alerts Schedule Patients Tasks & messages Notes to sign Availability Arrivals Triage queue Forms & consents Follow-ups Waitlist Pre-consultation desk Forms, consents and insurance No visits are booked at this location today. Help
+PASS path-follow-ups | http://localhost:4675/follow-ups | api: GET /api/v1/locations/00000000-0000-7000-8000-000000000101/follow-ups -> 200
+      page: Skip to main content Clinic Staff portal Synthetic Doctor Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Alerts Schedule Patients Tasks & messages Notes to sign Availability Arrivals Triage queue Forms & consents Follow-ups Waitlist Pre-consultation desk Follow-ups No-shows Follow-up and referral tasks Updated at 07:47 AM Refresh No open follow-ups. New ones appear here. Create a follow-up Search by name, date of birth, MRN or phone. Fill in at least one. Name Date of birth Year-month-day, for example 1984-03-27. MRN Phone Search Help
+PASS path-tasks | http://localhost:4675/tasks | api: GET /api/v1/tasks -> 200
+      page: Skip to main content Clinic Staff portal Synthetic Doctor Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Alerts Schedule Patients Tasks & messages Notes to sign Availability Arrivals Triage queue Forms & consents Follow-ups Waitlist Tasks & messages Tasks Secure messages Tasks New task Show tasks Open Done Cancelled Refresh You have no open tasks. Help
+PASS path-availability | http://localhost:4675/availability | api: GET /api/v1/clinicians/00000000-0000-7000-8000-000000000501/availability-templates -> 200
+      page: Skip to main content Clinic Staff portal Synthetic Doctor Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Alerts Schedule Patients Tasks & messages Notes to sign Availability Arrivals Triage queue Forms & consents Follow-ups Waitlist My availability Weekly hours Leave and blocked time Google Calendar Weekly hours These hours decide which times patients can book. A change applies to new searches from the moment you save it. Visits already booked are never cancelled by a change. Set up weekly hours From 2020-01-01, no end date Mon 09:00–17:00 · Tue 09:00–17:00 · Wed 09:00–17:00 · Thu 09:00–17:00 · Fri 09:00–17:00 · Sat 09:00–17:00 · Sun 09:
+PASS path-waitlist | http://localhost:4675/waitlist | api: 
+      page: Skip to main content Clinic Staff portal Synthetic Doctor Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Alerts Schedule Patients Tasks & messages Notes to sign Availability Arrivals Triage queue Forms & consents Follow-ups Waitlist Waitlist ℹ It is part of the portal but has not been released. Help
+
+API CALLS
+GET /api/v1/auth/sign-in -> 302
+GET /api/v1/auth/callback -> 302
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/alerts -> 404
+GET /api/v1/alerts/stream -> 403
+GET /api/v1/clinicians/00000000-0000-7000-8000-000000000501/schedule -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/alerts -> 404
+GET /api/v1/alerts/stream -> 403
+GET /api/v1/clinicians/00000000-0000-7000-8000-000000000501/schedule -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/alerts -> 404
+GET /api/v1/alerts/stream -> 403
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/alerts -> 404
+GET /api/v1/clinicians/00000000-0000-7000-8000-000000000501/notes -> 200
+GET /api/v1/alerts/stream -> 403
+GET /api/v1/clinicians/00000000-0000-7000-8000-000000000501/cosign-queue -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/locations/00000000-0000-7000-8000-000000000101/arrivals -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/locations/00000000-0000-7000-8000-000000000101/queue -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/locations/00000000-0000-7000-8000-000000000101/arrivals -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/locations/00000000-0000-7000-8000-000000000101/follow-ups -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/tasks -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/clinicians/00000000-0000-7000-8000-000000000501/availability-templates -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200

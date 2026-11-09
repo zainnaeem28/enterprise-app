@@ -1,0 +1,20 @@
+PASS sign-in | http://localhost:4675/schedule | api: GET /api/v1/auth/sign-in -> 302 ; GET /api/v1/auth/callback -> 302 ; GET /api/v1/alerts -> 404 ; GET /api/v1/alerts/stream -> 403 ; GET /api/v1/clinicians/00000000-0000-7000-8000-000000000501/schedule -> 200
+      page: Skip to main content Clinic Staff portal Synthetic Doctor Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Alerts Schedule Patients Tasks & messages Notes to sign Availability Arrivals Triage queue Forms & consents Follow-ups Waitlist Live alerts are paused because this page is out of date. Reload now. Reload Schedule today Updated at 7:55 AM Re
+PASS doctor-reads-reply | http://localhost:4675/tasks | api: GET /api/v1/tasks -> 200 ; GET /api/v1/threads -> 200 ; GET /api/v1/threads/01a1bf4e-16e7-7538-b8bd-d7963a33f197/messages -> 200
+      page: Skip to main content Clinic Staff portal Synthetic Doctor Sign out to switch to administrator Unsaved work is kept as a draft where the screen supports drafts. Alerts Schedule Patients Tasks & messages Notes to sign Availability Arrivals Triage queue Forms & consents Follow-ups Waitlist Tasks & messages Tasks Secure messages Secure messages New message Refresh Synthetic: handover for Sam Nov 9, 2026, 7:55 AM ℹ 1 unread Synthetic: handover for Sam Nov 9, 2026, 7:54 AM Synthetic: handover for Sam Nov 9, 2026, 7:52 AM Synthetic: handover for Sam You Nov 9, 2026, 7:55 AM Synthetic message: please book the follow-up. A colleague Nov 9, 2026, 7:55 AM Synthetic reply: follow-up booked. Your reply Send Help
+
+API CALLS
+GET /api/v1/auth/sign-in -> 302
+GET /api/v1/auth/callback -> 302
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/alerts -> 404
+GET /api/v1/alerts/stream -> 403
+GET /api/v1/clinicians/00000000-0000-7000-8000-000000000501/schedule -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/auth/session -> 200
+GET /api/v1/tasks -> 200
+GET /api/v1/threads -> 200
+GET /api/v1/threads/01a1bf4e-16e7-7538-b8bd-d7963a33f197/messages -> 200

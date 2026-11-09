@@ -1,0 +1,55 @@
+$ pnpm -r run build
+Scope: 10 of 11 workspace projects
+packages/contracts build$ tsc -p tsconfig.json
+packages/kernel build$ tsc -p tsconfig.json
+apps/site build$ tsc -p tsconfig.json --noEmit && vite build --outDir dist/client && vite build --ssr src/server.ts --outDir dist/server
+apps/cms build$ tsc -p tsconfig.json
+apps/cms build: Done
+packages/contracts build: Done
+apps/patient build$ tsc -p tsconfig.json --noEmit && vite build
+apps/staff build$ tsc -p tsconfig.json --noEmit && vite build
+packages/kernel build: Done
+apps/api build$ tsc -p tsconfig.json
+apps/site build: vite v8.3.5 building client environment for production...
+apps/site build: transforming...
+apps/site build: ✓ 17 modules transformed.
+apps/site build: rendering chunks...
+apps/site build: computing gzip size...
+apps/site build: dist/client/assets/site.css   15.13 kB │ gzip:  3.66 kB
+apps/site build: dist/client/assets/site.js   221.74 kB │ gzip: 69.46 kB
+apps/site build: 
+apps/site build: ✓ built in 377ms
+apps/site build: vite v8.3.5 building ssr environment for production...
+apps/site build: transforming...
+apps/site build: ✓ 26 modules transformed.
+apps/site build: rendering chunks...
+apps/site build: computing gzip size...
+apps/site build: dist/server/server.js  46.66 kB │ gzip: 13.68 kB
+apps/site build: 
+apps/site build: ✓ built in 100ms
+apps/site build: Done
+apps/worker build$ tsc -p tsconfig.json
+apps/worker build: Done
+apps/staff build: vite v8.3.5 building client environment for production...
+apps/staff build: transforming...
+apps/patient build: vite v8.3.5 building client environment for production...
+apps/patient build: transforming...
+apps/staff build: ✓ 134 modules transformed.
+apps/staff build: rendering chunks...
+apps/patient build: ✓ 132 modules transformed.
+apps/patient build: rendering chunks...
+apps/staff build: computing gzip size...
+apps/staff build: dist/index.html                   0.39 kB │ gzip:   0.26 kB
+apps/staff build: dist/assets/index-CIqImJ9r.css   17.99 kB │ gzip:   4.19 kB
+apps/staff build: dist/assets/index-BfxsS2ww.js   455.16 kB │ gzip: 134.91 kB
+apps/staff build: 
+apps/staff build: ✓ built in 351ms
+apps/staff build: Done
+apps/patient build: computing gzip size...
+apps/patient build: dist/index.html                   0.39 kB │ gzip:   0.26 kB
+apps/patient build: dist/assets/index-DjO5d1Tz.css   15.98 kB │ gzip:   3.84 kB
+apps/patient build: dist/assets/index-CduHInm5.js   384.40 kB │ gzip: 114.47 kB
+apps/patient build: 
+apps/patient build: ✓ built in 275ms
+apps/patient build: Done
+apps/api build: Done

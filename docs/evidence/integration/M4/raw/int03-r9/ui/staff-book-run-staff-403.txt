@@ -1,0 +1,5 @@
+session roles [{"key":"front_desk","locationId":"00000000-0000-7000-8000-000000000101"},{"key":"care_coordinator","locationId":"00000000-0000-7000-8000-000000000101"},{"key":"doctor","locationId":"00000000-0000-7000-8000-000000000101"}]
+POST /api/v1/availability/search -> 200 {"slots":[{"startsAt":"2026-11-09T14:00:00.000Z","endsAt":"2026-11-09T14:30:00.000Z","clinicianId":"00000000-0000-7000-8000-000000000501","locationId":"00000000-0000-7000-8000-000000000101","mode":"in
+first slot {"startsAt":"2026-11-09T14:00:00.000Z","endsAt":"2026-11-09T14:30:00.000Z","clinicianId":"00000000-0000-7000-8000-000000000501","locationId":"00000000-0000-7000-8000-000000000101","mode":"in_person"}
+POST /api/v1/holds -> 403 {"type":"https://errors.invalid/auth/forbidden","title":"Forbidden","status":403,"code":"auth.forbidden","requestId":"48bc6f95-bd76-41c2-9cb7-4bf4d25e8da5","retryable":false}
+POST /api/v1/appointments/undefined/confirm -> 403 {"type":"https://errors.invalid/auth/forbidden","title":"Forbidden","status":403,"code":"auth.forbidden","requestId":"fd31d230-31ca-4048-be3b-3679a39ff385","retryable":false}
