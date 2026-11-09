@@ -31,6 +31,10 @@ import {
 import { AlertService, ALERT_JOBS } from './modules/notifications/alerts/index.js';
 import { createPrivacy, PRIVACY_JOBS } from './modules/privacy/index.js';
 import type { PackageStorePort } from './modules/privacy/index.js';
+import {
+  createIntegrationsHostControllers,
+  PublicDirectoryService,
+} from './modules/integrations-host/index.js';
 import { createReporting, REPORTING_JOBS } from './modules/reporting/index.js';
 import {
   createIdentity,
@@ -274,6 +278,17 @@ export function buildComposition(deps: {
     ...(deps.now === undefined ? {} : { now: deps.now }),
   });
   const reporting = createReporting({ db: deps.db });
+  // The integrations host (BE-22, INT03-F18): GET /public/v1/services|locations|clinicians. No webhook vendor is configured yet (no
+  // verifier, no key store), so the receiver answers 404 for every source until C-01 delivers them.
+  const integrationsHost = createIntegrationsHostControllers({
+    directory: new PublicDirectoryService({
+      db: deps.db,
+      orgId: env.orgId,
+      organisation,
+      scheduling: availability,
+    }),
+    receiver: { receive: () => Promise.resolve({ status: 404 }) },
+  });
 
   const scopeOf = (req: Parameters<typeof requireAuthContext>[0]): ScopeSettings =>
     requireAuthContext(req).scope;
@@ -300,6 +315,7 @@ export function buildComposition(deps: {
       ...messaging.controllers,
       ...privacy.controllers,
       ...reporting.controllers,
+      ...integrationsHost,
     ],
   };
 }

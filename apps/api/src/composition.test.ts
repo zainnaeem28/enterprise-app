@@ -247,3 +247,43 @@ describe('M4 composition (INT03-F01)', () => {
     }
   });
 });
+
+describe('integrations host composition (INT03-F18)', () => {
+  test('GET /public/v1/services|locations|clinicians is mounted and answers 200 without a session', async () => {
+    const tx = { query: () => Promise.resolve({ rows: [] }) };
+    const db = {
+      withScope: (_s: unknown, fn: (x: unknown) => unknown) => fn(tx),
+    } as unknown as KernelDb;
+    const comp = buildComposition({
+      db,
+      logger: createLogger({ sink: () => undefined }),
+      identity: loadIdentityEnv(ENV),
+    });
+    const run = await start({ controllers: comp.controllers, policy: comp.policy });
+    try {
+      for (const p of ['services', 'locations', 'clinicians']) {
+        const r = await fetch(`${run.base}/public/v1/${p}`, {
+          headers: { 'x-client-release': R(MIN_RELEASE) },
+        });
+        assert.equal(r.status, 200, p);
+        assert.equal(r.headers.get('cache-control'), 'public, max-age=60', p);
+      }
+    } finally {
+      await run.close();
+    }
+  });
+
+  test('negative control: without the integrations host controllers /public/v1/services is 404', async () => {
+    const kept = c.controllers.filter((x) => !/PublicDirectory|Webhook/.test(x.name));
+    assert.ok(kept.length < c.controllers.length);
+    const run = await start({ controllers: kept, policy: c.policy });
+    try {
+      const r = await fetch(`${run.base}/public/v1/services`, {
+        headers: { 'x-client-release': R(MIN_RELEASE) },
+      });
+      assert.equal(r.status, 404);
+    } finally {
+      await run.close();
+    }
+  });
+});
