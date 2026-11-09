@@ -12,3 +12,6 @@ syft 1.57.0 9c077a7d43029b3b13e98a8db720661e700c4d58db6352153a06395ae4a2a704 htt
 # Requires CPython 3.13 on Linux x86_64. The semgrep sha256 is of the manylinux_2_34_x86_64 wheel, also equal to the PyPI-published digest.
 pip 26.3 f3b60b20ffaadd4415ed7957212a38ac63fa4c5fa375bd0f4a797777940fad13 https://files.pythonhosted.org/packages/07/25/ee8c38ae72d66b844ce8eb9711ba905dba21ca1a8a0c960057c41cd23337/pip-26.3-py3-none-any.whl
 semgrep 1.184.0 d847abb8fb6fdde77d9e30a6bc869dbfcb68eff4142dcd77897c52635a7600d9 https://pypi.org/project/semgrep/1.184.0/
+# HEAAA-497 (INT04-F19): sha256 compared with the vendor checksum files (tofu_1.13.9_SHA256SUMS, tflint checksums.txt) on 2026-11-09.
+tofu 1.13.9 bc44eb6b06446ba83bd4072114891987f590f66cca712737a7f1147c50c539ce https://github.com/opentofu/opentofu/releases/download/v1.13.9/tofu_1.13.9_linux_amd64.zip
+tflint 0.66.0 22be11cadc25cd02401e94c0ccc91aa63467debb8485c2a755d98f4c0a9d1e2e https://github.com/terraform-linters/tflint/releases/download/v0.66.0/tflint_linux_amd64.zip

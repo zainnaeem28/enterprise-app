@@ -1,0 +1,40 @@
+=== infra/accounts
+exit=0
+=== infra/approvals
+exit=0
+=== infra/bootstrap
+exit=0
+=== infra/modules/archive
+exit=0
+=== infra/modules/ci-trust
+exit=0
+=== infra/modules/compute
+exit=0
+=== infra/modules/database
+exit=0
+=== infra/modules/edge
+exit=0
+=== infra/modules/identity
+exit=0
+=== infra/modules/kms
+exit=0
+=== infra/modules/network
+exit=0
+=== infra/modules/observability
+exit=0
+=== infra/modules/secrets
+exit=0
+=== infra/modules/storage
+exit=0
+=== infra/accounts/log-archive (config infra/accounts/.tflint.hcl)
+exit=0
+=== infra/accounts/management (config infra/accounts/.tflint.hcl)
+exit=0
+=== infra/accounts/marketing (config infra/accounts/.tflint.hcl)
+exit=0
+=== infra/accounts/production (config infra/accounts/.tflint.hcl)
+exit=0
+=== infra/accounts/staging (config infra/accounts/.tflint.hcl)
+exit=0
+=== infra/accounts/tooling (config infra/accounts/.tflint.hcl)
+exit=0

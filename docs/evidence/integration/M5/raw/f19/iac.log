@@ -1,0 +1,38 @@
+=== infra/accounts/log-archive
+Success! The configuration is valid.
+=== infra/accounts/management
+Success! The configuration is valid.
+=== infra/accounts/marketing
+Success! The configuration is valid.
+=== infra/accounts/production
+Success! The configuration is valid.
+=== infra/accounts/staging
+Success! The configuration is valid.
+=== infra/accounts/tooling
+Success! The configuration is valid.
+=== infra/approvals
+Success! The configuration is valid.
+=== infra/bootstrap
+Success! The configuration is valid.
+=== infra/modules/archive
+Success! The configuration is valid.
+=== infra/modules/ci-trust
+Success! The configuration is valid.
+=== infra/modules/compute
+Success! The configuration is valid.
+=== infra/modules/database
+Success! The configuration is valid.
+=== infra/modules/edge
+Success! The configuration is valid.
+=== infra/modules/identity
+Success! The configuration is valid.
+=== infra/modules/kms
+Success! The configuration is valid.
+=== infra/modules/network
+Success! The configuration is valid.
+=== infra/modules/observability
+Success! The configuration is valid.
+=== infra/modules/secrets
+Success! The configuration is valid.
+=== infra/modules/storage
+Success! The configuration is valid.

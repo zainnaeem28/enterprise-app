@@ -61,6 +61,7 @@ for tool in "$@"; do
     exit 1
   fi
   case "$file" in
+    *.zip) python3 -I -c 'import sys,zipfile; zipfile.ZipFile(sys.argv[1]).extract(sys.argv[2], sys.argv[3])' "$file" "$tool" "$tools_dir/bin" ;;
     *.tar.gz) tar -xzf "$file" -C "$tools_dir/bin" "$tool" ;;
     *) install -m 0755 "$file" "$tools_dir/bin/$tool" ;;
   esac
