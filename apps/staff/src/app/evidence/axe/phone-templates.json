@@ -1,0 +1,9 @@
+{
+  "screen": "templates",
+  "project": "phone",
+  "url": "/admin/templates",
+  "axeVersion": "4.14.0",
+  "violations": [],
+  "passes": 43,
+  "incomplete": ["color-contrast"]
+}

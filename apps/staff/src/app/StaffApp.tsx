@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { LoadingState, Banner, SkipLink } from '@ehr/ui';
 import {
   NotFoundPage,
@@ -9,6 +9,7 @@ import {
   realmKind,
 } from '@ehr/app-shell';
 import type { ShellRuntime } from '@ehr/app-shell';
+import type { SecurityKey } from '../features/admin-auth/index.js';
 import {
   NavBar,
   SignInPage,
@@ -23,10 +24,45 @@ import { PreconsultDesk, isPreconsultPath } from '../features/preconsult/index.j
 import { MessagesPortal, isMessagesPath } from '../features/messages/index.js';
 import { AvailabilityPortal, isAvailabilityPath } from '../features/availability/index.js';
 import { DocumentsPage } from '../features/documents/index.js';
+import {
+  ADMIN_COMPLIANCE_NAV,
+  AdminCompliancePortal,
+  isAdminCompliancePath,
+} from '../features/admin-compliance/index.js';
+import {
+  ADMIN_CONFIG_NAV,
+  AdminConfigPortal,
+  isAdminConfigPath,
+} from '../features/admin-config/index.js';
+import {
+  ADMIN_LANDING,
+  ADMIN_SIGN_IN_PATH,
+  AdminRealmBar,
+  AdminSignInLink,
+  AdminSignInPage,
+  ElevationProvider,
+  ElevationStore,
+  browserSecurityKey,
+  createElevation,
+} from '../features/admin-auth/index.js';
 import { workspace } from '../features/doctor/workspace.js';
 import { useLocation } from './router.js';
 
 const PRODUCT = 'Clinic';
+
+/** Where the administrator realm opens: the first compliance screen (the path is also the target of the post-sign-in reload). */
+const ADMIN_HOME = ADMIN_COMPLIANCE_NAV[0]?.path ?? '/admin/audit';
+/** The two admin areas, each opening on its first screen; the area's own sub-navigation lists the rest. */
+const ADMIN_AREAS = [
+  { id: 'compliance', label: 'Audit & compliance', path: ADMIN_HOME },
+  {
+    id: 'configuration',
+    label: 'Configuration',
+    path: ADMIN_CONFIG_NAV[0]?.path ?? '/admin/clinics',
+  },
+];
+const isAdminPath = (path: string) =>
+  path === ADMIN_LANDING || isAdminCompliancePath(path) || isAdminConfigPath(path);
 
 /** The same Help link, in the same place (end of the page), on every screen (UI-UX 3.2, WCAG 3.2.6). */
 function HelpFooter() {
@@ -76,9 +112,11 @@ function NotAvailable({ label }: { label: string }) {
 export function StaffApp({
   runtime,
   assign = (u) => window.location.assign(u),
+  securityKey = browserSecurityKey,
 }: {
   runtime: ShellRuntime;
   assign?: (url: string) => void;
+  securityKey?: SecurityKey;
 }) {
   const loc = useLocation();
 
@@ -94,6 +132,17 @@ export function StaffApp({
         <HelpPage />
       </PublicShell>
     );
+  if (loc.path === ADMIN_SIGN_IN_PATH)
+    return (
+      <PublicShell>
+        <AdminSignInPage
+          runtime={runtime}
+          securityKey={securityKey}
+          assign={assign}
+          landing={ADMIN_HOME}
+        />
+      </PublicShell>
+    );
   if (loc.path === '/sign-in') {
     const params = new URLSearchParams(loc.search);
     return (
@@ -101,11 +150,20 @@ export function StaffApp({
         <SignInPage
           returnTo={safeReturnTo(params.get('returnTo'))}
           problem={params.has('problem')}
+          belowGoogle={<AdminSignInLink />}
         />
       </PublicShell>
     );
   }
-  return <Gate runtime={runtime} path={loc.path} navigate={loc.navigate} assign={assign} />;
+  return (
+    <Gate
+      runtime={runtime}
+      path={loc.path}
+      navigate={loc.navigate}
+      assign={assign}
+      securityKey={securityKey}
+    />
+  );
 }
 
 function Gate({
@@ -113,20 +171,32 @@ function Gate({
   path,
   navigate,
   assign,
+  securityKey,
 }: {
   runtime: ShellRuntime;
   path: string;
   navigate: (p: string, replace?: boolean) => void;
   assign: (u: string) => void;
+  securityKey: SecurityKey;
 }) {
   const { state, reload } = useStaffSession(runtime);
+  // One elevation store per tab, in memory only; the administrator realm and the staff realm are never held together.
+  const elevationStore = useMemo(() => new ElevationStore(), []);
+  const elevation = useMemo(
+    () => createElevation(runtime, securityKey, elevationStore),
+    [runtime, securityKey, elevationStore],
+  );
+  const signInUrl = (p: string) => {
+    if (isAdminPath(p)) return ADMIN_SIGN_IN_PATH;
+    const back = safeReturnTo(p);
+    return back === undefined ? '/sign-in' : `/sign-in?returnTo=${encodeURIComponent(back)}`;
+  };
   useEffect(() => runtime.releases.start(), [runtime]);
 
   // Not signed in: go to sign-in, remembering only a known screen path (never a query or an identifier).
   useEffect(() => {
     if (state.kind !== 'signed-out') return;
-    const back = safeReturnTo(path);
-    assign(back === undefined ? '/sign-in' : `/sign-in?returnTo=${encodeURIComponent(back)}`);
+    assign(signInUrl(path));
   }, [state.kind, path, assign]);
 
   if (state.kind === 'loading' || state.kind === 'signed-out')
@@ -149,6 +219,38 @@ function Gate({
   const firstItem = items[0];
   const current = items.find((i) => i.path === path);
 
+  if (realm === 'admin')
+    return (
+      <ElevationProvider elevation={elevation}>
+        <SkipLink targetId="main">Skip to main content</SkipLink>
+        <AdminRealmBar
+          runtime={runtime}
+          elevation={elevationStore}
+          productName={PRODUCT}
+          displayName={session.displayName}
+        />
+        <ReleasePrompts store={runtime.releases} />
+        <SessionPrompts store={runtime.session} onSignIn={() => assign(signInUrl(path))} />
+        <NavBar
+          items={ADMIN_AREAS}
+          current={isAdminConfigPath(path) ? ADMIN_AREAS[1]!.path : ADMIN_AREAS[0]!.path}
+          onNavigate={(p) => navigate(p)}
+        />
+        <main id="main" className="ehr-main" tabIndex={-1}>
+          {path === ADMIN_LANDING || path === '/' ? (
+            <Home first={ADMIN_HOME} navigate={navigate} />
+          ) : isAdminCompliancePath(path) ? (
+            <AdminCompliancePortal runtime={runtime} path={path} navigate={(p) => navigate(p)} />
+          ) : isAdminConfigPath(path) ? (
+            <AdminConfigPortal runtime={runtime} path={path} navigate={(p) => navigate(p)} />
+          ) : (
+            <NotFoundPage homeHref={ADMIN_HOME} />
+          )}
+        </main>
+        <HelpFooter />
+      </ElevationProvider>
+    );
+
   return (
     <>
       <SkipLink targetId="main">Skip to main content</SkipLink>
@@ -159,13 +261,7 @@ function Gate({
         store={runtime.session}
       />
       <ReleasePrompts store={runtime.releases} />
-      <SessionPrompts
-        store={runtime.session}
-        onSignIn={() => {
-          const back = safeReturnTo(path);
-          assign(back === undefined ? '/sign-in' : `/sign-in?returnTo=${encodeURIComponent(back)}`);
-        }}
-      />
+      <SessionPrompts store={runtime.session} onSignIn={() => assign(signInUrl(path))} />
       <NavBar items={items} current={path} onNavigate={(p) => navigate(p)} />
       <main id="main" className="ehr-main" tabIndex={-1}>
         {realm !== 'staff' ? (

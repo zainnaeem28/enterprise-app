@@ -1,0 +1,9 @@
+{
+  "screen": "flags",
+  "project": "desktop",
+  "url": "/admin/flags",
+  "axeVersion": "4.14.0",
+  "violations": [],
+  "passes": 47,
+  "incomplete": []
+}

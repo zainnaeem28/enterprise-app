@@ -49,6 +49,7 @@ describe('tokens meet WCAG 2.2 AA (1.4.3, 1.4.11)', () => {
     ['success', 'success-tint'],
     ['info', 'info-tint'],
     ['on-accent', 'danger'],
+    ['on-accent', 'realm-admin'],
     ['disabled-ink', 'disabled-bg'],
     ['ink', 'accent-tint'],
   ];

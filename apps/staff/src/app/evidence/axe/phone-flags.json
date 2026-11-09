@@ -1,0 +1,9 @@
+{
+  "screen": "flags",
+  "project": "phone",
+  "url": "/admin/flags",
+  "axeVersion": "4.14.0",
+  "violations": [],
+  "passes": 47,
+  "incomplete": ["color-contrast"]
+}

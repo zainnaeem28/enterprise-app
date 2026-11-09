@@ -1,0 +1,9 @@
+{
+  "screen": "clinics",
+  "project": "desktop",
+  "url": "/admin/clinics",
+  "axeVersion": "4.14.0",
+  "violations": [],
+  "passes": 43,
+  "incomplete": []
+}

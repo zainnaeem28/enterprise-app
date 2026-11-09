@@ -48,9 +48,10 @@ html {
 .ehr-realm-banner {
   margin: 0;
   padding: var(--sp-2) var(--sp-4);
-  background: var(--accent-tint);
-  color: var(--ink);
-  border-bottom: 1px solid var(--border);
+  /* Admin realm banner is always rust (UI-UX 3.1), whatever the portal accent is. */
+  background: var(--realm-admin);
+  color: var(--on-accent);
+  border-bottom: 1px solid var(--realm-admin);
 }
 .ehr-chip {
   display: inline-flex;

@@ -1,0 +1,9 @@
+{
+  "screen": "vital-ranges",
+  "project": "desktop",
+  "url": "/admin/vital-ranges",
+  "axeVersion": "4.14.0",
+  "violations": [],
+  "passes": 46,
+  "incomplete": []
+}
