@@ -137,6 +137,7 @@ variable "services" {
     cpu               = number
     memory            = number
     container_port    = optional(number)
+    backend_protocol  = optional(string, "HTTPS")
     attach_to_alb     = bool
     desired_count     = number
     min_count         = number
@@ -162,6 +163,10 @@ variable "services" {
     error_message = "Task ceilings come from the database connection budget: api <= 8, worker <= 4 (DEVOPS-PLAN 12)."
   }
   validation {
+    condition     = alltrue([for s in values(var.services) : s.backend_protocol == "HTTPS" || (var.plaintext_backend_exception_ref != "" && var.environment_class != "production")])
+    error_message = "backend_protocol HTTP is allowed only outside production and only with plaintext_backend_exception_ref (written Solution Architect/Security exception). Default is HTTPS."
+  }
+  validation {
     condition     = alltrue([for k, s in var.services : !s.attach_to_alb || s.container_port != null])
     error_message = "A service attached to the ALB needs container_port."
   }
@@ -176,4 +181,20 @@ variable "scale_in_cooldown_seconds" {
 variable "tags" {
   type    = map(string)
   default = {}
+}
+
+variable "plaintext_backend_exception_ref" {
+  description = "Reference (task/document id) of a written Solution Architect/Security exception that allows a plaintext ALB-to-task hop. Empty means HTTPS only."
+  type        = string
+  default     = ""
+}
+
+variable "environment_class" {
+  description = "production or non-production. Plaintext backend is never allowed in production."
+  type        = string
+  default     = "production"
+  validation {
+    condition     = contains(["production", "non-production"], var.environment_class)
+    error_message = "environment_class is production or non-production."
+  }
 }

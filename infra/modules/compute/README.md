@@ -11,7 +11,8 @@ ECS Fargate cluster, `api` and `worker` services, public ALB with host routing, 
 
 ## Open items (not decided here)
 
-- **ALB to task is HTTP** (checkov CKV_AWS_378 skipped with reason). Re-encrypting inside the VPC needs a Solution Architect decision.
+- **ALB to task is HTTPS by default** (`backend_protocol`, health check follows). The api container must serve TLS on `container_port` (self-signed is fine; the ALB does not validate it) - a requirement on the application/image tickets. HTTP is accepted only outside production and with `plaintext_backend_exception_ref` naming a written Solution Architect/Security exception; none exists. Unverified until staging.
+- **Wiring**: `portal_hosts` here and in `edge`, and the CloudFront origin read timeout in `edge` versus `sse_heartbeat_seconds`, must be fed from the same root-module values; the plan precondition only checks the timeouts it is given.
 - `origin_verify_secret` is a plain sensitive variable, so it is in state and in the listener rule. Rotation and the secret-store source belong to DO-04 / the pipeline.
 - Scaling targets (CPU 60 %, 500 requests per target) are placeholders until the load test. Worker scaling on queue depth needs a custom metric from the application (not available here).
 - Rollout refusal above 6 api / 3 worker tasks and holding auto-scaling during a rollout are pipeline rules, not in this module.

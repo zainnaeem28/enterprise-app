@@ -115,12 +115,12 @@ resource "aws_lb_listener" "https" {
 }
 
 resource "aws_lb_target_group" "service" {
-  # checkov:skip=CKV_AWS_378:TLS ends at the ALB; the ALB-to-task hop stays inside private subnets and is limited by security groups. Re-encryption to the task is an open decision for the Solution Architect (see infra/modules/compute/README.md).
+  # ALB-to-task hop is HTTPS by default (security NFR: TLS 1.2+ in transit for PHI). The ALB does not validate the task certificate; a self-signed one in the image is enough.
   for_each = local.alb_services
 
   name_prefix          = substr(each.key, 0, 6)
   vpc_id               = var.vpc_id
-  protocol             = "HTTP"
+  protocol             = each.value.backend_protocol
   port                 = each.value.container_port
   target_type          = "ip"
   deregistration_delay = var.deregistration_delay_seconds
@@ -128,7 +128,7 @@ resource "aws_lb_target_group" "service" {
   # Liveness only (/healthz). /readyz is for deploy gating, never for task replacement (DEVOPS-PLAN 9.1).
   health_check {
     path                = "/healthz"
-    protocol            = "HTTP"
+    protocol            = each.value.backend_protocol
     matcher             = "200"
     interval            = 15
     timeout             = 5

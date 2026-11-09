@@ -142,3 +142,33 @@ run "heartbeat_longer_than_timeout_rejected" {
   }
   expect_failures = [aws_lb.this]
 }
+
+run "backend_is_https_by_default" {
+  command = plan
+  assert {
+    condition     = aws_lb_target_group.service["api"].protocol == "HTTPS" && aws_lb_target_group.service["api"].health_check[0].protocol == "HTTPS"
+    error_message = "ALB to task must be HTTPS by default"
+  }
+}
+
+run "plaintext_backend_rejected_in_production" {
+  command = plan
+  variables {
+    plaintext_backend_exception_ref = "HEAAA-0"
+    services = {
+      api = {
+        image            = "111111111111.dkr.ecr.us-east-2.amazonaws.com/api@sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        task_role_arn    = "arn:aws:iam::111111111111:role/api"
+        cpu              = 1024
+        memory           = 2048
+        container_port   = 3000
+        backend_protocol = "HTTP"
+        attach_to_alb    = true
+        desired_count    = 2
+        min_count        = 2
+        max_count        = 8
+      }
+    }
+  }
+  expect_failures = [var.services]
+}
