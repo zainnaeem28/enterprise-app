@@ -72,7 +72,7 @@ export function createComplianceAlertTasks(deps: {
         {
           type: 'btg_opened',
           severity: 'high',
-          resourceType: 'audit.btg_grant',
+          resourceType: 'audit_btg_grant',
           resourceId: grantId.toLowerCase(),
           permission: COMPLIANCE_PERMISSION,
         },
@@ -88,7 +88,7 @@ export function createComplianceAlertTasks(deps: {
         {
           type: 'audit_anchor_mismatch',
           severity: 'critical',
-          resourceType: 'audit.anchor',
+          resourceType: 'audit_anchor',
           // The anchor's key is a bigint; an alert names its resource by UUID, so the same anchor always maps to the same one.
           resourceId: jobUuid('audit.anchor', String(anchorId)),
           permission: COMPLIANCE_PERMISSION,
@@ -105,7 +105,7 @@ export function createComplianceAlertTasks(deps: {
         {
           type: 'kill_switch_used',
           severity: 'critical',
-          resourceType: 'identity.principal',
+          resourceType: 'identity_principal',
           resourceId: principalId.toLowerCase(),
           permission: COMPLIANCE_PERMISSION,
         },
