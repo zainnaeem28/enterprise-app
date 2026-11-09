@@ -1,0 +1,102 @@
+▶ build-bundles
+  ✖ embeds r<n>.<sha12>, writes release.json, hashes the listing, records the optional portal as not-built (45.438613ms)
+  ✔ fails when the release is not in any shipped .js file (37.929884ms)
+  ✔ fails when a required bundle was not produced (48.729598ms)
+✖ build-bundles (133.31563ms)
+▶ release number
+  ✔ is the first-parent count and r<n>.<sha12> round-trips (1168.50118ms)
+  ✔ a merge counts once along the first parent (1834.685013ms)
+  ✔ a shallow clone and a malformed sha are refused (1049.302202ms)
+  ✔ malformed client releases do not parse (0.206717ms)
+✔ release number (4053.786402ms)
+▶ store decision (release_number check)
+  ✔ greater than every other manifest publishes (0.350518ms)
+  ✔ an older build finishing late fails by design with code release_number (0.183175ms)
+  ✔ an equal number from another commit fails (0.160932ms)
+  ✔ a re-run of a stored commit is idempotent: reuse, even when newer manifests exist (0.156844ms)
+  ✔ store keys encode number and sha; a foreign object in the index is an error (0.318989ms)
+✔ store decision (release_number check) (1.512939ms)
+▶ min_client_release (DEVOPS-PLAN 6.2, 15.3)
+  ✔ is the previous released number, not the previous commit (0.237245ms)
+  ✔ first release equals its own number (0.092034ms)
+  ✔ a hand-edited value above or below is refused (0.155021ms)
+  ✔ a previous number that is not below the own number is refused (0.10649ms)
+✔ min_client_release (DEVOPS-PLAN 6.2, 15.3) (0.784412ms)
+▶ listing hash
+  ✔ is independent of creation order and changes with content (1.807222ms)
+✔ listing hash (1.895046ms)
+▶ release manifest
+  ✔ a complete publish manifest and a dry-run manifest validate (7.969804ms)
+  ✔ lists image digests, bundle hashes, lockfile hash, migrations and release_number (1.307874ms)
+  ✔ refuses: image by tag instead of digest (0.318017ms)
+  ✔ refuses: unsigned image (0.265579ms)
+  ✔ refuses: missing provenance attestation (2.348948ms)
+  ✔ refuses: missing required image (0.210825ms)
+  ✔ refuses: bad digest (0.198704ms)
+  ✔ refuses: release number not matching client release (0.201698ms)
+  ✔ refuses: bundle embeds another release (0.208843ms)
+  ✔ refuses: required bundle not built (0.223619ms)
+  ✔ refuses: migration list tampered (0.176922ms)
+  ✔ refuses: no lockfile hash (0.132719ms)
+  ✔ refuses: no source SBOM (0.131537ms)
+  ✔ refuses: no signing key reference (0.130875ms)
+  ✔ a dry-run manifest cannot claim a published reference (0.167013ms)
+  ✔ the manifest hash is stable and changes with content (0.289604ms)
+✔ release manifest (15.873476ms)
+▶ client release refusal path, producer to API
+  ✔ the current build, the previous released build and an unreleased one in between are accepted (1359.890182ms)
+  ✔ refused: older than min_client_release -> 400 kernel.client_release_unsupported, no cookie (217.774771ms)
+  ✔ refused: much older -> 400 kernel.client_release_unsupported, no cookie (201.430231ms)
+  ✔ refused: missing -> 400 kernel.client_release_unsupported, no cookie (1.890037ms)
+  ✔ refused: malformed (no r prefix) -> 400 kernel.client_release_unsupported, no cookie (208.850976ms)
+  ✔ refused: malformed (short sha) -> 400 kernel.client_release_unsupported, no cookie (96.235921ms)
+  ✔ the stream takes the same value as a query parameter and refuses an old one before any event (211.431017ms)
+  ✔ exempt routes work without the header (2.261143ms)
+  ✔ first release: min_client_release equals its own number, so the previous number is refused (461.206095ms)
+✔ client release refusal path, producer to API (3110.820003ms)
+ℹ tests 42
+ℹ suites 7
+ℹ pass 41
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4922.746543
+
+✖ failing tests:
+
+test at scripts/release/test/bundles.test.mjs:38:3
+✖ embeds r<n>.<sha12>, writes release.json, hashes the listing, records the optional portal as not-built (45.438613ms)
+  AssertionError [ERR_ASSERTION]: file:///tmp/int04-r1/scripts/release/build-bundles.mjs:69
+      throw new Error(
+            ^
+  
+  Error: bundle patient: "r142.3f9a1c2b7d10" is not embedded in any shipped .js file (1 scanned)
+      at file:///tmp/int04-r1/scripts/release/build-bundles.mjs:69:11
+      at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+      at async node:internal/modules/esm/loader:647:26
+      at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+  
+  Node.js v24.22.2
+  bundle staff: built, 3 files, listing 8823d3141a3d4cf9f0ad5387b2f88d979c1ddbef5db00189709ed6a6305548a4
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///tmp/int04-r1/scripts/release/test/bundles.test.mjs:42:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at node:internal/test_runner/test:1903:71
+      at node:internal/per_context/primordials:504:82
+      at new Promise (<anonymous>)
+      at new SafePromise (node:internal/per_context/primordials:478:3)
+      at node:internal/per_context/primordials:504:9
+      at Array.map (<anonymous>) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

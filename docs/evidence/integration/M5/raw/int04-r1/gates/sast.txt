@@ -1,0 +1,81 @@
+non-blocking: semgrep.rules.package_managers.npm.npm-missing-minimum-release-age.npm-missing-minimum-release-age (MEDIUM) at .npmrc:1
+non-blocking: semgrep.rules.terraform.aws.security.aws-provider-static-credentials.aws-provider-static-credentials (WARNING) at infra/modules/observability/examples/plan/main.tf:22
+non-blocking: semgrep.rules.package_managers.pnpm.pnpm-block-exotic-sub-dependencies.pnpm-block-exotic-sub-dependencies (MEDIUM) at pnpm-workspace.yaml:1
+non-blocking: semgrep.rules.package_managers.pnpm.pnpm-missing-minimum-release-age.pnpm-minimum-release-age (MEDIUM) at pnpm-workspace.yaml:1
+non-blocking: semgrep.rules.package_managers.pnpm.pnpm-trust-policy.pnpm-trust-policy (MEDIUM) at pnpm-workspace.yaml:1
+::error::semgrep error: Internal matching error Internal matching error when running semgrep.rules.yaml.github-actions.security.gha-curl-pipe-shell.gha-curl-pipe-shell on .github/workflows/build-release.yml:
+ An error occurred while invoking the Semgrep engine. Please help us fix this by creating an issue at https://github.com/semgrep/semgrep
+
+rule semgrep.rules.yaml.github-actions.security.gha-curl-pipe-shell.gha-curl-pipe-shell: metavariable-pattern failed when parsing $SHELL's content as Bash: {
+  echo "### build-release (${{ env.PUBLISH == 'true' && 'publish' || 'dry-run, nothing published' }})"
+  echo "- release_number: ${{ steps.rn.outputs.release_number }}"
+  echo "- client_release: ${{ steps.rn.outputs.client_release }}"
+  [ -f "$OUT/release-manifest.json" ] && echo "- manifest sha256: $(cut -d' ' -f1 "$OUT/release-manifest.json.sha256" 2>/dev/null || sha256sum "$OUT/release-manifest.json" | cut -d' ' -f1)"
+} >> "$GITHUB_STEP_SUMMARY"
+
+::error::semgrep error: PartialParsing,[object Object] Syntax error at line .github/workflows/build-release.yml:108:
+ When parsing a snippet as Bash for metavariable-pattern in rule 'semgrep.rules.yaml.github-actions.security.gha-curl-pipe-shell.gha-curl-pipe-shell', `${{ steps.rn.outputs.release_number }}` was unexpected
+::error::semgrep error: PartialParsing,[object Object] Syntax error at line .github/workflows/build-release.yml:112:
+ When parsing a snippet as Bash for metavariable-pattern in rule 'semgrep.rules.yaml.github-actions.security.gha-curl-pipe-shell.gha-curl-pipe-shell', `${{ steps.rn.outputs.release_number }}` was unexpected
+::error::semgrep error: PartialParsing,[object Object] Syntax error at line .github/workflows/build-release.yml:128:
+ When parsing a snippet as Bash for metavariable-pattern in rule 'semgrep.rules.yaml.github-actions.security.gha-curl-pipe-shell.gha-curl-pipe-shell', `${{ steps.rn.outputs.release_number }}` was unexpected
+::error::semgrep error: PartialParsing,[object Object] Syntax error at line .github/workflows/build-release.yml:133:
+ When parsing a snippet as Bash for metavariable-pattern in rule 'semgrep.rules.yaml.github-actions.security.gha-curl-pipe-shell.gha-curl-pipe-shell', `${{ steps.rn.outputs.release_number }}` was unexpected
+::error::semgrep error: PartialParsing,[object Object] Syntax error at line .github/workflows/build-release.yml:141:
+ When parsing a snippet as Bash for metavariable-pattern in rule 'semgrep.rules.yaml.github-actions.security.gha-curl-pipe-shell.gha-curl-pipe-shell', `"${{` was unexpected
+::error::semgrep error: PartialParsing,[object Object] Syntax error at line .github/workflows/build-release.yml:151:
+ When parsing a snippet as Bash for metavariable-pattern in rule 'semgrep.rules.yaml.github-actions.security.gha-curl-pipe-shell.gha-curl-pipe-shell', `${{ steps.rn.outputs.release_number }}` was unexpected
+::error::semgrep error: PartialParsing,[object Object] Syntax error at line .github/workflows/deploy-marketing.yml:90:
+ When parsing a snippet as Bash for metavariable-pattern in rule 'semgrep.rules.yaml.github-actions.security.gha-curl-pipe-shell.gha-curl-pipe-shell', `${{ vars.DEPLOY_ROLE_ARN }}` was unexpected
+::error::semgrep error: PartialParsing,[object Object] Syntax error at line .github/workflows/deploy-marketing.yml:112:
+ When parsing a snippet as Bash for metavariable-pattern in rule 'semgrep.rules.yaml.github-actions.security.gha-curl-pipe-shell.gha-curl-pipe-shell', `${{ vars.DEPLOY_SITE_FILTER }}` was unexpected
+::error::semgrep error: PartialParsing,[object Object],[object Object],[object Object] Syntax error at line .github/workflows/deploy-marketing.yml:116:
+ When parsing a snippet as Bash for metavariable-pattern in rule 'semgrep.rules.yaml.github-actions.security.gha-curl-pipe-shell.gha-curl-pipe-shell', `${{ vars.DEPLOY_SITE_DIR }}` was unexpected
+::error::semgrep error: PartialParsing,[object Object] Syntax error at line .github/workflows/deploy-marketing.yml:127:
+ When parsing a snippet as Bash for metavariable-pattern in rule 'semgrep.rules.yaml.github-actions.security.gha-curl-pipe-shell.gha-curl-pipe-shell', `${{ steps.verify.outputs.git_sha }}` was unexpected
+::error::semgrep error: PartialParsing,[object Object],[object Object] Syntax error at line .github/workflows/deploy-production.yml:122:
+ When parsing a snippet as Bash for metavariable-pattern in rule 'semgrep.rules.yaml.github-actions.security.gha-curl-pipe-shell.gha-curl-pipe-shell', `${{ vars.DEPLOY_API_FAMILY }}` was unexpected
+::error::semgrep error: PartialParsing,[object Object],[object Object] Syntax error at line .github/workflows/deploy-production.yml:128:
+ When parsing a snippet as Bash for metavariable-pattern in rule 'semgrep.rules.yaml.github-actions.security.gha-curl-pipe-shell.gha-curl-pipe-shell', `${{ vars.DEPLOY_DB_INSTANCE }}` was unexpected
+::error::semgrep error: PartialParsing,[object Object],[object Object],[object Object] Syntax error at line .github/workflows/deploy-production.yml:132:
+ When parsing a snippet as Bash for metavariable-pattern in rule 'semgrep.rules.yaml.github-actions.security.gha-curl-pipe-shell.gha-curl-pipe-shell', `${{ vars.DEPLOY_DB_INSTANCE }}` was unexpected
+::error::semgrep error: PartialParsing,[object Object],[object Object],[object Object] Syntax error at line .github/workflows/deploy-production.yml:140:
+ When parsing a snippet as Bash for metavariable-pattern in rule 'semgrep.rules.yaml.github-actions.security.gha-curl-pipe-shell.gha-curl-pipe-shell', `${{ steps.taskdefs.outputs.taskdef_migration }}` was unexpected
+::error::semgrep error: PartialParsing,[object Object],[object Object] Syntax error at line .github/workflows/deploy-production.yml:145:
+ When parsing a snippet as Bash for metavariable-pattern in rule 'semgrep.rules.yaml.github-actions.security.gha-curl-pipe-shell.gha-curl-pipe-shell', `${{ vars.DEPLOY_MIN_CLIENT_PARAM }}` was unexpected
+::error::semgrep error: PartialParsing,[object Object],[object Object] Syntax error at line .github/workflows/deploy-production.yml:149:
+ When parsing a snippet as Bash for metavariable-pattern in rule 'semgrep.rules.yaml.github-actions.security.gha-curl-pipe-shell.gha-curl-pipe-shell', `${{ vars.DEPLOY_WORKER_SERVICE }}:${{ steps.taskdefs.outputs.taskdef_worker }}` was unexpected
+::error::semgrep error: PartialParsing,[object Object],[object Object],[object Object],[object Object] Syntax error at line .github/workflows/deploy-production.yml:154:
+ When parsing a snippet as Bash for metavariable-pattern in rule 'semgrep.rules.yaml.github-actions.security.gha-curl-pipe-shell.gha-curl-pipe-shell', `${{ vars.DEPLOY_PORTAL_BUCKET }}` was unexpected
+::error::semgrep error: PartialParsing,[object Object],[object Object],[object Object] Syntax error at line .github/workflows/deploy-production.yml:159:
+ When parsing a snippet as Bash for metavariable-pattern in rule 'semgrep.rules.yaml.github-actions.security.gha-curl-pipe-shell.gha-curl-pipe-shell', `${{ vars.DEPLOY_API_URL }}` was unexpected
+::error::semgrep error: PartialParsing,[object Object],[object Object],[object Object],[object Object],[object Object] Syntax error at line .github/workflows/deploy-production.yml:170:
+ When parsing a snippet as Bash for metavariable-pattern in rule 'semgrep.rules.yaml.github-actions.security.gha-curl-pipe-shell.gha-curl-pipe-shell', `${{ steps.verify.outputs.release_number }} (git ${{ steps.verify.outputs.git_sha }})` was unexpected
+::error::semgrep error: PartialParsing,[object Object] Syntax error at line .github/workflows/deploy-production.yml:199:
+ When parsing a snippet as Bash for metavariable-pattern in rule 'semgrep.rules.yaml.github-actions.security.gha-curl-pipe-shell.gha-curl-pipe-shell', `${{ vars.DEPLOY_OBSERVE_ROLE_ARN }}` was unexpected
+::error::semgrep error: PartialParsing,[object Object],[object Object],[object Object],[object Object] Syntax error at line .github/workflows/deploy-production.yml:202:
+ When parsing a snippet as Bash for metavariable-pattern in rule 'semgrep.rules.yaml.github-actions.security.gha-curl-pipe-shell.gha-curl-pipe-shell', `${{ vars.DEPLOY_OBSERVE_MINUTES }}` was unexpected
+::error::semgrep error: PartialParsing,[object Object] Syntax error at line .github/workflows/deploy-production.yml:237:
+ When parsing a snippet as Bash for metavariable-pattern in rule 'semgrep.rules.yaml.github-actions.security.gha-curl-pipe-shell.gha-curl-pipe-shell', `${{ vars.DEPLOY_RECOVER_ROLE_ARN }}` was unexpected
+::error::semgrep error: PartialParsing,[object Object],[object Object] Syntax error at line .github/workflows/deploy-production.yml:248:
+ When parsing a snippet as Bash for metavariable-pattern in rule 'semgrep.rules.yaml.github-actions.security.gha-curl-pipe-shell.gha-curl-pipe-shell', `${{ vars.DEPLOY_API_FAMILY }}` was unexpected
+::error::semgrep error: PartialParsing,[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object] Syntax error at line .github/workflows/deploy-production.yml:251:
+ When parsing a snippet as Bash for metavariable-pattern in rule 'semgrep.rules.yaml.github-actions.security.gha-curl-pipe-shell.gha-curl-pipe-shell', `${{ vars.DEPLOY_PORTAL_BUCKET }}` was unexpected
+::error::semgrep error: PartialParsing,[object Object] Syntax error at line .github/workflows/deploy-staging.yml:91:
+ When parsing a snippet as Bash for metavariable-pattern in rule 'semgrep.rules.yaml.github-actions.security.gha-curl-pipe-shell.gha-curl-pipe-shell', `${{ vars.DEPLOY_ROLE_ARN }}` was unexpected
+::error::semgrep error: PartialParsing,[object Object],[object Object],[object Object] Syntax error at line .github/workflows/deploy-staging.yml:105:
+ When parsing a snippet as Bash for metavariable-pattern in rule 'semgrep.rules.yaml.github-actions.security.gha-curl-pipe-shell.gha-curl-pipe-shell', `${{ vars.DEPLOY_API_FAMILY }}` was unexpected
+::error::semgrep error: PartialParsing,[object Object],[object Object],[object Object] Syntax error at line .github/workflows/deploy-staging.yml:119:
+ When parsing a snippet as Bash for metavariable-pattern in rule 'semgrep.rules.yaml.github-actions.security.gha-curl-pipe-shell.gha-curl-pipe-shell', `${{ steps.taskdefs.outputs.taskdef_migration }}` was unexpected
+::error::semgrep error: PartialParsing,[object Object],[object Object] Syntax error at line .github/workflows/deploy-staging.yml:124:
+ When parsing a snippet as Bash for metavariable-pattern in rule 'semgrep.rules.yaml.github-actions.security.gha-curl-pipe-shell.gha-curl-pipe-shell', `${{ vars.DEPLOY_MIN_CLIENT_PARAM }}` was unexpected
+::error::semgrep error: PartialParsing,[object Object],[object Object] Syntax error at line .github/workflows/deploy-staging.yml:128:
+ When parsing a snippet as Bash for metavariable-pattern in rule 'semgrep.rules.yaml.github-actions.security.gha-curl-pipe-shell.gha-curl-pipe-shell', `${{ vars.DEPLOY_WORKER_SERVICE }}:${{ steps.taskdefs.outputs.taskdef_worker }}` was unexpected
+::error::semgrep error: PartialParsing,[object Object],[object Object],[object Object],[object Object] Syntax error at line .github/workflows/deploy-staging.yml:133:
+ When parsing a snippet as Bash for metavariable-pattern in rule 'semgrep.rules.yaml.github-actions.security.gha-curl-pipe-shell.gha-curl-pipe-shell', `${{ vars.DEPLOY_PORTAL_BUCKET }}` was unexpected
+::error::semgrep error: PartialParsing,[object Object],[object Object],[object Object] Syntax error at line .github/workflows/deploy-staging.yml:138:
+ When parsing a snippet as Bash for metavariable-pattern in rule 'semgrep.rules.yaml.github-actions.security.gha-curl-pipe-shell.gha-curl-pipe-shell', `${{ vars.DEPLOY_API_URL }}` was unexpected
+::error::semgrep error: PartialParsing,[object Object],[object Object],[object Object] Syntax error at line .github/workflows/deploy-staging.yml:143:
+ When parsing a snippet as Bash for metavariable-pattern in rule 'semgrep.rules.yaml.github-actions.security.gha-curl-pipe-shell.gha-curl-pipe-shell', `${{ steps.verify.outputs.release_number }}` was unexpected
+::error::semgrep error: PartialParsing,[object Object],[object Object],[object Object] Syntax error at line .github/workflows/deploy-staging.yml:154:
+ When parsing a snippet as Bash for metavariable-pattern in rule 'semgrep.rules.yaml.github-actions.security.gha-curl-pipe-shell.gha-curl-pipe-shell', `${{ steps.verify.outputs.release_number }} (git ${{ steps.verify.outputs.git_sha }})` was unexpected

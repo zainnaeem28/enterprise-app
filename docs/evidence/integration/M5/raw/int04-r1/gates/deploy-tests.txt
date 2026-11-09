@@ -1,0 +1,48 @@
+✔ dry run against the stub manifest: verified, plan printed, nothing contacted (79.662733ms)
+✔ digest input that is not the record manifest_hash is refused (33.962168ms)
+✔ input digest that is not the hash of the manifest bytes is refused (46.353309ms)
+✔ expired record, wrong environment, missing record are refused (132.36799ms)
+✔ a release with a new migration needs `migrate` in the record (35.155377ms)
+✔ rollback target: previous manifest required unless first release; its number sets min_client_release (97.044799ms)
+✔ start gate stops a release at peak load in the dry run (67.657866ms)
+✔ set-release-config refuses /approved/* and non-integers; run-migration refuses an unpinned task definition (117.778333ms)
+✔ observation job cannot mutate: the read-only wrapper refuses a write verb before any process starts (21.440432ms)
+✔ manifest bytes: matching hash passes, altered bytes and dry-run mode are refused (2.521802ms)
+✔ manifest: an unsigned image or a tag reference is refused (0.527149ms)
+✔ record: the good case (0.252044ms)
+✔ record: refuses every mismatch (15.3) (0.35695ms)
+✔ record: rollback target rules (15.3, 33-a) (0.253987ms)
+✔ min_client_release: previous released number, or own for the first release; hand edits refused (0.741752ms)
+✔ new migrations: only additions; an edited applied migration is refused (0.465944ms)
+✔ start gate and rollback exemption (DPR-05, DPR-20) (0.259127ms)
+✔ observation verdict: 5 consecutive minutes, per condition (9.2) (0.622028ms)
+✔ staging floor (DPR-33, 33-b) (0.610646ms)
+✔ aws wrapper: read-only mode and the permanent refusals (0.554982ms)
+✔ task definitions: exactly one revision may match the manifest digest (0.247424ms)
+✔ migration task outcome (0.71888ms)
+✔ rollout: worker before api; services need a revisioned ARN (0.378049ms)
+✔ backup gate, portal switch, smoke, observe helpers (0.786215ms)
+✔ unmodified files pass (97.582228ms)
+✔ policy scan catches: push trigger added (34.765225ms)
+✔ policy scan catches: cancel-in-progress true (39.720803ms)
+✔ policy scan catches: concurrency group renamed (29.523338ms)
+✔ policy scan catches: dispatch input interpolated into a run body (35.425103ms)
+✔ policy scan catches: secret used (35.08293ms)
+✔ policy scan catches: record not read (31.275056ms)
+✔ policy scan catches: verify removed (32.627223ms)
+✔ policy scan catches: observe not read-only (32.25825ms)
+✔ policy scan catches: observe mutates (29.398164ms)
+✔ policy scan catches: recover not gated (43.92394ms)
+✔ policy scan catches: gate removed (46.524991ms)
+✔ policy scan catches: account id literal (29.212996ms)
+✔ policy scan catches: permissions widened (43.058928ms)
+✔ policy scan catches: swallowed failure (34.471494ms)
+✔ policy scan catches: script registers a task definition (39.088257ms)
+ℹ tests 40
+ℹ suites 0
+ℹ pass 40
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 744.306195

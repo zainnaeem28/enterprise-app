@@ -1,0 +1,15 @@
+$ prettier --check .
+Checking formatting...
+[warn] apps/api/src/telemetry/config.ts
+[warn] apps/api/src/telemetry/exporter.ts
+[warn] apps/api/src/telemetry/index.ts
+[warn] apps/api/src/telemetry/scrub.ts
+[warn] apps/api/src/telemetry/telemetry.test.ts
+[warn] apps/staff/src/features/admin-compliance/evidence/MANIFEST.md
+[warn] infra/accounts/README.md
+[warn] infra/modules/edge/README.md
+[warn] infra/modules/observability/canary/index.js
+[warn] infra/modules/observability/README.md
+[warn] infra/modules/observability/tests/phi-canary-scan.mjs
+[warn] Code style issues found in 11 files. Run Prettier with --write to fix.
+[ELIFECYCLE] Command failed with exit code 1.

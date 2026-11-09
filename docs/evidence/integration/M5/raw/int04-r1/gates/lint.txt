@@ -1,0 +1,34 @@
+$ eslint .
+
+/tmp/int04-r1/apps/api/src/modules/admin-routes/admin-routes.test.ts
+  5:1  error  Module "admin-routes" is not in the module graph (eslint/module-graph.mjs)  boundaries/module-boundaries
+  6:1  error  Module "admin-routes" is not in the module graph (eslint/module-graph.mjs)  boundaries/module-boundaries
+
+/tmp/int04-r1/apps/api/src/modules/admin-routes/audit-routes.ts
+  8:1  error  Module "admin-routes" is not in the module graph (eslint/module-graph.mjs)  boundaries/module-boundaries
+  9:1  error  Module "admin-routes" is not in the module graph (eslint/module-graph.mjs)  boundaries/module-boundaries
+
+/tmp/int04-r1/apps/api/src/modules/admin-routes/http.ts
+  6:1  error  Module "admin-routes" is not in the module graph (eslint/module-graph.mjs)  boundaries/module-boundaries
+  7:1  error  Module "admin-routes" is not in the module graph (eslint/module-graph.mjs)  boundaries/module-boundaries
+
+/tmp/int04-r1/apps/api/src/modules/admin-routes/integration-routes.ts
+   9:1  error  Module "admin-routes" is not in the module graph (eslint/module-graph.mjs)  boundaries/module-boundaries
+  10:1  error  Module "admin-routes" is not in the module graph (eslint/module-graph.mjs)  boundaries/module-boundaries
+  15:1  error  Module "admin-routes" is not in the module graph (eslint/module-graph.mjs)  boundaries/module-boundaries
+
+/tmp/int04-r1/infra/modules/observability/canary/index.js
+   4:15   error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+   4:15   error  'require' is not defined                 no-undef
+   5:13   error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+   5:13   error  'require' is not defined                 no-undef
+  22:102  error  'Buffer' is not defined                  no-undef
+  40:15   error  'process' is not defined                 no-undef
+  41:16   error  'process' is not defined                 no-undef
+  42:26   error  'process' is not defined                 no-undef
+  43:39   error  'process' is not defined                 no-undef
+  50:1    error  'exports' is not defined                 no-undef
+
+✖ 19 problems (19 errors, 0 warnings)
+
+[ELIFECYCLE] Command failed with exit code 1.
