@@ -1,0 +1,105 @@
+mounted routes (all modules): 117
+OpenAPI operations (clinical, messaging, privacy, reporting): 59
+
+== OpenAPI M4 operations: mounted? ==
+MOUNTED  GET /api/v1/admin/incidents                                            privacy  PrivacyAdminController  privacy.incident.manage
+MOUNTED  GET /api/v1/admin/privacy-requests                                     privacy  PrivacyAdminController  privacy.request.manage
+MOUNTED  GET /api/v1/admin/reports/ops                                          reporting  ReportingOpsController  reporting.ops.read
+MOUNTED  GET /api/v1/admin/vital-ranges                                         clinical  VitalRangeAdminController  clinical.vital_range.manage
+MOUNTED  GET /api/v1/clinicians/:p/cosign-queue                                 clinical  ClinicianNotesController  clinical.note.cosign
+MOUNTED  GET /api/v1/clinicians/:p/notes                                        clinical  ClinicianNotesController  clinical.note.write
+MOUNTED  GET /api/v1/locations/:p/referral-inbox                                clinical  FrontdoorStaffController  clinical.referral.manage
+MOUNTED  GET /api/v1/notes/:p                                                   clinical  NoteController  clinical.note.write
+MOUNTED  GET /api/v1/patients/:p/allergies                                      clinical  ChartReadController  clinical.chart.read
+MOUNTED  GET /api/v1/patients/:p/chart-summary                                  clinical  ChartReadController  clinical.chart.read_previsit
+MISSING  GET /api/v1/patients/:p/immunisations                                  clinical
+MOUNTED  GET /api/v1/patients/:p/medications                                    clinical  ChartReadController  clinical.chart.read
+MOUNTED  GET /api/v1/patients/:p/problems                                       clinical  ChartReadController  clinical.chart.read
+MOUNTED  GET /api/v1/patients/:p/questionnaire-responses                        clinical  FrontdoorStaffController  clinical.chart.read_previsit
+MOUNTED  GET /api/v1/patients/:p/threads                                        messaging  MessagingPatientController  patient
+MOUNTED  GET /api/v1/privacy-requests                                           privacy  PrivacyPatientController  patient
+MOUNTED  GET /api/v1/privacy-requests/:p                                        privacy  PrivacyPatientController  patient
+MOUNTED  GET /api/v1/tasks                                                      messaging  MessagingTaskController  messaging.task.manage
+MOUNTED  GET /api/v1/threads                                                    messaging  MessagingThreadController  messaging.thread.staff
+MOUNTED  GET /api/v1/threads/:p/messages                                        messaging  MessagingThreadController  messaging.thread.staff
+MOUNTED  PATCH /api/v1/admin/incidents                                          privacy  PrivacyAdminController  privacy.incident.manage
+MOUNTED  PATCH /api/v1/notes/:p                                                 clinical  NoteController  clinical.note.write
+MOUNTED  PATCH /api/v1/patients/:p/allergies/:p                                 clinical  ChartWriteController  clinical.list.write
+MISSING  PATCH /api/v1/patients/:p/immunisations/:p                             clinical
+MOUNTED  PATCH /api/v1/patients/:p/medications/:p                               clinical  ChartWriteController  clinical.list.write
+MOUNTED  PATCH /api/v1/patients/:p/problems/:p                                  clinical  ChartWriteController  clinical.list.write
+MOUNTED  PATCH /api/v1/referrals/:p                                             clinical  FrontdoorStaffController  clinical.referral.manage
+MOUNTED  PATCH /api/v1/tasks/:p                                                 messaging  MessagingTaskController  messaging.task.manage
+MOUNTED  POST /api/v1/admin/incidents                                           privacy  PrivacyAdminController  privacy.incident.manage
+MOUNTED  POST /api/v1/admin/privacy-requests/:p/decide                          privacy  PrivacyAdminController  privacy.request.manage
+MOUNTED  POST /api/v1/admin/privacy-requests/:p/verify-identity                 privacy  PrivacyAdminController  privacy.request.manage
+MOUNTED  POST /api/v1/admin/vital-ranges                                        clinical  VitalRangeAdminController  clinical.vital_range.manage
+MOUNTED  POST /api/v1/admin/vital-ranges/:p/retire                              clinical  VitalRangeAdminController  clinical.vital_range.manage
+MOUNTED  POST /api/v1/check-ins/:p/triage                                       clinical  FrontdoorStaffController  clinical.triage.record
+MOUNTED  POST /api/v1/check-ins/:p/vitals                                       clinical  FrontdoorStaffController  clinical.vitals.record
+MOUNTED  POST /api/v1/encounters                                                clinical  EncounterController  clinical.consultation.start
+MOUNTED  POST /api/v1/encounters/:p/complete                                    clinical  EncounterController  clinical.consultation.start
+MOUNTED  POST /api/v1/encounters/:p/notes                                       clinical  EncounterController  clinical.note.write
+MOUNTED  POST /api/v1/notes/:p/addenda                                          clinical  NoteController  clinical.note.write
+MOUNTED  POST /api/v1/notes/:p/cosign                                           clinical  NoteController  clinical.note.cosign
+MOUNTED  POST /api/v1/notes/:p/sign                                             clinical  NoteController  clinical.note.write
+MOUNTED  POST /api/v1/patients/:p/allergies                                     clinical  ChartWriteController  clinical.list.write
+MISSING  POST /api/v1/patients/:p/immunisations                                 clinical
+MOUNTED  POST /api/v1/patients/:p/medications                                   clinical  ChartWriteController  clinical.list.write
+MOUNTED  POST /api/v1/patients/:p/privacy-requests                              privacy  PrivacyStaffController  privacy.request.create_for_patient
+MOUNTED  POST /api/v1/patients/:p/problems                                      clinical  ChartWriteController  clinical.list.write
+MOUNTED  POST /api/v1/patients/:p/referrals                                     clinical  FrontdoorStaffController  clinical.referral.manage
+MOUNTED  POST /api/v1/patients/:p/threads                                       messaging  MessagingPatientController  patient
+MOUNTED  POST /api/v1/privacy-requests                                          privacy  PrivacyPatientController  patient
+MOUNTED  POST /api/v1/privacy-requests/:p/export/download-url                   privacy  PrivacyPatientController  patient
+MOUNTED  POST /api/v1/questionnaire-responses/:p/submit                         clinical  FrontdoorPatientController  patient
+MOUNTED  POST /api/v1/referrals/:p/accept                                       clinical  FrontdoorStaffController  clinical.referral.manage
+MOUNTED  POST /api/v1/referrals/:p/decline                                      clinical  FrontdoorStaffController  clinical.referral.manage
+MOUNTED  POST /api/v1/referrals/:p/send                                         clinical  FrontdoorStaffController  clinical.referral.manage
+MOUNTED  POST /api/v1/tasks                                                     messaging  MessagingTaskController  messaging.task.manage
+MOUNTED  POST /api/v1/terminology/search                                        clinical  ChartReadController  clinical.terminology.search
+MOUNTED  POST /api/v1/threads                                                   messaging  MessagingThreadController  messaging.thread.staff
+MOUNTED  POST /api/v1/threads/:p/messages                                       messaging  MessagingThreadController  messaging.thread.staff
+MOUNTED  PUT /api/v1/questionnaire-responses/:p                                 clinical  FrontdoorPatientController  patient
+
+OpenAPI M4 operations not mounted: 3
+
+== M4 routes mounted that are in no M4 OpenAPI file (other modules or undocumented) ==
+GET /api/v1/patients/:p/banner  ChartReadController
+GET /api/v1/check-ins/:p/triage  FrontdoorStaffController
+GET /api/v1/patients/:p/referrals  FrontdoorStaffController
+GET /api/v1/referrals/:p  FrontdoorStaffController
+POST /api/v1/patients/:p/follow-ups  FrontdoorStaffController
+GET /api/v1/patients/:p/follow-ups  FrontdoorStaffController
+GET /api/v1/locations/:p/follow-ups  FrontdoorStaffController
+PATCH /api/v1/follow-ups/:p  FrontdoorStaffController
+GET /api/v1/appointments/:p/questionnaire  FrontdoorPatientController
+
+== job types defined in the API-path registry ==
+audit.anchor
+audit.export
+audit.verify_anchors
+clinical.note_sign_reminder
+clinical.on_alert_unacknowledged
+clinical.terminology_load
+identity.apply_reference_data
+identity.purge_sessions
+identity.record_sign_in
+messaging.on_correction_requested
+notifications.escalate_alert
+notifications.send_message
+notifications.send_staff_message
+patient.execute_merge
+privacy.assemble_export
+privacy.check_legal_holds
+privacy.expire_packages
+reporting.refresh_ops
+scheduling.expire_holds
+scheduling.expire_offer
+scheduling.no_show_sweep
+scheduling.offer_waitlist
+scheduling.on_reservation_cancelled
+scheduling.on_reservation_confirmed
+scheduling.on_reservation_rescheduled
+scheduling.on_slot_freed
+scheduling.send_previsit

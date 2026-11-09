@@ -7,6 +7,14 @@ import { pathToFileURL } from 'node:url';
 import { JobRegistry, KernelDb, Queue } from '@ehr/kernel';
 import type { KernelConfig, Logger, PoolLike as KernelPoolLike } from '@ehr/kernel';
 import type { Task } from 'graphile-worker';
+import { createClinicalTasks, createClinicalWorkflowTasks } from './jobs/clinical/index.js';
+import type { ClinicalWorkerPort, TerminologySource } from './jobs/clinical/index.js';
+import { createMessagingTasks } from './jobs/messaging/index.js';
+import type { MessagingWorkerPort } from './jobs/messaging/index.js';
+import { closureOf, createPrivacyTasks, documentsLegalHolds } from './jobs/privacy/index.js';
+import type { PackageWriter, WorkerPackageStore } from './jobs/privacy/index.js';
+import { createReportingTasks } from './jobs/reporting/index.js';
+import type { ReportingWorkerPort } from './jobs/reporting/index.js';
 import { createAuditTasks } from './jobs/audit/index.js';
 import type { ExportSink } from './jobs/audit/index.js';
 import { createCalendarSyncTasks, registerGooglePushHandler } from './jobs/calendar-sync/index.js';
@@ -69,6 +77,14 @@ function refusingPort<T extends object>(port: string): T {
 export interface ApiPorts {
   scheduling: SchedulingFlowPort;
   telehealth: TelehealthWorkerPort;
+  clinical: ClinicalWorkerPort;
+  messaging: MessagingWorkerPort;
+  reporting: ReportingWorkerPort;
+  /** `privacy.assemble_export`: the API's `assembleExport` with the worker's package writer. */
+  assembleExport(
+    payload: Record<string, unknown>,
+    ctx: { jobId: string; attempt: number; maxAttempts: number },
+  ): Promise<unknown>;
 }
 
 export interface ComposeOptions {
@@ -87,6 +103,11 @@ export interface ComposeOptions {
     secretReader?: SecretReader;
     secretWriter?: InboundSecretWriter;
     payloadOpener?: PayloadOpener;
+    /** Terminology release source (NLM/UMLS licence, C-09). */
+    terminologySource?: TerminologySource;
+    /** Privacy package store with write access (bucket and KMS key, C-01). */
+    packageWriter?: PackageWriter;
+    packageStore?: WorkerPackageStore;
   };
 }
 
@@ -97,6 +118,10 @@ export async function loadApiPorts(opts: {
   queue: Queue;
   patientHost: string;
   qrKey: string;
+  orgId: string;
+  db: KernelDb;
+  packageWriter: PackageWriter;
+  closureOf: typeof closureOf;
 }): Promise<ApiPorts> {
   const url = pathToFileURL(
     new URL('../../api/dist/src/worker-ports.js', import.meta.url).pathname,
@@ -108,6 +133,10 @@ export async function loadApiPorts(opts: {
       registry: JobRegistry;
       patientHost: string;
       qrKey: Buffer;
+      orgId: string;
+      db: KernelDb;
+      packageWriter: PackageWriter;
+      closureOf: typeof closureOf;
     }): ApiPorts;
   };
   return mod.buildWorkerPorts({
@@ -116,6 +145,10 @@ export async function loadApiPorts(opts: {
     registry: opts.registry,
     patientHost: opts.patientHost,
     qrKey: Buffer.from(opts.qrKey, 'utf8'),
+    orgId: opts.orgId,
+    db: opts.db,
+    packageWriter: opts.packageWriter,
+    closureOf: opts.closureOf,
   });
 }
 
@@ -221,6 +254,34 @@ export function composeTasks(opts: ComposeOptions & { queue: Queue }): TaskTable
         writer: infra.secretWriter ?? refusingPort<InboundSecretWriter>('secret_writer'),
       },
     }),
+    ...createClinicalTasks({
+      db,
+      orgId,
+      source: infra.terminologySource ?? refusingPort<TerminologySource>('terminology_source'),
+      log,
+    }),
+    ...createClinicalWorkflowTasks({
+      db,
+      orgId,
+      clinical: opts.api?.clinical ?? refusingPort<ClinicalWorkerPort>('clinical'),
+    }),
+    ...createMessagingTasks({
+      messaging: opts.api?.messaging ?? refusingPort<MessagingWorkerPort>('messaging'),
+    }),
+    ...createReportingTasks({
+      reporting: opts.api?.reporting ?? refusingPort<ReportingWorkerPort>('reporting'),
+    }),
+    ...createPrivacyTasks({
+      db,
+      orgId,
+      log,
+      store: infra.packageStore ?? refusingPort<WorkerPackageStore>('package_store'),
+      holds: documentsLegalHolds,
+      closureOf,
+      assemble:
+        opts.api?.assembleExport ??
+        (() => Promise.reject(new PortNotConfiguredError('privacy_assemble_export'))),
+    }),
   };
   return tasks;
 }
@@ -239,6 +300,10 @@ export async function composeWorker(
       queue,
       patientHost: opts.patientHost,
       qrKey: opts.qrKey,
+      orgId: opts.cfg.organisationId ?? refuse('EHR_ORGANISATION_ID'),
+      db: new KernelDb(opts.pool as unknown as KernelPoolLike),
+      packageWriter: opts.infra?.packageWriter ?? refusingPort<PackageWriter>('package_writer'),
+      closureOf,
     });
   else if (api === undefined)
     opts.log.warn('scheduling and telehealth ports not configured', {

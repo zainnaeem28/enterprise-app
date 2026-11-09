@@ -98,6 +98,8 @@ export async function startWorker(opts: {
   /** Job types written to `queue_api.task_type` at start (21.8), so a freshly migrated database accepts API enqueues. */
   registry?: JobRegistry;
   concurrency?: number;
+  /** graphile-worker crontab text; each entry's task must be in `tasks`. */
+  crontab?: string;
 }): Promise<WorkerHandle> {
   const { cfg, pool, log } = opts;
   // Fail at start, not at the first job: the database must answer as app_worker and the queue schema must exist.
@@ -122,6 +124,17 @@ export async function startWorker(opts: {
         },
       );
   }
+  if (opts.crontab !== undefined) {
+    // A crontab entry whose task has no handler would fire forever and fail every time: refuse at start.
+    const unknown = opts.crontab
+      .split('\n')
+      .map((l) => l.trim())
+      .filter((l) => l !== '' && !l.startsWith('#'))
+      .map((l) => l.split(/\s+/)[5])
+      .filter((t): t is string => t !== undefined && taskList[t] === undefined);
+    if (unknown.length > 0)
+      throw new Error(`crontab names tasks without a handler: ${unknown.join(',')}`);
+  }
   const runner = await run({
     pgPool: pool as never,
     schema: cfg.queueSchema,
@@ -129,6 +142,7 @@ export async function startWorker(opts: {
     noHandleSignals: true,
     logger: workerLogger(log),
     taskList,
+    ...(opts.crontab === undefined ? {} : { crontab: opts.crontab }),
   });
   log.info('worker started', {
     tasks: Object.keys(taskList).length,
