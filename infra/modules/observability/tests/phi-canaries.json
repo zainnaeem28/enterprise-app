@@ -1,0 +1,13 @@
+{
+  "comment": "Synthetic PHI canary values. They are fake by construction and must never appear in telemetry configuration or output. Shapes: the module canary pattern, an email, a US SSN, a phone number, a date of birth field, a bearer token and a JWT-like string.",
+  "values": [
+    "PHI-CANARY-A1B2C3D4",
+    "PHI-CANARY-ZZ99YY88XX",
+    "canary.patient@example.invalid",
+    "000-12-3456",
+    "(555) 010-0199",
+    "dob: 1900-01-01",
+    "Bearer CANARYTOKEN0123456789abcdef",
+    "eyJhbGciOiJub25lIn0.eyJzdWIiOiJDQU5BUlkifQ.CANARYSIGNATURE01"
+  ]
+}
