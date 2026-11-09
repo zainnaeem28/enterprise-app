@@ -1,0 +1,187 @@
+# Nightly checks against what is deployed (DO-09, HEAAA-113; DEVOPS-PLAN 4.2, 7.2, 7.5 (DPR-39), 15.3).
+#
+# AUTHORED DISABLED (C-01, C-14). Nothing here has run. It refuses unless a person sets the repository variable
+# NIGHTLY_ENABLED to 'true', which happens only after staging is deployed, the `ci` approved record is applied (it enables
+# gh-nightly-staging, DPR-39) and the GitHub environment `nightly-staging` exists. No secret, account id or ARN is in this file.
+#
+# READ-ONLY by construction. Nothing in this file deploys, migrates, writes infrastructure or starts a restore. The only cloud
+# credential is the OIDC session of gh-nightly-staging (describe/list, logs and metrics queries, backup list/describe; no IAM
+# write, no data access), held by the single job that needs it. The restore *procedure* check reads backup state and the
+# runbook; the monthly restore itself is restore-test.yml.
+#
+# Environment `nightly-staging` variables (none is a secret): NIGHTLY_AWS_REGION, NIGHTLY_ROLE_ARN (gh-nightly-staging),
+# NIGHTLY_DB_INSTANCE, NIGHTLY_BACKUP_VAULT, NIGHTLY_BACKUP_MAX_AGE_MINUTES (default 30), NIGHTLY_RECOVERY_POINT_MAX_AGE_HOURS
+# (default 26), NIGHTLY_STAGING_URLS (JSON, public staging portal base URLs for the e2e suite).
+name: nightly
+
+on:
+  schedule:
+    - cron: '41 2 * * *' # 02:41 UTC; an off-peak minute, not on the hour
+  workflow_dispatch: {}
+
+permissions: {}
+
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CI: 'true'
+  CI_TOOLS_DIR: ${{ github.workspace }}/.ci-tools
+
+jobs:
+  enabled:
+    name: enabled and on main
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Refuse unless deliberately enabled, from main
+        env:
+          ENABLED: ${{ vars.NIGHTLY_ENABLED }}
+          REF: ${{ github.ref }}
+        run: |
+          [ "$REF" = "refs/heads/main" ] || { echo "::error::nightly runs from refs/heads/main only (got $REF)"; exit 1; }
+          [ "$ENABLED" = "true" ] || { echo "::error::nightly is authored but not enabled (repository variable NIGHTLY_ENABLED is not 'true'). Staging, the ci record and the nightly-staging environment must exist first (C-14)."; exit 1; }
+
+  # No cloud credentials: the repository against today's vulnerability data, and the base images from today's registry state.
+  rescan:
+    name: dependency and base-image re-scan
+    needs: [enabled]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Install OSV-Scanner and Trivy (pinned, sha256-verified)
+        run: scripts/ci/install-tools.sh osv-scanner trivy
+      - name: OSV-Scanner on pnpm-lock.yaml (HIGH/CRITICAL with a fix fails; the same rule as pull requests)
+        run: scripts/ci/deps.sh
+      - name: Trivy config scan, then a fresh build and Trivy image scan of every Dockerfile (base images re-resolved)
+        run: scripts/ci/container-scan.sh
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: nightly-rescan-reports
+          path: |
+            reports/deps
+            reports/container-scan
+          if-no-files-found: error
+          retention-days: 30
+
+  # No cloud credentials: the suite talks to the public staging portals with synthetic accounts only.
+  e2e:
+    name: full e2e against staging
+    needs: [enabled]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    environment: nightly-staging
+    permissions:
+      contents: read
+    env:
+      STAGING_URLS: ${{ vars.NIGHTLY_STAGING_URLS }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Install (frozen lockfile)
+        run: corepack enable && pnpm install --frozen-lockfile
+      - name: Staging suite (fails when the entry point or the URLs are missing, a missing suite is never a pass)
+        run: |
+          [ -n "$STAGING_URLS" ] || { echo "::error::NIGHTLY_STAGING_URLS is not set in the nightly-staging environment"; exit 1; }
+          jq -e 'type == "object" and length > 0' <<<"$STAGING_URLS" >/dev/null || { echo "::error::NIGHTLY_STAGING_URLS must be a non-empty JSON object"; exit 1; }
+          [ -x tests/e2e/staging/run.sh ] || { echo "::error::tests/e2e/staging/run.sh does not exist or is not executable. The staging e2e suite (QA-02) is not in this revision, so nothing can be reported as passed."; exit 1; }
+          mkdir -p reports/nightly-e2e
+          tests/e2e/staging/run.sh --report-dir reports/nightly-e2e
+      - name: Empty-suite guard
+        run: |
+          [ -s reports/nightly-e2e/report.json ] || { echo "::error::the e2e suite wrote no report.json"; exit 1; }
+          node tests/e2e/smoke/check-report.mjs reports/nightly-e2e/report.json 8
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: nightly-e2e-reports
+          path: reports/nightly-e2e
+          if-no-files-found: error
+          retention-days: 30
+
+  # The only job with a cloud credential: gh-nightly-staging, read-only.
+  restore-procedure:
+    name: staging backup-restore procedure check (read-only)
+    needs: [enabled]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment: nightly-staging
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AWS_REGION: ${{ vars.NIGHTLY_AWS_REGION }}
+      ROLE_ARN: ${{ vars.NIGHTLY_ROLE_ARN }}
+      DB_INSTANCE: ${{ vars.NIGHTLY_DB_INSTANCE }}
+      BACKUP_VAULT: ${{ vars.NIGHTLY_BACKUP_VAULT }}
+      MAX_AGE_MINUTES: ${{ vars.NIGHTLY_BACKUP_MAX_AGE_MINUTES || '30' }}
+      RP_MAX_AGE_HOURS: ${{ vars.NIGHTLY_RECOVERY_POINT_MAX_AGE_HOURS || '26' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Assume gh-nightly-staging (OIDC; denied by AWS unless the ci record is applied and unexpired)
+        run: scripts/deploy/aws-login.sh "$ROLE_ARN" gh-nightly-staging 3600
+      - name: Point-in-time restore is available and fresh (rds:DescribeDBInstances only)
+        run: |
+          mkdir -p reports/nightly-restore
+          node scripts/deploy/backup-gate.mjs check --db "$DB_INSTANCE" --max-age-minutes "$MAX_AGE_MINUTES" | tee reports/nightly-restore/pitr.txt
+      - name: A completed recovery point exists in the vault and is recent (backup:ListRecoveryPointsByBackupVault only)
+        run: |
+          aws backup list-recovery-points-by-backup-vault --backup-vault-name "$BACKUP_VAULT" --output json >reports/nightly-restore/recovery-points.json
+          latest="$(jq -er '[.RecoveryPoints[] | select(.Status == "COMPLETED") | .CreationDate] | max' reports/nightly-restore/recovery-points.json)" \
+            || { echo "::error::no COMPLETED recovery point in $BACKUP_VAULT"; exit 1; }
+          age_h=$(( ( $(date -u +%s) - $(date -u -d "$latest" +%s) ) / 3600 ))
+          echo "latest completed recovery point $latest (${age_h} h old, limit ${RP_MAX_AGE_HOURS} h)" | tee reports/nightly-restore/recovery-point.txt
+          [ "$age_h" -le "$RP_MAX_AGE_HOURS" ] || { echo "::error::latest completed recovery point is ${age_h} h old (limit ${RP_MAX_AGE_HOURS} h)"; exit 1; }
+      - name: The restore runbook and the restore tooling the procedure depends on are present
+        run: |
+          for f in docs/runbooks/restore.md scripts/restore/start-restore.mjs scripts/restore/run-checks.mjs scripts/restore/teardown.mjs scripts/restore/verify-record.mjs; do
+            [ -s "$f" ] || { echo "::error::$f is missing or empty"; exit 1; }
+          done
+          echo "restore runbook and tooling present" | tee reports/nightly-restore/procedure.txt
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: nightly-restore-procedure-reports
+          path: reports/nightly-restore
+          if-no-files-found: error
+          retention-days: 30
+
+  # One red/green answer for the schedule: any failed or skipped job fails the run, so a failed night is visible.
+  outcome:
+    name: nightly outcome
+    needs: [enabled, rescan, e2e, restore-procedure]
+    if: ${{ always() }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Every job succeeded
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          echo "$RESULTS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+          echo "$RESULTS" | jq -e 'all(.[]; .result == "success")' >/dev/null || { echo "::error::at least one nightly job did not succeed"; exit 1; }

@@ -1,10 +1,16 @@
-# Weekly dependency update pull requests (DEVOPS-PLAN 4.2). Dependabot proposes; a human reviews and
-# merges. GitHub Actions updates keep the full-SHA pin. Dependabot *alerts* are a separate repository
+# Weekly dependency update pull requests (DEVOPS-PLAN 4.2; DO-09, HEAAA-113). Dependabot proposes; a human reviews and
+# merges. GitHub Actions updates keep the full-SHA pin and its version comment. Dependabot *alerts* are a separate repository
 # setting that is currently disabled and can only be enabled by the repository owner.
 #
-# Not configured yet because the manifest does not exist (Dependabot reports an error for a missing
-# manifest): `docker` (first Dockerfile) and `terraform` (first infra/ root). The ticket that adds the
-# manifest extends this file.
+# Ecosystems: npm (pnpm lockfile), docker, docker-compose, github-actions (SHA pins), terraform (provider versions and the
+# .terraform.lock.hcl of every root and module; OpenTofu uses the same provider registry and lock format).
+#
+# Known limits, stated rather than hidden:
+#   - docker: the base image is a build ARG (`ARG NODE_IMAGE=node:...@sha256:...` then `FROM ${NODE_IMAGE}`). Dependabot does not
+#     follow an ARG used in FROM, so it will not propose the next digest. The nightly re-scan (nightly.yml) re-resolves and scans
+#     that image every night and a new base image is a manual, reviewed change to the ARG default.
+#   - tool binaries pinned in scripts/ci/tools.lock and the OpenTofu/tflint pins in infra.yml are not package manifests;
+#     they change by a reviewed pull request, not by Dependabot.
 version: 2
 updates:
   - package-ecosystem: npm
@@ -23,3 +29,35 @@ updates:
     cooldown:
       default-days: 7
     labels: [dependencies, ci]
+  - package-ecosystem: docker
+    directory: /docker
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
+    labels: [dependencies, docker]
+  - package-ecosystem: docker-compose
+    directory: /docker
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
+    labels: [dependencies, docker]
+  - package-ecosystem: terraform
+    directories:
+      - /infra/accounts/*
+      - /infra/approvals
+      - /infra/bootstrap
+      - /infra/modules/*
+      - /infra/modules/dr/*
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
+    labels: [dependencies, infra]
+    groups:
+      terraform-providers:
+        patterns: ['*']
