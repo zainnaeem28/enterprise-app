@@ -126,3 +126,17 @@ regexes = [
   '''^sk_live_SUPERSECRET$''',
   '''^appointment_reminder_(48h|4h)$''',
 ]
+
+# INT04-F07 (owner: DevOps Engineer; input: Cybersecurity; reviewer: Security Reviewer). The
+# observability PHI-canary fixture deliberately holds one JWT-shaped string (header {"alg":"none"},
+# payload {"sub":"CANARY"}, signature "CANARYSIGNATURE01"). It is unsigned and fake by construction;
+# the telemetry tests assert it never reaches telemetry output, so its shape must stay realistic.
+# Pinned to this one file AND the exact value (condition = "AND") and to rule jwt only: a different
+# JWT in the same file, or this value anywhere else, still fails. Applies to history (commit
+# 0bf3894) as well as the tree, so no history rewrite. No expiry: re-check if the fixture changes.
+[[allowlists]]
+description = "INT04-F07: synthetic unsigned JWT-shaped PHI canary in the observability test fixture"
+condition = "AND"
+targetRules = ["jwt"]
+paths = ['''(^|/)infra/modules/observability/tests/phi-canaries\.json$''']
+regexes = ['''^eyJhbGciOiJub25lIn0\.eyJzdWIiOiJDQU5BUlkifQ\.CANARYSIGNATURE01$''']
