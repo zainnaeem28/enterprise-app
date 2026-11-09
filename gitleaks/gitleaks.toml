@@ -27,17 +27,17 @@ description = "INT03-F12-a: synthetic test keys and ids in test files (exact fil
 condition = "AND"
 targetRules = ["generic-api-key"]
 paths = [
-  '''^apps/api/src/modules/calendar-sync/oauth\.test\.ts$''',
-  '''^apps/api/src/modules/clinical/(chart|frontdoor|notes)/testkit\.ts$''',
-  '''^apps/api/src/modules/identity/(admin/)?testkit\.ts$''',
-  '''^apps/api/src/modules/patient/testkit\.ts$''',
-  '''^apps/api/src/modules/notifications/notifications\.dbtest\.ts$''',
-  '''^apps/api/test/platform/db\.dbtest\.ts$''',
-  '''^apps/staff/src/features/preconsult/desk\.test\.tsx$''',
-  '''^apps/staff/src/features/preconsult/e2e/preconsult\.spec\.ts$''',
-  '''^apps/worker/src/compose\.dbtest\.ts$''',
-  '''^apps/worker/src/jobs/calendar-sync/(google-adapter|push-handler)\.test\.ts$''',
-  '''^apps/worker/src/jobs/notifications/notifications\.dbtest\.ts$''',
+  '''(^|/)apps/api/src/modules/calendar-sync/oauth\.test\.ts$''',
+  '''(^|/)apps/api/src/modules/clinical/(chart|frontdoor|notes)/testkit\.ts$''',
+  '''(^|/)apps/api/src/modules/identity/(admin/)?testkit\.ts$''',
+  '''(^|/)apps/api/src/modules/patient/testkit\.ts$''',
+  '''(^|/)apps/api/src/modules/notifications/notifications\.dbtest\.ts$''',
+  '''(^|/)apps/api/test/platform/db\.dbtest\.ts$''',
+  '''(^|/)apps/staff/src/features/preconsult/desk\.test\.tsx$''',
+  '''(^|/)apps/staff/src/features/preconsult/e2e/preconsult\.spec\.ts$''',
+  '''(^|/)apps/worker/src/compose\.dbtest\.ts$''',
+  '''(^|/)apps/worker/src/jobs/calendar-sync/(google-adapter|push-handler)\.test\.ts$''',
+  '''(^|/)apps/worker/src/jobs/notifications/notifications\.dbtest\.ts$''',
 ]
 regexes = [
   '''^decoy-key-for-tests-0123456789abcdef$''',
@@ -57,7 +57,7 @@ regexes = [
 description = "INT03-F12-b: notification template keys in r1-templates.ts"
 condition = "AND"
 targetRules = ["generic-api-key"]
-paths = ['''^apps/api/src/modules/notifications/r1-templates\.ts$''']
+paths = ['''(^|/)apps/api/src/modules/notifications/r1-templates\.ts$''']
 regexes = ['''^appointment_reminder_(48h|4h)$''']
 
 # F12-c: M3 UI journey evidence log; only the two template-key values appear, no credentials.
@@ -65,7 +65,7 @@ regexes = ['''^appointment_reminder_(48h|4h)$''']
 description = "INT03-F12-c: template_key values in the M3 journey evidence log"
 condition = "AND"
 targetRules = ["generic-api-key"]
-paths = ['''^docs/evidence/integration/M3/raw/r(11|12)/ui/journey-run\.txt$''']
+paths = ['''(^|/)docs/evidence/integration/M3/raw/r(11|12)/ui/journey-run\.txt$''']
 regexes = ['''^appointment_reminder_(48h|4h)$''']
 
 # F12-d: the literal placeholder "sk_live_SUPERSECRET" used to prove error redaction (test input and
@@ -75,9 +75,19 @@ description = "INT03-F12-d: fake sk_live_SUPERSECRET redaction-test marker"
 condition = "AND"
 targetRules = ["stripe-access-token"]
 paths = [
-  '''^apps/worker/src/jobs/integration-core/call-vendor\.test\.ts$''',
-  '''^docs/evidence/integration/M4/INT-03-RESULT-r5\.md$''',
+  '''(^|/)apps/worker/src/jobs/integration-core/call-vendor\.test\.ts$''',
+  '''(^|/)docs/evidence/integration/M4/INT-03-RESULT-r5\.md$''',
 ]
+regexes = ['''^sk_live_SUPERSECRET$''']
+
+# F12-g: history only. Commit f4644b81 first quoted the marker in the F12 decision log; the current
+# tree no longer has the literal (reworded in INT03-F14). Pinned to that commit AND file AND value.
+[[allowlists]]
+description = "INT03-F14: historical F12 decision-log commit quoting the fake redaction marker"
+condition = "AND"
+targetRules = ["stripe-access-token"]
+commits = ["f4644b81fbe8e8da0e20281d460b62742bb3763d"]
+paths = ['''(^|/)docs/evidence/integration/M4/INT03-F12-decision-log\.md$''']
 regexes = ['''^sk_live_SUPERSECRET$''']
 
 # F12-e: infra plan-test fixtures (placeholder origin-verify header value, never applied) and a
@@ -86,14 +96,14 @@ regexes = ['''^sk_live_SUPERSECRET$''']
 description = "INT03-F12-e: placeholder origin_verify_secret in terraform plan tests"
 condition = "AND"
 targetRules = ["generic-api-key"]
-paths = ['''^infra/modules/(compute|edge)/tests/plan\.tftest\.hcl$''']
+paths = ['''(^|/)infra/modules/(compute|edge)/tests/plan\.tftest\.hcl$''']
 regexes = ['''^0123456789abcdef0123456789abcdef0123$''']
 
 [[allowlists]]
 description = "INT03-F12-e: dockerfile sha256 digest in foundation versions evidence"
 condition = "AND"
 targetRules = ["generic-api-key"]
-paths = ['''^docs/evidence/foundation/raw/00-versions\.txt$''']
+paths = ['''(^|/)docs/evidence/foundation/raw/00-versions\.txt$''']
 regexes = ['''^5df716024056310597bc208745349d57e88f87e86079a35b42351a4e6b2647d2$''']
 
 # F12-f: compiled (gitignored, untracked) build output of the same test files, seen only by the
@@ -102,7 +112,7 @@ regexes = ['''^5df716024056310597bc208745349d57e88f87e86079a35b42351a4e6b2647d2$
 description = "INT03-F12-f: compiled build output of the synthetic test fixtures (exact values)"
 condition = "AND"
 targetRules = ["generic-api-key", "stripe-access-token"]
-paths = ['''^apps/(api|worker)/dist/.*\.(js|d\.ts)$''']
+paths = ['''(^|/)apps/(api|worker)/dist/.*\.(js|d\.ts)$''']
 regexes = [
   '''^decoy-key-for-tests-0123456789abcdef$''',
   '''^(csrf|rate|cursor|qr)-key-for-tests-0123456789abcdef(0123)?[0-9a-f]*$''',
