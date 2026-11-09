@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import type { KernelDb } from '@ehr/kernel';
-import { runAdminEvent, type ComplianceAlertInput } from './admin-events.js';
+import { runAdminEvent, runAdminEventNotice, type ComplianceAlertInput } from './admin-events.js';
 
 const ORG = '00000000-0000-7000-8000-0000000000a1';
 const P = '00000000-0000-7000-8000-0000000000b1';
@@ -11,7 +11,7 @@ const P = '00000000-0000-7000-8000-0000000000b1';
 function harness(activeCredentials = 2) {
   const sql: string[] = [];
   const alerts: ComplianceAlertInput[] = [];
-  const notices: { kind: string; principalId: string }[] = [];
+  const queued: { job: string; payload: unknown; key: unknown }[] = [];
   const db = {
     withScope: (_s: unknown, fn: (tx: unknown) => Promise<unknown>) =>
       fn({
@@ -26,19 +26,19 @@ function harness(activeCredentials = 2) {
   return {
     sql,
     alerts,
-    notices,
+    queued,
     deps: {
       db,
       orgId: ORG,
-      alerts: {
-        raise: (_tx: unknown, i: ComplianceAlertInput) => {
-          alerts.push(i);
+      queue: {
+        enqueue: (_tx: unknown, job: string, payload: unknown, o: { jobKey?: string }) => {
+          queued.push({ job, payload, key: o.jobKey });
           return Promise.resolve();
         },
       },
-      notice: {
-        notify: (n: { kind: string; principalId: string }) => {
-          notices.push(n);
+      alerts: {
+        raise: (_tx: unknown, i: ComplianceAlertInput) => {
+          alerts.push(i);
           return Promise.resolve();
         },
       },
@@ -54,11 +54,16 @@ test('credential_enrolled: audit row, alert and notice', async () => {
     'j',
     'ref',
   );
-  assert.deepEqual(r, { audited: true, alerted: true, activeCredentials: null });
+  assert.deepEqual(r, {
+    audited: true,
+    alerted: true,
+    noticeQueued: true,
+    activeCredentials: null,
+  });
   assert.ok(h.sql.some((s) => s.includes('INSERT INTO audit.event')));
   assert.equal(h.alerts[0]?.type, 'privileged_change');
   assert.equal(h.alerts[0]?.severity, 'high');
-  assert.equal(h.notices.length, 1);
+  assert.equal(h.queued.length, 1);
 });
 
 test('counter_regression with one key left is critical', async () => {
@@ -90,9 +95,14 @@ test('a role_change_requested is neither audited nor alerted here (the API wrote
     'j',
     'r',
   );
-  assert.deepEqual(r, { audited: false, alerted: false, activeCredentials: null });
+  assert.deepEqual(r, {
+    audited: false,
+    alerted: false,
+    noticeQueued: false,
+    activeCredentials: null,
+  });
   assert.equal(h.alerts.length, 0);
-  assert.equal(h.notices.length, 0);
+  assert.equal(h.queued.length, 0);
 });
 
 test('handle_failures writes a denied audit row', async () => {
@@ -101,14 +111,55 @@ test('handle_failures writes a denied audit row', async () => {
   assert.ok(h.sql.some((s) => s.includes('audit.event')));
 });
 
-test('a failing notice fails the job (retry, then dead-letter) instead of passing silently', async () => {
+test('the audit row and the alert are written before the notice is queued; the notice is its own job (S1)', async () => {
   const h = harness();
-  const deps = {
-    ...h.deps,
-    notice: { notify: () => Promise.reject(new Error('no mail channel')) },
-  };
+  await runAdminEvent(h.deps as never, { kind: 'counter_regression', principalId: P }, 'j', 'r');
+  assert.equal(h.queued[0]?.job, 'identity.admin_event_notice');
+  assert.deepEqual(h.queued[0]?.payload, { kind: 'counter_regression', principalId: P });
+});
+
+test('a failing alert fails the job, after the audit insert has run in its own transaction', async () => {
+  const h = harness();
+  const deps = { ...h.deps, alerts: { raise: () => Promise.reject(new Error('no recipient')) } };
   await assert.rejects(
     runAdminEvent(deps as never, { kind: 'credential_enrolled', principalId: P }, 'j', 'r'),
+  );
+  assert.ok(h.sql.some((q) => q.includes('INSERT INTO audit.event')));
+  assert.equal(h.queued.length, 0);
+});
+
+test('the audit insert is keyed by the job reference (a retry writes no second row, S4)', async () => {
+  const h = harness();
+  await runAdminEvent(h.deps as never, { kind: 'handle_failures', principalId: P }, 'j', 'r');
+  assert.ok(h.sql.some((q) => q.includes('WHERE NOT EXISTS') && q.includes('job_id = $1')));
+});
+
+test('the subject and a named actor are excluded from the alert recipients (S3)', async () => {
+  const h = harness();
+  const A = '00000000-0000-7000-8000-0000000000c1';
+  await runAdminEvent(
+    h.deps as never,
+    { kind: 'enrolment_token_approved', principalId: P, actorPrincipalId: A },
+    'j',
+    'r',
+  );
+  assert.deepEqual(h.alerts[0]?.excludePrincipalIds, [P, A]);
+});
+
+test('the notice job sends a notice with kind and ID only; a failing channel fails that job alone', async () => {
+  const sent: unknown[] = [];
+  await runAdminEventNotice(
+    { notice: { notify: (n) => (sent.push(n), Promise.resolve()) } },
+    { kind: 'credential_revoked', principalId: P },
+    'ref',
+  );
+  assert.deepEqual(sent, [{ kind: 'credential_revoked', principalId: P, jobRef: 'ref' }]);
+  await assert.rejects(
+    runAdminEventNotice(
+      { notice: { notify: () => Promise.reject(new Error('no mail channel')) } },
+      { kind: 'credential_revoked', principalId: P },
+      'ref',
+    ),
   );
 });
 

@@ -61,5 +61,8 @@ for (const outcome of ['up_to_date', 'locked'] as const)
   test(`audit.anchor emits AuditAnchorLateSeconds on a ${outcome} run`, async () => {
     const { gauges, task } = run(outcome);
     await task({}, {});
-    assert.deepEqual(gauges, [['AuditAnchorLateSeconds', 301.5]]);
+    assert.deepEqual(gauges, [
+      ['AuditAnchorLateSeconds', 301.5],
+      ['AdminEventDeadLettered', 0],
+    ]);
   });

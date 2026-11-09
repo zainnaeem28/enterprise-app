@@ -96,7 +96,25 @@ export function buildWorkerPorts(deps: WorkerPortsDeps) {
     ...(deps.now === undefined ? {} : { now: deps.now }),
   });
   // Milestone M4 handlers. The re-target needs only the roster and the alert service; the ports it never calls refuse.
-  const alerts = new AlertService({ queue: deps.queue, audit, resolver: createTargetResolver() });
+  const targetResolver = createTargetResolver();
+  const alerts = new AlertService({ queue: deps.queue, audit, resolver: targetResolver });
+  // A compliance alert for an admin's own change must not reach that admin: the worker has no acting principal in its scope, so the
+  // exclusion travels with the call. An empty result fails the job visibly (the alert service refuses a target list of zero).
+  const alertsWithout = (exclude: readonly string[] | undefined): AlertService =>
+    exclude === undefined || exclude.length === 0
+      ? alerts
+      : new AlertService({
+          queue: deps.queue,
+          audit,
+          resolver: {
+            roleHolders: (tx, roleKey, locationIds) =>
+              targetResolver.roleHolders(tx, roleKey, locationIds),
+            permissionHolders: async (tx, permission) =>
+              (await targetResolver.permissionHolders(tx, permission)).filter(
+                (id) => !exclude.some((x) => x.toLowerCase() === id.toLowerCase()),
+              ),
+          },
+        });
   const unused = (port: string): never =>
     new Proxy({} as never, {
       get: (_t, prop) => (): Promise<never> =>
@@ -148,10 +166,12 @@ export function buildWorkerPorts(deps: WorkerPortsDeps) {
           resourceType: string;
           resourceId: string;
           permission: string;
+          /** Principals who never receive this alert (the subject and the acting admin, C4; INT04F02-S3). */
+          excludePrincipalIds?: readonly string[];
         },
         jobId: string,
       ) =>
-        alerts.raise(
+        alertsWithout(input.excludePrincipalIds).raise(
           tx,
           {
             type: input.type,
