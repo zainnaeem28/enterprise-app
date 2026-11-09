@@ -80,9 +80,20 @@ resource "aws_secretsmanager_secret_policy" "this" {
           Sid       = "NobodyElseWritesTheValue"
           Effect    = "Deny"
           Principal = "*"
-          Action    = ["secretsmanager:PutSecretValue", "secretsmanager:UpdateSecret", "secretsmanager:RestoreSecret"]
+          Action    = ["secretsmanager:PutSecretValue", "secretsmanager:RestoreSecret"]
           Resource  = "*"
           Condition = { ArnNotEquals = { "aws:PrincipalArn" = distinct(concat(each.value.writers, var.break_glass_role_arns)) } }
+        },
+        {
+          # UpdateSecret changes metadata (description, key) and can write a value; the apply
+          # roles may call it because gh-tf-* carry an identity-side deny on PutSecretValue and
+          # the value reads, and Terraform sets no value (no secret_string anywhere).
+          Sid       = "NobodyElseUpdatesTheSecret"
+          Effect    = "Deny"
+          Principal = "*"
+          Action    = ["secretsmanager:UpdateSecret"]
+          Resource  = "*"
+          Condition = { ArnNotEquals = { "aws:PrincipalArn" = distinct(concat(each.value.writers, var.apply_role_arns, var.break_glass_role_arns)) } }
         },
       ],
       length(each.value.writers) > 0 ? [{
@@ -100,7 +111,15 @@ resource "aws_secretsmanager_secret_rotation" "this" {
   for_each            = var.rotation_lambda_arn == null ? {} : var.secrets
   secret_id           = aws_secretsmanager_secret.this[each.key].id
   rotation_lambda_arn = var.rotation_lambda_arn
+  rotate_immediately  = false # no value exists yet on first apply; the first rotation runs on schedule
   rotation_rules {
     automatically_after_days = var.rotation_days
+  }
+
+  lifecycle {
+    precondition {
+      condition     = length(var.secrets[each.key].writers) > 0
+      error_message = "A secret with rotation needs the rotation function's role in writers; otherwise the policy denies PutSecretValue and rotation fails silently."
+    }
   }
 }

@@ -129,6 +129,7 @@ variable "refs" {
     ecr_repository_arns            = optional(list(string), [])
     signing_key_arn                = optional(string)
     release_manifest_bucket_arn    = optional(string)
+    audit_bucket_arn               = optional(string)
     marketing_bucket_arns          = optional(map(string), {})
     marketing_distribution_arns    = optional(map(string), {})
     log_group_arns                 = optional(list(string), [])

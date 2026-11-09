@@ -241,3 +241,23 @@ run "unknown_role_is_rejected" {
   }
   expect_failures = [terraform_data.checks]
 }
+
+run "tf_roles_read_their_record_through_ssm_and_cannot_edit_protecting_controls" {
+  command = plan
+
+  assert {
+    condition = alltrue([for n in ["gh-tf-staging", "gh-tf-production"] : (
+      length([for st in jsondecode(output.role_policies[n]).Statement : st if st.Sid == "NoKeyUseForData" && contains(st.Condition.StringNotEquals["kms:ViaService"], "ssm.us-east-2.amazonaws.com")]) == 1 &&
+      length([for st in jsondecode(output.role_policies[n]).Statement : st if st.Sid == "RecordKeyOnlyViaSsm" && st.Resource == [var.ssm_kms_key_arn] && st.Condition.StringNotEquals["kms:ViaService"] == ["ssm.us-east-2.amazonaws.com"]]) == 1 &&
+      length([for st in jsondecode(output.role_policies[n]).Statement : st if st.Sid == "StateKeyOnlyViaS3" && st.Condition.StringNotEquals["kms:ViaService"] == ["s3.us-east-2.amazonaws.com"]]) == 1
+    )])
+    error_message = "the record key is usable through SSM only and the state key through S3 only, so the tf role can read /approved/<record>"
+  }
+  assert {
+    condition = alltrue([for n in ["gh-tf-staging", "gh-tf-production"] : (
+      anytrue([for st in jsondecode(output.role_policies[n]).Statement : st.Sid == "NoEditOfRecordAndEvidenceKeys" && contains(st.Resource, var.ssm_kms_key_arn) && contains(st.Resource, var.state_kms_key_arn) && contains(st.Action, "kms:PutKeyPolicy") && contains(st.Action, "kms:ScheduleKeyDeletion")]) &&
+      anytrue([for st in jsondecode(output.role_policies[n]).Statement : st.Sid == "NoEditOfEvidenceBuckets" && contains(st.Resource, var.state_bucket_arn) && contains(st.Action, "s3:PutBucket*")])
+    )])
+    error_message = "tf roles must be denied edits of the record key, the state key and the state bucket policy"
+  }
+}
