@@ -1,0 +1,9 @@
+install exit 0
+lint exit 1
+format-check exit 0
+typecheck exit 0
+build exit 0
+boundary exit 0
+unit exit 0
+integration-db exit 1
+integration-db rerun exit 0

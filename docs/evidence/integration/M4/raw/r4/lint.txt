@@ -1,0 +1,8 @@
+$ eslint .
+
+/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-344-sdlc-integrate-int-03-r4-bounded-round-4-re-merge-f09a-then-journeys-screenshots-n-1-scans/apps/api/src/modules/scheduling/core/binding.dbtest.ts
+  16:3  error  'saWrite' is defined but never used  @typescript-eslint/no-unused-vars
+
+✖ 1 problem (1 error, 0 warnings)
+
+[ELIFECYCLE] Command failed with exit code 1.
