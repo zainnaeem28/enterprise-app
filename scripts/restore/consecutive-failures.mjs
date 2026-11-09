@@ -8,7 +8,11 @@ import { isMain, main } from '../deploy/lib/cli.mjs';
 
 export function consecutiveFailures(runs, { event = 'schedule' } = {}) {
   const done = runs
-    .filter((r) => r.event === event && ['success', 'failure', 'timed_out', 'cancelled'].includes(r.conclusion))
+    .filter(
+      (r) =>
+        r.event === event &&
+        ['success', 'failure', 'timed_out', 'cancelled'].includes(r.conclusion),
+    )
     .filter((r) => r.conclusion !== 'cancelled')
     .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
   let n = 0;
@@ -22,6 +26,11 @@ export function consecutiveFailures(runs, { event = 'schedule' } = {}) {
 if (isMain(import.meta.url))
   main(() => {
     const r = consecutiveFailures(JSON.parse(readFileSync(0, 'utf8')));
-    console.log(`restore-test: ${r.consecutive} consecutive failed scheduled run(s) of ${r.examined} examined`);
-    if (r.stopReleases) throw new Error('two consecutive restore tests failed: releases stop until the restore test passes again (10.3 step 6)');
+    console.log(
+      `restore-test: ${r.consecutive} consecutive failed scheduled run(s) of ${r.examined} examined`,
+    );
+    if (r.stopReleases)
+      throw new Error(
+        'two consecutive restore tests failed: releases stop until the restore test passes again (10.3 step 6)',
+      );
   });

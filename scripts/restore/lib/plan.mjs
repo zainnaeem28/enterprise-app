@@ -9,9 +9,15 @@ export const MIN_AGE_SECONDS = 300; // never ask for a time inside the last 5 mi
  * A random PITR time within the last 7 days, inside the instance's restorable range. `rand(n)` returns an integer in
  * [0, n) and is injectable so a test is deterministic; production uses crypto.randomInt, never Math.random.
  */
-export function choosePitrTime({ latestRestorable, earliestRestorable, now = new Date(), rand = randomInt }) {
+export function choosePitrTime({
+  latestRestorable,
+  earliestRestorable,
+  now = new Date(),
+  rand = randomInt,
+}) {
   const latest = Date.parse(latestRestorable);
-  if (Number.isNaN(latest)) throw new Error('no LatestRestorableTime: point-in-time restore is not available');
+  if (Number.isNaN(latest))
+    throw new Error('no LatestRestorableTime: point-in-time restore is not available');
   const nowMs = now.getTime();
   const hi = Math.min(latest, nowMs - MIN_AGE_SECONDS * 1000);
   let lo = nowMs - PITR_WINDOW_SECONDS * 1000;
@@ -29,7 +35,8 @@ export function choosePitrTime({ latestRestorable, earliestRestorable, now = new
 export function targetIdentifier({ now = new Date(), runId, attempt = '1' }) {
   const day = now.toISOString().slice(0, 10).replaceAll('-', '');
   const id = `${TARGET_PREFIX}${day}-${String(runId).replace(/[^0-9]/g, '')}-${String(attempt).replace(/[^0-9]/g, '')}`;
-  if (!/^rt-[0-9]{8}-[0-9]+-[0-9]+$/.test(id) || id.length > 40) throw new Error(`cannot build a target identifier from run ${runId}`);
+  if (!/^rt-[0-9]{8}-[0-9]+-[0-9]+$/.test(id) || id.length > 40)
+    throw new Error(`cannot build a target identifier from run ${runId}`);
   return id;
 }
 

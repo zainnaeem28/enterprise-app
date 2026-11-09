@@ -10,9 +10,20 @@ export const TARGET_PREFIX = 'rt-';
 export const PURPOSE_TAG = 'purpose=restore-test';
 
 const ALLOWED = new Map([
-  ['rds', new Set(['restore-db-instance-to-point-in-time', 'describe-db-instances', 'delete-db-instance', 'describe-db-snapshots'])],
+  [
+    'rds',
+    new Set([
+      'restore-db-instance-to-point-in-time',
+      'describe-db-instances',
+      'delete-db-instance',
+      'describe-db-snapshots',
+    ]),
+  ],
   ['ecs', new Set(['run-task', 'describe-tasks', 'stop-task'])],
-  ['backup', new Set(['list-recovery-points-by-resource', 'describe-recovery-point', 'list-backup-jobs'])],
+  [
+    'backup',
+    new Set(['list-recovery-points-by-resource', 'describe-recovery-point', 'list-backup-jobs']),
+  ],
   ['ssm', new Set(['get-parameter'])],
   ['s3api', new Set(['get-object', 'head-object'])],
   ['sts', new Set(['get-caller-identity'])],
@@ -28,26 +39,37 @@ export function assertAllowed(args) {
   const [service, verb] = args;
   if (!service || !verb) throw new Error('aws: service and verb required');
   const verbs = ALLOWED.get(service);
-  if (!verbs || !verbs.has(verb)) throw new Error(`restore scripts never run "aws ${service} ${verb}"`);
+  if (!verbs || !verbs.has(verb))
+    throw new Error(`restore scripts never run "aws ${service} ${verb}"`);
   if (args.includes('--overrides'))
-    throw new Error('RunTask overrides are not used: the restore task finds its target by tag (DPR-28)');
+    throw new Error(
+      'RunTask overrides are not used: the restore task finds its target by tag (DPR-28)',
+    );
   if (service === 'rds' && verb === 'restore-db-instance-to-point-in-time') {
     const id = flag(args, '--target-db-instance-identifier');
-    if (!id?.startsWith(TARGET_PREFIX)) throw new Error(`restore target must start with "${TARGET_PREFIX}"`);
-    if (!args.includes('--no-publicly-accessible')) throw new Error('restore target must be --no-publicly-accessible');
+    if (!id?.startsWith(TARGET_PREFIX))
+      throw new Error(`restore target must start with "${TARGET_PREFIX}"`);
+    if (!args.includes('--no-publicly-accessible'))
+      throw new Error('restore target must be --no-publicly-accessible');
     if (!args.includes('--no-enable-iam-database-authentication'))
       throw new Error('restore target must not enable IAM database authentication');
-    if (!flag(args, '--db-subnet-group-name')) throw new Error('restore target needs the pinned --db-subnet-group-name');
-    if (!flag(args, '--vpc-security-group-ids')) throw new Error('restore target needs the pinned --vpc-security-group-ids');
+    if (!flag(args, '--db-subnet-group-name'))
+      throw new Error('restore target needs the pinned --db-subnet-group-name');
+    if (!flag(args, '--vpc-security-group-ids'))
+      throw new Error('restore target needs the pinned --vpc-security-group-ids');
     if (!(args.includes('--tags') && args.some((a) => a === `Key=purpose,Value=restore-test`)))
       throw new Error('restore target must be tagged purpose=restore-test');
-    if (args.includes('--copy-tags-to-snapshot')) throw new Error('restore target must not copy tags to snapshots');
+    if (args.includes('--copy-tags-to-snapshot'))
+      throw new Error('restore target must not copy tags to snapshots');
   }
   if (service === 'rds' && verb === 'delete-db-instance') {
     const id = flag(args, '--db-instance-identifier');
-    if (!id?.startsWith(TARGET_PREFIX)) throw new Error(`refusing to delete "${id}": not a restore-test target`);
-    if (!args.includes('--skip-final-snapshot')) throw new Error('a restore target is deleted without a final snapshot');
-    if (!args.includes('--delete-automated-backups')) throw new Error('a restore target is deleted with its automated backups');
+    if (!id?.startsWith(TARGET_PREFIX))
+      throw new Error(`refusing to delete "${id}": not a restore-test target`);
+    if (!args.includes('--skip-final-snapshot'))
+      throw new Error('a restore target is deleted without a final snapshot');
+    if (!args.includes('--delete-automated-backups'))
+      throw new Error('a restore target is deleted with its automated backups');
   }
   if (service === 's3api') {
     const key = flag(args, '--key') ?? '';

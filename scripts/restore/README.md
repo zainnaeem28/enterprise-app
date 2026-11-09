@@ -4,20 +4,20 @@ Authored, not applied, not run against AWS. Procedure and decisions: `docs/runbo
 
 ## Layout
 
-| Path | What it is |
-| --- | --- |
-| `.github/workflows/restore-test.yml` | Monthly restore test, authored disabled (`RESTORE_TEST_ENABLED`). API calls only; the runner never touches the restored data |
-| `verify-record.mjs`, `lib/record.mjs` | Checks the `restore-test` approved record (15.3) |
-| `start-restore.mjs`, `lib/plan.mjs` | Chooses the restore point (latest, or random within 7 days) and starts the restore into the pinned boundary |
-| `run-checks.mjs` | Starts the pinned task with no overrides and waits (own deadline) |
-| `fetch-result.mjs`, `lib/result.mjs` | Fetches and strictly validates the PHI-free result; refuses anything outside the closed schema |
-| `teardown.mjs` | Deletes the run's target, or every `rt-*` target older than 24 h |
-| `consecutive-failures.mjs` | Two consecutive scheduled failures stop releases |
-| `task/` | The in-VPC task: `run.mjs` (orchestration, injected I/O), `checks.mjs`, `restore-check.mjs` (entry), `tables.json` (proposal) |
-| `lib/aws.mjs` | Allow-list in front of the AWS CLI: no IAM, no task-definition registration, no overrides, `rt-` targets only |
-| `dr-rehearsal.sh` | Create / run / destroy / sweep the synthetic DR rehearsal stack in staging |
-| `../../infra/modules/dr/restore-boundary` | The isolated `restore-test` VPC, endpoints and policies, key, roles, pinned task definition |
-| `../../infra/modules/dr/rehearsal` (+ `root/`) | The `ENV-DR` stack, guarded to the staging account, `us-west-2` and synthetic snapshots |
+| Path                                           | What it is                                                                                                                    |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `.github/workflows/restore-test.yml`           | Monthly restore test, authored disabled (`RESTORE_TEST_ENABLED`). API calls only; the runner never touches the restored data  |
+| `verify-record.mjs`, `lib/record.mjs`          | Checks the `restore-test` approved record (15.3)                                                                              |
+| `start-restore.mjs`, `lib/plan.mjs`            | Chooses the restore point (latest, or random within 7 days) and starts the restore into the pinned boundary                   |
+| `run-checks.mjs`                               | Starts the pinned task with no overrides and waits (own deadline)                                                             |
+| `fetch-result.mjs`, `lib/result.mjs`           | Fetches and strictly validates the PHI-free result; refuses anything outside the closed schema                                |
+| `teardown.mjs`                                 | Deletes the run's target, or every `rt-*` target older than 24 h                                                              |
+| `consecutive-failures.mjs`                     | Two consecutive scheduled failures stop releases                                                                              |
+| `task/`                                        | The in-VPC task: `run.mjs` (orchestration, injected I/O), `checks.mjs`, `restore-check.mjs` (entry), `tables.json` (proposal) |
+| `lib/aws.mjs`                                  | Allow-list in front of the AWS CLI: no IAM, no task-definition registration, no overrides, `rt-` targets only                 |
+| `dr-rehearsal.sh`                              | Create / run / destroy / sweep the synthetic DR rehearsal stack in staging                                                    |
+| `../../infra/modules/dr/restore-boundary`      | The isolated `restore-test` VPC, endpoints and policies, key, roles, pinned task definition                                   |
+| `../../infra/modules/dr/rehearsal` (+ `root/`) | The `ENV-DR` stack, guarded to the staging account, `us-west-2` and synthetic snapshots                                       |
 
 ## Environment `restore-test` variables
 

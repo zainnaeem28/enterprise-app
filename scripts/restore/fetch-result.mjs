@@ -9,7 +9,11 @@ import { summarise, validateResult } from './lib/result.mjs';
 
 if (isMain(import.meta.url))
   main(() => {
-    const a = args(process.argv.slice(2), { bucket: 'required', 'run-id': 'required', out: 'required' });
+    const a = args(process.argv.slice(2), {
+      bucket: 'required',
+      'run-id': 'required',
+      out: 'required',
+    });
     mkdirSync(a.out, { recursive: true });
     const key = `restore-test/results/${a['run-id']}.json`;
     const file = `${a.out}/result.json`;
@@ -24,5 +28,8 @@ if (isMain(import.meta.url))
     if (doc.run_id !== a['run-id']) throw new Error('result document is for a different run');
     writeFileSync(`${a.out}/summary.md`, `${summarise(doc)}\n`);
     console.log(summarise(doc));
-    if (doc.overall !== 'pass') throw new Error(`restore test result is ${doc.overall}: a tracked finding is opened; two consecutive failures stop releases (10.3 step 6)`);
+    if (doc.overall !== 'pass')
+      throw new Error(
+        `restore test result is ${doc.overall}: a tracked finding is opened; two consecutive failures stop releases (10.3 step 6)`,
+      );
   });

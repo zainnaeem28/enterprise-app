@@ -8,16 +8,19 @@ export function checkRestoreRecord(text, { now = new Date(), action = 'restore-t
   } catch {
     return ['restore-test record is not valid JSON'];
   }
-  if (!r || typeof r !== 'object' || Array.isArray(r)) return ['restore-test record is not an object'];
+  if (!r || typeof r !== 'object' || Array.isArray(r))
+    return ['restore-test record is not an object'];
   const e = [];
   if (r.state !== 'approved') e.push(`record state is "${r.state}", not "approved"`);
-  if (r.environment !== 'production') e.push(`record is for environment "${r.environment}", not "production"`);
+  if (r.environment !== 'production')
+    e.push(`record is for environment "${r.environment}", not "production"`);
   const permitted = Array.isArray(r.permitted_actions) ? r.permitted_actions : [];
   if (!permitted.includes(action)) e.push(`action "${action}" is not in permitted_actions`);
   if (!Array.isArray(r.approvals) || r.approvals.length < 1) e.push('record names no approver');
   const nb = Date.parse(r.not_before);
   const ex = Date.parse(r.expires);
-  if (Number.isNaN(nb) || Number.isNaN(ex)) e.push('record not_before/expires missing or malformed');
+  if (Number.isNaN(nb) || Number.isNaN(ex))
+    e.push('record not_before/expires missing or malformed');
   else {
     if (now.getTime() < nb) e.push(`record is not valid before ${r.not_before}`);
     if (now.getTime() >= ex) e.push(`record expired at ${r.expires}`);

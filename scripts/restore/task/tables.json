@@ -5,7 +5,19 @@
     { "name": "audit.event", "class": "immutable", "pk": "event_id", "ts": "occurred_at" },
     { "name": "audit.anchor", "class": "immutable", "pk": "id", "ts": "to_ts" },
     { "name": "migration.schema_migration", "class": "immutable", "pk": "version", "ts": null },
-    { "name": "kernel.setting", "class": "mutable", "pk": null, "ts": null, "max_drift_ratio": 0.05 },
-    { "name": "kernel.reference_data_version", "class": "mutable", "pk": null, "ts": null, "max_drift_ratio": 0.05 }
+    {
+      "name": "kernel.setting",
+      "class": "mutable",
+      "pk": null,
+      "ts": null,
+      "max_drift_ratio": 0.05
+    },
+    {
+      "name": "kernel.reference_data_version",
+      "class": "mutable",
+      "pk": null,
+      "ts": null,
+      "max_drift_ratio": 0.05
+    }
   ]
 }
