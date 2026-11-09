@@ -16,6 +16,7 @@
   --info: #1f5fa8;
   --info-tint: #e4eef9;
   --on-accent: #ffffff;
+  --realm-admin: #8a3b12;
   --disabled-ink: #5b6573;
   --disabled-bg: #e6eaef;
   /* Portal accent: set per portal with data-portal on the root; staff doctor portal is the default. */
