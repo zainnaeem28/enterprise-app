@@ -4,7 +4,29 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "build": "tsc -p tsconfig.json --noEmit && vite build --outDir dist/client && vite build --ssr src/server.ts --outDir dist/server",
+    "start": "node dist/server/server.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "NODE_ENV=test vitest run --reporter=default --reporter=junit --outputFile.junit=\"${JUNIT_DIR:-.junit}/site.xml\"",
+    "test:a11y": "playwright test",
+    "lighthouse": "pnpm dlx @lhci/cli@0.16.0 autorun --config=lighthouserc.cjs"
+  },
+  "dependencies": {
+    "@ehr/ui": "workspace:*",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
+    "@playwright/test": "1.64.1",
+    "@testing-library/jest-dom": "7.0.1",
+    "@testing-library/react": "16.3.3",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.2.1",
+    "axe-core": "4.14.0",
+    "jsdom": "30.1.3",
+    "vite": "8.3.5",
+    "vitest": "5.1.0"
   }
 }
