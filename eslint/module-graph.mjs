@@ -7,6 +7,8 @@ export const LAYERS = {
   L3: ['scheduling', 'calendar-sync', 'telehealth', 'clinical', 'messaging', 'privacy'],
   L4: ['prescribing', 'pharmacy-network', 'billing', 'labs'],
   L5: ['reporting'],
+  // Admin routes (BE-24): composes audit and integration-core behind the admin realm; nothing imports it (INT04-F04).
+  L6: ['admin-routes'],
 };
 
 const layerOf = Object.fromEntries(

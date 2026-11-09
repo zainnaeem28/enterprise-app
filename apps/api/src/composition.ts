@@ -7,6 +7,7 @@ import { JobRegistry, Queue } from '@ehr/kernel';
 import type { JobType, KernelDb, Logger, ScopeSettings } from '@ehr/kernel';
 import type { Type } from '@nestjs/common';
 import { createPatientCliniciansControllers } from './clinicians.controller.js';
+import type { AdminEnv } from './admin-env.js';
 import type { IdentityEnv } from './identity-env.js';
 import type { GuardPolicy } from './platform/guard.js';
 import { MemoryRateLimiter, PgRateLimiter } from './platform/rate-limit.js';
@@ -50,12 +51,15 @@ import {
   PublicDirectoryService,
 } from './modules/integrations-host/index.js';
 import { createReporting, REPORTING_JOBS } from './modules/reporting/index.js';
+import { createIdentityAdmin, IDENTITY_ADMIN_JOBS } from './modules/identity/admin/index.js';
+import type { WebAuthnPort } from './modules/identity/admin/index.js';
 import {
   createIdentity,
   GoogleRealmAdapter,
   IDENTITY_JOBS,
   OidcPatientAdapter,
   requireAuthContext,
+  SessionService,
 } from './modules/identity/index.js';
 import {
   createMergeControllers,
@@ -87,7 +91,23 @@ import {
 } from './modules/scheduling/flow/index.js';
 import type { PrevisitPort } from './modules/scheduling/flow/types.js';
 import type { ClinicalFrontdoor } from './modules/clinical/frontdoor/index.js';
+import {
+  AuditAdminService,
+  createAdminRoutesControllers,
+  IntegrationAdminService,
+} from './modules/admin-routes/index.js';
+import type { ConnectionTester, ExportUrlSigner } from './modules/admin-routes/index.js';
+import { ConnectionService, SecretService } from './modules/integration-core/index.js';
+import type {
+  OutboundSecretStore,
+  PayloadSealer,
+  SealedJobEnqueuer,
+} from './modules/integration-core/index.js';
 import { createCatalogueControllers, OrganisationService } from './modules/organisation/index.js';
+import {
+  createOrganisationAdminController,
+  OrganisationAdminService,
+} from './modules/organisation/admin/index.js';
 import { isConsentTemplatePublished } from './modules/organisation/consent-template-port.js';
 
 export { registerAllParticipants } from './register-participants.js';
@@ -112,6 +132,31 @@ export const refusingObjectStore: ObjectStorePort = {
     throw new Error('port not configured: object_store');
   },
 };
+
+/** The secret store and the payload sealer are delivered with the secrets service and its KMS key (C-01); until then a secret write is refused, never faked. */
+export const refusingSecretStore: OutboundSecretStore = {
+  put(): never {
+    throw new Error('port not configured: secret_store');
+  },
+};
+export const refusingPayloadSealer: PayloadSealer = {
+  seal(): never {
+    throw new Error('port not configured: payload_sealer');
+  },
+};
+
+/**
+ * The infrastructure ports of the admin routes (BE-24). Every one is optional and absent means "refused": no signer makes an export
+ * download 503, no tester makes "test connection" 503 (only the worker may write the health columns), no sealed-payload enqueuer makes
+ * an inbound-secret request 503. None is replaced by a test value in production.
+ */
+export interface AdminPorts {
+  signer?: ExportUrlSigner;
+  tester?: ConnectionTester;
+  secretStore?: OutboundSecretStore;
+  sealer?: PayloadSealer;
+  enqueueApply?: SealedJobEnqueuer;
+}
 
 export interface Composition {
   /** Present when a LISTEN connection factory was supplied: it replaces the platform's transport-only `GET /alerts/stream` (ALR-N3); the caller runs `start()`/`stop()` with the app. */
@@ -138,6 +183,7 @@ export const API_PATH_JOBS: readonly JobType[] = [
   ...MESSAGING_JOBS,
   ...PRIVACY_JOBS,
   ...REPORTING_JOBS,
+  ...IDENTITY_ADMIN_JOBS,
 ];
 
 /**
@@ -155,6 +201,14 @@ export function buildComposition(deps: {
   packageStore?: PackageStorePort;
   /** Presigner of the documents store; defaults to the refusing one. */
   objectStore?: ObjectStorePort;
+  /**
+   * The admin realm (BE-05, BE-23, BE-24): `/api/v1/admin/*` and the admin ceremonies. Absent means the realm is NOT mounted and no elevation
+   * checker is installed (every elevated route is then refused by the guard); `main.ts` always supplies it (fail-closed, SEC02-F01).
+   */
+  admin?: AdminEnv;
+  adminPorts?: AdminPorts;
+  /** Test seam only (`main.ts` never passes it): replaces the pinned WebAuthn library port so a test can enrol a software key. */
+  webauthnPort?: WebAuthnPort;
   /** A NEW client on its own (non-pooled) connection per call; when given, the alert stream hub is composed. */
   listen?: () => ListenClient;
   now?: () => Date;
@@ -170,6 +224,39 @@ export function buildComposition(deps: {
   const queue = new Queue(registry, 'api');
   const audit = new AuditService({ logger: deps.logger, queue });
   const organisation = new OrganisationService();
+
+  // The admin realm is built first: its elevation checker is the guard's C1 check, installed in the identity policy below. It has its
+  // own session service over the same tables (the sessions are rows, not process state).
+  const admin =
+    deps.admin === undefined
+      ? undefined
+      : createIdentityAdmin({
+          db: deps.db,
+          queue,
+          audit,
+          logger: deps.logger,
+          ...(deps.webauthnPort === undefined ? {} : { port: deps.webauthnPort }),
+          sessions: new SessionService({
+            db: deps.db,
+            orgId: env.orgId,
+            ...(deps.now === undefined ? {} : { now: deps.now }),
+          }),
+          config: {
+            orgId: env.orgId,
+            ceremony: {
+              rpId: env.staffHost,
+              rpName: deps.admin.rpName,
+              expectedOrigins: [`https://${env.staffHost}`],
+            },
+            attestation: { mode: 'chain', rootCertificatesPem: deps.admin.attestationRootsPem },
+            allowedAaguids: deps.admin.allowedAaguids,
+            decoyKey: deps.admin.decoyKey,
+            rateKey: env.rateKey,
+            csrfKey: env.csrfKey,
+            allowedOrigins: [`https://${env.staffHost}`],
+          },
+          ...(deps.now === undefined ? {} : { now: deps.now }),
+        });
 
   const identity = createIdentity({
     db: deps.db,
@@ -196,6 +283,7 @@ export function buildComposition(deps: {
       }),
     },
     patientInScope,
+    ...(admin === undefined ? {} : { elevation: admin.elevation }),
     ...(deps.now === undefined ? {} : { now: deps.now }),
   });
   // The patient module registers its scope contributor and resolvers with identity; its records service is the flow's consent probe.
@@ -353,6 +441,49 @@ export function buildComposition(deps: {
       }),
     );
   }
+  const adminControllers: Type<unknown>[] = [];
+  if (admin !== undefined) {
+    const ports = deps.adminPorts ?? {};
+    const secrets = new SecretService({
+      audit,
+      store: ports.secretStore ?? refusingSecretStore,
+      sealer: ports.sealer ?? refusingPayloadSealer,
+      ...(ports.enqueueApply === undefined ? {} : { enqueueApply: ports.enqueueApply }),
+      ...(deps.now === undefined ? {} : { now: deps.now }),
+    });
+    adminControllers.push(
+      ...admin.controllers,
+      createOrganisationAdminController({
+        service: new OrganisationAdminService({ db: deps.db, audit, organisation }),
+        scopeOf,
+      }),
+      ...createAdminRoutesControllers({
+        audit: new AuditAdminService({
+          db: deps.db,
+          audit,
+          // The caller's live grant (revoked_at IS NULL, not expired): the export records the grant it was made under.
+          elevationIdOf: async (tx, sessionId) =>
+            (
+              await tx.query(
+                `SELECT id FROM identity.elevation_grant WHERE session_id = $1 AND revoked_at IS NULL AND expires_at > now() ORDER BY issued_at DESC LIMIT 1`,
+                [sessionId],
+              )
+            ).rows[0]?.['id'] as string | undefined,
+          ...(ports.signer === undefined ? {} : { signer: ports.signer }),
+          ...(deps.now === undefined ? {} : { now: deps.now }),
+        }),
+        integrations: new IntegrationAdminService({
+          db: deps.db,
+          audit,
+          connections: new ConnectionService(audit),
+          secrets,
+          ...(ports.tester === undefined ? {} : { tester: ports.tester }),
+        }),
+        scopeOf,
+        sessionIdOf: (req) => requireAuthContext(req).session.id,
+      }),
+    );
+  }
   return {
     ...(alertStreamHub === undefined ? {} : { alertStreamHub }),
     policy: identity.policy,
@@ -385,6 +516,7 @@ export function buildComposition(deps: {
         banner: chart.banner,
       }),
       ...integrationsHost,
+      ...adminControllers,
     ],
   };
 }
