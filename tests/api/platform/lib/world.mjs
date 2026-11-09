@@ -266,3 +266,45 @@ export function assign(patientId, principalId, role = 'clinician') {
     [uuid(), ORG, patientId, principalId, role],
   );
 }
+
+/**
+ * A document that exists in the database in a given state, for the cases that start from "a document is on file" while the object
+ * store, scanner and OCR vendor are not provisioned in ENV-INT/ci (C-01, C-10). It does NOT exercise the upload path.
+ * Returns the document id.
+ */
+export async function fixtureDocument({ patientId, uploadedBy, status = 'confirmed', retentionUntil = null, classification = 'external_record' }) {
+  const id = uuid();
+  const qkey = `q/${uuid().replace(/-/g, '')}`;
+  const ckey = `c/${uuid().replace(/-/g, '')}`;
+  const staff = principalId('STF-FD-A');
+  await sqlTx(async (c) => {
+    await c.query(
+      `INSERT INTO documents.document (id, organisation_id, patient_id, classification, status, current_version, uploaded_by, upload_channel, retention_until, created_by)
+       VALUES ($1,$2,$3,$4,'awaiting_upload',1,$5,'staff',NULL,$5)`,
+      [id, ORG, patientId, classification, uploadedBy ?? staff],
+    );
+    await c.query(
+      `INSERT INTO documents.document_version (document_id, version, organisation_id, patient_id, object_key, bucket, size_bytes, content_type, declared_content_type, scan_status)
+       VALUES ($1,1,$2,$3,$4,'quarantine',1234,'application/pdf','application/pdf','pending')`,
+      [id, ORG, patientId, qkey],
+    );
+    if (status === 'awaiting_upload') return;
+    await c.query(`SELECT set_config('app.audience','staff',true), set_config('app.realm','google',true), set_config('app.principal_id',$1,true)`, [staff]);
+    await c.query(`UPDATE documents.document_version SET scan_requested_at=now() WHERE document_id=$1`, [id]);
+    await c.query(`UPDATE documents.document SET status='scanning' WHERE id=$1`, [id]);
+    // the scan verdict and the clean state are the worker's to write: do it as the worker role, as its job would
+    await c.query(`SET LOCAL ROLE app_worker`);
+    await c.query(`SELECT set_config('app.audience','system',true), set_config('app.realm','worker',true), set_config('app.job_scope','org',true)`);
+    await c.query(
+      `UPDATE documents.document_version SET object_key=$2, bucket='clean', sha256=decode(repeat('ab',32),'hex'), scan_status='clean', scanned_at=now() WHERE document_id=$1`,
+      [id, ckey],
+    );
+    await c.query(`UPDATE documents.document SET status='clean' WHERE id=$1`, [id]);
+    await c.query(`RESET ROLE`);
+    if (status === 'confirmed') {
+      await c.query(`SELECT set_config('app.principal_id',$1,true), set_config('app.realm','google',true), set_config('app.audience','staff',true)`, [staff]);
+      await c.query(`UPDATE documents.document SET status='confirmed', confirmed_by=$2, confirmed_at=now(), retention_until=$3 WHERE id=$1`, [id, staff, retentionUntil]);
+    }
+  });
+  return id;
+}
