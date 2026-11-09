@@ -9,7 +9,8 @@ import { spawn, execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { mkdirSync, mkdtempSync, openSync, readFileSync, writeFileSync, chmodSync } from 'node:fs';
-import { createServer } from 'node:http';
+import { createServer, request as httpRequest } from 'node:http';
+import https from 'node:https';
 import net from 'node:net';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
@@ -174,14 +175,26 @@ const base = {
 start('api', process.execPath, [`${root}/apps/api/dist/src/main.js`], { ...base, EHR_DEPLOYABLE: 'api', EHR_DATABASE_URL: urlFor('app_api'), ...fxEnv });
 start('worker', process.execPath, [`${root}/apps/worker/dist/main.js`], { ...base, EHR_DEPLOYABLE: 'worker', EHR_DATABASE_URL: urlFor('app_worker') });
 
-// TLS front: /api/* -> the API (Host kept). Nothing else is needed (no portal is served).
-const front = await adminStack.startTlsFront({
-  key: tls.key,
-  cert: tls.cert,
-  tlsPort: ports.tls,
-  apiPort: ports.api,
-  staffPort: ports.api,
-  logFile: `${logDir}/tls-front.log`,
+// TLS front (loopback only): every request goes to the API with the Host kept and x-forwarded-proto https. Unlike the INT-04 admin
+// front it keeps the synthetic x-forwarded-for each test client sends, so per-IP rate limits are per client (as with QA-04).
+const front = await new Promise((resolve, reject) => {
+  const server = https.createServer({ key: tls.key, cert: tls.cert, minVersion: 'TLSv1.2' }, (req, res) => {
+    const headers = { ...req.headers };
+    for (const h of ['x-forwarded-host', 'x-forwarded-proto', 'forwarded']) delete headers[h];
+    headers['x-forwarded-proto'] = 'https';
+    headers['x-forwarded-for'] = req.headers['x-forwarded-for'] ?? req.socket.remoteAddress ?? '127.0.0.1';
+    const up = httpRequest({ host: '127.0.0.1', port: ports.api, method: req.method, path: req.url, headers }, (ur) => {
+      res.writeHead(ur.statusCode ?? 502, ur.headers);
+      ur.pipe(res);
+    });
+    up.on('error', () => {
+      if (!res.headersSent) res.writeHead(502, { 'content-type': 'text/plain' });
+      res.end('bad gateway');
+    });
+    req.pipe(up);
+  });
+  server.once('error', reject);
+  server.listen(ports.tls, '127.0.0.1', () => resolve({ server, close: () => new Promise((r) => { server.close(() => r()); server.closeAllConnections?.(); }) }));
 });
 
 let ready = false;
