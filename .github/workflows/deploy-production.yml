@@ -162,10 +162,12 @@ jobs:
 
       - name: Evidence
         if: ${{ !cancelled() }}
+        env:
+          MANIFEST_HASH: ${{ inputs.manifest_hash }}
         run: |
           {
             echo "### deploy-production"
-            echo "- manifest hash: ${{ inputs.manifest_hash }}"
+            echo "- manifest hash (dispatch input, unverified text): $MANIFEST_HASH"
             echo "- release_number: ${{ steps.verify.outputs.release_number }} (git ${{ steps.verify.outputs.git_sha }})"
             echo "- new migrations: ${{ steps.verify.outputs.new_migrations }}"
             echo "- restore point: ${{ steps.backup.outputs.restore_point }}"
@@ -182,6 +184,8 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    outputs:
+      breach: ${{ steps.observe.outputs.breach }}
     env:
       DEPLOY_READ_ONLY: '1'
     steps:
@@ -194,6 +198,7 @@ jobs:
       - name: Assume gh-observe-production (CloudWatch, ECS and ALB reads only)
         run: scripts/deploy/aws-login.sh "${{ vars.DEPLOY_OBSERVE_ROLE_ARN }}" gh-observe-production 18000
       - name: Observe (aborts the job, never changes the environment)
+        id: observe
         run: |
           node scripts/deploy/observe.mjs --minutes "${{ vars.DEPLOY_OBSERVE_MINUTES }}" --lb "${{ vars.DEPLOY_LB }}" \
             --tg "${{ vars.DEPLOY_TG }}" --alarm-prefix "${{ vars.DEPLOY_ALARM_PREFIX }}"
@@ -201,7 +206,7 @@ jobs:
   recover:
     name: approved recovery (rollback redeploy), only after a failure
     needs: [deploy, observe]
-    if: ${{ always() && needs.deploy.outputs.rollout_started == 'true' && (needs.deploy.result == 'failure' || needs.observe.result == 'failure') }}
+    if: ${{ always() && needs.deploy.outputs.rollout_started == 'true' && (needs.deploy.result == 'failure' || needs.observe.outputs.breach == 'true') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     environment: production

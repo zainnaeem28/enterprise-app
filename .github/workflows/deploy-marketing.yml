@@ -119,9 +119,11 @@ jobs:
 
       - name: Evidence
         if: ${{ !cancelled() }}
+        env:
+          MANIFEST_HASH: ${{ inputs.manifest_hash }}
         run: |
           {
             echo "### deploy-marketing ($TARGET)"
-            echo "- manifest hash: ${{ inputs.manifest_hash }}"
+            echo "- manifest hash (dispatch input, unverified text): $MANIFEST_HASH"
             echo "- git: ${{ steps.verify.outputs.git_sha }}"
           } >> "$GITHUB_STEP_SUMMARY"

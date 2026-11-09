@@ -14,6 +14,7 @@ import { freshnessErrors, snapshotName } from '../backup-gate.mjs';
 import { switchPlan } from '../portal-switch.mjs';
 import { expectReleaseJson } from '../smoke.mjs';
 import { metricQueries, toSample } from '../observe.mjs';
+import { hasFailedTarget } from '../rollout.mjs';
 
 const NOW = new Date('2026-11-09T06:00:00Z');
 const m = stubManifest();
@@ -273,12 +274,56 @@ test('backup gate, portal switch, smoke, observe helpers', () => {
   assert.equal(metricQueries('app/x/y', 'targetgroup/t/1').length, 4);
   const s = toSample(
     [
-      { Id: 'req', Values: [200] },
-      { Id: 'e5', Values: [4] },
-      { Id: 'p95', Values: [0.4] },
-      { Id: 'unh', Values: [0] },
+      { Id: 'req', Timestamps: ['2026-01-01T00:05:00Z'], Values: [200] },
+      { Id: 'e5', Timestamps: ['2026-01-01T00:05:00Z'], Values: [4] },
+      { Id: 'p95', Timestamps: ['2026-01-01T00:05:00Z'], Values: [0.4] },
+      { Id: 'unh', Timestamps: ['2026-01-01T00:05:00Z'], Values: [0] },
     ],
     [],
+    new Date('2026-01-01T00:06:00Z'),
   );
   assert.equal(s.errorRatePct, 2);
+  // F-02: a 5xx burst 4 minutes ago must not be counted against the current minute
+  const old = toSample(
+    [
+      {
+        Id: 'req',
+        Timestamps: ['2026-01-01T00:05:00Z', '2026-01-01T00:04:00Z'],
+        Values: [200, 200],
+      },
+      { Id: 'e5', Timestamps: ['2026-01-01T00:01:00Z'], Values: [90] },
+      { Id: 'p95', Timestamps: ['2026-01-01T00:05:00Z'], Values: [0.2] },
+      { Id: 'unh', Timestamps: [], Values: [] },
+    ],
+    [],
+    new Date('2026-01-01T00:06:00Z'),
+  );
+  assert.equal(old.errorRatePct, 0);
+  // no recent datapoint at all: all zeros
+  assert.equal(
+    toSample(
+      [{ Id: 'req', Timestamps: ['2026-01-01T00:00:00Z'], Values: [5] }],
+      [],
+      new Date('2026-01-01T00:06:00Z'),
+    ).errorRatePct,
+    0,
+  );
+  // F-03: circuit-breaker rollback shape - old revision PRIMARY, target FAILED
+  assert.equal(
+    hasFailedTarget(
+      [
+        { status: 'PRIMARY', taskDefinition: 'arn:old', rolloutState: 'COMPLETED' },
+        { status: 'ACTIVE', taskDefinition: 'arn:new', rolloutState: 'FAILED' },
+      ],
+      'arn:new',
+    ),
+    true,
+  );
+  assert.equal(
+    hasFailedTarget(
+      [{ status: 'PRIMARY', taskDefinition: 'arn:new', rolloutState: 'IN_PROGRESS' }],
+      'arn:new',
+    ),
+    false,
+  );
 });

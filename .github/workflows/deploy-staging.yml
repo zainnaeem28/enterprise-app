@@ -97,7 +97,7 @@ jobs:
         run: |
           aws ssm get-parameter --name /approved/staging-release --with-decryption --query Parameter.Value --output text > "$WORK/record.json"
           node scripts/deploy/verify-release.mjs --manifest "$WORK/current/release-manifest.json" --manifest-hash "$MANIFEST_HASH" \
-            --record "$WORK/record.json" --environment staging --actions migrate,rollout,smoke --no-rollback-target --skip-min-client
+            --record "$WORK/record.json" --environment staging --actions migrate,rollout,portal-switch,smoke --no-rollback-target --skip-min-client
 
       - name: Task definitions registered by approvals-staging for this manifest (stops and waits if absent)
         id: taskdefs
@@ -108,9 +108,11 @@ jobs:
 
       - name: min_client_release from what is deployed to staging (DPR-33)
         id: floor
+        env:
+          ROLLBACK_REHEARSAL: ${{ inputs.rollback_rehearsal }}
         run: |
           flag=()
-          if [ "${{ inputs.rollback_rehearsal }}" = "true" ]; then flag=(--rollback-rehearsal); fi
+          if [ "$ROLLBACK_REHEARSAL" = "true" ]; then flag=(--rollback-rehearsal); fi
           node scripts/deploy/staging-floor.mjs --manifest "$WORK/current/release-manifest.json" "${flag[@]}"
 
       - name: Run the migration task (idempotent runner, pinned definition)
@@ -144,10 +146,12 @@ jobs:
 
       - name: Evidence
         if: ${{ !cancelled() }}
+        env:
+          MANIFEST_HASH: ${{ inputs.manifest_hash }}
         run: |
           {
             echo "### deploy-staging"
-            echo "- manifest hash: ${{ inputs.manifest_hash }}"
+            echo "- manifest hash (dispatch input, unverified text): $MANIFEST_HASH"
             echo "- release_number: ${{ steps.verify.outputs.release_number }} (git ${{ steps.verify.outputs.git_sha }})"
             echo "- task definitions (pinned): api ${{ steps.taskdefs.outputs.taskdef_api }}, worker ${{ steps.taskdefs.outputs.taskdef_worker }}, migration ${{ steps.taskdefs.outputs.taskdef_migration }}"
             echo "- min_client_release: ${{ steps.floor.outputs.min_client_release }}"

@@ -3,6 +3,7 @@
 // scripts/ci/check-workflow-hygiene.mjs (which still runs over these files too). Fails on:
 //   all three: any trigger but workflow_dispatch; `secrets.` other than none; static AWS keys; top-level permissions
 //     missing/not `{}`; an enabled-gate job missing; an account id (12 digits) or ARN literal in the file;
+//   all three: ${{ inputs.* }} / github.event / head_ref inside a run: body (script injection; use env:);
 //   production: concurrency group production-release with cancel-in-progress false; id-token only in jobs that name an
 //     environment; the observe job has contents: read + id-token only and sets DEPLOY_READ_ONLY=1; a recover job gated on
 //     rollout_started; the verify step reading /approved/release;
@@ -49,6 +50,22 @@ for (const w of workflows) {
     );
   if (!/needs:\s*\[enabled\]/.test(t)) fail(file, 'no job needs the `enabled` gate');
   if (/continue-on-error|\|\|\s*true\b/.test(t)) fail(file, 'swallowed failure');
+  // untrusted text (dispatch inputs, event payload) must reach a shell only through env:, never inside a run: body
+  {
+    const lines = t.split('\n');
+    let runIndent = -1;
+    lines.forEach((l, i) => {
+      const indent = l.length - l.trimStart().length;
+      if (runIndent >= 0 && l.trim() !== '' && indent <= runIndent) runIndent = -1;
+      const m = /^(\s*)(?:- )?run:/.exec(l);
+      if (m && runIndent < 0) runIndent = m[1].length;
+      if (runIndent >= 0 && /\$\{\{\s*(inputs\.|github\.event|github\.head_ref)/.test(l))
+        fail(
+          file,
+          `line ${i + 1}: untrusted input interpolated into a run: body (pass it through env:)`,
+        );
+    });
+  }
   // id-token only with an environment in the same job
   for (const jm of t.matchAll(/^ {2}([a-z-]+):\n((?: {4}.*\n|\n)+)/gm)) {
     const [, name, body] = jm;

@@ -43,3 +43,15 @@ DPR-37 (staging Terraform apply role `gh-tf-staging`), DPR-38 (named creator of 
 Not executed against AWS or GitHub environments: login, `ssm`, `ecs run-task`/`update-service`, `rds`, CloudWatch queries, `s3`/CloudFront, `gh run download`, environment-scoped variables, concurrency queueing. Verified only offline (unit tests with stubs, the stub-manifest dry run, `actionlint` without shellcheck, hygiene and policy scans). Metric names for audit-write failures, booking invariant, alert latency and queue age are taken from the alarms of DEVOPS-PLAN 11.3 (`describe-alarms` by prefix); the alarms themselves are not yet defined in IaC. The 9.2 thresholds are the plan's starting values; the G3 package sets final ones. `e2e` and the ZAP baseline are not run by `deploy-staging.yml` (nightly/staging suites, other tickets). Staging `infra` plan/apply belongs to `infra.yml` (DO-08).
 
 Local checks: `node --test scripts/deploy/test/*.test.mjs`, `node scripts/deploy/policy-scan.mjs`, `node scripts/ci/check-workflow-hygiene.mjs`, `actionlint .github/workflows/*.yml`, `node scripts/deploy/dry-run.mjs --manifest m.json --record r.json`.
+
+## Marketing: what is published
+
+`deploy-marketing.yml` rebuilds the site from the manifest's `git_sha` at deploy time (`pnpm build`), so the published
+bytes are not an attested artifact digest as they are for the portals. Acceptable for a site without PHI; the G3
+package for marketing must say so.
+
+## Observation: exit codes
+
+`observe.mjs` exits 2 and writes `breach=true` only when an abort threshold is reached; that is the only signal the
+`recover` job accepts (still gated by the human-approved recover record). Credential, transport or argument errors exit
+1 and leave the decision to a person. The window is limited to 270 minutes (the 18000 s role session).

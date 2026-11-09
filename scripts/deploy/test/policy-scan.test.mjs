@@ -50,6 +50,13 @@ for (const [name, file, from, to, expect] of [
     'group: prod',
     /production-release/,
   ],
+  [
+    'dispatch input interpolated into a run body',
+    P,
+    'echo "- manifest hash (dispatch input, unverified text): $MANIFEST_HASH"',
+    'echo "- manifest hash: ${{ inputs.manifest_hash }}"',
+    /untrusted input/,
+  ],
   ['secret used', P, 'GH_TOKEN: ${{ github.token }}', 'GH_TOKEN: ${{ secrets.PAT }}', /secrets/],
   ['record not read', P, '/approved/release', '/approved/other', /\/approved\/release/],
   [

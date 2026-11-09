@@ -26,6 +26,11 @@ export function parseServices(list) {
   return out;
 }
 
+/** True when any deployment of the target task definition is FAILED (primary or already rolled back from). */
+export function hasFailedTarget(deployments, taskdef) {
+  return deployments.some((x) => x.taskDefinition === taskdef && x.rolloutState === 'FAILED');
+}
+
 if (isMain(import.meta.url))
   main(async () => {
     const argv = process.argv.slice(2);
@@ -72,7 +77,8 @@ if (isMain(import.meta.url))
           svc[k].service,
         ]).services?.[0];
         const d = (s?.deployments ?? []).find((x) => x.status === 'PRIMARY');
-        if (d?.rolloutState === 'FAILED')
+        // after a circuit-breaker rollback the OLD revision is PRIMARY again and the target one is the failed deployment
+        if (hasFailedTarget(s?.deployments ?? [], svc[k].taskdef))
           throw new Error(
             `${k}: deployment FAILED (circuit breaker); ECS is rolling back to the previous revision. The release is not complete.`,
           );
