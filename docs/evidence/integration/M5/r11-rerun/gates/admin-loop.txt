@@ -1,0 +1,15 @@
+loop1 rc=0 ℹ tests 22 ℹ pass 22 ℹ fail 0
+loop2 rc=0 ℹ tests 22 ℹ pass 22 ℹ fail 0
+loop3 rc=0 ℹ tests 22 ℹ pass 22 ℹ fail 0
+loop4 rc=0 ℹ tests 22 ℹ pass 22 ℹ fail 0
+loop5 rc=0 ℹ tests 22 ℹ pass 22 ℹ fail 0
+loop6 rc=0 ℹ tests 22 ℹ pass 22 ℹ fail 0
+loop7 rc=0 ℹ tests 22 ℹ pass 22 ℹ fail 0
+loop8 rc=0 ℹ tests 22 ℹ pass 22 ℹ fail 0
+loop9 rc=0 ℹ tests 22 ℹ pass 22 ℹ fail 0
+loop10 rc=0 ℹ tests 22 ℹ pass 22 ℹ fail 0
+loop11 rc=0 ℹ tests 22 ℹ pass 22 ℹ fail 0
+loop12 rc=0 ℹ tests 22 ℹ pass 22 ℹ fail 0
+loop13 rc=0 ℹ tests 22 ℹ pass 22 ℹ fail 0
+loop14 rc=0 ℹ tests 22 ℹ pass 22 ℹ fail 0
+loop15 rc=0 ℹ tests 22 ℹ pass 22 ℹ fail 0

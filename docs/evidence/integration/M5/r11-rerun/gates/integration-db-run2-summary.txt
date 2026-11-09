@@ -1,0 +1,22 @@
+== suite db-foundation (2 file(s), /tmp/r11b/repo)
+ℹ tests 120
+ℹ pass 120
+ℹ fail 0
+ℹ skipped 0
+== suite kernel (2 file(s), /tmp/r11b/repo)
+ℹ tests 23
+ℹ pass 23
+ℹ fail 0
+ℹ skipped 0
+== suite api (49 file(s), /tmp/r11b/repo)
+ℹ tests 1015
+ℹ pass 1015
+ℹ fail 0
+ℹ skipped 0
+== suite worker (11 file(s), /tmp/r11b/repo)
+ℹ tests 121
+ℹ pass 121
+ℹ fail 0
+ℹ skipped 0
+integration-db passed
+real	2m16.299s

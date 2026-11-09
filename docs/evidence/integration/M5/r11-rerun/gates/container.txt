@@ -1,0 +1,15 @@
+2026-11-09T21:56:33Z	WARN	[terraform parser] Variable values were not found in the environment or variable files. Evaluating may not work correctly.	module="root" variables="domain_certificate_arn, name, partner_auth_domain, partner_callback_urls, partner_logout_urls, patient_auth_domain, patient_callback_urls, patient_logout_urls, ses_from_address, ses_source_arn, sms_caller_role_arn, sms_external_id"
+2026-11-09T21:56:33Z	INFO	[terraform scanner] Scanning root module	file_path="infra/modules/observability/examples/plan"
+2026-11-09T21:56:33Z	INFO	[terraform scanner] Scanning root module	file_path="infra/modules/secrets"
+2026-11-09T21:56:33Z	WARN	[terraform parser] Variable values were not found in the environment or variable files. Evaluating may not work correctly.	module="root" variables="env, kms_key_arn, organization_id, secrets"
+2026-11-09T21:56:33Z	INFO	[terraform scanner] Scanning root module	file_path="infra/modules/storage"
+2026-11-09T21:56:33Z	WARN	[terraform parser] Variable values were not found in the environment or variable files. Evaluating may not work correctly.	module="root" variables="kms_key_arn, name_prefix"
+2026-11-09T21:56:33Z	INFO	[terraform executor] Ignore finding	rule="aws-s3-enable-logging" range="infra/modules/archive/main.tf:25-30"
+2026-11-09T21:56:33Z	INFO	[terraform executor] Ignore finding	rule="aws-s3-enable-logging" range="infra/modules/archive/main.tf:287-293"
+2026-11-09T21:56:33Z	INFO	[terraform executor] Ignore finding	rule="aws-rds-enable-iam-auth" range="infra/modules/database/main.tf:132-181"
+2026-11-09T21:56:33Z	INFO	[terraform executor] Ignore finding	rule="aws-s3-enable-logging" range="infra/modules/storage/main.tf:18-22"
+2026-11-09T21:56:33Z	INFO	[terraform executor] Ignore finding	rule="aws-s3-enable-logging" range="infra/modules/storage/main.tf:27-31"
+2026-11-09T21:56:33Z	INFO	[terraform executor] Ignore finding	rule="aws-s3-enable-logging" range="infra/modules/storage/main.tf:252-258"
+2026-11-09T21:56:33Z	INFO	Detected config files	num=24
+::error::AWS-0053 (HIGH) infra/modules/compute/main.tf: Load balancer is exposed to the internet.
+container rc=1
