@@ -1,0 +1,18 @@
+{
+  "origin": "https://staff.ci.test",
+  "handle": "ci-admin",
+  "ok": false,
+  "steps": [
+    {
+      "step": "enrol the admin principal with the fixture key (token spent, second key registered)",
+      "ok": true,
+      "ms": 111
+    },
+    {
+      "step": "administrator sign-in in the browser with the security key",
+      "ok": false,
+      "ms": 756,
+      "error": "session is not in the admin realm"
+    }
+  ]
+}
