@@ -8,7 +8,8 @@ import { createLogger, JobRegistry, Queue } from '@ehr/kernel';
 import type { JobType, KernelConfig } from '@ehr/kernel';
 import { composeTasks, PortNotConfiguredError } from './compose.js';
 import { buildWorkerRegistry, WORKER_CRONTAB, WORKER_JOBS } from './job-registry.js';
-import { unhandledJobTypes } from './runner.js';
+import { parseCrontab } from 'graphile-worker';
+import { fromCrontabTaskId, unhandledJobTypes } from './runner.js';
 
 const M4 = [
   'clinical.terminology_load',
@@ -62,10 +63,27 @@ test('the crontab holds the privacy expiry and the operations refresh, each with
   const { tasks } = table();
   const entries = WORKER_CRONTAB.split('\n');
   assert.deepEqual(entries, [
-    '50 3 * * * privacy.expire_packages',
-    '* * * * * reporting.refresh_ops',
+    '50 3 * * * privacy/expire_packages',
+    '* * * * * reporting/refresh_ops',
   ]);
-  for (const e of entries) assert.equal(typeof tasks[e.split(/\s+/)[5] as string], 'function', e);
+  for (const e of entries)
+    assert.equal(typeof tasks[fromCrontabTaskId(e.split(/\s+/)[5] as string)], 'function', e);
+});
+
+test('INT03-F11: graphile-worker parseCrontab accepts WORKER_CRONTAB and every entry maps to a registered task', () => {
+  const { registry, tasks } = table();
+  const items = parseCrontab(WORKER_CRONTAB);
+  assert.equal(items.length, 2);
+  const registered = registry.list().map((j) => j.name);
+  for (const item of items) {
+    const name = fromCrontabTaskId(item.task);
+    assert.ok(registered.includes(name), `${item.task} -> ${name} is not a registered job type`);
+    assert.equal(typeof tasks[name], 'function', name);
+  }
+});
+
+test('INT03-F11 negative control: a dotted task id is rejected by the real parser', () => {
+  assert.throws(() => parseCrontab('* * * * * reporting.refresh_ops'), /Invalid command/);
 });
 
 test('without the API ports and infrastructure the M4 handlers refuse (nothing pretends to work)', async () => {

@@ -10,7 +10,7 @@ import { createLogger, JobRegistry, loadConfig, Queue, syncTaskTypes } from '@eh
 import type { JobType } from '@ehr/kernel';
 import { pathToFileURL } from 'node:url';
 import { composeWorker } from './compose.js';
-import { buildWorkerRegistry, WORKER_JOBS } from './job-registry.js';
+import { buildWorkerRegistry, WORKER_CRONTAB, WORKER_JOBS } from './job-registry.js';
 import { createPool, startWorker } from './runner.js';
 
 const PG: string = 'pg';
@@ -244,5 +244,27 @@ describe('every registered worker job type has a handler in the composed task ta
       await w.end();
       await owner.end();
     }
+  });
+
+  test('INT03-F11: the worker boots with WORKER_CRONTAB (the real parser accepts it) and reaches "worker started"', async () => {
+    const cfg = loadConfig({
+      EHR_ENV: 'ci',
+      EHR_DEPLOYABLE: 'worker',
+      EHR_DATABASE_URL: urlFor('app_worker'),
+      EHR_ORGANISATION_ID: ORG,
+    });
+    const lines: string[] = [];
+    const log = createLogger({ sink: (l) => lines.push(l) });
+    const pool = await createPool(cfg);
+    const { tasks, registry } = await composeWorker({
+      cfg,
+      pool,
+      log,
+      patientHost: 'my.example.test',
+      qrKey: 'qr-key-for-tests-0123456789abcdef0123',
+    });
+    const worker = await startWorker({ cfg, pool, log, registry, tasks, crontab: WORKER_CRONTAB });
+    await worker.stop();
+    assert.match(lines.join('\n'), /worker started/);
   });
 });

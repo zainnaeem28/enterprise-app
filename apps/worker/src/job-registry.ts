@@ -12,6 +12,7 @@ import { INTEGRATION_CORE_JOBS } from './jobs/integration-core/jobs.js';
 import { MESSAGING_JOBS } from './jobs/messaging/jobs.js';
 import { ALERT_JOBS } from './jobs/notifications/alert-jobs.js';
 import { NOTIFICATIONS_JOBS } from './jobs/notifications/jobs.js';
+import { toCrontabText } from './runner.js';
 import { PATIENT_JOBS } from './jobs/patient/jobs.js';
 import { PRIVACY_CRONTAB, PRIVACY_JOBS } from './jobs/privacy/jobs.js';
 import { REPORTING_CRONTAB, REPORTING_JOBS } from './jobs/reporting/jobs.js';
@@ -36,7 +37,9 @@ export const WORKER_JOBS: readonly JobType[] = [
 ];
 
 /** The recurring entries the worker runs (graphile-worker crontab text). Milestone M4: privacy expiry and the operations refresh. */
-export const WORKER_CRONTAB: string = [PRIVACY_CRONTAB, REPORTING_CRONTAB].join('\n');
+export const WORKER_CRONTAB: string = toCrontabText(
+  [PRIVACY_CRONTAB, REPORTING_CRONTAB].join('\n'),
+);
 
 export function buildWorkerRegistry(): JobRegistry {
   const registry = new JobRegistry();

@@ -11,6 +11,27 @@ const PG: string = 'pg';
 
 export type TaskTable = Record<string, Task>;
 
+/**
+ * graphile-worker's crontab grammar (0.18.0) rejects '.' in a task id, while registered job types are dotted
+ * (`module.job`). The crontab spells a task with '/' for '.'; this pair is the one place that mapping lives.
+ * `startWorker` aliases each crontab id to the registered handler, so a cron-fired job runs the same task.
+ */
+export const toCrontabTaskId = (jobType: string): string => jobType.replaceAll('.', '/');
+export const fromCrontabTaskId = (taskId: string): string => taskId.replaceAll('/', '.');
+
+/** Rewrite crontab text written with registered (dotted) job types into text graphile-worker's parser accepts. */
+export function toCrontabText(entries: string): string {
+  return entries
+    .split('\n')
+    .map((l) => {
+      const parts = l.trim().split(/\s+/);
+      if (l.trim() === '' || l.trim().startsWith('#') || parts.length < 6) return l;
+      parts[5] = toCrontabTaskId(parts[5] as string);
+      return parts.join(' ');
+    })
+    .join('\n');
+}
+
 export interface WorkerHandle {
   readonly runner: Runner;
   /** Resolves when the runner has drained its running jobs and the pool is closed. */
@@ -131,9 +152,11 @@ export async function startWorker(opts: {
       .map((l) => l.trim())
       .filter((l) => l !== '' && !l.startsWith('#'))
       .map((l) => l.split(/\s+/)[5])
-      .filter((t): t is string => t !== undefined && taskList[t] === undefined);
-    if (unknown.length > 0)
-      throw new Error(`crontab names tasks without a handler: ${unknown.join(',')}`);
+      .filter((t): t is string => t !== undefined);
+    const missingCron = unknown.filter((t) => taskList[fromCrontabTaskId(t)] === undefined);
+    if (missingCron.length > 0)
+      throw new Error(`crontab names tasks without a handler: ${missingCron.join(',')}`);
+    for (const t of unknown) taskList[t] = taskList[fromCrontabTaskId(t)] as Task;
   }
   const runner = await run({
     pgPool: pool as never,
