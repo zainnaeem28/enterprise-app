@@ -196,11 +196,12 @@ describe('session gate and role navigation', () => {
     expect(await screen.findByText(/No staff screens are assigned/)).toBeInTheDocument();
     expect(screen.queryByRole('navigation')).toBeNull();
   });
-  it('gives an administrator session no staff navigation', async () => {
+  it('an administrator session never gets staff navigation; it opens on the audit log', async () => {
     const { runtime, assign } = setup({ roles: ['org_admin'], audience: 'admin_pool' });
     render(<StaffApp runtime={runtime} assign={assign} />);
-    expect(await screen.findByText(/Staff screens are not available/)).toBeInTheDocument();
-    expect(screen.queryByRole('navigation')).toBeNull();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Audit log' })).toBeInTheDocument();
+    expect(window.location.pathname).toBe('/admin/audit');
+    expect(screen.queryByRole('link', { name: 'Schedule' })).toBeNull();
   });
   it('a path outside the map is a plain not-found page', async () => {
     at('/patients/9f2c');
@@ -272,5 +273,59 @@ describe('no PHI in URLs', () => {
     await screen.findByRole('navigation');
     await act(async () => {});
     for (const s of seen) expect(s.path).toMatch(/^\/api\/v1\/auth\/[a-z/-]+$/);
+  });
+});
+
+describe('administrator portal is routed (INT04-F03)', () => {
+  const admin = { roles: ['org_admin'], audience: 'admin_pool' };
+  it.each([
+    ['/admin/audit', 'Audit log'],
+    ['/admin/btg', 'Break-the-glass review'],
+    ['/admin/users', 'Users & roles'],
+    ['/admin/privacy', 'Privacy requests'],
+    ['/admin/clinics', 'Clinics, rooms, hours and holidays'],
+    ['/admin/services', 'Services catalogue'],
+    ['/admin/policies', 'Booking policies'],
+    ['/admin/templates', 'Consent and questionnaire templates'],
+    ['/admin/integrations', 'Integrations'],
+    ['/admin/flags', 'Feature flags and banners'],
+    ['/admin/vital-ranges', 'Vital-sign reference ranges'],
+  ])('%s renders under the admin realm bar', async (path, heading) => {
+    at(path);
+    const { runtime, assign } = setup(admin);
+    render(<StaffApp runtime={runtime} assign={assign} />);
+    expect(await screen.findByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
+    expect(
+      screen.getByText('Administrator sign-in. Clinical data is not available here.'),
+    ).toHaveClass('ehr-realm-banner');
+  });
+  it('/admin lands on the first compliance screen', async () => {
+    at('/admin');
+    const { runtime, assign } = setup(admin);
+    render(<StaffApp runtime={runtime} assign={assign} />);
+    await screen.findByRole('heading', { level: 1, name: 'Audit log' });
+    expect(window.location.pathname).toBe('/admin/audit');
+  });
+  it('/admin/sign-in shows the administrator sign-in without a session call', () => {
+    at('/admin/sign-in');
+    const { runtime, seen, assign } = setup({});
+    render(<StaffApp runtime={runtime} assign={assign} />);
+    expect(screen.getByRole('heading', { name: 'Administrator sign-in' })).toBeInTheDocument();
+    expect(seen).toEqual([]);
+  });
+  it('an unauthenticated visitor to an admin screen goes to the admin sign-in', async () => {
+    at('/admin/users');
+    const { runtime, assign } = setup({ status: 401 });
+    render(<StaffApp runtime={runtime} assign={assign} />);
+    await waitFor(() => expect(assign).toHaveBeenCalledWith('/admin/sign-in'));
+  });
+  it('a staff session cannot reach admin screens', async () => {
+    at('/admin/audit');
+    const { runtime, assign } = setup({ roles: ['doctor'] });
+    render(<StaffApp runtime={runtime} assign={assign} />);
+    expect(
+      await screen.findByRole('heading', { level: 1, name: /can't find this/i }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Audit log' })).toBeNull();
   });
 });
