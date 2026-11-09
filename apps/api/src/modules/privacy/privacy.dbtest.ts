@@ -16,6 +16,7 @@ import { ParticipantRegistries } from '@ehr/kernel';
 import type { ExportContributor, ScopeSettings, Tx } from '@ehr/kernel';
 import { PRIVACY_JOBS } from './jobs.js';
 import { PRIVACY_CONFLICT_RULES, PRIVACY_MERGE_TABLES } from './merge.js';
+import { REGISTERED_EXPORT_MODULES } from '../../register-participants.js';
 import { ORG, buildRegistries, setupPrivacy, uuidv7 } from './testkit.js';
 import type { PatientKit, PrivacyKit, SeededSession } from './testkit.js';
 
@@ -184,6 +185,16 @@ describe('privacy (BE-20) on PostgreSQL 17', () => {
       'privacy',
     ].sort();
     assert.deepEqual(Object.keys(bundle.parts).sort(), expected);
+    // INT03-F04: the package holds a part from every contributor the shared registration registers (none is silently absent).
+    assert.deepEqual(
+      t.regs
+        .exportContributors()
+        .map((c) => c.module)
+        .sort(),
+      [...REGISTERED_EXPORT_MODULES].sort(),
+    );
+    for (const m of REGISTERED_EXPORT_MODULES)
+      assert.ok(bundle.parts[m] !== undefined, `the package has a part from ${m}`);
     assert.deepEqual(
       Object.keys(bundle.manifest['parts'] as object).sort(),
       [...expected, 'audit'].sort(),
@@ -672,55 +683,26 @@ describe('privacy (BE-20) on PostgreSQL 17', () => {
     assert.equal((await t.decide(a.requestId, 'retry')).status, 409);
   });
 
-  test('coverage: a module that appears later (a table with a patient_id) fails until its contributor is registered, then its part is in the package', async () => {
-    await t.k.sa.query(`CREATE SCHEMA telehealth`);
-    await t.k.sa.query(
-      `CREATE TABLE telehealth.session (id uuid PRIMARY KEY, patient_id uuid NOT NULL)`,
-    );
-    try {
-      const p = await mk();
-      const a = await t.approvedExport(p);
-      const out = await t.assemble(a.packageId);
-      assert.equal(out.status, 'failed');
-      assert.equal(out.status === 'failed' ? out.code : '', 'privacy.contributor_missing');
+  test('coverage: a module whose contributor is not registered (it holds a patient_id table) fails until it is registered, then its part is in the package (INT03-F04 negative control)', async () => {
+    const p = await mk();
+    const a = await t.approvedExport(p);
+    // The shared database holds telehealth.session; a registry without telehealth must fail the assembly, not skip the part.
+    const out = await t.assemble(a.packageId, { registries: registries(['telehealth']) });
+    assert.equal(out.status, 'failed');
+    assert.equal(out.status === 'failed' ? out.code : '', 'privacy.contributor_missing');
 
-      // The module registers; the fixture contributor (telehealth does not exist yet) returns a canned part.
-      const full = registries();
-      full.registerExportContributor({
-        module: 'telehealth',
-        exportPart: (_tx, ids) => Promise.resolve({ sessions: [{ fixture: true, ids: [...ids] }] }),
-      });
-      full.registerExportContributor({
-        module: 'messaging',
-        exportPart: () => Promise.resolve({ threads: [] }),
-      });
-      const retry = await t.decide(a.requestId, 'retry');
-      const pkg = (retry.json()['package'] as Record<string, unknown>)['id'] as string;
-      const done = await t.assemble(pkg, { registries: full });
-      assert.equal(done.status, 'ready', JSON.stringify(done));
-      const key = String(
-        (await row(`SELECT object_key FROM privacy.export_package WHERE id = $1`, [pkg]))[
-          'object_key'
-        ],
-      );
-      const bundle = t.store.read(key);
-      for (const m of [
-        'clinical',
-        'documents',
-        'identity',
-        'messaging',
-        'notifications',
-        'patient',
-        'privacy',
-        'scheduling',
-        'telehealth',
-      ])
-        assert.ok(m in bundle.parts, `a part for ${m}`);
-      assert.deepEqual((bundle.parts['telehealth'] as { sessions: unknown[] }).sessions.length, 1);
-      // A registered contributor for a module with no tables is included too (messaging).
-    } finally {
-      await t.k.sa.query(`DROP SCHEMA telehealth CASCADE`);
-    }
+    const retry = await t.decide(a.requestId, 'retry');
+    const pkg = (retry.json()['package'] as Record<string, unknown>)['id'] as string;
+    const done = await t.assemble(pkg, { registries: registries() });
+    assert.equal(done.status, 'ready', JSON.stringify(done));
+    const key = String(
+      (await row(`SELECT object_key FROM privacy.export_package WHERE id = $1`, [pkg]))[
+        'object_key'
+      ],
+    );
+    const bundle = t.store.read(key);
+    for (const m of REGISTERED_EXPORT_MODULES) assert.ok(m in bundle.parts, `a part for ${m}`);
+    assert.ok('patient' in bundle.parts && 'privacy' in bundle.parts);
   });
 
   test('chunks: each contributor runs in its own short transaction, and progress is committed between them', async () => {

@@ -1,0 +1,90 @@
+▶ M4 composition (INT03-F01)
+  ✖ every M4 module factory is wired: its controllers, routes and job types are present (2.759116ms)
+  ✔ every mounted route declares a permission and a resolver (route inventory has no failures) (0.488646ms)
+  ✔ no (method, path) is mounted twice (0.440738ms)
+  ✖ negative control: with one module removed from the composition the check fails and names it (0.572122ms)
+  ✖ each M4 module answers behind the identity guard: mounted (not 404) and refused without a session (30.011566ms)
+✖ M4 composition (INT03-F01) (140.829467ms)
+ℹ tests 5
+ℹ suites 1
+ℹ pass 2
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 610.417047
+
+✖ failing tests:
+
+test at dist/src/composition.test.js:133:5
+✖ every M4 module factory is wired: its controllers, routes and job types are present (2.759116ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + [
+  +   'messaging: controller MessagingThreadController',
+  +   'messaging: controller MessagingTaskController',
+  +   'messaging: controller MessagingPatientController',
+  +   'messaging: route GET /api/v1/threads',
+  +   'messaging: route POST /api/v1/threads/:id/messages',
+  +   'messaging: route PATCH /api/v1/tasks/:id',
+  +   'messaging: route POST /api/v1/patients/:patientId/threads',
+  +   'reporting: controller ReportingOpsController',
+  +   'reporting: route GET /api/v1/admin/reports/ops'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-308-sdlc-correction-int03-f01-mount-m4-modules-in-the-api-composition-root-and-register-m4-jobs-in-the-worker/apps/api/dist/src/composition.test.js:134:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at node:internal/test_runner/test:1903:71
+      at node:internal/per_context/primordials:504:82
+      at new Promise (<anonymous>)
+      at new SafePromise (node:internal/per_context/primordials:478:3)
+      at node:internal/per_context/primordials:504:9
+      at Array.map (<anonymous>) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'messaging: controller MessagingThreadController', 'messaging: controller MessagingTaskController', 'messaging: controller MessagingPatientController', 'messaging: route GET /api/v1/threads', 'messaging: route POST /api/v1/threads/:id/messages', 'messaging: route PATCH /api/v1/tasks/:id', 'messaging: route POST /api/v1/patients/:patientId/threads', 'reporting: controller ReportingOpsController', 'reporting: route GET /api/v1/admin/reports/ops' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at dist/src/composition.test.js:143:5
+✖ negative control: with one module removed from the composition the check fails and names it (0.572122ms)
+  AssertionError [ERR_ASSERTION]: clinical chart: clinical chart: controller ChartReadController; clinical chart: controller ChartWriteController; clinical chart: controller VitalRangeAdminController; clinical chart: route GET /api/v1/patients/:patientId/banner; clinical chart: route GET /api/v1/patients/:patientId/chart-summary; clinical chart: route POST /api/v1/terminology/search; clinical chart: route POST /api/v1/admin/vital-ranges; messaging: controller MessagingThreadController; messaging: controller MessagingTaskController; messaging: controller MessagingPatientController; messaging: route GET /api/v1/threads; messaging: route POST /api/v1/threads/:id/messages; messaging: route PATCH /api/v1/tasks/:id; messaging: route POST /api/v1/patients/:patientId/threads; reporting: controller ReportingOpsController; reporting: route GET /api/v1/admin/reports/ops
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-308-sdlc-correction-int03-f01-mount-m4-modules-in-the-api-composition-root-and-register-m4-jobs-in-the-worker/apps/api/dist/src/composition.test.js:148:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at dist/src/composition.test.js:153:5
+✖ each M4 module answers behind the identity guard: mounted (not 404) and refused without a session (30.011566ms)
+  AssertionError [ERR_ASSERTION]: /api/v1/threads
+  
+  404 !== 401
+  
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-308-sdlc-correction-int03-f01-mount-m4-modules-in-the-api-composition-root-and-register-m4-jobs-in-the-worker/apps/api/dist/src/composition.test.js:164:20)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 404,
+    expected: 401,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

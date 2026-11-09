@@ -4,13 +4,11 @@
 // seeded sessions, the worker's real terminology job over an in-memory source, and a second pair of pools for real concurrency.
 // Synthetic data only. Nothing here proves a licensed terminology (C-09) or the real elevation check (BE-05).
 /* eslint-disable boundaries/module-boundaries -- a test harness: it reuses the patient module's kit and merge executor (BE-08, BE-09), which are not on the patient index. Request to the Orchestrator: exempt testkit.ts and *.dbtest.ts from this rule (BE-10 README O-6). */
+import { newRegisteredRegistries } from '../../../register-participants.js';
 import { randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { KernelDb, ParticipantRegistries, syncTaskTypes } from '@ehr/kernel';
 import type { ScopeSettings, Tx } from '@ehr/kernel';
-import { registerDocumentsParticipants } from '../../documents/index.js';
-import { registerIdentityParticipants } from '../../identity/index.js';
-import { registerNotificationsParticipants } from '../../notifications/index.js';
 import {
   createMergeControllers,
   executeMerge,
@@ -19,7 +17,6 @@ import {
   mergeResolvers,
 } from '../../patient/merge/index.js';
 import type { ExecuteDeps, ExecuteResult } from '../../patient/merge/index.js';
-import { registerSchedulingParticipants } from '../../scheduling/core/index.js';
 import { JobRegistry, Queue } from '@ehr/kernel';
 import {
   ORG,
@@ -41,7 +38,7 @@ import {
   writeHeaders,
 } from '../../patient/testkit.js';
 import type { Kit, Resp, SeededSession } from '../../patient/testkit.js';
-import { createClinicalChart, registerClinicalParticipants } from './index.js';
+import { createClinicalChart } from './index.js';
 import type { ClinicalChart } from './index.js';
 
 export { ORG, PATIENT_HOST, repoRoot, STAFF_HOST, adminUrl, call, id, pg, saWrite, writeHeaders };
@@ -222,12 +219,7 @@ export async function setupChart(name: string): Promise<ChartKit> {
       ),
   };
 
-  const regs = new ParticipantRegistries();
-  registerIdentityParticipants(regs);
-  registerNotificationsParticipants(regs);
-  registerSchedulingParticipants(regs);
-  registerDocumentsParticipants(regs);
-  registerClinicalParticipants(regs);
+  const regs = newRegisteredRegistries();
 
   const lead = await (async () => {
     const p = await seedPrincipal(k, 'google', {

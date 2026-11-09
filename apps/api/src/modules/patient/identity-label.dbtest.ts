@@ -60,7 +60,14 @@ before(async () => {
         locationIds: [A1],
       },
       (tx) =>
-        k.patient.records.requestConsent(tx, { requestId: randomUUID() }, pid, 'treatment', 1),
+        k.patient.records.requestConsent(
+          tx,
+          { requestId: randomUUID() },
+          pid,
+          'treatment',
+          1,
+          'en',
+        ),
     );
   consent1 = (await ask(p1)).id;
   consent2 = (await ask(p2)).id;

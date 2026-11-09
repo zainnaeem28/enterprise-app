@@ -1,0 +1,14 @@
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+▶ production composition root
+  ✔ without a session the identity and booking routes are mounted and refuse (not 404) (30.954602ms)
+  ✔ M4 (INT03-F01): the clinical, messaging, privacy and reporting routes are mounted and refuse without a session (not 404) (20.007565ms)
+  ✔ a patient signs in through the callback and reaches session, catalogue, clinicians, search and holds (214.159415ms)
+✔ production composition root (2858.468538ms)
+ℹ tests 3
+ℹ suites 1
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3393.368537

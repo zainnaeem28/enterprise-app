@@ -7,6 +7,12 @@ export interface WorkerPackageStore {
   remove(key: string): Promise<void>;
 }
 
+/** The assembler's write access to the package store (mirrors the API package's `PackageWriterPort`); the object is encrypted at rest by the store. */
+export interface PackageWriter {
+  put(key: string, body: Buffer, contentType: string): Promise<void>;
+  remove(key: string): Promise<void>;
+}
+
 /** The documents module's answer to "how many documents of these patients are under a legal hold now" (BR-29). */
 export interface LegalHoldReader {
   documentsUnderHold(tx: Tx, patientIds: readonly string[]): Promise<number>;

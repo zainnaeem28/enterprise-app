@@ -7,15 +7,12 @@
 // Two contributors are FIXTURES and say so: `patient` (the patient module ships no `exportPart` yet; the owner calls it downwards) and,
 // in the tests that need them, `messaging` and `telehealth` (those modules do not exist yet). They return canned parts; they prove the
 // assembler iterates what is registered, not anything about those modules.
+import { newRegisteredRegistries, type RegisteredModule } from '../../register-participants.js';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
 import { pathToFileURL } from 'node:url';
 import { JobRegistry, KernelDb, ParticipantRegistries, Queue, syncTaskTypes } from '@ehr/kernel';
 import type { ExportContributor, ScopeSettings, Tx } from '@ehr/kernel';
-import { registerNotesParticipants } from '../clinical/notes/index.js';
-import { registerDocumentsParticipants } from '../documents/index.js';
-import { registerIdentityParticipants } from '../identity/index.js';
-import { registerNotificationsParticipants } from '../notifications/index.js';
 import { OrganisationService } from '../organisation/index.js';
 import {
   createMergeControllers,
@@ -46,11 +43,9 @@ import {
   writeHeaders,
 } from '../patient/testkit.js';
 import type { Kit, Resp, SeededSession } from '../patient/testkit.js';
-import { registerSchedulingFlowParticipants } from '../scheduling/flow/merge.js';
 import { assembleExport } from './assemble.js';
 import type { AssembleDeps, AssembleInput, AssembleResult } from './assemble.js';
 import { PRIVACY_JOBS } from './jobs.js';
-import { registerPrivacyParticipants } from './merge.js';
 import { SignedPackageUrls } from './ports.js';
 import type { PackageWriterPort } from './ports.js';
 import { createPrivacy } from './runtime.js';
@@ -92,18 +87,9 @@ export class MemoryPackageStore implements PackageWriterPort {
   }
 }
 
-/** The REAL contributors of the five modules that ship one, optionally without some (a registry of its own, not the process-wide one). */
-export function buildRegistries(without: string[] = []): ParticipantRegistries {
-  const r = new ParticipantRegistries();
-  const add = (f: (x: ParticipantRegistries) => void, module: string): void => {
-    if (!without.includes(module)) f(r);
-  };
-  add(registerIdentityParticipants, 'identity');
-  add(registerNotificationsParticipants, 'notifications');
-  add(registerDocumentsParticipants, 'documents');
-  add(registerSchedulingFlowParticipants, 'scheduling');
-  add(registerNotesParticipants, 'clinical');
-  return r;
+/** Every REAL participant and contributor (the shared helper), optionally without some for a negative control (a registry of its own). */
+export function buildRegistries(without: readonly RegisteredModule[] = []): ParticipantRegistries {
+  return newRegisteredRegistries({ without });
 }
 
 export interface PatientKit {
@@ -278,7 +264,6 @@ export async function setupPrivacy(name: string): Promise<PrivacyKit> {
 
   // The REAL contributors of five modules, in a registry of their own (not the process-wide one).
   const regs = buildRegistries();
-  registerPrivacyParticipants(regs);
 
   const patientFixture: ExportContributor = {
     module: 'patient',

@@ -18,7 +18,12 @@ export type { HoldCheckOutcome } from './check-legal-holds.js';
 export { runExpirePackages } from './expire-packages.js';
 export type { ExpireResult } from './expire-packages.js';
 export { closureOf, documentsLegalHolds } from './adapters.js';
-export type { LegalHoldReader, PrivacyJobDeps, WorkerPackageStore } from './ports.js';
+export type {
+  LegalHoldReader,
+  PackageWriter,
+  PrivacyJobDeps,
+  WorkerPackageStore,
+} from './ports.js';
 
 export function definePrivacyJobs(registry: JobRegistry): void {
   for (const j of PRIVACY_JOBS) registry.defineJob(j);

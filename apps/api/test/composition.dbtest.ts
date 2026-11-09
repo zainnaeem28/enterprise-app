@@ -109,6 +109,28 @@ describe('production composition root', () => {
     assert.equal(start.status, 302);
   });
 
+  test('M4 (INT03-F01): the clinical, messaging, privacy and reporting routes are mounted and refuse without a session (not 404)', async () => {
+    const id = '00000000-0000-7000-8000-000000000001';
+    for (const [host, m, p] of [
+      [PATIENT_HOST, 'GET', `/api/v1/appointments/${id}/questionnaire`],
+      [PATIENT_HOST, 'GET', '/api/v1/privacy-requests'],
+      [PATIENT_HOST, 'POST', '/api/v1/privacy-requests'],
+      [PATIENT_HOST, 'GET', `/api/v1/patients/${id}/threads`],
+      [STAFF_HOST, 'GET', `/api/v1/patients/${id}/banner`],
+      [STAFF_HOST, 'GET', `/api/v1/patients/${id}/chart-summary`],
+      [STAFF_HOST, 'POST', `/api/v1/check-ins/${id}/triage`],
+      [STAFF_HOST, 'POST', '/api/v1/encounters'],
+      [STAFF_HOST, 'POST', `/api/v1/notes/${id}/sign`],
+      [STAFF_HOST, 'GET', '/api/v1/threads'],
+      [STAFF_HOST, 'GET', '/api/v1/tasks'],
+      [STAFF_HOST, 'GET', '/api/v1/admin/privacy-requests'],
+      [STAFF_HOST, 'GET', '/api/v1/admin/reports/ops'],
+    ] as const) {
+      const r = await call(base, m, p, { host, ...(m === 'POST' ? { body: {} } : {}) });
+      assert.equal(r.status, 401, `${m} ${p}`);
+    }
+  });
+
   test('a patient signs in through the callback and reaches session, catalogue, clinicians, search and holds', async () => {
     k.idp.nextLogin = {
       sub: 'sub-composition-patient',
@@ -161,5 +183,12 @@ describe('production composition root', () => {
       { 'idempotency-key': 'composition-hold-1' },
     );
     assert.ok(hold.status >= 400 && hold.status < 500, `hold ${hold.status} ${hold.body}`);
+
+    // M4 through the real stack (guard, scope, real database): the signed-in patient lists their own privacy requests (none yet).
+    const requests = await patientCall('GET', '/api/v1/privacy-requests');
+    assert.equal(requests.status, 200, `privacy-requests ${requests.status} ${requests.body}`);
+    // A staff-only M4 route is refused for a patient-realm session (authorization is the guard's, not the UI's).
+    const ops = await patientCall('GET', '/api/v1/admin/reports/ops');
+    assert.ok(ops.status === 401 || ops.status === 403 || ops.status === 404, `ops ${ops.status}`);
   });
 });
