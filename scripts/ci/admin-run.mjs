@@ -391,7 +391,9 @@ export async function main(fixture) {
           return { status: r.status, realm: b.realm, audience: b.audience };
         }, cfg.clientRelease);
         assert.equal(session.status, 200, `session answered ${session.status}`);
-        assert.equal(session.realm, 'admin', 'session is not in the admin realm');
+        // The API names the administrator realm 'admin_pool' and gives it the 'staff' audience (admin/session.ts).
+        assert.equal(session.realm, 'admin_pool', 'session is not in the admin realm');
+        assert.equal(session.audience, 'staff', 'session audience is not staff');
         await shot('signed in landing');
       },
       { fatal: true },
