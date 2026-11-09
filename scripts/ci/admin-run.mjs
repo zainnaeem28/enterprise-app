@@ -399,6 +399,9 @@ export async function main(fixture) {
     );
 
     const serviceName = `CI admin run ${new Date().toISOString().replace(/\D/g, '').slice(0, 14)}`;
+    // The name can appear in more than one cell of the table (e.g. repeated in other columns); an exact match on the
+    // first one still proves the saved service is listed, without tripping Playwright strict mode.
+    const serviceCell = () => page.getByRole('cell', { name: serviceName, exact: true }).first();
     await step('admin configuration: create a service and see it saved', async () => {
       await open('/admin/services', 'Services catalogue');
       await page.getByRole('button', { name: 'Add: Services' }).click();
@@ -411,16 +414,14 @@ export async function main(fixture) {
       await page
         .getByText('Saved. The change is recorded in the audit log.')
         .waitFor({ state: 'visible', timeout: 15000 });
-      await page.getByRole('cell', { name: serviceName }).waitFor({ state: 'visible' });
+      await serviceCell().waitFor({ state: 'visible' });
       await shot('services saved');
     });
     await step(
       'admin configuration: the service is still there after a reload (persisted)',
       async () => {
         await open('/admin/services', 'Services catalogue');
-        await page
-          .getByRole('cell', { name: serviceName })
-          .waitFor({ state: 'visible', timeout: 15000 });
+        await serviceCell().waitFor({ state: 'visible', timeout: 15000 });
         await shot('services after reload');
       },
     );
