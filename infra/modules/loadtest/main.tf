@@ -75,7 +75,7 @@ module "database" {
   name_prefix               = local.name_prefix
   vpc_id                    = module.network.vpc_id
   data_subnet_ids           = module.network.data_subnet_ids
-  client_security_group_ids = values(module.compute.service_security_group_ids)
+  client_security_group_ids = module.compute.service_security_group_ids
   kms_key_arn               = module.kms_data.key_arn
 
   engine_version           = local.profile.database.engine_version
@@ -136,7 +136,7 @@ module "compute" {
   environment_class   = "production"
   deletion_protection = false
 
-  database_security_group_ids = [module.database.security_group_id]
+  database_security_group_ids = { database = module.database.security_group_id }
 
   services = {
     for k, s in local.profile.services : k => merge(s, {

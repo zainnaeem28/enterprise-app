@@ -1,0 +1,24 @@
+# compute module (DO-03, authored, not applied)
+
+ECS Fargate cluster, `api` and `worker` services, internal ALB (private subnets, no internet path) with host routing, target group, auto-scaling.
+
+- Rolling deployment 100 % / 150 %, circuit breaker with rollback (DEVOPS-PLAN 9.1). `desired_count` is ignored after creation (auto-scaling owns it).
+- Ceilings validated from the database connection budget: `api` max 8, `worker` max 4; floor 2 (DEVOPS-PLAN 12).
+- Images must be `repo@sha256:<digest>` (build once, promote the digest).
+- ALB: internal, HTTPS 443 only (no port 80 listener). The only ingress is 443 from the CloudFront VPC-origin service group, added by the `edge` module; the security group has no CIDR ingress. Portal hosts reach `/api/*` and `integrations.` reaches its host only with the origin-verify header that CloudFront adds; cookies on `integrations.` are rejected by the CLOUDFRONT-scope web ACL in `edge`; anything else gets 403. Target group health check is liveness `/healthz`.
+- SSE: ALB idle timeout 60 s, heartbeat 15 s, deregistration delay 120 s, long scale-in cooldown. A precondition fails the plan if the heartbeat is not shorter than the ALB idle and CloudFront origin read timeouts.
+- IAM roles, ECR, secrets, the database security group and DNS are inputs or later tickets (DO-04 and others).
+
+## Open items (not decided here)
+
+- **ALB to task is HTTPS by default** (`backend_protocol`, health check follows). The api container must serve TLS on `container_port` (self-signed is fine; the ALB does not validate it) - a requirement on the application/image tickets. HTTP is accepted only outside production and with `plaintext_backend_exception_ref` naming a written Solution Architect/Security exception; none exists. Unverified until staging.
+- **Wiring**: `portal_hosts` here and in `edge`, and the CloudFront origin read timeout in `edge` versus `sse_heartbeat_seconds`, must be fed from the same root-module values; the plan precondition only checks the timeouts it is given.
+- `origin_verify_secret` is a plain sensitive variable, so it is in state and in the listener rule. Rotation and the secret-store source belong to DO-04 / the pipeline.
+- Scaling targets (CPU 60 %, 500 requests per target) are placeholders until the load test. Worker scaling on queue depth needs a custom metric from the application (not available here).
+- Rollout refusal above 6 api / 3 worker tasks and holding auto-scaling during a rollout are pipeline rules, not in this module.
+- Everything about runtime behaviour (SSE through ALB, drain, circuit-breaker rollback) is **Unverified until staging**.
+
+## Database security group input
+
+`database_security_group_ids` is a `map(string)` of logical name => security group id (default `{}`). Egress rules are keyed `<service>-<name>`, so the names must be
+known at plan time while the ids may be apply-time values. A fresh plan of a root wiring this module with `database` is covered by `examples/sg-wiring`.

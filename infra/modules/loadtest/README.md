@@ -18,11 +18,10 @@ Decisions: HEAAA-586 `decision-log` D-1 (environment, cost) and D-2 (k6).
 
 ## Limitations (open)
 
-- **L1 (sibling modules, outside this ticket's paths).** `database` (`aws_vpc_security_group_ingress_rule.from_clients`,
-  `for_each = toset(var.client_security_group_ids)`) and `compute` (`service_database`, `setproduct(... database_security_group_ids)`)
-  key `for_each` on security-group ids that do not exist yet. A real **fresh** `plan` of any root that wires them
-  together fails with "Invalid for_each argument" (reproduced). Needs a fix in DO-02/DO-03 (static keys, apply-time ids as values) or a
-  staged `-target` apply. Until then the checks here replace those modules by fixed outputs (`tests/plan.tftest.hcl`).
+- **L1 (resolved by HEAAA-588).** `database` and `compute` previously keyed `for_each` on security-group ids and failed a fresh `plan`
+  with "Invalid for_each argument". Both now take `map(string)` (logical name => id) with static keys; this module passes
+  `module.compute.service_security_group_ids` and `{ database = module.database.security_group_id }`. A fresh-plan test lives in
+  `../compute/examples/sg-wiring`. The checks here still replace those modules by fixed outputs (`tests/plan.tftest.hcl`).
 - **L2.** The service task sizes and counts in `profile.tf` are placeholders: no production root instantiates `compute` yet, so there is
   no production value to copy. Database values are the production module defaults. `check-equivalence.mjs` must be run
   against the production plan's `profile` before the first real run; any unjustified difference fails.
