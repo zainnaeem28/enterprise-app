@@ -1,0 +1,100 @@
+# Audit partition archive and drop (DO-10, HEAAA-138; DEVOPS-PLAN 4.2, 4.1 A2, 7.4; ARCHITECTURE 6, SAR-07).
+#
+# AUTHORED DISABLED AND NOT EXECUTED (C-13, RK-5). Dropping an audit partition needs dual control: a human-applied
+# `audit-archive` approved record with TWO distinct human approvals that names exactly one `archive:<partition>` action, and with
+# one human in the project that cannot happen. Nothing here runs until the audit-archive boundary and task (DO-09b, Backend) exist,
+# a human applies the record, and a person sets the repository variable AUDIT_ARCHIVE_ENABLED=true. The file holds no secret.
+#
+# The partition is read by the TASK from the record; the dispatch input only has to agree with it. The task, as audit_archiver,
+# exports the partition to the Object-Lock bucket in the log-archive account, reads the copy back and checks row count and anchor
+# roots, and only then detaches and drops the partition, writing its own audit event in a short separate transaction and a manifest
+# entry. This workflow starts the pinned task (no arguments, no overrides) and refuses a result that does not claim all of that.
+name: audit-archive
+
+on:
+  workflow_dispatch:
+    inputs:
+      partition:
+        description: 'audit partition to archive and drop, audit.event_YYYY_MM; must equal the one the approved record names'
+        required: true
+        type: string
+
+permissions: {}
+
+# One archival at a time, never cancelled midway.
+concurrency:
+  group: audit-archive
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CI: 'true'
+  AWS_REGION: ${{ vars.AUDIT_ARCHIVE_AWS_REGION }}
+  AWS_DEFAULT_REGION: ${{ vars.AUDIT_ARCHIVE_AWS_REGION }}
+
+jobs:
+  enabled:
+    name: enabled and on main
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Refuse unless deliberately enabled, from main
+        env:
+          ENABLED: ${{ vars.AUDIT_ARCHIVE_ENABLED }}
+          REF: ${{ github.ref }}
+        run: |
+          [ "$REF" = "refs/heads/main" ] || { echo "::error::audit-archive runs from refs/heads/main only (got $REF)"; exit 1; }
+          [ "$ENABLED" = "true" ] || { echo "::error::audit-archive is authored but not enabled (repository variable AUDIT_ARCHIVE_ENABLED is not 'true'). It needs two human approvals of an applied audit-archive record (C-13, RK-5)."; exit 1; }
+
+  archive:
+    name: archive and drop one audit partition
+    needs: [enabled]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    environment: audit-archive
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      PARTITION: ${{ inputs.partition }}
+      ROLE_ARN: ${{ vars.AUDIT_ARCHIVE_ROLE_ARN }}
+      WORK: ${{ github.workspace }}/audit-archive-out
+      ARCHIVE_CLUSTER: ${{ vars.AUDIT_ARCHIVE_CLUSTER }}
+      ARCHIVE_TASK_DEFINITION_ARN: ${{ vars.AUDIT_ARCHIVE_TASK_DEFINITION_ARN }}
+      ARCHIVE_SUBNETS: ${{ vars.AUDIT_ARCHIVE_SUBNETS }}
+      ARCHIVE_SECURITY_GROUP: ${{ vars.AUDIT_ARCHIVE_SECURITY_GROUP }}
+      ARCHIVE_LOG_GROUP: ${{ vars.AUDIT_ARCHIVE_LOG_GROUP }}
+      ARCHIVE_LOG_STREAM_PREFIX: ${{ vars.AUDIT_ARCHIVE_LOG_STREAM_PREFIX }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Assume gh-audit-archive (OIDC; denied by AWS unless the audit-archive record is applied and unexpired)
+        run: scripts/deploy/aws-login.sh "$ROLE_ARN" gh-audit-archive 3600
+
+      - name: Read and check the audit-archive record (two approvals, exactly this partition)
+        run: |
+          mkdir -p "$WORK"
+          aws ssm get-parameter --name /approved/audit-archive --with-decryption --query Parameter.Value --output text > "$WORK/record.json"
+          node scripts/bootstrap/audit-archive/verify-record.mjs --partition "$PARTITION" --record "$WORK/record.json"
+
+      - name: Run the pinned archive task once (export, read back, detach, drop, audit event, manifest entry)
+        id: run
+        run: node scripts/bootstrap/audit-archive/run-task.mjs --partition "$PARTITION" --out "$WORK/result.json"
+
+      - name: Upload the result (counts, hashes and IDs only) as evidence
+        if: ${{ always() && steps.run.outcome == 'success' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: audit-archive-result-${{ github.run_id }}
+          path: ${{ github.workspace }}/audit-archive-out/result.json
+          if-no-files-found: error
+          retention-days: 90

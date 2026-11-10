@@ -1,0 +1,117 @@
+# First-admin bootstrap (DO-10, HEAAA-138; DEVOPS-PLAN 4.2, 16.2; HEAAA-460 decision log 4 and 4.1).
+#
+# AUTHORED DISABLED AND NOT EXECUTED (C-13, RK-5). This runbook needs two named human custodians, and with one human in the
+# project it cannot run. Nothing here runs until, in this order: the identity tables are migrated and the worker image holds the
+# `bootstrap-admins` command; a human applies the `bootstrap-<env>` approved record through the approvals root with TWO distinct
+# human approvals (approval-by-apply, 4.1 A2) together with the two custodian slot KMS keys; the security-contact test notice of
+# scripts/bootstrap/README.md step 0 is done and written into that record; and a person sets the repository variable
+# BOOTSTRAP_ENABLED=true. The file holds no secret, no account identifier and no person's name.
+#
+# Its only input is the environment. The persons, the custodians, their Identity Center roles, the enrollee identities and the ticket
+# reference are read by the TASK from /approved/bootstrap-<env>, not from here, so a tampered input cannot redirect a token. This
+# workflow only starts the pinned one-off task (no arguments, no overrides), reads its token-free result, then waits for the
+# token expiry, force-deletes the token secrets, checks they are gone and rotates the database credential. Tokens never enter this
+# job: the task writes them to Secrets Manager under per-custodian KMS keys that this job's role cannot decrypt.
+name: bootstrap
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'environment to bootstrap (the only input; everything else comes from the approved record)'
+        required: true
+        type: choice
+        options: [staging, production]
+
+permissions: {}
+
+# One bootstrap per environment at a time, never cancelled midway: a half-finished run leaves token secrets that only cleanup removes.
+concurrency:
+  group: bootstrap-${{ inputs.environment }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CI: 'true'
+  AWS_REGION: ${{ vars.BOOTSTRAP_AWS_REGION }}
+  AWS_DEFAULT_REGION: ${{ vars.BOOTSTRAP_AWS_REGION }}
+
+jobs:
+  enabled:
+    name: enabled and on main
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Refuse unless deliberately enabled, from main
+        env:
+          ENABLED: ${{ vars.BOOTSTRAP_ENABLED }}
+          REF: ${{ github.ref }}
+        run: |
+          [ "$REF" = "refs/heads/main" ] || { echo "::error::bootstrap runs from refs/heads/main only (got $REF)"; exit 1; }
+          [ "$ENABLED" = "true" ] || { echo "::error::bootstrap is authored but not enabled (repository variable BOOTSTRAP_ENABLED is not 'true'). It needs two human custodians and an applied bootstrap record (C-13, RK-5)."; exit 1; }
+
+  bootstrap:
+    name: bootstrap ${{ inputs.environment }}
+    needs: [enabled]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    environment: bootstrap-${{ inputs.environment }}
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      ENVIRONMENT: ${{ inputs.environment }}
+      ROLE_ARN: ${{ vars.BOOTSTRAP_ROLE_ARN }}
+      WORK: ${{ github.workspace }}/bootstrap-out
+      BOOTSTRAP_CLUSTER: ${{ vars.BOOTSTRAP_CLUSTER }}
+      BOOTSTRAP_TASK_DEFINITION_ARN: ${{ vars.BOOTSTRAP_TASK_DEFINITION_ARN }}
+      BOOTSTRAP_SUBNETS: ${{ vars.BOOTSTRAP_SUBNETS }}
+      BOOTSTRAP_SECURITY_GROUP: ${{ vars.BOOTSTRAP_SECURITY_GROUP }}
+      BOOTSTRAP_LOG_GROUP: ${{ vars.BOOTSTRAP_LOG_GROUP }}
+      BOOTSTRAP_LOG_STREAM_PREFIX: ${{ vars.BOOTSTRAP_LOG_STREAM_PREFIX }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Assume gh-bootstrap-<env> (OIDC; denied by AWS unless the bootstrap record is applied and unexpired)
+        id: login
+        run: scripts/deploy/aws-login.sh "$ROLE_ARN" gh-bootstrap 3600
+
+      - name: Read and check the bootstrap record (16.2 step 1; two approvals, custodians, security-contact test)
+        run: |
+          mkdir -p "$WORK"
+          aws ssm get-parameter --name "/approved/bootstrap-${ENVIRONMENT}" --with-decryption --query Parameter.Value --output text > "$WORK/record.json"
+          node scripts/bootstrap/verify-record.mjs --env "$ENVIRONMENT" --record "$WORK/record.json"
+          rm -f "$WORK/record.json" # it names people and role ARNs; the evidence is the task result, not the record
+
+      - name: Run the pinned bootstrap task once (it refuses if any admin principal exists)
+        id: run
+        run: node scripts/bootstrap/run-task.mjs --env "$ENVIRONMENT" --out "$WORK/result.json"
+
+      - name: Upload the token-free result as evidence
+        if: ${{ always() && steps.run.outcome == 'success' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: bootstrap-result-${{ inputs.environment }}-${{ github.run_id }}
+          path: ${{ github.workspace }}/bootstrap-out/result.json
+          if-no-files-found: error
+          retention-days: 90
+
+      # Always, success or failure: wait for the returned expiry (or delete at once when there is no usable result), force-delete both
+      # token secrets and check they are gone. Failure names the secrets for the platform-admin break-glass role.
+      - name: Wait for token expiry, delete the token secrets, check they are gone
+        if: ${{ always() && steps.login.outcome == 'success' }}
+        run: node scripts/bootstrap/cleanup.mjs --env "$ENVIRONMENT" --result "$WORK/result.json"
+
+      # Always: the database credential is rotated after every run so nobody holds a usable value between runs (4.1 item 1).
+      - name: Rotate the app-bootstrap database credential
+        if: ${{ always() && steps.login.outcome == 'success' }}
+        run: node scripts/bootstrap/rotate-credential.mjs --env "$ENVIRONMENT"

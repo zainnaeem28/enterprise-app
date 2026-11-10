@@ -1,0 +1,44 @@
+# Dual-control workflows: first-admin bootstrap and audit archive (DO-10, HEAAA-138)
+
+Authored, **not executed**. Both workflows need two distinct human approvals (approval-by-apply, DEVOPS-PLAN 4.1 A2) and the project
+has one human (RK-5, C-13). Both ship disabled: they refuse unless run from `main` **and** the repository variable
+`BOOTSTRAP_ENABLED` / `AUDIT_ARCHIVE_ENABLED` is `true`, which a person sets only after the enabling change is applied.
+
+| File | What it does |
+| --- | --- |
+| `.github/workflows/bootstrap.yml` | Starts the pinned one-off `bootstrap-admins` task, reads its token-free result, waits for token expiry, force-deletes the token secrets, checks they are gone, rotates `<env>/db/app-bootstrap`. Only input: the environment. |
+| `.github/workflows/audit-archive.yml` | Starts the pinned archive task for the one partition the approved record names; accepts only a result that claims read-back, matching counts and anchor roots, Object Lock compliance, drop, audit event and manifest entry. |
+| `lib/aws.mjs` | Allow-list of the only AWS CLI calls these workflows make (no overrides, no exec, no IAM, no `get-secret-value`, force-delete only of `bootstrap/<env>/token/<slot>`). |
+| `lib/record.mjs` | Pre-flight check of `/approved/bootstrap-<env>` and `/approved/audit-archive` (two distinct approvals, window <= 1 day, custodians, DPR-23, security-contact test <= 72 h). The task re-checks the same record. |
+| `lib/result.mjs`, `audit-archive/result.mjs` | Strict schemas for the task results; a malformed result is a failure; a token-like string anywhere in the output is refused without echoing it. |
+| `run-task.mjs`, `cleanup.mjs`, `rotate-credential.mjs`, `verify-record.mjs`, `audit-archive/*` | The steps the workflows call. |
+| `test/` | `node --test scripts/bootstrap/test/*.test.mjs` (no network, no AWS). |
+
+## Acceptance, mapped
+
+- **Roles enabled only by approval-by-apply with two distinct human approvals.** The roles `gh-bootstrap-<env>` and `gh-audit-archive` are denied by default in `infra/modules/ci-trust` (DO-04); both workflows start by reading their own record and `lib/record.mjs` refuses fewer than two distinct approvals.
+- **A custodian never reads their own token.** The read control is the per-custodian slot KMS key policy (decision log 4.1 item 3), created by the approved apply, not by these files. This ticket refuses a record where custodian `i` is enrollee `i`, and no workflow step can read a token: the job role has no `secretsmanager:GetSecretValue` or `kms:Decrypt`, and `lib/aws.mjs` refuses both.
+- **The job refuses if any admin exists.** Enforced where the state is: the `identity.bootstrap_admins` function's latch (decision log 2.1), called by the task as `app_bootstrap`. The runner has no database access. A refusal is a non-zero task exit, and the cleanup step still deletes both secrets. *Not tested here: it needs the task image (INT04-F02b-impl).*
+- **One human: authored, cannot execute.** Stated in both workflow headers and in this file.
+
+## Runbook (16.2) as these files implement it
+
+0. **Security-contact test notice (decision log 4 step 1a).** Both custodians send a test notice through the deployed worker's notice channel and the mailbox owner confirms receipt. They write `security_contact_verified_at` and `security_contact_test_ref` into the `bootstrap-<env>` change under `infra/approvals/`. The record check refuses a run when this is older than 72 h. Until OPEN-6 names the mailbox owner no environment can satisfy it.
+1. Two custodians review the change under `infra/approvals/` (they are not its author); a platform admin applies it. The apply also creates the two slot KMS keys and opens the allow on `<env>/db/app-bootstrap`.
+2. Custodian A starts `bootstrap` (input: environment). The workflow checks the record, runs the task, and ends with expiry wait, deletion and rotation.
+3. Custodian `i` reads slot `i` with MFA through their own Identity Center role and hands it over in person or by a secure channel they choose.
+4. Both enrollees finish both keys before any other admin is created (16.2 step 4). Verification and handoff evidence: step 5-6 of 16.2.
+
+Evidence: the `bootstrap-result-<env>-<run id>` artifact (mode, run reference, expiry, per slot `issued`/`skipped`, token ID, secret ARN; no token), the cleanup step's "token secrets are gone", and CloudTrail for the reads.
+
+## Open interface points and limitations
+
+**These are things the next owner must settle; none is guessed away.** G-1..G-3 need an IaC change (DO-04, `infra/`, outside this ticket's paths) and an answer from the Solution Architect.
+
+- **G-1. Deleting and checking the token secrets.** Decision log 4 step 6 says `bootstrap.yml` ends with a step that force-deletes and checks the secrets, while step 3 allows `DeleteSecret` only to the bootstrap *task* role and the break-glass role, and `gh-bootstrap-<env>` (ci-trust `allow_bootstrap`) has only `ecs:RunTask`, `ecs:DescribeTasks`, `iam:PassRole` and the record read. `cleanup.mjs` is written to the decision log's step 6 and needs `secretsmanager:DeleteSecret` (and `DescribeSecret`) on `bootstrap/<env>/token/*` for the job role; otherwise the task itself must wait for expiry and delete, and `cleanup.mjs` becomes a check-only step. A failed cleanup exits non-zero and names the secrets for the break-glass role.
+- **G-2. Reading the task result.** `run-task.mjs` and `audit-archive/run-task.mjs` read the result from the task's CloudWatch log stream (`logs:GetLogEvents`), which neither role has. Alternative: the task writes the result to S3 and `restore-test` style `fetch-result`. Also `secretsmanager:RotateSecret` on `<env>/db/app-bootstrap` for the rotation step (decision log 4.1 item 1 says rotation is "final workflow step"). The workflow variables and the log layout (`<prefix>/<container>/<task id>`) are assumptions to confirm with DO-04.
+- **G-3. Slot secret names.** `bootstrap/<env>/token/<slot-i>` with `slot-1` / `slot-2` (16.2 step 3). When no usable result exists, `cleanup.mjs` deletes exactly those two names.
+- **G-4. JSON field names.** The decision log fixes what `/approved/bootstrap-<env>` and the task result hold, not the field names. This ticket reads: `custodians[].identity_center_user_id|role_arn`, `enrollees[].handle|identity_arn`, `ticket_ref`, `security_contact_verified_at`, `security_contact_test_ref`; result `mode`, `run_ref`, `expires`, `enrollees[].slot|principal_id|result|token_id|secret_arn|secret`. The `ci-trust` `records` variable (DO-04) is a fixed object type and carries none of the bootstrap fields yet, so it needs the same addition. A rename is a one-line change in `lib/record.mjs` / `lib/result.mjs`.
+- **G-5. Audit archive task.** The `audit_archiver` role has no grants yet and the archive task, its image command and the read-back logic are not built (BE-01 README AUD-N7: "DO-09b"). The result field names in `audit-archive/result.mjs` are this ticket's reading of ARCHITECTURE 6 (a)-(c). Read-back of the archive copy happens in the task, not on the runner (the role has no S3 access).
+- **G-6. AWS behaviour is unverified.** Rotation, `secretsmanager:KmsKeyId` condition keys, `RunTask` override detection and key policies without root delegation are design from documentation (decision log 4.1 item 4). They must be proved in staging with TC-SEC-11 before the first real run. That is **blocked** until a second human exists.
+- The 1-hour role session bounds wait + task + cleanup: the token lives 30 minutes, the task is given 15, cleanup runs at expiry plus 15 s.
