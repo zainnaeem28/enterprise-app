@@ -1,0 +1,78 @@
+▶ TC-BK concurrency (100 parallel sessions)
+  ✔ TC-BK-13 one slot, ONE patient account on 100 sessions: exactly one appointment (5428.153136ms)
+  ℹ outcomes: {"hold:409:scheduling.slot_taken":99,"confirmed":1}
+  ✔ TC-BK-14 one slot, 100 DIFFERENT patients: exactly one wins, losers see alternatives, none sees another reservation (5295.800922ms)
+  ℹ outcomes: {"hold:409:scheduling.slot_taken":99,"confirmed":1}
+  ✔ TC-BK-15 overbookable session, cap 2, 100 patients: exactly 2 succeed, no more (HEAAA-631/632 ruling D-F11-1: the cap counts every active booking in the slot) (5403.069915ms)
+  ℹ outcomes: {"hold:409:scheduling.slot_taken":98,"confirmed":2}
+  ✔ TC-BK-16 hold expiry race: after A's hold expires, B and C race; exactly one wins, neither gets a false "taken" [G2 setting: hold 1 min, real wait] (62310.192167ms)
+  ℹ outcomes: {"confirmed":1,"hold:409:scheduling.slot_taken":1}
+✔ TC-BK concurrency (100 parallel sessions) (78438.645782ms)
+▶ TC-BK-15 cap variants (D-F11-1)
+  ✖ cap 1 on an overbookable session, 40 parallel patients: exactly 1 succeed (1049.352374ms)
+  ✖ cap 0 on an overbookable session, 40 parallel patients: exactly 1 succeed (885.025234ms)
+  ✖ cap 3 on an overbookable session, 40 parallel patients: exactly 3 succeed (898.475251ms)
+  ✖ cap 2, two slots of one session: exactly 2 + 2, the first slot being full does not hide or fill the second (837.305842ms)
+✖ TC-BK-15 cap variants (D-F11-1) (3671.556833ms)
+ℹ tests 8
+ℹ suites 2
+ℹ pass 4
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 82839.53035
+
+✖ failing tests:
+
+test at tests/api/booking/overbook-cap.test.mjs:33:5
+✖ cap 1 on an overbookable session, 40 parallel patients: exactly 1 succeed (1049.352374ms)
+  TypeError [Error]: Cannot read properties of undefined (reading 'clinicianId')
+      at holdBody (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/e2e/journeys/lib/world.mjs:111:64)
+      at hold (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/e2e/journeys/lib/world.mjs:114:47)
+      at bookOnce (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/api/booking/overbook-cap.test.mjs:15:19)
+      at file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/api/booking/overbook-cap.test.mjs:39:52
+      at Array.map (<anonymous>)
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/api/booking/overbook-cap.test.mjs:39:41)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+
+test at tests/api/booking/overbook-cap.test.mjs:33:5
+✖ cap 0 on an overbookable session, 40 parallel patients: exactly 1 succeed (885.025234ms)
+  TypeError [Error]: Cannot read properties of undefined (reading 'clinicianId')
+      at holdBody (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/e2e/journeys/lib/world.mjs:111:64)
+      at hold (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/e2e/journeys/lib/world.mjs:114:47)
+      at bookOnce (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/api/booking/overbook-cap.test.mjs:15:19)
+      at file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/api/booking/overbook-cap.test.mjs:39:52
+      at Array.map (<anonymous>)
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/api/booking/overbook-cap.test.mjs:39:41)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/api/booking/overbook-cap.test.mjs:33:5
+✖ cap 3 on an overbookable session, 40 parallel patients: exactly 3 succeed (898.475251ms)
+  TypeError [Error]: Cannot read properties of undefined (reading 'clinicianId')
+      at holdBody (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/e2e/journeys/lib/world.mjs:111:64)
+      at hold (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/e2e/journeys/lib/world.mjs:114:47)
+      at bookOnce (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/api/booking/overbook-cap.test.mjs:15:19)
+      at file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/api/booking/overbook-cap.test.mjs:39:52
+      at Array.map (<anonymous>)
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/api/booking/overbook-cap.test.mjs:39:41)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/api/booking/overbook-cap.test.mjs:47:3
+✖ cap 2, two slots of one session: exactly 2 + 2, the first slot being full does not hide or fill the second (837.305842ms)
+  AssertionError [ERR_ASSERTION]: the session offers a second, non-overlapping slot
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/api/booking/overbook-cap.test.mjs:55:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

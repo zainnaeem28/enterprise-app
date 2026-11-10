@@ -1,0 +1,143 @@
+{
+  "engine": "webkit",
+  "browser": "27.2",
+  "results": [
+    {
+      "id": "seed.world",
+      "ok": true,
+      "detail": "doctor STF-DR-X5677006, patient PAT-363751, front desk STF-FD-QA-7055550, booked=true"
+    },
+    {
+      "id": "webkit:doctor.session",
+      "ok": false,
+      "detail": "status 401"
+    },
+    {
+      "id": "webkit:10-doctor-schedule",
+      "ok": false,
+      "detail": "http://localhost:4211/sign-in text=385ch expect /Casey Synthetic/"
+    },
+    {
+      "id": "webkit:11-doctor-patient-list",
+      "ok": true,
+      "detail": "http://localhost:4211/sign-in text=385ch"
+    },
+    {
+      "id": "webkit:12-doctor-alerts",
+      "ok": true,
+      "detail": "http://localhost:4211/sign-in text=385ch"
+    },
+    {
+      "id": "webkit:13-doctor-notes-to-sign",
+      "ok": true,
+      "detail": "http://localhost:4211/sign-in text=385ch"
+    },
+    {
+      "id": "webkit:14-doctor-availability",
+      "ok": true,
+      "detail": "http://localhost:4211/sign-in text=385ch"
+    },
+    {
+      "id": "webkit:15-doctor-tasks",
+      "ok": true,
+      "detail": "http://localhost:4211/sign-in text=385ch"
+    },
+    {
+      "id": "webkit:frontdesk.session",
+      "ok": false,
+      "detail": "status 401"
+    },
+    {
+      "id": "webkit:20-frontdesk-arrivals",
+      "ok": true,
+      "detail": "http://localhost:4211/sign-in text=385ch"
+    },
+    {
+      "id": "webkit:21-frontdesk-waitlist",
+      "ok": true,
+      "detail": "http://localhost:4211/sign-in text=385ch"
+    },
+    {
+      "id": "webkit:22-frontdesk-patients",
+      "ok": true,
+      "detail": "http://localhost:4211/sign-in text=385ch"
+    },
+    {
+      "id": "webkit:23-frontdesk-forms",
+      "ok": true,
+      "detail": "http://localhost:4211/sign-in text=385ch"
+    },
+    {
+      "id": "webkit:24-frontdesk-triage-queue",
+      "ok": true,
+      "detail": "http://localhost:4211/sign-in text=385ch"
+    },
+    {
+      "id": "webkit:patient.session",
+      "ok": false,
+      "detail": "status 401"
+    },
+    {
+      "id": "webkit:30-patient-home",
+      "ok": true,
+      "detail": "http://127.0.0.1:4210/ text=161ch"
+    },
+    {
+      "id": "webkit:31-patient-booking-start",
+      "ok": false,
+      "detail": "http://127.0.0.1:4210/book text=171ch expect /What would you like to book/"
+    },
+    {
+      "id": "webkit:32-patient-profile",
+      "ok": false,
+      "detail": "http://127.0.0.1:4210/profile text=171ch expect /Casey|profile/i"
+    },
+    {
+      "id": "webkit:33-patient-privacy",
+      "ok": false,
+      "detail": "http://127.0.0.1:4210/privacy text=171ch"
+    },
+    {
+      "id": "webkit:34-patient-messages",
+      "ok": false,
+      "detail": "http://127.0.0.1:4210/messages text=171ch"
+    },
+    {
+      "id": "webkit:35-patient-appointments",
+      "ok": false,
+      "detail": "http://127.0.0.1:4210/appointments text=171ch expect /Confirmed/"
+    },
+    {
+      "id": "webkit:36-patient-previsit",
+      "ok": false,
+      "detail": "http://127.0.0.1:4210/appointments/01a1c5e7-fff3-78e0-915c-48413c3e0f51/previsit text=171ch"
+    },
+    {
+      "id": "webkit:40-site-home",
+      "ok": true,
+      "detail": "http://127.0.0.1:35639/ text=824ch"
+    },
+    {
+      "id": "webkit:41-site-services",
+      "ok": true,
+      "detail": "http://127.0.0.1:35639/services text=770ch expect /appointment|consult/i"
+    },
+    {
+      "id": "webkit:42-site-doctors",
+      "ok": true,
+      "detail": "http://127.0.0.1:35639/doctors text=997ch"
+    },
+    {
+      "id": "webkit:43-site-locations",
+      "ok": true,
+      "detail": "http://127.0.0.1:35639/locations text=545ch"
+    },
+    {
+      "id": "webkit:50-patient-home-360px",
+      "ok": true,
+      "detail": "http://127.0.0.1:4210/ text=161ch"
+    }
+  ],
+  "pageErrors": [],
+  "at": "2026-11-10T14:41:42.983Z"
+}
