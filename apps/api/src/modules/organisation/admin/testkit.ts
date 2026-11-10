@@ -2,6 +2,7 @@
 // Harness of the BE-23 real-database tests: the BE-05 admin kit (throwaway PostgreSQL database migrated by the real pipeline, real
 // reference data, real WebAuthn-shaped admin sessions and elevation), plus the organisation admin controller mounted on the same
 // application the way the composition root mounts it. Not a test file; imported by the *.dbtest.ts files.
+import type { Type } from '@nestjs/common';
 import { createLogger, Queue, syncTaskTypes } from '@ehr/kernel';
 import type { ScopeSettings } from '@ehr/kernel';
 import { createApp } from '../../../platform/app.js';
@@ -62,7 +63,10 @@ export const WORKER_SCOPE: ScopeSettings = {
   jobScope: 'org',
 };
 
-export async function orgAdminSetup(name: string): Promise<OrgKit> {
+export async function orgAdminSetup(
+  name: string,
+  extraControllers: (kit: Kit, audit: AuditService) => Type<unknown>[] = () => [],
+): Promise<OrgKit> {
   const kit = await setup({ name, withApp: false });
   for (const j of IDENTITY_ADMIN_JOBS) kit.registry.defineJob(j);
   const wc = new (await import('../../identity/testkit.js')).pg.Client({
@@ -151,6 +155,7 @@ export async function orgAdminSetup(name: string): Promise<OrgKit> {
         service,
         scopeOf: (req) => requireAuthContext(req).scope,
       }),
+      ...extraControllers(kit, audit),
     ],
   });
   await app.listen(0, '127.0.0.1');
