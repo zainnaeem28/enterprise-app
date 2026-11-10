@@ -33,3 +33,4 @@ cms-typecheck=0
 cms-test-db=0
 cms-junit-guard=0
 cms-next-build=0 (first attempt 1: harness shell exported the Paperclip DATABASE_URL, which the CMS production guard refuses; unset and rerun)
+secrets-final-rerun=0 (after the cms next build output, ignored and generated after the first scan, was removed; the first scan ran before it existed and passed)
