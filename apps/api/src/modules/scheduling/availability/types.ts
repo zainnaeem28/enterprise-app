@@ -109,7 +109,7 @@ export interface Slot {
   clinicianId: string;
   locationId: string;
   mode: 'in_person' | 'video';
-  /** Only in a staff search with `includeOverbook`: this slot is extra capacity of an overbookable session. */
+  /** Only in a staff search with `includeOverbook`: this slot already holds a booking and takes a further one, up to the cap, in an overbookable window. */
   overbook?: true;
 }
 

@@ -277,8 +277,10 @@ export class WaitlistService {
   // ===== the freed slot and its candidates (job `scheduling.offer_waitlist`, organisation scope) ======================
 
   /**
-   * The slot a freed occupancy leaves, or undefined when there is nothing to offer: the occupancy is not in a freed state, it was an
-   * overbook row, it has started, or somebody already holds or has the time (an earlier offer is open, a patient booked it).
+   * The slot a freed occupancy leaves, or undefined when there is nothing to offer: the occupancy is not in a freed state, it has
+   * started, or somebody already holds or has the time (an earlier offer is open, a patient booked it). In an overbookable slot every
+   * booking is an overbook row (HEAAA-632), so the slot is offered only when it is now empty: any other row of the doctor that
+   * overlaps it, overbook or not, or a row of another clinician in the room, makes it busy.
    */
   async freedSlot(tx: Tx, occupancyId: string): Promise<FreedSlot | undefined> {
     if (tx.scope.audience !== 'system') throw new SchedulingScopeError();
@@ -286,19 +288,19 @@ export class WaitlistService {
     const r = (
       await tx.query(
         `SELECT o.id, o.organisation_id, o.location_id, o.clinician_principal_id, o.room_id, lower(o.period) AS starts_at,
-                upper(o.period) AS ends_at, o.period, o.status, o.overbook, r.service_id, r.mode
+                upper(o.period) AS ends_at, o.period, o.status, r.service_id, r.mode
            FROM scheduling.slot_occupancy o JOIN scheduling.slot_reservation r ON r.id = o.id WHERE o.id = $1::uuid`,
         [occupancyId.toLowerCase()],
       )
     ).rows[0] as Row | undefined;
-    if (r === undefined || !FREED.includes(String(r['status'])) || r['overbook'] === true)
-      return undefined;
+    if (r === undefined || !FREED.includes(String(r['status']))) return undefined;
     if (new Date(iso(r['starts_at'])).getTime() <= this.now().getTime()) return undefined;
     const busy = await tx.query(
       `SELECT 1 FROM scheduling.slot_occupancy x
-        WHERE x.id <> $1::uuid AND x.status = ANY($4::text[]) AND NOT x.overbook
+        WHERE x.id <> $1::uuid AND x.status = ANY($4::text[])
           AND NOT (x.status = 'held' AND x.expires_at < now()) AND x.period && $3::tstzrange
-          AND (x.clinician_principal_id = $2::uuid OR ($5::uuid IS NOT NULL AND x.room_id = $5::uuid)) LIMIT 1`,
+          AND (x.clinician_principal_id = $2::uuid
+               OR ($5::uuid IS NOT NULL AND x.room_id = $5::uuid AND x.clinician_principal_id <> $2::uuid)) LIMIT 1`,
       [
         occupancyId.toLowerCase(),
         r['clinician_principal_id'],

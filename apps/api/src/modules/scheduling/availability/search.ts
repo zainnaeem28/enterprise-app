@@ -42,6 +42,11 @@ interface Interval {
   end: number;
 }
 
+/** A booking in a room: whose time it is, so that the same doctor's further patients do not block each other (HEAAA-632 R3, R4). */
+interface RoomInterval extends Interval {
+  clinicianId: string;
+}
+
 export interface SearchDeps {
   organisation: Pick<OrganisationService, 'bookingPolicy' | 'setting'>;
   now?: () => Date;
@@ -128,8 +133,9 @@ export class AvailabilitySearch implements AvailabilityPort {
   /**
    * Is `q` a slot of the doctor's template? The period must lie inside a template window of the right place, service and mode, on the
    * slot grid of the service (a multiple of its duration from the window's start), clear of blocked time, leave and busy time.
-   * Overlap with another booking is the database's to decide (the exclusion constraint), except in an overbookable session: where the
-   * slot is already occupied and the rule is overbookable, the answer names the session so `scheduling.occupy` counts it against the cap.
+   * Overlap with another booking is the database's to decide (the exclusion constraint), except in an overbookable window: where the
+   * rule is overbookable and the stored cap is 2 or more, every booking (the first included) is an overbook row, so the answer always
+   * names the slot and `scheduling.occupy` counts all the doctor's active rows in the slot against the cap (HEAAA-632 D-F11-T1, R2).
    */
   async resolve(
     tx: Tx,
@@ -176,14 +182,11 @@ export class AvailabilitySearch implements AvailabilityPort {
     )
       return { ok: false, code: 'scheduling.outside_hours' };
     if (!w.overbookable) return { ok: true };
-    const occupied =
-      overlaps(data.booked.get(q.clinicianId), from, to) ||
-      (q.roomId !== null && overlaps(data.roomBooked.get(q.roomId), from, to));
-    if (!occupied) return { ok: true };
     const cap = (await this.deps.organisation.bookingPolicy(tx, q.serviceId, q.locationId))
       .overbookCapPerSession;
-    return cap > 0
-      ? { ok: true, overbook: { sessionKey: `${w.ruleId}:${w.localDate}` } }
+    // A cap of 0 or 1 means no overbooking. The key names the slot for traceability only; the database counts by overlap.
+    return cap >= 2
+      ? { ok: true, overbook: { sessionKey: `${w.ruleId}:${new Date(from).toISOString()}` } }
       : { ok: true };
   }
 
@@ -291,8 +294,7 @@ export class AvailabilitySearch implements AvailabilityPort {
     to: number,
   ): Promise<{
     booked: Map<string, Interval[]>;
-    roomBooked: Map<string, Interval[]>;
-    overbookStarts: Map<string, number[]>;
+    roomBooked: Map<string, RoomInterval[]>;
     busy: Map<string, Interval[]>;
     lastSync: Map<string, number>;
     blocked: Map<string, Interval[]>;
@@ -304,11 +306,10 @@ export class AvailabilitySearch implements AvailabilityPort {
       else l.push(i);
     };
     const booked = new Map<string, Interval[]>();
-    const roomBooked = new Map<string, Interval[]>();
-    const overbookStarts = new Map<string, number[]>();
+    const roomBooked = new Map<string, RoomInterval[]>();
     // A lapsed hold no longer occupies anything (the inserting transaction expires it, 25.1): it is not read here either.
     const occ = await tx.query(
-      `SELECT clinician_principal_id AS clinician_id, room_id, lower(period) AS s, upper(period) AS e, overbook
+      `SELECT clinician_principal_id AS clinician_id, room_id, lower(period) AS s, upper(period) AS e
          FROM scheduling.slot_occupancy
         WHERE status = ANY($1::text[]) AND NOT (status = 'held' AND expires_at < now()) AND period && $2::tstzrange
           AND (clinician_principal_id = ANY($3::uuid[]) OR room_id = ANY($4::uuid[]))`,
@@ -319,25 +320,13 @@ export class AvailabilitySearch implements AvailabilityPort {
       const i = { start: ms(r['s']), end: ms(r['e']) };
       const cid = String(r['clinician_id']);
       if (clinicians.includes(cid)) push(booked, cid, i);
-      if (r['room_id'] !== null && r['overbook'] !== true)
-        push(roomBooked, String(r['room_id']), i);
-    }
-    // The cap is per session. `session_key` is a hidden column (SEC-03 F09, 0951), so a session is read as the rule window of the day:
-    // the starts of the overbook rows are collected here and counted per window below. The cap itself is enforced by scheduling.occupy.
-    const ob = await tx.query(
-      `SELECT clinician_principal_id AS clinician_id, lower(period) AS s
-         FROM scheduling.slot_occupancy
-        WHERE overbook AND status = ANY($1::text[]) AND NOT (status = 'held' AND expires_at < now())
-          AND clinician_principal_id = ANY($2::uuid[])
-          AND lower(period) >= $3::timestamptz - interval '2 days' AND lower(period) < $4::timestamptz + interval '2 days'`,
-      [[...ACTIVE], [...clinicians], new Date(from).toISOString(), new Date(to).toISOString()],
-    );
-    for (const x of ob.rows) {
-      const r = x as Row;
-      const cid = String(r['clinician_id']);
-      const l = overbookStarts.get(cid);
-      if (l === undefined) overbookStarts.set(cid, [ms(r['s'])]);
-      else l.push(ms(r['s']));
+      if (r['room_id'] !== null) {
+        const rid = String(r['room_id']);
+        const l = roomBooked.get(rid);
+        const ri = { ...i, clinicianId: cid };
+        if (l === undefined) roomBooked.set(rid, [ri]);
+        else l.push(ri);
+      }
     }
 
     const busy = new Map<string, Interval[]>();
@@ -368,7 +357,7 @@ export class AvailabilitySearch implements AvailabilityPort {
       const r = x as Row;
       push(blocked, String(r['clinician_id']), { start: ms(r['s']), end: ms(r['e']) });
     }
-    return { booked, roomBooked, overbookStarts, busy, lastSync, blocked };
+    return { booked, roomBooked, busy, lastSync, blocked };
   }
 
   // ===== the search proper ================================================================================================
@@ -446,10 +435,18 @@ export class AvailabilitySearch implements AvailabilityPort {
           overlaps(data.busy.get(w.clinicianId), s, e)
         )
           continue;
-        const occupied =
-          overlaps(data.booked.get(w.clinicianId), s, e) ||
-          (w.roomId !== null && overlaps(data.roomBooked.get(w.roomId), s, e));
-        if (!occupied) {
+        // The period overlap is authoritative (HEAAA-632 N1): `own` counts the doctor's active rows that overlap this start, overbook
+        // rows included; a room held by another clinician's row, overbook or not, is never offered (R4).
+        const own = (data.booked.get(w.clinicianId) ?? []).filter(
+          (x) => x.start < e && s < x.end,
+        ).length;
+        const roomTaken =
+          w.roomId !== null &&
+          (data.roomBooked.get(w.roomId) ?? []).some(
+            (x) => x.clinicianId !== w.clinicianId && x.start < e && s < x.end,
+          );
+        if (roomTaken) continue;
+        if (own === 0) {
           out.set(key, {
             start: s,
             end: e,
@@ -457,13 +454,7 @@ export class AvailabilitySearch implements AvailabilityPort {
             locationId: w.locationId,
             overbook: false,
           });
-        } else if (
-          c.includeOverbook &&
-          w.overbookable &&
-          pol.cap > 0 &&
-          (data.overbookStarts.get(w.clinicianId) ?? []).filter((t) => t >= w.start && t < w.end)
-            .length < pol.cap
-        ) {
+        } else if (c.includeOverbook && w.overbookable && pol.cap >= 2 && own < pol.cap) {
           out.set(key, {
             start: s,
             end: e,

@@ -82,9 +82,12 @@ async function scenario(opts: {
   waiters: number;
   staffBooker?: boolean;
   registered?: boolean;
+  /** The doctor's window is overbookable (HEAAA-632): every booking of the slot is an overbook row while the stored cap is 2 or more. */
+  overbook?: boolean;
 }) {
   t.clock.at = undefined;
   const doc = (await t.doctor()).principalId;
+  if (opts.overbook === true) t.overbook.set(doc, 'SESSION-OB');
   const booker = await t.patient(1000 + (day += 1));
   const start = opts.start ?? slotStart(nextDay());
   const rid = await t.confirmed(booker, doc, start);
@@ -1333,6 +1336,49 @@ describe('merge participant and export part for the flow tables (22.16, 38.2 ite
       Object.values(leak).map((x) => x.length),
       [0, 0, 0, 0, 0],
     );
+  });
+});
+
+describe('an overbookable slot and the waitlist (HEAAA-632 T9 d, R8)', () => {
+  const setCap = (cap: number): Promise<unknown> =>
+    t.k.sa.query(
+      `UPDATE organisation.booking_policy SET overbook_cap_per_session = $2 WHERE service_id = $1 AND location_id IS NULL`,
+      [SVC, cap],
+    );
+
+  test('cancelling the only booking of an overbookable slot offers it to the waitlist; cancelling one of two does not', async () => {
+    await setCap(2);
+    try {
+      const only = await scenario({ waiters: 1, overbook: true });
+      assert.equal(
+        await nrows(
+          `SELECT count(*) AS n FROM scheduling.slot_occupancy WHERE id = $1 AND overbook`,
+          [only.rid],
+        ),
+        1,
+        'the first booking of an overbookable slot is an overbook row',
+      );
+      await only.free();
+      const r1 = await only.chain(only.rid);
+      assert.equal(r1.outcome, 'offered', JSON.stringify(r1));
+
+      const two = await scenario({ waiters: 1, overbook: true });
+      const second = await t.patient(9000 + (day += 1));
+      await t.confirmed(second, two.doc, two.start);
+      await two.free();
+      const r2 = await two.chain(two.rid);
+      assert.notEqual(r2.outcome, 'offered', JSON.stringify(r2));
+      assert.equal(
+        await nrows(
+          `SELECT count(*) AS n FROM scheduling.waitlist_offer WHERE waitlist_entry_id = $1`,
+          [two.entries[0]],
+        ),
+        0,
+        'the slot still holds the other booking: nothing is offered',
+      );
+    } finally {
+      await setCap(0);
+    }
   });
 });
 

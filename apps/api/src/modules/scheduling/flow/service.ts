@@ -526,11 +526,16 @@ export class SchedulingFlowService {
           await tx.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [
             `rm:${wanted.toLowerCase()}`,
           ]);
+        // HEAAA-632 R8: overbook rows occupy their doctor's time and their room, so neither filters them out. For the room, rows of the
+        // visit's resulting doctor do not block it (an overbookable slot is one doctor, one room, several patients); rows of any other
+        // clinician do.
+        const resulting = (clinician ?? String(slot['clinician_principal_id'])).toLowerCase();
         const busy = await tx.query(
           `SELECT 1 FROM scheduling.slot_occupancy x
-            WHERE x.id <> $1::uuid AND x.${col} = $2::uuid AND x.status = ANY($4::text[]) AND NOT x.overbook
+            WHERE x.id <> $1::uuid AND x.${col} = $2::uuid AND x.status = ANY($4::text[])
+              AND ($5::text <> 'room_id' OR x.clinician_principal_id <> $6::uuid)
               AND NOT (x.status = 'held' AND x.expires_at < now()) AND x.period && $3::tstzrange LIMIT 1`,
-          [cur.id, wanted.toLowerCase(), slot['period'], [...ACTIVE_STATUSES]],
+          [cur.id, wanted.toLowerCase(), slot['period'], [...ACTIVE_STATUSES], col, resulting],
         );
         if (busy.rows.length > 0) throw new SlotTakenError();
         if (col === 'room_id') {

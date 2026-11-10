@@ -13,6 +13,7 @@ export {
   AuditEnvelopeError,
   AuditError,
   AuditScopeError,
+  ExportRateLimitedError,
   ExportTooLargeError,
   SelfReviewError,
 } from './errors.js';

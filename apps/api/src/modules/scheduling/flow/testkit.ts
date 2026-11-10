@@ -47,6 +47,7 @@ import type { Client, Kit, SeededSession } from '../../patient/testkit.js';
 import { createSchedulingControllers, schedulingResolvers } from '../core/controller.js';
 import { SCHEDULING_CORE_JOBS } from '../core/jobs.js';
 import { nearbyFreeStarts, SchedulingCoreService } from '../core/service.js';
+import { stubOverbook } from '../core/testkit.js';
 import type { AvailabilityPort } from '../core/types.js';
 import { PgRateLimiter } from '../../../platform/rate-limit.js';
 import { createFlowControllers, flowResolvers } from './controller.js';
@@ -320,16 +321,7 @@ export async function setupFlow(
   const realSearch = new AvailabilitySearch({ organisation: org });
   const availability: AvailabilityPort = {
     resolve: (tx, q) =>
-      real.on
-        ? realSearch.resolve(tx, q)
-        : Promise.resolve(
-            overbook.has(q.clinicianId)
-              ? {
-                  ok: true as const,
-                  overbook: { sessionKey: overbook.get(q.clinicianId) as string },
-                }
-              : { ok: true as const },
-          ),
+      real.on ? realSearch.resolve(tx, q) : stubOverbook(tx, q, overbook.get(q.clinicianId)),
     alternatives: (tx, q) => nearbyFreeStarts(tx, q),
   };
   const apiQueue = new Queue(k.registry, 'api');
