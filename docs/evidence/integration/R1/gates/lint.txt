@@ -1,0 +1,18 @@
+$ eslint .
+
+/tmp/int05/repo/scripts/bootstrap/test/tasks.test.mjs
+  97:15  error  'argv' is defined but never used  @typescript-eslint/no-unused-vars
+
+/tmp/int05/repo/scripts/bootstrap/test/workflow-policy.test.mjs
+  33:24  error  Spaces are hard to count. Use {2}  no-regex-spaces
+  54:31  error  Spaces are hard to count. Use {6}  no-regex-spaces
+  59:5   error  Spaces are hard to count. Use {8}  no-regex-spaces
+  63:5   error  Spaces are hard to count. Use {8}  no-regex-spaces
+
+/tmp/int05/repo/scripts/restore/task/run.mjs
+  103:13  error  'hashes' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+✖ 6 problems (6 errors, 0 warnings)
+  4 errors and 0 warnings potentially fixable with the `--fix` option.
+
+[ELIFECYCLE] Command failed with exit code 1.

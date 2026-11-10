@@ -1,0 +1,1 @@
+admin-run self-test: configuration, redaction and screenshot naming ok

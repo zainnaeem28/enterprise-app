@@ -1,0 +1,1 @@
+admin-stack self-test: environments and key sizes ok

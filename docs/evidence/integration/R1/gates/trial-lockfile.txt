@@ -1,0 +1,5 @@
+Scope: all 11 workspace projects
+✓ Lockfile passes supply-chain policies (verified 23m ago)
+[WARN] 2 deprecated subdependencies found: @esbuild-kit/core-utils@3.3.2, @esbuild-kit/esm-loader@2.6.5
+[WARN] Issues with peer dependencies found. Run "pnpm peers check" to list them.
+Done in 1.4s using pnpm v12.16.1

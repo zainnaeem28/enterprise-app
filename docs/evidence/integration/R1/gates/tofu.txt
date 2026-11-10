@@ -1,0 +1,593 @@
+=== infra/modules/archive
+
+Initializing provider plugins...
+- Finding hashicorp/aws versions matching "~> 5.80"...
+- Installing hashicorp/aws v5.100.0...
+- Installed hashicorp/aws v5.100.0 (unauthenticated)
+
+OpenTofu has created a lock file .terraform.lock.hcl to record the provider
+selections it made above. Include this file in your version control repository
+so that OpenTofu can guarantee to make the same selections by default when
+you run "tofu init" in the future.
+
+╷
+│ Warning: Incomplete lock file information for providers
+│ 
+│ Due to your customized provider installation methods, OpenTofu was forced
+│ to calculate lock file checksums locally for the following providers:
+│   - hashicorp/aws
+│ 
+│ The current .terraform.lock.hcl file only includes checksums for
+│ linux_amd64, so OpenTofu running on another platform will fail to install
+│ these providers.
+│ 
+│ To calculate additional checksums for another platform, run:
+│   tofu providers lock -platform=linux_amd64
+│ (where linux_amd64 is the platform to generate)
+╵
+
+OpenTofu has been successfully initialized!
+init exit=0
+Success! The configuration is valid.
+validate exit=0
+tests/plan.tftest.hcl... pass
+  run "object_lock_compliance_on_archive_and_replica"... pass
+  run "backup_vaults_locked"... pass
+  run "retention_has_no_default"... pass
+  run "bad_lock_mode_rejected"... pass
+  run "nobody_can_delete_or_shorten_retention"... pass
+  run "bucket_policies_wait_for_every_bucket_setting"... pass
+  run "vault_policies_keep_a_repair_path"... pass
+  run "writers_are_scoped_to_their_own_prefix"... pass
+
+Success! 8 passed, 0 failed.
+test exit=0
+=== infra/modules/ci-trust
+
+Initializing provider plugins...
+- terraform.io/builtin/terraform is built in to OpenTofu
+- Finding hashicorp/aws versions matching "~> 5.80"...
+- Installing hashicorp/aws v5.100.0...
+- Installed hashicorp/aws v5.100.0 (unauthenticated)
+
+OpenTofu has created a lock file .terraform.lock.hcl to record the provider
+selections it made above. Include this file in your version control repository
+so that OpenTofu can guarantee to make the same selections by default when
+you run "tofu init" in the future.
+
+╷
+│ Warning: Incomplete lock file information for providers
+│ 
+│ Due to your customized provider installation methods, OpenTofu was forced
+│ to calculate lock file checksums locally for the following providers:
+│   - hashicorp/aws
+│ 
+│ The current .terraform.lock.hcl file only includes checksums for
+│ linux_amd64, so OpenTofu running on another platform will fail to install
+│ these providers.
+│ 
+│ To calculate additional checksums for another platform, run:
+│   tofu providers lock -platform=linux_amd64
+│ (where linux_amd64 is the platform to generate)
+╵
+
+OpenTofu has been successfully initialized!
+init exit=0
+Success! The configuration is valid.
+validate exit=0
+tests/plan.tftest.hcl... pass
+  run "every_role_is_denied_without_a_record"... pass
+  run "no_role_policy_allows_iam_write_task_registration_or_secret_values"... pass
+  run "release_record_enables_only_its_roles_with_pinned_trust"... pass
+  run "listed_actions_limit_the_deploy_policy"... pass
+  run "audit_archive_needs_two_distinct_approvals"... pass
+  run "audit_archive_window_over_one_day_is_rejected"... pass
+  run "applier_cannot_be_the_sole_approver"... pass
+  run "release_without_previous_manifest_needs_first_release_flag"... pass
+  run "unknown_role_is_rejected"... pass
+
+Success! 9 passed, 0 failed.
+test exit=0
+=== infra/modules/compute
+
+Initializing provider plugins...
+- Finding hashicorp/aws versions matching "~> 5.80"...
+- Installing hashicorp/aws v5.100.0...
+- Installed hashicorp/aws v5.100.0 (unauthenticated)
+
+OpenTofu has created a lock file .terraform.lock.hcl to record the provider
+selections it made above. Include this file in your version control repository
+so that OpenTofu can guarantee to make the same selections by default when
+you run "tofu init" in the future.
+
+╷
+│ Warning: Incomplete lock file information for providers
+│ 
+│ Due to your customized provider installation methods, OpenTofu was forced
+│ to calculate lock file checksums locally for the following providers:
+│   - hashicorp/aws
+│ 
+│ The current .terraform.lock.hcl file only includes checksums for
+│ linux_amd64, so OpenTofu running on another platform will fail to install
+│ these providers.
+│ 
+│ To calculate additional checksums for another platform, run:
+│   tofu providers lock -platform=linux_amd64
+│ (where linux_amd64 is the platform to generate)
+╵
+
+OpenTofu has been successfully initialized!
+init exit=0
+Success! The configuration is valid.
+validate exit=0
+tests/plan.tftest.hcl... pass
+  run "rollout_and_network_posture"... pass
+  run "alb_is_internal_with_no_internet_path"... pass
+  run "every_forwarding_rule_needs_the_origin_verify_header"... pass
+  run "tag_image_rejected"... pass
+  run "api_ceiling_over_budget_rejected"... pass
+  run "heartbeat_longer_than_timeout_rejected"... pass
+  run "backend_is_https_by_default"... pass
+  run "plaintext_backend_rejected_in_production"... pass
+
+Success! 8 passed, 0 failed.
+test exit=0
+=== infra/modules/database
+
+Initializing provider plugins...
+- Finding hashicorp/aws versions matching "~> 5.80"...
+- Installing hashicorp/aws v5.100.0...
+- Installed hashicorp/aws v5.100.0 (unauthenticated)
+
+OpenTofu has created a lock file .terraform.lock.hcl to record the provider
+selections it made above. Include this file in your version control repository
+so that OpenTofu can guarantee to make the same selections by default when
+you run "tofu init" in the future.
+
+╷
+│ Warning: Incomplete lock file information for providers
+│ 
+│ Due to your customized provider installation methods, OpenTofu was forced
+│ to calculate lock file checksums locally for the following providers:
+│   - hashicorp/aws
+│ 
+│ The current .terraform.lock.hcl file only includes checksums for
+│ linux_amd64, so OpenTofu running on another platform will fail to install
+│ these providers.
+│ 
+│ To calculate additional checksums for another platform, run:
+│   tofu providers lock -platform=linux_amd64
+│ (where linux_amd64 is the platform to generate)
+╵
+
+OpenTofu has been successfully initialized!
+init exit=0
+Success! The configuration is valid.
+validate exit=0
+tests/plan.tftest.hcl... pass
+  run "production_defaults"... pass
+  run "role_level_bound_is_declared_for_audit_writers"... pass
+  run "staging_single_az"... pass
+  run "rejects_default_master_name"... pass
+  run "rejects_old_engine"... pass
+  run "replication_needs_recovery_key"... pass
+  run "single_subnet_rejected"... pass
+  run "backup_retention_below_vault_lock_minimum_rejected"... pass
+  run "monthly_retention_above_vault_lock_maximum_rejected"... pass
+  run "backup_role_has_no_restore_policy"... pass
+
+Success! 10 passed, 0 failed.
+test exit=0
+=== infra/modules/dr/rehearsal
+Initializing modules...
+- kms in ../../kms
+- network in ../../network
+
+Initializing provider plugins...
+- terraform.io/builtin/terraform is built in to OpenTofu
+- Finding hashicorp/aws versions matching "~> 5.80"...
+- Installing hashicorp/aws v5.100.0...
+- Installed hashicorp/aws v5.100.0 (unauthenticated)
+
+OpenTofu has created a lock file .terraform.lock.hcl to record the provider
+selections it made above. Include this file in your version control repository
+so that OpenTofu can guarantee to make the same selections by default when
+you run "tofu init" in the future.
+
+╷
+│ Warning: Incomplete lock file information for providers
+│ 
+│ Due to your customized provider installation methods, OpenTofu was forced
+│ to calculate lock file checksums locally for the following providers:
+│   - hashicorp/aws
+│ 
+│ The current .terraform.lock.hcl file only includes checksums for
+│ linux_amd64, so OpenTofu running on another platform will fail to install
+│ these providers.
+│ 
+│ To calculate additional checksums for another platform, run:
+│   tofu providers lock -platform=linux_amd64
+│ (where linux_amd64 is the platform to generate)
+╵
+
+OpenTofu has been successfully initialized!
+init exit=0
+Success! The configuration is valid.
+validate exit=0
+tests/plan.tftest.hcl... pass
+  run "the_stack_is_synthetic_short_lived_and_leaves_nothing_behind"... pass
+  run "refused_outside_the_staging_account"... pass
+  run "refused_outside_the_recovery_region"... pass
+  run "refused_for_a_snapshot_that_is_not_marked_synthetic"... pass
+  run "refused_for_a_name_that_could_be_mistaken_for_an_environment"... pass
+  run "refused_for_a_malformed_expiry"... pass
+
+Success! 6 passed, 0 failed.
+test exit=0
+=== infra/modules/dr/restore-boundary
+Initializing modules...
+- kms in ../../kms
+
+Initializing provider plugins...
+- Finding hashicorp/aws versions matching "~> 5.80"...
+- Installing hashicorp/aws v5.100.0...
+- Installed hashicorp/aws v5.100.0 (unauthenticated)
+
+OpenTofu has created a lock file .terraform.lock.hcl to record the provider
+selections it made above. Include this file in your version control repository
+so that OpenTofu can guarantee to make the same selections by default when
+you run "tofu init" in the future.
+
+╷
+│ Warning: Incomplete lock file information for providers
+│ 
+│ Due to your customized provider installation methods, OpenTofu was forced
+│ to calculate lock file checksums locally for the following providers:
+│   - hashicorp/aws
+│ 
+│ The current .terraform.lock.hcl file only includes checksums for
+│ linux_amd64, so OpenTofu running on another platform will fail to install
+│ these providers.
+│ 
+│ To calculate additional checksums for another platform, run:
+│   tofu providers lock -platform=linux_amd64
+│ (where linux_amd64 is the platform to generate)
+╵
+
+OpenTofu has been successfully initialized!
+init exit=0
+Success! The configuration is valid.
+validate exit=0
+tests/plan.tftest.hcl... pass
+  run "no_way_out_of_the_vpc_except_endpoints"... pass
+  run "the_task_definition_is_pinned_by_digest_with_a_fixed_entry_point"... pass
+  run "a_tag_is_refused"... pass
+  run "a_wide_cidr_is_refused"... pass
+  run "targets_are_private_and_in_the_pinned_group"... pass
+  run "without_an_alert_topic_the_rule_has_no_target"... pass
+  run "with_an_alert_topic_the_rule_has_a_target"... pass
+
+Success! 7 passed, 0 failed.
+test exit=0
+=== infra/modules/edge
+
+Initializing provider plugins...
+- Finding hashicorp/aws versions matching "~> 5.80"...
+- Installing hashicorp/aws v5.100.0...
+- Installed hashicorp/aws v5.100.0 (unauthenticated)
+
+OpenTofu has created a lock file .terraform.lock.hcl to record the provider
+selections it made above. Include this file in your version control repository
+so that OpenTofu can guarantee to make the same selections by default when
+you run "tofu init" in the future.
+
+╷
+│ Warning: Incomplete lock file information for providers
+│ 
+│ Due to your customized provider installation methods, OpenTofu was forced
+│ to calculate lock file checksums locally for the following providers:
+│   - hashicorp/aws
+│ 
+│ The current .terraform.lock.hcl file only includes checksums for
+│ linux_amd64, so OpenTofu running on another platform will fail to install
+│ these providers.
+│ 
+│ To calculate additional checksums for another platform, run:
+│   tofu providers lock -platform=linux_amd64
+│ (where linux_amd64 is the platform to generate)
+╵
+
+OpenTofu has been successfully initialized!
+init exit=0
+Success! The configuration is valid.
+validate exit=0
+tests/plan.tftest.hcl... pass
+  run "api_behaviour_is_uncached_and_forwards_everything"... pass
+  run "release_json_has_no_cookies_and_never_reaches_the_api"... pass
+  run "sse_timeouts_and_tls"... pass
+  run "integrations_has_its_own_distribution_and_cloudfront_waf"... pass
+  run "alb_ingress_is_only_the_vpc_origin_service_group"... pass
+  run "integrations_dns_alias_only_with_a_zone"... pass
+  run "integrations_dns_alias_with_a_zone"... pass
+  run "bot_control_off_without_paths_on_with_paths"... pass
+  run "bot_control_with_paths"... pass
+  run "wrong_portal_keys_rejected"... pass
+
+Success! 10 passed, 0 failed.
+test exit=0
+=== infra/modules/identity
+
+Initializing provider plugins...
+- Finding hashicorp/aws versions matching "~> 5.80"...
+- Installing hashicorp/aws v5.100.0...
+- Installed hashicorp/aws v5.100.0 (unauthenticated)
+
+OpenTofu has created a lock file .terraform.lock.hcl to record the provider
+selections it made above. Include this file in your version control repository
+so that OpenTofu can guarantee to make the same selections by default when
+you run "tofu init" in the future.
+
+╷
+│ Warning: Incomplete lock file information for providers
+│ 
+│ Due to your customized provider installation methods, OpenTofu was forced
+│ to calculate lock file checksums locally for the following providers:
+│   - hashicorp/aws
+│ 
+│ The current .terraform.lock.hcl file only includes checksums for
+│ linux_amd64, so OpenTofu running on another platform will fail to install
+│ these providers.
+│ 
+│ To calculate additional checksums for another platform, run:
+│   tofu providers lock -platform=linux_amd64
+│ (where linux_amd64 is the platform to generate)
+╵
+
+OpenTofu has been successfully initialized!
+init exit=0
+Success! The configuration is valid.
+validate exit=0
+tests/plan.tftest.hcl... pass
+  run "patient_pool_matches_the_approved_card"... pass
+  run "partner_pool_has_mandatory_mfa_and_no_self_sign_up"... pass
+  run "dev_pp04_b_is_refused_until_endorsed"... pass
+  run "dev_pp04_b_allowed_once_endorsed"... pass
+  run "http_callbacks_rejected"... pass
+
+Success! 5 passed, 0 failed.
+test exit=0
+=== infra/modules/kms
+
+Initializing provider plugins...
+- Finding hashicorp/aws versions matching "~> 5.80"...
+- Installing hashicorp/aws v5.100.0...
+- Installed hashicorp/aws v5.100.0 (unauthenticated)
+
+OpenTofu has created a lock file .terraform.lock.hcl to record the provider
+selections it made above. Include this file in your version control repository
+so that OpenTofu can guarantee to make the same selections by default when
+you run "tofu init" in the future.
+
+╷
+│ Warning: Incomplete lock file information for providers
+│ 
+│ Due to your customized provider installation methods, OpenTofu was forced
+│ to calculate lock file checksums locally for the following providers:
+│   - hashicorp/aws
+│ 
+│ The current .terraform.lock.hcl file only includes checksums for
+│ linux_amd64, so OpenTofu running on another platform will fail to install
+│ these providers.
+│ 
+│ To calculate additional checksums for another platform, run:
+│   tofu providers lock -platform=linux_amd64
+│ (where linux_amd64 is the platform to generate)
+╵
+
+OpenTofu has been successfully initialized!
+init exit=0
+Success! The configuration is valid.
+validate exit=0
+tests/plan.tftest.hcl... pass
+  run "rotation_is_on_and_alias_prefixed"... pass
+  run "deletion_window_validated"... pass
+
+Success! 2 passed, 0 failed.
+test exit=0
+=== infra/modules/network
+
+Initializing provider plugins...
+- Finding hashicorp/aws versions matching "~> 5.80"...
+- Installing hashicorp/aws v5.100.0...
+- Installed hashicorp/aws v5.100.0 (unauthenticated)
+
+OpenTofu has created a lock file .terraform.lock.hcl to record the provider
+selections it made above. Include this file in your version control repository
+so that OpenTofu can guarantee to make the same selections by default when
+you run "tofu init" in the future.
+
+╷
+│ Warning: Incomplete lock file information for providers
+│ 
+│ Due to your customized provider installation methods, OpenTofu was forced
+│ to calculate lock file checksums locally for the following providers:
+│   - hashicorp/aws
+│ 
+│ The current .terraform.lock.hcl file only includes checksums for
+│ linux_amd64, so OpenTofu running on another platform will fail to install
+│ these providers.
+│ 
+│ To calculate additional checksums for another platform, run:
+│   tofu providers lock -platform=linux_amd64
+│ (where linux_amd64 is the platform to generate)
+╵
+
+OpenTofu has been successfully initialized!
+init exit=0
+Success! The configuration is valid.
+validate exit=0
+tests/plan.tftest.hcl... pass
+  run "three_tier_two_az_single_nat"... pass
+  run "three_az_nat_per_az"... pass
+  run "one_az_rejected"... pass
+
+Success! 3 passed, 0 failed.
+test exit=0
+=== infra/modules/observability
+
+Initializing provider plugins...
+- Finding hashicorp/archive versions matching "~> 2.4"...
+- Finding hashicorp/aws versions matching "~> 5.80"...
+- Installing hashicorp/aws v5.100.0...
+- Installed hashicorp/aws v5.100.0 (unauthenticated)
+╷
+│ Error: Failed to query available provider packages
+│ 
+│ Could not retrieve the list of available versions for provider
+│ hashicorp/archive: provider registry.opentofu.org/hashicorp/archive was not
+│ found in any of the search locations
+│ 
+│   - /tmp/int05/mirror
+╵
+
+init exit=1
+╷
+│ Error: Missing required provider
+│ 
+│ This configuration requires provider
+│ registry.opentofu.org/hashicorp/archive, but that provider isn't available.
+│ You may be able to install it automatically by running:
+│   tofu init
+╵
+╷
+│ Error: Missing required provider
+│ 
+│ This configuration requires provider registry.opentofu.org/hashicorp/aws,
+│ but that provider isn't available. You may be able to install it
+│ automatically by running:
+│   tofu init
+╵
+validate exit=1
+tests/plan.tftest.hcl... fail
+  run "every_alert_has_owner_impact_first_step_runbook"... fail
+╷
+│ Error: Missing required provider
+│ 
+│ This configuration requires provider
+│ registry.opentofu.org/hashicorp/archive, but that provider isn't available.
+│ You may be able to install it automatically by running:
+│   tofu init
+╵
+╷
+│ Error: Missing required provider
+│ 
+│ This configuration requires provider registry.opentofu.org/hashicorp/aws,
+│ but that provider isn't available. You may be able to install it
+│ automatically by running:
+│   tofu init
+╵
+  run "slo_table_matches_approved_targets"... skip
+  run "plan_thresholds_from_devops_plan_11_3"... skip
+  run "backup_lag_alarm_inactive_until_first_replica_reports"... skip
+  run "paging_claims_nothing_without_a_rota"... skip
+  run "vendor_criticality_routes_to_page_or_ticket"... skip
+  run "canaries_are_read_only_and_cost_matches_plan"... skip
+  run "data_protection_policy_covers_every_log_group"... skip
+  run "collector_allowlist_and_sidecar"... skip
+  run "cloudfront_waf_alarm_needs_us_east_1"... skip
+  run "canary_url_with_query_rejected"... skip
+  run "canary_frequency_must_be_approved"... skip
+  run "write_canary_kind_rejected"... skip
+  run "tag_image_rejected"... skip
+  run "second_instance_holds_only_non_core_alarms"... skip
+  run "primary_instance_keeps_security_rules"... skip
+  run "canary_names_unique_and_within_limit"... skip
+  run "silent_emitter_alarms_breach_on_missing_data"... skip
+  run "phi_alarm_uses_findings_metric_filter"... skip
+  run "bare_module_with_no_inputs_plans"... skip
+
+Failure! 0 passed, 1 failed, 19 skipped.
+test exit=1
+=== infra/modules/secrets
+
+Initializing provider plugins...
+- Finding hashicorp/aws versions matching "~> 5.80"...
+- Installing hashicorp/aws v5.100.0...
+- Installed hashicorp/aws v5.100.0 (unauthenticated)
+
+OpenTofu has created a lock file .terraform.lock.hcl to record the provider
+selections it made above. Include this file in your version control repository
+so that OpenTofu can guarantee to make the same selections by default when
+you run "tofu init" in the future.
+
+╷
+│ Warning: Incomplete lock file information for providers
+│ 
+│ Due to your customized provider installation methods, OpenTofu was forced
+│ to calculate lock file checksums locally for the following providers:
+│   - hashicorp/aws
+│ 
+│ The current .terraform.lock.hcl file only includes checksums for
+│ linux_amd64, so OpenTofu running on another platform will fail to install
+│ these providers.
+│ 
+│ To calculate additional checksums for another platform, run:
+│   tofu providers lock -platform=linux_amd64
+│ (where linux_amd64 is the platform to generate)
+╵
+
+OpenTofu has been successfully initialized!
+init exit=0
+Success! The configuration is valid.
+validate exit=0
+tests/plan.tftest.hcl... pass
+  run "containers_only_with_pinned_readers"... pass
+  run "rotation_scheduled_when_function_given"... pass
+  run "runtime_secrets_are_not_containers"... pass
+  run "replica_requires_key"... pass
+
+Success! 4 passed, 0 failed.
+test exit=0
+=== infra/modules/storage
+
+Initializing provider plugins...
+- Finding hashicorp/aws versions matching "~> 5.80"...
+- Installing hashicorp/aws v5.100.0...
+- Installed hashicorp/aws v5.100.0 (unauthenticated)
+
+OpenTofu has created a lock file .terraform.lock.hcl to record the provider
+selections it made above. Include this file in your version control repository
+so that OpenTofu can guarantee to make the same selections by default when
+you run "tofu init" in the future.
+
+╷
+│ Warning: Incomplete lock file information for providers
+│ 
+│ Due to your customized provider installation methods, OpenTofu was forced
+│ to calculate lock file checksums locally for the following providers:
+│   - hashicorp/aws
+│ 
+│ The current .terraform.lock.hcl file only includes checksums for
+│ linux_amd64, so OpenTofu running on another platform will fail to install
+│ these providers.
+│ 
+│ To calculate additional checksums for another platform, run:
+│   tofu providers lock -platform=linux_amd64
+│ (where linux_amd64 is the platform to generate)
+╵
+
+OpenTofu has been successfully initialized!
+init exit=0
+Success! The configuration is valid.
+validate exit=0
+tests/plan.tftest.hcl... pass
+  run "two_buckets_encrypted_and_blocked"... pass
+  run "clean_replicated_with_rtc_quarantine_not"... pass
+  run "replication_off_needs_no_recovery_key"... pass
+  run "replication_requires_replica_key"... pass
+  run "bucket_policies_enforce_tls_and_single_clean_writer"... pass
+  run "unrestricted_clean_writers_need_explicit_opt_in"... pass
+  run "unrestricted_clean_writers_allowed_when_opted_in"... pass
+
+Success! 7 passed, 0 failed.
+test exit=0

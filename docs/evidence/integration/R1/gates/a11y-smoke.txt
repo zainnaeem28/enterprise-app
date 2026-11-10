@@ -1,0 +1,250 @@
+
+Running 8 tests using 1 worker
+
+Skipping host requirements validation logic because `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` env variable is set.
+  ✘  1 [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:36:9 › desktop 1280 › signed-out state (5.1s)
+Skipping host requirements validation logic because `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` env variable is set.
+  ✘  2 [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:43:9 › desktop 1280 › server error state (5.1s)
+Skipping host requirements validation logic because `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` env variable is set.
+  ✘  3 [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:50:9 › desktop 1280 › blocking release dialog (5.1s)
+Skipping host requirements validation logic because `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` env variable is set.
+  ✘  4 [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:59:9 › desktop 1280 › non-blocking release bar (5.1s)
+Skipping host requirements validation logic because `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` env variable is set.
+  ✘  5 [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:36:9 › phone 360 › signed-out state (5.1s)
+Skipping host requirements validation logic because `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` env variable is set.
+  ✘  6 [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:43:9 › phone 360 › server error state (5.1s)
+Skipping host requirements validation logic because `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` env variable is set.
+  ✘  7 [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:50:9 › phone 360 › blocking release dialog (5.1s)
+Skipping host requirements validation logic because `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` env variable is set.
+  ✘  8 [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:59:9 › phone 360 › non-blocking release bar (5.1s)
+
+
+  1) [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:36:9 › desktop 1280 › signed-out state ────────────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText('You are not signed in')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByText('You are not signed in') with timeout 5000ms
+      - waiting for getByText('You are not signed in')
+        - waiting for "http://127.0.0.1:4173/sign-in" navigation to finish...
+        - navigated to "http://127.0.0.1:4173/sign-in"
+
+
+      37 |       await page.route(SESSION, (r) => r.fulfill(problem(401, 'auth.unauthenticated')));
+      38 |       await page.goto('/');
+    > 39 |       await expect(page.getByText('You are not signed in')).toBeVisible();
+         |                                                             ^
+      40 |       await expectNoSeriousViolations(page, 'signed-out');
+      41 |     });
+      42 |
+        at /tmp/int05/repo/tests/e2e/smoke/a11y.spec.ts:39:61
+
+    Error Context: ../../reports/smoke/test-results/a11y-desktop-1280-signed-out-state-a11y/error-context.md
+
+  2) [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:43:9 › desktop 1280 › server error state ──────────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText(/Reference for support/)
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByText(/Reference for support/) with timeout 5000ms
+      - waiting for getByText(/Reference for support/)
+        - waiting for "http://127.0.0.1:4173/sign-in" navigation to finish...
+        - navigated to "http://127.0.0.1:4173/sign-in"
+
+
+      44 |       await page.route(SESSION, (r) => r.fulfill(problem(503, 'kernel.unavailable')));
+      45 |       await page.goto('/');
+    > 46 |       await expect(page.getByText(/Reference for support/)).toBeVisible();
+         |                                                             ^
+      47 |       await expectNoSeriousViolations(page, 'server error');
+      48 |     });
+      49 |
+        at /tmp/int05/repo/tests/e2e/smoke/a11y.spec.ts:46:61
+
+    Error Context: ../../reports/smoke/test-results/a11y-desktop-1280-server-error-state-a11y/error-context.md
+
+  3) [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:50:9 › desktop 1280 › blocking release dialog ─────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('alertdialog')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('alertdialog') with timeout 5000ms
+      - waiting for getByRole('alertdialog')
+        - waiting for "http://127.0.0.1:4173/sign-in" navigation to finish...
+        - navigated to "http://127.0.0.1:4173/sign-in"
+
+
+      53 |       );
+      54 |       await page.goto('/');
+    > 55 |       await expect(page.getByRole('alertdialog')).toBeVisible();
+         |                                                   ^
+      56 |       await expectNoSeriousViolations(page, 'blocking dialog');
+      57 |     });
+      58 |
+        at /tmp/int05/repo/tests/e2e/smoke/a11y.spec.ts:55:51
+
+    Error Context: ../../reports/smoke/test-results/a11y-desktop-1280-blocking-release-dialog-a11y/error-context.md
+
+  4) [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:59:9 › desktop 1280 › non-blocking release bar ────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('status').filter({ hasText: 'A new version is available' })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('status').filter({ hasText: 'A new version is available' }) with timeout 5000ms
+      - waiting for getByRole('status').filter({ hasText: 'A new version is available' })
+        - waiting for "http://127.0.0.1:4173/sign-in" navigation to finish...
+        - navigated to "http://127.0.0.1:4173/sign-in"
+
+
+      68 |       await expect(
+      69 |         page.getByRole('status').filter({ hasText: 'A new version is available' }),
+    > 70 |       ).toBeVisible();
+         |         ^
+      71 |       await expectNoSeriousViolations(page, 'release bar');
+      72 |     });
+      73 |   });
+        at /tmp/int05/repo/tests/e2e/smoke/a11y.spec.ts:70:9
+
+    Error Context: ../../reports/smoke/test-results/a11y-desktop-1280-non-blocking-release-bar-a11y/error-context.md
+
+  5) [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:36:9 › phone 360 › signed-out state ───────────────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText('You are not signed in')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByText('You are not signed in') with timeout 5000ms
+      - waiting for getByText('You are not signed in')
+        - waiting for "http://127.0.0.1:4173/sign-in" navigation to finish...
+        - navigated to "http://127.0.0.1:4173/sign-in"
+
+
+      37 |       await page.route(SESSION, (r) => r.fulfill(problem(401, 'auth.unauthenticated')));
+      38 |       await page.goto('/');
+    > 39 |       await expect(page.getByText('You are not signed in')).toBeVisible();
+         |                                                             ^
+      40 |       await expectNoSeriousViolations(page, 'signed-out');
+      41 |     });
+      42 |
+        at /tmp/int05/repo/tests/e2e/smoke/a11y.spec.ts:39:61
+
+    Error Context: ../../reports/smoke/test-results/a11y-phone-360-signed-out-state-a11y/error-context.md
+
+  6) [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:43:9 › phone 360 › server error state ─────────────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText(/Reference for support/)
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByText(/Reference for support/) with timeout 5000ms
+      - waiting for getByText(/Reference for support/)
+        - waiting for "http://127.0.0.1:4173/sign-in" navigation to finish...
+        - navigated to "http://127.0.0.1:4173/sign-in"
+
+
+      44 |       await page.route(SESSION, (r) => r.fulfill(problem(503, 'kernel.unavailable')));
+      45 |       await page.goto('/');
+    > 46 |       await expect(page.getByText(/Reference for support/)).toBeVisible();
+         |                                                             ^
+      47 |       await expectNoSeriousViolations(page, 'server error');
+      48 |     });
+      49 |
+        at /tmp/int05/repo/tests/e2e/smoke/a11y.spec.ts:46:61
+
+    Error Context: ../../reports/smoke/test-results/a11y-phone-360-server-error-state-a11y/error-context.md
+
+  7) [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:50:9 › phone 360 › blocking release dialog ────────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('alertdialog')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('alertdialog') with timeout 5000ms
+      - waiting for getByRole('alertdialog')
+        - waiting for "http://127.0.0.1:4173/sign-in" navigation to finish...
+        - navigated to "http://127.0.0.1:4173/sign-in"
+
+
+      53 |       );
+      54 |       await page.goto('/');
+    > 55 |       await expect(page.getByRole('alertdialog')).toBeVisible();
+         |                                                   ^
+      56 |       await expectNoSeriousViolations(page, 'blocking dialog');
+      57 |     });
+      58 |
+        at /tmp/int05/repo/tests/e2e/smoke/a11y.spec.ts:55:51
+
+    Error Context: ../../reports/smoke/test-results/a11y-phone-360-blocking-release-dialog-a11y/error-context.md
+
+  8) [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:59:9 › phone 360 › non-blocking release bar ───────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('status').filter({ hasText: 'A new version is available' })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('status').filter({ hasText: 'A new version is available' }) with timeout 5000ms
+      - waiting for getByRole('status').filter({ hasText: 'A new version is available' })
+        - waiting for "http://127.0.0.1:4173/sign-in" navigation to finish...
+        - navigated to "http://127.0.0.1:4173/sign-in"
+
+
+      68 |       await expect(
+      69 |         page.getByRole('status').filter({ hasText: 'A new version is available' }),
+    > 70 |       ).toBeVisible();
+         |         ^
+      71 |       await expectNoSeriousViolations(page, 'release bar');
+      72 |     });
+      73 |   });
+        at /tmp/int05/repo/tests/e2e/smoke/a11y.spec.ts:70:9
+
+    Error Context: ../../reports/smoke/test-results/a11y-phone-360-non-blocking-release-bar-a11y/error-context.md
+
+  8 failed
+    [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:36:9 › desktop 1280 › signed-out state ─────────────
+    [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:43:9 › desktop 1280 › server error state ───────────
+    [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:50:9 › desktop 1280 › blocking release dialog ──────
+    [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:59:9 › desktop 1280 › non-blocking release bar ─────
+    [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:36:9 › phone 360 › signed-out state ────────────────
+    [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:43:9 › phone 360 › server error state ──────────────
+    [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:50:9 › phone 360 › blocking release dialog ─────────
+    [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:59:9 › phone 360 › non-blocking release bar ────────
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in /tmp/int05/repo/apps/staff
+

@@ -1,0 +1,9 @@
+Scope: all 11 workspace projects
+? Verifying lockfile against supply-chain policies (424 entries)...
+Update available! 12.16.1 → 12.18.0.
+Changelog: https://pnpm.io/v/12.18.0
+To update, run: curl -fsSL https://get.pnpm.io/install.sh | sh -
+✓ Lockfile passes supply-chain policies (424 entries in 2s)
+[WARN] 2 deprecated subdependencies found: @esbuild-kit/core-utils@3.3.2, @esbuild-kit/esm-loader@2.6.5
+[WARN] Issues with peer dependencies found. Run "pnpm peers check" to list them.
+Done in 7.6s using pnpm v12.16.1

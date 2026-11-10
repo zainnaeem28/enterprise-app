@@ -1,0 +1,65 @@
+verbose: Linting all workflow files in repository: /tmp/int05/repo
+verbose: Detected project: /tmp/int05/repo
+verbose: Collected 10 YAML files
+verbose: Linting 10 files
+verbose: Linting .github/workflows/restore-test.yml
+verbose: Using project at /tmp/int05/repo
+verbose: Linting .github/workflows/bootstrap.yml
+verbose: Using project at /tmp/int05/repo
+verbose: Found 0 parse errors in 0 ms for .github/workflows/bootstrap.yml
+verbose: Found 0 parse errors in 0 ms for .github/workflows/restore-test.yml
+verbose: Linting .github/workflows/build-release.yml
+verbose: Using project at /tmp/int05/repo
+verbose: Rule "shellcheck" was disabled: exec: "shellcheck": executable file not found in $PATH
+verbose: Rule "pyflakes" was disabled: exec: "pyflakes": executable file not found in $PATH
+verbose: Found 0 parse errors in 0 ms for .github/workflows/build-release.yml
+verbose: Rule "shellcheck" was disabled: exec: "shellcheck": executable file not found in $PATH
+verbose: Rule "pyflakes" was disabled: exec: "pyflakes": executable file not found in $PATH
+verbose: Found total 0 errors in 0 ms for .github/workflows/build-release.yml
+verbose: Linting .github/workflows/deploy-marketing.yml
+verbose: Using project at /tmp/int05/repo
+verbose: Found 0 parse errors in 0 ms for .github/workflows/deploy-marketing.yml
+verbose: Rule "shellcheck" was disabled: exec: "shellcheck": executable file not found in $PATH
+verbose: Rule "pyflakes" was disabled: exec: "pyflakes": executable file not found in $PATH
+verbose: Found total 0 errors in 0 ms for .github/workflows/deploy-marketing.yml
+verbose: Rule "shellcheck" was disabled: exec: "shellcheck": executable file not found in $PATH
+verbose: Rule "pyflakes" was disabled: exec: "pyflakes": executable file not found in $PATH
+verbose: Found total 0 errors in 1 ms for .github/workflows/bootstrap.yml
+verbose: Found total 0 errors in 2 ms for .github/workflows/restore-test.yml
+verbose: Linting .github/workflows/deploy-staging.yml
+verbose: Using project at /tmp/int05/repo
+verbose: Linting .github/workflows/audit-archive.yml
+verbose: Using project at /tmp/int05/repo
+verbose: Found 0 parse errors in 0 ms for .github/workflows/audit-archive.yml
+verbose: Found 0 parse errors in 0 ms for .github/workflows/deploy-staging.yml
+verbose: Linting .github/workflows/deploy-production.yml
+verbose: Using project at /tmp/int05/repo
+verbose: Rule "shellcheck" was disabled: exec: "shellcheck": executable file not found in $PATH
+verbose: Rule "shellcheck" was disabled: exec: "shellcheck": executable file not found in $PATH
+verbose: Rule "pyflakes" was disabled: exec: "pyflakes": executable file not found in $PATH
+verbose: Rule "pyflakes" was disabled: exec: "pyflakes": executable file not found in $PATH
+verbose: Linting .github/workflows/nightly.yml
+verbose: Using project at /tmp/int05/repo
+verbose: Linting .github/workflows/infra.yml
+verbose: Using project at /tmp/int05/repo
+verbose: Linting .github/workflows/ci.yml
+verbose: Using project at /tmp/int05/repo
+verbose: Found 0 parse errors in 3 ms for .github/workflows/nightly.yml
+verbose: Rule "shellcheck" was disabled: exec: "shellcheck": executable file not found in $PATH
+verbose: Rule "pyflakes" was disabled: exec: "pyflakes": executable file not found in $PATH
+verbose: Found 0 parse errors in 3 ms for .github/workflows/infra.yml
+verbose: Rule "shellcheck" was disabled: exec: "shellcheck": executable file not found in $PATH
+verbose: Rule "pyflakes" was disabled: exec: "pyflakes": executable file not found in $PATH
+verbose: Found total 0 errors in 3 ms for .github/workflows/nightly.yml
+verbose: Found 0 parse errors in 5 ms for .github/workflows/deploy-production.yml
+verbose: Rule "shellcheck" was disabled: exec: "shellcheck": executable file not found in $PATH
+verbose: Rule "pyflakes" was disabled: exec: "pyflakes": executable file not found in $PATH
+verbose: Found total 0 errors in 6 ms for .github/workflows/deploy-production.yml
+verbose: Found total 0 errors in 6 ms for .github/workflows/audit-archive.yml
+verbose: Found total 0 errors in 7 ms for .github/workflows/deploy-staging.yml
+verbose: Found 0 parse errors in 6 ms for .github/workflows/ci.yml
+verbose: Rule "shellcheck" was disabled: exec: "shellcheck": executable file not found in $PATH
+verbose: Rule "pyflakes" was disabled: exec: "pyflakes": executable file not found in $PATH
+verbose: Found total 0 errors in 7 ms for .github/workflows/ci.yml
+verbose: Found total 0 errors in 8 ms for .github/workflows/infra.yml
+verbose: Found 0 errors in 10 files

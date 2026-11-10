@@ -1,0 +1,2 @@
+index-CWaMDZbB.js: 162327 bytes gzip
+total JS gzip: 162327 / 122880

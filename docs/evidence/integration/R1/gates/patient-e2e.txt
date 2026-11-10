@@ -1,0 +1,47 @@
+
+Running 3 tests using 1 worker
+
+Skipping host requirements validation logic because `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` env variable is set.
+[WebServer] 2:05:22 AM [vite] http proxy error: /api/v1/auth/callback?code=c&state=s&to=%2Faccount
+[WebServer] Error: connect ECONNREFUSED 127.0.0.1:3000
+[WebServer]     at TCPConnectWrap.afterConnect [as oncomplete] (node:net:2083:16)
+  ✘  1 e2e/journey.spec.ts:81:1 › entry, pre-redirect, sign-in, callback, landing and sign-out, with axe on each page (5.8s)
+Skipping host requirements validation logic because `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` env variable is set.
+  ✓  2 e2e/journey.spec.ts:106:1 › a callback that left no session shows the sign-in-failed state (764ms)
+  ✓  3 e2e/journey.spec.ts:116:1 › a refused sign-in shows the unavailable state (497ms)
+
+
+  1) e2e/journey.spec.ts:81:1 › entry, pre-redirect, sign-in, callback, landing and sign-out, with axe on each page 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('heading', { name: 'You are signed in' })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('heading', { name: 'You are signed in' }) with timeout 5000ms
+      - waiting for getByRole('heading', { name: 'You are signed in' })
+        - waiting for "http://127.0.0.1:4174/api/v1/auth/callback?code=c&state=s&to=%2Faccount" navigation to finish...
+        - navigated to "http://127.0.0.1:4174/api/v1/auth/callback?code=c&state=s&to=%2Faccount"
+
+
+      93 |
+      94 |   await page.getByRole('button', { name: 'Continue to secure sign-in' }).click();
+    > 95 |   await expect(page.getByRole('heading', { name: 'You are signed in' })).toBeVisible();
+         |                                                                          ^
+      96 |   await expect(page.getByText('Signed in as Test Patient.')).toBeVisible();
+      97 |   await expect(page).toHaveURL(/\/account$/);
+      98 |   await axe(page);
+        at /tmp/int05/repo/apps/patient/e2e/journey.spec.ts:95:74
+
+    Error Context: test-results/journey-entry-pre-redirect-bf28f-n-out-with-axe-on-each-page/error-context.md
+
+  1 failed
+    e2e/journey.spec.ts:81:1 › entry, pre-redirect, sign-in, callback, landing and sign-out, with axe on each page 
+  2 passed (8.5s)
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in /tmp/int05/repo/apps/patient
+
