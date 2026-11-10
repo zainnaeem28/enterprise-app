@@ -28,7 +28,7 @@ require_tool docker
 for df in "${dockerfiles[@]}"; do
   name="$(echo "$df" | tr '/.' '--' | tr 'A-Z' 'a-z')"
   tag="ci-scan/${name}:${GITHUB_SHA:-local}"
-  docker build --file "$df" --tag "$tag" "$(dirname "$df")"
+  docker build --file "$df" --tag "$tag" "$CI_ROOT"
   trivy image --config "$CI_ROOT/trivy/trivy.yaml" --ignorefile "$CI_ROOT/trivy/.trivyignore" \
     --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 \
     --format json --output "$out/trivy-image-${name}.json" "$tag"
