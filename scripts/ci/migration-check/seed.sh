@@ -55,7 +55,7 @@ add_migration() {
   local last next
   last="$(find "$1/db/migrations" -maxdepth 1 -name '[0-9]*_*.sql' -printf '%f\n' | sed -E 's/^([0-9]+)_.*/\1/' | sort -n | tail -n 1)"
   [ -n "$last" ] || { echo "seed.sh: no existing migration found in $1/db/migrations" >&2; exit 2; }
-  next="$(printf '%04d' $((10#$last + 1)))"
+  next="$(awk -v v="$last" 'BEGIN{printf "%04d", v+1}')"
   cat >"$1/db/migrations/${next}_$2"
 }
 SEED_TABLE='CREATE SCHEMA seedmod;
