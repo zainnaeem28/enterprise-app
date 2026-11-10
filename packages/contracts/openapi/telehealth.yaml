@@ -19,7 +19,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/appointments/{id}/video-session/admit
-          catalogueRow: 29.3#79
+          catalogueRow: 29.3#80
       security:
         - sessionCookie: []
       parameters:
@@ -106,7 +106,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/appointments/{id}/video-session/end
-          catalogueRow: 29.3#79
+          catalogueRow: 29.3#80
       security:
         - sessionCookie: []
       parameters:
@@ -195,7 +195,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/appointments/{reservationId}/video-session
-          catalogueRow: 29.2#40
+          catalogueRow: 29.2#41
         staff:
           permission: telehealth.session.host
           resolver: reservation
@@ -203,7 +203,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/appointments/{id}/video-session
-          catalogueRow: 29.3#79
+          catalogueRow: 29.3#80
       x-passive: true
       security:
         - sessionCookie: []
@@ -289,7 +289,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/appointments/{reservationId}/video-session/device-check
-          catalogueRow: 29.2#41
+          catalogueRow: 29.2#42
       security:
         - sessionCookie: []
       parameters:
@@ -384,7 +384,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/appointments/{reservationId}/video-session/join
-          catalogueRow: 29.2#43
+          catalogueRow: 29.2#44
         staff:
           permission: telehealth.session.host
           resolver: reservation
@@ -392,7 +392,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/appointments/{id}/video-session/join
-          catalogueRow: 29.3#79
+          catalogueRow: 29.3#80
       security:
         - sessionCookie: []
       parameters:
@@ -485,7 +485,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/appointments/{reservationId}/video-session/location
-          catalogueRow: 29.2#42
+          catalogueRow: 29.2#43
       security:
         - sessionCookie: []
       parameters:

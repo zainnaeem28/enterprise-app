@@ -19,7 +19,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/banners
-          catalogueRow: 29.4#130
+          catalogueRow: 29.4#131
       security:
         - sessionCookie: []
       parameters:
@@ -96,7 +96,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/banners
-          catalogueRow: 29.4#130
+          catalogueRow: 29.4#131
       security:
         - sessionCookie: []
       parameters:
@@ -183,7 +183,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/booking-policies
-          catalogueRow: 29.4#128
+          catalogueRow: 29.4#129
       security:
         - sessionCookie: []
       parameters:
@@ -265,7 +265,7 @@ paths:
           ifMatch: true
           elevationRequired: true
           pathAs: /api/v1/admin/booking-policies
-          catalogueRow: 29.4#128
+          catalogueRow: 29.4#129
       x-catalogue-gap: The catalogue lists PATCH on the collection and names no identifier of the resource
       security:
         - sessionCookie: []
@@ -370,7 +370,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/booking-policies
-          catalogueRow: 29.4#128
+          catalogueRow: 29.4#129
       security:
         - sessionCookie: []
       parameters:
@@ -461,7 +461,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/consent-templates
-          catalogueRow: 29.4#129
+          catalogueRow: 29.4#130
       security:
         - sessionCookie: []
       parameters:
@@ -537,7 +537,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/consent-templates
-          catalogueRow: 29.4#129
+          catalogueRow: 29.4#130
       security:
         - sessionCookie: []
       parameters:
@@ -624,7 +624,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/consent-templates/{id}/publish
-          catalogueRow: 29.4#129
+          catalogueRow: 29.4#130
       security:
         - sessionCookie: []
       parameters:
@@ -706,7 +706,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/feature-flags
-          catalogueRow: 29.4#130
+          catalogueRow: 29.4#131
       security:
         - sessionCookie: []
       parameters:
@@ -783,7 +783,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/feature-flags
-          catalogueRow: 29.4#130
+          catalogueRow: 29.4#131
       security:
         - sessionCookie: []
       parameters:
@@ -870,7 +870,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/holidays
-          catalogueRow: 29.4#127
+          catalogueRow: 29.4#128
       security:
         - sessionCookie: []
       parameters:
@@ -947,7 +947,7 @@ paths:
           ifMatch: true
           elevationRequired: true
           pathAs: /api/v1/admin/holidays
-          catalogueRow: 29.4#127
+          catalogueRow: 29.4#128
       x-catalogue-gap: The catalogue lists PATCH on the collection and names no identifier of the resource
       security:
         - sessionCookie: []
@@ -1047,7 +1047,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/holidays
-          catalogueRow: 29.4#127
+          catalogueRow: 29.4#128
       security:
         - sessionCookie: []
       parameters:
@@ -1134,7 +1134,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/locations
-          catalogueRow: 29.4#127
+          catalogueRow: 29.4#128
       security:
         - sessionCookie: []
       parameters:
@@ -1211,7 +1211,7 @@ paths:
           ifMatch: true
           elevationRequired: true
           pathAs: /api/v1/admin/locations
-          catalogueRow: 29.4#127
+          catalogueRow: 29.4#128
       x-catalogue-gap: The catalogue lists PATCH on the collection and names no identifier of the resource
       security:
         - sessionCookie: []
@@ -1311,7 +1311,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/locations
-          catalogueRow: 29.4#127
+          catalogueRow: 29.4#128
       security:
         - sessionCookie: []
       parameters:
@@ -1398,7 +1398,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/opening-hours
-          catalogueRow: 29.4#127
+          catalogueRow: 29.4#128
       security:
         - sessionCookie: []
       parameters:
@@ -1475,7 +1475,7 @@ paths:
           ifMatch: true
           elevationRequired: true
           pathAs: /api/v1/admin/opening-hours
-          catalogueRow: 29.4#127
+          catalogueRow: 29.4#128
       x-catalogue-gap: The catalogue lists PATCH on the collection and names no identifier of the resource
       security:
         - sessionCookie: []
@@ -1575,7 +1575,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/opening-hours
-          catalogueRow: 29.4#127
+          catalogueRow: 29.4#128
       security:
         - sessionCookie: []
       parameters:
@@ -1662,7 +1662,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/operating-states
-          catalogueRow: 29.4#130
+          catalogueRow: 29.4#131
       security:
         - sessionCookie: []
       parameters:
@@ -1739,7 +1739,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/operating-states
-          catalogueRow: 29.4#130
+          catalogueRow: 29.4#131
       security:
         - sessionCookie: []
       parameters:
@@ -1825,7 +1825,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/questionnaire-templates
-          catalogueRow: 29.4#129
+          catalogueRow: 29.4#130
       security:
         - sessionCookie: []
       parameters:
@@ -1901,7 +1901,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/questionnaire-templates
-          catalogueRow: 29.4#129
+          catalogueRow: 29.4#130
       security:
         - sessionCookie: []
       parameters:
@@ -1988,7 +1988,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/questionnaire-templates/{id}/publish
-          catalogueRow: 29.4#129
+          catalogueRow: 29.4#130
       security:
         - sessionCookie: []
       parameters:
@@ -2070,7 +2070,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/rooms
-          catalogueRow: 29.4#127
+          catalogueRow: 29.4#128
       security:
         - sessionCookie: []
       parameters:
@@ -2147,7 +2147,7 @@ paths:
           ifMatch: true
           elevationRequired: true
           pathAs: /api/v1/admin/rooms
-          catalogueRow: 29.4#127
+          catalogueRow: 29.4#128
       x-catalogue-gap: The catalogue lists PATCH on the collection and names no identifier of the resource
       security:
         - sessionCookie: []
@@ -2247,7 +2247,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/rooms
-          catalogueRow: 29.4#127
+          catalogueRow: 29.4#128
       security:
         - sessionCookie: []
       parameters:
@@ -2334,7 +2334,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/services
-          catalogueRow: 29.4#128
+          catalogueRow: 29.4#129
       security:
         - sessionCookie: []
       parameters:
@@ -2416,7 +2416,7 @@ paths:
           ifMatch: true
           elevationRequired: true
           pathAs: /api/v1/admin/services
-          catalogueRow: 29.4#128
+          catalogueRow: 29.4#129
       x-catalogue-gap: The catalogue lists PATCH on the collection and names no identifier of the resource
       security:
         - sessionCookie: []
@@ -2521,7 +2521,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/services
-          catalogueRow: 29.4#128
+          catalogueRow: 29.4#129
       security:
         - sessionCookie: []
       parameters:
@@ -2613,7 +2613,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/settings
-          catalogueRow: 29.4#130
+          catalogueRow: 29.4#131
       security:
         - sessionCookie: []
       parameters:
@@ -2690,7 +2690,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/settings
-          catalogueRow: 29.4#130
+          catalogueRow: 29.4#131
       security:
         - sessionCookie: []
       parameters:
@@ -2762,6 +2762,87 @@ paths:
         '504':
           $ref: common.yaml#/components/responses/Error504
           description: 'Codes: kernel.timeout.'
+  /api/v1/banners:
+    get:
+      operationId: getBanners
+      tags:
+        - organisation
+      summary: GET /api/v1/banners
+      description: |-
+        Amendment A-8 (HEAAA-644, QA-EXEC-F09). Current maintenance banners for the caller's portal. The surface comes from the session: audience `patient` (self and proxy) reads `patient` on `my.`; audience `staff` (realms `google` and `admin_pool`) reads `staff` on `staff.`. Rows with `startsAt <= now < endsAt`, ordered by `startsAt, id`, at most 10, `nextCursor` always null. No query parameters. C0, no PHI; not audited.
+      x-access:
+        my:
+          who: any session
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/banners
+          catalogueRow: 29.1#11
+        staff:
+          who: any session
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/banners
+          catalogueRow: 29.1#11
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: common.yaml#/components/parameters/ClientRelease
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetBannersResponse'
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
   /api/v1/clinicians:
     get:
       operationId: getClinicians
@@ -2777,7 +2858,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/clinicians
-          catalogueRow: 29.2#21
+          catalogueRow: 29.2#22
       security:
         - sessionCookie: []
       parameters:
@@ -2865,7 +2946,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/locations
-          catalogueRow: 29.2#21
+          catalogueRow: 29.2#22
       security:
         - sessionCookie: []
       parameters:
@@ -2943,7 +3024,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/services
-          catalogueRow: 29.2#21
+          catalogueRow: 29.2#22
       security:
         - sessionCookie: []
       parameters:
@@ -3006,6 +3087,57 @@ paths:
         '504':
           $ref: common.yaml#/components/responses/Error504
           description: 'Codes: kernel.timeout.'
+  /public/v1/banners:
+    get:
+      operationId: getPublicV1Banners
+      tags:
+        - organisation
+      summary: GET /public/v1/banners
+      description: |-
+        Amendment A-8 (HEAAA-644, QA-EXEC-F09). integrations.: C0 only; `max-age=60`. Current `site` banners, read only through the view `organisation.public_banner` (22.5.1). Ordered by `startsAt, id`, at most 10, `nextCursor` always null. No query parameters.
+      x-access:
+        integrations:
+          caller: '`site` server'
+          authentication: none (audience `public`)
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /public/v1/banners
+          catalogueRow: 29.5#150
+      security: []
+      x-authentication: none (audience `public`)
+      x-error-codes:
+        '400':
+          - kernel.validation_failed
+        '404':
+          - kernel.not_found
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CachePublic
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetPublicV1BannersResponse'
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.validation_failed.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
   /public/v1/clinicians:
     get:
       operationId: getPublicV1Clinicians
@@ -3020,7 +3152,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /public/v1/clinicians
-          catalogueRow: 29.5#147
+          catalogueRow: 29.5#148
       security: []
       x-authentication: none (audience `public`)
       parameters:
@@ -3083,7 +3215,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /public/v1/locations
-          catalogueRow: 29.5#147
+          catalogueRow: 29.5#148
       security: []
       x-authentication: none (audience `public`)
       parameters:
@@ -3136,7 +3268,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /public/v1/services
-          catalogueRow: 29.5#147
+          catalogueRow: 29.5#148
       security: []
       x-authentication: none (audience `public`)
       parameters:
@@ -3395,6 +3527,55 @@ components:
               - displayName
       required:
         - items
+    MaintenanceBanner:
+      type: object
+      description: Amendment A-8. A current maintenance banner (C0, no PHI). Exactly these four fields.
+      additionalProperties: false
+      required:
+        - id
+        - message
+        - startsAt
+        - endsAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        message:
+          type: string
+          minLength: 1
+          maxLength: 500
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: string
+          format: date-time
+    GetBannersResponse:
+      type: object
+      required:
+        - items
+        - nextCursor
+      properties:
+        items:
+          type: array
+          maxItems: 10
+          items:
+            $ref: '#/components/schemas/MaintenanceBanner'
+        nextCursor:
+          type: 'null'
+    GetPublicV1BannersResponse:
+      type: object
+      required:
+        - items
+        - nextCursor
+      properties:
+        items:
+          type: array
+          maxItems: 10
+          items:
+            $ref: '#/components/schemas/MaintenanceBanner'
+        nextCursor:
+          type: 'null'
     GetPublicV1LocationsResponse:
       type: object
       required:

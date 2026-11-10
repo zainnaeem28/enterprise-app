@@ -18,7 +18,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/clinicians/{id}/availability-templates
-          catalogueRow: 29.4#125
+          catalogueRow: 29.4#126
       security:
         - sessionCookie: []
       parameters:
@@ -100,7 +100,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/clinicians/{id}/availability-templates
-          catalogueRow: 29.4#125
+          catalogueRow: 29.4#126
       security:
         - sessionCookie: []
       parameters:
@@ -192,7 +192,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/clinicians/{id}/availability-templates/{templateId}
-          catalogueRow: 29.4#125
+          catalogueRow: 29.4#126
       security:
         - sessionCookie: []
       parameters:
@@ -274,7 +274,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/clinicians/{id}/availability-templates/{templateId}
-          catalogueRow: 29.4#125
+          catalogueRow: 29.4#126
       security:
         - sessionCookie: []
       parameters:
@@ -373,7 +373,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/clinicians/{id}/blocked-times
-          catalogueRow: 29.4#125
+          catalogueRow: 29.4#126
       x-catalogue-gap: The catalogue lists DELETE on the collection and names no identifier of the blocked time to delete
       security:
         - sessionCookie: []
@@ -451,7 +451,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/clinicians/{id}/blocked-times
-          catalogueRow: 29.4#125
+          catalogueRow: 29.4#126
       security:
         - sessionCookie: []
       parameters:
@@ -534,7 +534,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/clinicians/{id}/blocked-times
-          catalogueRow: 29.4#125
+          catalogueRow: 29.4#126
       security:
         - sessionCookie: []
       parameters:
@@ -627,7 +627,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/locations/{id}/roster
-          catalogueRow: 29.4#126
+          catalogueRow: 29.4#127
       x-catalogue-gap: The catalogue lists DELETE on the collection and names no identifier of the roster entry to delete
       security:
         - sessionCookie: []
@@ -705,7 +705,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/locations/{id}/roster
-          catalogueRow: 29.4#126
+          catalogueRow: 29.4#127
       security:
         - sessionCookie: []
       parameters:
@@ -788,7 +788,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/locations/{id}/roster
-          catalogueRow: 29.4#126
+          catalogueRow: 29.4#127
       security:
         - sessionCookie: []
       parameters:
@@ -881,7 +881,7 @@ paths:
           idempotencyKey: false
           ifMatch: true
           pathAs: /api/v1/appointments/{id}/assignment
-          catalogueRow: 29.3#68
+          catalogueRow: 29.3#69
       security:
         - sessionCookie: []
       parameters:
@@ -988,7 +988,7 @@ paths:
           idempotencyKey: true
           ifMatch: true
           pathAs: /api/v1/appointments/{id}/check-in
-          catalogueRow: 29.3#66
+          catalogueRow: 29.3#67
       x-banner: true
       security:
         - sessionCookie: []
@@ -1089,7 +1089,7 @@ paths:
           idempotencyKey: true
           ifMatch: true
           pathAs: /api/v1/appointments/{id}/no-show
-          catalogueRow: 29.3#67
+          catalogueRow: 29.3#68
       security:
         - sessionCookie: []
       parameters:
@@ -1194,7 +1194,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/appointments/{reservationId}
-          catalogueRow: 29.2#26
+          catalogueRow: 29.2#27
       security:
         - sessionCookie: []
       parameters:
@@ -1276,7 +1276,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/appointments/{reservationId}/calendar.ics
-          catalogueRow: 29.2#29
+          catalogueRow: 29.2#30
       security:
         - sessionCookie: []
       parameters:
@@ -1358,7 +1358,7 @@ paths:
           idempotencyKey: true
           ifMatch: true
           pathAs: /api/v1/appointments/{reservationId}/cancel
-          catalogueRow: 29.2#27
+          catalogueRow: 29.2#28
         staff:
           permission: scheduling.booking.manage (or .own_schedule for a doctor's own calendar)
           resolver: patient in scope
@@ -1366,7 +1366,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/appointments/{id}/cancel
-          catalogueRow: 29.3#65
+          catalogueRow: 29.3#66
       security:
         - sessionCookie: []
       parameters:
@@ -1485,7 +1485,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/appointments/{reservationId}/confirm
-          catalogueRow: 29.2#24
+          catalogueRow: 29.2#25
         staff:
           permission: scheduling.booking.manage (or .own_schedule for a doctor's own calendar)
           resolver: patient in scope
@@ -1493,7 +1493,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/appointments/{id}/confirm
-          catalogueRow: 29.3#65
+          catalogueRow: 29.3#66
       security:
         - sessionCookie: []
       parameters:
@@ -1581,7 +1581,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/appointments/{reservationId}/previsit
-          catalogueRow: 29.2#32
+          catalogueRow: 29.2#33
       security:
         - sessionCookie: []
       parameters:
@@ -1663,7 +1663,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/appointments/{reservationId}/previsit/consents
-          catalogueRow: 29.2#32
+          catalogueRow: 29.2#33
       security:
         - sessionCookie: []
       parameters:
@@ -1754,7 +1754,7 @@ paths:
           idempotencyKey: true
           ifMatch: true
           pathAs: /api/v1/appointments/{reservationId}/reschedule
-          catalogueRow: 29.2#28
+          catalogueRow: 29.2#29
         staff:
           permission: scheduling.booking.manage (or .own_schedule for a doctor's own calendar)
           resolver: patient in scope
@@ -1762,7 +1762,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/appointments/{id}/reschedule
-          catalogueRow: 29.3#65
+          catalogueRow: 29.3#66
       security:
         - sessionCookie: []
       parameters:
@@ -1875,7 +1875,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/availability/search
-          catalogueRow: 29.2#22
+          catalogueRow: 29.2#23
         staff:
           permission: scheduling.availability.search
           resolver: —
@@ -1883,7 +1883,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/availability/search
-          catalogueRow: 29.3#64
+          catalogueRow: 29.3#65
       security:
         - sessionCookie: []
       parameters:
@@ -1970,7 +1970,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/check-ins
-          catalogueRow: 29.2#49
+          catalogueRow: 29.2#50
       security:
         - sessionCookie: []
       parameters:
@@ -2067,7 +2067,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/clinicians/{id}/availability-templates
-          catalogueRow: 29.3#72
+          catalogueRow: 29.3#73
       security:
         - sessionCookie: []
       parameters:
@@ -2150,7 +2150,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/clinicians/{id}/availability-templates
-          catalogueRow: 29.3#72
+          catalogueRow: 29.3#73
       security:
         - sessionCookie: []
       parameters:
@@ -2248,7 +2248,7 @@ paths:
           idempotencyKey: false
           ifMatch: true
           pathAs: /api/v1/clinicians/{id}/availability-templates/{templateId}
-          catalogueRow: 29.3#72
+          catalogueRow: 29.3#73
       security:
         - sessionCookie: []
       parameters:
@@ -2344,7 +2344,7 @@ paths:
           idempotencyKey: false
           ifMatch: true
           pathAs: /api/v1/clinicians/{id}/availability-templates/{templateId}
-          catalogueRow: 29.3#72
+          catalogueRow: 29.3#73
       security:
         - sessionCookie: []
       parameters:
@@ -2456,7 +2456,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/clinicians/{id}/blocked-times
-          catalogueRow: 29.3#73
+          catalogueRow: 29.3#74
       x-catalogue-gap: The catalogue lists DELETE on the collection and names no identifier of the blocked time to delete
       security:
         - sessionCookie: []
@@ -2535,7 +2535,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/clinicians/{id}/blocked-times
-          catalogueRow: 29.3#73
+          catalogueRow: 29.3#74
       security:
         - sessionCookie: []
       parameters:
@@ -2619,7 +2619,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/clinicians/{id}/blocked-times
-          catalogueRow: 29.3#73
+          catalogueRow: 29.3#74
       security:
         - sessionCookie: []
       parameters:
@@ -2718,7 +2718,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/clinicians/{id}/schedule
-          catalogueRow: 29.3#111
+          catalogueRow: 29.3#112
       security:
         - sessionCookie: []
       parameters:
@@ -2815,7 +2815,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/holds
-          catalogueRow: 29.2#23
+          catalogueRow: 29.2#24
         staff:
           permission: scheduling.booking.manage (or .own_schedule for a doctor's own calendar)
           resolver: patient in scope
@@ -2823,7 +2823,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/holds
-          catalogueRow: 29.3#65
+          catalogueRow: 29.3#66
       security:
         - sessionCookie: []
       parameters:
@@ -2925,7 +2925,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/locations/{id}/roster
-          catalogueRow: 29.3#76
+          catalogueRow: 29.3#77
       x-catalogue-gap: The catalogue lists DELETE on the collection and names no identifier of the roster entry to delete
       security:
         - sessionCookie: []
@@ -3008,7 +3008,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/locations/{id}/roster
-          catalogueRow: 29.3#76
+          catalogueRow: 29.3#77
       security:
         - sessionCookie: []
       parameters:
@@ -3096,7 +3096,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/locations/{id}/roster
-          catalogueRow: 29.3#76
+          catalogueRow: 29.3#77
       security:
         - sessionCookie: []
       parameters:
@@ -3199,7 +3199,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/locations/{locationId}/arrivals
-          catalogueRow: 29.3#69
+          catalogueRow: 29.3#70
       security:
         - sessionCookie: []
       parameters:
@@ -3287,7 +3287,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/locations/{locationId}/check-in-qr
-          catalogueRow: 29.3#77
+          catalogueRow: 29.3#78
       security:
         - sessionCookie: []
       parameters:
@@ -3369,7 +3369,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/locations/{locationId}/queue
-          catalogueRow: 29.3#70
+          catalogueRow: 29.3#71
       security:
         - sessionCookie: []
       parameters:
@@ -3451,7 +3451,7 @@ paths:
           idempotencyKey: false
           ifMatch: true
           pathAs: /api/v1/queue-entries/{id}/stage
-          catalogueRow: 29.3#71
+          catalogueRow: 29.3#72
       security:
         - sessionCookie: []
       parameters:
@@ -3557,7 +3557,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/waitlist
-          catalogueRow: 29.3#75
+          catalogueRow: 29.3#76
       security:
         - sessionCookie: []
       parameters:
@@ -3647,7 +3647,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/waitlist-entries
-          catalogueRow: 29.2#30
+          catalogueRow: 29.2#31
       security:
         - sessionCookie: []
       parameters:
@@ -3748,7 +3748,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/waitlist-entries/{id}
-          catalogueRow: 29.2#30
+          catalogueRow: 29.2#31
       security:
         - sessionCookie: []
       parameters:
@@ -3831,7 +3831,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/waitlist-offers/{offerId}/accept
-          catalogueRow: 29.2#31
+          catalogueRow: 29.2#32
       security:
         - sessionCookie: []
       parameters:
@@ -3919,7 +3919,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/waitlist-offers/{offerId}/decline
-          catalogueRow: 29.2#31
+          catalogueRow: 29.2#32
       security:
         - sessionCookie: []
       parameters:
@@ -4006,7 +4006,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /public/v1/clinicians/{id}/next-available
-          catalogueRow: 29.5#148
+          catalogueRow: 29.5#149
       security: []
       x-authentication: none
       parameters:

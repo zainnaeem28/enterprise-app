@@ -2003,6 +2003,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/banners': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * GET /api/v1/banners
+     * @description Amendment A-8 (HEAAA-644, QA-EXEC-F09). Current maintenance banners for the caller's portal. The surface comes from the session: audience `patient` (self and proxy) reads `patient` on `my.`; audience `staff` (realms `google` and `admin_pool`) reads `staff` on `staff.`. Rows with `startsAt <= now < endsAt`, ordered by `startsAt, id`, at most 10, `nextCursor` always null. No query parameters. C0, no PHI; not audited.
+     */
+    get: operations['getBanners'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/calendar-link': {
     parameters: {
       query?: never;
@@ -4145,6 +4165,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/public/v1/banners': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * GET /public/v1/banners
+     * @description Amendment A-8 (HEAAA-644, QA-EXEC-F09). integrations.: C0 only; `max-age=60`. Current `site` banners, read only through the view `organisation.public_banner` (22.5.1). Ordered by `startsAt, id`, at most 10, `nextCursor` always null. No query parameters.
+     */
+    get: operations['getPublicV1Banners'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/public/v1/clinicians': {
     parameters: {
       query?: never;
@@ -4750,6 +4790,20 @@ export interface components {
       }[];
       availabilityStale: boolean;
     };
+    /** @description Amendment A-8. A current maintenance banner (C0, no PHI). Exactly these four fields. */
+    MaintenanceBanner: {
+      /** Format: uuid */
+      id: string;
+      message: string;
+      /** Format: date-time */
+      startsAt: string;
+      /** Format: date-time */
+      endsAt: string;
+    };
+    GetBannersResponse: {
+      items: components['schemas']['MaintenanceBanner'][];
+      nextCursor: null;
+    };
     PostCheckInsRequest: {
       /** Format: uuid */
       reservationId: string;
@@ -5237,6 +5291,10 @@ export interface components {
       from: string;
       /** Format: date-time */
       to: string;
+    };
+    GetPublicV1BannersResponse: {
+      items: components['schemas']['MaintenanceBanner'][];
+      nextCursor: null;
     };
     GetPublicV1CliniciansResponse: {
       items: {
@@ -11361,6 +11419,48 @@ export interface operations {
       409: components['responses']['Error409'];
       /** @description Codes: kernel.payload_too_large. */
       413: components['responses']['Error413'];
+      /** @description Codes: kernel.rate_limited. */
+      429: components['responses']['Error429'];
+      /** @description Codes: kernel.unavailable. */
+      503: components['responses']['Error503'];
+      /** @description Codes: kernel.timeout. */
+      504: components['responses']['Error504'];
+    };
+  };
+  getBanners: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description r<releaseNumber>.<gitSha12>, for example r142.3f9a1c2b7d10, sent by every portal bundle on every /api/* call (28.6). Missing, malformed or releaseNumber < min_client_release is refused with 400 kernel.client_release_unsupported before any session lookup. */
+        'X-Client-Release': components['parameters']['ClientRelease'];
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success (200) */
+      200: {
+        headers: {
+          'X-Request-Id': components['headers']['XRequestId'];
+          'Cache-Control': components['headers']['CacheNoStore'];
+          'X-Session-Idle-Expires-At': components['headers']['XSessionIdleExpiresAt'];
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GetBannersResponse'];
+        };
+      };
+      /** @description Codes: kernel.client_release_unsupported, kernel.validation_failed. */
+      400: components['responses']['Error400'];
+      /** @description Codes: auth.unauthenticated. */
+      401: components['responses']['Error401'];
+      /** @description Codes: auth.forbidden. */
+      403: components['responses']['Error403'];
+      /** @description Codes: kernel.not_found. */
+      404: components['responses']['Error404'];
+      /** @description Codes: patient.merged. */
+      409: components['responses']['Error409'];
       /** @description Codes: kernel.rate_limited. */
       429: components['responses']['Error429'];
       /** @description Codes: kernel.unavailable. */
@@ -17690,6 +17790,36 @@ export interface operations {
       409: components['responses']['Error409'];
       /** @description Codes: kernel.rate_limited. */
       429: components['responses']['Error429'];
+      /** @description Codes: kernel.unavailable. */
+      503: components['responses']['Error503'];
+      /** @description Codes: kernel.timeout. */
+      504: components['responses']['Error504'];
+    };
+  };
+  getPublicV1Banners: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success (200) */
+      200: {
+        headers: {
+          'X-Request-Id': components['headers']['XRequestId'];
+          'Cache-Control': components['headers']['CachePublic'];
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GetPublicV1BannersResponse'];
+        };
+      };
+      /** @description Codes: kernel.validation_failed. */
+      400: components['responses']['Error400'];
+      /** @description Codes: kernel.not_found. */
+      404: components['responses']['Error404'];
       /** @description Codes: kernel.unavailable. */
       503: components['responses']['Error503'];
       /** @description Codes: kernel.timeout. */
