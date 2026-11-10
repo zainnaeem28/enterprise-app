@@ -78,6 +78,37 @@ export async function mockApi(page: Page, who: Who) {
   });
 }
 
+/**
+ * Booking-flow answers (one service, one place, one doctor, one open time, a hold) layered over `mockApi`, so the
+ * doctor, time and confirm steps render instead of redirecting to /book (their state lives in memory only).
+ */
+export async function mockBooking(page: Page) {
+  const startsAt = new Date(Date.now() + 26 * 3_600_000);
+  startsAt.setUTCMinutes(0, 0, 0);
+  const slot = {
+    startsAt: startsAt.toISOString(),
+    endsAt: new Date(startsAt.getTime() + 1_800_000).toISOString(),
+    clinicianId: UUID,
+    locationId: UUID,
+    mode: 'in_person',
+  };
+  await page.route('**/api/v1/**', (r) => {
+    const { pathname } = new URL(r.request().url());
+    const ok = (body: unknown) =>
+      r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
+    if (pathname === '/api/v1/services')
+      return ok({ items: [{ id: UUID, name: 'General visit', durationMin: 30, mode: 'in_person' }] });
+    if (pathname === '/api/v1/locations')
+      return ok({ items: [{ id: UUID, name: 'Main clinic', timeZone: 'UTC' }] });
+    if (pathname === '/api/v1/clinicians')
+      return ok({ items: [{ clinicianId: UUID, displayName: 'Dr Test' }] });
+    if (pathname === '/api/v1/availability/search') return ok({ slots: [slot] });
+    if (pathname === '/api/v1/holds')
+      return ok({ reservationId: UUID, expiresAt: new Date(Date.now() + 600_000).toISOString() });
+    return r.fallback();
+  });
+}
+
 export interface AxeOutcome {
   label: string;
   rulesPassed: number;

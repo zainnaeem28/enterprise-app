@@ -4,7 +4,8 @@
 // report. The manual runs (TC-A11Y-02/03/07/08, human parts of 04/05/06) remain Pending-human.
 import { expect, test } from '@playwright/test';
 import { IDS } from '../../../apps/site/e2e/ids.mjs';
-import { PATIENT, SITE, STAFF, UUID, expectClean, mockApi, scan } from './support';
+import type { Page } from '@playwright/test';
+import { PATIENT, SITE, STAFF, UUID, expectClean, mockApi, mockBooking, scan } from './support';
 import type { Who } from './support';
 
 interface Pg {
@@ -85,6 +86,25 @@ const PAGES: Pg[] = [
   ]),
 ];
 
+const BOOKING_STEPS = ['/book/doctor', '/book/time', '/book/confirm'];
+
+async function driveBooking(page: Page, step: number) {
+  await page.getByRole('radio', { name: /General visit/ }).check();
+  await page.getByRole('button', { name: 'Continue' }).click();
+  if (step >= 1) {
+    await expect(page).toHaveURL(/\/book\/doctor$/);
+    await page.getByLabel('Place').selectOption({ label: 'Main clinic' });
+    await page.getByRole('button', { name: 'Continue' }).click();
+  }
+  if (step >= 2) {
+    await expect(page).toHaveURL(/\/book\/time$/);
+    await page.getByRole('button', { name: /^\d{1,2}:\d{2}\s?[AP]M/ }).first().click();
+    await expect(page.getByRole('button', { name: 'Continue' })).toBeEnabled();
+    await page.getByRole('button', { name: 'Continue' }).click();
+  }
+  await page.waitForLoadState('networkidle');
+}
+
 const VIEWPORTS = [
   { name: '1280', size: { width: 1280, height: 800 } },
   { name: '360', size: { width: 360, height: 740 } },
@@ -96,9 +116,17 @@ for (const vp of VIEWPORTS) {
     for (const p of PAGES) {
       test(`TC-A11Y-01 ${p.portal} ${p.path}`, async ({ page }, info) => {
         if (p.who !== 'none' || p.base !== SITE) await mockApi(page, p.who);
-        await page.goto(p.base + p.path);
+        const step = BOOKING_STEPS.indexOf(p.path);
+        if (step >= 0) await mockBooking(page);
+        await page.goto(p.base + (step >= 0 ? '/book' : p.path));
         await page.waitForLoadState('networkidle');
+        // The booking steps keep their state in memory, so they are reached by using the flow, not by URL.
+        if (step >= 0) await driveBooking(page, step);
         // The page must have rendered real content (a landmark and a heading), not a blank shell.
+        // Guard against a silent redirect: the page scanned must be the page named.
+        expect(new URL(page.url()).pathname, `${p.path}: scanned a different page`).toBe(
+          p.path.split('?')[0],
+        );
         await expect(page.locator('main, [role="main"]').first()).toBeVisible();
         await expect(page.getByRole('heading').first()).toBeVisible();
         const o = await scan(page, `${p.portal} ${p.path} @${vp.name}`);
