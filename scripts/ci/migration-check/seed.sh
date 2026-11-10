@@ -47,6 +47,8 @@ expect_fail() {
     tail -n 15 "$log" | sed 's/^/      /' | tee -a "$RESULTS"
     bad=$((bad + 1))
   fi
+  # Each scenario copy is single-use: free it now (peak disk = one copy, not all of them). Never the real tree.
+  case "$dir" in "$WORK"/*) rm -rf "$dir" ;; esac
 }
 
 # add_migration <dir> <name> (SQL on stdin): the seeded migration gets a version ABOVE the newest real migration (computed,
