@@ -272,7 +272,7 @@ run "infra_roles_cannot_edit_signing_restore_secrets_keys_or_secret_policies" {
     condition = alltrue([for n in ["gh-tf-staging", "gh-tf-production", "gh-rehearsal-staging"] : (
       anytrue([for st in jsondecode(output.role_policies[n]).Statement : st.Sid == "NoEditOfRecordAndEvidenceKeys" && st.Effect == "Deny" &&
         alltrue([for k in [var.refs.signing_key_arn, var.refs.restore_kms_key_arn, var.refs.secrets_kms_key_arn] : contains(st.Resource, k)]) &&
-        alltrue([for a in ["kms:PutKeyPolicy", "kms:CreateGrant", "kms:Revoke*", "kms:Disable*", "kms:ScheduleKeyDeletion"] : contains(st.Action, a)])]) &&
+      alltrue([for a in ["kms:PutKeyPolicy", "kms:CreateGrant", "kms:Revoke*", "kms:Disable*", "kms:ScheduleKeyDeletion"] : contains(st.Action, a)])]) &&
       anytrue([for st in jsondecode(output.role_policies[n]).Statement : st.Sid == "NoEditOfSecretResourcePolicies" && st.Effect == "Deny" && contains(st.Action, "secretsmanager:PutResourcePolicy") && contains(st.Action, "secretsmanager:DeleteResourcePolicy")]) &&
       !anytrue([for st in jsondecode(output.role_policies[n]).Statement : st.Effect == "Allow" && (contains(try(tolist(st.Action), [st.Action]), "secretsmanager:PutResourcePolicy") || contains(try(tolist(st.Action), [st.Action]), "secretsmanager:DeleteResourcePolicy"))])
     )])
