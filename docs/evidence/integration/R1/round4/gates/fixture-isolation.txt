@@ -1,0 +1,2 @@
+ci-fixture isolation self-test: allowed job and comments pass, 6 seeded violations fail
+ci-fixture isolation: 221 file(s) scanned, the fixture is set nowhere outside the admin-run job

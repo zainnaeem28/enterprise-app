@@ -1,0 +1,11 @@
+Your pool doesn't have error handlers! See: https://err.red/wpeh?v=0.18.0
+Skipping host requirements validation logic because `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` env variable is set.
+chromium 156.0.8078.4
+ok   enrol the admin principal with the fixture key (token spent, second key registered)
+ok   administrator sign-in in the browser with the security key
+ok   admin configuration: create a service and see it saved
+ok   admin configuration: the service is still there after a reload (persisted)
+ok   audit viewer: the last 24 hours show recorded entries
+ok   break-the-glass review: record a decision on a pending access
+ok   break-the-glass review: the decision is stored (shown under Justified after reload)
+admin run passed (7 steps), screenshots in /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-141-sdlc-ticket-int-05-integrate-r1-release-candidate-and-run-the-complete-combined-check-set/artifacts/admin-run

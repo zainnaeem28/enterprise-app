@@ -1,0 +1,23 @@
+$ vitest run --config vitest.db.config.ts --reporter=default --reporter=junit --outputFile.junit="${JUNIT_DIR:-.junit}/cms-db.xml"
+
+ RUN  v5.1.0 /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-141-sdlc-ticket-int-05-integrate-r1-release-candidate-and-run-the-complete-combined-check-set/apps/cms
+
+[⣷] Pulling schema from database...
+[2K[1G[✓] Pulling schema from database...
+[09:52:57] [33mWARN[39m: [36mNo email adapter provided. Email will be written to console. More info at https://payloadcms.com/docs/email/overview.[39m
+[09:52:57] [33mWARN[39m: [36mcms sign-in denied[39m
+    [35mreason[39m: "not_in_marketing_group"
+[09:52:57] [33mWARN[39m: [36mcms sign-in denied[39m
+    [35mreason[39m: "wrong_domain"
+[09:52:57] [33mWARN[39m: [36mcms sign-in denied[39m
+    [35mreason[39m: "wrong_domain"
+[09:52:57] [33mWARN[39m: [36mcms sign-in denied[39m
+    [35mreason[39m: "email_unverified"
+ ✓ src/auth/signin.dbtest.ts (7 tests) 1190ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  09:52:55
+   Duration  1.73s (tests 73%, import 26%, transform 1%)
+
+JUNIT report written to /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-141-sdlc-ticket-int-05-integrate-r1-release-candidate-and-run-the-complete-combined-check-set/reports/cms/junit/cms-db.xml
