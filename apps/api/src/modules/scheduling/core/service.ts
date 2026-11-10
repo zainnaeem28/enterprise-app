@@ -544,6 +544,9 @@ export class SchedulingCoreService {
     const new0 = await this.get(tx, newHoldId);
     if (old0 === undefined || new0 === undefined) throw new ReservationNotFoundError();
     if (old0.patientId !== new0.patientId) throw new SchedulingValidationError(['newHoldId']);
+    // A staff grant is location-bound and the route authorizes only the old appointment's location, so the new hold must be there too.
+    if (tx.scope.audience === 'staff' && old0.locationId !== new0.locationId)
+      throw new ReservationNotFoundError();
     if (o.expectedVersion !== undefined && o.expectedVersion !== old0.version)
       throw new PreconditionFailedError();
     const staff = tx.scope.audience === 'staff';
