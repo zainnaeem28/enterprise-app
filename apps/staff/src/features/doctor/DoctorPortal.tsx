@@ -18,13 +18,10 @@ import { docStrings as d } from './strings.js';
 import { useKnownNotes, useOpen, workspace } from './workspace.js';
 import type { Banner as BannerData } from './types.js';
 import type { VideoAdapter } from './video.js';
+import { DOCTOR_PATHS, isDoctorPath } from './paths.js';
+import type { DoctorPath } from './paths.js';
 import './doctor.css';
 
-/** The paths this feature serves. They match the doctor navigation items and carry no record identifier. */
-export const DOCTOR_PATHS = ['/schedule', '/patients', '/alerts', '/notes-to-sign'] as const;
-export type DoctorPath = (typeof DOCTOR_PATHS)[number];
-export const isDoctorPath = (path: string): path is DoctorPath =>
-  (DOCTOR_PATHS as readonly string[]).includes(path);
 
 /**
  * The doctor portal (FE-10): schedule, patient list, chart summary, note editor with sign, addenda, co-sign queue, alert tray and
@@ -157,3 +154,6 @@ function Patients({ documents }: { documents?: (patientId: string) => React.Reac
     </section>
   );
 }
+
+export { DOCTOR_PATHS, isDoctorPath };
+export type { DoctorPath };

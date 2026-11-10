@@ -1,8 +1,8 @@
 /* global module, process */
 // Lighthouse CI for the BUILT staff shell (F-09, DEVOPS-PLAN 5.1 "Bundle and LCP budget", NFR-7: LCP < 2.5 s on 4G).
 // Lighthouse's default mobile profile simulates slow 4G and a 4x CPU slowdown. The script-size ceiling matches the
-// initial shell ceiling of apps/staff/scripts/bundle-budget.mjs (gzip) as raw bytes with a margin; raise it only by a
-// reviewed change. `assert` fails the run (exit 1) when a budget is exceeded or an audit is missing.
+// initial-set ceiling (JS loaded by index.html: scripts and modulepreloads, HEAAA-604) of
+// apps/staff/scripts/bundle-budget.mjs (gzip) as raw bytes with a margin; raise it only by a reviewed change. `assert` fails the run (exit 1) when a budget is exceeded or an audit is missing.
 //   pnpm dlx @lhci/cli@0.16.0 autorun   (see the bundle-budget job)
 module.exports = {
   ci: {

@@ -1,16 +1,10 @@
-// Fails when the gzipped JS of the built shell exceeds the budget. NFR-7 sets the real budget; this
-// initial value is a ceiling for the shell only and is raised by a reviewed change, not silently.
-import { readdirSync, readFileSync } from 'node:fs';
-import { gzipSync } from 'node:zlib';
-import { join } from 'node:path';
+// Fails when the gzipped JS of the built staff app exceeds a budget. Thin wrapper: the logic (initial set, largest lazy
+// chunk, total tripwire; limits and their raise rules in HEAAA-604 D-4/D-6) lives in tests/e2e/smoke/bundle-gzip.mjs,
+// the file CI runs, so the local script and CI cannot drift.
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
-const BUDGET_GZIP_BYTES = 120 * 1024;
-const dir = new URL('../dist/assets/', import.meta.url).pathname;
-let total = 0;
-for (const f of readdirSync(dir).filter((n) => n.endsWith('.js'))) {
-  const size = gzipSync(readFileSync(join(dir, f))).length;
-  console.log(`${f}: ${size} bytes gzip`);
-  total += size;
-}
-console.log(`total JS gzip: ${total} / ${BUDGET_GZIP_BYTES}`);
-if (total > BUDGET_GZIP_BYTES) process.exit(1);
+const shared = fileURLToPath(new URL('../../../tests/e2e/smoke/bundle-gzip.mjs', import.meta.url));
+const dist = fileURLToPath(new URL('../dist', import.meta.url));
+const r = spawnSync(process.execPath, [shared, dist], { stdio: 'inherit' });
+process.exit(r.status ?? 1);
