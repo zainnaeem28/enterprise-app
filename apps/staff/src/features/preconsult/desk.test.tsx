@@ -531,10 +531,12 @@ describe('triage with vitals and the red-flag bar (PC-04, PC-06)', () => {
     mount(NURSE, '/triage', triageHandler());
     const save = await screen.findByRole('button', { name: 'Save vitals' });
     expect(save).toBeEnabled();
+    // The button can appear before React has flushed the passive effect that subscribes to `offline`; flush it so the event is not lost.
+    await act(async () => {});
     await act(async () => {
       window.dispatchEvent(new Event('offline'));
     });
-    expect(screen.getByText(/You are offline/)).toBeVisible();
+    expect(await screen.findByText(/You are offline/)).toBeVisible();
     expect(screen.getByRole('button', { name: 'Save vitals' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Save triage' })).toBeDisabled();
     await act(async () => {
