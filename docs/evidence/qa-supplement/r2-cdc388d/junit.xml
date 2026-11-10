@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testsuite name="RA-R1-23 doctor availability, leave and blocked time (TC-DR)" time="0.862698" disabled="0" errors="0" tests="3" failures="0" skipped="0" timestamp="2026-11-10T15:02:56.824Z" hostname="314866be9867">
+		<testcase name="TC-DR-01 leave and blocked time change slot search at once; removing them restores the slots; a template edit is reflected" time="0.468878" classname="RA-R1-23 doctor availability, leave and blocked time (TC-DR)" file="/tmp/qa661/tests/api/supplement/supplement.test.mjs"/>
+		<testcase name="TC-DR-02 leave over a booked slot warns of the conflict (dry run) and never cancels the appointment silently" time="0.204855" classname="RA-R1-23 doctor availability, leave and blocked time (TC-DR)" file="/tmp/qa661/tests/api/supplement/supplement.test.mjs"/>
+		<testcase name="TC-DR-03 another doctor cannot read or change this doctor’s availability, leave or blocked time; nothing changes" time="0.187662" classname="RA-R1-23 doctor availability, leave and blocked time (TC-DR)" file="/tmp/qa661/tests/api/supplement/supplement.test.mjs"/>
+	</testsuite>
+	<testsuite name="RA-R1-24 doctor chart summary with name, DOB and photo (TC-CL-08)" time="0.583437" disabled="0" errors="0" tests="1" failures="0" skipped="0" timestamp="2026-11-10T15:02:57.686Z" hostname="314866be9867">
+		<testcase name="TC-CL-08 chart summary shows problems, allergies, medications, vitals, history, documents, with name, date of birth and MRN on the banner; uncoded items are marked [photo: no object store]" time="0.583151" classname="RA-R1-24 doctor chart summary with name, DOB and photo (TC-CL-08)" file="/tmp/qa661/tests/api/supplement/supplement.test.mjs"/>
+	</testsuite>
+	<testsuite name="RA-R1-24 history and documents parts of the chart summary (TC-CL-08b)" time="0.329716" disabled="0" errors="0" tests="1" failures="1" skipped="0" timestamp="2026-11-10T15:02:58.271Z" hostname="314866be9867">
+		<testcase name="TC-CL-08b the chart summary returns the encounter history and the documents list (arrays, not null)" time="0.328881" classname="RA-R1-24 history and documents parts of the chart summary (TC-CL-08b)" file="/tmp/qa661/tests/api/supplement/supplement.test.mjs" failure="history: encounters must be a list, got null">
+			<failure type="testCodeFailure" message="history: encounters must be a list, got null">
+Error [ERR_TEST_FAILURE]: history: encounters must be a list, got null
+    at async Promise.all (index 0) {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: AssertionError [ERR_ASSERTION]: history: encounters must be a list, got null
+      at TestContext.&lt;anonymous> (file:///tmp/qa661/tests/api/supplement/supplement.test.mjs:149:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+}
+			</failure>
+		</testcase>
+	</testsuite>
+	<testsuite name="RA-R1-29 manual insurance verification (TC-PC-10)" time="0.284297" disabled="0" errors="0" tests="1" failures="0" skipped="0" timestamp="2026-11-10T15:02:58.600Z" hostname="314866be9867">
+		<testcase name="TC-PC-10 staff record a verification status and date; it is saved and audited; no outbound call is made [card image: no object store]" time="0.283987" classname="RA-R1-29 manual insurance verification (TC-PC-10)" file="/tmp/qa661/tests/api/supplement/supplement.test.mjs"/>
+	</testsuite>
+	<testsuite name="RA-R1-21 pre-visit questionnaire, consents, insurance and staff-visible status (TC-PP-06, TC-PP-07)" time="0.688348" disabled="0" errors="0" tests="2" failures="0" skipped="0" timestamp="2026-11-10T15:02:58.884Z" hostname="314866be9867">
+		<testcase name="TC-PP-07 partial completion (consent only): staff see the visit incomplete and exactly which items are open" time="0.325467" classname="RA-R1-21 pre-visit questionnaire, consents, insurance and staff-visible status (TC-PP-06, TC-PP-07)" file="/tmp/qa661/tests/api/supplement/supplement.test.mjs"/>
+		<testcase name="TC-PP-06 questionnaire submitted, consent e-signed with its version and date, insurance record added: staff see all three complete [card image upload: blocked, no object store; send-time 72 h setting not exercised]" time="0.362480" classname="RA-R1-21 pre-visit questionnaire, consents, insurance and staff-visible status (TC-PP-06, TC-PP-07)" file="/tmp/qa661/tests/api/supplement/supplement.test.mjs"/>
+	</testsuite>
+	<!-- tests 8 -->
+	<!-- suites 5 -->
+	<!-- pass 7 -->
+	<!-- fail 1 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 0 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 3111.416952 -->
+</testsuites>

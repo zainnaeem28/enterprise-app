@@ -1,0 +1,48 @@
+▶ RA-R1-23 doctor availability, leave and blocked time (TC-DR)
+  ✔ TC-DR-01 leave and blocked time change slot search at once; removing them restores the slots; a template edit is reflected (468.877734ms)
+  ✔ TC-DR-02 leave over a booked slot warns of the conflict (dry run) and never cancels the appointment silently (204.854581ms)
+# TC-DR-03 audit denied/failed events for the other doctor: 7
+  ✔ TC-DR-03 another doctor cannot read or change this doctor’s availability, leave or blocked time; nothing changes (187.661538ms)
+✔ RA-R1-23 doctor availability, leave and blocked time (TC-DR) (862.698242ms)
+# TC-CL-08 banner keys: patientId,displayName,dateOfBirth,mrn,allergies; encounters=null; documents=null; photoUrl=absent (no photo document / object store)
+▶ RA-R1-24 doctor chart summary with name, DOB and photo (TC-CL-08)
+  ✔ TC-CL-08 chart summary shows problems, allergies, medications, vitals, history, documents, with name, date of birth and MRN on the banner; uncoded items are marked [photo: no object store] (583.150565ms)
+✔ RA-R1-24 doctor chart summary with name, DOB and photo (TC-CL-08) (583.437084ms)
+▶ RA-R1-24 history and documents parts of the chart summary (TC-CL-08b)
+  ✖ TC-CL-08b the chart summary returns the encounter history and the documents list (arrays, not null) (328.880637ms)
+✖ RA-R1-24 history and documents parts of the chart summary (TC-CL-08b) (329.716155ms)
+▶ RA-R1-29 manual insurance verification (TC-PC-10)
+  ✔ TC-PC-10 staff record a verification status and date; it is saved and audited; no outbound call is made [card image: no object store] (283.986696ms)
+✔ RA-R1-29 manual insurance verification (TC-PC-10) (284.296758ms)
+# TC-PP-07 stored check-in snapshot: {"consents":true,"insurance":false,"questionnaire":false}
+▶ RA-R1-21 pre-visit questionnaire, consents, insurance and staff-visible status (TC-PP-06, TC-PP-07)
+  ✔ TC-PP-07 partial completion (consent only): staff see the visit incomplete and exactly which items are open (325.467021ms)
+# TC-PP-06 stored check-in snapshot: {"consents":true,"insurance":true,"questionnaire":true}
+  ✔ TC-PP-06 questionnaire submitted, consent e-signed with its version and date, insurance record added: staff see all three complete [card image upload: blocked, no object store; send-time 72 h setting not exercised] (362.479951ms)
+✔ RA-R1-21 pre-visit questionnaire, consents, insurance and staff-visible status (TC-PP-06, TC-PP-07) (688.348026ms)
+ℹ tests 8
+ℹ suites 5
+ℹ pass 7
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3111.416952
+
+✖ failing tests:
+
+test at tests/api/supplement/supplement.test.mjs:143:3
+✖ TC-CL-08b the chart summary returns the encounter history and the documents list (arrays, not null) (328.880637ms)
+  AssertionError [ERR_ASSERTION]: history: encounters must be a list, got null
+      at TestContext.<anonymous> (file:///tmp/qa661/tests/api/supplement/supplement.test.mjs:149:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
