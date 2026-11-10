@@ -16,18 +16,18 @@ reports to `reports/<job>/` (uploaded as an artifact).
 
 ## Rule map (DEVOPS-PLAN 5.2 -> check id)
 
-| Rule                                                                                     | Check                                                                                             |
-| ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| RLS enabled and FORCEd                                                                   | `M-1`, `M-1-kernel`                                                                               |
-| policy `TO PUBLIC`                                                                       | `M-2`, `M-3`                                                                                      |
-| view without `security_invoker`                                                          | `M-4-views`                                                                                       |
-| `patient_id` table without merge write guard                                             | `M-5-patient-guard`                                                                               |
-| definer not in inventory / no fixed `search_path` / owner can log in                     | `M-5-definer`, `R-attributes`                                                                     |
-| audit-writing role without role-level `transaction_timeout`; `app_owner` INSERT on audit | `R-timeouts`, `R-app-owner-no-audit-insert`                                                       |
-| DML in a migration; expand/contract; non-concurrent index                                | `check-migrations.mjs` (runner rules `DML`, `EXPAND_DESTRUCTIVE`, `EXPAND_LOCKING`, `CONTRACT_*`) |
-| previous release's suite against the new schema                                          | `n-minus-1.sh`                                                                                    |
-| `BYPASSRLS`, application role owns a table                                               | `R-attributes`, `X-bypassrls`, `R-no-owned-tables`                                                |
-| RDS master user owns objects / appears in config                                         | `X-admin-owns-nothing`, `X-no-superuser-membership`, `lint-config-secrets.mjs`                    |
+| Rule                                                                                     | Check                                                                                                      |
+| ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| RLS enabled and FORCEd                                                                   | `M-1`, `M-1-kernel`                                                                                        |
+| policy `TO PUBLIC`                                                                       | `M-2`, `M-3`                                                                                               |
+| view without `security_invoker`                                                          | `M-4-views`                                                                                                |
+| `patient_id` table without merge write guard                                             | `M-5-patient-guard`                                                                                        |
+| definer not in inventory / no fixed `search_path` / owner can log in                     | `M-5-definer`, `R-attributes`                                                                              |
+| audit-writing role without role-level `transaction_timeout`; `app_owner` INSERT on audit | `R-timeouts`, `R-app-owner-no-audit-insert`                                                                |
+| DML in a migration; expand/contract; non-concurrent index                                | `check-migrations.mjs` (runner rules `DML`, `EXPAND_DESTRUCTIVE`, `EXPAND_LOCKING`, `CONTRACT_*`)          |
+| previous release's suite against the new schema                                          | `n-minus-1.sh`                                                                                             |
+| `BYPASSRLS`, application role owns a table                                               | `R-attributes`, `X-bypassrls`, `R-no-owned-tables`                                                         |
+| RDS master user owns objects / appears in config                                         | `X-admin-owns-nothing`, `X-extensions-allowlisted`, `X-no-superuser-membership`, `lint-config-secrets.mjs` |
 
 ## Previous release tag
 
@@ -40,6 +40,9 @@ variable `REQUIRE_PREVIOUS_RELEASE_TAG=true` once the first release tag exists; 
 
 - PostgreSQL in CI is a container, not RDS. Role-level `transaction_timeout` visible to the audit trigger on RDS stays
   **Unverified** until staging (DEVOPS-PLAN 5.2).
+- `X-admin-owns-nothing` does not count member objects of `btree_gist` and `pg_trgm` when they are owned by the bootstrap
+  superuser (OID 10) and the extension is owned by `app_owner` (PostgreSQL does this for trusted extensions; HEAAA-594).
+  `X-extensions-allowlisted` fails on any other extension. Ownership by `rdsadmin` on RDS stays **Unverified** until staging.
 - `lock_timeout` guards are applied by the runner (F-03); this job does not add a separate check for them.
 - The secret-reference lint is pattern-based over tracked files. It cannot see a task definition that is generated at
   deploy time; the deploy workflow must lint the rendered definition (later ticket).

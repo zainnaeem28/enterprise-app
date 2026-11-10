@@ -109,6 +109,9 @@ if [ "$JOB" = migration-check ]; then
   sql_case "reporting_ro granted an object outside the C0/C1 list" 'check M-4-reporting FAILED' 'GRANT SELECT ON kernel.setting TO reporting_ro;'
   sql_case "application role owns a table" 'check R-no-owned-tables FAILED' 'ALTER TABLE kernel.setting OWNER TO app_api;'
   sql_case "administrator (RDS master user) owns an object" 'check X-admin-owns-nothing FAILED' 'CREATE TABLE public.admin_owned (i int);'
+  sql_case "administrator owns a function in a module schema" 'check X-admin-owns-nothing FAILED' "CREATE FUNCTION scheduling.seed_admin_fn() RETURNS int LANGUAGE sql AS 'SELECT 1';"
+  sql_case "administrator created an extension" 'check X-extensions-allowlisted FAILED' 'CREATE EXTENSION citext SCHEMA clinical;'
+  sql_case "app_owner created an extension that is not on the allow-list" 'check X-extensions-allowlisted FAILED' 'SET ROLE app_owner; CREATE EXTENSION citext SCHEMA clinical; RESET ROLE;'
   sql_case "app_owner can INSERT into an audit table" 'check R-app-owner-no-audit-insert FAILED' 'CREATE SCHEMA audit; CREATE TABLE audit.seed_event (i int); ALTER TABLE audit.seed_event OWNER TO app_owner;'
 fi
 
