@@ -1,0 +1,3 @@
+$ node scripts/bundle-budget.mjs
+index-DzIq6WMQ.js: 113325 bytes gzip
+total JS gzip: 113325 / 122880

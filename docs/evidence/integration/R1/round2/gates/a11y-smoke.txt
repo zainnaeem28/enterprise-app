@@ -1,0 +1,13 @@
+
+Running 8 tests using 1 worker
+
+  ✓  1 [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:57:9 › desktop 1280 › sign-in page (signed-out visitor redirected from /) (504ms)
+  ✓  2 [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:68:9 › desktop 1280 › server error state (441ms)
+  ✓  3 [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:83:9 › desktop 1280 › blocking release dialog (549ms)
+  ✓  4 [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:96:9 › desktop 1280 › non-blocking release bar (signed in) (475ms)
+  ✓  5 [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:57:9 › phone 360 › sign-in page (signed-out visitor redirected from /) (487ms)
+  ✓  6 [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:68:9 › phone 360 › server error state (453ms)
+  ✓  7 [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:83:9 › phone 360 › blocking release dialog (538ms)
+  ✓  8 [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:96:9 › phone 360 › non-blocking release bar (signed in) (437ms)
+
+  8 passed (4.9s)

@@ -1,0 +1,12 @@
+$ prettier --check .
+Checking formatting...
+[[33mwarn[39m] apps/staff/src/app/StaffApp.tsx
+[[33mwarn[39m] apps/staff/src/features/admin-compliance/AdminCompliancePortal.tsx
+[[33mwarn[39m] apps/staff/src/features/admin-config/AdminConfigPortal.tsx
+[[33mwarn[39m] apps/staff/src/features/availability/AvailabilityPortal.tsx
+[[33mwarn[39m] apps/staff/src/features/doctor/DoctorPortal.tsx
+[[33mwarn[39m] apps/staff/src/features/messages/MessagesPortal.tsx
+[[33mwarn[39m] apps/staff/src/features/preconsult/PreconsultDesk.tsx
+[[33mwarn[39m] tests/e2e/smoke/bundle-gzip.mjs
+[[33mwarn[39m] Code style issues found in 8 files. Run Prettier with --write to fix.
+[ELIFECYCLE] Command failed with exit code 1.

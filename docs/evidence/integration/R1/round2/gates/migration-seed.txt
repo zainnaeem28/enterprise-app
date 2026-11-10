@@ -1,0 +1,125 @@
+FAIL (rc=1, pattern /check M-1 FAILED/ NOT found)  RLS/FORCE missing on a table
+        file: 'regproc.c',
+        line: '1686',
+        routine: 'regnamespacein'
+      }
+      
+      Node.js v24.22.2
+      ::error::FAILED catalog rules after migrating from empty
+      == no previous release tag, and none required
+      ::notice::no previous release tag (r[0-9]*): the upgrade path and the N-1 suite did NOT run (first release). Not a pass of those checks.
+      ok   no previous release tag, and none required
+      == secret-reference lint (RDS master user)
+      ::error::.github/workflows/ci.yml:749: connection string uses the master/admin user
+      secret-reference lint: 245 configuration file(s), 1 problem(s)
+      ::error::FAILED secret-reference lint (RDS master user)
+      ::error::migration-check FAILED
+FAIL (rc=1, pattern /check M-2 FAILED/ NOT found)  policy TO PUBLIC
+        file: 'regproc.c',
+        line: '1686',
+        routine: 'regnamespacein'
+      }
+      
+      Node.js v24.22.2
+      ::error::FAILED catalog rules after migrating from empty
+      == no previous release tag, and none required
+      ::notice::no previous release tag (r[0-9]*): the upgrade path and the N-1 suite did NOT run (first release). Not a pass of those checks.
+      ok   no previous release tag, and none required
+      == secret-reference lint (RDS master user)
+      ::error::.github/workflows/ci.yml:749: connection string uses the master/admin user
+      secret-reference lint: 245 configuration file(s), 1 problem(s)
+      ::error::FAILED secret-reference lint (RDS master user)
+      ::error::migration-check FAILED
+FAIL (rc=1, pattern /check M-4-views FAILED/ NOT found)  view without security_invoker
+        file: 'regproc.c',
+        line: '1686',
+        routine: 'regnamespacein'
+      }
+      
+      Node.js v24.22.2
+      ::error::FAILED catalog rules after migrating from empty
+      == no previous release tag, and none required
+      ::notice::no previous release tag (r[0-9]*): the upgrade path and the N-1 suite did NOT run (first release). Not a pass of those checks.
+      ok   no previous release tag, and none required
+      == secret-reference lint (RDS master user)
+      ::error::.github/workflows/ci.yml:749: connection string uses the master/admin user
+      secret-reference lint: 245 configuration file(s), 1 problem(s)
+      ::error::FAILED secret-reference lint (RDS master user)
+      ::error::migration-check FAILED
+FAIL (rc=1, pattern /check M-5-patient-guard FAILED/ NOT found)  patient_id table without the merge write guard
+        file: 'regproc.c',
+        line: '1686',
+        routine: 'regnamespacein'
+      }
+      
+      Node.js v24.22.2
+      ::error::FAILED catalog rules after migrating from empty
+      == no previous release tag, and none required
+      ::notice::no previous release tag (r[0-9]*): the upgrade path and the N-1 suite did NOT run (first release). Not a pass of those checks.
+      ok   no previous release tag, and none required
+      == secret-reference lint (RDS master user)
+      ::error::.github/workflows/ci.yml:749: connection string uses the master/admin user
+      secret-reference lint: 245 configuration file(s), 1 problem(s)
+      ::error::FAILED secret-reference lint (RDS master user)
+      ::error::migration-check FAILED
+FAIL (rc=1, pattern /check M-5-definer FAILED/ NOT found)  SECURITY DEFINER function outside the inventory, no search_path
+        file: 'regproc.c',
+        line: '1686',
+        routine: 'regnamespacein'
+      }
+      
+      Node.js v24.22.2
+      ::error::FAILED catalog rules after migrating from empty
+      == no previous release tag, and none required
+      ::notice::no previous release tag (r[0-9]*): the upgrade path and the N-1 suite did NOT run (first release). Not a pass of those checks.
+      ok   no previous release tag, and none required
+      == secret-reference lint (RDS master user)
+      ::error::.github/workflows/ci.yml:749: connection string uses the master/admin user
+      secret-reference lint: 245 configuration file(s), 1 problem(s)
+      ::error::FAILED secret-reference lint (RDS master user)
+      ::error::migration-check FAILED
+PASS (rc=1, matched /DML/)  DML in a migration
+FAIL (rc=1, pattern /EXPAND_DESTRUCTIVE/ NOT found)  expand/contract: DROP COLUMN in an expand migration
+        file: 'regproc.c',
+        line: '1686',
+        routine: 'regnamespacein'
+      }
+      
+      Node.js v24.22.2
+      ::error::FAILED catalog rules after migrating from empty
+      == no previous release tag, and none required
+      ::notice::no previous release tag (r[0-9]*): the upgrade path and the N-1 suite did NOT run (first release). Not a pass of those checks.
+      ok   no previous release tag, and none required
+      == secret-reference lint (RDS master user)
+      ::error::.github/workflows/ci.yml:749: connection string uses the master/admin user
+      secret-reference lint: 245 configuration file(s), 1 problem(s)
+      ::error::FAILED secret-reference lint (RDS master user)
+      ::error::migration-check FAILED
+PASS (rc=1, matched /master/admin user/)  RDS master user in an application connection string
+PASS (rc=1, matched /RDS master secret/)  RDS master secret referenced by a task definition
+PASS (rc=1, matched /check R-attributes FAILED/)  function-owner role can log in
+PASS (rc=1, matched /check X-bypassrls FAILED/)  application role has BYPASSRLS
+PASS (rc=1, matched /check R-timeouts FAILED/)  audit-writing role lost transaction_timeout
+PASS (rc=1, matched /check M-4-reporting FAILED/)  reporting_ro granted an object outside the C0/C1 list
+PASS (rc=1, matched /check R-no-owned-tables FAILED/)  application role owns a table
+PASS (rc=1, matched /check X-admin-owns-nothing FAILED/)  administrator (RDS master user) owns an object
+PASS (rc=1, matched /check X-admin-owns-nothing FAILED/)  administrator owns a function in a module schema
+PASS (rc=1, matched /check X-extensions-allowlisted FAILED/)  administrator created an extension
+PASS (rc=1, matched /check X-extensions-allowlisted FAILED/)  app_owner created an extension that is not on the allow-list
+FAIL (rc=1, pattern /check R-app-owner-no-audit-insert FAILED/ NOT found)  app_owner can INSERT into an audit table
+      pass  M-5-patient-guard  (merge write guard on patient_id tables)
+      pass  M-5-definer  (SECURITY DEFINER inventory, fixed search_path, NOLOGIN owner)
+      pass  M-5-anonymous  (anonymous/public policy sets are exactly the listed ones)
+      pass  M-5-public  (anonymous/public policy sets are exactly the listed ones)
+      pass  M-5-directory  (anonymous/public policy sets are exactly the listed ones)
+      catalog verification: 29 check(s), 0 problem(s)
+      ok   catalog rules after migrating from empty
+      == no previous release tag, and none required
+      ::notice::no previous release tag (r[0-9]*): the upgrade path and the N-1 suite did NOT run (first release). Not a pass of those checks.
+      ok   no previous release tag, and none required
+      == secret-reference lint (RDS master user)
+      ::error::.github/workflows/ci.yml:749: connection string uses the master/admin user
+      secret-reference lint: 245 configuration file(s), 1 problem(s)
+      ::error::FAILED secret-reference lint (RDS master user)
+      ::error::migration-check FAILED
+seeded violations: 7 not caught (results in /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-141-sdlc-ticket-int-05-integrate-r1-release-candidate-and-run-the-complete-combined-check-set/reports/seeded-migration-check.txt)

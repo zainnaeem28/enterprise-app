@@ -1,0 +1,6 @@
+db-foundation: 120 test(s), 0 failure(s), 0 skipped
+kernel: 23 test(s), 0 failure(s), 0 skipped
+api: 1015 test(s), 0 failure(s), 0 skipped
+worker: 121 test(s), 0 failure(s), 0 skipped
+database suites: 4 suite(s), 1279 test(s)
+integration-db passed
