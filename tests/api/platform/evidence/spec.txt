@@ -1,0 +1,253 @@
+▶ TC-AD
+  ✔ TC-AD-01 clinics, rooms, hours and holidays are saved, audited with before/after, and visible in the catalogue (224.063713ms)
+  ✔ TC-AD-02 a service that reveals a condition needs a neutral patient-visible name, which is the only one patients see (87.518352ms)
+  ✔ TC-AD-03 booking policy: block-only works; a fee is stored and nothing is charged (D-3 default) (33.565541ms)
+  ﹣ TC-AD-04 message templates: variables restricted to the allowlist; a free-text binding is rejected (0.201908ms) # NOT DELIVERED: the API has no message-template admin route (probed /admin/message-templates: 404; README BE-23 N-BE23-4 lists message templates as not built). Coverage gap recorded as QA05-F07, not a pass
+  ✔ TC-AD-05 role assignment needs the second approver; no role is effective before approval (108.764988ms)
+  ✔ TC-AD-06 front desk cannot open admin routes (105.836943ms)
+  ✔ TC-AD-07 future-appointment cap set in admin applies at the boundary (261.428723ms)
+  ✔ TC-AD-08 a feature flag set for LOC-A1 only is stored per location, readable per location, and audited (73.762722ms)
+  ✖ TC-AD-09 a maintenance banner is visible on all three hosts without PHI and removed cleanly (155.287859ms)
+  ✔ TC-AD-10 flag change without a live elevation grant is refused (C1) (114.00483ms)
+  ﹣ TC-AD-11 integration health shows OK/failed correctly with a real failure injected [sandboxes] (0.155612ms) # BLOCKED: no Google, e-mail, SMS, push or analytics sandbox in ENV-INT/ci (C-10); health depends on a real vendor probe
+  ﹣ TC-AD-12 secrets are write-only: never displayed, logged or exported [secret store] (0.048411ms) # BLOCKED: no secret store (OutboundSecretStore) in ENV-INT/ci (INT-N8); the write cannot complete without it. Needs ENV-INT/staging
+  ✔ TC-AD-13 integration setting change is audited with who, what, before and after (29.658569ms)
+  ✔ TC-AD-14 compromised api: the api role cannot write an approval or an inbound-verification secret itself (23.278548ms)
+  ﹣ TC-AD-15 disabling an integration makes dependent features fail visibly [sandboxes] (0.117801ms) # BLOCKED: needs a working e-mail integration and booking confirmation against a sandbox (C-10)
+✖ TC-AD (1411.557308ms)
+▶ TC-API
+  ﹣ TC-API-01 every module returns the standard problem body [deployed stack] (0.670278ms) # BLOCKED: needs ENV-INT/staging with the fault-injection endpoint and every R1 module routable; see TC-API-02/10 for the ci-level body checks
+  ﹣ TC-API-09 contract test over the published OpenAPI documents [Schemathesis + contracts/openapi] (0.093455ms) # BLOCKED in this suite: run by tests/api/harness/schemathesis-run.mjs (QA-02) against the published documents, not by tests/api/platform
+  ✔ TC-API-02 401 without a session, 403 without the right, 404 for a patient outside the caller's scope; bodies are problem+json without PHI (126.345815ms)
+  ✔ TC-API-03 patient search is POST-only: PHI in a GET URL is refused (88.888743ms)
+  ✔ TC-API-04 PATCH without If-Match is 428, a stale If-Match is 412, the current one succeeds with a new ETag (patient record; notes route not in this stack) (105.826385ms)
+  ✔ TC-API-05 list limit is capped at 100 and a tampered cursor is refused (60.403877ms)
+  ✔ TC-API-06 Cache-Control: no-store on API responses (success, error, redirect, anonymous) (92.167816ms)
+  ✔ TC-API-07 above the per-principal write limit the next call is 429 kernel.rate_limited with Retry-After (724.70181ms)
+  ✔ TC-API-08 a body over 1 MB is 413; unknown fields: ignored on portal endpoints (46.043331ms)
+  ✔ TC-API-10 client release: missing and malformed are 400 kernel.client_release_unsupported with no side effect; exempt routes work without it; N-1/N/N+1 accepted (67.181264ms)
+  ✔ TC-API-10b the X-Request-Id of a request appears in the response and in the audit event it caused (74.336319ms)
+✔ TC-API (1388.514694ms)
+▶ TC-AU
+  ✔ setup: STF-DR-A1 is on the care team of PAT-01 (assignment rule, BQ-5) (20.367577ms)
+  ✔ TC-AU-01 chart view and patient search each create an audit event with user, time, IP/device and no clinical values (133.476896ms)
+  ﹣ TC-AU-01b chart export and print each create an audit event (0.229009ms) # NOT TESTABLE: the API has no chart export or print route in R1 (probed chart-export, chart-print, export: 404); the view and search half is TC-AU-01. Recorded as a coverage gap, not a pass
+  ✔ TC-AU-02 audit insert failure: the read fails and the change rolls back; with the fault removed it works (97.038085ms)
+  ✔ TC-AU-03 denial-write failure: the caller still gets the denial (fail closed) and the failure is logged (55.90267ms)
+  ✔ TC-AU-04 audit.require_bounded_tx: unset and over-bound refused (PA001), app_owner has no INSERT (42501), at-bound succeeds (44.344003ms)
+  ✔ TC-AU-05 nobody can edit or delete audit rows: not via API routes, not as any app_* role (the attempt is refused) (112.570718ms)
+  ✔ TC-AU-06 audit viewer: filters who/what/when, required fields shown, no PHI (202.741147ms)
+  ✔ TC-AU-07 audit export is an asynchronous, size-limited, audited job (127.754688ms)
+  ﹣ TC-AU-07b the export reaches ready and the requester downloads it (0.236474ms) # BLOCKED: the audit export sink (object store, infrastructure) is not provisioned in ENV-INT/ci; the worker's sink is a refusing port, so the job ends failed. Needs the staging object store
+  ﹣ TC-AU-08 tampering with a stored audit row is detected by the anchor verification (0.091493ms) # BLOCKED: audit.verify_anchors treats the Object Lock archive as the authority (INT04-F10 D-2); the archive store is infrastructure that does not exist in ENV-INT/ci
+  ﹣ TC-AU-09 retention value and archive job [OPS] (0.065162ms) # BLOCKED: audit/clinical retention period not decided at G2 (open decision); type OPS: DevOps evidence
+  ﹣ TC-AU-10 duplicate of TC-PERF-04: no result of its own (0.040707ms) # n/a: owned by TC-PERF-04 (ENV-LOAD, not provisioned)
+✔ TC-AU (796.766648ms)
+▶ TC-DOC
+  ﹣ TC-DOC-01 upload of a clean PDF: unavailable until scanned clean, then classified and confirmed [store + scanner] (0.653656ms) # BLOCKED: no object store, malware scanner or OCR vendor in ENV-INT/ci (C-01, C-10); the API composition has the refusing presigner. Needs ENV-INT/staging with the bucket and scanner
+  ﹣ TC-DOC-02 EICAR upload is quarantined, uploader told, clinicians cannot open it [real scanner] (0.094897ms) # BLOCKED: no object store, malware scanner or OCR vendor in ENV-INT/ci (C-01, C-10); the API composition has the refusing presigner. Needs ENV-INT/staging with the bucket and scanner
+  ﹣ TC-DOC-05 pre-signed URLs go to the object store, expire, and cannot read another patient's file [store] (0.082855ms) # BLOCKED: no object store, malware scanner or OCR vendor in ENV-INT/ci (C-01, C-10); the API composition has the refusing presigner. Needs ENV-INT/staging with the bucket and scanner
+  ﹣ TC-DOC-08 scanner outage: file stays unavailable, visible failure, no bypass [scanner] (0.100118ms) # BLOCKED: no object store, malware scanner or OCR vendor in ENV-INT/ci (C-01, C-10); the API composition has the refusing presigner. Needs ENV-INT/staging with the bucket and scanner
+  ✔ TC-DOC-00 observation: without a store an upload request is refused (never faked) (85.598411ms)
+  ✔ TC-DOC-03 disallowed type, double extension and oversize are rejected with a safe error (66.176548ms)
+  ✔ TC-DOC-04 deletion of a document under legal hold is refused with the reason recorded (171.336482ms)
+  ✔ TC-DOC-06 another patient's file ID is 404 and the attempt is logged (89.444306ms)
+  ✔ TC-DOC-07 deletion allowed only after the retention period and with no hold (D1 old, D2 young, D3 old+hold) (304.1539ms)
+✔ TC-DOC (720.019116ms)
+▶ TC-MG
+  ✔ TC-MG-01 registering a patient who matches an existing one warns (probable/exact match) and shows nothing out of scope (302.391151ms)
+  ✔ TC-MG-02 a merge needs a second approver; after approval the survivor holds both histories and the merge is audited (715.435537ms)
+  ✔ TC-MG-03 staff without patient.merge.request cannot request a merge (93.776002ms)
+  ✔ TC-MG-04 a requester who sees only one patient: the whole merge still completes (job runs with exact IDs) (654.568089ms)
+  ✔ TC-MG-06 an injected failure in a participant module rolls everything back, fails the request, and leaves no partial merge (687.335762ms)
+  ✔ TC-MG-07 after a merge, a stale session writing to the merged patient gets 409 patient.merged and nothing is written (740.034593ms)
+  ✔ TC-MG-12 two simultaneous merge requests that chain (A into B, B into C): one wins, the other is patient.already_merged or pending; no deadlock (785.461912ms)
+  ﹣ TC-MG-05 signed note keeps its original patient_id after merge [signed-note flow] (0.213961ms) # BLOCKED: needs a signed clinical note authored under the merged patient; the note authoring/sign flow is not driven by the platform harness (QA-04 owns clinical journeys)
+  ﹣ TC-MG-08 hold-vs-merge ordering [test hooks] (0.104496ms) # BLOCKED: needs controllable test hooks to order the hold and merge transactions; the product exposes none in ENV-INT/ci
+  ﹣ TC-MG-09 note-vs-merge ordering [test hooks] (0.173395ms) # BLOCKED: needs controllable test hooks to order transactions; none exposed
+  ﹣ TC-MG-10 job types declare on_merged; undeclared fails CI [registry check] (0.080001ms) # BLOCKED: needs the job-type on_merged registry check from CI; no runner for it in tests/api/platform
+  ﹣ TC-MG-11 addendum on a signed note of a merged patient [signed-note flow] (0.049583ms) # BLOCKED: depends on the signed-note flow (see TC-MG-05)
+  ﹣ TC-MG-13 chained merge visibility across locations and care-relationship end [multi-step location flow] (0.033433ms) # BLOCKED: needs location care-relationship end and new-location booking flows not driven by this harness
+  ﹣ TC-MG-14 merge of a 10x chart finishes within the 60 s bound or rolls back [volume dataset] (0.033623ms) # BLOCKED: needs the 10x ARCH 35.3 chart dataset generator; not in scope of this ticket's harness
+✔ TC-MG (3981.507147ms)
+▶ TC-MSG
+  ✔ TC-MSG-01 a task and a secure message reach the recipient, are audited, and no notice carries their content (4193.527432ms)
+  ✔ TC-MSG-02 a message or task cannot be sent or assigned to a user of another organisation (59.762133ms)
+  ✔ TC-MSG-03 patient messaging: N/A while D-5 keeps it off; the flag cannot be enabled and the route is not available (123.21431ms)
+  ✔ TC-MSG-04 a script string in a message is stored as text and served as inert JSON (91.082982ms)
+✔ TC-MSG (4468.952528ms)
+▶ TC-PP
+  ✔ TC-PP-01 the patient edits demographics, language, pharmacy and a contact; changes persist and are audited (137.678039ms)
+  ✔ TC-PP-02 hostile and invalid input is rejected or stored as inert text (172.296244ms)
+  ✔ TC-PP-04 a proxy-link request is refused (not queued) while the verification rules are undecided (D-7) (36.384269ms)
+  ﹣ TC-PP-03 proxy default view shows appointments only [proxy grant flow] (0.173846ms) # BLOCKED: needs a verified proxy grant, which cannot be created while D-7 is open; the isolation side is TC-AZ-14 (QA-02)
+  ﹣ TC-PP-05 age-out and revocation of a proxy [D-7 / G-07] (0.09518ms) # BLOCKED: rule values do not exist yet (D-7 / G-07); case written when decided
+  ﹣ TC-PP-06 patient completes the pre-visit request, questionnaire and e-signs; staff see status [clinical flow] (0.077015ms) # BLOCKED: the pre-visit request/questionnaire/e-sign journey is the QA-04 clinical suite and insurance-card upload needs the object store (C-01)
+  ﹣ TC-PP-07 partial completion shows "incomplete" and which items [clinical flow] (0.078236ms) # BLOCKED: same flow as TC-PP-06 (QA-04)
+✔ TC-PP (348.093406ms)
+▶ TC-PR
+  ✔ TC-PR-01 notification preferences: SMS off, email on, saved and read back after reload (117.331652ms)
+  ✖ TC-PR-02 export request: identity check, compliance sees it, assembled in chunks (each audited), delivered via the portal (678.813806ms)
+  ﹣ TC-PR-02b the finished export is downloaded through the portal with a short-lived link and no PHI in the e-mail (0.613882ms) # BLOCKED: no package store or presigner in ENV-INT/ci (C-01); the API composition has the refusing presigner. Needs ENV-INT/staging
+  ✔ TC-PR-03 deletion request is recorded and visible to compliance; nothing is deleted (D-8 open) (62.731625ms)
+  ✔ TC-PR-04 another patient's request and export cannot be read or downloaded (93.547996ms)
+  ✔ TC-PR-05 processing before the identity check is refused; a refusal needs a reason and is recorded (68.359625ms)
+✖ TC-PR (1022.924229ms)
+▶ TC-TH
+  ﹣ TC-TH-01 visit runs with both parties, notes pane doctor only [AUTO+H real devices] (0.610264ms) # BLOCKED: no video vendor selected (C-11) and no vendor sandbox (C-10); nothing here proves a real vendor
+  ✖ TC-TH-02 join page shows the time in the viewer zone and the clinic zone (needs the join page and an Eastern/Pacific browser pair) (165.84051ms)
+  ✖ TC-TH-03 another patient cannot join, view or check devices of someone else's session (and it is logged) (161.913845ms)
+  ﹣ TC-TH-04 vendor outage: visible failure, retry message, no data loss [AUTO against a vendor sandbox set to unavailable] (0.283722ms) # BLOCKED: no video vendor selected (C-11) and no vendor sandbox (C-10); nothing here proves a real vendor
+  ✖ TC-TH-05 join window: refused too early with the start time, joins at the window, refused after the end (182.998354ms)
+  ✔ TC-TH-06 licensing at booking: in-state allowed; out-of-state and non-operating state refused (placeholder states) (224.990946ms)
+  ✖ TC-TH-07 patient must confirm their state at join; outside the licensed states refused, inside joins (90.045123ms)
+  ✖ TC-TH-08 licence removed after the answer: join refused with a safe message; re-added: allowed; both audited (142.00578ms)
+✖ TC-TH (970.354832ms)
+▶ TC-BS
+  ✔ TC-BS-01 published pages exist and show services, doctors, locations from the real directory (112.967083ms)
+  ✔ TC-BS-02 the Book hand-off from a doctor page goes to my. with the service and doctor pre-selected (link check) (8.205897ms)
+  ✔ TC-BS-05 robots, sitemap, titles, descriptions and structured data are present and well-formed (12.223185ms)
+  ✔ TC-BS-06 (no-form half) the site accepts only GET/HEAD and sets no cookie; there is no contact form to abuse (3.913443ms)
+  ✔ TC-BS-07 no language switch leads to a broken page (English only) (9.848639ms)
+  ﹣ TC-BS-03 marketing edits and publishes a page without a developer [CMS + browser] (0.127119ms) # BLOCKED: needs the CMS with a marketing login (C-19 decides the content source; apps/cms is not a deployed service in ENV-INT/ci) and a human for the editing journey
+  ﹣ TC-BS-04 no health data in analytics events after consent [analytics sandbox + browser] (0.079048ms) # BLOCKED: needs Chrome network capture and an analytics sandbox; none is provisioned in ENV-INT/ci (ANALYTICS_SRC unset, so the site loads no analytics at all)
+  ﹣ TC-BS-08 consent banner: no analytics before consent, allowed after, choice remembered [browser] (0.086041ms) # BLOCKED: needs a browser session; the consent unit tests (apps/site/src/consent.test.ts) cover the logic only and are not a substitute
+✔ TC-BS (373.657793ms)
+ℹ tests 95
+ℹ suites 10
+ℹ pass 56
+ℹ fail 7
+ℹ cancelled 0
+ℹ skipped 32
+ℹ todo 0
+ℹ duration_ms 16270.608932
+
+✖ failing tests:
+
+test at tests/api/platform/admin.test.mjs:156:3
+✖ TC-AD-09 a maintenance banner is visible on all three hosts without PHI and removed cleanly (155.287859ms)
+  AssertionError [ERR_ASSERTION]: QA05-F06: the banner is readable on 0 of 3 hosts (none): no route returns banners to a portal
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/admin.test.mjs:179:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests/api/platform/privacy.test.mjs:34:3
+✖ TC-PR-02 export request: identity check, compliance sees it, assembled in chunks (each audited), delivered via the portal (678.813806ms)
+  AssertionError [ERR_ASSERTION]: QA05-F02: the export package ended 'failed' (privacy.contributor_missing); the request the patient sees stays 'in_progress'
+  
+  'failed' !== 'ready'
+  
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/privacy.test.mjs:53:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'failed',
+    expected: 'ready',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/api/platform/telehealth.test.mjs:30:3
+✖ TC-TH-02 join page shows the time in the viewer zone and the clinic zone (needs the join page and an Eastern/Pacific browser pair) (165.84051ms)
+  AssertionError [ERR_ASSERTION]: QA05-F01: GET /appointments/{id}/video-session answered 404 for the patient's own video visit (the telehealth routes are not mounted in the API composition)
+  
+  404 !== 200
+  
+      at sessionReachable (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/telehealth.test.mjs:23:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/telehealth.test.mjs:32:15)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 404,
+    expected: 200,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/api/platform/telehealth.test.mjs:37:3
+✖ TC-TH-03 another patient cannot join, view or check devices of someone else's session (and it is logged) (161.913845ms)
+  AssertionError [ERR_ASSERTION]: QA05-F01: GET /appointments/{id}/video-session answered 404 for the patient's own video visit (the telehealth routes are not mounted in the API composition)
+  
+  404 !== 200
+  
+      at sessionReachable (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/telehealth.test.mjs:23:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/telehealth.test.mjs:39:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 404,
+    expected: 200,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/api/platform/telehealth.test.mjs:60:3
+✖ TC-TH-05 join window: refused too early with the start time, joins at the window, refused after the end (182.998354ms)
+  AssertionError [ERR_ASSERTION]: QA05-F01: GET /appointments/{id}/video-session answered 404 for the patient's own video visit (the telehealth routes are not mounted in the API composition)
+  
+  404 !== 200
+  
+      at sessionReachable (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/telehealth.test.mjs:23:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/telehealth.test.mjs:62:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 404,
+    expected: 200,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/api/platform/telehealth.test.mjs:92:3
+✖ TC-TH-07 patient must confirm their state at join; outside the licensed states refused, inside joins (90.045123ms)
+  AssertionError [ERR_ASSERTION]: QA05-F01: GET /appointments/{id}/video-session answered 404 for the patient's own video visit (the telehealth routes are not mounted in the API composition)
+  
+  404 !== 200
+  
+      at sessionReachable (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/telehealth.test.mjs:23:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/telehealth.test.mjs:94:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 404,
+    expected: 200,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/api/platform/telehealth.test.mjs:104:3
+✖ TC-TH-08 licence removed after the answer: join refused with a safe message; re-added: allowed; both audited (142.00578ms)
+  AssertionError [ERR_ASSERTION]: QA05-F01: GET /appointments/{id}/video-session answered 404 for the patient's own video visit (the telehealth routes are not mounted in the API composition)
+  
+  404 !== 200
+  
+      at sessionReachable (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/telehealth.test.mjs:23:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/telehealth.test.mjs:106:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 404,
+    expected: 200,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

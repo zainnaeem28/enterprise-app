@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testsuite name="TC-AD" time="1.411557" disabled="0" errors="0" tests="15" failures="1" skipped="4" timestamp="2026-11-09T23:07:17.176Z" hostname="314866be9867">
+		<testcase name="TC-AD-01 clinics, rooms, hours and holidays are saved, audited with before/after, and visible in the catalogue" time="0.224064" classname="TC-AD" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/admin.test.mjs"/>
+		<testcase name="TC-AD-02 a service that reveals a condition needs a neutral patient-visible name, which is the only one patients see" time="0.087518" classname="TC-AD" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/admin.test.mjs"/>
+		<testcase name="TC-AD-03 booking policy: block-only works; a fee is stored and nothing is charged (D-3 default)" time="0.033566" classname="TC-AD" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/admin.test.mjs"/>
+		<testcase name="TC-AD-04 message templates: variables restricted to the allowlist; a free-text binding is rejected" time="0.000202" classname="TC-AD" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/admin.test.mjs">
+			<skipped type="skipped" message="NOT DELIVERED: the API has no message-template admin route (probed /admin/message-templates: 404; README BE-23 N-BE23-4 lists message templates as not built). Coverage gap recorded as QA05-F07, not a pass"/>
+		</testcase>
+		<testcase name="TC-AD-05 role assignment needs the second approver; no role is effective before approval" time="0.108765" classname="TC-AD" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/admin.test.mjs"/>
+		<testcase name="TC-AD-06 front desk cannot open admin routes" time="0.105837" classname="TC-AD" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/admin.test.mjs"/>
+		<testcase name="TC-AD-07 future-appointment cap set in admin applies at the boundary" time="0.261429" classname="TC-AD" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/admin.test.mjs"/>
+		<testcase name="TC-AD-08 a feature flag set for LOC-A1 only is stored per location, readable per location, and audited" time="0.073763" classname="TC-AD" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/admin.test.mjs"/>
+		<testcase name="TC-AD-09 a maintenance banner is visible on all three hosts without PHI and removed cleanly" time="0.155288" classname="TC-AD" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/admin.test.mjs" failure="QA05-F06: the banner is readable on 0 of 3 hosts (none): no route returns banners to a portal">
+			<failure type="testCodeFailure" message="QA05-F06: the banner is readable on 0 of 3 hosts (none): no route returns banners to a portal">
+[Error [ERR_TEST_FAILURE]: QA05-F06: the banner is readable on 0 of 3 hosts (none): no route returns banners to a portal] {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: AssertionError [ERR_ASSERTION]: QA05-F06: the banner is readable on 0 of 3 hosts (none): no route returns banners to a portal
+      at TestContext.&lt;anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/admin.test.mjs:179:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+}
+			</failure>
+		</testcase>
+		<testcase name="TC-AD-10 flag change without a live elevation grant is refused (C1)" time="0.114005" classname="TC-AD" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/admin.test.mjs"/>
+		<testcase name="TC-AD-11 integration health shows OK/failed correctly with a real failure injected [sandboxes]" time="0.000156" classname="TC-AD" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/admin.test.mjs">
+			<skipped type="skipped" message="BLOCKED: no Google, e-mail, SMS, push or analytics sandbox in ENV-INT/ci (C-10); health depends on a real vendor probe"/>
+		</testcase>
+		<testcase name="TC-AD-12 secrets are write-only: never displayed, logged or exported [secret store]" time="0.000048" classname="TC-AD" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/admin.test.mjs">
+			<skipped type="skipped" message="BLOCKED: no secret store (OutboundSecretStore) in ENV-INT/ci (INT-N8); the write cannot complete without it. Needs ENV-INT/staging"/>
+		</testcase>
+		<testcase name="TC-AD-13 integration setting change is audited with who, what, before and after" time="0.029659" classname="TC-AD" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/admin.test.mjs"/>
+		<testcase name="TC-AD-14 compromised api: the api role cannot write an approval or an inbound-verification secret itself" time="0.023279" classname="TC-AD" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/admin.test.mjs"/>
+		<testcase name="TC-AD-15 disabling an integration makes dependent features fail visibly [sandboxes]" time="0.000118" classname="TC-AD" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/admin.test.mjs">
+			<skipped type="skipped" message="BLOCKED: needs a working e-mail integration and booking confirmation against a sandbox (C-10)"/>
+		</testcase>
+	</testsuite>
+	<testsuite name="TC-API" time="1.388515" disabled="0" errors="0" tests="11" failures="0" skipped="2" timestamp="2026-11-09T23:07:18.661Z" hostname="314866be9867">
+		<testcase name="TC-API-01 every module returns the standard problem body [deployed stack]" time="0.000670" classname="TC-API" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/api.test.mjs">
+			<skipped type="skipped" message="BLOCKED: needs ENV-INT/staging with the fault-injection endpoint and every R1 module routable; see TC-API-02/10 for the ci-level body checks"/>
+		</testcase>
+		<testcase name="TC-API-09 contract test over the published OpenAPI documents [Schemathesis + contracts/openapi]" time="0.000093" classname="TC-API" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/api.test.mjs">
+			<skipped type="skipped" message="BLOCKED in this suite: run by tests/api/harness/schemathesis-run.mjs (QA-02) against the published documents, not by tests/api/platform"/>
+		</testcase>
+		<testcase name="TC-API-02 401 without a session, 403 without the right, 404 for a patient outside the caller's scope; bodies are problem+json without PHI" time="0.126346" classname="TC-API" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/api.test.mjs"/>
+		<testcase name="TC-API-03 patient search is POST-only: PHI in a GET URL is refused" time="0.088889" classname="TC-API" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/api.test.mjs"/>
+		<testcase name="TC-API-04 PATCH without If-Match is 428, a stale If-Match is 412, the current one succeeds with a new ETag (patient record; notes route not in this stack)" time="0.105826" classname="TC-API" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/api.test.mjs"/>
+		<testcase name="TC-API-05 list limit is capped at 100 and a tampered cursor is refused" time="0.060404" classname="TC-API" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/api.test.mjs"/>
+		<testcase name="TC-API-06 Cache-Control: no-store on API responses (success, error, redirect, anonymous)" time="0.092168" classname="TC-API" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/api.test.mjs"/>
+		<testcase name="TC-API-07 above the per-principal write limit the next call is 429 kernel.rate_limited with Retry-After" time="0.724702" classname="TC-API" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/api.test.mjs"/>
+		<testcase name="TC-API-08 a body over 1 MB is 413; unknown fields: ignored on portal endpoints" time="0.046043" classname="TC-API" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/api.test.mjs"/>
+		<testcase name="TC-API-10 client release: missing and malformed are 400 kernel.client_release_unsupported with no side effect; exempt routes work without it; N-1/N/N+1 accepted" time="0.067181" classname="TC-API" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/api.test.mjs"/>
+		<testcase name="TC-API-10b the X-Request-Id of a request appears in the response and in the audit event it caused" time="0.074336" classname="TC-API" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/api.test.mjs"/>
+	</testsuite>
+	<testsuite name="TC-AU" time="0.796767" disabled="0" errors="0" tests="13" failures="0" skipped="5" timestamp="2026-11-09T23:07:20.129Z" hostname="314866be9867">
+		<testcase name="setup: STF-DR-A1 is on the care team of PAT-01 (assignment rule, BQ-5)" time="0.020368" classname="TC-AU" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/audit.test.mjs"/>
+		<testcase name="TC-AU-01 chart view and patient search each create an audit event with user, time, IP/device and no clinical values" time="0.133477" classname="TC-AU" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/audit.test.mjs"/>
+		<testcase name="TC-AU-01b chart export and print each create an audit event" time="0.000229" classname="TC-AU" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/audit.test.mjs">
+			<skipped type="skipped" message="NOT TESTABLE: the API has no chart export or print route in R1 (probed chart-export, chart-print, export: 404); the view and search half is TC-AU-01. Recorded as a coverage gap, not a pass"/>
+		</testcase>
+		<testcase name="TC-AU-02 audit insert failure: the read fails and the change rolls back; with the fault removed it works" time="0.097038" classname="TC-AU" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/audit.test.mjs"/>
+		<testcase name="TC-AU-03 denial-write failure: the caller still gets the denial (fail closed) and the failure is logged" time="0.055903" classname="TC-AU" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/audit.test.mjs"/>
+		<testcase name="TC-AU-04 audit.require_bounded_tx: unset and over-bound refused (PA001), app_owner has no INSERT (42501), at-bound succeeds" time="0.044344" classname="TC-AU" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/audit.test.mjs"/>
+		<testcase name="TC-AU-05 nobody can edit or delete audit rows: not via API routes, not as any app_* role (the attempt is refused)" time="0.112571" classname="TC-AU" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/audit.test.mjs"/>
+		<testcase name="TC-AU-06 audit viewer: filters who/what/when, required fields shown, no PHI" time="0.202741" classname="TC-AU" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/audit.test.mjs"/>
+		<testcase name="TC-AU-07 audit export is an asynchronous, size-limited, audited job" time="0.127755" classname="TC-AU" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/audit.test.mjs"/>
+		<testcase name="TC-AU-07b the export reaches ready and the requester downloads it" time="0.000236" classname="TC-AU" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/audit.test.mjs">
+			<skipped type="skipped" message="BLOCKED: the audit export sink (object store, infrastructure) is not provisioned in ENV-INT/ci; the worker's sink is a refusing port, so the job ends failed. Needs the staging object store"/>
+		</testcase>
+		<testcase name="TC-AU-08 tampering with a stored audit row is detected by the anchor verification" time="0.000091" classname="TC-AU" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/audit.test.mjs">
+			<skipped type="skipped" message="BLOCKED: audit.verify_anchors treats the Object Lock archive as the authority (INT04-F10 D-2); the archive store is infrastructure that does not exist in ENV-INT/ci"/>
+		</testcase>
+		<testcase name="TC-AU-09 retention value and archive job [OPS]" time="0.000065" classname="TC-AU" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/audit.test.mjs">
+			<skipped type="skipped" message="BLOCKED: audit/clinical retention period not decided at G2 (open decision); type OPS: DevOps evidence"/>
+		</testcase>
+		<testcase name="TC-AU-10 duplicate of TC-PERF-04: no result of its own" time="0.000041" classname="TC-AU" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/audit.test.mjs">
+			<skipped type="skipped" message="n/a: owned by TC-PERF-04 (ENV-LOAD, not provisioned)"/>
+		</testcase>
+	</testsuite>
+	<testsuite name="TC-DOC" time="0.720019" disabled="0" errors="0" tests="9" failures="0" skipped="4" timestamp="2026-11-09T23:07:21.002Z" hostname="314866be9867">
+		<testcase name="TC-DOC-01 upload of a clean PDF: unavailable until scanned clean, then classified and confirmed [store + scanner]" time="0.000654" classname="TC-DOC" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/documents.test.mjs">
+			<skipped type="skipped" message="BLOCKED: no object store, malware scanner or OCR vendor in ENV-INT/ci (C-01, C-10); the API composition has the refusing presigner. Needs ENV-INT/staging with the bucket and scanner"/>
+		</testcase>
+		<testcase name="TC-DOC-02 EICAR upload is quarantined, uploader told, clinicians cannot open it [real scanner]" time="0.000095" classname="TC-DOC" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/documents.test.mjs">
+			<skipped type="skipped" message="BLOCKED: no object store, malware scanner or OCR vendor in ENV-INT/ci (C-01, C-10); the API composition has the refusing presigner. Needs ENV-INT/staging with the bucket and scanner"/>
+		</testcase>
+		<testcase name="TC-DOC-05 pre-signed URLs go to the object store, expire, and cannot read another patient's file [store]" time="0.000083" classname="TC-DOC" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/documents.test.mjs">
+			<skipped type="skipped" message="BLOCKED: no object store, malware scanner or OCR vendor in ENV-INT/ci (C-01, C-10); the API composition has the refusing presigner. Needs ENV-INT/staging with the bucket and scanner"/>
+		</testcase>
+		<testcase name="TC-DOC-08 scanner outage: file stays unavailable, visible failure, no bypass [scanner]" time="0.000100" classname="TC-DOC" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/documents.test.mjs">
+			<skipped type="skipped" message="BLOCKED: no object store, malware scanner or OCR vendor in ENV-INT/ci (C-01, C-10); the API composition has the refusing presigner. Needs ENV-INT/staging with the bucket and scanner"/>
+		</testcase>
+		<testcase name="TC-DOC-00 observation: without a store an upload request is refused (never faked)" time="0.085598" classname="TC-DOC" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/documents.test.mjs"/>
+		<testcase name="TC-DOC-03 disallowed type, double extension and oversize are rejected with a safe error" time="0.066177" classname="TC-DOC" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/documents.test.mjs"/>
+		<testcase name="TC-DOC-04 deletion of a document under legal hold is refused with the reason recorded" time="0.171336" classname="TC-DOC" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/documents.test.mjs"/>
+		<testcase name="TC-DOC-06 another patient's file ID is 404 and the attempt is logged" time="0.089444" classname="TC-DOC" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/documents.test.mjs"/>
+		<testcase name="TC-DOC-07 deletion allowed only after the retention period and with no hold (D1 old, D2 young, D3 old+hold)" time="0.304154" classname="TC-DOC" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/documents.test.mjs"/>
+	</testsuite>
+	<testsuite name="TC-MG" time="3.981507" disabled="0" errors="0" tests="14" failures="0" skipped="7" timestamp="2026-11-09T23:07:21.799Z" hostname="314866be9867">
+		<testcase name="TC-MG-01 registering a patient who matches an existing one warns (probable/exact match) and shows nothing out of scope" time="0.302391" classname="TC-MG" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/merge.test.mjs"/>
+		<testcase name="TC-MG-02 a merge needs a second approver; after approval the survivor holds both histories and the merge is audited" time="0.715436" classname="TC-MG" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/merge.test.mjs"/>
+		<testcase name="TC-MG-03 staff without patient.merge.request cannot request a merge" time="0.093776" classname="TC-MG" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/merge.test.mjs"/>
+		<testcase name="TC-MG-04 a requester who sees only one patient: the whole merge still completes (job runs with exact IDs)" time="0.654568" classname="TC-MG" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/merge.test.mjs"/>
+		<testcase name="TC-MG-06 an injected failure in a participant module rolls everything back, fails the request, and leaves no partial merge" time="0.687336" classname="TC-MG" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/merge.test.mjs"/>
+		<testcase name="TC-MG-07 after a merge, a stale session writing to the merged patient gets 409 patient.merged and nothing is written" time="0.740035" classname="TC-MG" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/merge.test.mjs"/>
+		<testcase name="TC-MG-12 two simultaneous merge requests that chain (A into B, B into C): one wins, the other is patient.already_merged or pending; no deadlock" time="0.785462" classname="TC-MG" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/merge.test.mjs"/>
+		<testcase name="TC-MG-05 signed note keeps its original patient_id after merge [signed-note flow]" time="0.000214" classname="TC-MG" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/merge.test.mjs">
+			<skipped type="skipped" message="BLOCKED: needs a signed clinical note authored under the merged patient; the note authoring/sign flow is not driven by the platform harness (QA-04 owns clinical journeys)"/>
+		</testcase>
+		<testcase name="TC-MG-08 hold-vs-merge ordering [test hooks]" time="0.000104" classname="TC-MG" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/merge.test.mjs">
+			<skipped type="skipped" message="BLOCKED: needs controllable test hooks to order the hold and merge transactions; the product exposes none in ENV-INT/ci"/>
+		</testcase>
+		<testcase name="TC-MG-09 note-vs-merge ordering [test hooks]" time="0.000173" classname="TC-MG" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/merge.test.mjs">
+			<skipped type="skipped" message="BLOCKED: needs controllable test hooks to order transactions; none exposed"/>
+		</testcase>
+		<testcase name="TC-MG-10 job types declare on_merged; undeclared fails CI [registry check]" time="0.000080" classname="TC-MG" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/merge.test.mjs">
+			<skipped type="skipped" message="BLOCKED: needs the job-type on_merged registry check from CI; no runner for it in tests/api/platform"/>
+		</testcase>
+		<testcase name="TC-MG-11 addendum on a signed note of a merged patient [signed-note flow]" time="0.000050" classname="TC-MG" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/merge.test.mjs">
+			<skipped type="skipped" message="BLOCKED: depends on the signed-note flow (see TC-MG-05)"/>
+		</testcase>
+		<testcase name="TC-MG-13 chained merge visibility across locations and care-relationship end [multi-step location flow]" time="0.000033" classname="TC-MG" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/merge.test.mjs">
+			<skipped type="skipped" message="BLOCKED: needs location care-relationship end and new-location booking flows not driven by this harness"/>
+		</testcase>
+		<testcase name="TC-MG-14 merge of a 10x chart finishes within the 60 s bound or rolls back [volume dataset]" time="0.000034" classname="TC-MG" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/merge.test.mjs">
+			<skipped type="skipped" message="BLOCKED: needs the 10x ARCH 35.3 chart dataset generator; not in scope of this ticket's harness"/>
+		</testcase>
+	</testsuite>
+	<testsuite name="TC-MSG" time="4.468953" disabled="0" errors="0" tests="4" failures="0" skipped="0" timestamp="2026-11-09T23:07:25.855Z" hostname="314866be9867">
+		<testcase name="TC-MSG-01 a task and a secure message reach the recipient, are audited, and no notice carries their content" time="4.193527" classname="TC-MSG" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/messaging.test.mjs"/>
+		<testcase name="TC-MSG-02 a message or task cannot be sent or assigned to a user of another organisation" time="0.059762" classname="TC-MSG" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/messaging.test.mjs"/>
+		<testcase name="TC-MSG-03 patient messaging: N/A while D-5 keeps it off; the flag cannot be enabled and the route is not available" time="0.123214" classname="TC-MSG" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/messaging.test.mjs"/>
+		<testcase name="TC-MSG-04 a script string in a message is stored as text and served as inert JSON" time="0.091083" classname="TC-MSG" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/messaging.test.mjs"/>
+	</testsuite>
+	<testsuite name="TC-PP" time="0.348093" disabled="0" errors="0" tests="7" failures="0" skipped="4" timestamp="2026-11-09T23:07:30.402Z" hostname="314866be9867">
+		<testcase name="TC-PP-01 the patient edits demographics, language, pharmacy and a contact; changes persist and are audited" time="0.137678" classname="TC-PP" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/patient-profile.test.mjs"/>
+		<testcase name="TC-PP-02 hostile and invalid input is rejected or stored as inert text" time="0.172296" classname="TC-PP" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/patient-profile.test.mjs"/>
+		<testcase name="TC-PP-04 a proxy-link request is refused (not queued) while the verification rules are undecided (D-7)" time="0.036384" classname="TC-PP" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/patient-profile.test.mjs"/>
+		<testcase name="TC-PP-03 proxy default view shows appointments only [proxy grant flow]" time="0.000174" classname="TC-PP" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/patient-profile.test.mjs">
+			<skipped type="skipped" message="BLOCKED: needs a verified proxy grant, which cannot be created while D-7 is open; the isolation side is TC-AZ-14 (QA-02)"/>
+		</testcase>
+		<testcase name="TC-PP-05 age-out and revocation of a proxy [D-7 / G-07]" time="0.000095" classname="TC-PP" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/patient-profile.test.mjs">
+			<skipped type="skipped" message="BLOCKED: rule values do not exist yet (D-7 / G-07); case written when decided"/>
+		</testcase>
+		<testcase name="TC-PP-06 patient completes the pre-visit request, questionnaire and e-signs; staff see status [clinical flow]" time="0.000077" classname="TC-PP" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/patient-profile.test.mjs">
+			<skipped type="skipped" message="BLOCKED: the pre-visit request/questionnaire/e-sign journey is the QA-04 clinical suite and insurance-card upload needs the object store (C-01)"/>
+		</testcase>
+		<testcase name="TC-PP-07 partial completion shows &quot;incomplete&quot; and which items [clinical flow]" time="0.000078" classname="TC-PP" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/patient-profile.test.mjs">
+			<skipped type="skipped" message="BLOCKED: same flow as TC-PP-06 (QA-04)"/>
+		</testcase>
+	</testsuite>
+	<testsuite name="TC-PR" time="1.022924" disabled="0" errors="0" tests="6" failures="1" skipped="1" timestamp="2026-11-09T23:07:30.829Z" hostname="314866be9867">
+		<testcase name="TC-PR-01 notification preferences: SMS off, email on, saved and read back after reload" time="0.117332" classname="TC-PR" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/privacy.test.mjs"/>
+		<testcase name="TC-PR-02 export request: identity check, compliance sees it, assembled in chunks (each audited), delivered via the portal" time="0.678814" classname="TC-PR" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/privacy.test.mjs" failure="QA05-F02: the export package ended 'failed' (privacy.contributor_missing); the request the patient sees stays 'in_progress'&#10;&#10;'failed' !== 'ready'&#10;">
+			<failure type="testCodeFailure" message="QA05-F02: the export package ended 'failed' (privacy.contributor_missing); the request the patient sees stays 'in_progress'&#10;&#10;'failed' !== 'ready'">
+[Error [ERR_TEST_FAILURE]: QA05-F02: the export package ended 'failed' (privacy.contributor_missing); the request the patient sees stays 'in_progress'
+
+'failed' !== 'ready'
+] {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: AssertionError [ERR_ASSERTION]: QA05-F02: the export package ended 'failed' (privacy.contributor_missing); the request the patient sees stays 'in_progress'
+  
+  'failed' !== 'ready'
+  
+      at TestContext.&lt;anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/privacy.test.mjs:53:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'failed',
+    expected: 'ready',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+}
+			</failure>
+		</testcase>
+		<testcase name="TC-PR-02b the finished export is downloaded through the portal with a short-lived link and no PHI in the e-mail" time="0.000614" classname="TC-PR" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/privacy.test.mjs">
+			<skipped type="skipped" message="BLOCKED: no package store or presigner in ENV-INT/ci (C-01); the API composition has the refusing presigner. Needs ENV-INT/staging"/>
+		</testcase>
+		<testcase name="TC-PR-03 deletion request is recorded and visible to compliance; nothing is deleted (D-8 open)" time="0.062732" classname="TC-PR" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/privacy.test.mjs"/>
+		<testcase name="TC-PR-04 another patient's request and export cannot be read or downloaded" time="0.093548" classname="TC-PR" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/privacy.test.mjs"/>
+		<testcase name="TC-PR-05 processing before the identity check is refused; a refusal needs a reason and is recorded" time="0.068360" classname="TC-PR" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/privacy.test.mjs"/>
+	</testsuite>
+	<testsuite name="TC-TH" time="0.970355" disabled="0" errors="0" tests="8" failures="5" skipped="2" timestamp="2026-11-09T23:07:31.929Z" hostname="314866be9867">
+		<testcase name="TC-TH-01 visit runs with both parties, notes pane doctor only [AUTO+H real devices]" time="0.000610" classname="TC-TH" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/telehealth.test.mjs">
+			<skipped type="skipped" message="BLOCKED: no video vendor selected (C-11) and no vendor sandbox (C-10); nothing here proves a real vendor"/>
+		</testcase>
+		<testcase name="TC-TH-02 join page shows the time in the viewer zone and the clinic zone (needs the join page and an Eastern/Pacific browser pair)" time="0.165841" classname="TC-TH" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/telehealth.test.mjs" failure="QA05-F01: GET /appointments/{id}/video-session answered 404 for the patient's own video visit (the telehealth routes are not mounted in the API composition)&#10;&#10;404 !== 200&#10;">
+			<failure type="testCodeFailure" message="QA05-F01: GET /appointments/{id}/video-session answered 404 for the patient's own video visit (the telehealth routes are not mounted in the API composition)&#10;&#10;404 !== 200">
+[Error [ERR_TEST_FAILURE]: QA05-F01: GET /appointments/{id}/video-session answered 404 for the patient's own video visit (the telehealth routes are not mounted in the API composition)
+
+404 !== 200
+] {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: AssertionError [ERR_ASSERTION]: QA05-F01: GET /appointments/{id}/video-session answered 404 for the patient's own video visit (the telehealth routes are not mounted in the API composition)
+  
+  404 !== 200
+  
+      at sessionReachable (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/telehealth.test.mjs:23:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.&lt;anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/telehealth.test.mjs:32:15)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 404,
+    expected: 200,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+}
+			</failure>
+		</testcase>
+		<testcase name="TC-TH-03 another patient cannot join, view or check devices of someone else's session (and it is logged)" time="0.161914" classname="TC-TH" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/telehealth.test.mjs" failure="QA05-F01: GET /appointments/{id}/video-session answered 404 for the patient's own video visit (the telehealth routes are not mounted in the API composition)&#10;&#10;404 !== 200&#10;">
+			<failure type="testCodeFailure" message="QA05-F01: GET /appointments/{id}/video-session answered 404 for the patient's own video visit (the telehealth routes are not mounted in the API composition)&#10;&#10;404 !== 200">
+[Error [ERR_TEST_FAILURE]: QA05-F01: GET /appointments/{id}/video-session answered 404 for the patient's own video visit (the telehealth routes are not mounted in the API composition)
+
+404 !== 200
+] {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: AssertionError [ERR_ASSERTION]: QA05-F01: GET /appointments/{id}/video-session answered 404 for the patient's own video visit (the telehealth routes are not mounted in the API composition)
+  
+  404 !== 200
+  
+      at sessionReachable (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/telehealth.test.mjs:23:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.&lt;anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/telehealth.test.mjs:39:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 404,
+    expected: 200,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+}
+			</failure>
+		</testcase>
+		<testcase name="TC-TH-04 vendor outage: visible failure, retry message, no data loss [AUTO against a vendor sandbox set to unavailable]" time="0.000284" classname="TC-TH" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/telehealth.test.mjs">
+			<skipped type="skipped" message="BLOCKED: no video vendor selected (C-11) and no vendor sandbox (C-10); nothing here proves a real vendor"/>
+		</testcase>
+		<testcase name="TC-TH-05 join window: refused too early with the start time, joins at the window, refused after the end" time="0.182998" classname="TC-TH" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/telehealth.test.mjs" failure="QA05-F01: GET /appointments/{id}/video-session answered 404 for the patient's own video visit (the telehealth routes are not mounted in the API composition)&#10;&#10;404 !== 200&#10;">
+			<failure type="testCodeFailure" message="QA05-F01: GET /appointments/{id}/video-session answered 404 for the patient's own video visit (the telehealth routes are not mounted in the API composition)&#10;&#10;404 !== 200">
+[Error [ERR_TEST_FAILURE]: QA05-F01: GET /appointments/{id}/video-session answered 404 for the patient's own video visit (the telehealth routes are not mounted in the API composition)
+
+404 !== 200
+] {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: AssertionError [ERR_ASSERTION]: QA05-F01: GET /appointments/{id}/video-session answered 404 for the patient's own video visit (the telehealth routes are not mounted in the API composition)
+  
+  404 !== 200
+  
+      at sessionReachable (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/telehealth.test.mjs:23:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.&lt;anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/telehealth.test.mjs:62:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 404,
+    expected: 200,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+}
+			</failure>
+		</testcase>
+		<testcase name="TC-TH-06 licensing at booking: in-state allowed; out-of-state and non-operating state refused (placeholder states)" time="0.224991" classname="TC-TH" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/telehealth.test.mjs"/>
+		<testcase name="TC-TH-07 patient must confirm their state at join; outside the licensed states refused, inside joins" time="0.090045" classname="TC-TH" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/telehealth.test.mjs" failure="QA05-F01: GET /appointments/{id}/video-session answered 404 for the patient's own video visit (the telehealth routes are not mounted in the API composition)&#10;&#10;404 !== 200&#10;">
+			<failure type="testCodeFailure" message="QA05-F01: GET /appointments/{id}/video-session answered 404 for the patient's own video visit (the telehealth routes are not mounted in the API composition)&#10;&#10;404 !== 200">
+[Error [ERR_TEST_FAILURE]: QA05-F01: GET /appointments/{id}/video-session answered 404 for the patient's own video visit (the telehealth routes are not mounted in the API composition)
+
+404 !== 200
+] {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: AssertionError [ERR_ASSERTION]: QA05-F01: GET /appointments/{id}/video-session answered 404 for the patient's own video visit (the telehealth routes are not mounted in the API composition)
+  
+  404 !== 200
+  
+      at sessionReachable (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/telehealth.test.mjs:23:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.&lt;anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/telehealth.test.mjs:94:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 404,
+    expected: 200,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+}
+			</failure>
+		</testcase>
+		<testcase name="TC-TH-08 licence removed after the answer: join refused with a safe message; re-added: allowed; both audited" time="0.142006" classname="TC-TH" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/telehealth.test.mjs" failure="QA05-F01: GET /appointments/{id}/video-session answered 404 for the patient's own video visit (the telehealth routes are not mounted in the API composition)&#10;&#10;404 !== 200&#10;">
+			<failure type="testCodeFailure" message="QA05-F01: GET /appointments/{id}/video-session answered 404 for the patient's own video visit (the telehealth routes are not mounted in the API composition)&#10;&#10;404 !== 200">
+[Error [ERR_TEST_FAILURE]: QA05-F01: GET /appointments/{id}/video-session answered 404 for the patient's own video visit (the telehealth routes are not mounted in the API composition)
+
+404 !== 200
+] {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: AssertionError [ERR_ASSERTION]: QA05-F01: GET /appointments/{id}/video-session answered 404 for the patient's own video visit (the telehealth routes are not mounted in the API composition)
+  
+  404 !== 200
+  
+      at sessionReachable (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/telehealth.test.mjs:23:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.&lt;anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/api/platform/telehealth.test.mjs:106:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 404,
+    expected: 200,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+}
+			</failure>
+		</testcase>
+	</testsuite>
+	<testsuite name="TC-BS" time="0.373658" disabled="0" errors="0" tests="8" failures="0" skipped="3" timestamp="2026-11-09T23:07:32.976Z" hostname="314866be9867">
+		<testcase name="TC-BS-01 published pages exist and show services, doctors, locations from the real directory" time="0.112967" classname="TC-BS" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/e2e/site/site.test.mjs"/>
+		<testcase name="TC-BS-02 the Book hand-off from a doctor page goes to my. with the service and doctor pre-selected (link check)" time="0.008206" classname="TC-BS" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/e2e/site/site.test.mjs"/>
+		<testcase name="TC-BS-05 robots, sitemap, titles, descriptions and structured data are present and well-formed" time="0.012223" classname="TC-BS" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/e2e/site/site.test.mjs"/>
+		<testcase name="TC-BS-06 (no-form half) the site accepts only GET/HEAD and sets no cookie; there is no contact form to abuse" time="0.003913" classname="TC-BS" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/e2e/site/site.test.mjs"/>
+		<testcase name="TC-BS-07 no language switch leads to a broken page (English only)" time="0.009849" classname="TC-BS" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/e2e/site/site.test.mjs"/>
+		<testcase name="TC-BS-03 marketing edits and publishes a page without a developer [CMS + browser]" time="0.000127" classname="TC-BS" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/e2e/site/site.test.mjs">
+			<skipped type="skipped" message="BLOCKED: needs the CMS with a marketing login (C-19 decides the content source; apps/cms is not a deployed service in ENV-INT/ci) and a human for the editing journey"/>
+		</testcase>
+		<testcase name="TC-BS-04 no health data in analytics events after consent [analytics sandbox + browser]" time="0.000079" classname="TC-BS" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/e2e/site/site.test.mjs">
+			<skipped type="skipped" message="BLOCKED: needs Chrome network capture and an analytics sandbox; none is provisioned in ENV-INT/ci (ANALYTICS_SRC unset, so the site loads no analytics at all)"/>
+		</testcase>
+		<testcase name="TC-BS-08 consent banner: no analytics before consent, allowed after, choice remembered [browser]" time="0.000086" classname="TC-BS" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-143-sdlc-ticket-qa-05-automated-cases-telehealth-audit-documents-privacy-admin-brand-site-messaging-merge-api-conv/tests/e2e/site/site.test.mjs">
+			<skipped type="skipped" message="BLOCKED: needs a browser session; the consent unit tests (apps/site/src/consent.test.ts) cover the logic only and are not a substitute"/>
+		</testcase>
+	</testsuite>
+	<!-- tests 95 -->
+	<!-- suites 10 -->
+	<!-- pass 56 -->
+	<!-- fail 7 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 32 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 16270.608932 -->
+</testsuites>

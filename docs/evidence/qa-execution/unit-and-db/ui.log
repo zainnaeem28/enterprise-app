@@ -1,0 +1,16 @@
+$ NODE_ENV=test vitest run --reporter=default --reporter=junit --outputFile.junit="${JUNIT_DIR:-.junit}/ui.xml"
+
+ RUN  v5.1.0 /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-29-sdlc-qa-execution-execute-full-acceptance-cases-and-end-to-end-journeys/packages/ui
+
+ ✓ src/tokens.test.ts (39 tests) 24ms
+ ✓ src/copy.test.tsx (26 tests) 368ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+ ✓ src/components.test.tsx (107 tests) 1493ms
+
+ Test Files  3 passed (3)
+      Tests  172 passed (172)
+   Start at  10:18:22
+   Duration  3.12s (environment 38%, tests 37%, setup 11%, transform 8%, import 7%)
+
+JUNIT report written to /tmp/qa-ev/ui.xml

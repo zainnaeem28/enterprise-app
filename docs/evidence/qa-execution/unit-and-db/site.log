@@ -1,0 +1,22 @@
+$ NODE_ENV=test vitest run --reporter=default --reporter=junit --outputFile.junit="${JUNIT_DIR:-.junit}/site.xml"
+
+ RUN  v5.1.0 /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-29-sdlc-qa-execution-execute-full-acceptance-cases-and-end-to-end-journeys/apps/site
+
+ ✓ src/directory.test.ts (8 tests) 49ms
+ ✓ src/server.test.ts (19 tests) 676ms
+ ✓ src/consent.test.ts (7 tests) 56ms
+ ✓ src/seo.test.ts (4 tests) 8ms
+ ✓ src/handoff.test.ts (3 tests) 5ms
+ ✓ src/a11y.test.tsx (15 tests) 1116ms
+   ✓ axe (jsdom) on every page state (13)
+     ✓ home 387ms
+
+ Test Files  6 passed (6)
+      Tests  56 passed (56)
+   Start at  10:19:00
+   Duration  3.07s (environment 29%, tests 29%, setup 19%, transform 17%, import 6%, worker 1%)
+
+    Isolate  6 workers spawned · ~482ms startup each (spawn + environment, per file)
+             at least ~482ms faster with isolate: false — reuses workers across files instead of one per file
+
+JUNIT report written to /tmp/qa-ev/site.xml
