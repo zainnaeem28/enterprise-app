@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="88" failures="0" errors="0" time="0.233830499">
+    <testsuite name="src/admin/SignIn.test.tsx" timestamp="2026-11-10T13:38:18.671Z" hostname="314866be9867" tests="3" failures="0" errors="0" skipped="0" time="0.008476797">
+        <testcase classname="src/admin/SignIn.test.tsx" name="SignInView &gt; shows an accessible generic alert when sign-in failed" time="0.006512271">
+        </testcase>
+        <testcase classname="src/admin/SignIn.test.tsx" name="SignInView &gt; shows no alert on a normal visit" time="0.000573807">
+        </testcase>
+        <testcase classname="src/admin/SignIn.test.tsx" name="SignInView &gt; does not reveal why the denial happened" time="0.000215263">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/admin/preview.test.ts" timestamp="2026-11-10T13:38:18.672Z" hostname="314866be9867" tests="4" failures="0" errors="0" skipped="0" time="0.005320063">
+        <testcase classname="src/admin/preview.test.ts" name="preview token &gt; round-trips and expires" time="0.002394103">
+        </testcase>
+        <testcase classname="src/admin/preview.test.ts" name="preview token &gt; rejects a wrong secret, a tampered body and malformed input" time="0.000434385">
+        </testcase>
+        <testcase classname="src/admin/preview.test.ts" name="preview token &gt; refuses a slug that is not a clean path" time="0.000775666">
+        </testcase>
+        <testcase classname="src/admin/preview.test.ts" name="preview token &gt; builds a link on the site origin only" time="0.000512191">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/auth/endpoints.test.ts" timestamp="2026-11-10T13:38:18.673Z" hostname="314866be9867" tests="6" failures="0" errors="0" skipped="0" time="0.013857474">
+        <testcase classname="src/auth/endpoints.test.ts" name="GET /oauth/google/start &gt; redirects to Google with a sealed, HttpOnly, Secure, short-lived transaction cookie" time="0.005026773">
+        </testcase>
+        <testcase classname="src/auth/endpoints.test.ts" name="GET /oauth/google/callback &gt; denies a callback with no transaction cookie (CSRF / forged link)" time="0.001291643">
+        </testcase>
+        <testcase classname="src/auth/endpoints.test.ts" name="GET /oauth/google/callback &gt; denies a state that does not match the cookie" time="0.001123007">
+        </testcase>
+        <testcase classname="src/auth/endpoints.test.ts" name="GET /oauth/google/callback &gt; denies a tampered transaction cookie" time="0.000871616">
+        </testcase>
+        <testcase classname="src/auth/endpoints.test.ts" name="GET /oauth/google/callback &gt; denies and creates no user when the Google exchange fails" time="0.003306685">
+        </testcase>
+        <testcase classname="src/auth/endpoints.test.ts" name="GET /oauth/google/callback &gt; clears the transaction cookie on every outcome" time="0.000641454">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/auth/google.test.ts" timestamp="2026-11-10T13:38:18.674Z" hostname="314866be9867" tests="20" failures="0" errors="0" skipped="0" time="0.150379752">
+        <testcase classname="src/auth/google.test.ts" name="verifyGoogleIdToken &gt; accepts a valid marketing identity" time="0.00636762">
+        </testcase>
+        <testcase classname="src/auth/google.test.ts" name="verifyGoogleIdToken &gt; lower-cases the e-mail before the allow-list check" time="0.002225898">
+        </testcase>
+        <testcase classname="src/auth/google.test.ts" name="verifyGoogleIdToken &gt; rejects a token signed by another key" time="0.004152302">
+        </testcase>
+        <testcase classname="src/auth/google.test.ts" name="verifyGoogleIdToken &gt; rejects another OAuth client (audience), e.g. a portal client" time="0.001410476">
+        </testcase>
+        <testcase classname="src/auth/google.test.ts" name="verifyGoogleIdToken &gt; rejects a wrong issuer" time="0.001438268">
+        </testcase>
+        <testcase classname="src/auth/google.test.ts" name="verifyGoogleIdToken &gt; rejects an expired token" time="0.001229056">
+        </testcase>
+        <testcase classname="src/auth/google.test.ts" name="verifyGoogleIdToken &gt; rejects garbage" time="0.000229712">
+        </testcase>
+        <testcase classname="src/auth/google.test.ts" name="verifyGoogleIdToken &gt; rejects a replayed token with a different nonce" time="0.003580919">
+        </testcase>
+        <testcase classname="src/auth/google.test.ts" name="verifyGoogleIdToken &gt; rejects a missing nonce" time="0.001353741">
+        </testcase>
+        <testcase classname="src/auth/google.test.ts" name="verifyGoogleIdToken &gt; rejects an unverified e-mail" time="0.00147558">
+        </testcase>
+        <testcase classname="src/auth/google.test.ts" name="verifyGoogleIdToken &gt; rejects a personal Google account (no hd)" time="0.001464478">
+        </testcase>
+        <testcase classname="src/auth/google.test.ts" name="verifyGoogleIdToken &gt; rejects another Workspace domain" time="0.001246108">
+        </testcase>
+        <testcase classname="src/auth/google.test.ts" name="verifyGoogleIdToken &gt; rejects a matching hd with a foreign e-mail domain" time="0.001312664">
+        </testcase>
+        <testcase classname="src/auth/google.test.ts" name="verifyGoogleIdToken &gt; rejects a domain member who is not in the marketing group" time="0.001186457">
+        </testcase>
+        <testcase classname="src/auth/google.test.ts" name="authorization request &gt; uses authorization code + PKCE S256 + state + nonce and restricts the hosted domain" time="0.000989718">
+        </testcase>
+        <testcase classname="src/auth/google.test.ts" name="authorization request &gt; matches the RFC 7636 S256 test vector" time="0.000126367">
+        </testcase>
+        <testcase classname="src/auth/google.test.ts" name="authorization request &gt; generates unguessable distinct values" time="0.000387747">
+        </testcase>
+        <testcase classname="src/auth/google.test.ts" name="authorization request &gt; compares state in constant time and rejects empty / unequal lengths" time="0.000144071">
+        </testcase>
+        <testcase classname="src/auth/google.test.ts" name="exchangeCode &gt; posts the code with the PKCE verifier and returns the id_token" time="0.016973181">
+        </testcase>
+        <testcase classname="src/auth/google.test.ts" name="exchangeCode &gt; denies on a failed exchange or a response without id_token" time="0.000823766">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/auth/session.test.ts" timestamp="2026-11-10T13:38:18.677Z" hostname="314866be9867" tests="5" failures="0" errors="0" skipped="0" time="0.029972765">
+        <testcase classname="src/auth/session.test.ts" name="session cookie &gt; is named so Payload logout expires it, and is HttpOnly Secure SameSite=Lax" time="0.002077959">
+        </testcase>
+        <testcase classname="src/auth/session.test.ts" name="session cookie &gt; round-trips, expires, and rejects tampering or the wrong secret" time="0.00614364">
+        </testcase>
+        <testcase classname="src/auth/session.test.ts" name="sessionStrategy &gt; authenticates an allow-listed editor" time="0.017279286">
+        </testcase>
+        <testcase classname="src/auth/session.test.ts" name="sessionStrategy &gt; ends access immediately when the person leaves the marketing allow-list" time="0.00139103">
+        </testcase>
+        <testcase classname="src/auth/session.test.ts" name="sessionStrategy &gt; is anonymous without a valid cookie or when the user row is gone" time="0.001593179">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/collections/collections.test.ts" timestamp="2026-11-10T13:38:18.677Z" hostname="314866be9867" tests="12" failures="0" errors="0" skipped="0" time="0.008919197">
+        <testcase classname="src/collections/collections.test.ts" name="content collections &gt; pages: anonymous visitors read only published documents; editors read everything" time="0.001876321">
+        </testcase>
+        <testcase classname="src/collections/collections.test.ts" name="content collections &gt; banners: anonymous visitors read only published documents; editors read everything" time="0.000260659">
+        </testcase>
+        <testcase classname="src/collections/collections.test.ts" name="content collections &gt; faqs: anonymous visitors read only published documents; editors read everything" time="0.000195336">
+        </testcase>
+        <testcase classname="src/collections/collections.test.ts" name="content collections &gt; pages: only a signed-in editor can write, and drafts + publish are on" time="0.000384863">
+        </testcase>
+        <testcase classname="src/collections/collections.test.ts" name="content collections &gt; banners: only a signed-in editor can write, and drafts + publish are on" time="0.000233578">
+        </testcase>
+        <testcase classname="src/collections/collections.test.ts" name="content collections &gt; faqs: only a signed-in editor can write, and drafts + publish are on" time="0.000263745">
+        </testcase>
+        <testcase classname="src/collections/collections.test.ts" name="content collections &gt; has no field that could hold patient data (public content only)" time="0.000328155">
+        </testcase>
+        <testcase classname="src/collections/collections.test.ts" name="content collections &gt; pages require a validated unique slug" time="0.000699444">
+        </testcase>
+        <testcase classname="src/collections/collections.test.ts" name="content collections &gt; banner links must be https or site-relative" time="0.000363822">
+        </testcase>
+        <testcase classname="src/collections/collections.test.ts" name="users (editors) &gt; has no local password strategy and no API-created or edited accounts" time="0.000364153">
+        </testcase>
+        <testcase classname="src/collections/collections.test.ts" name="users (editors) &gt; exposes exactly the two Google endpoints" time="0.000706747">
+        </testcase>
+        <testcase classname="src/collections/collections.test.ts" name="pages preview link &gt; opens the brand site /preview with a signed short-lived token for that slug" time="0.001742119">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/lib/env.test.ts" timestamp="2026-11-10T13:38:18.680Z" hostname="314866be9867" tests="21" failures="0" errors="0" skipped="0" time="0.008184868">
+        <testcase classname="src/lib/env.test.ts" name="loadCmsEnv &gt; loads a complete marketing-account environment" time="0.00224875">
+        </testcase>
+        <testcase classname="src/lib/env.test.ts" name="loadCmsEnv &gt; refuses to start when DATABASE_URL (production database access) is present" time="0.000732374">
+        </testcase>
+        <testcase classname="src/lib/env.test.ts" name="loadCmsEnv &gt; refuses to start when PRODUCTION_DATABASE_URL (production database access) is present" time="0.000187812">
+        </testcase>
+        <testcase classname="src/lib/env.test.ts" name="loadCmsEnv &gt; refuses to start when APP_DATABASE_URL (production database access) is present" time="0.00017016">
+        </testcase>
+        <testcase classname="src/lib/env.test.ts" name="loadCmsEnv &gt; refuses to start when PGHOST (production database access) is present" time="0.000189505">
+        </testcase>
+        <testcase classname="src/lib/env.test.ts" name="loadCmsEnv &gt; refuses to start when PGPASSWORD (production database access) is present" time="0.000164289">
+        </testcase>
+        <testcase classname="src/lib/env.test.ts" name="loadCmsEnv &gt; refuses to start when PGUSER (production database access) is present" time="0.000166032">
+        </testcase>
+        <testcase classname="src/lib/env.test.ts" name="loadCmsEnv &gt; refuses to start when PGDATABASE (production database access) is present" time="0.000177573">
+        </testcase>
+        <testcase classname="src/lib/env.test.ts" name="loadCmsEnv &gt; refuses to start when PGSERVICEFILE (production database access) is present" time="0.000190166">
+        </testcase>
+        <testcase classname="src/lib/env.test.ts" name="loadCmsEnv &gt; refuses to start when PGPASSFILE (production database access) is present" time="0.00025511">
+        </testcase>
+        <testcase classname="src/lib/env.test.ts" name="loadCmsEnv &gt; ignores forbidden variables that are empty strings" time="0.000283752">
+        </testcase>
+        <testcase classname="src/lib/env.test.ts" name="loadCmsEnv &gt; requires a dedicated CMS database role" time="0.000374704">
+        </testcase>
+        <testcase classname="src/lib/env.test.ts" name="loadCmsEnv &gt; requires PAYLOAD_SECRET" time="0.000205856">
+        </testcase>
+        <testcase classname="src/lib/env.test.ts" name="loadCmsEnv &gt; requires CMS_PREVIEW_SECRET" time="0.000116118">
+        </testcase>
+        <testcase classname="src/lib/env.test.ts" name="loadCmsEnv &gt; requires CMS_DATABASE_URL" time="0.000118722">
+        </testcase>
+        <testcase classname="src/lib/env.test.ts" name="loadCmsEnv &gt; requires CMS_GOOGLE_CLIENT_ID" time="0.000141526">
+        </testcase>
+        <testcase classname="src/lib/env.test.ts" name="loadCmsEnv &gt; requires CMS_GOOGLE_CLIENT_SECRET" time="0.000142297">
+        </testcase>
+        <testcase classname="src/lib/env.test.ts" name="loadCmsEnv &gt; requires CMS_ALLOWED_EMAILS" time="0.000131076">
+        </testcase>
+        <testcase classname="src/lib/env.test.ts" name="loadCmsEnv &gt; rejects short or identical secrets" time="0.000225924">
+        </testcase>
+        <testcase classname="src/lib/env.test.ts" name="loadCmsEnv &gt; requires https in production but allows localhost http in development" time="0.000333236">
+        </testcase>
+        <testcase classname="src/lib/env.test.ts" name="loadCmsEnv &gt; bounds the preview and session lifetimes" time="0.000240471">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/lib/slug.test.ts" timestamp="2026-11-10T13:38:18.684Z" hostname="314866be9867" tests="17" failures="0" errors="0" skipped="0" time="0.008719583">
+        <testcase classname="src/lib/slug.test.ts" name="validateSlug &gt; accepts about" time="0.002051951">
+        </testcase>
+        <testcase classname="src/lib/slug.test.ts" name="validateSlug &gt; accepts services/cardiology" time="0.000247444">
+        </testcase>
+        <testcase classname="src/lib/slug.test.ts" name="validateSlug &gt; accepts a-1" time="0.000150162">
+        </testcase>
+        <testcase classname="src/lib/slug.test.ts" name="validateSlug &gt; rejects &quot;&quot;" time="0.000749306">
+        </testcase>
+        <testcase classname="src/lib/slug.test.ts" name="validateSlug &gt; rejects &quot;About&quot;" time="0.00022906">
+        </testcase>
+        <testcase classname="src/lib/slug.test.ts" name="validateSlug &gt; rejects &quot;a b&quot;" time="0.00019192">
+        </testcase>
+        <testcase classname="src/lib/slug.test.ts" name="validateSlug &gt; rejects &quot;/x&quot;" time="0.000179867">
+        </testcase>
+        <testcase classname="src/lib/slug.test.ts" name="validateSlug &gt; rejects &quot;x/&quot;" time="0.0001489">
+        </testcase>
+        <testcase classname="src/lib/slug.test.ts" name="validateSlug &gt; rejects &quot;../x&quot;" time="0.000167905">
+        </testcase>
+        <testcase classname="src/lib/slug.test.ts" name="validateSlug &gt; rejects &quot;a//b&quot;" time="0.000277871">
+        </testcase>
+        <testcase classname="src/lib/slug.test.ts" name="validateSlug &gt; rejects &quot;preview&quot;" time="0.000183395">
+        </testcase>
+        <testcase classname="src/lib/slug.test.ts" name="validateSlug &gt; rejects &quot;admin/x&quot;" time="0.000139311">
+        </testcase>
+        <testcase classname="src/lib/slug.test.ts" name="validateSlug &gt; rejects &quot;api&quot;" time="0.000164198">
+        </testcase>
+        <testcase classname="src/lib/slug.test.ts" name="validateSlug &gt; rejects &quot;my/portal&quot;" time="0.000145282">
+        </testcase>
+        <testcase classname="src/lib/slug.test.ts" name="validateSlug &gt; rejects non-strings" time="0.000140514">
+        </testcase>
+        <testcase classname="src/lib/slug.test.ts" name="sealed value &gt; round-trips, expires and detects tampering" time="0.001245657">
+        </testcase>
+        <testcase classname="src/lib/slug.test.ts" name="sealed value purposes &gt; a value sealed for the OAuth transaction is not valid as a session, and vice versa" time="0.000352923">
+        </testcase>
+    </testsuite>
+</testsuites>

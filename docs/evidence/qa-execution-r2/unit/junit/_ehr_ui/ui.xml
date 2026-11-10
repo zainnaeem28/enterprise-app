@@ -1,0 +1,353 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="172" failures="0" errors="0" time="1.294937911">
+    <testsuite name="src/components.test.tsx" timestamp="2026-11-10T13:38:58.857Z" hostname="314866be9867" tests="107" failures="0" errors="0" skipped="0" time="1.11101183">
+        <testcase classname="src/components.test.tsx" name="Button &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.099397382">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="Button &gt; is keyboard operable" time="0.020255611">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="StatusBar &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.029851297">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="StatusBar &gt; is keyboard operable" time="0.003060633">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="AlertDialog &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.029846478">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="AlertDialog &gt; is keyboard operable" time="0.017682151">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="PlaceholderMark &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.008241265">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="PlaceholderMark &gt; is keyboard operable" time="0.001429302">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="SkipLink &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.012074097">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="SkipLink &gt; is keyboard operable" time="0.002384324">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="Banner &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.014126339">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="Banner &gt; is keyboard operable" time="0.002197914">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="ErrorSummary &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.023435968">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="ErrorSummary &gt; is keyboard operable" time="0.014900822">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="OtpInput &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.011099308">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="OtpInput &gt; is keyboard operable" time="0.003888908">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="SelectField &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.018208699">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="SelectField &gt; is keyboard operable" time="0.004841896">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="Skeleton &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.009062977">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="Skeleton &gt; is keyboard operable" time="0.001960168">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="StatusChip &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.007600313">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="StatusChip &gt; is keyboard operable" time="0.001605722">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="TextAreaField &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.013527926">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="TextAreaField &gt; is keyboard operable" time="0.003358602">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="TextField &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.01616776">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="TextField &gt; is keyboard operable" time="0.008042952">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="ToastRegion &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.01576882">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="ToastRegion &gt; is keyboard operable" time="0.006285606">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="AppBar &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.011257715">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="AppBar &gt; is keyboard operable" time="0.004861072">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="Stepper &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.01042361">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="Stepper &gt; is keyboard operable" time="0.003167853">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="Tabs &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.016167259">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="Tabs &gt; is keyboard operable" time="0.01465469">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="EmptyState &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.008571084">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="EmptyState &gt; is keyboard operable" time="0.005720413">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="ErrorState &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.013373926">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="ErrorState &gt; is keyboard operable" time="0.007396159">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="LoadingState &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.009546945">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="LoadingState &gt; is keyboard operable" time="0.002842944">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="MaintenanceBanner &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.009260678">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="MaintenanceBanner &gt; is keyboard operable" time="0.001832739">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="OfflineBanner &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.009303488">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="OfflineBanner &gt; is keyboard operable" time="0.001834443">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="PartialFailureList &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.015401342">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="PartialFailureList &gt; is keyboard operable" time="0.00242488">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="PermissionNote &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.006032821">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="PermissionNote &gt; is keyboard operable" time="0.001315759">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="RefreshingContent &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.008877369">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="RefreshingContent &gt; is keyboard operable" time="0.001748019">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="SessionEndedDialog &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.012770755">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="SessionEndedDialog &gt; is keyboard operable" time="0.005817106">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="SessionWarningDialog &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.014069982">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="SessionWarningDialog &gt; is keyboard operable" time="0.006002043">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="StaleChip &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.007085346">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="StaleChip &gt; is keyboard operable" time="0.001148575">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="AuditTable &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.027155277">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="AuditTable &gt; is keyboard operable" time="0.003478036">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="CardList &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.009654717">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="CardList &gt; is keyboard operable" time="0.002370157">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="DataTable &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.013734343">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="DataTable &gt; is keyboard operable" time="0.012612789">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="DocumentList &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.013585844">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="DocumentList &gt; is keyboard operable" time="0.00405492">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="FilterBar &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.018548146">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="FilterBar &gt; is keyboard operable" time="0.007182088">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="MessageThread &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.008809862">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="MessageThread &gt; is keyboard operable" time="0.002086495">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="Timeline &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.00886204">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="Timeline &gt; is keyboard operable" time="0.001823672">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="UploadList &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.016637892">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="UploadList &gt; is keyboard operable" time="0.005612691">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="CalendarWeek &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.018692207">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="CalendarWeek &gt; is keyboard operable" time="0.007320467">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="ScheduleDay &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.011538453">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="ScheduleDay &gt; is keyboard operable" time="0.003074769">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="SlotGrid &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.010354279">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="SlotGrid &gt; is keyboard operable" time="0.009200875">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="AlertBar &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.009267241">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="AlertBar &gt; is keyboard operable" time="0.003904978">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="AlertTray &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.012309538">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="AlertTray &gt; is keyboard operable" time="0.00911248">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="AllergyBlock &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.014044816">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="AllergyBlock &gt; is keyboard operable" time="0.006728186">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="BreakTheGlassDialog &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.014114267">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="BreakTheGlassDialog &gt; is keyboard operable" time="0.016251857">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="BtgReviewPanel &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.019937784">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="BtgReviewPanel &gt; is keyboard operable" time="0.007053437">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="ConfirmRiskDialog &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.013777013">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="ConfirmRiskDialog &gt; is keyboard operable" time="0.007780661">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="EmergencyAccessBanner &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.007070278">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="EmergencyAccessBanner &gt; is keyboard operable" time="0.001121854">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="PasskeyPrompt &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.010818161">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="PasskeyPrompt &gt; is keyboard operable" time="0.003312867">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="PatientBanner &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.016276033">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="PatientBanner &gt; is keyboard operable" time="0.006273993">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="RangeText &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.009098573">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="RangeText &gt; is keyboard operable" time="0.003976853">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="ReauthDialog &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.011985691">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="ReauthDialog &gt; is keyboard operable" time="0.004631982">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="SecurityKeyPrompt &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.014948241">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="SecurityKeyPrompt &gt; is keyboard operable" time="0.004487761">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="SignNoteDialog &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.01362098">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="SignNoteDialog &gt; is keyboard operable" time="0.00508412">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="SoapEditor &gt; has no axe violations (structural WCAG 2.2 A/AA rules)" time="0.017224182">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="SoapEditor &gt; is keyboard operable" time="0.012668171">
+        </testcase>
+        <testcase classname="src/components.test.tsx" name="coverage &gt; every exported component has an axe and keyboard case" time="0.000232597">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/copy.test.tsx" timestamp="2026-11-10T13:38:58.872Z" hostname="314866be9867" tests="26" failures="0" errors="0" skipped="0" time="0.172339048">
+        <testcase classname="src/copy.test.tsx" name="PatientBanner &gt; keeps the allergy block outside the collapsible region" time="0.030287847">
+        </testcase>
+        <testcase classname="src/copy.test.tsx" name="PatientBanner &gt; keeps the not-shown chip outside the collapsible region too" time="0.00412463">
+        </testcase>
+        <testcase classname="src/copy.test.tsx" name="PatientBanner &gt; gives two banners distinct ids and matching aria-controls" time="0.006491211">
+        </testcase>
+        <testcase classname="src/copy.test.tsx" name="escalationText &gt; shows an overdue state once the deadline has passed" time="0.000501271">
+        </testcase>
+        <testcase classname="src/copy.test.tsx" name="copy hooks: no default wording remains when copy is replaced &gt; AllergyBlock" time="0.004376763">
+        </testcase>
+        <testcase classname="src/copy.test.tsx" name="copy hooks: no default wording remains when copy is replaced &gt; AllergyNone" time="0.001771354">
+        </testcase>
+        <testcase classname="src/copy.test.tsx" name="copy hooks: no default wording remains when copy is replaced &gt; AllergyHidden" time="0.001356476">
+        </testcase>
+        <testcase classname="src/copy.test.tsx" name="copy hooks: no default wording remains when copy is replaced &gt; PatientBanner" time="0.003002895">
+        </testcase>
+        <testcase classname="src/copy.test.tsx" name="copy hooks: no default wording remains when copy is replaced &gt; AlertBar" time="0.001671728">
+        </testcase>
+        <testcase classname="src/copy.test.tsx" name="copy hooks: no default wording remains when copy is replaced &gt; AlertBarOff" time="0.001428971">
+        </testcase>
+        <testcase classname="src/copy.test.tsx" name="copy hooks: no default wording remains when copy is replaced &gt; AlertTray" time="0.003077966">
+        </testcase>
+        <testcase classname="src/copy.test.tsx" name="copy hooks: no default wording remains when copy is replaced &gt; SignNoteDialog" time="0.063761389">
+        </testcase>
+        <testcase classname="src/copy.test.tsx" name="copy hooks: no default wording remains when copy is replaced &gt; ReauthDialog" time="0.004269732">
+        </testcase>
+        <testcase classname="src/copy.test.tsx" name="copy hooks: no default wording remains when copy is replaced &gt; SecurityKeyPrompt" time="0.004519141">
+        </testcase>
+        <testcase classname="src/copy.test.tsx" name="copy hooks: no default wording remains when copy is replaced &gt; BreakTheGlassDialog" time="0.009735128">
+        </testcase>
+        <testcase classname="src/copy.test.tsx" name="copy hooks: no default wording remains when copy is replaced &gt; BtgReviewPanel" time="0.006356988">
+        </testcase>
+        <testcase classname="src/copy.test.tsx" name="copy hooks: no default wording remains when copy is replaced &gt; SoapEditor" time="0.004393726">
+        </testcase>
+        <testcase classname="src/copy.test.tsx" name="copy hooks: no default wording remains when copy is replaced &gt; SoapSigned" time="0.002823979">
+        </testcase>
+        <testcase classname="src/copy.test.tsx" name="copy hooks: no default wording remains when copy is replaced &gt; SessionWarningDialog" time="0.003278182">
+        </testcase>
+        <testcase classname="src/copy.test.tsx" name="copy hooks: no default wording remains when copy is replaced &gt; DataTable" time="0.001176107">
+        </testcase>
+        <testcase classname="src/copy.test.tsx" name="copy hooks: no default wording remains when copy is replaced &gt; CardList" time="0.001032287">
+        </testcase>
+        <testcase classname="src/copy.test.tsx" name="copy hooks: no default wording remains when copy is replaced &gt; AuditTable" time="0.001262639">
+        </testcase>
+        <testcase classname="src/copy.test.tsx" name="copy hooks: no default wording remains when copy is replaced &gt; DocumentList" time="0.001108409">
+        </testcase>
+        <testcase classname="src/copy.test.tsx" name="copy hooks: no default wording remains when copy is replaced &gt; ErrorSummary" time="0.002868514">
+        </testcase>
+        <testcase classname="src/copy.test.tsx" name="copy hooks: no default wording remains when copy is replaced &gt; OtpInput" time="0.001699028">
+        </testcase>
+        <testcase classname="src/copy.test.tsx" name="copy hooks: no default wording remains when copy is replaced &gt; banner toggle wording comes from copy" time="0.004266687">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/tokens.test.ts" timestamp="2026-11-10T13:38:58.876Z" hostname="314866be9867" tests="39" failures="0" errors="0" skipped="0" time="0.011587033">
+        <testcase classname="src/tokens.test.ts" name="tokens meet WCAG 2.2 AA (1.4.3, 1.4.11) &gt; text ink on bg &gt;= 4.5:1" time="0.001762326">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="tokens meet WCAG 2.2 AA (1.4.3, 1.4.11) &gt; text ink on surface &gt;= 4.5:1" time="0.000335579">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="tokens meet WCAG 2.2 AA (1.4.3, 1.4.11) &gt; text muted on bg &gt;= 4.5:1" time="0.000204834">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="tokens meet WCAG 2.2 AA (1.4.3, 1.4.11) &gt; text muted on surface &gt;= 4.5:1" time="0.000227388">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="tokens meet WCAG 2.2 AA (1.4.3, 1.4.11) &gt; text danger on surface &gt;= 4.5:1" time="0.000217798">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="tokens meet WCAG 2.2 AA (1.4.3, 1.4.11) &gt; text danger on danger-tint &gt;= 4.5:1" time="0.000289734">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="tokens meet WCAG 2.2 AA (1.4.3, 1.4.11) &gt; text warning on warning-tint &gt;= 4.5:1" time="0.000262151">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="tokens meet WCAG 2.2 AA (1.4.3, 1.4.11) &gt; text success on success-tint &gt;= 4.5:1" time="0.000178324">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="tokens meet WCAG 2.2 AA (1.4.3, 1.4.11) &gt; text info on info-tint &gt;= 4.5:1" time="0.000274947">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="tokens meet WCAG 2.2 AA (1.4.3, 1.4.11) &gt; text on-accent on danger &gt;= 4.5:1" time="0.000242535">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="tokens meet WCAG 2.2 AA (1.4.3, 1.4.11) &gt; text on-accent on realm-admin &gt;= 4.5:1" time="0.000232407">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="tokens meet WCAG 2.2 AA (1.4.3, 1.4.11) &gt; text disabled-ink on disabled-bg &gt;= 4.5:1" time="0.000134642">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="tokens meet WCAG 2.2 AA (1.4.3, 1.4.11) &gt; text ink on accent-tint &gt;= 4.5:1" time="0.000118732">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="tokens meet WCAG 2.2 AA (1.4.3, 1.4.11) &gt; UI component border-control on surface &gt;= 3:1" time="0.000127699">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="tokens meet WCAG 2.2 AA (1.4.3, 1.4.11) &gt; UI component border-control on bg &gt;= 3:1" time="0.000142367">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="tokens meet WCAG 2.2 AA (1.4.3, 1.4.11) &gt; UI component focus on surface &gt;= 3:1" time="0.000114515">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="tokens meet WCAG 2.2 AA (1.4.3, 1.4.11) &gt; UI component focus on bg &gt;= 3:1" time="0.000068378">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="tokens meet WCAG 2.2 AA (1.4.3, 1.4.11) &gt; portal patient accent: white on accent &gt;= 4.5, accent on tint &gt;= 4.5, accent on surface &gt;= 3" time="0.000216987">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="tokens meet WCAG 2.2 AA (1.4.3, 1.4.11) &gt; portal brand accent: white on accent &gt;= 4.5, accent on tint &gt;= 4.5, accent on surface &gt;= 3" time="0.000153177">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="tokens meet WCAG 2.2 AA (1.4.3, 1.4.11) &gt; portal pre-consultation accent: white on accent &gt;= 4.5, accent on tint &gt;= 4.5, accent on surface &gt;= 3" time="0.000122681">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="tokens meet WCAG 2.2 AA (1.4.3, 1.4.11) &gt; portal doctor accent: white on accent &gt;= 4.5, accent on tint &gt;= 4.5, accent on surface &gt;= 3" time="0.00009598">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="tokens meet WCAG 2.2 AA (1.4.3, 1.4.11) &gt; portal pharmacy accent: white on accent &gt;= 4.5, accent on tint &gt;= 4.5, accent on surface &gt;= 3" time="0.000109495">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="tokens meet WCAG 2.2 AA (1.4.3, 1.4.11) &gt; portal admin accent: white on accent &gt;= 4.5, accent on tint &gt;= 4.5, accent on surface &gt;= 3" time="0.000379962">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="tokens meet WCAG 2.2 AA (1.4.3, 1.4.11) &gt; portal accents are distinct from each other (except brand/patient) and from danger" time="0.000774564">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="swapping tokens needs no component change &gt; alert-dialog.tsx has no literal colour values" time="0.000615555">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="swapping tokens needs no component change &gt; button.tsx has no literal colour values" time="0.000112551">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="swapping tokens needs no component change &gt; clinical.tsx has no literal colour values" time="0.000146915">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="swapping tokens needs no component change &gt; components.css has no literal colour values" time="0.000134343">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="swapping tokens needs no component change &gt; data.tsx has no literal colour values" time="0.000120917">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="swapping tokens needs no component change &gt; nav.tsx has no literal colour values" time="0.000156384">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="swapping tokens needs no component change &gt; placeholder-mark.tsx has no literal colour values" time="0.000091963">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="swapping tokens needs no component change &gt; primitives.tsx has no literal colour values" time="0.000151804">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="swapping tokens needs no component change &gt; scheduling.tsx has no literal colour values" time="0.000137749">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="swapping tokens needs no component change &gt; skip-link.tsx has no literal colour values" time="0.000098595">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="swapping tokens needs no component change &gt; states.tsx has no literal colour values" time="0.00012245">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="swapping tokens needs no component change &gt; status-bar.tsx has no literal colour values" time="0.000116879">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="swapping tokens needs no component change &gt; styles.css has no literal colour values" time="0.000099667">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="swapping tokens needs no component change &gt; the focus ring is not removed anywhere" time="0.000619322">
+        </testcase>
+        <testcase classname="src/tokens.test.ts" name="contrast helper &gt; matches known values" time="0.000208321">
+        </testcase>
+    </testsuite>
+</testsuites>
