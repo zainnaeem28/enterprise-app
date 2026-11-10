@@ -73,9 +73,11 @@ export interface GuardDeps {
 
 /** 403 clinical.not_assigned with the `btgAvailable` extension member (30). */
 export class NotAssignedError extends ApiError {
-  readonly btgAvailable = true;
-  constructor() {
-    super(403, 'clinical.not_assigned');
+  readonly btgAvailable: boolean;
+  /** `btgAvailable`: whether the caller holds `audit.btg.open` (QA-EXEC-F01 / TC-AZ-10: the member is serialised in the body). */
+  constructor(btgAvailable = true) {
+    super(403, 'clinical.not_assigned', false, { btgAvailable });
+    this.btgAvailable = btgAvailable;
     this.name = 'NotAssignedError';
   }
 }
@@ -142,8 +144,11 @@ export class IdentityGuardPolicy implements GuardPolicy {
     if (!(PATIENT_REALM as readonly string[]).includes(decl.permission)) {
       if (!ctx.grants.has(decl.permission)) return this.deny(req, ctx, decl, 'forbidden');
       if (decl.elevation === true || ctx.grants.needsElevation(decl.permission)) {
-        if (!(await (this.deps.elevation ?? NO_ELEVATION).isElevated(ctx)))
+        if (!(await (this.deps.elevation ?? NO_ELEVATION).isElevated(ctx))) {
+          // A refusal is a `denied` audit event like every other (8.1 rule 2, QA-EXEC-F02); the audit write must not throw.
+          await this.audit(req, ctx, decl, 'forbidden');
           throw new ForbiddenError('identity.elevation_required');
+        }
       }
     }
 
@@ -181,7 +186,7 @@ export class IdentityGuardPolicy implements GuardPolicy {
             !(await this.deps.assignment.isAssigned(tx, ctx.session.principalId, res.patientId))
           ) {
             await this.audit(req, ctx, decl, 'forbidden', res);
-            throw new NotAssignedError();
+            throw new NotAssignedError(ctx.grants.has('audit.btg.open'));
           }
         }
       }

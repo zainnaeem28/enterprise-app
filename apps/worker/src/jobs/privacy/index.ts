@@ -18,6 +18,7 @@ export type { HoldCheckOutcome } from './check-legal-holds.js';
 export { runExpirePackages } from './expire-packages.js';
 export type { ExpireResult } from './expire-packages.js';
 export { closureOf, documentsLegalHolds } from './adapters.js';
+export { CiPackageStore } from './ci-package-store.js';
 export type {
   LegalHoldReader,
   PackageWriter,

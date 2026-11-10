@@ -41,6 +41,8 @@ export const PASSIVE_ROUTES: readonly { method: string; pattern: RegExp }[] = [
   { method: 'GET', pattern: /^\/api\/v1\/alerts\/stream\/?$/ },
   { method: 'GET', pattern: /^\/api\/v1\/alerts\/open-ids\/?$/ },
   { method: 'GET', pattern: /^\/api\/v1\/appointments\/[^/]+\/video-session\/?$/ },
+  // BE-15 D1: the host's waiting-room poll (29.3 puts it on the patient's path; the route platform has one declaration per path).
+  { method: 'GET', pattern: /^\/api\/v1\/appointments\/[^/]+\/video-session\/host\/?$/ },
 ];
 
 export function isPassive(method: string, path: string): boolean {

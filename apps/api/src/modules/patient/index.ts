@@ -17,6 +17,7 @@ export type {
   StaffDirectoryPort,
 } from './records.js';
 export { patientScopeContributor, patientInScope } from './scope.js';
+export { patientExportContributor } from './export.js';
 export { createPatientControllers, patientResolvers, ifMatchVersion } from './controller.js';
 export type { PatientControllerDeps } from './controller.js';
 export { PATIENT_JOBS, PATIENT_EVENTS } from './jobs.js';

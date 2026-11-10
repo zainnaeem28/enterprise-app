@@ -13,7 +13,12 @@ import { createAlertTasks } from './jobs/notifications/alert-jobs.js';
 import type { AlertWorkerPort } from './jobs/notifications/alert-jobs.js';
 import { createMessagingTasks } from './jobs/messaging/index.js';
 import type { MessagingWorkerPort } from './jobs/messaging/index.js';
-import { closureOf, createPrivacyTasks, documentsLegalHolds } from './jobs/privacy/index.js';
+import {
+  CiPackageStore,
+  closureOf,
+  createPrivacyTasks,
+  documentsLegalHolds,
+} from './jobs/privacy/index.js';
 import type { PackageWriter, WorkerPackageStore } from './jobs/privacy/index.js';
 import { createReportingTasks } from './jobs/reporting/index.js';
 import type { ReportingWorkerPort } from './jobs/reporting/index.js';
@@ -330,7 +335,11 @@ export function composeTasks(opts: ComposeOptions & { queue: Queue }): TaskTable
       db,
       orgId,
       log,
-      store: infra.packageStore ?? refusingPort<WorkerPackageStore>('package_store'),
+      store:
+        infra.packageStore ??
+        (opts.cfg.environment === 'ci'
+          ? new CiPackageStore()
+          : refusingPort<WorkerPackageStore>('package_store')),
       holds: documentsLegalHolds,
       closureOf,
       assemble:
@@ -357,7 +366,11 @@ export async function composeWorker(
       qrKey: opts.qrKey,
       orgId: opts.cfg.organisationId ?? refuse('EHR_ORGANISATION_ID'),
       db: new KernelDb(opts.pool as unknown as KernelPoolLike),
-      packageWriter: opts.infra?.packageWriter ?? refusingPort<PackageWriter>('package_writer'),
+      packageWriter:
+        opts.infra?.packageWriter ??
+        (opts.cfg.environment === 'ci'
+          ? new CiPackageStore()
+          : refusingPort<PackageWriter>('package_writer')),
       closureOf,
     });
   else if (api === undefined)

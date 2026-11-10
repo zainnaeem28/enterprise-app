@@ -12,7 +12,18 @@ import type { IdentityEnv } from './identity-env.js';
 import type { GuardPolicy } from './platform/guard.js';
 import { MemoryRateLimiter, PgRateLimiter } from './platform/rate-limit.js';
 import { AUDIT_JOBS, AuditService } from './modules/audit/index.js';
-import { createClinicalChart, CLINICAL_CHART_JOBS } from './modules/clinical/chart/index.js';
+import {
+  createTelehealthControllers,
+  registerTelehealthHandlers,
+  TELEHEALTH_JOBS,
+  TelehealthService,
+} from './modules/telehealth/index.js';
+import type { VideoVendorPort } from './modules/telehealth/index.js';
+import {
+  createBreakGlassControllers,
+  createClinicalChart,
+  CLINICAL_CHART_JOBS,
+} from './modules/clinical/chart/index.js';
 import {
   createClinicalFrontdoor,
   createFrontdoorPorts,
@@ -182,6 +193,7 @@ export const API_PATH_JOBS: readonly JobType[] = [
   ...NOTES_JOBS,
   ...MESSAGING_JOBS,
   ...PRIVACY_JOBS,
+  ...TELEHEALTH_JOBS,
   ...REPORTING_JOBS,
   ...IDENTITY_ADMIN_JOBS,
 ];
@@ -221,6 +233,7 @@ export function buildComposition(deps: {
   registerFrontdoorHandlers(registry);
   registerMessagingHandlers(registry);
   registerComplianceAlertHandlers(registry);
+  registerTelehealthHandlers(registry);
   const queue = new Queue(registry, 'api');
   const audit = new AuditService({ logger: deps.logger, queue });
   const organisation = new OrganisationService();
@@ -397,6 +410,19 @@ export function buildComposition(deps: {
     ...(deps.now === undefined ? {} : { now: deps.now }),
   });
   const reporting = createReporting({ db: deps.db });
+  // Telehealth (BE-15): the video vendor is not selected yet (C-11), so the port refuses every call; a join then answers 503
+  // `telehealth.vendor_unavailable`. The session, waiting room, device check and location routes need no vendor.
+  const refusingVideoVendor: VideoVendorPort = {
+    issueJoinToken: () => Promise.reject(new Error('video vendor not configured')),
+  };
+  const telehealth = new TelehealthService({
+    db: deps.db,
+    audit,
+    organisation,
+    vendor: refusingVideoVendor,
+    queue,
+    ...(deps.now === undefined ? {} : { now: deps.now }),
+  });
   // The integrations host (BE-22, INT03-F18): GET /public/v1/services|locations|clinicians. No webhook vendor is configured yet (no
   // verifier, no key store), so the receiver answers 404 for every source until C-01 delivers them.
   const integrationsHost = createIntegrationsHostControllers({
@@ -508,6 +534,8 @@ export function buildComposition(deps: {
       ...messaging.controllers,
       ...privacy.controllers,
       ...reporting.controllers,
+      ...createBreakGlassControllers({ db: deps.db, audit }),
+      ...createTelehealthControllers({ db: deps.db, telehealth }),
       ...alertControllers,
       ...createDocumentsControllers({
         db: deps.db,
