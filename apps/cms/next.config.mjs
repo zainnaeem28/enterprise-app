@@ -5,6 +5,7 @@ const nextConfig = {
   poweredByHeader: false,
   agentRules: false,
   output: 'standalone',
+  images: { unoptimized: true },
   async headers() {
     return [
       {
