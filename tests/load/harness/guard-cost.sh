@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Cost guard (run between test stages and on a schedule during a run). Stops the run when
 # the spend tagged to it reaches the per-run ceiling, and reports it; it never raises the
-# ceiling. Needs ce:GetCostAndUsage in the loadtest account.
+# ceiling. Needs ce:GetCostAndUsage in the loadtest account. Prerequisite: `RunId` must be
+# activated as a cost-allocation tag; Cost Explorer lags up to a day, so same-day overspend is
+# NOT caught here. The per-run budget alarm is the early signal.
 set -euo pipefail
 run_id="${1:?usage: guard-cost.sh <run_id> <ceiling_usd> <start YYYY-MM-DD>}"; ceiling="${2:?}"; start="${3:?}"
 end=$(date -u -d tomorrow +%F)

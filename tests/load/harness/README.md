@@ -9,7 +9,7 @@ Tooling the load scripts (QA-07) run on. Environment: `infra/modules/loadtest`.
 | `sse-client/sse-load.mjs` | Own SSE client (Node built-ins, no dependencies): concurrent streams, time to first event, event rate, heartbeat gaps, unexpected closes, reconnect with `Last-Event-ID`, peak open streams. |
 | `sse-fixture/server.mjs` | Local SSE stand-in used to prove the above. Not the API. |
 | `seed.sh` | Runs the synthetic-data seeder task and waits. |
-| `teardown.sh`, `reap-expired.sh`, `guard-cost.sh` | Always-run destroy, TTL reaper, per-run cost guard. |
+| `teardown.sh <root> <run_id>`, `reap-expired.sh`, `guard-cost.sh` (+ `lib-tagged.sh`) | Always-run destroy with all-Region verification, TTL reaper, per-run cost guard. |
 | `check-equivalence.mjs` | Compares the loadtest `profile` output with production's; unjustified differences fail. |
 | `evidence/` | Raw reports. |
 

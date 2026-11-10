@@ -77,7 +77,7 @@ override_module {
 variables {
   run_id                        = "20261110-01"
   owner                         = "devops-engineer"
-  expires_at                    = "2026-11-11T08:00:00Z"
+  expires_at                    = timeadd(plantimestamp(), "12h")
   flow_log_destination_arn      = "arn:aws:s3:::example-flow-logs"
   alb_certificate_arn           = "arn:aws:acm:us-east-2:111111111111:certificate/11111111-1111-1111-1111-111111111111"
   cloudfront_certificate_arn    = "arn:aws:acm:us-east-1:111111111111:certificate/22222222-2222-2222-2222-222222222222"
@@ -183,4 +183,17 @@ run "tag_image_rejected" {
     }
   }
   expect_failures = [var.seeder]
+}
+
+run "lifetime_over_24h_rejected" {
+  command = plan
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+    aws.recovery  = aws.recovery
+  }
+  variables {
+    expires_at = timeadd(plantimestamp(), "48h")
+  }
+  expect_failures = [var.expires_at]
 }

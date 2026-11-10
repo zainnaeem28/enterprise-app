@@ -28,6 +28,10 @@ variable "expires_at" {
     condition     = can(formatdate("YYYY", var.expires_at))
     error_message = "expires_at must be an RFC 3339 timestamp such as 2026-11-11T08:00:00Z."
   }
+  validation {
+    condition     = !can(formatdate("YYYY", var.expires_at)) || timecmp(var.expires_at, timeadd(plantimestamp(), "24h")) <= 0
+    error_message = "expires_at must be at most 24 hours after the plan time (decision-log D-1)."
+  }
 }
 
 variable "cidr_block" {
