@@ -47,7 +47,7 @@ interface Mock {
 
 async function mockApi(
   page: Page,
-  opts: { slots?: unknown[]; waitlist?: number } = {},
+  opts: { slots?: unknown[]; waitlist?: number; signedOut?: boolean } = {},
 ): Promise<Mock> {
   const seen: string[] = [];
   const takeNext = { value: false };
@@ -68,6 +68,12 @@ async function mockApi(
     const key = `${req.method()} ${path}`;
     switch (key) {
       case 'GET /api/v1/auth/session':
+        if (opts.signedOut)
+          return ok(
+            route,
+            { status: 401, code: 'auth.unauthenticated', requestId: 'req-e2e' },
+            401,
+          );
         return ok(route, {
           principalId: '11111111-1111-4111-8111-111111111111',
           realm: 'patient',
@@ -79,6 +85,15 @@ async function mockApi(
           permissions: [],
           patients: [{ patientId: PATIENT, relation: 'self', scope: 'full' }],
         });
+      case `GET /api/v1/patients`:
+      case 'GET /api/v1/me':
+        if (opts.signedOut)
+          return ok(
+            route,
+            { status: 401, code: 'auth.unauthenticated', requestId: 'req-e2e' },
+            401,
+          );
+        return ok(route, { status: 404, code: 'kernel.not_found' }, 404);
       case 'GET /api/v1/services':
         return ok(route, {
           items: [
@@ -295,5 +310,59 @@ test.describe('PP-15..PP-19', () => {
     await expect(page.getByRole('timer')).toBeVisible();
     await axe(page);
     await shot(page, 'pp19-offer', info.project.name);
+  });
+});
+
+test.describe('TC-BS-02 patient side: hand-off from the brand site', () => {
+  const HANDOFF = `/book?serviceId=${SERVICE}&clinicianId=${DOCTOR}`;
+
+  test('signed in: service and doctor pre-checked, ids leave the address bar, booking completes', async ({
+    page,
+  }, info) => {
+    const m = await mockApi(page);
+    await page.goto(HANDOFF);
+    await expect(page.getByRole('radio', { name: /General visit/ })).toBeChecked();
+    await expect(page).toHaveURL(/\/book$/);
+    await axe(page);
+    await shot(page, 'bs06-pp10-preselected', info.project.name);
+    await page.getByRole('button', { name: 'Continue' }).click();
+    await expect(page.getByLabel('Doctor')).toHaveValue(DOCTOR);
+    await page.getByLabel('Place').selectOption(PLACE);
+    await axe(page);
+    await shot(page, 'bs06-pp11-preselected', info.project.name);
+    await page.getByRole('button', { name: 'Continue' }).click();
+    await page
+      .getByRole('button', { name: /\d:00 [AP]M/ })
+      .first()
+      .click();
+    await page.getByRole('button', { name: 'Continue' }).click();
+    await page.getByRole('button', { name: 'Confirm appointment' }).click();
+    await expect(page.getByRole('heading', { name: 'Your appointment is booked' })).toBeVisible();
+    expect(m.seen).toContain('POST /api/v1/holds');
+    // Back must not return to a URL that carries the ids.
+    await page.goBack({ waitUntil: 'commit' }).catch(() => undefined);
+    expect(page.url()).not.toContain('serviceId');
+  });
+
+  test('unknown ids: nothing pre-selected and no error', async ({ page }) => {
+    await mockApi(page);
+    await page.goto('/book?serviceId=99999999-9999-4999-8999-999999999999&clinicianId=' + DOCTOR);
+    await expect(page.getByRole('radio', { name: /General visit/ })).not.toBeChecked();
+    await expect(page.getByRole('alert')).toHaveCount(0);
+    await expect(page.locator('body')).not.toContainText('99999999');
+  });
+
+  test('not signed in: BS-06 interstitial, returnTo keeps the query', async ({ page }, info) => {
+    await mockApi(page, { signedOut: true });
+    await page.goto(HANDOFF);
+    await expect(
+      page.getByRole('heading', { name: 'Sign in or create an account to finish booking' }),
+    ).toBeVisible();
+    await axe(page);
+    await shot(page, 'bs06-interstitial', info.project.name);
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    const url = new URL(page.url());
+    expect(url.pathname).toBe('/continue');
+    expect(url.searchParams.get('returnTo')).toBe(HANDOFF);
   });
 });

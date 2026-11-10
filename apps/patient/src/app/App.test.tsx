@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App.js';
+import { checkedReturnTo } from '../features/auth/returnTo.js';
 import { json, runtimeWith, SESSION } from './test-helpers.js';
 import type { Respond } from './test-helpers.js';
 
@@ -231,5 +232,31 @@ describe('patient-portal route sets (route components mocked)', () => {
     window.history.replaceState(null, '', '/nothing-here');
     mount(redirect);
     expect(screen.getByRole('button', { name: 'Sign in' })).toBeInTheDocument();
+  });
+});
+
+describe('BS-06 hand-off from the brand site', () => {
+  const Q =
+    '/book?serviceId=33333333-3333-4333-8333-333333333333&clinicianId=55555555-5555-4555-8555-555555555555';
+  const signedOut: Respond = (r) => {
+    const p = new URL(r.url).pathname;
+    if (p.endsWith('/auth/session') || p.endsWith('/patients'))
+      return json(401, { status: 401, code: 'auth.unauthenticated', requestId: 'req-1' });
+    return json(404, { code: 'kernel.not_found' });
+  };
+
+  it('shows the interstitial and carries the full path with its query as returnTo', async () => {
+    window.history.replaceState(null, '', Q);
+    mount(signedOut);
+    expect(
+      await screen.findByRole('heading', {
+        name: 'Sign in or create an account to finish booking',
+      }),
+    ).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Create account' }));
+    expect(window.location.pathname).toBe('/continue');
+    const p = new URLSearchParams(window.location.search);
+    expect(p.get('intent')).toBe('create');
+    expect(checkedReturnTo(p.get('returnTo'))).toBe(Q);
   });
 });
