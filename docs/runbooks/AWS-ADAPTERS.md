@@ -182,7 +182,7 @@ Behaviour and decisions:
   Unverified until a real scan (go-live).
 - **Textract.** `DetectDocumentText` reads the object by S3 reference (no bytes pass through the worker) and a small phrase table maps the
   text to one of the closed classification list (`id_document`, `insurance_card`, `referral_letter`, `consent`) or no suggestion. The text is never logged or
-  returned. Multi-page PDFs and unsupported files (synchronous API limits) give no suggestion; throttling and 5xx are retried. It only suggests; staff confirm.
+  returned. Multi-page PDFs and unsupported files (synchronous API limits) give no suggestion; throttling (including Textract's HTTP 400 `ProvisionedThroughputExceededException`) and 5xx are retried. It only suggests; staff confirm.
   The phrase table is a first rule set to be tuned on real documents. Textract has no free probe call, so health means "configured".
 - **Cognito (patient).** Already complete; not reopened. The patient realm is a generic OIDC client that verifies the id token against the
   issuer's JWKS (RS256/ES256, issuer, audience, nonce, expiry). Cognito is configured, not coded: `EHR_PATIENT_OIDC_ISSUER=https://cognito-idp.<region>.amazonaws.com/<poolId>`,

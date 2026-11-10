@@ -28,6 +28,13 @@ const nameOf = (e: unknown): string => (e as { name?: string } | null)?.name ?? 
 const statusOf = (e: unknown): number | undefined =>
   (e as { $metadata?: { httpStatusCode?: number } } | null)?.$metadata?.httpStatusCode;
 
+/** Textract throttles with HTTP 400 and these names: retry, do not lose the suggestion. */
+const THROTTLED = new Set([
+  'ProvisionedThroughputExceededException',
+  'ThrottlingException',
+  'LimitExceededException',
+]);
+
 /** Errors that mean "this file cannot be read here": no suggestion, no retry. */
 const UNREADABLE = new Set([
   'UnsupportedDocumentException',
@@ -65,7 +72,7 @@ export class TextractOcrClient implements OcrProviderClient {
       if (UNREADABLE.has(n)) return { documentType: null };
       const s = statusOf(e);
       throw new OcrProviderError(
-        s === undefined || s === 429 || s >= 500,
+        s === undefined || s === 429 || s >= 500 || THROTTLED.has(n),
         s,
         n || 'textract_error',
       );

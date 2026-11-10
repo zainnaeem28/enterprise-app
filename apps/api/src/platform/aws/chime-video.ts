@@ -17,6 +17,12 @@ import type {
 
 export const CHIME_VARS = ['EHR_CHIME_MEDIA_REGION'] as const;
 export const CHIME_VENDOR = 'chime';
+/** A hung Chime call must not hold the patient's join request open. */
+export const CHIME_CLIENT_LIMITS = {
+  connectionTimeout: 3000,
+  requestTimeout: 8000,
+  maxAttempts: 2,
+} as const;
 const MEETING_ID = /^[\x21-\x7e]{1,200}$/;
 const MEDIA_REGION = /^[a-z]{2}(-[a-z]+)+-\d$/;
 
@@ -72,6 +78,11 @@ export function selectChimeVideoVendor(env: Env, log: Logger): VideoVendorPort |
       return new ChimeVideoVendor(
         new ChimeSDKMeetingsClient({
           region: s.region,
+          maxAttempts: CHIME_CLIENT_LIMITS.maxAttempts,
+          requestHandler: {
+            connectionTimeout: CHIME_CLIENT_LIMITS.connectionTimeout,
+            requestTimeout: CHIME_CLIENT_LIMITS.requestTimeout,
+          },
           ...(s.endpoint === undefined ? {} : { endpoint: s.endpoint }),
         }),
       );

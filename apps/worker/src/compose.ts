@@ -1,7 +1,7 @@
 // Composition root of the worker's task table (HEAAA-231, R8-N2): every registered job type gets a handler, built from the nine
 // `create*Tasks` factories. Ports backed by the database or by the API's services are real. Ports that need infrastructure which does
 // not exist yet (object store, malware scanner, OCR, secret store, payload-opening key, export sink, calendar channel key, e-mail/SMS/
-// push/video/Google providers: C-01, C-10, C-11, DEVOPS-PLAN) are REFUSING: the job is picked up and the handler runs, then the port
+// push/Google providers (video, malware scan and OCR have AWS adapters selected by configuration: AWS-BE-4): C-01, C-10, C-11, DEVOPS-PLAN) are REFUSING: the job is picked up and the handler runs, then the port
 // fails with `PortNotConfiguredError` (class name only in the log) and the library retries. Nothing here pretends those services work.
 import { pathToFileURL } from 'node:url';
 import { JobRegistry, KernelDb, Queue } from '@ehr/kernel';

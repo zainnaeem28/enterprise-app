@@ -157,7 +157,7 @@ test('textract: classifies by phrase, unreadable files give no suggestion, text 
       signal: sig,
     }),
     (e: { retryable?: boolean; message: string }) =>
-      e.message === 'ProvisionedThroughputExceededException' && e.retryable === false,
+      e.message === 'ProvisionedThroughputExceededException' && e.retryable === true,
   );
   await assert.rejects(
     c(() => sdkError('ThrottlingException', 429)).classify({

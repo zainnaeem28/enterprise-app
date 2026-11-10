@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { AwsConfigError, createLogger } from '@ehr/kernel';
-import { ChimeVideoVendor, selectChimeVideoVendor } from './chime-video.js';
+import { CHIME_CLIENT_LIMITS, ChimeVideoVendor, selectChimeVideoVendor } from './chime-video.js';
 
 const log = createLogger({ sink: () => undefined });
 const req = {
@@ -77,4 +77,10 @@ test('selection: absent keeps the refusing port; half-set stops the start', () =
   assert.ok(
     selectChimeVideoVendor({ EHR_CHIME_MEDIA_REGION: 'us-east-1', AWS_REGION: 'us-east-1' }, log),
   );
+});
+
+test('client limits: bounded timeouts and attempts so a hung call cannot hold a join open', () => {
+  assert.ok(CHIME_CLIENT_LIMITS.requestTimeout <= 10_000);
+  assert.ok(CHIME_CLIENT_LIMITS.connectionTimeout < CHIME_CLIENT_LIMITS.requestTimeout);
+  assert.ok(CHIME_CLIENT_LIMITS.maxAttempts <= 3);
 });
