@@ -150,6 +150,8 @@ export function buildWorkerPorts(deps: WorkerPortsDeps) {
     clinical: {
       retargetUnacknowledged: (tx: Tx, alertId: string) =>
         triage.retargetUnacknowledged(tx, alertId),
+      raiseQuestionnaireRedFlag: (tx: Tx, responseId: string) =>
+        triage.raiseQuestionnaireRedFlag(tx, responseId),
       noteSignReminder: (tx: Tx, payload: { encounterId: string; patientId: string }) =>
         runNoteSignReminder(reminder, tx, payload),
     },

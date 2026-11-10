@@ -99,6 +99,7 @@ const M4_ROUTES: Record<string, { controllers: string[]; routes: string[] }> = {
 const M4_JOBS = [
   'clinical.terminology_load',
   'clinical.on_alert_unacknowledged',
+  'clinical.on_questionnaire_red_flag',
   'clinical.note_sign_reminder',
   'messaging.on_correction_requested',
   'privacy.assemble_export',

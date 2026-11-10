@@ -53,6 +53,7 @@ export function createClinicalFrontdoor(deps: FrontdoorDeps): ClinicalFrontdoor 
     access: deps.chart.access,
     catalog: ports.catalog,
     checkIns: ports.checkIns,
+    events: ports.events,
   });
   const triage = new TriageService({
     audit,

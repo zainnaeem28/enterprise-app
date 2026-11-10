@@ -5,9 +5,11 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { after, before, describe, test } from 'node:test';
+import type { ScopeSettings } from '@ehr/kernel';
 import {
   A1,
   A2,
+  ADVICE,
   B1,
   CONSENT_A,
   CONSENT_B,
@@ -278,6 +280,100 @@ describe('clinical front door (BE-18), flows on PostgreSQL 17', () => {
         [404, 409, 412].includes(again.status),
         `a submitted response cannot be submitted again (${again.status})`,
       );
+    });
+
+    test('QA-EXEC-F06 / TC-SAF-01, TC-SAF-04b (PRD 8.3): a questionnaire submitted with a red flag creates a durable alert for the on-duty doctor, with the time recorded, exactly once', async () => {
+      await t.roster(t.doctor, 'on_duty_doctor');
+      const rp = await t.mkPatient(n());
+      const rci = await t.confirmed(rp);
+      const id = uuidv7();
+      const c = await t.pcall(rp, 'PUT', `/api/v1/questionnaire-responses/${id}`, {
+        reservationId: rci,
+        templateKey: TEMPLATE_KEY,
+        answers: { q_flag_a: true },
+      });
+      assert.equal(c.status, 201, c.body);
+      const before = Date.now();
+      const s = await t.pcall(
+        rp,
+        'POST',
+        `/api/v1/questionnaire-responses/${id}/submit`,
+        undefined,
+        { 'if-match': String(c.headers['etag']), 'idempotency-key': randomUUID() },
+      );
+      assert.equal(s.status, 200, s.body);
+      assert.equal(s.json()['redFlag'], true);
+      assert.equal(s.json()['advice'], ADVICE, 'the patient still sees the emergency advice');
+      // committed with the submit: the job that raises the alert is in the queue for this response
+      const jobs = await rows<{ payload: Record<string, unknown> }>(
+        `SELECT j.payload FROM queue._private_jobs j JOIN queue._private_tasks tk ON tk.id = j.task_id
+          WHERE tk.identifier = 'clinical.on_questionnaire_red_flag' AND j.payload->>'responseId' = $1`,
+        [id],
+      );
+      assert.equal(jobs.length, 1);
+      assert.equal(jobs[0]?.payload['patientId'], rp.patientId);
+      // the handler (a patients-scope system job) raises the alert; a retry finds the same alert
+      const scope: ScopeSettings = {
+        audience: 'system',
+        realm: 'worker',
+        orgId: ORG,
+        jobScope: 'patients',
+        jobPatientIds: [rp.patientId],
+      };
+      const alertId = await t.asWorker(scope, (tx) =>
+        t.frontdoor.triage.raiseQuestionnaireRedFlag(tx, id),
+      );
+      assert.ok(alertId !== null);
+      const again = await t.asWorker(scope, (tx) =>
+        t.frontdoor.triage.raiseQuestionnaireRedFlag(tx, id),
+      );
+      assert.equal(again, alertId, 'idempotent');
+      const alerts = await rows(
+        `SELECT * FROM notifications.staff_alert WHERE resource_type = 'questionnaire_response' AND resource_id = $1`,
+        [id],
+      );
+      assert.equal(alerts.length, 1);
+      const a = alerts[0] as Record<string, unknown>;
+      assert.equal(a['id'], alertId);
+      assert.equal(a['type'], 'red_flag');
+      assert.equal(a['severity'], 'critical');
+      assert.equal(a['patient_id'], rp.patientId);
+      assert.equal(a['status'], 'open');
+      assert.deepEqual(a['target_principal_ids'], [t.doctor.seeded.principalId]);
+      assert.ok(a['created_at'] instanceof Date, 'the time of the alert is recorded');
+      assert.ok((a['created_at'] as Date).getTime() >= before - 5_000);
+      assert.deepEqual(
+        (
+          await rows(`SELECT kind FROM notifications.staff_alert_event WHERE alert_id = $1`, [
+            alertId,
+          ])
+        ).map((x) => x['kind']),
+        ['created'],
+      );
+      const audited = await rows(
+        `SELECT 1 FROM audit.event WHERE resource_type = 'clinical.questionnaire_response' AND resource_id = $1 AND change->>'redFlagAlert' = $2`,
+        [id, alertId],
+      );
+      assert.equal(audited.length, 1, 'the alert time is audited');
+      // the on-duty doctor sees it through their own row-level security
+      const seen = await t.as(t.staffScope(t.doctor), (tx) => t.alerts.list(tx, {}));
+      assert.ok(JSON.stringify(seen).includes(String(alertId)));
+      // a response without a red flag raises nothing
+      const q = await rows<{ id: string }>(
+        `SELECT id FROM clinical.questionnaire_response WHERE red_flag = false AND status = 'submitted' LIMIT 1`,
+      );
+      if (q[0] !== undefined) {
+        const qp = (
+          await rows<{ patient_id: string }>(
+            `SELECT patient_id FROM clinical.questionnaire_response WHERE id = $1`,
+            [q[0].id],
+          )
+        )[0];
+        const none = await t.asWorker({ ...scope, jobPatientIds: [String(qp?.patient_id)] }, (tx) =>
+          t.frontdoor.triage.raiseQuestionnaireRedFlag(tx, String(q[0]?.id)),
+        );
+        assert.equal(none, null);
+      }
     });
 
     test("another patient cannot read or write this patient's response", async () => {

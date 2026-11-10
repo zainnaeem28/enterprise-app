@@ -520,6 +520,12 @@ export class SchedulingFlowService {
         ['room_id', a.roomId, slot['room_id'] === null ? null : String(slot['room_id'])],
       ] as const) {
         if (wanted === undefined || wanted === null || wanted.toLowerCase() === booked) continue;
+        // QA-EXEC-F05: the room's lock is the one `scheduling.occupy` takes (`rm:`), so an assignment and a booking of the same room
+        // queue behind each other; the queue-entry exclusion constraint (2500) is what refuses a second holder when they race.
+        if (col === 'room_id')
+          await tx.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [
+            `rm:${wanted.toLowerCase()}`,
+          ]);
         const busy = await tx.query(
           `SELECT 1 FROM scheduling.slot_occupancy x
             WHERE x.id <> $1::uuid AND x.${col} = $2::uuid AND x.status = ANY($4::text[]) AND NOT x.overbook
@@ -527,6 +533,15 @@ export class SchedulingFlowService {
           [cur.id, wanted.toLowerCase(), slot['period'], [...ACTIVE_STATUSES]],
         );
         if (busy.rows.length > 0) throw new SlotTakenError();
+        if (col === 'room_id') {
+          // Another visit already sent to this room for an overlapping time (its occupancy row still says the booked room).
+          const held = await tx.query(
+            `SELECT 1 FROM scheduling.queue_entry q
+              WHERE q.id <> $1::uuid AND q.room_id = $2::uuid AND q.stage <> 'done' AND q.room_period && $3::tstzrange LIMIT 1`,
+            [cur.id, wanted.toLowerCase(), slot['period']],
+          );
+          if (held.rows.length > 0) throw new SlotTakenError();
+        }
       }
       const u = await tx.query(
         `UPDATE scheduling.queue_entry SET assigned_clinician_principal_id = $2::uuid, room_id = $3::uuid

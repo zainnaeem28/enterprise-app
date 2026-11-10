@@ -6,8 +6,9 @@
 // row, and returns the template's emergency advice when a rule matched (AC-08). A submitted response is final: the trigger of 1701
 // refuses any later change, and a merge keeps it where it is (22.16, K).
 //
-// The alert for the on-duty doctor is NOT raised here: 25.5 raises it when triage is saved (a patient session may not insert a staff
-// alert, and the nurse sees the response before deciding). The response carries `red_flag` so the desk and the triage screen show it.
+// The alert for the on-duty doctor is NOT inserted here (a patient session may not insert a staff alert): a red flag publishes
+// `clinical.questionnaire_red_flag` in this transaction and the job `clinical.on_questionnaire_red_flag` raises it (QA-EXEC-F06,
+// PRD 8.3); saving a triage raises its own alert as well (25.5). The response carries `red_flag` so the desk and the triage screen show it.
 import type { Tx } from '@ehr/kernel';
 import type { ChartAccess } from '../chart/access.js';
 import type { ChartAuditPort } from '../chart/audit-port.js';
@@ -22,8 +23,9 @@ import {
   translateDbError,
 } from './errors.js';
 import { isUuid } from './ids.js';
-import type { CatalogPort, CheckInPort } from './ports.js';
+import type { CatalogPort, CheckInPort, EventPort } from './ports.js';
 import { adviceOf, evaluateRedFlags } from './redflag.js';
+import { QUESTIONNAIRE_RED_FLAG } from './triage.js';
 import type {
   QuestionnaireForVisit,
   QuestionnaireResponseView,
@@ -38,6 +40,8 @@ export interface QuestionnaireDeps {
   access: ChartAccess;
   catalog: Pick<CatalogPort, 'questionnaireTemplate'>;
   checkIns: Pick<CheckInPort, 'reservation'>;
+  /** Publishes the event whose handler job raises the red-flag alert (a patient session cannot insert a staff alert). */
+  events: EventPort;
 }
 
 export const toResponseView = (r: Row): QuestionnaireResponseView => ({
@@ -260,6 +264,13 @@ export class QuestionnaireService {
         submitted: true,
         redFlag: result.redFlag,
       });
+      // PRD 8.3, RA-R1-07 (not waivable): the red flag becomes a durable alert for the on-duty doctor. The event is published in the
+      // submit's own transaction, so the flag and the job that raises its alert commit together or not at all.
+      if (result.redFlag)
+        await this.deps.events.publish(tx, QUESTIONNAIRE_RED_FLAG, {
+          responseId: String(row['id']),
+          patientId: String(row['patient_id']),
+        });
       const advice = result.redFlag ? adviceOf(schema) : undefined;
       return {
         response: toResponseView(u.rows[0] as Row),

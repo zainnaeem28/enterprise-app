@@ -15,12 +15,26 @@ export const FRONTDOOR_JOBS: readonly JobType[] = [
     jobScope: 'patients',
     jobClass: 'handler',
   },
+  // Handler of `clinical.questionnaire_red_flag` (QA-EXEC-F06): raises the red-flag alert of a questionnaire submitted with a red flag.
+  {
+    name: 'clinical.on_questionnaire_red_flag',
+    maxAttempts: 8,
+    onMerged: 'resolve',
+    carriesPatientIds: true,
+    jobScope: 'patients',
+    jobClass: 'handler',
+  },
 ];
 
 /** Events this module publishes. `clinical.red_flag_raised` is the 24 event; `clinical.roster_gap` is the operations signal of 25.5. */
-export const FRONTDOOR_EVENTS = ['clinical.red_flag_raised', 'clinical.roster_gap'] as const;
+export const FRONTDOOR_EVENTS = [
+  'clinical.red_flag_raised',
+  'clinical.roster_gap',
+  'clinical.questionnaire_red_flag',
+] as const;
 
 /** Registers the one handler this module has for an event of another module's. */
 export function registerFrontdoorHandlers(registry: Pick<JobRegistry, 'registerHandler'>): void {
   registry.registerHandler('notifications.alert_unacknowledged', 'clinical');
+  registry.registerHandler('clinical.questionnaire_red_flag', 'clinical');
 }
