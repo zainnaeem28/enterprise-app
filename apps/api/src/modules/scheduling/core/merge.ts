@@ -53,29 +53,17 @@ export const schedulingMergeParticipant: MergeParticipant = {
       throw new SchedulingValidationError(['mergedId', 'survivorId', 'requestId']);
     mustBeMergeJob(tx, [mergedId, survivorId]);
 
-    // The rows are locked first, in id order, so a concurrent cancel or confirm of one of them waits (a status change under a merge
-    // would move a row between R and K after it had been counted).
-    await tx.query(
-      `SELECT r.id FROM scheduling.slot_reservation r WHERE r.patient_id = $1::uuid ORDER BY r.id FOR UPDATE`,
-      [mergedId],
-    );
-    const found = await count(
-      tx,
-      `SELECT count(*)::int AS n FROM scheduling.slot_reservation WHERE patient_id = $1::uuid`,
-      [mergedId],
-    );
-    const kept = await count(
-      tx,
-      `SELECT count(*)::int AS n FROM scheduling.slot_reservation r JOIN scheduling.slot_occupancy o ON o.id = r.id
-        WHERE r.patient_id = $1::uuid AND o.status <> ALL($2::text[])`,
-      [mergedId, R_STATES],
-    );
-    const moved = await tx.query(
-      `UPDATE scheduling.slot_reservation r SET patient_id = $2::uuid
-         FROM scheduling.slot_occupancy o
-        WHERE o.id = r.id AND r.patient_id = $1::uuid AND o.status = ANY($3::text[])`,
-      [mergedId, survivorId, R_STATES],
-    );
+    // SEC03-F11: app_worker holds SELECT only. The function locks the rows in id order (a concurrent cancel or confirm of one of them
+    // waits: a status change under a merge would move a row between R and K after it had been counted), counts and moves them.
+    const done = (
+      await tx.query(
+        `SELECT n_found, n_kept, n_repointed FROM scheduling.merge_repoint_slot_reservation($1::uuid)`,
+        [requestId],
+      )
+    ).rows[0] as Row;
+    const found = Number(done['n_found']);
+    const kept = Number(done['n_kept']);
+    const repointed = Number(done['n_repointed']);
     // 22.16 step 4: no R row may be left on the merged ID.
     const left = await count(
       tx,
@@ -85,7 +73,6 @@ export const schedulingMergeParticipant: MergeParticipant = {
     );
     if (left !== 0)
       throw new Error('scheduling.repointPatient: an R row is left on the merged patient');
-    const repointed = moved.rowCount ?? 0;
     if (found !== repointed + kept)
       throw new Error(
         'scheduling.repointPatient: counts do not add up for scheduling.slot_reservation',

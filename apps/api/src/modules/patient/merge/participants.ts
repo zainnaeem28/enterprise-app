@@ -9,6 +9,9 @@
 //   patient.communication_preference R (all)                                                    PK (patient): the survivor's row wins; the merged row is deleted and returned
 //   patient.care_team_member        R active                  K ended                         UQ active (patient, principal, role): the survivor's wins; the merged row is ended
 //   patient.duplicate_flag          R open, merge_requested   K not_duplicate, resolved       flags between the two are resolved; others get the survivor; a doubled pair keeps the older flag
+// SEC03-F11: app_worker holds SELECT only on these tables. Every write goes through a patient_scope_owner function of migration 2503
+// (patient.merge_repoint_*, scheduling.merge_repoint_slot_reservation), which refuses unless `requestId` is the executing merge of
+// the job's two patients; the row locks (FOR UPDATE) are taken inside them too.
 import { defaultRegistries } from '@ehr/kernel';
 import type { MergeParticipant, ParticipantRegistries, Tx } from '@ehr/kernel';
 import { PatientScopeError, PatientValidationError } from '../errors.js';
@@ -73,18 +76,25 @@ async function simple(
   table: 'patient.patient_contact' | 'patient.insurance_coverage',
   merged: string,
   survivor: string,
+  requestId: string,
 ): Promise<MergeCounts> {
   const found = await n(tx, `SELECT count(*)::int AS n FROM ${table} WHERE patient_id = $1`, [
     merged,
   ]);
-  const moved = await tx.query(`UPDATE ${table} SET patient_id = $2 WHERE patient_id = $1`, [
-    merged,
-    survivor,
-  ]);
-  return counts(table, found, moved.rowCount ?? 0, 0, 0);
+  const fn =
+    table === 'patient.patient_contact'
+      ? 'patient.merge_repoint_patient_contact'
+      : 'patient.merge_repoint_insurance_coverage';
+  const moved = await n(tx, `SELECT ${fn}($1::uuid) AS n`, [requestId]);
+  return counts(table, found, moved, 0, 0);
 }
 
-async function consents(tx: Tx, merged: string, survivor: string): Promise<MergeCounts> {
+async function consents(
+  tx: Tx,
+  merged: string,
+  survivor: string,
+  requestId: string,
+): Promise<MergeCounts> {
   const found = await n(
     tx,
     `SELECT count(*)::int AS n FROM patient.consent WHERE patient_id = $1`,
@@ -95,69 +105,50 @@ async function consents(tx: Tx, merged: string, survivor: string): Promise<Merge
     `SELECT count(*)::int AS n FROM patient.consent WHERE patient_id = $1 AND status IN ('superseded', 'withdrawn')`,
     [merged],
   );
-  let resolved = 0;
-  // Signed on both for one template: the higher version wins, then the later signing time; ties go to the survivor.
-  const pairs = (
-    await tx.query(
-      `SELECT m.id AS m_id, s.id AS s_id,
-              (m.template_version, m.signed_at) > (s.template_version, s.signed_at) AS merged_wins
-         FROM patient.consent m JOIN patient.consent s
-           ON s.patient_id = $2 AND s.template_key = m.template_key AND s.status = 'signed'
-        WHERE m.patient_id = $1 AND m.status = 'signed'
-        ORDER BY m.id FOR UPDATE OF m, s`,
-      [merged, survivor],
-    )
-  ).rows as Row[];
-  for (const p of pairs) {
-    const loser = p['merged_wins'] === true ? p['s_id'] : p['m_id'];
-    await tx.query(`UPDATE patient.consent SET status = 'superseded' WHERE id = $1`, [loser]);
-    if (p['merged_wins'] !== true) resolved += 1; // a loser on the merged ID stays there as K
-  }
-  // Pending on both for one template version: the survivor's pending request stays; the merged one is withdrawn.
-  const dup = await tx.query(
-    `UPDATE patient.consent m SET status = 'withdrawn', reason = 'merged_duplicate'
-      WHERE m.patient_id = $1 AND m.status = 'pending'
-        AND EXISTS (SELECT 1 FROM patient.consent s WHERE s.patient_id = $2 AND s.status = 'pending'
-                       AND s.template_key = m.template_key AND s.template_version = m.template_version)`,
-    [merged, survivor],
-  );
-  resolved += dup.rowCount ?? 0;
-  const moved = await tx.query(
-    `UPDATE patient.consent SET patient_id = $2 WHERE patient_id = $1 AND status IN ('pending', 'signed')`,
-    [merged, survivor],
-  );
-  return counts('patient.consent', found, moved.rowCount ?? 0, resolved, kept);
+  // Signed on both for one template: the higher version wins, then the later signing time; ties go to the survivor. Pending on both
+  // for one template version: the merged one is withdrawn. Then the pending and signed rows move. All three steps run in the function.
+  const r = (
+    await tx.query(`SELECT repointed, resolved FROM patient.merge_repoint_consent($1::uuid)`, [
+      requestId,
+    ])
+  ).rows[0] as Row;
+  return counts('patient.consent', found, Number(r['repointed']), Number(r['resolved']), kept);
 }
 
-async function preferences(tx: Tx, merged: string, survivor: string): Promise<MergeCounts> {
+async function preferences(
+  tx: Tx,
+  merged: string,
+  survivor: string,
+  requestId: string,
+): Promise<MergeCounts> {
   const found = await n(
     tx,
     `SELECT count(*)::int AS n FROM patient.communication_preference WHERE patient_id = $1`,
     [merged],
   );
-  const deleted = (
+  const r = (
     await tx.query(
-      `DELETE FROM patient.communication_preference m
-        WHERE m.patient_id = $1 AND EXISTS (SELECT 1 FROM patient.communication_preference s WHERE s.patient_id = $2)
-        RETURNING to_jsonb(m) AS row`,
-      [merged, survivor],
+      `SELECT repointed, deleted FROM patient.merge_repoint_communication_preference($1::uuid)`,
+      [requestId],
     )
-  ).rows.map((r) => (r as Row)['row']);
-  const moved = await tx.query(
-    `UPDATE patient.communication_preference SET patient_id = $2 WHERE patient_id = $1`,
-    [merged, survivor],
-  );
+  ).rows[0] as Row;
+  const deleted = r['deleted'] as unknown[];
   return counts(
     'patient.communication_preference',
     found,
-    moved.rowCount ?? 0,
+    Number(r['repointed']),
     deleted.length,
     0,
     deleted,
   );
 }
 
-async function careTeam(tx: Tx, merged: string, survivor: string): Promise<MergeCounts> {
+async function careTeam(
+  tx: Tx,
+  merged: string,
+  survivor: string,
+  requestId: string,
+): Promise<MergeCounts> {
   const found = await n(
     tx,
     `SELECT count(*)::int AS n FROM patient.care_team_member WHERE patient_id = $1`,
@@ -168,21 +159,27 @@ async function careTeam(tx: Tx, merged: string, survivor: string): Promise<Merge
     `SELECT count(*)::int AS n FROM patient.care_team_member WHERE patient_id = $1 AND to_date IS NOT NULL`,
     [merged],
   );
-  const ended = await tx.query(
-    `UPDATE patient.care_team_member m SET to_date = greatest(current_date, m.from_date), end_reason = 'merged_duplicate'
-      WHERE m.patient_id = $1 AND m.to_date IS NULL
-        AND EXISTS (SELECT 1 FROM patient.care_team_member s WHERE s.patient_id = $2 AND s.to_date IS NULL
-                       AND s.principal_id = m.principal_id AND s.role = m.role)`,
-    [merged, survivor],
+  const r = (
+    await tx.query(
+      `SELECT repointed, ended FROM patient.merge_repoint_care_team_member($1::uuid)`,
+      [requestId],
+    )
+  ).rows[0] as Row;
+  return counts(
+    'patient.care_team_member',
+    found,
+    Number(r['repointed']),
+    Number(r['ended']),
+    kept,
   );
-  const moved = await tx.query(
-    `UPDATE patient.care_team_member SET patient_id = $2 WHERE patient_id = $1 AND to_date IS NULL`,
-    [merged, survivor],
-  );
-  return counts('patient.care_team_member', found, moved.rowCount ?? 0, ended.rowCount ?? 0, kept);
 }
 
-async function flags(tx: Tx, merged: string, survivor: string): Promise<MergeCounts> {
+async function flags(
+  tx: Tx,
+  merged: string,
+  survivor: string,
+  requestId: string,
+): Promise<MergeCounts> {
   const found = await n(
     tx,
     `SELECT count(*)::int AS n FROM patient.duplicate_flag WHERE patient_id = $1 OR candidate_patient_id = $1`,
@@ -194,64 +191,21 @@ async function flags(tx: Tx, merged: string, survivor: string): Promise<MergeCou
       WHERE (patient_id = $1 OR candidate_patient_id = $1) AND status IN ('not_duplicate', 'resolved')`,
     [merged],
   );
-  let resolved = 0;
-  let repointed = 0;
-  // 1. Flags between the two merging patients, either direction.
-  const between = await tx.query(
-    `UPDATE patient.duplicate_flag SET status = 'resolved', resolved_reason = 'merged'
-      WHERE status IN ('open', 'merge_requested')
-        AND ((patient_id = $1 AND candidate_patient_id = $2) OR (patient_id = $2 AND candidate_patient_id = $1))`,
-    [merged, survivor],
-  );
-  resolved += between.rowCount ?? 0;
-  // 2. The rest, oldest first: the survivor takes the merged side; a doubled pair keeps the older flag.
-  const rest = (
+  // 1. Flags between the two merging patients, either direction, are resolved. 2. The rest, oldest first: the survivor takes the merged
+  // side; a doubled pair keeps the older flag. Both steps run in the function.
+  const r = (
     await tx.query(
-      `SELECT id, patient_id, candidate_patient_id, created_at FROM patient.duplicate_flag
-        WHERE status IN ('open', 'merge_requested') AND (patient_id = $1 OR candidate_patient_id = $1)
-        ORDER BY created_at, id FOR UPDATE`,
-      [merged],
+      `SELECT repointed, resolved FROM patient.merge_repoint_duplicate_flag($1::uuid)`,
+      [requestId],
     )
-  ).rows as Row[];
-  for (const f of rest) {
-    const other = f['patient_id'] === merged ? f['candidate_patient_id'] : f['patient_id'];
-    const e = (
-      await tx.query(
-        `SELECT id, created_at FROM patient.duplicate_flag
-          WHERE status IN ('open', 'merge_requested') AND id <> $3
-            AND ((patient_id = $1 AND candidate_patient_id = $2) OR (patient_id = $2 AND candidate_patient_id = $1))
-          FOR UPDATE`,
-        [survivor, other, f['id']],
-      )
-    ).rows[0] as Row | undefined;
-    if (e !== undefined) {
-      const fNewer =
-        (f['created_at'] as Date).getTime() > (e['created_at'] as Date).getTime() ||
-        ((f['created_at'] as Date).getTime() === (e['created_at'] as Date).getTime() &&
-          String(f['id']) > String(e['id']));
-      if (fNewer) {
-        await tx.query(
-          `UPDATE patient.duplicate_flag SET status = 'resolved', resolved_reason = 'merged_duplicate' WHERE id = $1`,
-          [f['id']],
-        );
-        resolved += 1;
-        continue;
-      }
-      await tx.query(
-        `UPDATE patient.duplicate_flag SET status = 'resolved', resolved_reason = 'merged_duplicate' WHERE id = $1`,
-        [e['id']],
-      );
-    }
-    await tx.query(
-      `UPDATE patient.duplicate_flag
-          SET patient_id = CASE WHEN patient_id = $2 THEN $3::uuid ELSE patient_id END,
-              candidate_patient_id = CASE WHEN candidate_patient_id = $2 THEN $3::uuid ELSE candidate_patient_id END
-        WHERE id = $1`,
-      [f['id'], merged, survivor],
-    );
-    repointed += 1;
-  }
-  return counts('patient.duplicate_flag', found, repointed, resolved, kept);
+  ).rows[0] as Row;
+  return counts(
+    'patient.duplicate_flag',
+    found,
+    Number(r['repointed']),
+    Number(r['resolved']),
+    kept,
+  );
 }
 
 export const patientMergeParticipant: MergeParticipant = {
@@ -268,12 +222,12 @@ export const patientMergeParticipant: MergeParticipant = {
       throw new PatientValidationError(['mergedId', 'survivorId', 'requestId']);
     mustBeMergeJob(tx, [mergedId, survivorId]);
     const out = [
-      await simple(tx, 'patient.patient_contact', mergedId, survivorId),
-      await simple(tx, 'patient.insurance_coverage', mergedId, survivorId),
-      await consents(tx, mergedId, survivorId),
-      await preferences(tx, mergedId, survivorId),
-      await careTeam(tx, mergedId, survivorId),
-      await flags(tx, mergedId, survivorId),
+      await simple(tx, 'patient.patient_contact', mergedId, survivorId, requestId),
+      await simple(tx, 'patient.insurance_coverage', mergedId, survivorId, requestId),
+      await consents(tx, mergedId, survivorId, requestId),
+      await preferences(tx, mergedId, survivorId, requestId),
+      await careTeam(tx, mergedId, survivorId, requestId),
+      await flags(tx, mergedId, survivorId, requestId),
     ];
     // 22.16 step 4: no R row may be left on the merged ID.
     const left = await n(

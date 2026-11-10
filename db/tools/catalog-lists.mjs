@@ -119,6 +119,16 @@ export const definerInventory = [
   'patient.begin_merge',
   'patient.complete_merge',
   'patient.fail_merge',
+  // SEC03-F11 (HEAAA-687, migration 2503; spec docs/security/SEC03-F11-worker-merge-grants-hardening-spec.md section 3): the merge re-pointing
+  // writes moved from app_worker grants into definer functions. Inventory entry needs the Solution Architect's sign-off (HEAAA-687 decision log).
+  'patient.merge_job_check',
+  'patient.merge_repoint_patient_contact',
+  'patient.merge_repoint_insurance_coverage',
+  'patient.merge_repoint_consent',
+  'patient.merge_repoint_communication_preference',
+  'patient.merge_repoint_care_team_member',
+  'patient.merge_repoint_duplicate_flag',
+  'scheduling.merge_repoint_slot_reservation',
   'scheduling.occupy',
   'scheduling.set_status',
   'scheduling.expire_holds',
