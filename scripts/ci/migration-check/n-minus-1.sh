@@ -30,26 +30,22 @@ cp -a "$CI_ROOT/db/roles" "$PREV_TREE/db/roles"
 for f in catalog-lists.mjs catalog-check.mjs; do
   [ -f "$CI_ROOT/db/tools/$f" ] && cp -a "$CI_ROOT/db/tools/$f" "$PREV_TREE/db/tools/$f"
 done
-SKIPS="$MC_DIR/n-minus-1-skips.tsv"
-SKIP_REPORT="$OUT/n-minus-1-skipped.txt"
-: >"$SKIP_REPORT"
-# skip_regex <suite>: regex of the listed tests for the suite; an entry absent from the previous tree is ignored with a notice.
-skip_regex() {
-  local suite="$1" sfx name reason files re=""
-  while IFS=$'\t' read -r sfx name reason; do
-    case "$sfx" in ''|'#'*) continue ;; esac
-    [ "$sfx" = "$suite" ] || continue
-    mapfile -t files < <(suite_files "$PREV_TREE" "$suite")
-    if ! (cd "$PREV_TREE" && grep -qF -- "$name" "${files[@]}"); then
-      echo "::notice::N-1 skip list entry not present in $TAG, ignored: $name" >&2
-      continue
-    fi
-    echo "::notice::N-1 SKIPPED (not a pass) [$suite] $name -- $reason" >&2
-    printf '%s\t%s\t%s\n' "$suite" "$name" "$reason" >>"$SKIP_REPORT"
-    re="${re:+$re|}$(node -e 'process.stdout.write("^"+process.argv[1].replace(/[.*+?^${}()|[\]\\\/]/g,"\\$&")+"$")' "$name")"
-  done <"$SKIPS"
-  printf '%s' "$re"
-}
+PINS="$MC_DIR/n-minus-1-pins.tsv"
+PIN_REPORT="$OUT/n-minus-1-pins.txt"
+PINS_PRESENT="$OUT/n-minus-1-pins-present.tsv"
+: >"$PIN_REPORT"
+: >"$PINS_PRESENT"
+# Expected pin failures (HEAAA-739 Q1 (d)): listed tests RUN; check-junit.mjs accepts a listed failure only when it is exactly
+# the recorded literal-size assertion. An entry whose test is absent from the previous tree is ignored with a notice.
+while IFS=$'\t' read -r sfx name loc literal reason; do
+  case "$sfx" in ''|'#'*) continue ;; esac
+  mapfile -t files < <(suite_files "$PREV_TREE" "$sfx")
+  if [ "${#files[@]}" -eq 0 ] || ! (cd "$PREV_TREE" && grep -qF -- "$name" "${files[@]}"); then
+    echo "::notice::N-1 pin entry not present in $TAG, ignored: $name" >&2
+    continue
+  fi
+  printf '%s\t%s\t%s\t%s\t%s\n' "$sfx" "$name" "$loc" "$literal" "$reason" >>"$PINS_PRESENT"
+done <"$PINS"
 suites=()
 rc=0
 for s in db-foundation kernel api worker; do
@@ -59,10 +55,10 @@ for s in db-foundation kernel api worker; do
     continue
   fi
   suites+=("$s")
-  run_db_suite "$PREV_TREE" "$s" "$J" "$OUT/n-minus-1-$s.txt" "$(skip_regex "$s")" || rc=1
+  run_db_suite "$PREV_TREE" "$s" "$J" "$OUT/n-minus-1-$s.txt" || rc=1
 done
 [ "${#suites[@]}" -gt 0 ] || { echo "::error::previous release $TAG has no database suite to run (empty N-1 suite)"; exit 1; }
-node "$MC_DIR/check-junit.mjs" "$J" "${suites[@]}" || rc=1
+node "$MC_DIR/check-junit.mjs" --pins "$PINS_PRESENT" --catalog "$PREV_TREE/db/tools/catalog-lists.mjs" --report "$PIN_REPORT" "$J" "${suites[@]}" || rc=1
 [ "$rc" -eq 0 ] || { echo "::error::N-1: the previous release ($TAG) does not pass against the candidate schema"; exit 1; }
 echo "N-1 passed against $TAG"
-[ ! -s "$SKIP_REPORT" ] || echo "::notice::N-1 passed with $(wc -l <"$SKIP_REPORT") listed test(s) skipped (not a pass); see n-minus-1-skipped.txt"
+[ ! -s "$PIN_REPORT" ] || echo "::notice::N-1 passed with $(wc -l <"$PIN_REPORT") expected pin failure(s) (not a pass); see n-minus-1-pins.txt"
