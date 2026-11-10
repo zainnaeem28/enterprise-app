@@ -94,7 +94,7 @@ test('cleanup reports a secret that cannot be deleted or still exists, and treat
     return {};
   };
   assert.deepEqual(await cleanup({ env: 'staging', names, call }), names);
-  const nf = (argv) => {
+  const nf = () => {
     const e = new Error('x');
     e.stderr = 'ResourceNotFoundException';
     throw e;

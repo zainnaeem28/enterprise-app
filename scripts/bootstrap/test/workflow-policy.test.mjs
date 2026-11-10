@@ -30,7 +30,7 @@ const wfs = {
 
 for (const [name, text] of Object.entries(wfs)) {
   test(`${name}: manual only, empty top-level permissions, no secrets context, SHA-pinned actions`, () => {
-    assert.match(text, /^on:\n  workflow_dispatch:/m);
+    assert.match(text, /^on:\n {2}workflow_dispatch:/m);
     assert.doesNotMatch(text, /^\s+(push|pull_request|pull_request_target|schedule):/m);
     assert.match(text, /^permissions: \{\}$/m);
     assert.doesNotMatch(text, /\$\{\{\s*secrets\./);
@@ -51,16 +51,16 @@ for (const [name, text] of Object.entries(wfs)) {
 
 test('bootstrap.yml: the environment is the only input and the cleanup and rotation steps always run after login', () => {
   const t = wfs['bootstrap.yml'];
-  assert.equal([...t.matchAll(/^      [a-z_]+:\n        description/gm)].length, 1);
+  assert.equal([...t.matchAll(/^ {6}[a-z_]+:\n {8}description/gm)].length, 1);
   assert.match(t, /environment: bootstrap-\$\{\{ inputs\.environment \}\}/);
   assert.match(t, /group: bootstrap-\$\{\{ inputs\.environment \}\}/);
   assert.match(
     t,
-    /if: \$\{\{ always\(\) && steps\.login\.outcome == 'success' \}\}\n        run: node scripts\/bootstrap\/cleanup\.mjs/,
+    /if: \$\{\{ always\(\) && steps\.login\.outcome == 'success' \}\}\n {8}run: node scripts\/bootstrap\/cleanup\.mjs/,
   );
   assert.match(
     t,
-    /if: \$\{\{ always\(\) && steps\.login\.outcome == 'success' \}\}\n        run: node scripts\/bootstrap\/rotate-credential\.mjs/,
+    /if: \$\{\{ always\(\) && steps\.login\.outcome == 'success' \}\}\n {8}run: node scripts\/bootstrap\/rotate-credential\.mjs/,
   );
   assert.doesNotMatch(t, /--(custodian|enrollee|handle|token|person)/);
 });

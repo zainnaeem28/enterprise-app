@@ -157,7 +157,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        root: [accounts/staging, accounts/production, accounts/tooling, accounts/log-archive, accounts/marketing]
+        root:
+          [
+            accounts/staging,
+            accounts/production,
+            accounts/tooling,
+            accounts/log-archive,
+            accounts/marketing,
+          ]
     env:
       ROOT: ${{ matrix.root }}
       PLAN_ENABLED: ${{ vars.INFRA_PLAN_ENABLED }}
