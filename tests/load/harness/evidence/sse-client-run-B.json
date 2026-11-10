@@ -1,0 +1,31 @@
+{
+  "tool": "sse-load.mjs",
+  "node": "v24.22.2",
+  "url": "http://127.0.0.1:8099/events",
+  "requested": {
+    "streams": 50,
+    "durationSeconds": 15,
+    "rampSeconds": 2
+  },
+  "elapsedSeconds": 17,
+  "opened": 146,
+  "openAtEnd": 46,
+  "peakOpen": 50,
+  "events": 1319,
+  "eventsPerSecond": 77.6,
+  "heartbeats": 205,
+  "timeToFirstEventMs": {
+    "p50": 1,
+    "p95": 1,
+    "p99": 9,
+    "max": 10
+  },
+  "unexpectedClose": 100,
+  "reconnects": 100,
+  "connectErrors": 0,
+  "httpErrors": 0,
+  "statusCodes": {
+    "200": 146
+  },
+  "heartbeatGapsOverLimit": 0
+}
