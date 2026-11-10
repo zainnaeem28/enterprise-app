@@ -53,6 +53,14 @@
 19cea0d45f44cc0b2313439200566a61bba04b21:tests/api/platform/admin.test.mjs:generic-api-key:149
 19cea0d45f44cc0b2313439200566a61bba04b21:tests/api/platform/admin.test.mjs:generic-api-key:185
 19cea0d45f44cc0b2313439200566a61bba04b21:tests/api/platform/admin.test.mjs:generic-api-key:189
+
+# Triage of gitleaks findings (HEAAA-682; owner: Cybersecurity; reviewer: Security Reviewer). Full-history scan of main bcb6448: 10 findings, 8 distinct fingerprints.
+# Every entry is one exact fingerprint (commit:file:rule:line), reviewed individually. None is a credential:
+#  - tests/api/platform/admin.test.mjs (commits 25fea61a, 264b9141): feature-flag key literals 'qa05_probe_flag' / 'qa05_probe_flag2' (rule generic-api-key, key: field name).
+#  - docs/evidence/qa-execution-r2/screens-{chromium,firefox}/stack.out line 107 (commit 264b9141): captured output, JSON list {"applied":["0001_...sql",...]} of migration file names (entropy match).
+# No history rewrite, no rule disabled, no path-wide allowlist: a new finding anywhere still fails the scan.
+25fea61a059cfbe174c1fb03774c631a5142d682:tests/api/platform/admin.test.mjs:generic-api-key:298
+25fea61a059cfbe174c1fb03774c631a5142d682:tests/api/platform/admin.test.mjs:generic-api-key:372
 264b9141db5df43f4dc22e3314111bf0a1b8c48a:docs/evidence/qa-execution-r2/screens-chromium/stack.out:generic-api-key:107
 264b9141db5df43f4dc22e3314111bf0a1b8c48a:docs/evidence/qa-execution-r2/screens-firefox/stack.out:generic-api-key:107
 264b9141db5df43f4dc22e3314111bf0a1b8c48a:tests/api/platform/admin.test.mjs:generic-api-key:146
