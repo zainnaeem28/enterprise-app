@@ -78,14 +78,15 @@ suite_files() {
   esac
 }
 
-# run_db_suite <tree> <suite> <junit-dir> <log>: node:test over the suite's files with spec + JUnit reporters.
+# run_db_suite <tree> <suite> <junit-dir> <log> [skip-regex]: node:test over the suite's files with spec + JUnit reporters.
 run_db_suite() {
-  local tree="$1" s="$2" junit="$3" log="$4" files
+  local tree="$1" s="$2" junit="$3" log="$4" skip="${5:-}" files extra=()
+  [ -z "$skip" ] || extra=(--test-skip-pattern "$skip")
   mapfile -t files < <(suite_files "$tree" "$s")
   [ "${#files[@]}" -gt 0 ] || { echo "::error::suite $s: no database test files found in $tree (an empty suite fails)" >&2; return 1; }
   echo "== suite $s (${#files[@]} file(s), $tree)"
   (cd "$tree" && node --test \
     --test-reporter=spec --test-reporter-destination=stdout \
     --test-reporter=junit --test-reporter-destination="$junit/$s.xml" \
-    "${files[@]}") 2>&1 | tee "$log"
+    "${extra[@]}" "${files[@]}") 2>&1 | tee "$log"
 }

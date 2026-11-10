@@ -1,0 +1,4 @@
+# N-1 expected-incompatibility list (HEAAA-722 D2). Only previous-release tests that fail SOLELY because they pin a literal
+# catalog size or shape may be listed. No behavioural, RLS, grant-refusal or audit test may be listed.
+# Columns (TAB separated): suite <TAB> exact test name <TAB> one-line reason.  A listed test is "not a pass".
+db-foundation	I-10: M-5-definer passes with 28 entries (25 of F03B, the two referral definers of F08d and identity.bootstrap_admins of A-6); is_creator does not exist; patient_scope_owner holds only the four participant columns	pins the literal definer-catalog size (28) that the candidate catalog legitimately grows beyond
