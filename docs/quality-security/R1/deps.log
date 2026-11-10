@@ -1,0 +1,7 @@
+Starting filesystem walk for root: /
+Scanned /tmp/h30-cand/pnpm-lock.yaml file and found 795 packages
+End status: 0 dirs visited, 1 inodes visited, 1 Extract calls, 15.425836ms elapsed, 15.425926ms wall time
+non-blocking: deepmerge@4.3.1 GHSA-gcqx-w48m-w2h4 (deepmerge mergeObject() allows prototype poisoning of returned objects): severity 5.3, no fix
+non-blocking: minimatch@10.2.6 GHSA-g3hv-75wg-m249 (minimatch has potential denial of service via globparts amplification): severity 6.9, fix available
+non-blocking: yaml@2.8.1 GHSA-48c2-rrv3-qjmp (yaml is vulnerable to Stack Overflow via deeply nested YAML collections): severity 4.3, fix available
+osv: 3 package(s) with findings, 3 vulnerabilities, none blocking
