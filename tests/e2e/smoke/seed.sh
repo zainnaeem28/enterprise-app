@@ -30,6 +30,19 @@ expect_fail() { # expect_fail <label> <pattern> <command...>
     bad=$((bad + 1))
   fi
 }
+expect_fail_only() { # expect_fail_only <label> <pattern> <forbidden-pattern> <command...>: also requires the log NOT to match <forbidden-pattern>
+  local label="$1" pattern="$2" forbidden="$3"
+  shift 3
+  local log="$LOGS/${label//[^A-Za-z0-9]/_}.log" rc=0
+  "$@" >"$log" 2>&1 || rc=$?
+  if [ "$rc" -ne 0 ] && grep -Eq -- "$pattern" "$log" && ! grep -Eq -- "$forbidden" "$log"; then
+    printf 'PASS (rc=%s, matched /%s/, not /%s/)  %s\n' "$rc" "$pattern" "$forbidden" "$label" | tee -a "$RESULTS"
+  else
+    printf 'FAIL (rc=%s, pattern /%s/ %s, forbidden /%s/ %s)  %s\n' "$rc" "$pattern" "$(grep -Eq -- "$pattern" "$log" && echo found || echo NOT found)" "$forbidden" "$(grep -Eq -- "$forbidden" "$log" && echo FOUND || echo absent)" "$label" | tee -a "$RESULTS"
+    tail -n 25 "$log" | sed 's/^/      /' | tee -a "$RESULTS"
+    bad=$((bad + 1))
+  fi
+}
 broken_dist() { # broken_dist <name>: copy of the built shell
   rm -rf "$WORK/$1"
   cp -a "$CI_ROOT/apps/staff/dist" "$WORK/$1"
@@ -64,9 +77,23 @@ case "$JOB" in
     ;;
   bundle-budget)
     d="$(broken_dist bloat)"
+    bloat="$d"
     head -c 700000 /dev/urandom | base64 -w0 | sed 's/.*/window.__seedBloat="&";/' >"$d/assets/seed-bloat.js"
     sed -i 's#</head>#<script src="/assets/seed-bloat.js"></script></head>#' "$d/index.html"
-    expect_fail "script weight over budget (gzip budget script)" 'total JS gzip' env BUNDLE_DIST_DIR="$d" node "$SMOKE/bundle-gzip.mjs" "$d"
+    expect_fail "script weight over budget (gzip budget script, initial set)" '::error::budget initial' env BUNDLE_DIST_DIR="$d" node "$SMOKE/bundle-gzip.mjs" "$d"
+    d="$(broken_dist lazy-bloat)"
+    head -c 700000 /dev/urandom | base64 -w0 >"$d/assets/seed-lazy-bloat.js" # not linked from index.html
+    expect_fail_only "lazy chunk over budget (gzip budget script, unlinked 700 KB chunk)" '::error::budget lazy-chunk' '::error::budget (initial|total)' \
+      env BUDGET_TOTAL_GZIP_BYTES=10000000 node "$SMOKE/bundle-gzip.mjs" "$d"
+    d="$(broken_dist total-bloat)"
+    for i in $(seq 1 12); do head -c 20000 /dev/urandom | base64 -w0 >"$d/assets/seed-total-$i.js"; done # unlinked, each under the chunk limit
+    chunk_limit="${BUDGET_CHUNK_GZIP_BYTES:-30720}"
+    for i in $(seq 1 12); do
+      [ "$(gzip -c "$d/assets/seed-total-$i.js" | wc -c)" -lt "$chunk_limit" ] || { echo "seed file $i would trip the lazy-chunk check" | tee -a "$RESULTS"; bad=$((bad + 1)); }
+    done
+    expect_fail_only "total JS over tripwire (gzip budget script, 12 unlinked chunks)" '::error::budget total' '::error::budget (initial|lazy-chunk)' \
+      node "$SMOKE/bundle-gzip.mjs" "$d"
+    d="$bloat"
     expect_fail "script weight over budget (Lighthouse CI)" 'resource-summary:script:size|Assertion failed' \
       env SMOKE_DIST_DIR="$d" LHCI_OUTPUT_DIR="$WORK/lhci-bloat" CHROME_PATH="${CHROME_PATH:-}" pnpm dlx "@lhci/cli@${LHCI_VERSION:-0.16.0}" autorun --config=lighthouserc.cjs
     mkdir -p "$WORK/lhci-empty"
