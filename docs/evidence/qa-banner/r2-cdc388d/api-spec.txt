@@ -1,0 +1,66 @@
+# ROUTE banner (doctor) GET /api/v1/patients/{id}/banner -> 403
+# ROUTE banner (triage nurse) GET /api/v1/patients/{id}/banner -> 200
+# ROUTE banner (front desk) GET /api/v1/patients/{id}/banner -> 200
+# ROUTE chart-summary GET /api/v1/patients/{id}/chart-summary -> 200
+# ROUTE problems GET /api/v1/patients/{id}/problems -> 200
+# ROUTE allergies GET /api/v1/patients/{id}/allergies -> 200
+# ROUTE medications GET /api/v1/patients/{id}/medications -> 200
+# ROUTE documents GET /api/v1/patients/{id}/documents -> 200
+# ROUTE questionnaire-responses (triage nurse) GET /api/v1/patients/{id}/questionnaire-responses -> 200
+# ROUTE patient record (doctor) GET /api/v1/patients/{id} -> 403
+# ROUTE patient record (front desk) GET /api/v1/patients/{id} -> 200
+# triage GET before any triage: 200 banner=omitted (triage null)
+# triage POST 201 keys=category,redFlag,triage,patientBanner
+# ROUTE triage GET (after triage) GET /api/v1/check-ins/01a1c613-fbd3-7e06-88d7-f3f19ac9f56a/triage -> 200
+# encounters POST 201 {"id":"01a1c613-fdb9-7e14-9996-cd77de7678df","patientId":"00000000-0000-7000-8000-000004778122","locationId":"00000000-0000-7000-8000-000000000101","reservation
+# note POST 201 {"id":"01a1c613-fdea-79d1-a518-0a3fdc3c4c62","encounterId":"01a1c613-fdb9-7e14-9996-cd77de7678df","patientId":"00000000-
+# TC-PC-13 refused (non-200) route/role pairs: banner (doctor):403, patient record (doctor):403
+# TC-PC-13 routes with a banner: banner (triage nurse) | banner (front desk) | chart-summary | problems | allergies | medications | documents | questionnaire-responses (triage nurse) | patient record (front desk) | triage GET (after triage)
+# TC-PC-13 contract violations: 1
+#   VIOLATION patient record (front desk): name/dob/mrn: {"patientId":"00000000-0000-7000-8000-000004778122","mrn":"MRN-10659374","givenName":"Test","familyName":"Patient 1559374","dateOfBirth":"1980-01-01","photoDocumentId":null,"allergySummary":null,"merged":false}
+▶ BR-34 banner (TC-PC-07, TC-PC-13, TC-CL-08 API parts)
+  ✖ TC-PC-13 steps 1,5 / TC-PC-07: every banner:true route and GET /patients/{id}/banner carries displayName, dateOfBirth, mrn for the patient the data belongs to (779.082208ms)
+# stale-tab check: other patient via same session -> 200; banner.patientId=00000000-0000-7000-8000-000004778128
+  ✔ TC-PC-13 step 3 (stale tab): a banner always names the patient of the URL, never another patient with this patient's data (314.856528ms)
+# TC-PC-14 API: long-name length=120; same-name DOB 1975-03-04/1982-09-30 MRN MRN-10659379/MRN-10659380; photoUrl key absent
+  ✔ TC-PC-14 (API): no-photo patient has no photoUrl; 120-char name is carried in full; same-name patients differ by DOB and MRN (238.793687ms)
+✖ BR-34 banner (TC-PC-07, TC-PC-13, TC-CL-08 API parts) (1334.113423ms)
+# TC-PC-15 fixture: active=12 uncoded=12 (all items are free text => uncoded); 3 excluded statuses set
+# TC-PC-15 step 1 allergies (doctor): {"state":"recorded","n":10,"moreCount":2,"uncodedCount":12}
+# TC-PC-15 step 4: MRO call added 0 allergy_summary audit rows; nurse call added 1
+# TC-PC-15 step 3 MRO GET /patients/{id} -> 200 allergies=undefined
+# TC-PC-15 step 3 MRO banner: status 200; allergies=null
+# TC-PC-15 step 4 audit rows by resource for the patient: [{"resource_type":"clinical.allergy","c":18},{"resource_type":"clinical.allergy_summary","c":22},{"resource_type":"clinical.chart_summary","c":1},{"resource_type":"patient.patient","c":1},{"resource_type":"scheduling.appointment_notice","c":1},{"resource_type":"scheduling.check_in","c":1},{"resource_type":"scheduling.previsit_message","c":1},{"resource_type":"scheduling.slot_reservation","c":2}]
+# TC-PC-15 step 5 patient session GET banner: 403
+▶ TC-PC-15 allergies in the banner, per role, audit
+  ✔ 12 active allergies (2 severe, 1 uncoded), resolved/entered_in_error/inactive excluded; none_recorded; null for patient.read-only; same for nurse, front desk, assigned doctor; audit (1188.618612ms)
+✔ TC-PC-15 allergies in the banner, per role, audit (1188.843525ms)
+ℹ tests 4
+ℹ suites 2
+ℹ pass 3
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2879.107714
+
+✖ failing tests:
+
+test at tests/api/banner/banner.test.mjs:25:3
+✖ TC-PC-13 steps 1,5 / TC-PC-07: every banner:true route and GET /patients/{id}/banner carries displayName, dateOfBirth, mrn for the patient the data belongs to (779.082208ms)
+  AssertionError [ERR_ASSERTION]: patient record (front desk): name/dob/mrn: {"patientId":"00000000-0000-7000-8000-000004778122","mrn":"MRN-10659374","givenName":"Test","familyName":"Patient 1559374","dateOfBirth":"1980-01-01","photoDocumentId":null,"allergySummary":null,"merged":false}
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///tmp/qa666/cand/tests/api/banner/banner.test.mjs:67:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
