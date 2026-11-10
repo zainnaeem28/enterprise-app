@@ -36,3 +36,4 @@ Also: the roles themselves and the state bucket (infrastructure not created here
 - Cost Explorer lags up to a day; the per-run budget alarm is the early signal (see `infra/modules/loadtest/README.md`).
 - The reaper destroys with placeholder values for variables that only satisfy validation; destroy relies on state. Untested against real state.
 - No QA-07 scenarios yet; the "Run load scenarios" step is a placeholder.
+- Integration note (HEAAA-674): the `reap` job is skipped unless the repository variable `LOADTEST_REAPER_ENABLED` is `'true'`. The module is authored but not applied, so the two-hourly schedule would only fail. Set the variable when the loadtest stack is applied (G3, HEAAA-667).

@@ -23,6 +23,9 @@ defaults:
 
 jobs:
   reap:
+    # HEAAA-674: DO-11 is authored but not applied. The environment, OIDC role and tagged stack do not exist yet, so the
+    # scheduled run is skipped until the repository variable LOADTEST_REAPER_ENABLED is set to 'true' (set it when the module is applied).
+    if: ${{ vars.LOADTEST_REAPER_ENABLED == 'true' }}
     runs-on: ubuntu-24.04
     environment: loadtest-reaper
     timeout-minutes: 120
