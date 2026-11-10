@@ -1,6 +1,6 @@
 # SEC03-F11 follow-up: least-privilege worker merge grants (specification)
 
-Status: **specified, not implemented** (task HEAAA-662, ACC-R2-03). Condition set by HEAAA-650 when it accepted F11 (QS-03, Low).
+Status: **implemented in migration `2503_least_privilege_worker_merge_grants.sql`, awaiting independent review** (task HEAAA-687; specified under HEAAA-662, ACC-R2-03). Scope of the implementation: the six patient participant tables and `scheduling.slot_reservation` of section 1. The other modules' participants (identity, notifications, documents, telehealth, flow, clinical, messaging, privacy) hold the same kind of `app_worker` re-pointing grants (0502, 1002, 1201, 1302, 1502, 1602, 1702, 1802, 1902, 2002); they are outside this spec and are not changed here. Design departures: the gate is one shared helper `patient.merge_job_check`, and the slot function lives with `scheduling_booking_owner` (it needs `USAGE` on schema `patient` and `EXECUTE` on the helper). Condition set by HEAAA-650 when it accepted F11 (QS-03, Low).
 Owner of the implementation: Backend Engineer. Reviewers: Solution Architect Reviewer (design), Security Reviewer (grants and probes), Backend Reviewer (code and dbtests).
 
 ## G3 due point

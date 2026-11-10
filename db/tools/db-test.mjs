@@ -1141,8 +1141,8 @@ describe('the single merge write guard (T1-T4 of HEAAA-190, extended by HEAAA-31
     const { definerInventory } = await import('./catalog-lists.mjs');
     assert.equal(
       definerInventory.length,
-      28,
-      'definerInventory has the 23 entries of A-3, the two messaging predicates, the two referral definers of the two A-4 amendments and identity.bootstrap_admins (A-6)',
+      36,
+      'definerInventory has the 23 entries of A-3, the two messaging predicates, the two referral definers of the two A-4 amendments and identity.bootstrap_admins (A-6), plus the eight SEC03-F11 merge-write definers of 2503 (HEAAA-687)',
     );
   });
 
@@ -1457,12 +1457,12 @@ describe('A-4 messaging definers (migrations 2203/2204): T-1..T-10 of Cybersecur
   });
   after(() => adm?.end());
 
-  test('I-10: M-5-definer passes with 28 entries (25 of F03B, the two referral definers of F08d and identity.bootstrap_admins of A-6); is_creator does not exist; patient_scope_owner holds only the four participant columns', async () => {
+  test('I-10: M-5-definer passes with 36 entries (the 28 above and the eight SEC03-F11 merge-write definers of 2503, HEAAA-687); is_creator does not exist; patient_scope_owner holds only the four participant columns', async () => {
     const report = await runChecks(adm);
     for (const id_ of ['M-5-definer', 'M-5-messaging-definer'])
       assert.equal(report.find((r) => r.id === id_)?.status, 'pass', id_);
     const { definerInventory } = await import('./catalog-lists.mjs');
-    assert.equal(definerInventory.length, 28);
+    assert.equal(definerInventory.length, 36);
     const gone = await adm.query(
       "SELECT count(*)::int AS n FROM pg_proc WHERE pronamespace = 'messaging'::regnamespace AND proname = 'is_creator'",
     );
