@@ -62,7 +62,8 @@ const evalGate = (file, job, variable, env) => {
     const run = (enabledValue) => {
       const out = join(dir, 'out'),
         sum = join(dir, 'sum');
-      (writeFileSync(out, ''), writeFileSync(sum, ''));
+      writeFileSync(out, '');
+      writeFileSync(sum, '');
       const envv = {
         PATH: process.env.PATH,
         GITHUB_OUTPUT: out,
@@ -104,7 +105,7 @@ for (const [file, [job, variable, env]] of Object.entries(GATES)) {
   evalGate(file, job, variable, env);
   const text = readFileSync(join(wf, file), 'utf8');
   // every job (other than the gate job) that lists the gate job in needs must test its output
-  const jobs = text.split(/\n(?=  [A-Za-z0-9_-]+:\s*\n)/);
+  const jobs = text.split(/\n(?= {2}[A-Za-z0-9_-]+:\s*\n)/);
   for (const j of jobs) {
     const name = j.match(/^\s*([A-Za-z0-9_-]+):/)?.[1];
     const needs =
