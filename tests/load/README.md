@@ -30,7 +30,7 @@ case is `Blocked` until a run on `loadtest` is recorded. The only runs made so f
 | TC-PERF-04 | `perf-04-audit.js` + `check-audit.mjs` | k6 + SQL reconciliation (all recorded, no unanchored row past 120 s) | VOL-1; read-only DB role |
 | TC-PERF-05 | **not k6** - LCP is measured by Lighthouse CI on a production-like build (QA-06 tooling) | - | out of scope here |
 | TC-PERF-06 | `perf-06-video-join.js` | k6 thresholds | `VENDOR_SANDBOX=1`; **refuses to run without it** (case is Blocked, vendor named) |
-| TC-PERF-07 | `perf-07-booking-race.js` + `check-exactly-one.mjs` | exact winner count from the database | VOL-3; `ids.raceSlots`; run beside `perf-01` |
+| TC-PERF-07 | `perf-07-booking-race.js` + `check-exactly-one.mjs` | one scenario per round (100 VUs, barrier via startTime); k6 exit 0 does NOT prove exactness, the database count does | VOL-3; `ids.raceSlots`; run beside `perf-01` |
 | TC-PERF-08 | `perf-08-soak.js` | k6 latency thresholds. Leak / queue-growth is **not** judged by k6: it needs the environment's memory, connection and queue-depth series (`check-soak` not written: those series' source is not defined yet) | VOL-1 |
 | TC-REC-04 | `rec-continuity.js` (`REC_CASE=TC-REC-04`) + `check-recovery.mjs` | zero failed requests; no lost or duplicate acknowledged write | DevOps performs migration + rollback (OPS part) |
 | TC-REC-07 | `rec-continuity.js` (`REC_CASE=TC-REC-07`) + `check-recovery.mjs` | longest error window <= 120 s, recovery observed, no lost or duplicate write | DevOps stops the primary (OPS part) |

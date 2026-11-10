@@ -1,6 +1,7 @@
-// TC-PERF-08 (NFR-9): soak for several hours at 1x and a burst at 3x. Leaks and queue growth are detected from the
-// environment's own metrics (check-soak.mjs reads memory, connection and queue-depth series exported by the run); the k6 part holds
-// the load and fails the run on latency drift between the first and the last hour.
+// TC-PERF-08 (NFR-9): soak for several hours at 1x and a burst at 3x. Leaks and queue growth need the environment's own metrics,
+// which NO script reads yet (series source undefined, see README). This k6 part only holds the load for 4 h and fails on p95 latency,
+// error rate and dropped iterations over the soak and burst phases; it does NOT detect hour-to-hour drift, leaks or queue growth.
+// A k6 exit 0 here is NOT a TC-PERF-08 PASS.
 import { guard, latencyThresholds, PEAK_RPS, pick, get, slotSearch, summaryWithMeta } from '../lib/common.js';
 
 guard();

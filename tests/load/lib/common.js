@@ -47,12 +47,13 @@ export function phased(exec, prefix, peakRps, extra = {}) {
   const out = {};
   let start = 0;
   for (const p of PHASES) {
-    const rate = Math.max(1, Math.round(peakRps * p.factor * 10) / 10);
+    const perTenS = Math.round(peakRps * p.factor * 10); // exact fractional rates via a 10 s time unit (booking 0.4/s = 4 per 10 s)
+    const rate = perTenS / 10;
     out[`${prefix}_${p.name}`] = {
       executor: 'constant-arrival-rate',
       exec,
-      rate: Math.round(rate),
-      timeUnit: '1s',
+      rate: perTenS,
+      timeUnit: '10s',
       duration: `${p.seconds}s`,
       startTime: `${start}s`,
       preAllocatedVUs: Math.ceil(rate * 2) + 20,

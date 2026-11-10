@@ -9,8 +9,7 @@ import { check, sleep } from 'k6';
 guard();
 if (__ENV.VENDOR_SANDBOX !== '1' && __ENV.FIXTURE_SELFTEST !== '1') throw new Error('TC-PERF-06 is Blocked: VENDOR_SANDBOX=1 (named vendor sandbox with known limits) is required.');
 const joined = new Counter('video_joined');
-const HEADROOM = 3; // vendor-side concurrency target is 250 at peak; this runs 250 x headroom factor of the NFR-9 value (2x sustained)
-const VUS = 250 * 2;
+const VUS = 250 * 2; // 250 concurrent visits at peak x 2 (NFR-9 sustained factor) = 500 VUs
 export const options = {
   scenarios: { video: { executor: 'constant-vus', vus: VUS, duration: __ENV.FIXTURE_SELFTEST === '1' ? '10s' : '30m' } },
   thresholds: {
@@ -20,7 +19,6 @@ export const options = {
     checks: ['rate>0.99'], // TC-PERF-06 "join success meets target": target to be set by the Product Manager; 99% is the placeholder
   },
 };
-void HEADROOM;
 export default function () {
   const s = sessions.filter((x) => x.audience === 'patient')[(__VU - 1) % sessions.filter((x) => x.audience === 'patient').length];
   const rid = ids.videoReservations[(__VU - 1) % ids.videoReservations.length];

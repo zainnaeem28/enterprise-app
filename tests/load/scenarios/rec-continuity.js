@@ -22,7 +22,9 @@ export const options = {
     load: { executor: 'constant-arrival-rate', rate: PEAK_RPS.staff + PEAK_RPS.patient, timeUnit: '1s', duration: `${DURATION_S}s`, preAllocatedVUs: 500, maxVUs: 3000 },
   },
   thresholds: {
-    dropped_iterations: ['count==0'],
+    // TC-REC-07: VUs stuck on a dead primary may exhaust maxVUs and drop iterations during the outage; recovery is judged by
+    // check-recovery.mjs, so this threshold applies to TC-REC-04 only.
+    ...(CASE === 'TC-REC-04' ? { dropped_iterations: ['count==0'] } : {}),
     rec_failed_requests: CASE === 'TC-REC-04' ? ['count==0'] : ['count>=0'],
     rec_acked_writes: ['count>0'],
   },
