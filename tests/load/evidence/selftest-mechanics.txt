@@ -1,0 +1,9 @@
+# QA-07 mechanics self-test (FIXTURE ONLY - not evidence about the system). k6 v2.3.0, 6 s phases, localhost fixture.
+guard without ENV_NAME=loadtest: exit 107 (script exception)
+perf-02 fixture 700 ms: exit 0 (slot p95 700 < 1000); fixture 1200 ms: exit 99 (slot_search p95 FAIL in all 3 phases)
+perf-01 fixture 1% 503: exit 99 (http_req_failed FAIL peak_1x/sustained_2x/burst_3x, checks FAIL)
+rec-04 fixture 2% 503: exit 99 (rec_failed_requests count==0 FAIL); clean fixture: exit 0, 116 acked writes
+perf-06 without attendeeToken: exit 99; perf-03, perf-04, perf-08 clean fixture: exit 0
+check-recovery.mjs: synthetic 30 s window => windows=1 longest=30 pass (<=120); real k6 raw.json parsed (114 failures in faulty run)
+check-recovery.mjs with empty read-only SQL (fake psql): all 116 acked writes reported missing, exit 1
+NOT run: check-audit.mjs, check-exactly-one.mjs (syntax-checked only; need a database), perf-07 (k6 inspect only).

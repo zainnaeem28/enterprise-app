@@ -1,0 +1,5 @@
+trivy 0.76.2 config scan of infra/modules/loadtest/root (resolves ../ and sibling modules from DO-01/02/03 merged in a scratch tree)
+HIGH AWS-0053 ../../compute/main.tf line 59 - Load balancer is exposed publicly.
+CRITICAL AWS-0104 ../../compute/main.tf line 259 - Security group rule allows unrestricted egress to any IP address.
+CRITICAL AWS-0104 ../../compute/main.tf line 259 - Security group rule allows unrestricted egress to any IP address.
+MEDIUM AWS-0177 ../../database/main.tf line 164 - Instance does not have Deletion Protection enabled

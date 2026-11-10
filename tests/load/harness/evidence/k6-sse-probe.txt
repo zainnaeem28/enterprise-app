@@ -1,0 +1,34 @@
+# k6 SSE capability probe (unmodified k6, built-in http only)
+# command: K6_BINARY_PROVISIONING=false k6 run tests/load/harness/k6/sse-probe.js  (fixture: EVENT_MS=500)
+k6 v2.3.0 (commit/e088784614, go1.26.8, linux/amd64)
+
+  █ THRESHOLDS 
+    checks
+    ✗ 'rate>0.99' rate=33.33%
+  █ TOTAL RESULTS 
+    checks_total.......: 180    9.997838/s
+    checks_succeeded...: 33.33% 60 out of 180
+    checks_failed......: 66.66% 120 out of 180
+    ✗ status 200
+      ↳  0% — ✓ 0 / ✗ 60
+    ✗ got a complete response without error
+      ↳  0% — ✓ 0 / ✗ 60
+    ✓ event bodies readable after the stream ended
+    CUSTOM
+    sse_events_seen_in_body...: 720     39.991351/s
+    sse_first_byte_ms.........: avg=5.14ms min=1.04ms med=6ms   max=8.78ms p(90)=7.94ms p(95)=8.56ms
+    HTTP
+    http_req_duration.........: avg=6s     min=5.99s  med=5.99s max=6s     p(90)=6s     p(95)=6s    
+    http_req_failed...........: 100.00% 60 out of 60
+    http_reqs.................: 60      3.332613/s
+    EXECUTION
+    iteration_duration........: avg=6s     min=6s     med=6s    max=6s     p(90)=6s     p(95)=6s    
+    iterations................: 60      3.332613/s
+    vus.......................: 20      min=20       max=20
+    vus_max...................: 20      min=20       max=20
+    NETWORK
+    data_received.............: 40 kB   2.2 kB/s
+    data_sent.................: 6.2 kB  343 B/s
+time="2026-11-10T01:48:37Z" level=error msg="thresholds on metrics 'checks' have been crossed"
+
+# 60 'Request Failed: request timeout' warnings omitted here (one per stream aborted by the client timeout)
