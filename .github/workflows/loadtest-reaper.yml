@@ -1,0 +1,128 @@
+# Scheduled TTL reaper for the loadtest environment (DO-11 follow-up B, HEAAA-589).
+# Finds resources whose `ttl` tag is past (all three Regions) and destroys them via teardown.sh.
+# Destroy only: this workflow never creates anything. Uses the separate GitHub environment
+# `loadtest-reaper` (no required reviewers, so a leak is cleaned without waiting on a person)
+# and a destroy-scoped OIDC role. Details: docs/loadtest-workflow.md.
+name: loadtest-reaper
+
+on:
+  schedule:
+    - cron: '17 */2 * * *'
+  workflow_dispatch: {}
+
+permissions: {}
+
+# Same lock as creation: the reaper never runs while a run is in progress or being torn down.
+concurrency:
+  group: loadtest-stack
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  gate:
+    name: configuration check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
+    outputs:
+      configured: ${{ steps.check.outputs.configured }}
+    env:
+      REQUIRED: LOADTEST_REAPER_ENABLED_TRUE LOADTEST_REAPER_AWS_ROLE_ARN LOADTEST_STATE_BUCKET LOADTEST_TFVARS_S3_URI
+      LOADTEST_REAPER_ENABLED_TRUE: ${{ vars.LOADTEST_REAPER_ENABLED == 'true' && 'true' || '' }}
+      LOADTEST_REAPER_AWS_ROLE_ARN: ${{ vars.LOADTEST_REAPER_AWS_ROLE_ARN }}
+      LOADTEST_STATE_BUCKET: ${{ vars.LOADTEST_STATE_BUCKET }}
+      LOADTEST_TFVARS_S3_URI: ${{ vars.LOADTEST_TFVARS_S3_URI }}
+    steps:
+      - name: Skip with a notice when the load-test environment is not configured
+        id: check
+        run: |
+          missing=""
+          for v in $REQUIRED; do [ -n "${!v:-}" ] || missing="$missing $v"; done
+          if [ -n "$missing" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=load-test not configured::The DO-11 reaper has nothing to reap until the module is applied. Missing repository/environment variables:$missing. NO load test was created or run and no AWS call was made."
+            { echo "### load test NOT RUN"; echo "Not configured (missing:$missing). Nothing was created, seeded or measured."; } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  reap:
+    # DO-11 is authored but not applied. The environment, OIDC role and tagged stack do not exist yet, so the scheduled run
+    # is skipped (with a notice from the gate job) until LOADTEST_REAPER_ENABLED is 'true' and the variables below are set.
+    needs: gate
+    if: ${{ needs.gate.outputs.configured == 'true' }}
+    runs-on: ubuntu-24.04
+    environment: loadtest-reaper
+    timeout-minutes: 120
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      AWS_REGION: us-east-2
+      ROOT: infra/modules/loadtest/root
+      IAC_BIN: tofu
+      TOFU_VERSION: '1.13.9'
+      TOFU_SHA256: 'bc44eb6b06446ba83bd4072114891987f590f66cca712737a7f1147c50c539ce'
+      CI_TOOLS_DIR: ${{ github.workspace }}/.ci-tools
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install OpenTofu (pinned, sha256-verified)
+        run: |
+          mkdir -p "$CI_TOOLS_DIR/bin" "$CI_TOOLS_DIR/dl"
+          curl --fail --silent --show-error --location --retry 3 --output "$CI_TOOLS_DIR/dl/tofu.zip" "https://github.com/opentofu/opentofu/releases/download/v${TOFU_VERSION}/tofu_${TOFU_VERSION}_linux_amd64.zip"
+          echo "$TOFU_SHA256  $CI_TOOLS_DIR/dl/tofu.zip" | sha256sum --check --strict -
+          unzip -o -q "$CI_TOOLS_DIR/dl/tofu.zip" tofu -d "$CI_TOOLS_DIR/bin"
+          echo "$CI_TOOLS_DIR/bin" >>"$GITHUB_PATH"
+
+      - name: Assume the reaper role (OIDC)
+        run: scripts/deploy/aws-login.sh "${{ vars.LOADTEST_REAPER_AWS_ROLE_ARN }}" "loadtest-reaper" 3600
+
+      - name: Find expired resources
+        id: find
+        run: |
+          set -uo pipefail
+          out=$(tests/load/harness/reap-expired.sh 2>&1); rc=$?
+          echo "$out"
+          if [ "$rc" -eq 0 ]; then echo "expired=false" >> "$GITHUB_OUTPUT"; exit 0; fi
+          # rc 1 with expired-run-id lines = expired resources; any other failure (API error) fails the job.
+          ids=$(grep -o '^expired-run-id=.*' <<<"$out" | cut -d= -f2 | sort -u | tr '\n' ' ')
+          [ -n "$ids" ] || { echo "reaper failed without a result" >&2; exit "$rc"; }
+          echo "expired=true" >> "$GITHUB_OUTPUT"; echo "ids=$ids" >> "$GITHUB_OUTPUT"
+
+      - name: Destroy expired runs
+        if: steps.find.outputs.expired == 'true'
+        env:
+          IDS: ${{ steps.find.outputs.ids }}
+        run: |
+          set -uo pipefail
+          aws s3 cp "${{ vars.LOADTEST_TFVARS_S3_URI }}" "$RUNNER_TEMP/common.tfvars.json"
+          failed=0
+          for id in $IDS; do
+            [[ "$id" =~ ^[a-z0-9][a-z0-9-]{2,23}$ ]] || { echo "skipping unexpected run id '$id'" >&2; failed=1; continue; }
+            rm -rf "$ROOT/.terraform" "$ROOT/backend_override.tf"
+            cat > "$ROOT/backend_override.tf" <<TF
+          terraform {
+            backend "s3" {
+              bucket       = "${{ vars.LOADTEST_STATE_BUCKET }}"
+              key          = "loadtest/${id}/terraform.tfstate"
+              region       = "us-east-2"
+              use_lockfile = true
+              encrypt      = true
+            }
+          }
+          TF
+            # Values below only satisfy variable validation; destroy reads real values from state.
+            jq -n --arg r "$id" '{run_id:$r, owner:"reaper", expires_at:"2000-01-01T00:00:00Z", run_cost_ceiling_usd:1}' > "$RUNNER_TEMP/run.tfvars.json"
+            export TF_VAR_origin_verify_secret="reaper-destroy-only"
+            tofu -chdir="$ROOT" init -input=false \
+              && tests/load/harness/teardown.sh "$ROOT" "$id" \
+                   -var-file="$RUNNER_TEMP/common.tfvars.json" -var-file="$RUNNER_TEMP/run.tfvars.json" \
+              || { echo "teardown FAILED for $id" >&2; failed=1; }
+          done
+          exit "$failed"
