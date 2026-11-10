@@ -1101,3 +1101,110 @@ describe('K states are immutable for every role, including a data_repair job (38
     }
   });
 });
+
+describe('DF-10 / SEC03-F10 (b): GET /patient-merges/{id} and the decision return a fixed, narrowed shape', () => {
+  const REASON = 'Same person, two registrations, synthetic reason text';
+  const SHAPE = [
+    'callerIsRequester',
+    'counts',
+    'createdAt',
+    'decidedAt',
+    'failureCode',
+    'id',
+    'mergedId',
+    'reason',
+    'status',
+    'survivorId',
+  ];
+  const keys = (j: Record<string, unknown>): string[] => Object.keys(j).sort();
+  const noIdentifiers = (body: string, s: SeededSession): void => {
+    for (const v of [s.seeded.principalId, s.seeded.personId, m.lead.seeded.principalId])
+      assert.ok(!body.includes(v), `the body must not carry ${v}`);
+    assert.ok(!/requester|approver/i.test(body.replace(/callerIsRequester/g, '')));
+  };
+
+  test('a non-requester who sees neither patient gets status and counts and no patient ID, reason or person ID', async () => {
+    const s = await patient(A1);
+    const d = await patient(A1);
+    const r = await m.request(m.lead, s, d, REASON);
+    assert.equal(r.status, 200, r.body);
+    const rid = r.json()['id'] as string;
+    // mr is a medical-records member at A2: sees neither patient (BQ-3: the approver need not)
+    const view = await get(m.mr, `/api/v1/patient-merges/${rid}`);
+    assert.equal(view.status, 200, view.body);
+    const j = view.json();
+    assert.deepEqual(keys(j), SHAPE);
+    assert.equal(j['status'], 'requested');
+    assert.equal(j['callerIsRequester'], false);
+    assert.equal(j['survivorId'], null);
+    assert.equal(j['mergedId'], null);
+    assert.equal(j['reason'], null);
+    assert.ok(!view.body.includes(s) && !view.body.includes(d) && !view.body.includes('synthetic'));
+    noIdentifiers(view.body, m.mr);
+    // the decision returns the same narrowed shape to the approver
+    const approved = await m.approve(m.mr, rid);
+    assert.equal(approved.status, 200, approved.body);
+    const a = approved.json();
+    assert.deepEqual(keys(a), SHAPE);
+    assert.equal(a['status'], 'approved');
+    assert.equal(a['survivorId'], null);
+    assert.equal(a['mergedId'], null);
+    assert.equal(a['reason'], null);
+    noIdentifiers(approved.body, m.mr);
+  });
+
+  test('each patient ID only when the caller sees that patient; the reason only for the requester or a caller who sees both', async () => {
+    const sA = await patient(A1);
+    const dA = await patient(A1);
+    const dB = await patient(B1);
+    // requester `lead` sees A1 and B1
+    const both = (await m.request(m.lead, sA, dA, REASON)).json()['id'] as string;
+    const mixed = (await m.request(m.lead, sA, dB, REASON)).json()['id'] as string;
+    // the requester sees everything and is told so
+    const own = (await get(m.lead, `/api/v1/patient-merges/${mixed}`)).json();
+    assert.deepEqual(keys(own), SHAPE);
+    assert.equal(own['callerIsRequester'], true);
+    assert.equal(own['survivorId'], sA);
+    assert.equal(own['mergedId'], dB);
+    assert.equal(own['reason'], REASON);
+    // mrA1 holds .approve and sees A1 patients only
+    const both1 = (await get(m.mrA1, `/api/v1/patient-merges/${both}`)).json();
+    assert.equal(both1['callerIsRequester'], false);
+    assert.equal(both1['survivorId'], sA);
+    assert.equal(both1['mergedId'], dA);
+    assert.equal(both1['reason'], REASON, 'sees both patients: the reason is visible');
+    const mixed1 = (await get(m.mrA1, `/api/v1/patient-merges/${mixed}`)).json();
+    assert.equal(mixed1['survivorId'], sA);
+    assert.equal(mixed1['mergedId'], null, 'dB is at B1: not visible to mrA1');
+    assert.equal(mixed1['reason'], null, 'sees only one of the two: no reason');
+    // a second lead at A1 only is not the requester and sees A1 only
+    const leadA1 = (await get(m.leadA1, `/api/v1/patient-merges/${mixed}`)).json();
+    assert.equal(leadA1['callerIsRequester'], false);
+    assert.equal(leadA1['mergedId'], null);
+    assert.equal(leadA1['reason'], null);
+  });
+
+  test('counts only once completed; the database function returns exactly the fixed column list', async () => {
+    const s = await patient(A1);
+    const d = await patient(A1);
+    const rid = (await m.request(m.lead, s, d, REASON)).json()['id'] as string;
+    assert.equal((await get(m.mr, `/api/v1/patient-merges/${rid}`)).json()['counts'], null);
+    for (const fn of ['get_merge_request', 'decide_merge']) {
+      const r = await q<{ ret: string }>(
+        `SELECT pg_get_function_result(p.oid) AS ret FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+          WHERE n.nspname = 'patient' AND p.proname = $1`,
+        [fn],
+      );
+      assert.equal(r.length, 1);
+      const ret = (r[0] as { ret: string }).ret;
+      assert.ok(!ret.includes('merge_request'), `${fn} returns a table, not the row type: ${ret}`);
+      for (const banned of [
+        'requester_person_id',
+        'requester_principal_id',
+        'approver_person_id',
+        'approver_principal_id',
+      ])
+        assert.ok(!ret.includes(banned), `${fn} must not return ${banned}`);
+    }
+  });
+});

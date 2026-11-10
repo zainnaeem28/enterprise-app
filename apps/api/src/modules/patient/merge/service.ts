@@ -16,10 +16,13 @@ export type MergeStatus =
 
 export interface MergeRequestView {
   id: string;
-  survivorId: string;
-  mergedId: string;
+  /** Only when the caller sees that patient (DF-10); otherwise null. */
+  survivorId: string | null;
+  mergedId: string | null;
   status: MergeStatus;
-  reason: string;
+  /** Only to the requester or a caller who sees both patients (DF-10); otherwise null. */
+  reason: string | null;
+  callerIsRequester: boolean;
   createdAt: string;
   decidedAt: string | null;
   failureCode: string | null;
@@ -33,10 +36,11 @@ const iso = (v: unknown): string | null =>
 function view(r: Row): MergeRequestView {
   return {
     id: String(r['id']),
-    survivorId: String(r['survivor_id']),
-    mergedId: String(r['merged_id']),
+    survivorId: r['survivor_id'] === null ? null : String(r['survivor_id']),
+    mergedId: r['merged_id'] === null ? null : String(r['merged_id']),
     status: String(r['status']) as MergeStatus,
-    reason: String(r['reason']),
+    reason: r['reason'] === null ? null : String(r['reason']),
+    callerIsRequester: r['caller_is_requester'] === true,
     createdAt: iso(r['created_at']) ?? '',
     decidedAt: iso(r['decided_at']),
     failureCode: r['failure_code'] === null ? null : String(r['failure_code']),

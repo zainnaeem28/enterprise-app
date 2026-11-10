@@ -571,7 +571,7 @@ paths:
       tags:
         - patient
       summary: GET /api/v1/patient-merges/{id}
-      description: 'staff.: Status, counts after completion'
+      description: 'staff.: Status, counts after completion. survivorId and mergedId only for a patient the caller sees; reason only for the requester or a caller who sees both patients; no requester or approver identifier (ARCHITECTURE 21.6 DF-10).'
       x-access:
         staff:
           permission: patient.merge.request or .approve
@@ -622,7 +622,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: common.yaml#/components/schemas/OpaqueObject
+                $ref: '#/components/schemas/PatientMergeRequestView'
         '400':
           $ref: common.yaml#/components/responses/Error400
           description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
@@ -710,7 +710,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: common.yaml#/components/schemas/OpaqueObject
+                $ref: '#/components/schemas/PatientMergeRequestView'
         '400':
           $ref: common.yaml#/components/responses/Error400
           description: 'Codes: kernel.client_release_unsupported, kernel.idempotency_key_required, kernel.validation_failed.'
@@ -798,7 +798,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: common.yaml#/components/schemas/OpaqueObject
+                $ref: '#/components/schemas/PatientMergeRequestView'
         '400':
           $ref: common.yaml#/components/responses/Error400
           description: 'Codes: kernel.client_release_unsupported, kernel.idempotency_key_required, kernel.validation_failed.'
@@ -3423,6 +3423,53 @@ components:
           maxLength: 100
       required:
         - typedName
+    PatientMergeRequestView:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [requested, approved, rejected, executing, completed, failed, cancelled]
+        createdAt:
+          type: string
+          format: date-time
+        decidedAt:
+          type: [string, 'null']
+          format: date-time
+        failureCode:
+          type: [string, 'null']
+        counts:
+          type: [object, 'null']
+          additionalProperties: true
+          description: Present after completion only.
+        callerIsRequester:
+          type: boolean
+        survivorId:
+          type: [string, 'null']
+          format: uuid
+          description: Null unless the caller sees the survivor patient.
+        mergedId:
+          type: [string, 'null']
+          format: uuid
+          description: Null unless the caller sees the merged patient.
+        reason:
+          type: [string, 'null']
+          description: Null unless the caller is the requester or sees both patients.
+      required:
+        [
+          id,
+          status,
+          createdAt,
+          decidedAt,
+          failureCode,
+          counts,
+          callerIsRequester,
+          survivorId,
+          mergedId,
+          reason,
+        ]
     PostPatientMergesRequest:
       type: object
       properties:
