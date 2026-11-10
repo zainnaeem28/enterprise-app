@@ -1,11 +1,47 @@
 // e2e-smoke (DEVOPS-PLAN 5.1 "Browser end-to-end smoke", PR subset): journeys of the BUILT staff shell in Chromium against
 // the real API process behind the same-origin proxy (no CORS), plus contract mocks for states the API cannot yet produce.
+// HEAAA-639: rewritten for the real staff shell (sign-in redirect, session gate, shared release prompts); the old placeholder
+// connection page no longer exists.
 // A suite that finds no test, or skips one, fails (check-report.mjs and Playwright's own empty-suite exit).
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page, type Route } from '@playwright/test';
 
 const RELEASE_HEADER = /^r[1-9][0-9]*\.[0-9a-f]{12}$/;
 
-test('shell loads on one origin: no console error, no failed request, nothing sent to a third party', async ({
+const SESSION = {
+  principalId: '11111111-1111-4111-8111-111111111111',
+  realm: 'google',
+  audience: 'staff',
+  displayName: 'Dr Smoke',
+  csrfToken: 'csrf-smoke',
+  roles: [{ key: 'doctor', locationId: '22222222-2222-4222-8222-222222222222' }],
+  permissions: [],
+  patients: [],
+};
+
+/** A signed-in staff session; every other /api call the shell makes answers an empty list or 404 (this suite checks the shell, not the clinical pages). */
+async function signedIn(page: Page, banners?: (r: Route) => Promise<void>) {
+  await page.route('**/api/**', (r) => {
+    const path = new URL(r.request().url()).pathname;
+    if (path === '/api/v1/auth/session')
+      return r.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ...SESSION,
+          idleExpiresAt: new Date(Date.now() + 30 * 60_000).toISOString(),
+        }),
+      });
+    if (path === '/api/v1/banners') {
+      if (banners) return banners(r);
+      return r.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({ items: [], nextCursor: null }),
+      });
+    }
+    return r.fulfill({ status: 404, contentType: 'application/json', body: '{}' });
+  });
+}
+
+test('shell loads on one origin: signed out goes to sign-in, no script error, no failed request, nothing sent to a third party', async ({
   page,
   baseURL,
 }) => {
@@ -20,10 +56,11 @@ test('shell loads on one origin: no console error, no failed request, nothing se
   });
   page.on('requestfailed', (r) => failed.push(`${r.method()} ${r.url()}`));
   await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1, name: 'Staff portal' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Server connection' })).toBeVisible();
-  // The call is answered by the real API: any definite answer ends the "Checking" state.
-  await expect(page.getByText('Checking the server…')).toBeHidden();
+  // The real API answers the session read with 401; the shell sends the person to the sign-in screen.
+  await expect(page).toHaveURL(/\/sign-in/);
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Sign in to the staff portal' }),
+  ).toBeVisible();
   // 4xx answers are logged by the browser as console errors; only script errors count here.
   expect(
     errors.filter((e) => !/Failed to load resource/.test(e)),
@@ -48,7 +85,7 @@ test('every /api call sends X-Client-Release and reaches the real API', async ({
       });
   });
   await page.goto('/');
-  await expect(page.getByText('Checking the server…')).toBeHidden();
+  await expect(page).toHaveURL(/\/sign-in/);
   expect(seen.length, 'the shell made no /api call').toBeGreaterThan(0);
   for (const s of seen) {
     expect(s.release, `X-Client-Release on ${s.url}`).toMatch(RELEASE_HEADER);
@@ -56,22 +93,22 @@ test('every /api call sends X-Client-Release and reaches the real API', async ({
   }
 });
 
-test('"Check again" repeats the call once per activation and is keyboard-operable', async ({
+test('a failed session read shows a retry button that repeats the call once per activation, with no timer polling', async ({
   page,
 }) => {
   let calls = 0;
   await page.route('**/api/v1/auth/session', (r) => {
     calls++;
     return r.fulfill({
-      status: 401,
+      status: 500,
       contentType: 'application/problem+json',
-      body: JSON.stringify({ status: 401, code: 'auth.unauthenticated', requestId: 'req-smoke' }),
+      body: JSON.stringify({ status: 500, code: 'kernel.internal', requestId: 'req-smoke' }),
     });
   });
   await page.goto('/');
-  await expect(page.getByText('You are not signed in')).toBeVisible();
+  const button = page.getByRole('button', { name: /try again|retry/i });
+  await expect(button).toBeVisible();
   expect(calls).toBe(1);
-  const button = page.getByRole('button', { name: 'Check again' });
   await button.focus();
   await expect(button).toBeFocused();
   await page.keyboard.press('Enter');
@@ -83,7 +120,7 @@ test('"Check again" repeats the call once per activation and is keyboard-operabl
 test('a refused client release opens the blocking dialog and focus moves into it', async ({
   page,
 }) => {
-  await page.route('**/api/v1/auth/session', (r) =>
+  await signedIn(page, (r) =>
     r.fulfill({
       status: 400,
       contentType: 'application/problem+json',
@@ -101,13 +138,7 @@ test('a refused client release opens the blocking dialog and focus moves into it
 });
 
 test('a newer release on release.json shows the non-blocking bar', async ({ page }) => {
-  await page.route('**/api/v1/auth/session', (r) =>
-    r.fulfill({
-      status: 401,
-      contentType: 'application/problem+json',
-      body: JSON.stringify({ status: 401, code: 'auth.unauthenticated' }),
-    }),
-  );
+  await signedIn(page);
   await page.route('**/release.json', (r) =>
     r.fulfill({ contentType: 'application/json', body: JSON.stringify({ release_number: 99 }) }),
   );
@@ -121,6 +152,7 @@ test('security baseline on the built shell: skip link first, document language a
   page,
 }) => {
   await page.goto('/');
+  await expect(page).toHaveURL(/\/sign-in/);
   await expect(page.locator('html')).toHaveAttribute('lang', /^[a-z]{2}/);
   await expect(page).toHaveTitle(/\S/);
   await page.keyboard.press('Tab');
