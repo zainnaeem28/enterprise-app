@@ -6,8 +6,7 @@
 //   previsit : the banner (with the allergy summary) and the recent vitals only - the pre-visit items of 27.2; every other part is
 //              `null`, meaning "not available with your access", never an empty list that would read as "none";
 //   none     : 404 (the patient is not visible), decided by the guard before this runs.
-// `encounters` is null until the encounter module (BE-17) provides its port; `documents` is null until the documents module's list
-// is wired in at composition.
+// `encounters` and `documents` are lists for a chart-level caller (wired in at composition, QA661-F01); null only when no source is given.
 import type { Tx } from '@ehr/kernel';
 import type { ChartAuditPort } from './audit-port.js';
 import type { AuthContext } from '../../identity/index.js';
