@@ -30,7 +30,7 @@ Chosen: **move the re-pointing into `patient_scope_owner` SECURITY DEFINER funct
 * AC-1 A patients-scope job that is not the executing merge cannot `UPDATE` or `DELETE` any table in section 1 (permission denied or 0 rows, as appropriate), including withdrawing a signed consent (SEC-03 P7 now fails).
 * AC-2 The full merge still passes unchanged (`merge.dbtest.ts`, `concurrency.dbtest.ts`) and the equation found = re-pointed + resolved + kept (PM013) still holds.
 * AC-3 `app_worker` holds no `UPDATE`/`DELETE` privilege on the section 1 tables/columns in the catalog (`information_schema.column_privileges` / `pg_policies` assertion).
-* AC-4 The new functions have a fixed `search_path`, are not executable by PUBLIC, `app_api` or `app_api`'s roles, and refuse a call outside an executing merge for the named patients.
+* AC-4 The new functions have a fixed `search_path`, are not executable by PUBLIC or `app_api`, and refuse a call outside an executing merge for the named patients.
 
 ## 5. Required db tests (to be written by the implementer; none exist yet)
 
