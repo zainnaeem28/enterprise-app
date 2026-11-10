@@ -93,28 +93,32 @@ test('every /api call sends X-Client-Release and reaches the real API', async ({
   }
 });
 
-test('a failed session read shows a retry button that repeats the call once per activation, with no timer polling', async ({
+test('a failed roles read shows a retry button that repeats the reads once per activation, with no timer polling', async ({
   page,
 }) => {
+  // One page load reads the session twice (identity, then roles). The second read returns no body: a failed read, not "no roles".
   let calls = 0;
   await page.route('**/api/v1/auth/session', (r) => {
     calls++;
+    if (calls % 2 === 0) return r.fulfill({ status: 204 });
     return r.fulfill({
-      status: 500,
-      contentType: 'application/problem+json',
-      body: JSON.stringify({ status: 500, code: 'kernel.internal', requestId: 'req-smoke' }),
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...SESSION,
+        idleExpiresAt: new Date(Date.now() + 30 * 60_000).toISOString(),
+      }),
     });
   });
   await page.goto('/');
   const button = page.getByRole('button', { name: /try again|retry/i });
   await expect(button).toBeVisible();
-  expect(calls).toBe(1);
+  expect(calls).toBe(2);
   await button.focus();
   await expect(button).toBeFocused();
   await page.keyboard.press('Enter');
-  await expect.poll(() => calls).toBe(2);
+  await expect.poll(() => calls).toBe(4);
   await page.waitForTimeout(1500);
-  expect(calls, 'no timer-driven polling of the session').toBe(2);
+  expect(calls, 'no timer-driven polling of the session').toBe(4);
 });
 
 test('a refused client release opens the blocking dialog and focus moves into it', async ({
