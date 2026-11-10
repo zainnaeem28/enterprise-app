@@ -209,8 +209,45 @@ describe('M4 composition (INT03-F01)', () => {
     const shared = routes.filter(
       (r) => routes.filter((o) => o.method === r.method && o.path === r.path).length > 1,
     );
-    assert.equal(shared.length, 8, 'four shared documents paths, two controllers each');
+    assert.equal(
+      shared.length,
+      16,
+      'four shared documents paths and four shared booking paths (QA-EXEC-F07), two controllers each',
+    );
     assert.ok(shared.every((r) => r.host !== undefined));
+  });
+
+  test('the booking calendar file, the calendar-link routes and the Google push webhook are mounted (QA-EXEC-F08)', () => {
+    const routes = inventory(c.controllers as never).routes;
+    const has = (method: string, path: string): boolean =>
+      routes.some((r) => r.method === method && r.path === path);
+    assert.ok(has('GET', '/api/v1/appointments/:id/calendar.ics'));
+    for (const [m, p] of [
+      ['GET', '/api/v1/calendar-link'],
+      ['POST', '/api/v1/calendar-link/start'],
+      ['GET', '/api/v1/calendar-link/callback'],
+      ['DELETE', '/api/v1/calendar-link'],
+      ['POST', '/webhooks/google/calendar'],
+    ] as const)
+      assert.ok(has(m, p), `${m} ${p}`);
+  });
+
+  test('staff variants of the booking paths declare scheduling.booking.manage on the staff host only (QA-EXEC-F07)', () => {
+    const routes = inventory(c.controllers as never).routes;
+    for (const path of [
+      '/api/v1/holds',
+      '/api/v1/appointments/:id/confirm',
+      '/api/v1/appointments/:id/cancel',
+      '/api/v1/appointments/:id/reschedule',
+    ]) {
+      const both = routes.filter((r) => r.method === 'POST' && r.path === path);
+      assert.equal(both.length, 2, path);
+      assert.deepEqual(
+        both.map((r) => r.declaration?.permission).sort(),
+        ['proxy', 'scheduling.booking.manage'],
+        path,
+      );
+    }
   });
 
   test('inventory: an unbound duplicate of a host-bound path is a failure (INT03-F21-O1)', async () => {
