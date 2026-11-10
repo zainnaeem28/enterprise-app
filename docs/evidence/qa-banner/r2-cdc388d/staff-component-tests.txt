@@ -1,0 +1,14 @@
+
+ RUN  v5.1.0 /tmp/qa666/cand/apps/staff
+
+
+ Test Files  3 passed (3)
+      Tests  60 passed (60)
+   Start at  15:29:24
+   Duration  2.90s (environment 39%, tests 33%, transform 16%, setup 8%, import 3%)
+
+npm notice
+npm notice New major version of npm available! 11.19.1 -> 12.2.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.2
+npm notice To update run: npm install -g npm@12.2.2
+npm notice

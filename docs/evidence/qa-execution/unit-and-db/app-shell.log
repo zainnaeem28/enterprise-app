@@ -1,0 +1,54 @@
+$ NODE_ENV=test vitest run --reporter=default --reporter=junit --outputFile.junit="${JUNIT_DIR:-.junit}/app-shell.xml"
+
+ RUN  v5.1.0 /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-29-sdlc-qa-execution-execute-full-acceptance-cases-and-end-to-end-journeys/packages/app-shell
+
+ ✓ src/session/session-store.test.ts (12 tests) 24ms
+ ✓ src/session/SessionPrompts.test.tsx (11 tests) 446ms
+ ✓ src/documents/documents.test.tsx (15 tests) 940ms
+stderr | src/release/ReleasePrompts.test.tsx > non-blocking bar > announces politely, reloads at once without unsaved input
+The current testing environment is not configured to support act(...)
+
+stderr | src/release/ReleasePrompts.test.tsx > non-blocking bar > with unsaved input asks first, naming forms and never content
+The current testing environment is not configured to support act(...)
+
+stderr | src/release/ReleasePrompts.test.tsx > non-blocking bar > with unsaved input asks first, naming forms and never content
+The current testing environment is not configured to support act(...)
+
+stderr | src/release/ReleasePrompts.test.tsx > non-blocking bar > offers save-and-reload only where a draft route exists, and stays on failure
+The current testing environment is not configured to support act(...)
+
+stderr | src/release/ReleasePrompts.test.tsx > non-blocking bar > offers save-and-reload only where a draft route exists, and stays on failure
+The current testing environment is not configured to support act(...)
+
+stderr | src/release/ReleasePrompts.test.tsx > non-blocking bar > remind me later hides the bar
+The current testing environment is not configured to support act(...)
+
+stderr | src/release/ReleasePrompts.test.tsx > blocking dialog > pulls focus back when it escapes the dialog (backdrop click)
+The current testing environment is not configured to support act(...)
+
+stderr | src/release/ReleasePrompts.test.tsx > blocking dialog > opens on refusal with the exact text, request id and no auto reload
+The current testing environment is not configured to support act(...)
+
+stderr | src/release/ReleasePrompts.test.tsx > blocking dialog > keep-open shows the red bar and closes the dialog
+The current testing environment is not configured to support act(...)
+
+stderr | src/release/ReleasePrompts.test.tsx > blocking dialog > shows the paused-alerts bar so a refused stream never looks like no alerts
+The current testing environment is not configured to support act(...)
+
+ ✓ src/release/ReleasePrompts.test.tsx (8 tests) 384ms
+ ✓ src/runtime.test.ts (5 tests) 22ms
+ ✓ src/release/release-store.test.ts (8 tests) 13ms
+ ✓ src/realm/RealmBar.test.tsx (18 tests) 216ms
+ ✓ src/errors/errors.test.tsx (5 tests) 247ms
+ ✓ src/api/client.test.ts (5 tests) 13ms
+
+ Test Files  9 passed (9)
+      Tests  87 passed (87)
+   Start at  10:18:26
+   Duration  4.98s (environment 57%, tests 18%, setup 10%, transform 9%, import 5%)
+
+Environment  jsdom was created 9 times · 7.54s total, 57% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+JUNIT report written to /tmp/qa-ev/app-shell.xml

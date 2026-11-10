@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testsuite name="BR-34 banner (TC-PC-07, TC-PC-13, TC-CL-08 API parts)" time="1.334113" disabled="0" errors="0" tests="3" failures="1" skipped="0" timestamp="2026-11-10T15:29:20.645Z" hostname="314866be9867">
+		<testcase name="TC-PC-13 steps 1,5 / TC-PC-07: every banner:true route and GET /patients/{id}/banner carries displayName, dateOfBirth, mrn for the patient the data belongs to" time="0.779082" classname="BR-34 banner (TC-PC-07, TC-PC-13, TC-CL-08 API parts)" file="/tmp/qa666/cand/tests/api/banner/banner.test.mjs" failure="patient record (front desk): name/dob/mrn: {&quot;patientId&quot;:&quot;00000000-0000-7000-8000-000004778122&quot;,&quot;mrn&quot;:&quot;MRN-10659374&quot;,&quot;givenName&quot;:&quot;Test&quot;,&quot;familyName&quot;:&quot;Patient 1559374&quot;,&quot;dateOfBirth&quot;:&quot;1980-01-01&quot;,&quot;photoDocumentId&quot;:null,&quot;allergySummary&quot;:null,&quot;merged&quot;:false}&#10;&#10;1 !== 0&#10;">
+			<failure type="testCodeFailure" message="patient record (front desk): name/dob/mrn: {&quot;patientId&quot;:&quot;00000000-0000-7000-8000-000004778122&quot;,&quot;mrn&quot;:&quot;MRN-10659374&quot;,&quot;givenName&quot;:&quot;Test&quot;,&quot;familyName&quot;:&quot;Patient 1559374&quot;,&quot;dateOfBirth&quot;:&quot;1980-01-01&quot;,&quot;photoDocumentId&quot;:null,&quot;allergySummary&quot;:null,&quot;merged&quot;:false}&#10;&#10;1 !== 0">
+Error [ERR_TEST_FAILURE]: patient record (front desk): name/dob/mrn: {"patientId":"00000000-0000-7000-8000-000004778122","mrn":"MRN-10659374","givenName":"Test","familyName":"Patient 1559374","dateOfBirth":"1980-01-01","photoDocumentId":null,"allergySummary":null,"merged":false}
+
+1 !== 0
+
+    at async Promise.all (index 0) {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: AssertionError [ERR_ASSERTION]: patient record (front desk): name/dob/mrn: {"patientId":"00000000-0000-7000-8000-000004778122","mrn":"MRN-10659374","givenName":"Test","familyName":"Patient 1559374","dateOfBirth":"1980-01-01","photoDocumentId":null,"allergySummary":null,"merged":false}
+  
+  1 !== 0
+  
+      at TestContext.&lt;anonymous> (file:///tmp/qa666/cand/tests/api/banner/banner.test.mjs:67:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+}
+			</failure>
+		</testcase>
+		<testcase name="TC-PC-13 step 3 (stale tab): a banner always names the patient of the URL, never another patient with this patient's data" time="0.314857" classname="BR-34 banner (TC-PC-07, TC-PC-13, TC-CL-08 API parts)" file="/tmp/qa666/cand/tests/api/banner/banner.test.mjs"/>
+		<testcase name="TC-PC-14 (API): no-photo patient has no photoUrl; 120-char name is carried in full; same-name patients differ by DOB and MRN" time="0.238794" classname="BR-34 banner (TC-PC-07, TC-PC-13, TC-CL-08 API parts)" file="/tmp/qa666/cand/tests/api/banner/banner.test.mjs"/>
+	</testsuite>
+	<testsuite name="TC-PC-15 allergies in the banner, per role, audit" time="1.188844" disabled="0" errors="0" tests="1" failures="0" skipped="0" timestamp="2026-11-10T15:29:21.980Z" hostname="314866be9867">
+		<testcase name="12 active allergies (2 severe, 1 uncoded), resolved/entered_in_error/inactive excluded; none_recorded; null for patient.read-only; same for nurse, front desk, assigned doctor; audit" time="1.188619" classname="TC-PC-15 allergies in the banner, per role, audit" file="/tmp/qa666/cand/tests/api/banner/banner.test.mjs"/>
+	</testsuite>
+	<!-- tests 4 -->
+	<!-- suites 2 -->
+	<!-- pass 3 -->
+	<!-- fail 1 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 0 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 2879.107714 -->
+</testsuites>

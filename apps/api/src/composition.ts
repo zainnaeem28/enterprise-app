@@ -80,7 +80,11 @@ import {
   mergeResolvers,
   patientInScope,
 } from './modules/patient/index.js';
-import { NOTIFICATIONS_JOBS, NotificationService } from './modules/notifications/index.js';
+import {
+  NOTIFICATIONS_JOBS,
+  NotificationService,
+  TemplateService,
+} from './modules/notifications/index.js';
 import {
   AvailabilitySearch,
   AvailabilityService,
@@ -119,6 +123,7 @@ import type {
   PayloadSealer,
   SealedJobEnqueuer,
 } from './modules/integration-core/index.js';
+import { createTemplateAdminController } from './modules/notifications/admin-controller.js';
 import {
   CALENDAR_SYNC_JOBS,
   CalendarLinkService,
@@ -556,6 +561,21 @@ export function buildComposition(deps: {
       createOrganisationAdminController({
         service: new OrganisationAdminService({ db: deps.db, audit, organisation }),
         scopeOf,
+      }),
+      // Message templates (TC-AD-04, RA-R1-15). The configured languages are the boot provisioning's (EHR_TEMPLATE_LANGUAGES).
+      createTemplateAdminController({
+        db: deps.db,
+        scopeOf,
+        templates: new TemplateService({
+          audit,
+          configuredLanguages: () =>
+            Promise.resolve(
+              (process.env['EHR_TEMPLATE_LANGUAGES'] ?? 'en')
+                .split(',')
+                .map((l) => l.trim())
+                .filter(Boolean),
+            ),
+        }),
       }),
       ...createAdminRoutesControllers({
         audit: new AuditAdminService({

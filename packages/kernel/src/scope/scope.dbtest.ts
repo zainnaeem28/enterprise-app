@@ -43,7 +43,7 @@ describe('withScope and idempotency on PostgreSQL', () => {
   let admin: { query(s: string, p?: unknown[]): Promise<{ rows: Record<string, unknown>[] }> };
 
   before(async () => {
-    const a = new pg.Client({ connectionString: adminUrl });
+    const a = new pg.Client({ connectionString: adminUrl }).on('error', () => undefined);
     await a.connect();
     await a.query(`CREATE DATABASE ${dbName}`);
     await a.end();
@@ -57,15 +57,21 @@ describe('withScope and idempotency on PostgreSQL', () => {
         env,
         stdio: 'inherit',
       });
-    pool = new pg.Pool({ connectionString: urlFor('app_api'), max: 4 });
+    pool = new pg.Pool({ connectionString: urlFor('app_api'), max: 4 }).on(
+      'error',
+      () => undefined,
+    );
     db = new KernelDb(pool as never);
-    admin = new pg.Client({ connectionString: urlFor(new URL(adminUrl).username) });
+    admin = new pg.Client({ connectionString: urlFor(new URL(adminUrl).username) }).on(
+      'error',
+      () => undefined,
+    );
     await (admin as unknown as { connect(): Promise<void> }).connect();
   });
   after(async () => {
     await pool.end();
     await (admin as unknown as { end(): Promise<void> }).end();
-    const a = new pg.Client({ connectionString: adminUrl });
+    const a = new pg.Client({ connectionString: adminUrl }).on('error', () => undefined);
     await a.connect();
     await a.query(`DROP DATABASE IF EXISTS ${dbName} WITH (FORCE)`);
     await a.end();

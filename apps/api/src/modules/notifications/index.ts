@@ -55,3 +55,5 @@ export {
   RenderCheckFailedError,
 } from './errors.js';
 export type { RenderFailure } from './errors.js';
+export { createTemplateAdminController } from './admin-controller.js';
+export type { TemplateAdminDeps } from './admin-controller.js';

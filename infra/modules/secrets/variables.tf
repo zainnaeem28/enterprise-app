@@ -40,6 +40,12 @@ variable "break_glass_role_arns" {
   default     = []
 }
 
+variable "apply_role_arns" {
+  description = "Terraform apply roles (gh-tf-*) that may update secret metadata. They still cannot read or put values: ci-trust denies both."
+  type        = list(string)
+  default     = []
+}
+
 variable "rotation_lambda_arn" {
   description = "Rotation function. When null no rotation is scheduled and the evidence says so."
   type        = string

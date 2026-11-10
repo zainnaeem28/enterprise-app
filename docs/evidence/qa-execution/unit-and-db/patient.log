@@ -1,0 +1,40 @@
+$ NODE_ENV=test vitest run --reporter=default --reporter=junit --outputFile.junit="${JUNIT_DIR:-.junit}/patient.xml"
+
+ RUN  v5.1.0 /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-29-sdlc-qa-execution-execute-full-acceptance-cases-and-end-to-end-journeys/apps/patient
+
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+ ✓ src/features/profile/profile.test.tsx (18 tests) 1277ms
+   ✓ PP-35 profile and contact details (9)
+     ✓ shows the record, sends only the changed field with If-Match, and says what changed 397ms
+ ✓ src/features/previsit/previsit.test.tsx (22 tests) 1664ms
+   ✓ pre-visit overview (PP-25..27) (4)
+     ✓ shows each item as To do, Done or Needs fixing and says the consultation is blocked 325ms
+ ✓ src/features/booking/flow.test.tsx (28 tests) 3121ms
+   ✓ PP-10..PP-14 book a visit (5)
+     ✓ walks service, doctor and place, time, confirm and booked, with step-1 and step-2 keys that differ 596ms
+ ✓ src/app/App.test.tsx (29 tests) 1027ms
+   ✓ entry, pre-redirect and handoff (5)
+     ✓ "Sign in" shows the message, then hands off to getAuthSignIn 306ms
+ ✓ src/features/telehealth/telehealth.test.tsx (15 tests) 1730ms
+   ✓ PP-23 device check and join (13)
+     ✓ F02: opens Join by itself when the join window opens 358ms
+ ✓ src/features/privacy/privacy.test.tsx (8 tests) 877ms
+   ✓ PP-24 my privacy (8)
+     ✓ records an export request with its own idempotency key and lists it 396ms
+ ✓ src/features/booking/lib.test.ts (10 tests) 60ms
+ ✓ src/features/messages/messages.test.tsx (8 tests) 500ms
+ ✓ src/features/auth/signIn.test.ts (8 tests) 18ms
+ ✓ src/a11y.test.tsx (14 tests) 892ms
+ ✓ src/features/auth/ProblemPage.test.tsx (13 tests) 297ms
+ ✓ src/features/auth/returnTo.test.ts (13 tests) 5ms
+
+ Test Files  12 passed (12)
+      Tests  186 passed (186)
+   Start at  10:18:31
+   Duration  10.01s (tests 42%, environment 36%, transform 9%, setup 7%, import 6%)
+
+Environment  jsdom was created 12 times · 9.76s total, 36% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+JUNIT report written to /tmp/qa-ev/patient.xml

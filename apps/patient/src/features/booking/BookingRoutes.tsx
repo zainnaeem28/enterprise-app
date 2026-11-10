@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { ErrorState, LoadingState } from '@ehr/ui';
 import type { PatientRuntime } from '../../app/runtime.js';
 import { createBookingApi } from './api.js';
@@ -6,6 +7,7 @@ import type { Failure } from './api.js';
 import { BookingContext, emptyDraft } from './context.js';
 import type { Booked, CancellationPolicy, Draft, Pending } from './context.js';
 import { Problem } from './components/Problem.js';
+import { clearHandoffFromUrl, readHandoff, seedDraft } from './handoff.js';
 import { matchBookingRoute } from './routes.js';
 import { AppointmentsPage } from './pages/AppointmentsPage.js';
 import { BookedPage } from './pages/BookedPage.js';
@@ -37,6 +39,7 @@ export function BookingRoutes({
   params,
   go,
   policy = {},
+  signedOut,
 }: {
   runtime: PatientRuntime;
   path: string;
@@ -44,6 +47,8 @@ export function BookingRoutes({
   go: (to: string) => void;
   /** The cancellation policy to quote. Defaults to the block-only text without a number (D-3). */
   policy?: CancellationPolicy;
+  /** Shown instead of the booking screens at `/book` when there is no session (BS-06). */
+  signedOut?: ReactNode;
 }) {
   const api = useMemo(() => createBookingApi(runtime), [runtime]);
   const [loaded, setLoaded] = useState<Loaded | undefined>();
@@ -53,6 +58,10 @@ export function BookingRoutes({
   const [draft, setDraft] = useState<Draft>(emptyDraft);
   const [pending, setPending] = useState<Pending | undefined>();
   const [booked, setBooked] = useState<Booked | undefined>();
+  // The hand-off from the brand site is read once, from the address the page was opened at, and seeds the draft once.
+  const handoff = useRef(
+    matchBookingRoute(path)?.name === 'service' ? readHandoff(params) : undefined,
+  );
 
   useEffect(() => {
     let live = true;
@@ -69,6 +78,14 @@ export function BookingRoutes({
       if (!live) return;
       if (!patients.ok) return setFailure(patients);
       // The catalogue is a convenience for names; the screens still work with generic wording when it fails.
+      const seed = handoff.current;
+      handoff.current = undefined;
+      if (seed !== undefined && services.ok && seed.serviceId !== undefined) {
+        const seeded = await seedDraft(seed, services.data, api, emptyDraft);
+        if (!live) return;
+        setDraft(seeded);
+      }
+      if (seed !== undefined) clearHandoffFromUrl();
       setLoaded({
         patients: patients.data,
         services: services.ok ? services.data : [],
@@ -93,6 +110,13 @@ export function BookingRoutes({
   const route = matchBookingRoute(path);
   if (route === undefined)
     return <ErrorState kind="not-found" homeHref="/appointments" headingLevel={1} />;
+  if (
+    failure !== undefined &&
+    failure.status === 401 &&
+    signedOut !== undefined &&
+    route.name === 'service'
+  )
+    return <>{signedOut}</>;
   if (failure !== undefined)
     return <Problem failure={failure} onRetry={() => setAttempt((n) => n + 1)} />;
   if (loaded === undefined || patientId === undefined) {

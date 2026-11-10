@@ -89,7 +89,7 @@ const run = (
 ): Promise<void> => h(payload, { job: { id: String(Math.floor(Math.random() * 1e9)), key } });
 
 before(async () => {
-  const a = new pg.Client({ connectionString: adminUrl });
+  const a = new pg.Client({ connectionString: adminUrl }).on('error', () => undefined);
   await a.connect();
   await a.query(`CREATE DATABASE ${dbName}`);
   await a.end();
@@ -101,7 +101,10 @@ before(async () => {
   for (const cmd of ['bootstrap', 'migrate'])
     execFileSync(process.execPath, [`${root}db/tools/migrate.mjs`, cmd], { env, stdio: 'ignore' });
   await installQueue(urlFor('app_owner'));
-  sa = new pg.Client({ connectionString: urlFor(new URL(adminUrl).username) });
+  sa = new pg.Client({ connectionString: urlFor(new URL(adminUrl).username) }).on(
+    'error',
+    () => undefined,
+  );
   await sa.connect();
   // Seeding bypasses the guard triggers and the role-assignment FK (a superuser fixture); the handlers under test run as app_worker.
   await sa.query(`SET session_replication_role = replica`);
@@ -137,7 +140,7 @@ before(async () => {
 after(async () => {
   await pool?.end();
   await sa?.end();
-  const a = new pg.Client({ connectionString: adminUrl });
+  const a = new pg.Client({ connectionString: adminUrl }).on('error', () => undefined);
   await a.connect();
   await a.query(`DROP DATABASE IF EXISTS ${dbName} WITH (FORCE)`);
   await a.end();

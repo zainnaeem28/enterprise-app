@@ -38,7 +38,7 @@ describe('worker boots against PostgreSQL 17 and runs a queued job', () => {
   before(async () => {
     const admin = new pg.Client({
       connectionString: urlFor(new URL(adminUrl).username, 'postgres'),
-    });
+    }).on('error', () => undefined);
     await admin.connect();
     await admin.query(`CREATE DATABASE ${dbName}`);
     await admin.end();
@@ -53,7 +53,10 @@ describe('worker boots against PostgreSQL 17 and runs a queued job', () => {
         stdio: 'inherit',
       });
     await installQueue(urlFor('app_owner'));
-    const w = new pg.Client({ connectionString: urlFor('app_worker') });
+    const w = new pg.Client({ connectionString: urlFor('app_worker') }).on(
+      'error',
+      () => undefined,
+    );
     await w.connect();
     await syncTaskTypes(w, registry);
     await w.end();
@@ -61,7 +64,7 @@ describe('worker boots against PostgreSQL 17 and runs a queued job', () => {
   after(async () => {
     const admin = new pg.Client({
       connectionString: urlFor(new URL(adminUrl).username, 'postgres'),
-    });
+    }).on('error', () => undefined);
     await admin.connect();
     await admin.query(`DROP DATABASE IF EXISTS ${dbName} WITH (FORCE)`);
     await admin.end();
@@ -96,7 +99,7 @@ describe('worker boots against PostgreSQL 17 and runs a queued job', () => {
         },
       },
     });
-    const api = new pg.Client({ connectionString: urlFor('app_api') });
+    const api = new pg.Client({ connectionString: urlFor('app_api') }).on('error', () => undefined);
     await api.connect();
     try {
       await api.query('BEGIN');
@@ -146,7 +149,7 @@ describe('worker boots against PostgreSQL 17 and runs a queued job', () => {
         },
       },
     });
-    const api = new pg.Client({ connectionString: urlFor('app_api') });
+    const api = new pg.Client({ connectionString: urlFor('app_api') }).on('error', () => undefined);
     await api.connect();
     try {
       await api.query('BEGIN');
@@ -197,7 +200,7 @@ describe('worker boots against PostgreSQL 17 and runs a queued job', () => {
     const fresh = `${dbName}_sync`;
     const admin = new pg.Client({
       connectionString: urlFor(new URL(adminUrl).username, 'postgres'),
-    });
+    }).on('error', () => undefined);
     await admin.connect();
     await admin.query(`CREATE DATABASE ${fresh}`);
     await admin.end();
@@ -219,7 +222,10 @@ describe('worker boots against PostgreSQL 17 and runs a queued job', () => {
       EHR_ORGANISATION_ID: ORG,
     });
     const registry = buildWorkerRegistry();
-    const api = new pg.Client({ connectionString: urlFor('app_api', fresh) });
+    const api = new pg.Client({ connectionString: urlFor('app_api', fresh) }).on(
+      'error',
+      () => undefined,
+    );
     await api.connect();
     const enqueue = async (): Promise<void> => {
       await api.query('BEGIN');
@@ -250,7 +256,10 @@ describe('worker boots against PostgreSQL 17 and runs a queued job', () => {
       });
       await worker.stop();
       await enqueue();
-      const w = new pg.Client({ connectionString: urlFor('app_worker', fresh) });
+      const w = new pg.Client({ connectionString: urlFor('app_worker', fresh) }).on(
+        'error',
+        () => undefined,
+      );
       await w.connect();
       const n = await w.query('SELECT count(*)::int AS n FROM queue_api.task_type');
       await w.end();
@@ -259,7 +268,7 @@ describe('worker boots against PostgreSQL 17 and runs a queued job', () => {
       await api.end();
       const a2 = new pg.Client({
         connectionString: urlFor(new URL(adminUrl).username, 'postgres'),
-      });
+      }).on('error', () => undefined);
       await a2.connect();
       await a2.query(`DROP DATABASE IF EXISTS ${fresh} WITH (FORCE)`);
       await a2.end();

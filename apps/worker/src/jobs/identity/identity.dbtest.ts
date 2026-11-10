@@ -47,7 +47,7 @@ const q = (s: string, p?: unknown[]): Promise<Record<string, unknown>[]> =>
 const n = async (s: string, p?: unknown[]): Promise<number> => Number((await q(s, p))[0]?.['n']);
 
 before(async () => {
-  const a = new pg.Client({ connectionString: adminUrl });
+  const a = new pg.Client({ connectionString: adminUrl }).on('error', () => undefined);
   await a.connect();
   await a.query(`CREATE DATABASE ${dbName}`);
   await a.end();
@@ -58,15 +58,21 @@ before(async () => {
   };
   for (const cmd of ['bootstrap', 'migrate'])
     execFileSync(process.execPath, [`${root}db/tools/migrate.mjs`, cmd], { env, stdio: 'ignore' });
-  sa = new pg.Client({ connectionString: urlFor(new URL(adminUrl).username) });
+  sa = new pg.Client({ connectionString: urlFor(new URL(adminUrl).username) }).on(
+    'error',
+    () => undefined,
+  );
   await sa.connect();
-  pool = new pg.Pool({ connectionString: urlFor('app_worker'), max: 3 });
+  pool = new pg.Pool({ connectionString: urlFor('app_worker'), max: 3 }).on(
+    'error',
+    () => undefined,
+  );
   wdb = new KernelDb(pool as never);
 });
 after(async () => {
   await pool?.end();
   await sa?.end();
-  const a = new pg.Client({ connectionString: adminUrl });
+  const a = new pg.Client({ connectionString: adminUrl }).on('error', () => undefined);
   await a.connect();
   await a.query(`DROP DATABASE IF EXISTS ${dbName} WITH (FORCE)`);
   await a.end();
@@ -149,7 +155,7 @@ describe('identity.apply_reference_data', () => {
   });
 
   test('only the worker, only as system, only for the organisation, may write the reference data', async () => {
-    const c = new pg.Client({ connectionString: urlFor('app_api') });
+    const c = new pg.Client({ connectionString: urlFor('app_api') }).on('error', () => undefined);
     await c.connect();
     try {
       await c.query('BEGIN');

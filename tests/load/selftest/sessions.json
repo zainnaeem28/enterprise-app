@@ -1,0 +1,4 @@
+[
+  {"key":"STF-SELF-1","audience":"staff","cookie":"selftest-staff","csrf":"selftest","clinicianId":"00000000-0000-4000-8000-0000000000a1","locationId":"00000000-0000-4000-8000-0000000000b1","patientId":"00000000-0000-4000-8000-0000000000c1"},
+  {"key":"PAT-SELF-1","audience":"patient","cookie":"selftest-patient","csrf":"selftest","patientId":"00000000-0000-4000-8000-0000000000c2"}
+]

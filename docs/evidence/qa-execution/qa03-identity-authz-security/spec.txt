@@ -1,0 +1,178 @@
+▶ TC-AZ authorization, scope and break-the-glass
+  ✔ TC-AZ-01 a front-desk user at LOC-A1 cannot find or open a patient cared for at LOC-B1 only; the denial is audited as not_visible (301.957148ms)
+  ✔ TC-AZ-02 a patient who changes IDs in URLs gets 404 for another patient's appointments, documents, notes, profile and threads, and the denials are audited (591.172908ms)
+  ✔ TC-AZ-03 a doctor of ORG-1 cannot find or open a patient of ORG-2; the denial is logged (155.143886ms)
+  ✔ TC-AZ-04 visibility follows the care relationship at the user's location: invisible, booked at LOC-A1 (visible), relationship ended (invisible again) (212.531296ms)
+  ✖ TC-AZ-09 the staff-scope drift check finds and corrects a missing and an extra row and raises the alerts (20637.849284ms)
+  ✖ TC-AZ-10 an unassigned doctor is blocked until a reason is entered; BTG then grants access and alerts compliance (121.499409ms)
+  ✔ TC-AZ-11 BTG review: justified / not_justified are recorded and audited; the opener cannot review; a reviewer needs the permission (374.433883ms)
+  ✔ TC-AZ-12 public routes are GET only, cacheable and PHI free (rate-limit step is a WAF check on staging) (19.387452ms)
+  ✔ TC-AZ-14 a proxy sees the linked patient's appointments only; everything else is 404; another patient never opens (229.800413ms)
+  ✔ TC-AZ-15 an assistant cannot sign, prescribe or run EPCS actions (334.363271ms)
+  ✖ TC-AZ-16 break-the-glass reason boundaries: empty, spaces, one character and over-maximum are refused; minimum and maximum are accepted (76.928701ms)
+✖ TC-AZ authorization, scope and break-the-glass (23057.145093ms)
+▶ TC-AZ database roles, RLS and definer functions
+  ✔ TC-AZ-05 PUBLIC and the limited application context get nothing from PHI tables; reporting_ro is refused on every PHI table, view and read model (226.160583ms)
+  ✔ TC-AZ-06 each function-owner role reaches only its allow-listed columns; M-5 catalog: FORCE RLS everywhere, role-targeted policies, owner-rights views only where designed (311.079869ms)
+  ✔ TC-AZ-07 definer functions refuse callers outside their audience and never return out-of-scope demographics (771.239975ms)
+  ✔ TC-AZ-08 a compliance principal holding only privacy.request.manage sees no audit event, consent or incident; identity_label needs the key, a visible referencing record and is rate limited (782.077581ms)
+  ✔ TC-AZ-13 role x capability grid: every cell matches the 27.3 matrix, and a route grid is refused or allowed cell by cell (1379.358752ms)
+✔ TC-AZ database roles, RLS and definer functions (3471.458924ms)
+▶ TC-ID identity, sign-in and sessions
+  ﹣ TC-ID-01 patient sign-up with an e-mail OTP (0.726362ms) # BLOCKED: sign-up and the OTP are the managed patient pool (hosted page); no pool and no e-mail/SMS sandbox in ENV-INT/ci (TEST-CASES 0.3, DEVOPS-PLAN 3.5). Needs ENV-INT/staging after the staging apply. Not mocked.
+  ﹣ TC-ID-02 wrong OTP five times, then right, then a used OTP (0.091952ms) # BLOCKED: the OTP is checked by the managed pool, not by this API. The API-side limit on failed callbacks is asserted in TC-ID-11 step 1. OTP wording and rate limit need ENV-INT/staging.
+  ﹣ TC-ID-03 second factor demanded for a patient (0.076614ms) # Pending-human (AUTO+H): the second factor is a passkey ceremony on a real device in the managed pool. The script half (the API accepts only a session minted from a completed pool sign-in) is TC-ID-10/11.
+  ﹣ TC-ID-03b hosted-page OTP paste/autofill, MFA at sign-up, passkey first (0.078708ms) # PENDING-HUMAN: stays pending until a real person runs it after the staging apply (TEST-CASES TC-ID-03b); a written case is not evidence.
+  ✔ TC-ID-04 staff sign-in is Google only: session realm google / audience staff, no local-password route (100.96745ms)
+  ﹣ TC-ID-05 a staff account without 2SV cannot sign in (0.167504ms) # BLOCKED (AUTO+H): refusal comes from the Workspace 2SV enforcement policy only; `hd` / `email_verified` cannot detect it, so a local claim check would be false evidence. Needs the Workspace test tenant (not provisioned).
+  ✔ TC-ID-06 an ID token from outside the allowed domain, or with email_verified=false, is refused and creates nothing (85.165628ms)
+  ✔ TC-ID-06b every kind of invalid ID token is refused by the callback: wrong nonce, audience, issuer or authorised party, expired, future, bad signature, alg none/HS256, unknown key, no nonce (239.334985ms)
+  ✔ TC-ID-08b a re-authentication (prompt=login, max_age) refuses a stale auth_time and accepts a fresh one (89.580162ms)
+  ﹣ TC-ID-07 Workspace policy export (0.246904ms) # OPS + HUMAN: evidence is the owner/DevOps policy export dated within 30 days; QA reads it. Not a script. Pending-human.
+  ✔ TC-ID-08 signing a note needs a fresh sign-in; a stale one is refused and leaves the draft intact (441.734769ms)
+  ✔ TC-ID-09 idle timeout: before it the action works and the timer resets; after it the action is refused and the server session is gone (380.555945ms)
+  ✔ TC-ID-10 a session is bound to one audience; cookies are __Host-, Secure, HttpOnly and SameSite (142.263726ms)
+  ✔ TC-ID-11 brute force is rate limited, answers are identical for any failure, the session id changes at login, CSRF is refused (359.404342ms)
+  ✔ TC-ID-12 sign-out is server-side; the other session is not extended; one session per browser (128.928332ms)
+✔ TC-ID identity, sign-in and sessions (1971.32517ms)
+▶ TC-SEC C1 step-up and elevation grant
+  ✖ TC-SEC-01 every privileged action is refused without a live elevation grant; nothing changes and each attempt leaves a denied event (20419.396156ms)
+  ✔ TC-SEC-02 the elevation window: works at window - 1 min, refused at window + 1 min with identity.elevation_required; activity does not extend it (217.057159ms)
+  ✔ TC-SEC-03 a failed user verification, an unenrolled key and a replayed assertion each issue no grant (216.97219ms)
+  ✔ TC-SEC-04 a grant is bound to its session and its person (287.296118ms)
+  ✔ TC-SEC-05 enrolment is not self-service: no token, a stale staff session, and a wrong-person token are refused; with the token and two people it succeeds and is audited (320.831799ms)
+  ﹣ TC-SEC-06 Google forced re-authentication (path A only) (0.157014ms) # NOT APPLICABLE on the built path: D-35 path B (separate admin_pool realm) is built; there is no Google admin identity. The path B equivalent (WebAuthn assertion is the only way to a grant) is TC-SEC-02/03.
+✖ TC-SEC C1 step-up and elevation grant (21463.175415ms)
+▶ TC-SEC C4 second approver
+  ✔ TC-SEC-07 a role is assigned only after a different, elevated, eligible person approves; the audit holds requester, approver, before/after and outcome (210.370242ms)
+  ✔ TC-SEC-08 only an eligible, elevated, different person approves: requester, subject, no elevation, staff, no approver role and the same person_id are all refused (535.381884ms)
+  ✔ TC-SEC-09 a request approved one minute before expiry works; one minute after expiry is refused as expired, changes nothing and is audited (247.534763ms)
+  ✔ TC-SEC-10 changing the approver set itself needs a different eligible person: the requester and the subject cannot decide it, a third admin completes it (310.852362ms)
+  ﹣ TC-SEC-11 first-admin bootstrap with two custodians (0.148209ms) # PENDING-HUMAN (HUMAN): ENV-INT/bootstrap needs two real custodians (TEST-CASES 5.2). QA reviews the evidence; no result is recorded here.
+  ✔ TC-SEC-12 role-change audit events are complete and immutable; config_change events carry no secret values (328.146525ms)
+✔ TC-SEC C4 second approver (1633.075957ms)
+▶ TC-SEC C6 kill switch and deprovisioning
+  ✔ TC-SEC-13 the kill switch ends every session and elevation of the target at once, alerts compliance and is audited (315.606734ms)
+  ✔ TC-SEC-14 removing the admin role while elevated ends the elevation at once, not at expiry (328.355125ms)
+  ﹣ TC-SEC-15 the kill switch works while the identity provider is down (staging egress block) (0.165229ms) # BLOCKED (ENV-INT/staging): needs the egress block to the managed pool on the staging account. In ci the admin realm has no external IdP at all (sessions live only in our database), so a ci run would prove nothing about the property. Pending until the staging apply.
+  ﹣ TC-SEC-16 same-business-day deprovisioning of an admin test person (0.053009ms) # PENDING-HUMAN (HUMAN + OPS): a measured elapsed time from a real runbook run; QA never records it.
+✔ TC-SEC C6 kill switch and deprovisioning (644.467619ms)
+▶ TC-SEC C2, C3, C5 and path B properties
+  ﹣ TC-SEC-17 Workspace admin OU policy export (C2) (0.115757ms) # OPS + HUMAN (path A): the owner/DevOps policy export; not a script. Pending-human.
+  ﹣ TC-SEC-18 hourly directory re-check of OU membership (C2 app check, path A) (0.049873ms) # NOT APPLICABLE on the built path B and BLOCKED for path A: needs the Workspace test tenant; the hourly reconciliation job is not built (identity README: person_link/directory_check not part of BE-05).
+  ﹣ TC-SEC-19 super-admin inventory (C3) (0.040356ms) # OPS + HUMAN (path A): inventory and quarterly access review evidence; not a script. Pending-human.
+  ✖ TC-SEC-20 admin sees audit metadata, not PHI; admin cannot reach clinical data; export is rate limited and alerted (722.405392ms)
+  ✔ TC-SEC-21 the admin realm has no password/OTP/SMS sign-in, rejects google sessions, is refused by clinical routes, and has no self-recovery (340.837502ms)
+  ✔ TC-SEC-22 changing realm needs sign-out and sign-in; one browser never holds two sessions on the staff host (112.907877ms)
+  ✔ TC-SEC-23 an enrolment token: dual-controlled, single use, bound to one person, expires after 30 minutes; all steps audited (427.536385ms)
+  ﹣ TC-SEC-24 the spike fallback decision matches the build (HUMAN + AUTO) (0.155152ms) # PENDING-HUMAN (Cybersecurity review of the spike report P-1..P-7). The rerun of TC-SEC-03, 21, 23 is part of this suite; the human half is not recorded here.
+  ﹣ TC-SEC-25 admin sign-in and elevation in the recovery region (DR) (0.050445ms) # OPS (ENV-DR): result of the DR drill, TC-REC-03 owns it. Not a script.
+✖ TC-SEC C2, C3, C5 and path B properties (1604.621151ms)
+▶ TC-SEC-C7 negative authorization (condition C7)
+  ✔ TC-SEC-C7-01 role elevation without an approver never takes effect: API, replay, direct SQL and a forged approval row all fail (304.530008ms)
+  ✔ TC-SEC-C7-02 self-approval: requester, subject, a second principal of the same person and a self-request are all refused (440.516063ms)
+  ✖ TC-SEC-C7-03 a stale or expired elevation, a stale challenge and a missing re-authentication are refused and audited; no grant is created or extended (20314.718976ms)
+  ✔ TC-SEC-C7-04 (path B) a google principal cannot hold a privileged role; a disabled admin cannot be given one (241.397919ms)
+  ✔ TC-SEC-C7-05 (path B) a staff identity cannot receive an admin or compliance role even with a valid approver (288.727102ms)
+  ✔ TC-SEC-C7-06 a Workspace group claim never grants an app role: a token carrying an admin group still signs in as the same staff member with the same roles (87.207098ms)
+  ✔ TC-SEC-C7-07 the kill switch ends an elevated session even while its privileged request is in flight: no partial change, old cookie and grant are useless, alert and audit exist (571.411406ms)
+✖ TC-SEC-C7 negative authorization (condition C7) (22250.148718ms)
+ℹ tests 63
+ℹ suites 8
+ℹ pass 42
+ℹ fail 6
+ℹ cancelled 0
+ℹ skipped 15
+ℹ todo 0
+ℹ duration_ms 76517.819487
+
+✖ failing tests:
+
+test at tests/api/authorization/authorization.test.mjs:179:3
+✖ TC-AZ-09 the staff-scope drift check finds and corrects a missing and an extra row and raises the alerts (20637.849284ms)
+  AssertionError [ERR_ASSERTION]: an alert for the drift was raised (operations for missing, compliance for extra)
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-29-sdlc-qa-execution-execute-full-acceptance-cases-and-end-to-end-journeys/tests/api/authorization/authorization.test.mjs:208:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests/api/authorization/authorization.test.mjs:212:3
+✖ TC-AZ-10 an unassigned doctor is blocked until a reason is entered; BTG then grants access and alerts compliance (121.499409ms)
+  AssertionError [ERR_ASSERTION]: POST /patients/{id}/break-glass must open a grant (got 404 {"type":"https://errors.invalid/kernel/not_found","title":"Not found","status":404,"code":"kernel.not_found","requestId":"da6a7231-ced4-489e-9327-50520110ca50",). The route is not mounted: README of the audit module lists it as not built
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-29-sdlc-qa-execution-execute-full-acceptance-cases-and-end-to-end-journeys/tests/api/authorization/authorization.test.mjs:220:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests/api/authorization/authorization.test.mjs:335:3
+✖ TC-AZ-16 break-the-glass reason boundaries: empty, spaces, one character and over-maximum are refused; minimum and maximum are accepted (76.928701ms)
+  AssertionError [ERR_ASSERTION]: POST /patients/{id}/break-glass must exist (it is 404: the route is not mounted in the API, audit README "Not built")
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-29-sdlc-qa-execution-execute-full-acceptance-cases-and-end-to-end-journeys/tests/api/authorization/authorization.test.mjs:344:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests/api/security/admin-controls.test.mjs:28:3
+✖ TC-SEC-01 every privileged action is refused without a live elevation grant; nothing changes and each attempt leaves a denied event (20419.396156ms)
+  AssertionError [ERR_ASSERTION]: a denied audit event exists per attempt (9)
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-29-sdlc-qa-execution-execute-full-acceptance-cases-and-end-to-end-journeys/tests/api/security/admin-controls.test.mjs:64:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests/api/security/admin-controls.test.mjs:414:3
+✖ TC-SEC-20 admin sees audit metadata, not PHI; admin cannot reach clinical data; export is rate limited and alerted (722.405392ms)
+  AssertionError [ERR_ASSERTION]: the export rate limit is enforced (30 accepted before the refusal)
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-29-sdlc-qa-execution-execute-full-acceptance-cases-and-end-to-end-journeys/tests/api/security/admin-controls.test.mjs:443:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests/api/security/c7.test.mjs:107:3
+✖ TC-SEC-C7-03 a stale or expired elevation, a stale challenge and a missing re-authentication are refused and audited; no grant is created or extended (20314.718976ms)
+  AssertionError [ERR_ASSERTION]: every stale or expired attempt is audited as denied
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-29-sdlc-qa-execution-execute-full-acceptance-cases-and-end-to-end-journeys/tests/api/security/c7.test.mjs:144:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

@@ -38,12 +38,17 @@ locals {
     "kms:ReplicateKey", "cognito-idp:*", "cognito-identity:*", "logs:*", "cloudwatch:*", "events:*", "sns:*", "sqs:*", "ses:*", "acm:*",
     "route53:*", "cloudfront:*", "wafv2:*", "backup:*", "application-autoscaling:*", "ecr:*", "tag:*",
     "secretsmanager:CreateSecret", "secretsmanager:DeleteSecret", "secretsmanager:DescribeSecret", "secretsmanager:GetResourcePolicy",
-    "secretsmanager:PutResourcePolicy", "secretsmanager:DeleteResourcePolicy", "secretsmanager:TagResource", "secretsmanager:UntagResource",
+    "secretsmanager:TagResource", "secretsmanager:UntagResource",
     "secretsmanager:UpdateSecret", "secretsmanager:ReplicateSecretToRegions", "secretsmanager:RemoveRegionsFromReplication",
     "ssm:PutParameter", "ssm:GetParameter*", "ssm:DescribeParameters", "ssm:AddTagsToResource", "ssm:RemoveTagsFromResource", "ssm:ListTagsForResource", "ssm:DeleteParameter",
     "s3:CreateBucket", "s3:DeleteBucket", "s3:ListAllMyBuckets", "s3:*Bucket*", "s3:Get*Configuration", "s3:Put*Configuration", "s3:Delete*Configuration",
     "iam:Get*", "iam:List*", "iam:CreateServiceLinkedRole",
   ]
+
+  # Keys whose policy is a control: record, state, release signing, restore and secrets keys.
+  protected_key_arns = compact([var.ssm_kms_key_arn, var.state_kms_key_arn, var.refs.signing_key_arn, var.refs.restore_kms_key_arn, var.refs.secrets_kms_key_arn])
+
+  protected_bucket_arns = compact([var.state_bucket_arn, var.refs.release_manifest_bucket_arn, var.refs.audit_bucket_arn])
 
   tf_statements = concat(local.state_read, local.state_write, [
     { sid = "WorkloadServices", actions = local.tf_actions, resources = ["*"] },
@@ -55,8 +60,20 @@ locals {
       resources = null
     },
     { sid = "NoFaultSwitchWrites", effect = "Deny", actions = ["ssm:PutParameter", "ssm:DeleteParameter"], resources = ["arn:aws:ssm:*:*:parameter/*/faults/*"] },
+    # Data keys are used through S3 (state) or SSM (the /approved/* SecureString records); never directly.
     { sid = "NoKeyUseForData", effect = "Deny", actions = ["kms:Decrypt", "kms:Encrypt", "kms:GenerateDataKey*", "kms:ReEncrypt*"], resources = ["*"], not_res = null,
+    conditions = { StringNotEquals = { "kms:ViaService" = ["s3.${var.region}.amazonaws.com", "ssm.${var.region}.amazonaws.com"] } } },
+    { sid = "StateKeyOnlyViaS3", effect = "Deny", actions = ["kms:Decrypt", "kms:Encrypt", "kms:GenerateDataKey*", "kms:ReEncrypt*"], resources = [var.state_kms_key_arn], not_res = null,
     conditions = { StringNotEquals = { "kms:ViaService" = ["s3.${var.region}.amazonaws.com"] } } },
+    { sid = "RecordKeyOnlyViaSsm", effect = "Deny", actions = ["kms:Decrypt", "kms:Encrypt", "kms:GenerateDataKey*", "kms:ReEncrypt*"], resources = [var.ssm_kms_key_arn], not_res = null,
+    conditions = { StringNotEquals = { "kms:ViaService" = ["ssm.${var.region}.amazonaws.com"] } } },
+    # The controls that protect the records and the evidence: the key policy of the record key and
+    # the state key, and the policy and configuration of the state, manifest and audit buckets.
+    { sid = "NoEditOfRecordAndEvidenceKeys", effect = "Deny", actions = ["kms:PutKeyPolicy", "kms:Put*", "kms:Update*", "kms:Disable*", "kms:ScheduleKeyDeletion", "kms:Revoke*", "kms:CreateGrant"], resources = local.protected_key_arns, not_res = null },
+    # Secret resource policies pin who may read and write each value; changing them is a human apply
+    # through break-glass, never a gh-* role (S2).
+    { sid = "NoEditOfSecretResourcePolicies", effect = "Deny", actions = ["secretsmanager:PutResourcePolicy", "secretsmanager:DeleteResourcePolicy"], resources = ["*"], not_res = null },
+    { sid = "NoEditOfEvidenceBuckets", effect = "Deny", actions = ["s3:PutBucket*", "s3:DeleteBucket*", "s3:Put*Configuration", "s3:Delete*Configuration", "s3:DeleteBucket"], resources = local.protected_bucket_arns, not_res = null },
   ])
 
   allow = {

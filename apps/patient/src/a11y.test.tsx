@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { App } from './app/App.js';
 import { json, runtimeWith, SESSION } from './app/test-helpers.js';
 import type { Respond } from './app/test-helpers.js';
+import { DOCTOR, mockApi, SERVICE } from './features/booking/testkit.js';
 
 afterEach(cleanup);
 
@@ -57,6 +58,27 @@ describe('axe on the patient pages (jsdom)', () => {
     window.history.replaceState(null, '', `/problem?code=${code}`);
     const { container } = render(<App runtime={runtimeWith(signedIn).runtime} />);
     await screen.findByRole('alert');
+    expect(await violations(container)).toEqual([]);
+  });
+});
+
+describe('axe on the brand-site hand-off (jsdom)', () => {
+  const Q = `/book?serviceId=${SERVICE}&clinicianId=${DOCTOR}`;
+  it('BS-06 interstitial', async () => {
+    window.history.replaceState(null, '', Q);
+    const signedOut: Respond = () => json(401, { status: 401, code: 'auth.unauthenticated' });
+    const { container } = render(<App runtime={runtimeWith(signedOut).runtime} />);
+    await screen.findByRole('heading', { name: 'Sign in or create an account to finish booking' });
+    expect(await violations(container)).toEqual([]);
+  });
+  it('pre-selected PP-10 and PP-11', async () => {
+    window.history.replaceState(null, '', Q);
+    const { container } = render(<App runtime={runtimeWith(mockApi().respond).runtime} />);
+    expect(await screen.findByRole('radio', { name: /General visit/ })).toBeChecked();
+    expect(await violations(container)).toEqual([]);
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    await screen.findByLabelText('Doctor');
+    expect(screen.getByLabelText('Doctor')).toHaveValue(DOCTOR);
     expect(await violations(container)).toEqual([]);
   });
 });

@@ -294,6 +294,18 @@ regexes = ['''^2406_notifications_staff_scope_allows_patient\.sql$''']
 description = "HEAAA-671: QA-05 probe feature-flag names in admin.test.mjs (commit 19cea0d4 + file + value)"
 condition = "AND"
 targetRules = ["generic-api-key"]
-commits = ["19cea0d45f44cc0b2313439200566a61bba04b21"]
+commits = [
+  "19cea0d45f44cc0b2313439200566a61bba04b21",
+  "25fea61a059cfbe174c1fb03774c631a5142d682", # HEAAA-674: prettier reformat of the same file; same two flag names at new lines
+]
+paths = ['''(^|/)tests/api/platform/admin\.test\.mjs$''']
+regexes = ['''^qa05_probe_flag2?$''']
+
+# HEAAA-674. Working-tree scan of the same file (merged QA-05 suite): the same throw-away flag names.
+# Pinned to the file AND the exact values.
+[[allowlists]]
+description = "HEAAA-674: QA-05 probe feature-flag names in admin.test.mjs (working tree, file + value)"
+condition = "AND"
+targetRules = ["generic-api-key"]
 paths = ['''(^|/)tests/api/platform/admin\.test\.mjs$''']
 regexes = ['''^qa05_probe_flag2?$''']

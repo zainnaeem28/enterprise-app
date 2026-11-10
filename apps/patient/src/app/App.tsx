@@ -6,6 +6,7 @@ import { useLocation } from './router.js';
 import { EntryPage } from '../features/auth/EntryPage.js';
 import type { Intent } from '../features/auth/EntryPage.js';
 import { PreRedirectPage } from '../features/auth/PreRedirectPage.js';
+import { BookSignInPage } from '../features/auth/BookSignInPage.js';
 import { LandingPage } from '../features/auth/LandingPage.js';
 import { ProblemPage } from '../features/auth/ProblemPage.js';
 import { isProblemCode } from '../features/auth/problems.js';
@@ -18,6 +19,12 @@ import { isProfilePath, ProfileRoutes } from '../features/profile/index.js';
 import { isPrivacyPath, PrivacyRoutes } from '../features/privacy/index.js';
 import { isMessagesPath, MessagesRoutes } from '../features/messages/index.js';
 import { probeSignIn, signInUrl } from '../features/auth/signIn.js';
+
+/** The path with its query, so a hand-off such as `/book?serviceId=…` survives sign-in. */
+const fullPath = (l: { path: string; params: URLSearchParams }) => {
+  const q = l.params.toString();
+  return q === '' ? l.path : `${l.path}?${q}`;
+};
 
 export function App({
   runtime,
@@ -78,7 +85,15 @@ export function App({
     );
   } else if (isBookingPath(location.path)) {
     page = (
-      <BookingRoutes runtime={runtime} path={location.path} params={location.params} go={go} />
+      <BookingRoutes
+        runtime={runtime}
+        path={location.path}
+        params={location.params}
+        go={go}
+        signedOut={
+          <BookSignInPage onContinue={(intent) => toContinue(intent, fullPath(location))} />
+        }
+      />
     );
   } else if (location.path === '/problem') {
     const code = location.params.get('code');
@@ -113,7 +128,9 @@ export function App({
       <MaintenanceBanners api={runtime.api} />
       <SessionPrompts
         store={runtime.session}
-        onSignIn={() => toContinue('sign-in', location.path)}
+        onSignIn={() =>
+          toContinue('sign-in', checkedReturnTo(window.location.pathname + window.location.search))
+        }
       />
       <main id="main" className="ehr-main" tabIndex={-1}>
         {page}

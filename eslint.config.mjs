@@ -20,6 +20,24 @@ export default tseslint.config(
     rules: { '@typescript-eslint/no-require-imports': 'off' },
   },
   {
+    // QA automated suites (HEAAA-674). k6 scripts run in the k6 runtime, not Node, so its globals are declared here.
+    files: ['tests/load/**/*.js'],
+    languageOptions: {
+      globals: {
+        __ENV: 'readonly',
+        __VU: 'readonly',
+        __ITER: 'readonly',
+        open: 'readonly',
+        console: 'readonly',
+      },
+    },
+  },
+  {
+    // QA suites import shared helpers per file; an unused helper import is a warning here, not a build break. Product code keeps the rule as an error.
+    files: ['tests/**'],
+    rules: { '@typescript-eslint/no-unused-vars': 'warn' },
+  },
+  {
     files: ['apps/api/src/modules/**/*.ts'],
     plugins: { boundaries },
     rules: { 'boundaries/module-boundaries': 'error' },

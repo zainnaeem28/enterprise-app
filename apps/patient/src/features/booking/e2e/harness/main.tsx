@@ -7,6 +7,7 @@ import { SkipLink } from '@ehr/ui';
 import '@ehr/ui/styles.css';
 import { createPatientRuntime } from '../../../../app/runtime.js';
 import { useLocation } from '../../../../app/router.js';
+import { BookSignInPage } from '../../../auth/BookSignInPage.js';
 import { BookingRoutes } from '../../index.js';
 
 const runtime = createPatientRuntime({
@@ -23,7 +24,23 @@ function Page() {
         <p className="ehr-appbar__name">Patient portal</p>
       </header>
       <main id="main" className="ehr-main" tabIndex={-1}>
-        <BookingRoutes runtime={runtime} path={location.path} params={location.params} go={go} />
+        <BookingRoutes
+          runtime={runtime}
+          path={location.path}
+          params={location.params}
+          go={go}
+          signedOut={
+            <BookSignInPage
+              onContinue={(intent) =>
+                go(
+                  `/continue?intent=${intent}&returnTo=${encodeURIComponent(
+                    window.location.pathname + window.location.search,
+                  )}`,
+                )
+              }
+            />
+          }
+        />
       </main>
     </>
   );

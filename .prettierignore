@@ -5,3 +5,11 @@ dist/
 eslint/fixtures/
 # Raw Playwright run report kept byte-identical as evidence (generated; formatting it would alter evidence)
 apps/patient/src/features/booking/evidence/playwright-report.json
+# QA reports and generated evidence merged in HEAAA-674; kept byte-identical to what the QA runs produced
+tests/api/platform/QA-05-REPORT.md
+tests/api/security/QA-03-REPORT.md
+tests/e2e/a11y/QA-REPORT.md
+tests/e2e/a11y/evidence/
+tests/e2e/journeys/evidence/
+tests/load/selftest/ids.json
+tests/load/selftest/sessions.json

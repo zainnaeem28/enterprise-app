@@ -154,7 +154,7 @@ describe('organisation module on PostgreSQL 17 (BE-03)', () => {
     sa.query(s, p).then((r) => r.rows as T[]);
 
   before(async () => {
-    const a = new pg.Client({ connectionString: adminUrl });
+    const a = new pg.Client({ connectionString: adminUrl }).on('error', () => undefined);
     await a.connect();
     await a.query(`CREATE DATABASE ${dbName}`);
     await a.end();
@@ -168,10 +168,19 @@ describe('organisation module on PostgreSQL 17 (BE-03)', () => {
         env,
         stdio: 'inherit',
       });
-    sa = new pg.Client({ connectionString: urlFor(new URL(adminUrl).username) });
+    sa = new pg.Client({ connectionString: urlFor(new URL(adminUrl).username) }).on(
+      'error',
+      () => undefined,
+    );
     await sa.connect();
-    apiPool = new pg.Pool({ connectionString: urlFor('app_api'), max: 4 });
-    workerPool = new pg.Pool({ connectionString: urlFor('app_worker'), max: 2 });
+    apiPool = new pg.Pool({ connectionString: urlFor('app_api'), max: 4 }).on(
+      'error',
+      () => undefined,
+    );
+    workerPool = new pg.Pool({ connectionString: urlFor('app_worker'), max: 2 }).on(
+      'error',
+      () => undefined,
+    );
     db = new KernelDb(apiPool as never);
     wdb = new KernelDb(workerPool as never);
 
@@ -232,7 +241,7 @@ describe('organisation module on PostgreSQL 17 (BE-03)', () => {
     await apiPool?.end();
     await workerPool?.end();
     await sa?.end();
-    const a = new pg.Client({ connectionString: adminUrl });
+    const a = new pg.Client({ connectionString: adminUrl }).on('error', () => undefined);
     await a.connect();
     await a.query(`DROP DATABASE IF EXISTS ${dbName} WITH (FORCE)`);
     await a.end();
