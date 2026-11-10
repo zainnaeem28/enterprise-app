@@ -100,7 +100,8 @@ export async function runRestoreCheck(deps) {
       reason: r.reason,
       hashes: r.hashes,
     });
-    const { hashes, ...rest } = r;
+    const rest = { ...r };
+    delete rest.hashes;
     return rest;
   });
   if (!results.has('checksums'))
