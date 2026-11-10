@@ -133,6 +133,8 @@ export interface ComposeOptions {
     secretReader?: SecretReader;
     secretWriter?: InboundSecretWriter;
     payloadOpener?: PayloadOpener;
+    /** Calendar channel-token key (`<env>/integration/inbound/google-calendar-channel-key`, current version). */
+    channelKeys?: CalendarJobDeps['channelKeys'];
     /** Terminology release source (NLM/UMLS licence, C-09). */
     terminologySource?: TerminologySource;
     /** Privacy package store with write access (bucket and KMS key, C-01). */
@@ -213,7 +215,7 @@ export function composeTasks(opts: ComposeOptions & { queue: Queue }): TaskTable
     orgId,
     queue,
     vendor,
-    channelKeys: refusingPort('calendar_channel_key'),
+    channelKeys: infra.channelKeys ?? refusingPort('calendar_channel_key'),
     get webhookUrl(): string {
       return opts.calendarWebhookUrl ?? refuse('calendar_webhook_url');
     },

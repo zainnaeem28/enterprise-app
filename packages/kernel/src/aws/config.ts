@@ -1,6 +1,8 @@
 // The one place the AWS adapters get their region, endpoint and client (docs/runbooks/AWS-ADAPTERS.md). Credentials are never read here:
 // the SDK's default provider chain finds them (task role in AWS; the AWS_ACCESS_KEY_ID pair against an emulator).
+import { KMSClient } from '@aws-sdk/client-kms';
 import { S3Client } from '@aws-sdk/client-s3';
+import { SecretsManagerClient } from '@aws-sdk/client-secrets-manager';
 import type { Logger } from '../logging/logger.js';
 
 export type Env = Readonly<Record<string, string | undefined>>;
@@ -50,6 +52,20 @@ export function createS3Client(s: AwsSettings): S3Client {
     // Only send/validate a checksum when an operation requires one: keeps emulators and presigned URLs simple.
     requestChecksumCalculation: 'WHEN_REQUIRED',
     responseChecksumValidation: 'WHEN_REQUIRED',
+  });
+}
+
+export function createKmsClient(s: AwsSettings): KMSClient {
+  return new KMSClient({
+    region: s.region,
+    ...(s.endpoint === undefined ? {} : { endpoint: s.endpoint }),
+  });
+}
+
+export function createSecretsManagerClient(s: AwsSettings): SecretsManagerClient {
+  return new SecretsManagerClient({
+    region: s.region,
+    ...(s.endpoint === undefined ? {} : { endpoint: s.endpoint }),
   });
 }
 
