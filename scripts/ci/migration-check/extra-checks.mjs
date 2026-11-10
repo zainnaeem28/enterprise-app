@@ -10,6 +10,20 @@ if (!url) {
   process.exit(2);
 }
 const userSchemas = `(SELECT oid FROM pg_namespace WHERE nspname !~ '^pg_' AND nspname <> 'information_schema')`;
+// HEAAA-594 (INT05-F06): a trusted extension created by app_owner has its member objects owned by the bootstrap
+// superuser (OID 10), not by app_owner and not by anything the administrator created. Only such members of these
+// extensions, whose own owner is app_owner, are exempt from X-admin-owns-nothing. Changed only by a reviewed
+// Solution Architect decision; X-extensions-allowlisted fails on any other extension.
+const EXTENSION_ALLOWLIST = [
+  ['btree_gist', 'scheduling', 'app_owner'],
+  ['pg_trgm', 'clinical', 'app_owner'],
+];
+const extensionMember = (alias, ownerCol, catalog) => `(${alias}.${ownerCol} = 10 AND EXISTS (
+            SELECT 1 FROM pg_depend d JOIN pg_extension e ON e.oid = d.refobjid
+            WHERE d.classid = '${catalog}'::regclass AND d.objid = ${alias}.oid
+              AND d.refclassid = 'pg_extension'::regclass AND d.deptype = 'e'
+              AND e.extname = ANY (ARRAY[${EXTENSION_ALLOWLIST.map(([n]) => `'${n}'`).join(',')}])
+              AND e.extowner = 'app_owner'::regrole))`;
 const checks = {
   'X-bypassrls': {
     title:
@@ -18,12 +32,23 @@ const checks = {
   },
   'X-admin-owns-nothing': {
     title:
-      'the administrator that ran db/roles (stands in for the RDS master user) owns no object in a user schema (M-1)',
+      'the administrator that ran db/roles (stands in for the RDS master user) owns no object in a user schema (M-1); members of allow-listed extensions created by app_owner, which PostgreSQL assigns to the bootstrap superuser, are not counted',
     sql: `SELECT c.oid::regclass::text AS object FROM pg_class c WHERE c.relnamespace IN ${userSchemas} AND c.relowner = (SELECT oid FROM pg_roles WHERE rolname = session_user)
+            AND NOT ${extensionMember('c', 'relowner', 'pg_class')}
           UNION ALL
           SELECT p.oid::regprocedure::text FROM pg_proc p WHERE p.pronamespace IN ${userSchemas} AND p.proowner = (SELECT oid FROM pg_roles WHERE rolname = session_user)
+            AND NOT ${extensionMember('p', 'proowner', 'pg_proc')}
           UNION ALL
           SELECT n.nspname FROM pg_namespace n WHERE n.oid IN ${userSchemas} AND n.nspowner = (SELECT oid FROM pg_roles WHERE rolname = session_user)`,
+  },
+  'X-extensions-allowlisted': {
+    title:
+      'installed extensions are exactly the allow-list (name, schema, owner app_owner) of decision HEAAA-594',
+    sql: `SELECT e.extname, e.extnamespace::regnamespace::text AS schema, pg_get_userbyid(e.extowner) AS owner
+          FROM pg_extension e
+          WHERE e.extname <> 'plpgsql'
+            AND (e.extname, e.extnamespace::regnamespace::text, pg_get_userbyid(e.extowner))
+                NOT IN (${EXTENSION_ALLOWLIST.map(([n, s, o]) => `('${n}','${s}','${o}')`).join(', ')})`,
   },
   'X-no-superuser-membership': {
     title: 'no application or function-owner role is a member of a superuser or rds_superuser role',

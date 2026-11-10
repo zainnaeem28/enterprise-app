@@ -15,6 +15,7 @@ export const REQUIRED = {
   'application roles own no table; admin (RDS master user) owns nothing': [
     'R-no-owned-tables',
     'X-admin-owns-nothing',
+    'X-extensions-allowlisted',
   ],
   'role memberships are the SET-only grants; no master-user membership': [
     'R-memberships',
