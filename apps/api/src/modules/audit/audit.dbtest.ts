@@ -110,7 +110,7 @@ describe('audit module on PostgreSQL 17 (BE-01)', () => {
     Number((await admin.query(`SELECT count(*) AS n FROM audit.event WHERE ${where}`)).rows[0]?.n);
 
   before(async () => {
-    const a = new pg.Client({ connectionString: adminUrl });
+    const a = new pg.Client({ connectionString: adminUrl }).on('error', () => undefined);
     await a.connect();
     await a.query(`CREATE DATABASE ${dbName}`);
     await a.end();
@@ -124,7 +124,10 @@ describe('audit module on PostgreSQL 17 (BE-01)', () => {
         env,
         stdio: 'inherit',
       });
-    admin = new pg.Client({ connectionString: urlFor(new URL(adminUrl).username) });
+    admin = new pg.Client({ connectionString: urlFor(new URL(adminUrl).username) }).on(
+      'error',
+      () => undefined,
+    );
     await (admin as never as { connect(): Promise<void> }).connect();
     // Fault injection for TC-AU-02/03: a trigger that fails the audit insert while the session flag is on.
     await admin.query(`CREATE FUNCTION public.audit_fault() RETURNS trigger LANGUAGE plpgsql AS $$
@@ -135,13 +138,16 @@ describe('audit module on PostgreSQL 17 (BE-01)', () => {
     await admin.query(
       `CREATE TRIGGER aaa_fault BEFORE INSERT ON audit.event FOR EACH ROW EXECUTE FUNCTION public.audit_fault()`,
     );
-    pool = new pg.Pool({ connectionString: urlFor('app_api'), max: 6 });
+    pool = new pg.Pool({ connectionString: urlFor('app_api'), max: 6 }).on(
+      'error',
+      () => undefined,
+    );
     db = new KernelDb(pool as never);
   });
   after(async () => {
     await pool?.end();
     await admin?.end();
-    const a = new pg.Client({ connectionString: adminUrl });
+    const a = new pg.Client({ connectionString: adminUrl }).on('error', () => undefined);
     await a.connect();
     await a.query(`DROP DATABASE IF EXISTS ${dbName} WITH (FORCE)`);
     await a.end();
@@ -366,7 +372,10 @@ describe('audit module on PostgreSQL 17 (BE-01)', () => {
       const alertsBefore = denialAlerts.length;
       // A role-level setting reaches only NEW connections, so the injected write runs on a fresh pool.
       await admin.query(`ALTER ROLE app_api SET test.audit_fault = 'on'`);
-      const fresh = new pg.Pool({ connectionString: urlFor('app_api'), max: 1 });
+      const fresh = new pg.Pool({ connectionString: urlFor('app_api'), max: 1 }).on(
+        'error',
+        () => undefined,
+      );
       let res;
       try {
         res = await audit.recordDenied(new KernelDb(fresh as never), doctor, {
@@ -397,7 +406,7 @@ describe('audit module on PostgreSQL 17 (BE-01)', () => {
 
   describe('TC-AU-04 (corrected per SA-TC-06): unbounded transactions are refused', () => {
     const insertAs = async (user: string, timeout: string | null): Promise<void> => {
-      const c = new pg.Client({ connectionString: urlFor(user) });
+      const c = new pg.Client({ connectionString: urlFor(user) }).on('error', () => undefined);
       await c.connect();
       try {
         await c.query('BEGIN');
@@ -446,7 +455,7 @@ describe('audit module on PostgreSQL 17 (BE-01)', () => {
       sql: string,
       settings: Record<string, string> = {},
     ): Promise<{ code?: string; message: string }> => {
-      const c = new pg.Client({ connectionString: urlFor(user) });
+      const c = new pg.Client({ connectionString: urlFor(user) }).on('error', () => undefined);
       await c.connect();
       try {
         await c.query('BEGIN');
@@ -902,7 +911,10 @@ describe('audit module on PostgreSQL 17 (BE-01)', () => {
         jobScope: 'org',
       };
       // app_api cannot be `system`: use the worker pool.
-      const wpool = new pg.Pool({ connectionString: urlFor('app_worker'), max: 2 });
+      const wpool = new pg.Pool({ connectionString: urlFor('app_worker'), max: 2 }).on(
+        'error',
+        () => undefined,
+      );
       try {
         const wdb = new KernelDb(wpool as never);
         const p1 = await wdb.withScope(sys, (tx) => audit.disclosuresFor(tx, [PAT1], { limit: 3 }));

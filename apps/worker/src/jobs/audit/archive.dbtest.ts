@@ -98,7 +98,7 @@ describe('anchor archive on PostgreSQL 17 (INT04-F10-B)', () => {
     }));
 
   before(async () => {
-    const a = new pg.Client({ connectionString: adminUrl });
+    const a = new pg.Client({ connectionString: adminUrl }).on('error', () => undefined);
     await a.connect();
     await a.query(`CREATE DATABASE ${dbName}`);
     await a.end();
@@ -113,13 +113,22 @@ describe('anchor archive on PostgreSQL 17 (INT04-F10-B)', () => {
         stdio: 'inherit',
       });
     await installQueue(urlFor('app_owner'));
-    const w = new pg.Client({ connectionString: urlFor('app_worker') });
+    const w = new pg.Client({ connectionString: urlFor('app_worker') }).on(
+      'error',
+      () => undefined,
+    );
     await w.connect();
     await syncTaskTypes(w, registry);
     await w.end();
-    admin = new pg.Client({ connectionString: urlFor(new URL(adminUrl).username) });
+    admin = new pg.Client({ connectionString: urlFor(new URL(adminUrl).username) }).on(
+      'error',
+      () => undefined,
+    );
     await admin.connect();
-    pool = new pg.Pool({ connectionString: urlFor('app_worker'), max: 4 });
+    pool = new pg.Pool({ connectionString: urlFor('app_worker'), max: 4 }).on(
+      'error',
+      () => undefined,
+    );
     db = new KernelDb(pool as never);
     // Eight events, one every 5 minutes starting 40 minutes ago, written by app_worker as a system job would; anchored in 10-minute steps.
     await db.withScope(
@@ -141,7 +150,7 @@ describe('anchor archive on PostgreSQL 17 (INT04-F10-B)', () => {
   after(async () => {
     await pool?.end();
     await admin?.end();
-    const a = new pg.Client({ connectionString: adminUrl });
+    const a = new pg.Client({ connectionString: adminUrl }).on('error', () => undefined);
     await a.connect();
     await a.query(`DROP DATABASE IF EXISTS ${dbName} WITH (FORCE)`);
     await a.end();
@@ -170,7 +179,7 @@ describe('anchor archive on PostgreSQL 17 (INT04-F10-B)', () => {
         (await anchorRows()).length,
       );
       for (const user of ['app_api', 'app_worker', 'app_owner', 'audit_archiver']) {
-        const c = new pg.Client({ connectionString: urlFor(user) });
+        const c = new pg.Client({ connectionString: urlFor(user) }).on('error', () => undefined);
         await c.connect();
         try {
           for (const sql of [
@@ -187,7 +196,10 @@ describe('anchor archive on PostgreSQL 17 (INT04-F10-B)', () => {
           await c.end();
         }
       }
-      const w = new pg.Client({ connectionString: urlFor('app_worker') });
+      const w = new pg.Client({ connectionString: urlFor('app_worker') }).on(
+        'error',
+        () => undefined,
+      );
       await w.connect();
       try {
         await assert.rejects(

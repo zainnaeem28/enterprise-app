@@ -34,7 +34,7 @@ describe('every registered worker job type has a handler in the composed task ta
   before(async () => {
     const admin = new pg.Client({
       connectionString: urlFor(new URL(adminUrl).username, 'postgres'),
-    });
+    }).on('error', () => undefined);
     await admin.connect();
     await admin.query(`CREATE DATABASE ${dbName}`);
     await admin.end();
@@ -53,7 +53,7 @@ describe('every registered worker job type has a handler in the composed task ta
   after(async () => {
     const admin = new pg.Client({
       connectionString: urlFor(new URL(adminUrl).username, 'postgres'),
-    });
+    }).on('error', () => undefined);
     await admin.connect();
     await admin.query(`DROP DATABASE IF EXISTS ${dbName} WITH (FORCE)`);
     await admin.end();
@@ -91,7 +91,10 @@ describe('every registered worker job type has a handler in the composed task ta
     });
     for (const j of WORKER_JOBS) control.defineJob(j);
     const worker = await startWorker({ cfg, pool, log, tasks, registry: control, concurrency: 5 });
-    const w = new pg.Client({ connectionString: urlFor('app_worker') });
+    const w = new pg.Client({ connectionString: urlFor('app_worker') }).on(
+      'error',
+      () => undefined,
+    );
     await w.connect();
     try {
       const queue = new Queue(registry, 'worker');
@@ -174,11 +177,17 @@ describe('every registered worker job type has a handler in the composed task ta
       fileURLToPath(new URL('../../api/dist/src/composition.js', import.meta.url)),
     ).href;
     const api = ((await import(url)) as { API_PATH_JOBS: readonly JobType[] }).API_PATH_JOBS;
-    const owner = new pg.Client({ connectionString: urlFor('app_owner') });
+    const owner = new pg.Client({ connectionString: urlFor('app_owner') }).on(
+      'error',
+      () => undefined,
+    );
     await owner.connect();
-    const w = new pg.Client({ connectionString: urlFor('app_worker') });
+    const w = new pg.Client({ connectionString: urlFor('app_worker') }).on(
+      'error',
+      () => undefined,
+    );
     await w.connect();
-    const a = new pg.Client({ connectionString: urlFor('app_api') });
+    const a = new pg.Client({ connectionString: urlFor('app_api') }).on('error', () => undefined);
     await a.connect();
     try {
       await syncTaskTypes(w, buildWorkerRegistry());

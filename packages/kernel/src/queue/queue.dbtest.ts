@@ -27,7 +27,7 @@ const urlFor = (user: string, database = dbName) => {
   return u.toString();
 };
 const open = async (user: string) => {
-  const c = new pg.Client({ connectionString: urlFor(user) });
+  const c = new pg.Client({ connectionString: urlFor(user) }).on('error', () => undefined);
   await c.connect();
   return c;
 };
@@ -63,7 +63,7 @@ describe('queue on FORCEd tables', () => {
   const queue = new Queue(registry, 'api');
 
   before(async () => {
-    const admin = new pg.Client({ connectionString: adminUrl });
+    const admin = new pg.Client({ connectionString: adminUrl }).on('error', () => undefined);
     await admin.connect();
     await admin.query(`CREATE DATABASE ${dbName}`);
     await admin.end();
@@ -86,7 +86,7 @@ describe('queue on FORCEd tables', () => {
     }
   });
   after(async () => {
-    const admin = new pg.Client({ connectionString: adminUrl });
+    const admin = new pg.Client({ connectionString: adminUrl }).on('error', () => undefined);
     await admin.connect();
     await admin.query(`DROP DATABASE IF EXISTS ${dbName} WITH (FORCE)`);
     await admin.end();
