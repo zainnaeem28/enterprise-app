@@ -31,6 +31,13 @@ const SAFE_KEYS = new Set([
   'audience',
   'realm',
   'name',
+  // vendor call lines (DL-1, HEAAA-707): closed vocabularies and class names only, never a vendor message
+  'kind',
+  'vendor',
+  'operation',
+  'outcome',
+  'errorClass',
+  'correlationId',
 ]);
 
 const PATTERNS: [RegExp, string][] = [

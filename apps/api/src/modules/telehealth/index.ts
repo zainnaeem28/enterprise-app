@@ -3,8 +3,8 @@
 //   1. define TELEHEALTH_JOBS in the API's and the worker's JobRegistry (and sync queue task types); `registerTelehealthHandlers` on the
 //      registry used by `Queue.publish`;
 //   2. registerTelehealthParticipants() (merge participant + export contributor; the registry takes one per module);
-//   3. API: new TelehealthService({ db, audit, organisation, vendor, queue }) where `vendor` is a VideoVendorPort over the worker's
-//      VendorGateway (`callVendor('video', 'join_token' | 'end_meeting', ...)`); controllers via createTelehealthControllers; the
+//   3. API: new TelehealthService({ db, audit, organisation, vendor, queue }) where `vendor` is a VideoVendorPort for `join_token`
+//      only (production: platform/aws/chime-video.ts); meeting creation and closing are worker jobs; controllers via createTelehealthControllers; the
 //      `reservation` resolver is the booking core's (schedulingResolvers());
 //   4. worker: createTelehealthTasks (apps/worker/src/jobs/telehealth) with a `TelehealthPort` that is `telehealthPort(service)`, the
 //      VideoAdapter registered with integration-core's AdapterRegistry, and TELEHEALTH_CRONTAB.

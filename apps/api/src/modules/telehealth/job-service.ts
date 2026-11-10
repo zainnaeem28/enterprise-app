@@ -144,6 +144,27 @@ export class TelehealthJobService {
     }
   }
 
+  /**
+   * `telehealth.close_meeting` (DL-1): under the one patient's scope, the room of an ended session that still has one, or null. Reads
+   * only; the end itself was audited.
+   */
+  async meetingToClose(
+    tx: Tx,
+    sessionId: string,
+  ): Promise<{ vendor: string; meetingId: string } | null> {
+    if (!isUuid(sessionId)) throw new TelehealthValidationError(['sessionId']);
+    const patientId = this.patientOf(tx);
+    const r = (
+      await tx.query(
+        `SELECT vendor, vendor_meeting_id FROM telehealth.video_session
+          WHERE id = $1::uuid AND patient_id = $2::uuid AND status = 'ended' AND vendor_meeting_id IS NOT NULL`,
+        [sessionId.toLowerCase(), patientId],
+      )
+    ).rows[0] as Row | undefined;
+    if (r === undefined) return null;
+    return { vendor: String(r['vendor']), meetingId: String(r['vendor_meeting_id']) };
+  }
+
   /** Organisation scope: live sessions whose slot ended more than STALE_AFTER_HOURS ago (33.1 `telehealth.end_stale`). */
   async staleSessions(tx: Tx, limit = 200): Promise<StaleSession[]> {
     const r = await tx.query(

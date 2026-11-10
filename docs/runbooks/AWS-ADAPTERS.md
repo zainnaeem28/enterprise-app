@@ -159,7 +159,7 @@ Code: `apps/api/src/platform/aws/chime-video.ts` (API side), `apps/worker/src/aw
 
 | Group (adapter) | Variables | Process |
 |---|---|---|
-| Video (Chime SDK Meetings) | required: `EHR_CHIME_MEDIA_REGION` (e.g. `us-east-1`, a Chime media region) | api (join token, end meeting), worker (create meeting) |
+| Video (Chime SDK Meetings) | required: `EHR_CHIME_MEDIA_REGION` (e.g. `us-east-1`, a Chime media region) | api (join token only), worker (create and close meeting) |
 | Malware scan (GuardDuty tag reader) | `EHR_MALWARE_SCAN=guardduty`; also needs `EHR_S3_DOCS_QUARANTINE_BUCKET`, `EHR_S3_DOCS_CLEAN_BUCKET` (start fails naming the missing one) | worker |
 | OCR (Textract) | `EHR_OCR=textract`; also needs the same two bucket variables | worker |
 | Patient identity (Cognito) | no new variables: the existing `EHR_PATIENT_OIDC_*` | api |
@@ -175,7 +175,7 @@ Behaviour and decisions:
   The API creates one attendee per join with `ExternalUserId` = our opaque participant ID and returns the join token once; it is not logged,
   stored or put in an error (only the SDK error name and status leave an adapter). The waiting room, the 15-minute token record and the
   single-use rule stay in our database and are unchanged. **Limit:** Chime offers no per-token lifetime, so the "short-lived" bound is OUR record's;
-  the Chime token itself lives as long as the attendee/meeting (a go-live check). Ending a session deletes the meeting (`NotFoundException` = already ended).
+  the Chime token itself lives as long as the attendee/meeting (a go-live check). Ending a session enqueues `telehealth.close_meeting`; the worker deletes the meeting through the gateway (`NotFoundException` = already ended), with retries, and a job that reaches `dead` shows in the operations view.
 - **GuardDuty.** The adapter does not scan; it reads the object tag `GuardDutyMalwareScanStatus` (`s3:GetObjectTagging`). `NO_THREATS_FOUND` = clean,
   `THREATS_FOUND` = infected, **no tag = pending** (the existing 30-minute wait, then alert), `UNSUPPORTED`, `ACCESS_DENIED`, `FAILED` or any other value =
   error, an unreadable object or an outage throws. A missing result is never clean. Tag name and values are from the AWS documentation and are
@@ -192,7 +192,7 @@ Behaviour and decisions:
 
 Required IAM (task roles):
 
-- worker, video: `chime:CreateMeeting`, `chime:DeleteMeeting`, `chime:GetMeeting` (health probe). api, video: `chime:CreateAttendee`, `chime:DeleteMeeting`.
+- worker, video: `chime:CreateMeeting`, `chime:DeleteMeeting`, `chime:GetMeeting` (health probe). api, video: `chime:CreateAttendee` only, scoped to meetings in the account and region (no `CreateMeeting`, `DeleteMeeting`, media-pipeline or recording actions; DL-1 C4).
 - worker, scan: `s3:GetObjectTagging` on the quarantine and clean buckets; `s3:ListBucket` on the quarantine bucket (health `HeadBucket`).
 - worker, OCR: `textract:DetectDocumentText`; `s3:GetObject` on the clean and quarantine buckets and `kms:Decrypt` on the documents key (Textract reads the object with the caller's permissions).
 - GuardDuty Malware Protection for S3 itself (plan, service role, tagging on) is IaC.
@@ -224,3 +224,5 @@ files and its latency; Textract on real insurance cards and ID documents (accura
   `docs/GO-LIVE.md`. The AWS-BE-2 emulator tests are `packages/kernel/src/aws/secrets-kms.emulator.test.ts` (same `EHR_EMULATOR_S3_ENDPOINT` LocalStack edge URL;
   `pnpm test:emulator` runs the kernel too). Real-KMS checks for the go-live list: the key policy and `kms:EncryptionContextKeys` conditions, that the api
   role cannot Decrypt, and that a rotated key still opens old blobs.
+
+**Hand-off to DevOps (DL-1, HEAAA-738):** (C3) a log-metric filter and alarm on `event = vendor_call, kind = video, outcome != ok` (rate over 5 min) in the API log group, and an alarm on `telehealth.close_meeting` jobs reaching `dead`; (C4) the API task role gets only `chime:CreateAttendee` as above.

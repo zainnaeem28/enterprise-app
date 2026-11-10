@@ -697,17 +697,14 @@ export class TelehealthService {
 
   /**
    * `POST .../end` (29.3): the host ends the visit. Every live join token is revoked first (the database refuses to end a session that
-   * still holds one), then the session ends. Repeating it on an ended session changes nothing. Returns what the caller must tell the
-   * vendor once this commits (`vendorClose`), or nothing.
+   * still holds one), then the session ends. Repeating it on an ended session changes nothing. When the session had a room, the
+   * close at the vendor is a worker job enqueued in this transaction (`telehealth.close_meeting`, DL-1): durable and retried.
    */
   async end(
     tx: Tx,
     meta: TelehealthMeta,
     reservationId: string,
-  ): Promise<{
-    view: HostSessionView;
-    vendorClose?: { vendor: string; meetingId: string; sessionId: string };
-  }> {
+  ): Promise<{ view: HostSessionView }> {
     const c = await this.context(tx, reservationId);
     this.requireHost(tx, c);
     if (c.sessionId === null) throw new SessionNotFoundError();
@@ -737,33 +734,16 @@ export class TelehealthService {
         locationId: c.locationId,
         change: { status: 'ended' },
       });
-      const view = await this.hostViewOf(tx, { ...c, sessionStatus: 'ended' });
-      return c.vendor !== null && c.meetingId !== null
-        ? {
-            view,
-            vendorClose: { vendor: c.vendor, meetingId: c.meetingId, sessionId: c.sessionId },
-          }
-        : { view };
+      if (c.vendor !== null && c.meetingId !== null)
+        await this.deps.queue?.enqueue(
+          tx,
+          'telehealth.close_meeting',
+          { sessionId: c.sessionId, patientId: c.patientId },
+          { jobKey: `close_meeting_${c.sessionId}` },
+        );
+      return { view: await this.hostViewOf(tx, { ...c, sessionStatus: 'ended' }) };
     } catch (e) {
       translateDbError(e);
-    }
-  }
-
-  /** After `end` committed: tell the vendor, best effort. A failure is logged by the caller by class only; the vendor room times out. */
-  async closeAtVendor(v: {
-    vendor: string;
-    meetingId: string;
-    sessionId: string;
-  }): Promise<boolean> {
-    try {
-      await this.deps.vendor.endMeeting?.({
-        vendor: v.vendor,
-        meetingId: v.meetingId,
-        idempotencyToken: `end-${v.sessionId}`,
-      });
-      return true;
-    } catch {
-      return false;
     }
   }
 

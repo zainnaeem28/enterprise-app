@@ -25,6 +25,16 @@ export const TELEHEALTH_JOBS: readonly JobType[] = [
     jobScope: 'patients',
     jobClass: 'job',
   },
+  // The vendor room of an ended session, closed durably (DL-1): enqueued in the transaction that ends the session (host `end` or
+  // `end_stale`). Issued Chime tokens stay usable until the meeting closes, so this is part of token lifetime (ST-4).
+  {
+    name: 'telehealth.close_meeting',
+    maxAttempts: 8,
+    onMerged: 'resolve',
+    carriesPatientIds: true,
+    jobScope: 'patients',
+    jobClass: 'job',
+  },
   // Every 15 minutes: ends sessions 2 h after their slot, revoking their tokens first.
   {
     name: 'telehealth.end_stale',
