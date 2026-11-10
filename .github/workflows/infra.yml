@@ -1,0 +1,293 @@
+# Infrastructure as code: checks and plan on pull requests, apply per protected environment (DO-09, HEAAA-113;
+# DEVOPS-PLAN 4.2, 7.2, 7.4, 7.5, 15.3; DPR-35).
+#
+# AUTHORED DISABLED (C-01, C-14). Nothing here has run against AWS. The plan and apply jobs refuse unless a person has set
+# the repository variable INFRA_PLAN_ENABLED / INFRA_APPLY_ENABLED to 'true'. That happens only after the `ci`,
+# `staging-infra` and `infra` approved records are applied (infra/approvals, by a human) and the GitHub environments below exist.
+# The file holds no secret, account identifier or ARN: those are GitHub environment variables, listed above each job.
+#
+# Who can do what:
+#   pull request  `static` (no cloud credentials, forks included) then `plan` as gh-ci-plan: read-only, never applies,
+#                 same-repository pull requests only. The plan text and its sha256 are uploaded; the sha256 is what a person
+#                 reads before dispatching an apply.
+#   dispatch      `apply` for ONE named target, from main only. staging  -> environment `staging-infra`, role gh-tf-staging;
+#                 production -> environment `production-infra`, role gh-tf-production. The roles are denied by AWS until the
+#                 matching approved record exists and has not expired (7.4); they hold no IAM write and no
+#                 ecs:RegisterTaskDefinition (7.2, 7.5), so the approvals root, the management root and the bootstrap root are
+#                 NOT applied here and are not selectable. The job re-plans, refuses unless the plan text hashes to the value the
+#                 person approved, then applies that saved plan file and nothing else.
+name: infra
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'infra/**'
+      - '.github/workflows/infra.yml'
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'which environment to apply (workload root accounts/<target> only)'
+        required: true
+        type: choice
+        options: [staging, production]
+      approved_plan_sha256:
+        description: 'sha256 of the plan text the approver read (printed by the plan job and by the apply job on a refusal)'
+        required: true
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: infra-${{ github.event_name == 'workflow_dispatch' && format('apply-{0}', inputs.target) || format('pr-{0}', github.event.pull_request.number) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CI: 'true'
+  TOFU_VERSION: '1.13.9'
+  TOFU_SHA256: 'bc44eb6b06446ba83bd4072114891987f590f66cca712737a7f1147c50c539ce'
+  TFLINT_VERSION: '0.66.0'
+  TFLINT_SHA256: '22be11cadc25cd02401e94c0ccc91aa63467debb8485c2a755d98f4c0a9d1e2e'
+  CI_TOOLS_DIR: ${{ github.workspace }}/.ci-tools
+  TF_IN_AUTOMATION: '1'
+  TF_INPUT: '0'
+
+jobs:
+  # ---- pull request: no credentials of any kind ------------------------------------------------------------------------
+  static:
+    name: fmt, validate, tflint, tests, policy scan
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Install OpenTofu and tflint (pinned, sha256-verified)
+        run: |
+          mkdir -p "$CI_TOOLS_DIR/bin" "$CI_TOOLS_DIR/dl"
+          fetch() { # url sha256 file
+            curl --fail --silent --show-error --location --retry 3 --output "$CI_TOOLS_DIR/dl/$3" "$1"
+            echo "$2  $CI_TOOLS_DIR/dl/$3" | sha256sum --check --strict -
+          }
+          fetch "https://github.com/opentofu/opentofu/releases/download/v${TOFU_VERSION}/tofu_${TOFU_VERSION}_linux_amd64.zip" "$TOFU_SHA256" tofu.zip
+          fetch "https://github.com/terraform-linters/tflint/releases/download/v${TFLINT_VERSION}/tflint_linux_amd64.zip" "$TFLINT_SHA256" tflint.zip
+          unzip -o -q "$CI_TOOLS_DIR/dl/tofu.zip" tofu -d "$CI_TOOLS_DIR/bin"
+          unzip -o -q "$CI_TOOLS_DIR/dl/tflint.zip" tflint -d "$CI_TOOLS_DIR/bin"
+          echo "$CI_TOOLS_DIR/bin" >>"$GITHUB_PATH"
+      - name: Install Trivy (pinned, sha256-verified)
+        run: scripts/ci/install-tools.sh trivy
+      - name: fmt (recursive, no write)
+        run: |
+          mkdir -p reports/infra-static
+          tofu version | tee reports/infra-static/tool-versions.txt
+          tflint --version | tee -a reports/infra-static/tool-versions.txt
+          tofu fmt -check -recursive -diff infra 2>&1 | tee reports/infra-static/fmt.txt
+      - name: validate every module and root (no backend, no provider credentials)
+        run: |
+          set -o pipefail
+          while IFS= read -r dir; do
+            echo "::group::validate $dir"
+            tofu -chdir="$dir" init -backend=false -input=false -no-color
+            tofu -chdir="$dir" validate -no-color
+            echo "::endgroup::"
+          done < <(find infra -name versions.tf -not -path '*/.terraform/*' -printf '%h\n' | sort) | tee reports/infra-static/validate.txt
+          [ "$(grep -c '^::group::validate ' reports/infra-static/validate.txt)" -gt 0 ] || { echo "::error::no Terraform directory found under infra/"; exit 1; }
+      - name: tflint (the .tflint.hcl of each directory, recommended preset)
+        run: |
+          set -o pipefail
+          while IFS= read -r cfg; do
+            dir="$(dirname "$cfg")"
+            echo "::group::tflint $dir"
+            tflint --chdir="$dir" --config="$PWD/$cfg" --format=compact --minimum-failure-severity=warning
+            echo "::endgroup::"
+          done < <(find infra -name .tflint.hcl -not -path '*/.terraform/*' | sort) | tee reports/infra-static/tflint.txt
+          [ "$(grep -c '^::group::tflint ' reports/infra-static/tflint.txt)" -gt 0 ] || { echo "::error::no .tflint.hcl found under infra/"; exit 1; }
+      - name: tofu test (mock providers, every directory that has tests)
+        run: |
+          set -o pipefail
+          while IFS= read -r dir; do
+            echo "::group::tofu test $dir"
+            tofu -chdir="$dir" init -backend=false -input=false -no-color
+            tofu -chdir="$dir" test -no-color
+            echo "::endgroup::"
+          done < <(find infra -path '*/tests/*.tftest.hcl' -not -path '*/.terraform/*' -printf '%h\n' | sed 's#/tests$##' | sort -u) | tee reports/infra-static/tofu-test.txt
+          [ "$(grep -c '^::group::tofu test ' reports/infra-static/tofu-test.txt)" -gt 0 ] || { echo "::error::no tofu test suite found under infra/"; exit 1; }
+      - name: Policy scan (Trivy config over infra/ with the committed configuration; blocks on HIGH/CRITICAL)
+        run: |
+          export TRIVY_SKIP_VERSION_CHECK=true TRIVY_DISABLE_TELEMETRY=true
+          "$CI_TOOLS_DIR/bin/trivy" --version | tee reports/infra-static/trivy-version.txt
+          "$CI_TOOLS_DIR/bin/trivy" config --config trivy/trivy.yaml --ignorefile trivy/.trivyignore \
+            --format json --output reports/infra-static/trivy-config.json infra
+          [ -s reports/infra-static/trivy-config.json ] || { echo "::error::Trivy report missing or empty"; exit 1; }
+          node scripts/ci/check-trivy-config.mjs reports/infra-static/trivy-config.json 2>&1 | tee reports/infra-static/trivy-policy.txt
+      - name: Workflow policy (SHA pins, permissions, no swallowed failures)
+        run: node scripts/ci/check-workflow-hygiene.mjs 2>&1 | tee reports/infra-static/hygiene.txt
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: infra-static-reports
+          path: reports/infra-static
+          if-no-files-found: error
+          retention-days: 30
+
+  # ---- pull request: read-only plan as gh-ci-plan ---------------------------------------------------------------------
+  # Environment `infra-plan` variables (none is a secret): INFRA_PLAN_ENABLED, INFRA_PLAN_TARGETS (JSON keyed by root, each
+  # {"plan_role_arn": ..., "provider_role_arn": ...}), INFRA_AWS_REGION, INFRA_STATE_BUCKET, INFRA_STATE_REGION, INFRA_STATE_KMS_KEY_ARN.
+  plan:
+    name: plan ${{ matrix.root }} (read-only)
+    needs: [static]
+    # Same-repository pull requests only: a fork never obtains an OIDC token or reaches the environment.
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: infra-plan
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        root: [accounts/staging, accounts/production, accounts/tooling, accounts/log-archive, accounts/marketing]
+    env:
+      ROOT: ${{ matrix.root }}
+      PLAN_ENABLED: ${{ vars.INFRA_PLAN_ENABLED }}
+      TARGETS: ${{ vars.INFRA_PLAN_TARGETS }}
+      AWS_REGION: ${{ vars.INFRA_AWS_REGION }}
+      STATE_BUCKET: ${{ vars.INFRA_STATE_BUCKET }}
+      STATE_REGION: ${{ vars.INFRA_STATE_REGION }}
+      STATE_KMS_KEY_ARN: ${{ vars.INFRA_STATE_KMS_KEY_ARN }}
+      OUT: ${{ github.workspace }}/plan-out
+    steps:
+      - name: Refuse unless deliberately enabled
+        run: |
+          [ "$PLAN_ENABLED" = "true" ] || { echo "::error::infra plan is authored but not enabled (INFRA_PLAN_ENABLED is not 'true'). The ci approved record and the infra-plan environment must exist first (C-14)."; exit 1; }
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install OpenTofu (pinned, sha256-verified)
+        run: |
+          mkdir -p "$CI_TOOLS_DIR/bin" "$CI_TOOLS_DIR/dl"
+          curl --fail --silent --show-error --location --retry 3 --output "$CI_TOOLS_DIR/dl/tofu.zip" "https://github.com/opentofu/opentofu/releases/download/v${TOFU_VERSION}/tofu_${TOFU_VERSION}_linux_amd64.zip"
+          echo "$TOFU_SHA256  $CI_TOOLS_DIR/dl/tofu.zip" | sha256sum --check --strict -
+          unzip -o -q "$CI_TOOLS_DIR/dl/tofu.zip" tofu -d "$CI_TOOLS_DIR/bin"
+          echo "$CI_TOOLS_DIR/bin" >>"$GITHUB_PATH"
+      - name: Assume gh-ci-plan for this root (OIDC; read-only; denied by AWS unless the ci record is applied and unexpired)
+        run: |
+          plan_role="$(jq -er --arg r "$ROOT" '.[$r].plan_role_arn' <<<"$TARGETS")"
+          provider_role="$(jq -er --arg r "$ROOT" '.[$r].provider_role_arn' <<<"$TARGETS")"
+          echo "TF_VAR_apply_role_arn=$provider_role" >>"$GITHUB_ENV"
+          scripts/deploy/aws-login.sh "$plan_role" gh-ci-plan 3600
+      - name: init (state read only) and plan, never apply
+        run: |
+          mkdir -p "$OUT"
+          cd "infra/$ROOT"
+          printf 'bucket = "%s"\nregion = "%s"\nkms_key_id = "%s"\n' "$STATE_BUCKET" "$STATE_REGION" "$STATE_KMS_KEY_ARN" >"$RUNNER_TEMP/backend.hcl"
+          tofu init -input=false -no-color -backend-config="$RUNNER_TEMP/backend.hcl"
+          rc=0
+          tofu plan -input=false -no-color -lock=false -detailed-exitcode -out="$RUNNER_TEMP/tfplan" || rc=$?
+          { [ "$rc" -eq 0 ] || [ "$rc" -eq 2 ]; } || { echo "::error::tofu plan failed (exit $rc)"; exit 1; }
+          echo "plan exit code $rc (0 no changes, 2 changes)"
+          # Rendered text only: sensitive values are redacted there. The binary plan and the JSON are not uploaded.
+          tofu show -no-color "$RUNNER_TEMP/tfplan" >"$OUT/plan.txt"
+          (cd "$OUT" && sha256sum plan.txt | tee plan.txt.sha256)
+          {
+            echo "### plan $ROOT"
+            echo "exit code $rc (0 no changes, 2 changes); plan text sha256: \`$(cut -d' ' -f1 "$OUT/plan.txt.sha256")\`"
+          } >>"$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: infra-plan-${{ strategy.job-index }}-${{ github.run_id }}
+          path: plan-out
+          if-no-files-found: error
+          retention-days: 14
+
+  # ---- dispatch: apply one named environment from main, only through its protected environment and role ---------------
+  # Environment `staging-infra` / `production-infra` variables (none is a secret): INFRA_APPLY_ENABLED, INFRA_APPLY_ROLE_ARN
+  # (gh-tf-staging / gh-tf-production), INFRA_PROVIDER_ROLE_ARN (the root's apply_role_arn), INFRA_AWS_REGION, INFRA_STATE_BUCKET,
+  # INFRA_STATE_REGION, INFRA_STATE_KMS_KEY_ARN.
+  apply:
+    name: apply ${{ inputs.target }} (workload root only)
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    # The environment decides the OIDC `sub` claim, and therefore the role AWS will let this job assume:
+    # staging-infra -> gh-tf-staging, production-infra -> gh-tf-production. Nothing else is selectable.
+    environment: ${{ inputs.target == 'production' && 'production-infra' || 'staging-infra' }}
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      TARGET: ${{ inputs.target }}
+      APPROVED_SHA: ${{ inputs.approved_plan_sha256 }}
+      REF: ${{ github.ref }}
+      APPLY_ENABLED: ${{ vars.INFRA_APPLY_ENABLED }}
+      ROLE_ARN: ${{ vars.INFRA_APPLY_ROLE_ARN }}
+      AWS_REGION: ${{ vars.INFRA_AWS_REGION }}
+      TF_VAR_apply_role_arn: ${{ vars.INFRA_PROVIDER_ROLE_ARN }}
+      STATE_BUCKET: ${{ vars.INFRA_STATE_BUCKET }}
+      STATE_REGION: ${{ vars.INFRA_STATE_REGION }}
+      STATE_KMS_KEY_ARN: ${{ vars.INFRA_STATE_KMS_KEY_ARN }}
+      OUT: ${{ github.workspace }}/apply-out
+    steps:
+      - name: Refuse unless deliberately enabled, from main, for a known target and a well-formed hash
+        run: |
+          [ "$REF" = "refs/heads/main" ] || { echo "::error::infra apply runs from refs/heads/main only (got $REF)"; exit 1; }
+          [ "$APPLY_ENABLED" = "true" ] || { echo "::error::infra apply is authored but not enabled (INFRA_APPLY_ENABLED is not 'true'). The $TARGET infra record must be applied by a person first (C-14)."; exit 1; }
+          case "$TARGET" in staging | production) ;; *) echo "::error::unknown target"; exit 1 ;; esac
+          [[ "$APPROVED_SHA" =~ ^[0-9a-f]{64}$ ]] || { echo "::error::approved_plan_sha256 must be 64 lowercase hex characters"; exit 1; }
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install OpenTofu (pinned, sha256-verified)
+        run: |
+          mkdir -p "$CI_TOOLS_DIR/bin" "$CI_TOOLS_DIR/dl"
+          curl --fail --silent --show-error --location --retry 3 --output "$CI_TOOLS_DIR/dl/tofu.zip" "https://github.com/opentofu/opentofu/releases/download/v${TOFU_VERSION}/tofu_${TOFU_VERSION}_linux_amd64.zip"
+          echo "$TOFU_SHA256  $CI_TOOLS_DIR/dl/tofu.zip" | sha256sum --check --strict -
+          unzip -o -q "$CI_TOOLS_DIR/dl/tofu.zip" tofu -d "$CI_TOOLS_DIR/bin"
+          echo "$CI_TOOLS_DIR/bin" >>"$GITHUB_PATH"
+      - name: Assume the environment's tf role (OIDC; denied by AWS unless its approved record is applied and unexpired)
+        run: scripts/deploy/aws-login.sh "$ROLE_ARN" "gh-tf-$TARGET" 7200
+      - name: init, plan, compare with the approved plan hash
+        run: |
+          mkdir -p "$OUT"
+          cd "infra/accounts/$TARGET"
+          printf 'bucket = "%s"\nregion = "%s"\nkms_key_id = "%s"\n' "$STATE_BUCKET" "$STATE_REGION" "$STATE_KMS_KEY_ARN" >"$RUNNER_TEMP/backend.hcl"
+          tofu init -input=false -no-color -backend-config="$RUNNER_TEMP/backend.hcl"
+          rc=0
+          tofu plan -input=false -no-color -detailed-exitcode -out="$RUNNER_TEMP/tfplan" || rc=$?
+          { [ "$rc" -eq 0 ] || [ "$rc" -eq 2 ]; } || { echo "::error::tofu plan failed (exit $rc)"; exit 1; }
+          tofu show -no-color "$RUNNER_TEMP/tfplan" >"$OUT/plan.txt"
+          actual="$(sha256sum "$OUT/plan.txt" | cut -d' ' -f1)"
+          echo "$actual" >"$OUT/plan.txt.sha256"
+          echo "plan exit code $rc; plan text sha256 $actual"
+          if [ "$actual" != "$APPROVED_SHA" ]; then
+            echo "::error::the plan now differs from the one approved (approved $APPROVED_SHA, actual $actual). Read the plan artifact, then dispatch again with the new hash."
+            exit 1
+          fi
+          echo "PLAN_EXIT=$rc" >>"$GITHUB_ENV"
+      - name: Apply the saved plan (exactly the approved plan; nothing is applied when there are no changes)
+        run: |
+          if [ "$PLAN_EXIT" = "0" ]; then
+            echo "no changes: nothing to apply"
+            exit 0
+          fi
+          cd "infra/accounts/$TARGET"
+          tofu apply -input=false -no-color "$RUNNER_TEMP/tfplan"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: infra-apply-${{ inputs.target }}-${{ github.run_id }}
+          path: apply-out
+          if-no-files-found: error
+          retention-days: 400
