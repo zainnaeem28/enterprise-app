@@ -211,3 +211,44 @@ paths = [
   '''(^|/)docs/evidence/integration/M5/r11/prepare-db[2-6]?\.txt$''',
 ]
 regexes = ['''^2406_notifications_staff_scope_allows_patient\.sql$''']
+
+# INT05-F05 (owner: DevOps Engineer; input: Cybersecurity; reviewer: Security Reviewer). The full-history
+# scan reports 15 generic-api-key hits, each triaged individually (decision-log on HEAAA-593): none is a
+# credential. History may not be rewritten, so each entry below is pinned to the exact commit AND exact
+# file AND exact value (condition = "AND") and to this rule only. The same value in any other commit or
+# file, or any other value in these files, still fails. No expiry: the commits are frozen history.
+# F05-a: scripts/bootstrap/test/aws-result.test.mjs line 110 (commit 1836e0ae; the tree fixture was renamed to a non-key-shaped value): the last segment of a
+# fake Secrets Manager ARN (account 111111111111) used as a negative test input for the result parser.
+[[allowlists]]
+description = "INT05-F05-a: fake secret ARN suffix in the aws-result parser negative test (commit + file + value)"
+condition = "AND"
+targetRules = ["generic-api-key"]
+commits = ["1836e0ae147613fd2fe13c98aef5200f1309dd5d"]
+paths = ['''(^|/)scripts/bootstrap/test/aws-result\.test\.mjs$''']
+regexes = ['''^other-AbC123$''']
+
+# F05-b: tests/api/platform/admin.test.mjs lines 146, 149, 185, 189 (commit e8378fdd): the names of
+# throw-away feature flags the QA-05 test creates (public identifiers, not secrets).
+[[allowlists]]
+description = "INT05-F05-b: QA-05 probe feature-flag names in admin.test.mjs (commit + file + value)"
+condition = "AND"
+targetRules = ["generic-api-key"]
+commits = ["e8378fdd7ed38091b489a0fef0ee7337fb917a38"]
+paths = ['''(^|/)tests/api/platform/admin\.test\.mjs$''']
+regexes = ['''^qa05_probe_flag2?$''']
+
+# F05-c: five SEC-05 re-read evidence extracts (commit 8cb02eb5; frozen in the tree too, so pinned by file + value only), line 105 of each, two hits each: the
+# migration file name 2406_notifications_staff_scope_allows_patient.sql in a JSON list of applied
+# migrations (public file name; same false positive as INT04-F18/F33/F36).
+[[allowlists]]
+description = "INT05-F05-c: migration file name in five SEC-05 re-read evidence extracts (file + value)"
+condition = "AND"
+targetRules = ["generic-api-key"]
+paths = [
+  '''(^|/)docs/evidence/integration/M5/sec05-reread/api-modules_audit_audit\.txt$''',
+  '''(^|/)docs/evidence/integration/M5/sec05-reread/w-compose\.txt$''',
+  '''(^|/)docs/evidence/integration/M5/sec05-reread/worker-audit\.txt$''',
+  '''(^|/)docs/evidence/integration/M5/sec05-reread/worker-archive\.txt$''',
+  '''(^|/)docs/evidence/integration/M5/sec05-reread/w-jobs_notifications_notifications\.txt$''',
+]
+regexes = ['''^2406_notifications_staff_scope_allows_patient\.sql$''']

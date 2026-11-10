@@ -107,7 +107,7 @@ test('malformed results are failures: other run, bad result value, wrong secret,
   g.enrollees[0].result = 'maybe';
   assert.throws(() => parse(g), /neither issued nor skipped/);
   const h = good();
-  h.enrollees[0].secret_arn = 'arn:aws:secretsmanager:eu-west-1:111111111111:secret:other-AbC123';
+  h.enrollees[0].secret_arn = 'arn:aws:secretsmanager:eu-west-1:111111111111:secret:other-name';
   assert.throws(() => parse(h), /secret_arn/);
   const i = good();
   i.enrollees[0].secret_arn = arn('slot-2');
