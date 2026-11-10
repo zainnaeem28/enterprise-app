@@ -99,6 +99,22 @@ targetRules = ["generic-api-key"]
 paths = ['''(^|/)infra/modules/(compute|edge)/tests/plan\.tftest\.hcl$''']
 regexes = ['''^0123456789abcdef0123456789abcdef0123$''']
 
+# INT05-N1 (owner: DevOps Engineer; input: Cybersecurity; reviewer: Security Reviewer). The DO-11
+# commits 9a0625c and 15c52dd add two more fixtures carrying the same placeholder origin_verify_secret
+# as F12-e: infra/modules/compute/examples/sg-wiring/main.tf and infra/modules/loadtest/tests/plan.tftest.hcl
+# (2 hits). Never applied. Pinned to these two exact files AND the exact value (condition = "AND") and
+# to this rule only: another value in these files, or this value in any other file, still fails.
+# Covers history (the commits are not rewritten) and the tree. No expiry: re-check if the fixtures change.
+[[allowlists]]
+description = "INT05-N1: placeholder origin_verify_secret in the DO-11 compute example and loadtest plan test"
+condition = "AND"
+targetRules = ["generic-api-key"]
+paths = [
+  '''(^|/)infra/modules/compute/examples/sg-wiring/main\.tf$''',
+  '''(^|/)infra/modules/loadtest/tests/plan\.tftest\.hcl$''',
+]
+regexes = ['''^0123456789abcdef0123456789abcdef0123$''']
+
 [[allowlists]]
 description = "INT03-F12-e: dockerfile sha256 digest in foundation versions evidence"
 condition = "AND"
