@@ -8,13 +8,10 @@ import { Threads } from './Threads.js';
 import { useDoctorSession } from '../doctor/session.js';
 import { useOnline } from '../doctor/DoctorContext.js';
 import { msgStrings as s } from './strings.js';
+import { MESSAGES_PATHS, isMessagesPath } from './paths.js';
+import type { MessagesPath } from './paths.js';
 import './messages.css';
 
-/** The one path this feature serves (the navigation item "Tasks & messages" already points here). It carries no record identifier. */
-export const MESSAGES_PATHS = ['/tasks'] as const;
-export type MessagesPath = (typeof MESSAGES_PATHS)[number];
-export const isMessagesPath = (path: string): path is MessagesPath =>
-  (MESSAGES_PATHS as readonly string[]).includes(path);
 
 type Section = 'tasks' | 'messages';
 
@@ -56,3 +53,6 @@ export function MessagesPortal({ runtime }: { runtime: Pick<ShellRuntime, 'api'>
     </MessagesContext.Provider>
   );
 }
+
+export { MESSAGES_PATHS, isMessagesPath };
+export type { MessagesPath };

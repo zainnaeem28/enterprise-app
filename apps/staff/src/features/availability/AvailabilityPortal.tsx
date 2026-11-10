@@ -10,13 +10,10 @@ import { Templates } from './Templates.js';
 import { useDoctorSession } from '../doctor/session.js';
 import { useOnline } from '../doctor/DoctorContext.js';
 import { avStrings as s } from './strings.js';
+import { AVAILABILITY_PATHS, isAvailabilityPath } from './paths.js';
+import type { AvailabilityPath } from './paths.js';
 import './availability.css';
 
-/** The one path this feature serves. It carries no record identifier. */
-export const AVAILABILITY_PATHS = ['/availability'] as const;
-export type AvailabilityPath = (typeof AVAILABILITY_PATHS)[number];
-export const isAvailabilityPath = (path: string): path is AvailabilityPath =>
-  (AVAILABILITY_PATHS as readonly string[]).includes(path);
 
 type Section = 'hours' | 'leave' | 'calendar';
 
@@ -88,3 +85,6 @@ export function AvailabilityPortal({
     </AvailabilityContext.Provider>
   );
 }
+
+export { AVAILABILITY_PATHS, isAvailabilityPath };
+export type { AvailabilityPath };

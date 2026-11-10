@@ -15,13 +15,10 @@ import { Triage } from './Triage.js';
 import { useDeskSession } from './session.js';
 import { preStrings as p } from './strings.js';
 import { ErrorState } from '@ehr/ui';
+import { PRECONSULT_PATHS, isPreconsultPath } from './paths.js';
+import type { PreconsultPath } from './paths.js';
 import './preconsult.css';
 
-/** The paths this feature serves. They match the pre-consultation navigation items and carry no record identifier. */
-export const PRECONSULT_PATHS = ['/arrivals', '/triage', '/forms', '/follow-ups'] as const;
-export type PreconsultPath = (typeof PRECONSULT_PATHS)[number];
-export const isPreconsultPath = (path: string): path is PreconsultPath =>
-  (PRECONSULT_PATHS as readonly string[]).includes(path);
 
 /**
  * The pre-consultation desk (FE-09): arrivals, check-in, registration and duplicates, merge, forms review, triage, queue, follow-ups
@@ -201,3 +198,6 @@ function Screens({
     </DeskContext.Provider>
   );
 }
+
+export { PRECONSULT_PATHS, isPreconsultPath };
+export type { PreconsultPath };

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { Suspense, lazy, useEffect, useMemo } from 'react';
 import { LoadingState, Banner, SkipLink } from '@ehr/ui';
 import {
   NotFoundPage,
@@ -19,21 +19,12 @@ import {
   safeReturnTo,
   useStaffSession,
 } from '../features/auth/index.js';
-import { DoctorPortal, isDoctorPath } from '../features/doctor/index.js';
-import { PreconsultDesk, isPreconsultPath } from '../features/preconsult/index.js';
-import { MessagesPortal, isMessagesPath } from '../features/messages/index.js';
-import { AvailabilityPortal, isAvailabilityPath } from '../features/availability/index.js';
-import { DocumentsPage } from '../features/documents/index.js';
-import {
-  ADMIN_COMPLIANCE_NAV,
-  AdminCompliancePortal,
-  isAdminCompliancePath,
-} from '../features/admin-compliance/index.js';
-import {
-  ADMIN_CONFIG_NAV,
-  AdminConfigPortal,
-  isAdminConfigPath,
-} from '../features/admin-config/index.js';
+import { isDoctorPath } from '../features/doctor/paths.js';
+import { isPreconsultPath } from '../features/preconsult/paths.js';
+import { isMessagesPath } from '../features/messages/paths.js';
+import { isAvailabilityPath } from '../features/availability/paths.js';
+import { ADMIN_COMPLIANCE_NAV, isAdminCompliancePath } from '../features/admin-compliance/paths.js';
+import { ADMIN_CONFIG_NAV, isAdminConfigPath } from '../features/admin-config/paths.js';
 import {
   ADMIN_LANDING,
   ADMIN_SIGN_IN_PATH,
@@ -47,6 +38,29 @@ import {
 } from '../features/admin-auth/index.js';
 import { workspace } from '../features/doctor/workspace.js';
 import { useLocation } from './router.js';
+
+// Each portal is its own chunk, fetched on first visit to one of its screens, so the shell stays under the bundle budget.
+const DoctorPortal = lazy(() =>
+  import('../features/doctor/index.js').then((m) => ({ default: m.DoctorPortal })),
+);
+const PreconsultDesk = lazy(() =>
+  import('../features/preconsult/index.js').then((m) => ({ default: m.PreconsultDesk })),
+);
+const MessagesPortal = lazy(() =>
+  import('../features/messages/index.js').then((m) => ({ default: m.MessagesPortal })),
+);
+const AvailabilityPortal = lazy(() =>
+  import('../features/availability/index.js').then((m) => ({ default: m.AvailabilityPortal })),
+);
+const DocumentsPage = lazy(() =>
+  import('../features/documents/index.js').then((m) => ({ default: m.DocumentsPage })),
+);
+const AdminCompliancePortal = lazy(() =>
+  import('../features/admin-compliance/index.js').then((m) => ({ default: m.AdminCompliancePortal })),
+);
+const AdminConfigPortal = lazy(() =>
+  import('../features/admin-config/index.js').then((m) => ({ default: m.AdminConfigPortal })),
+);
 
 const PRODUCT = 'Clinic';
 
@@ -237,6 +251,7 @@ function Gate({
           onNavigate={(p) => navigate(p)}
         />
         <main id="main" className="ehr-main" tabIndex={-1}>
+          <Suspense fallback={<LoadingState label={s.loadingSession} />}>
           {path === ADMIN_LANDING || path === '/' ? (
             <Home first={ADMIN_HOME} navigate={navigate} />
           ) : isAdminCompliancePath(path) ? (
@@ -246,6 +261,7 @@ function Gate({
           ) : (
             <NotFoundPage homeHref={ADMIN_HOME} />
           )}
+          </Suspense>
         </main>
         <HelpFooter />
       </ElevationProvider>
@@ -264,6 +280,7 @@ function Gate({
       <SessionPrompts store={runtime.session} onSignIn={() => assign(signInUrl(path))} />
       <NavBar items={items} current={path} onNavigate={(p) => navigate(p)} />
       <main id="main" className="ehr-main" tabIndex={-1}>
+        <Suspense fallback={<LoadingState label={s.loadingSession} />}>
         {realm !== 'staff' ? (
           <Banner tone="info">
             <p>{s.adminSession}</p>
@@ -302,6 +319,7 @@ function Gate({
         ) : (
           <NotFoundPage homeHref={first?.path ?? '/'} />
         )}
+        </Suspense>
       </main>
       <HelpFooter />
     </>
