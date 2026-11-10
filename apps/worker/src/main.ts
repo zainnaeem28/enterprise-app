@@ -2,6 +2,9 @@
 import { ConfigError, createLogger, describeDatabase, loadConfig } from '@ehr/kernel';
 import { notifyAdapters, selectNotifyWorkerInfra } from './aws/notify-adapters.js';
 import { selectPushAdapter } from './aws/web-push.js';
+import { selectChimeVideoAdapter } from './aws/chime-video.js';
+import { selectGuardDutyScanner } from './aws/guardduty-scan.js';
+import { selectTextractAdapter } from './aws/textract-ocr.js';
 import { selectS3WorkerInfra } from './aws/s3-adapters.js';
 import { selectSecretsWorkerInfra } from './aws/secrets-kms.js';
 import { composeWorker } from './compose.js';
@@ -24,9 +27,14 @@ async function main(): Promise<void> {
   const env = process.env;
   const notify = selectNotifyWorkerInfra(env, log);
   const push = await selectPushAdapter(env, log);
+  const video = selectChimeVideoAdapter(env, log);
+  const ocr = selectTextractAdapter(env, log);
+  const scanner = selectGuardDutyScanner(env, log);
   const channelAdapters = [
     ...notifyAdapters(notify.providers),
     ...(push === undefined ? [] : [push]),
+    ...(video === undefined ? [] : [video]),
+    ...(ocr === undefined ? [] : [ocr]),
   ];
   const { tasks, registry } = await composeWorker({
     cfg,
@@ -36,6 +44,7 @@ async function main(): Promise<void> {
     infra: {
       ...selectS3WorkerInfra(env, log),
       ...selectSecretsWorkerInfra(env, log),
+      ...(scanner === undefined ? {} : { scanner }),
       ...(notify.securityNotice === undefined ? {} : { securityNotice: notify.securityNotice }),
       channelAdapters,
     },

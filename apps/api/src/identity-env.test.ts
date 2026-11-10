@@ -50,3 +50,20 @@ describe('host variables (INT02-R7-N1)', () => {
       );
     });
 });
+
+describe('patient realm on Cognito (AWS-BE-4: configuration only)', () => {
+  test('a Cognito user pool is configured through the existing OIDC variables', () => {
+    const issuer = 'https://cognito-idp.us-east-2.amazonaws.com/us-east-2_AbCdEf123';
+    const domain = 'https://auth.example.test';
+    const cfg = loadIdentityEnv(
+      base({
+        EHR_PATIENT_OIDC_ISSUER: issuer,
+        EHR_PATIENT_OIDC_AUTHORIZATION_ENDPOINT: `${domain}/oauth2/authorize`,
+        EHR_PATIENT_OIDC_TOKEN_ENDPOINT: `${domain}/oauth2/token`,
+        EHR_PATIENT_OIDC_JWKS_URI: `${issuer}/.well-known/jwks.json`,
+      }),
+    );
+    assert.equal(cfg.patient.endpoints.issuer, issuer);
+    assert.equal(cfg.patient.endpoints.jwksUri, `${issuer}/.well-known/jwks.json`);
+  });
+});

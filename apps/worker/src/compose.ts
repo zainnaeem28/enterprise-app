@@ -30,6 +30,7 @@ import type { CalendarJobDeps } from './jobs/calendar-sync/index.js';
 import {
   createDocumentsTasks,
   metadataStrippingReencoder,
+  type ScanCaller,
   type WorkerObjectStore,
 } from './jobs/documents/index.js';
 import { createIdentityTasks } from './jobs/identity/index.js';
@@ -131,6 +132,8 @@ export interface ComposeOptions {
     /** Object Lock archive of audit anchors (log-archive bucket, SEC05-F02); refusing until the bucket adapter exists. */
     anchorArchive?: AnchorArchiveStore;
     objectStore?: WorkerObjectStore;
+    /** Malware scan verdict reader (GuardDuty Malware Protection for S3, AWS-BE-4); refusing when absent, never `clean`. */
+    scanner?: ScanCaller;
     secretReader?: SecretReader;
     secretWriter?: InboundSecretWriter;
     payloadOpener?: PayloadOpener;
@@ -297,7 +300,7 @@ export function composeTasks(opts: ComposeOptions & { queue: Queue }): TaskTable
       survivorOf,
       gateway,
       store: infra.objectStore ?? refusingPort<WorkerObjectStore>('object_store'),
-      scan: () => Promise.reject(new PortNotConfiguredError('malware_scanner')),
+      scan: infra.scanner ?? (() => Promise.reject(new PortNotConfiguredError('malware_scanner'))),
       reencode: metadataStrippingReencoder,
     }),
     ...createIntegrationCoreTasks({
