@@ -14,7 +14,6 @@ import { AVAILABILITY_PATHS, isAvailabilityPath } from './paths.js';
 import type { AvailabilityPath } from './paths.js';
 import './availability.css';
 
-
 type Section = 'hours' | 'leave' | 'calendar';
 
 /** `?calendar=linked|denied|error` is what the Google callback adds to the return address (BE-14). Anything else is ignored. */

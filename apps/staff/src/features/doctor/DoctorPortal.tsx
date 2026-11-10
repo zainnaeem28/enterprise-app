@@ -22,7 +22,6 @@ import { DOCTOR_PATHS, isDoctorPath } from './paths.js';
 import type { DoctorPath } from './paths.js';
 import './doctor.css';
 
-
 /**
  * The doctor portal (FE-10): schedule, patient list, chart summary, note editor with sign, addenda, co-sign queue, alert tray and
  * the break-the-glass dialog. Permissions only decide what is drawn; the server authorizes every call.
