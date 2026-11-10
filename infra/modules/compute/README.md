@@ -17,8 +17,3 @@ ECS Fargate cluster, `api` and `worker` services, internal ALB (private subnets,
 - Scaling targets (CPU 60 %, 500 requests per target) are placeholders until the load test. Worker scaling on queue depth needs a custom metric from the application (not available here).
 - Rollout refusal above 6 api / 3 worker tasks and holding auto-scaling during a rollout are pipeline rules, not in this module.
 - Everything about runtime behaviour (SSE through ALB, drain, circuit-breaker rollback) is **Unverified until staging**.
-
-## Database security group input
-
-`database_security_group_ids` is a `map(string)` of logical name => security group id (default `{}`). Egress rules are keyed `<service>-<name>`, so the names must be
-known at plan time while the ids may be apply-time values. A fresh plan of a root wiring this module with `database` is covered by `examples/sg-wiring`.

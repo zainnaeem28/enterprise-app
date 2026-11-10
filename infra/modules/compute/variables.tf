@@ -105,9 +105,9 @@ variable "deregistration_delay_seconds" {
 }
 
 variable "database_security_group_ids" {
-  description = "Database security groups the tasks may reach on database_port, as logical name => security group id. The keys must be known at plan time; the ids may be apply-time values. The matching ingress rule belongs to the database module."
-  type        = map(string)
-  default     = {}
+  description = "Database security groups the tasks may reach on database_port. The matching ingress rule belongs to the database module."
+  type        = list(string)
+  default     = []
 }
 
 variable "database_port" {

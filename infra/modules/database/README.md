@@ -15,9 +15,3 @@ The parameter group declares `transaction_timeout` (instance default, `var.trans
 ## Checks
 
 `tofu fmt -check`, `tofu validate`, `tflint`, `tofu test` (mock provider), `trivy config`. See HEAAA-99 evidence.
-
-## Security group inputs
-
-`client_security_group_ids` is a `map(string)` of logical name => security group id (for example `api`, `worker`, `migration`). The ingress rules are keyed by
-the logical name, so the keys must be known at plan time while the ids may be apply-time values. A list keyed by the ids themselves fails a fresh plan with
-"Invalid for_each argument". See `../compute/examples/sg-wiring`.

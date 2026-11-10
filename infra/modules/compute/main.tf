@@ -237,8 +237,8 @@ resource "aws_vpc_security_group_egress_rule" "service_https" {
 
 resource "aws_vpc_security_group_egress_rule" "service_database" {
   for_each = {
-    for pair in setproduct(keys(var.services), keys(var.database_security_group_ids)) :
-    "${pair[0]}-${pair[1]}" => { service = pair[0], target = var.database_security_group_ids[pair[1]] }
+    for pair in setproduct(keys(var.services), var.database_security_group_ids) :
+    "${pair[0]}-${pair[1]}" => { service = pair[0], target = pair[1] }
   }
   security_group_id            = aws_security_group.service[each.value.service].id
   description                  = "To the database"

@@ -24,7 +24,7 @@ variables {
   name_prefix               = "t"
   vpc_id                    = "vpc-1"
   data_subnet_ids           = ["subnet-a", "subnet-b"]
-  client_security_group_ids = { api = "sg-api" }
+  client_security_group_ids = ["sg-api"]
   kms_key_arn               = "arn:aws:kms:us-east-1:111111111111:key/aaaa"
   recovery_kms_key_arn      = "arn:aws:kms:us-west-2:111111111111:key/bbbb"
   backup_copy_vault_arns    = ["arn:aws:backup:us-east-1:222222222222:backup-vault:v"]
