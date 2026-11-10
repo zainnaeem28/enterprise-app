@@ -28,5 +28,5 @@ Decisions: HEAAA-586 `decision-log` D-1 (environment, cost) and D-2 (k6).
 - **L3.** Cost ceiling currency amount is not yet filled from a price list; the first real create needs it in the plan artifact.
 - **L4.** The provider lock file is not committed: the authoring sandbox had no space to download the provider from the registry
   (a read-only local plugin directory with AWS provider 5.100.0 was used). Run `terraform providers lock` in CI.
-- **L5.** Workflow wiring (create, always-run teardown, scheduled reaper) belongs in `.github/workflows`, outside this ticket's paths; request sent to the Orchestrator.
+- **L5 (authored, HEAAA-589).** Workflow wiring is in `.github/workflows/loadtest-*.yml`, see `docs/loadtest-workflow.md`; not executed.
 - **Round 2 notes.** `expires_at` is validated to at most 24 h after plan time. `reap-expired.sh` and `teardown.sh` query us-east-2, us-east-1 and us-west-2 and fail on any API error. `guard-cost.sh` needs `RunId` activated as a cost-allocation tag and lags up to a day (budget alarm is the early signal). HEAAA-587 wiring must add: `providers lock` check (no lock file yet), and gating the first real create on a passing `check-equivalence.mjs`. The plan artifact is from mock providers, so the environment is not yet shown to be creatable from IaC.
