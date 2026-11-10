@@ -926,8 +926,8 @@ describe('T-RA-29: catalog', () => {
         grantees.rows.map((r) => r.g),
         ['patient_scope_owner'],
       );
-    // 28 = the 25 of F03B, the two referral definers of migration 2300, and identity.bootstrap_admins; assert the exact membership, not only the count.
-    assert.equal(definerInventory.length, 28);
+    // 36 = the 25 of F03B, the two referral definers of migration 2300, identity.bootstrap_admins and the eight SEC03-F11 merge-write definers of 2503; assert the exact membership, not only the count.
+    assert.equal(definerInventory.length, 36);
     assert.equal(new Set(definerInventory).size, definerInventory.length);
     for (const n of ['patient.lock_referral_patient', 'patient.ensure_referral_care_relationship'])
       assert.equal(definerInventory.filter((x) => x === n).length, 1, `${n} listed exactly once`);
