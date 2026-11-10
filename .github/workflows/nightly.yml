@@ -39,19 +39,29 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions: {}
+    outputs:
+      enabled: ${{ steps.gate.outputs.enabled }}
     steps:
-      - name: Refuse unless deliberately enabled, from main
+      - name: Gate - from main; skip (with a notice) unless deliberately enabled
+        id: gate
         env:
           ENABLED: ${{ vars.NIGHTLY_ENABLED }}
           REF: ${{ github.ref }}
         run: |
           [ "$REF" = "refs/heads/main" ] || { echo "::error::nightly runs from refs/heads/main only (got $REF)"; exit 1; }
-          [ "$ENABLED" = "true" ] || { echo "::error::nightly is authored but not enabled (repository variable NIGHTLY_ENABLED is not 'true'). Staging, the ci record and the nightly-staging environment must exist first (C-14)."; exit 1; }
+          if [ "$ENABLED" != "true" ]; then
+            echo "::notice::not configured: NIGHTLY_ENABLED (repository variable is not 'true'); no nightly check ran. This run is a skip, not a success of the real operation."
+            printf '### Not configured: NIGHTLY_ENABLED\n%s\n' "no nightly check ran. Nothing ran against any cloud account." >>"$GITHUB_STEP_SUMMARY"
+            echo "enabled=false" >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "enabled=true" >>"$GITHUB_OUTPUT"
 
   # No cloud credentials: the repository against today's vulnerability data, and the base images from today's registry state.
   rescan:
     name: dependency and base-image re-scan
     needs: [enabled]
+    if: ${{ needs.enabled.outputs.enabled == 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     permissions:
@@ -83,6 +93,7 @@ jobs:
   e2e:
     name: full e2e against staging
     needs: [enabled]
+    if: ${{ needs.enabled.outputs.enabled == 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     environment: nightly-staging
@@ -122,6 +133,7 @@ jobs:
   restore-procedure:
     name: staging backup-restore procedure check (read-only)
     needs: [enabled]
+    if: ${{ needs.enabled.outputs.enabled == 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     environment: nightly-staging
@@ -182,6 +194,14 @@ jobs:
       - name: Every job succeeded
         env:
           RESULTS: ${{ toJSON(needs) }}
+          ENABLED: ${{ needs.enabled.outputs.enabled }}
         run: |
           echo "$RESULTS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+          if [ "$ENABLED" != "true" ]; then
+            # Not configured: the gate succeeded and said so; every other job must have been skipped, never run, never failed.
+            echo "$RESULTS" | jq -e 'to_entries | all(.[]; (.key == "enabled" and .value.result == "success") or .value.result == "skipped")' >/dev/null \
+              || { echo "::error::nightly is not configured but a job did something other than skip"; exit 1; }
+            echo "::notice::not configured: NIGHTLY_ENABLED; no nightly check ran (a skip, not a green night)"
+            exit 0
+          fi
           echo "$RESULTS" | jq -e 'all(.[]; .result == "success")' >/dev/null || { echo "::error::at least one nightly job did not succeed"; exit 1; }
