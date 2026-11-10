@@ -13,7 +13,7 @@
     "verify": "pnpm run openapi:lint && pnpm run openapi:check-routes && pnpm run generate:check && pnpm run typecheck"
   },
   "devDependencies": {
-    "@redocly/openapi-core": "1.34.23",
+    "@redocly/openapi-core": "2.73.0",
     "openapi-typescript": "7.13.0",
     "yaml": "2.8.1"
   }
