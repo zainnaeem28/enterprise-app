@@ -63,3 +63,19 @@ Caveats for the reviewer: Nest 12.3.x is 9 days old at pinning (12.3.0 on 2026-1
 ## Import-boundary rule
 
 `eslint/rules/module-boundaries.mjs` is a small local rule rather than a third-party plugin, so the allowed edges in `eslint/module-graph.mjs` (SHARED-BOUNDARIES 3.2, BD-02) are explicit and reviewable. It applies to `apps/api/src/modules/<module>/`. `pnpm test:boundary` runs it on a failing fixture (an upward import that must be rejected) and a passing fixture. The tool choice remains open to G2/Architect review (SHARED-BOUNDARIES 3.2 names dependency-cruiser or eslint-plugin-boundaries as alternatives).
+
+## Licence decisions
+
+### `sharp` / `@img/sharp-libvips-linux-x64` (LGPL-3.0-or-later) excluded from install (INT05-F10, HEAAA-599)
+
+`next` 16.4.5 (`apps/cms` only) declares `sharp` 0.35.5 as an optional dependency. On linux-x64 glibc, `sharp` pulls the prebuilt libvips binary `@img/sharp-libvips-linux-x64` 1.3.4, licensed LGPL-3.0-or-later. Nothing in the repository uses it: `apps/cms` has no upload or media collection, does not pass `sharp` to the Payload config, and does not import `next/image`. No other importer depends on `sharp`.
+
+Decision: **exclude it** rather than ship an unused copyleft native library. The full record (options, reasons, the licence rule applied) is in the HEAAA-599 `decision-log` document. Implementation (separate task, not done by this change):
+
+- `pnpm-workspace.yaml`: `ignoredOptionalDependencies: [sharp]`. This removes `sharp` and every `@img/sharp-*` package from the resolved tree. Checked on pnpm 12.16.1 in a scratch project: with the setting, the ignored optional package is absent from the lockfile.
+- `apps/cms/next.config.mjs`: `images: { unoptimized: true }`, so the `/_next/image` optimiser, which needs `sharp`, is not served.
+- The Integrator re-resolves `pnpm-lock.yaml`; it must then contain no `sharp@` or `@img/sharp-` entries, and the `apps/cms` `next build` CI step must pass.
+
+No LGPL notice is needed while the package stays excluded. Adding image processing to the CMS (a media collection, `next/image` optimisation) reopens this decision before the dependency comes back.
+
+The other non-MIT licences in the `apps/cms` production tree are permissive and accepted without action: `CC-BY-4.0` (`caniuse-lite`, browser-support data; attribution), `Python-2.0` (`argparse`), `WTFPL` (`truncate-utf8-bytes`), `BlueOak-1.0.0` (`sax`).
