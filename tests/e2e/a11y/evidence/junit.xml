@@ -1,0 +1,256 @@
+<testsuites id="" name="" tests="125" failures="0" skipped="0" errors="0" time="127.012072">
+<testsuite name="a11y.spec.ts" timestamp="2026-11-10T00:08:59.527Z" hostname="chromium" tests="116" failures="0" skipped="0" time="122.593" errors="0">
+<testcase name="axe @ 1280 px › TC-A11Y-01 staff/none /sign-in" classname="a11y.spec.ts" time="1.076">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 staff/none /signed-out" classname="a11y.spec.ts" time="0.99">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 staff/none /help" classname="a11y.spec.ts" time="0.976">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 staff/none /admin/sign-in" classname="a11y.spec.ts" time="1.011">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 staff/staff-desk /arrivals" classname="a11y.spec.ts" time="1.089">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 staff/staff-desk /triage" classname="a11y.spec.ts" time="1.082">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 staff/staff-desk /forms" classname="a11y.spec.ts" time="1.124">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 staff/staff-desk /follow-ups" classname="a11y.spec.ts" time="1.105">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 staff/staff-desk /waitlist" classname="a11y.spec.ts" time="1.059">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 staff/staff-doctor /schedule" classname="a11y.spec.ts" time="1.075">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 staff/staff-doctor /patients" classname="a11y.spec.ts" time="1.096">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 staff/staff-doctor /alerts" classname="a11y.spec.ts" time="1.086">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 staff/staff-doctor /notes-to-sign" classname="a11y.spec.ts" time="1.08">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 staff/staff-doctor /tasks" classname="a11y.spec.ts" time="1.097">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 staff/staff-doctor /availability" classname="a11y.spec.ts" time="1.128">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 staff/admin /admin/audit" classname="a11y.spec.ts" time="1.104">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 staff/admin /admin/btg" classname="a11y.spec.ts" time="1.086">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 staff/admin /admin/privacy" classname="a11y.spec.ts" time="1.067">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 staff/admin /admin/users" classname="a11y.spec.ts" time="1.126">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 staff/admin /admin/clinics" classname="a11y.spec.ts" time="1.152">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 staff/admin /admin/services" classname="a11y.spec.ts" time="1.168">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 staff/admin /admin/policies" classname="a11y.spec.ts" time="1.155">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 staff/admin /admin/templates" classname="a11y.spec.ts" time="1.152">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 staff/admin /admin/integrations" classname="a11y.spec.ts" time="1.252">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 staff/admin /admin/flags" classname="a11y.spec.ts" time="1.258">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 staff/admin /admin/vital-ranges" classname="a11y.spec.ts" time="1.162">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 patient /" classname="a11y.spec.ts" time="1.021">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 patient /continue?intent=sign-in" classname="a11y.spec.ts" time="1.019">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 patient /problem?code=identity.sign_in_failed" classname="a11y.spec.ts" time="0.994">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 patient /appointments" classname="a11y.spec.ts" time="1.026">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 patient /book" classname="a11y.spec.ts" time="1.042">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 patient /book/doctor" classname="a11y.spec.ts" time="1.037">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 patient /book/time" classname="a11y.spec.ts" time="1.035">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 patient /book/confirm" classname="a11y.spec.ts" time="1.023">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 patient /waitlist/join" classname="a11y.spec.ts" time="1.022">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 patient /appointments/5b0d3a6e-1111-4222-8333-444455556666/previsit" classname="a11y.spec.ts" time="1.004">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 patient /appointments/5b0d3a6e-1111-4222-8333-444455556666/previsit/questionnaire" classname="a11y.spec.ts" time="1.036">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 patient /appointments/5b0d3a6e-1111-4222-8333-444455556666/previsit/consents" classname="a11y.spec.ts" time="1.022">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 patient /appointments/5b0d3a6e-1111-4222-8333-444455556666/previsit/insurance" classname="a11y.spec.ts" time="1.039">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 patient /appointments/5b0d3a6e-1111-4222-8333-444455556666/previsit/emergency" classname="a11y.spec.ts" time="1.023">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 patient /appointments/5b0d3a6e-1111-4222-8333-444455556666/video" classname="a11y.spec.ts" time="1.035">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 patient /profile" classname="a11y.spec.ts" time="1.041">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 patient /profile/notifications" classname="a11y.spec.ts" time="1.033">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 patient /family" classname="a11y.spec.ts" time="1.013">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 patient /family/add" classname="a11y.spec.ts" time="1.07">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 patient /privacy" classname="a11y.spec.ts" time="1.03">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 patient /messages" classname="a11y.spec.ts" time="1.027">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 patient /messages/new" classname="a11y.spec.ts" time="1.015">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 site /" classname="a11y.spec.ts" time="1.086">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 site /about" classname="a11y.spec.ts" time="1.088">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 site /services" classname="a11y.spec.ts" time="1.034">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 site /doctors" classname="a11y.spec.ts" time="1.065">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 site /doctors/33333333-3333-4333-8333-333333333333" classname="a11y.spec.ts" time="1.061">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 site /locations" classname="a11y.spec.ts" time="1.099">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 site /contact" classname="a11y.spec.ts" time="1.06">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 site /legal/privacy" classname="a11y.spec.ts" time="1.05">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 site /legal/cookies" classname="a11y.spec.ts" time="1.028">
+</testcase>
+<testcase name="axe @ 1280 px › TC-A11Y-01 site /nope" classname="a11y.spec.ts" time="1.05">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 staff/none /sign-in" classname="a11y.spec.ts" time="1.003">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 staff/none /signed-out" classname="a11y.spec.ts" time="0.951">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 staff/none /help" classname="a11y.spec.ts" time="0.99">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 staff/none /admin/sign-in" classname="a11y.spec.ts" time="0.964">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 staff/staff-desk /arrivals" classname="a11y.spec.ts" time="1.057">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 staff/staff-desk /triage" classname="a11y.spec.ts" time="1.089">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 staff/staff-desk /forms" classname="a11y.spec.ts" time="1.093">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 staff/staff-desk /follow-ups" classname="a11y.spec.ts" time="1.101">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 staff/staff-desk /waitlist" classname="a11y.spec.ts" time="1.064">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 staff/staff-doctor /schedule" classname="a11y.spec.ts" time="1.067">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 staff/staff-doctor /patients" classname="a11y.spec.ts" time="1.084">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 staff/staff-doctor /alerts" classname="a11y.spec.ts" time="1.079">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 staff/staff-doctor /notes-to-sign" classname="a11y.spec.ts" time="1.057">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 staff/staff-doctor /tasks" classname="a11y.spec.ts" time="1.077">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 staff/staff-doctor /availability" classname="a11y.spec.ts" time="1.084">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 staff/admin /admin/audit" classname="a11y.spec.ts" time="1.113">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 staff/admin /admin/btg" classname="a11y.spec.ts" time="1.092">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 staff/admin /admin/privacy" classname="a11y.spec.ts" time="1.105">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 staff/admin /admin/users" classname="a11y.spec.ts" time="1.115">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 staff/admin /admin/clinics" classname="a11y.spec.ts" time="1.149">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 staff/admin /admin/services" classname="a11y.spec.ts" time="1.114">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 staff/admin /admin/policies" classname="a11y.spec.ts" time="1.085">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 staff/admin /admin/templates" classname="a11y.spec.ts" time="1.078">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 staff/admin /admin/integrations" classname="a11y.spec.ts" time="1.113">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 staff/admin /admin/flags" classname="a11y.spec.ts" time="1.195">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 staff/admin /admin/vital-ranges" classname="a11y.spec.ts" time="1.175">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 patient /" classname="a11y.spec.ts" time="1.019">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 patient /continue?intent=sign-in" classname="a11y.spec.ts" time="0.97">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 patient /problem?code=identity.sign_in_failed" classname="a11y.spec.ts" time="1.001">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 patient /appointments" classname="a11y.spec.ts" time="1.025">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 patient /book" classname="a11y.spec.ts" time="1.005">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 patient /book/doctor" classname="a11y.spec.ts" time="1.002">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 patient /book/time" classname="a11y.spec.ts" time="1.001">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 patient /book/confirm" classname="a11y.spec.ts" time="1.006">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 patient /waitlist/join" classname="a11y.spec.ts" time="0.989">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 patient /appointments/5b0d3a6e-1111-4222-8333-444455556666/previsit" classname="a11y.spec.ts" time="0.97">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 patient /appointments/5b0d3a6e-1111-4222-8333-444455556666/previsit/questionnaire" classname="a11y.spec.ts" time="0.994">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 patient /appointments/5b0d3a6e-1111-4222-8333-444455556666/previsit/consents" classname="a11y.spec.ts" time="0.98">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 patient /appointments/5b0d3a6e-1111-4222-8333-444455556666/previsit/insurance" classname="a11y.spec.ts" time="0.975">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 patient /appointments/5b0d3a6e-1111-4222-8333-444455556666/previsit/emergency" classname="a11y.spec.ts" time="0.985">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 patient /appointments/5b0d3a6e-1111-4222-8333-444455556666/video" classname="a11y.spec.ts" time="0.961">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 patient /profile" classname="a11y.spec.ts" time="0.971">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 patient /profile/notifications" classname="a11y.spec.ts" time="1.001">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 patient /family" classname="a11y.spec.ts" time="1.017">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 patient /family/add" classname="a11y.spec.ts" time="1.023">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 patient /privacy" classname="a11y.spec.ts" time="1.012">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 patient /messages" classname="a11y.spec.ts" time="1">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 patient /messages/new" classname="a11y.spec.ts" time="0.985">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 site /" classname="a11y.spec.ts" time="1.051">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 site /about" classname="a11y.spec.ts" time="1.05">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 site /services" classname="a11y.spec.ts" time="1.057">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 site /doctors" classname="a11y.spec.ts" time="1.03">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 site /doctors/33333333-3333-4333-8333-333333333333" classname="a11y.spec.ts" time="1.026">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 site /locations" classname="a11y.spec.ts" time="1.004">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 site /contact" classname="a11y.spec.ts" time="1.201">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 site /legal/privacy" classname="a11y.spec.ts" time="1.046">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 site /legal/cookies" classname="a11y.spec.ts" time="1.073">
+</testcase>
+<testcase name="axe @ 360 px › TC-A11Y-01 site /nope" classname="a11y.spec.ts" time="1.085">
+</testcase>
+</testsuite>
+<testsuite name="xb.spec.ts" timestamp="2026-11-10T00:08:59.527Z" hostname="chromium" tests="9" failures="0" skipped="0" time="1.545" errors="0">
+<testcase name="TC-XB-01 staff: signed-out visitor is sent to the sign-in page, which offers Google sign-in" classname="xb.spec.ts" time="0.196">
+</testcase>
+<testcase name="TC-XB-01 staff: a signed-in doctor lands on the schedule with navigation" classname="xb.spec.ts" time="0.144">
+</testcase>
+<testcase name="TC-XB-01 staff: the administrator realm shows its fixed banner" classname="xb.spec.ts" time="0.159">
+</testcase>
+<testcase name="TC-XB-01 patient: entry page leads to the sign-in hand-off page" classname="xb.spec.ts" time="0.142">
+</testcase>
+<testcase name="TC-XB-01 patient: a signed-in patient reaches the booking start and the profile page" classname="xb.spec.ts" time="0.201">
+</testcase>
+<testcase name="TC-XB-01 site: services page, and Book hands off to the patient portal with opaque IDs only" classname="xb.spec.ts" time="0.337">
+</testcase>
+<testcase name="TC-XB-01 site: keyboard — the skip link is the first tab stop and focus is visible" classname="xb.spec.ts" time="0.101">
+</testcase>
+<testcase name="TC-A11Y-05 (automated part) forced-colors and reduced-motion render without a scan error" classname="xb.spec.ts" time="0.107">
+</testcase>
+<testcase name="TC-A11Y-06 (automated part) an empty link-a-family-member form on the patient portal reports errors linked to fields" classname="xb.spec.ts" time="0.158">
+</testcase>
+</testsuite>
+</testsuites>
