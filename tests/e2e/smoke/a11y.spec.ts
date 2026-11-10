@@ -66,9 +66,17 @@ for (const vp of viewports) {
     });
 
     test('server error state', async ({ page }) => {
-      await page.route(SESSION, (r) => r.fulfill(problem(503, 'kernel.unavailable')));
+      // A 503 on the very first session read is treated as signed out (redirect to /sign-in); the error page shows when
+      // the session loads and the roles read that follows fails, so the first answer is a session and the rest are 503.
+      let reads = 0;
+      await page.route(SESSION, (r) =>
+        r.fulfill(++reads === 1 ? signedIn() : problem(503, 'kernel.unavailable')),
+      );
       await page.goto('/');
-      await expect(page.getByText(/Reference for support/)).toBeVisible();
+      await expect(
+        page.getByRole('heading', { level: 1, name: /Something went wrong on our side/ }),
+      ).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible();
       await expectNoSeriousViolations(page, 'server error');
     });
 
@@ -79,7 +87,9 @@ for (const vp of viewports) {
       );
       await page.goto('/');
       await page.getByRole('button', { name: 'Sign out' }).click();
-      await expect(page.getByRole('alertdialog')).toBeVisible();
+      await expect(
+        page.getByRole('alertdialog', { name: 'This page is out of date' }),
+      ).toBeVisible();
       await expectNoSeriousViolations(page, 'blocking dialog');
     });
 
