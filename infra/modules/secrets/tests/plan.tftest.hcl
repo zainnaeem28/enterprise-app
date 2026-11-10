@@ -51,10 +51,39 @@ run "rotation_scheduled_when_function_given" {
 
   variables {
     rotation_lambda_arn = "arn:aws:lambda:us-east-2:111111111111:function:rotate"
+    secrets = {
+      "db/app_owner" = { description = "a", readers = ["arn:aws:iam::111111111111:role/migrate-task"], writers = ["arn:aws:iam::111111111111:role/rotation"] }
+      "db/app_api"   = { description = "b", readers = ["arn:aws:iam::111111111111:role/api-task"], writers = ["arn:aws:iam::111111111111:role/rotation"] }
+    }
   }
   assert {
-    condition     = length(aws_secretsmanager_secret_rotation.this) == 2
-    error_message = "rotation is scheduled for every container"
+    condition     = length(aws_secretsmanager_secret_rotation.this) == 2 && aws_secretsmanager_secret_rotation.this["db/app_api"].rotate_immediately == false
+    error_message = "rotation is scheduled for every container and does not rotate on first apply"
+  }
+}
+
+run "rotation_without_a_writer_is_rejected" {
+  command = plan
+
+  variables {
+    rotation_lambda_arn = "arn:aws:lambda:us-east-2:111111111111:function:rotate"
+  }
+  expect_failures = [aws_secretsmanager_secret_rotation.this]
+}
+
+run "apply_role_may_update_metadata_but_not_put_values" {
+  command = plan
+
+  variables {
+    apply_role_arns = ["arn:aws:iam::111111111111:role/gh-tf-staging"]
+  }
+  assert {
+    condition = alltrue([for k, p in aws_secretsmanager_secret_policy.this : anytrue([for st in jsondecode(p.policy).Statement :
+      st.Sid == "NobodyElseUpdatesTheSecret" && contains(st.Condition.ArnNotEquals["aws:PrincipalArn"], "arn:aws:iam::111111111111:role/gh-tf-staging")
+      ]) && !anytrue([for st in jsondecode(p.policy).Statement :
+      st.Sid == "NobodyElseWritesTheValue" && contains(st.Condition.ArnNotEquals["aws:PrincipalArn"], "arn:aws:iam::111111111111:role/gh-tf-staging")
+    ])])
+    error_message = "apply role is excepted from the metadata-update deny only, never from the value-write deny"
   }
 }
 
