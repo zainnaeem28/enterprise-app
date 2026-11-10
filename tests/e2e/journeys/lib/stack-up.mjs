@@ -51,7 +51,8 @@ await sa.connect();
 const fixtures = await seed(sa);
 await sa.end();
 
-const ports = { api: 3610, patientIdp: 9210, staffIdp: 9220 };
+const off = Number(process.env.QA_PORT_OFFSET ?? 0);
+const ports = { api: 3610 + off, patientIdp: 9210 + off, staffIdp: 9220 + off };
 const k = () => randomBytes(24).toString('hex');
 const pids = {};
 const start = (name, cmd, args, env) => {
@@ -70,14 +71,24 @@ const idpJson = async (name, kind, port) => {
   });
   p.unref();
   pids[name] = p.pid;
-  await new Promise((r) => setTimeout(r, 2000));
-  return JSON.parse((await import('node:fs')).readFileSync(out, 'utf8'));
+  const fsm = await import('node:fs');
+  for (let i = 0; i < 40; i++) {
+    await new Promise((r) => setTimeout(r, 500));
+    try { return JSON.parse(fsm.readFileSync(out, 'utf8')); } catch { /* not written yet */ }
+  }
+  throw new Error(`IdP ${name} did not start; see ${logDir}/${name}.log`);
 };
 const pIdp = await idpJson('idp-patient', 'patient', ports.patientIdp);
 const sIdp = await idpJson('idp-staff', 'staff', ports.staffIdp);
+const { createAttestationFixture } = await imp('apps/api/dist/src/ci-fixture/attestation-ca.js');
+const ca = createAttestationFixture();
 const base = {
   PATH: process.env.PATH,
   EHR_ENV: 'ci',
+  EHR_ADMIN_CI_FIXTURE: '1',
+  EHR_ADMIN_ATTESTATION_ROOTS_PEM: ca.rootPem,
+  EHR_ADMIN_ALLOWED_AAGUIDS: ca.aaguid,
+  EHR_ADMIN_DECOY_KEY: k(),
   EHR_ORGANISATION_ID: ORG,
   EHR_INTEGRATIONS_HOST: 'integrations.localhost',
   EHR_MIN_CLIENT_RELEASE: '1',

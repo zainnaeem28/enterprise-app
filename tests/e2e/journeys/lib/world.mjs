@@ -3,7 +3,7 @@
 // and its own calendar day, so cases do not interfere with each other.
 import { createRequire } from 'node:module';
 import { randomUUID } from 'node:crypto';
-import { addPatient, patientId, patientKey, ORG, SVC, A1, B1, principalId, addStaff, STAFF } from './seed.mjs';
+import { ensureGrantors, grantRole, addPatient, patientId, patientKey, ORG, SVC, A1, B1, principalId, addStaff, STAFF } from './seed.mjs';
 import { login, state } from './client.mjs';
 
 export { ORG, SVC, A1, B1, principalId, patientId, login, state, STAFF, addStaff };
@@ -181,11 +181,8 @@ export async function newDoctor({ services = [SVC.IN], overbookable = false, loc
       [pid, ORG, person, `sub-${key}`, `${key.toLowerCase()}@example.com`],
     );
     await c.query(`INSERT INTO identity.staff_profile (principal_id, organisation_id, display_name, directory_listed) VALUES ($1,$2,$3,true)`, [pid, ORG, `Synthetic ${key}`]);
-    const role = (await c.query(`SELECT id FROM identity.role WHERE key = $1`, [roleKey])).rows[0].id;
-    await c.query(
-      `INSERT INTO identity.role_assignment (id, organisation_id, principal_id, role_id, location_id, granted_via_request_id) VALUES ($1,$2,$3,$4,$5,$6)`,
-      [uuid(), ORG, pid, role, location, uuid()],
-    );
+    await ensureGrantors(c);
+    await grantRole(c, pid, roleKey, location);
     await c.query(`INSERT INTO identity.licensed_state (principal_id, jurisdiction_code, organisation_id, licence_number) VALUES ($1,$2,$3,$4)`, [pid, location === A1 ? 'NY' : 'CA', ORG, `SYNTH-${key}`]);
     for (const s of services)
       await c.query(`INSERT INTO organisation.service_clinician (organisation_id, service_id, clinician_principal_id) VALUES ($1,$2,$3)`, [ORG, s, pid]);
@@ -215,14 +212,8 @@ export async function newStaff(grants, { name = 'STF-X' } = {}) {
       [pid, ORG, person, `sub-${key}`, `${key.toLowerCase()}@example.com`],
     );
     await c.query(`INSERT INTO identity.staff_profile (principal_id, organisation_id, display_name, directory_listed) VALUES ($1,$2,$3,false)`, [pid, ORG, `Synthetic ${key}`]);
-    for (const [role, loc] of grants) {
-      const r = await c.query(`SELECT id FROM identity.role WHERE key = $1`, [role]);
-      if (!r.rows[0]) throw new Error(`role ${role} missing`);
-      await c.query(
-        `INSERT INTO identity.role_assignment (id, organisation_id, principal_id, role_id, location_id, granted_via_request_id) VALUES ($1,$2,$3,$4,$5,$6)`,
-        [uuid(), ORG, pid, r.rows[0].id, loc, uuid()],
-      );
-    }
+    await ensureGrantors(c);
+    for (const [role, loc] of grants) await grantRole(c, pid, role, loc);
   });
   return { key, id: pid, personId: person, client: await login('staff', key) };
 }

@@ -18,6 +18,38 @@ export const SVC = {
 export const SENS_INTERNAL_NAME = 'Synthetic HIV clinic';
 export const SENS_DISPLAY_NAME = 'General appointment';
 
+// Role grants go through the real two-person request states (identity.role_assignment.granted_via_request_id is a foreign key).
+// Two fixed admin_pool persons act as requester and approver; they hold no role themselves.
+export const GRANTOR = { requester: { person: id(900001), principal: id(900002) }, approver: { person: id(900003), principal: id(900004) } };
+export async function ensureGrantors(sa) {
+  for (const [name, g] of Object.entries(GRANTOR)) {
+    const has = await sa.query('SELECT 1 FROM identity.person WHERE id = $1', [g.person]);
+    if (has.rowCount) continue;
+    await sa.query(`INSERT INTO identity.person (id, organisation_id, display_name) VALUES ($1,$2,$3)`, [g.person, ORG, `Synthetic grantor ${name}`]);
+    await sa.query(`INSERT INTO identity.principal (id, organisation_id, person_id, realm, subject, status) VALUES ($1,$2,$3,'admin_pool',$4,'active')`, [g.principal, ORG, g.person, `seed-${name}`]);
+  }
+}
+/** Grants `roleKey` (optionally at a location) to a principal through a requested -> approved -> applied request. Call inside a transaction. */
+export async function grantRole(c, principalId, roleKey, locationId) {
+  const r = await c.query('SELECT id FROM identity.role WHERE key = $1', [roleKey]);
+  if (!r.rows[0]) throw new Error(`role ${roleKey} is missing from the reference data`);
+  const requestId = randomUUID();
+  const as = (p) => c.query(`SELECT set_config('app.person_id', $1, true)`, [p]);
+  await as(GRANTOR.requester.person);
+  await c.query(
+    `INSERT INTO identity.role_change_request (id, organisation_id, requester_person_id, subject_principal_id, change, before, request_hash, status, expires_at)
+     VALUES ($1,$2,$3,$4,'{"add":[],"remove":[]}'::jsonb,'[]'::jsonb,decode(repeat('ab',32),'hex'),'requested',now() + interval '1 day')`,
+    [requestId, ORG, GRANTOR.requester.person, principalId],
+  );
+  await as(GRANTOR.approver.person);
+  await c.query(`UPDATE identity.role_change_request SET status='approved', approver_person_id=$2, decided_at=now() WHERE id=$1`, [requestId, GRANTOR.approver.person]);
+  await c.query(
+    `INSERT INTO identity.role_assignment (id, organisation_id, principal_id, role_id, location_id, granted_via_request_id) VALUES ($1,$2,$3,$4,$5,$6)`,
+    [randomUUID(), ORG, principalId, r.rows[0].id, locationId ?? null, requestId],
+  );
+  await c.query(`UPDATE identity.role_change_request SET status='applied' WHERE id=$1`, [requestId]);
+}
+
 const emailOf = (key) => `${key.toLowerCase()}@example.com`;
 export const subjectOf = (key) => `sub-${key}`;
 export const personaEmail = emailOf;
@@ -62,15 +94,8 @@ export async function addStaff(sa, key, grants = STAFF[key]) {
     `INSERT INTO identity.staff_profile (principal_id, organisation_id, display_name, directory_listed) VALUES ($1,$2,$3,$4)`,
     [P, ORG, `Synthetic ${key}`, DOCTORS.includes(key)],
   );
-  for (const [role, loc] of grants) {
-    const r = await sa.query('SELECT id FROM identity.role WHERE key = $1', [role]);
-    if (!r.rows[0]) throw new Error(`role ${role} missing from the reference data`);
-    await sa.query(
-      `INSERT INTO identity.role_assignment (id, organisation_id, principal_id, role_id, location_id, granted_via_request_id)
-       VALUES ($1,$2,$3,$4,$5,$6)`,
-      [randomUUID(), ORG, P, r.rows[0].id, loc, randomUUID()],
-    );
-  }
+  await ensureGrantors(sa);
+  for (const [role, loc] of grants) await grantRole(sa, P, role, loc);
 }
 
 // PATIENTS: PAT-nn (1..) -> patient row + patient-realm principal + `self` link. n >= 1000 are the VOL-3 pool.

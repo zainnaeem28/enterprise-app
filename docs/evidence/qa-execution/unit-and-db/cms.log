@@ -1,0 +1,19 @@
+$ NODE_ENV=test vitest run --reporter=default --reporter=junit --outputFile.junit="${JUNIT_DIR:-.junit}/cms.xml"
+
+ RUN  v5.1.0 /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-29-sdlc-qa-execution-execute-full-acceptance-cases-and-end-to-end-journeys/apps/cms
+
+ ✓ src/auth/endpoints.test.ts (6 tests) 32ms
+ ✓ src/auth/google.test.ts (20 tests) 238ms
+ ✓ src/auth/session.test.ts (5 tests) 65ms
+ ✓ src/lib/env.test.ts (21 tests) 13ms
+ ✓ src/admin/preview.test.ts (4 tests) 6ms
+ ✓ src/lib/slug.test.ts (17 tests) 15ms
+ ✓ src/admin/SignIn.test.tsx (3 tests) 10ms
+ ✓ src/collections/collections.test.ts (12 tests) 16ms
+
+ Test Files  8 passed (8)
+      Tests  88 passed (88)
+   Start at  10:19:04
+   Duration  1.83s (import 69%, transform 15%, tests 14%, worker 2%)
+
+JUNIT report written to /tmp/qa-ev/cms.xml

@@ -1,0 +1,214 @@
+▶ TC-BK booking and rescheduling
+  ✔ TC-BK-01 book: appointment Confirmed, confirmation + reminders recorded, audit rows, no patient on any calendar surface [no mailbox] [no Google] (750.944547ms)
+  ✖ TC-BK-01a the .ics of a confirmed appointment is served (`GET /appointments/{id}/calendar.ics`, RA-R1-02) (130.710624ms)
+  ✔ TC-BK-02 video visit: appointment carries the clinic time zone; patient and clinic zones both derivable (BR-05) (137.017364ms)
+  ✔ TC-BK-03 availability = template - bookings (mechanics: busy block by SQL) [no Google: the sync itself is TC-CAL] (85.474688ms)
+  ✔ TC-BK-04 stale search: second patient gets 409 scheduling.slot_taken with alternatives (152.161792ms)
+  ✔ TC-BK-05 cancel inside the cut-off is blocked (D-3 default), cancel outside is free [G2 setting: cut-off set by SQL] (172.320718ms)
+  ✔ TC-BK-06 reschedule: old slot released, new slot confirmed, reminders recomputed, audit (699.428283ms)
+  ✔ TC-BK-07 max future appointments per service: 4th refused (BR-04) [G2 setting: 3 by SQL] (256.29991ms)
+  ✔ TC-BK-08 hold expiry: confirm after expiry gives 409 scheduling.hold_expired with alternatives; no appointment [G2 setting: hold 1 min, real wait] (61609.776524ms)
+  ✔ TC-BK-09 idempotency: same key and body = one hold; same key other body = 409; same key on another route is a different key (142.146754ms)
+  ✔ TC-BK-10 time zones: stored UTC, shown in the location zone across a daylight-saving change (LOC-B1) (70.070896ms)
+  ✖ TC-BK-11 front desk books for a patient at the assigned location only, refused at another (RA-R1-02) (96.861784ms)
+✖ TC-BK booking and rescheduling (64305.488411ms)
+▶ TC-CAL calendar sync mechanics (no Google tenant on ci)
+  ✔ TC-CAL-01/02 structure: a calendar block and its event map hold no patient, reason, diagnosis or service name (20.099054ms)
+  ✔ TC-CAL-03 synced busy time makes that time unavailable within one search (no cache) (121.284409ms)
+  ✔ TC-CAL-04 stale sync: busy rows are still used and the answer is flagged; fresh data is not flagged; threshold from the setting (96.321451ms)
+  ✖ TC-CAL-05 steps 1-2 the push webhook refuses a wrong HMAC token and an unknown channel; nothing is stored or enqueued (6.126823ms)
+✖ TC-CAL calendar sync mechanics (no Google tenant on ci) (245.569235ms)
+▶ TC-BK concurrency (100 parallel sessions)
+  ✔ TC-BK-13 one slot, ONE patient account on 100 sessions: exactly one appointment (3844.274992ms)
+  ℹ outcomes: {"hold:409:scheduling.slot_taken":99,"confirmed":1}
+  ✔ TC-BK-14 one slot, 100 DIFFERENT patients: exactly one wins, losers see alternatives, none sees another reservation (3451.618413ms)
+  ℹ outcomes: {"confirmed":1,"hold:409:scheduling.slot_taken":99}
+  ✖ TC-BK-15 overbookable session, cap 2, 100 patients: exactly 2 succeed, no more (written expectation; see QA04-F07) (3401.760794ms)
+  ℹ outcomes: {"confirmed":3,"hold:409:scheduling.slot_taken":97}
+  ✔ TC-BK-16 hold expiry race: after A's hold expires, B and C race; exactly one wins, neither gets a false "taken" [G2 setting: hold 1 min, real wait] (62209.356268ms)
+  ℹ outcomes: {"hold:409:scheduling.slot_taken":1,"confirmed":1}
+✖ TC-BK concurrency (100 parallel sessions) (72908.378181ms)
+▶ TC-BK rooms, leakage, merge
+  ✖ TC-BK-17 room: three checked-in visits at one time, three parallel assignments of the SAME room: exactly one succeeds (SAR-09) (533.157748ms)
+  ℹ assignment statuses: 200:ok, 200:ok, 200:ok
+  ℹ queue entries holding the room (all three share one start time): 3
+  ✔ TC-BK-18 slot search and /public/v1 show no identifiers of other patients, reservations or rooms (243.272863ms)
+✖ TC-BK rooms, leakage, merge (777.64526ms)
+▶ TC-BK waitlist and merge
+  ✔ TC-BK-22 a waitlisted patient is merged into another: the freed slot is offered once, to the survivor (2282.290233ms)
+✔ TC-BK waitlist and merge (2283.035961ms)
+▶ TC-NT notifications and PHI-free messages
+  ✔ TC-NT-01 every published template, in every channel and language, binds only allowlisted variables and carries no condition-revealing text (11.782203ms)
+  ✔ TC-NT-01/06 a sensitive-service booking by a patient whose own name is a condition/medicine: every queued message holds only allowlisted values (635.403702ms)
+  ✔ TC-NT-02 confirmation plus two reminders at the configured offsets, each with the portal links and no clinical text (594.367536ms)
+  ✔ TC-NT-04 provider failure: the send is retried (attempts > 1, error class recorded), the in-app message is still delivered, and the failure is visible in the queue view (4616.411528ms)
+  ✖ TC-NT-05 application logs contain no health data after the booking, check-in and note journeys (0.931498ms)
+  ✔ TC-NT-07 an alert reaches only the principals it targets; another staff session does not see it (99.041019ms)
+  ✔ TC-NT-08 notification preferences: with SMS off and email on, a booking sends email and suppresses SMS (security messages: PM-confirm-3, not asserted) (608.565625ms)
+✖ TC-NT notifications and PHI-free messages (6568.101058ms)
+▶ TC-BK waitlist offers
+  ✔ TC-BK-19 first on the list is offered first; ignoring lets the offer lapse and it passes to the next [G2 setting: 1 min] (60957.209537ms)
+  ✔ TC-BK-20 accept races: two accepts of one offer, and an accept against a direct booking, yield exactly one appointment (764.590219ms)
+  ✔ TC-BK-21 slot starting within 24 h uses the within-24-hours acceptance time; late accept is refused and the offer passes on [G2 setting: default 3 min, within 24 h 1 min] (62408.663125ms)
+✔ TC-BK waitlist offers (124131.68838ms)
+▶ TC-PC check-in, queue, triage, referrals
+  ✔ TC-PC-01 desk check-in moves the visit to checked-in and it appears in the queue with a stage and wait time (287.334407ms)
+  ✔ TC-PC-08 check-in with a required consent unsigned raises the missing-consent flag (200.836442ms)
+  ✔ TC-PC-05 four checked-in patients: category and wait time displayed for each, none dropped (order asserted only after PM-confirm-2) (681.3154ms)
+  ✔ TC-PC-06 two nurses on one triage record: the second save is refused (412 stale ETag, 428 without one); no silent overwrite (294.505541ms)
+  ✔ TC-CL-10 step 1 a vital with no range configured is stored and reported as no_range, never refused (177.19536ms)
+  ✔ TC-PC-12 front desk without referral/follow-up permission is refused for both and the refusal is audited (169.830924ms)
+  ✔ TC-PC-11 coordinator records a follow-up and a referral; both are audited; no lab-collection booking exists (213.469352ms)
+✔ TC-PC check-in, queue, triage, referrals (2026.006254ms)
+▶ TC-SAF red-flag mechanics (rules are synthetic fixtures; acceptance blocked on D-12a)
+  ✔ TC-SAF-03a near-miss and non-flag answers do not alert (exact comparison) (586.54206ms)
+  ✔ TC-SAF-03b a blank or missing red-flag answer is rejected and nothing is saved as "no red flag" (211.16064ms)
+  ✔ TC-SAF-01/03c every configured red flag alerts the on-duty doctor at once (durable alert row, listed, audited) (797.459335ms)
+  ✔ TC-SAF-01/04a the patient sees the configured emergency advice when a red flag is submitted (independent of the alert stream) (177.578759ms)
+  ✖ TC-SAF-01/04b the durable alert exists with no alert stream open, stays open and visible until acknowledged (20566.461796ms)
+✖ TC-SAF red-flag mechanics (rules are synthetic fixtures; acceptance blocked on D-12a) (22340.381061ms)
+▶ TC-CL clinical notes
+  ✔ TC-CL-01 a note locks on signing; edits fail with note_locked; changes only by addendum (BR-11) (444.108621ms)
+  ✔ TC-CL-02 / CL-07 step 3 addendum: author, time, original unchanged; the note row never changes (685.602884ms)
+  ✔ TC-CL-05 two sessions on one draft: the second save gets 412 and the draft stays recoverable (330.592647ms)
+  ✔ TC-CL-07 a signed note: PATCH with a valid If-Match, DELETE and SQL UPDATE/DELETE as app_api all fail; hash unchanged (347.931064ms)
+  ✔ TC-CL-03 trainee note: release needs the supervisor; a non-supervisor co-sign is refused; supervisor co-sign releases (443.546938ms)
+✔ TC-CL clinical notes (2253.374494ms)
+▶ TC-SAF consent gate (mechanics; the required consents are D-12a data)
+  ✔ TC-SAF-05 consultation cannot start without the required signed consent; the message names the template and carries no PHI (185.798662ms)
+  ✔ TC-SAF-06 emergency exception: with a reason it starts and is recorded and audited; without a reason it is refused (226.641828ms)
+  ✔ TC-SAF-08 two consents: only-A blocks naming B; superseded A blocks naming A; both valid starts; sign-then-reopen is immediate; withdrawal blocks again (869.75567ms)
+✔ TC-SAF consent gate (mechanics; the required consents are D-12a data) (1282.723749ms)
+ℹ tests 53
+ℹ suites 11
+ℹ pass 46
+ℹ fail 7
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 301895.505365
+
+✖ failing tests:
+
+test at tests/api/booking/booking.test.mjs:43:3
+✖ TC-BK-01a the .ics of a confirmed appointment is served (`GET /appointments/{id}/calendar.ics`, RA-R1-02) (130.710624ms)
+  AssertionError [ERR_ASSERTION]: documented route answered 404: {"type":"https://errors.invalid/kernel/not_found","title":"Not found","status":404,"code":"kernel.not_found","requestId":"fe30d720-9022-44be-8937-9276a25a1ebe","retryable":false}
+  
+  404 !== 200
+  
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-29-sdlc-qa-execution-execute-full-acceptance-cases-and-end-to-end-journeys/tests/api/booking/booking.test.mjs:48:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 404,
+    expected: 200,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/api/booking/booking.test.mjs:216:3
+✖ TC-BK-11 front desk books for a patient at the assigned location only, refused at another (RA-R1-02) (96.861784ms)
+  AssertionError [ERR_ASSERTION]: front desk hold at the assigned location answered 403 {"type":"https://errors.invalid/auth/forbidden","title":"Forbidden","status":403,"code":"auth.forbidden","requestId":"65623f30-7297-4827-95b4-c1d03b9cc5fa","ret
+  
+  403 !== 201
+  
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-29-sdlc-qa-execution-execute-full-acceptance-cases-and-end-to-end-journeys/tests/api/booking/booking.test.mjs:223:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 403,
+    expected: 201,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/api/booking/calendar.test.mjs:83:3
+✖ TC-CAL-05 steps 1-2 the push webhook refuses a wrong HMAC token and an unknown channel; nothing is stored or enqueued (6.126823ms)
+  AssertionError [ERR_ASSERTION]: wrong HMAC: 404 {"type":"https://errors.invalid/kernel/not_found","title":"Not found","status":404,"code":"kernel.not_found","requestId"
+  
+  404 !== 401
+  
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-29-sdlc-qa-execution-execute-full-acceptance-cases-and-end-to-end-journeys/tests/api/booking/calendar.test.mjs:87:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 404,
+    expected: 401,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/api/booking/concurrency.test.mjs:74:3
+✖ TC-BK-15 overbookable session, cap 2, 100 patients: exactly 2 succeed, no more (written expectation; see QA04-F07) (3401.760794ms)
+  AssertionError [ERR_ASSERTION]: TC-BK-15 written expectation: exactly 2 succeed (cap 2)
+  
+  3 !== 2
+  
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-29-sdlc-qa-execution-execute-full-acceptance-cases-and-end-to-end-journeys/tests/api/booking/concurrency.test.mjs:86:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 3,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/api/booking/isolation.test.mjs:28:3
+✖ TC-BK-17 room: three checked-in visits at one time, three parallel assignments of the SAME room: exactly one succeeds (SAR-09) (533.157748ms)
+  AssertionError [ERR_ASSERTION]: exactly one assignment succeeds
+  
+  3 !== 1
+  
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-29-sdlc-qa-execution-execute-full-acceptance-cases-and-end-to-end-journeys/tests/api/booking/isolation.test.mjs:54:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 3,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/api/booking/notifications.test.mjs:99:3
+✖ TC-NT-05 application logs contain no health data after the booking, check-in and note journeys (0.931498ms)
+  AssertionError [ERR_ASSERTION]: logs were actually scanned (0 bytes)
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-29-sdlc-qa-execution-execute-full-acceptance-cases-and-end-to-end-journeys/tests/api/booking/notifications.test.mjs:112:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests/api/clinical/frontdoor.test.mjs:201:3
+✖ TC-SAF-01/04b the durable alert exists with no alert stream open, stays open and visible until acknowledged (20566.461796ms)
+  AssertionError [ERR_ASSERTION]: a durable red_flag alert exists for the on-duty doctor (rows in the table for this patient: 0; visible to the doctor through the API: no)
+      at TestContext.<anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-29-sdlc-qa-execution-execute-full-acceptance-cases-and-end-to-end-journeys/tests/api/clinical/frontdoor.test.mjs:208:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

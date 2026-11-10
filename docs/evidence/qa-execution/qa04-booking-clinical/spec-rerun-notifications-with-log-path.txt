@@ -1,0 +1,17 @@
+▶ TC-NT notifications and PHI-free messages
+  ✔ TC-NT-01 every published template, in every channel and language, binds only allowlisted variables and carries no condition-revealing text (13.485771ms)
+  ✔ TC-NT-01/06 a sensitive-service booking by a patient whose own name is a condition/medicine: every queued message holds only allowlisted values (707.133846ms)
+  ✔ TC-NT-02 confirmation plus two reminders at the configured offsets, each with the portal links and no clinical text (622.804536ms)
+  ✔ TC-NT-04 provider failure: the send is retried (attempts > 1, error class recorded), the in-app message is still delivered, and the failure is visible in the queue view (4619.3476ms)
+  ✔ TC-NT-05 application logs contain no health data after the booking, check-in and note journeys (0.6982ms)
+  ✔ TC-NT-07 an alert reaches only the principals it targets; another staff session does not see it (111.928889ms)
+  ✔ TC-NT-08 notification preferences: with SMS off and email on, a booking sends email and suppresses SMS (security messages: PM-confirm-3, not asserted) (627.108181ms)
+✔ TC-NT notifications and PHI-free messages (6704.046802ms)
+ℹ tests 7
+ℹ suites 1
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7054.494192

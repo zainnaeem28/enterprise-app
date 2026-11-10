@@ -1,0 +1,36 @@
+▶ TC-API
+  ﹣ TC-API-01 every module returns the standard problem body [deployed stack] (0.689914ms) # BLOCKED: needs ENV-INT/staging with the fault-injection endpoint and every R1 module routable; see TC-API-02/10 for the ci-level body checks
+  ﹣ TC-API-09 contract test over the published OpenAPI documents [Schemathesis + contracts/openapi] (0.097052ms) # BLOCKED in this suite: run by tests/api/harness/schemathesis-run.mjs (QA-02) against the published documents, not by tests/api/platform
+  ✔ TC-API-02 401 without a session, 403 without the right, 404 for a patient outside the caller's scope; bodies are problem+json without PHI (223.895861ms)
+  ✔ TC-API-03 patient search is POST-only: PHI in a GET URL is refused (87.680989ms)
+  ✔ TC-API-04 PATCH without If-Match is 428, a stale If-Match is 412, the current one succeeds with a new ETag (patient record; notes route not in this stack) (122.009215ms)
+  ✔ TC-API-05 list limit is capped at 100 and a tampered cursor is refused (65.134356ms)
+  ✔ TC-API-06 Cache-Control: no-store on API responses (success, error, redirect, anonymous) (103.9106ms)
+  ✔ TC-API-07 above the per-principal write limit the next call is 429 kernel.rate_limited with Retry-After (731.242668ms)
+  ✔ TC-API-08 a body over 1 MB is 413; unknown fields: ignored on portal endpoints (66.04855ms)
+  ✔ TC-API-10 client release: missing and malformed are 400 kernel.client_release_unsupported with no side effect; exempt routes work without it; N-1/N/N+1 accepted (70.808616ms)
+  ✔ TC-API-10b the X-Request-Id of a request appears in the response and in the audit event it caused (74.398697ms)
+✔ TC-API (1547.730699ms)
+▶ TC-AU
+  ✔ setup: STF-DR-A1 is on the care team of PAT-01 (assignment rule, BQ-5) (15.77584ms)
+  ✔ TC-AU-01 chart view and patient search each create an audit event with user, time, IP/device and no clinical values (130.722813ms)
+  ﹣ TC-AU-01b chart export and print each create an audit event (0.193473ms) # NOT TESTABLE: the API has no chart export or print route in R1 (probed chart-export, chart-print, export: 404); the view and search half is TC-AU-01. Recorded as a coverage gap, not a pass
+  ✔ TC-AU-02 audit insert failure: the read fails and the change rolls back; with the fault removed it works (97.386689ms)
+  ✔ TC-AU-03 denial-write failure: the caller still gets the denial (fail closed) and the failure is logged (65.591984ms)
+  ✔ TC-AU-04 audit.require_bounded_tx: unset and over-bound refused (PA001), app_owner has no INSERT (42501), at-bound succeeds (36.363631ms)
+  ✔ TC-AU-05 nobody can edit or delete audit rows: not via API routes, not as any app_* role (the attempt is refused) (189.996051ms)
+  ✔ TC-AU-06 audit viewer: filters who/what/when, required fields shown, no PHI (190.165296ms)
+  ✔ TC-AU-07 audit export is an asynchronous, size-limited, audited job (197.015152ms)
+  ﹣ TC-AU-07b the export reaches ready and the requester downloads it (0.342142ms) # BLOCKED: the audit export sink (object store, infrastructure) is not provisioned in ENV-INT/ci; the worker's sink is a refusing port, so the job ends failed. Needs the staging object store
+  ﹣ TC-AU-08 tampering with a stored audit row is detected by the anchor verification (0.102642ms) # BLOCKED: audit.verify_anchors treats the Object Lock archive as the authority (INT04-F10 D-2); the archive store is infrastructure that does not exist in ENV-INT/ci
+  ﹣ TC-AU-09 retention value and archive job [OPS] (0.066074ms) # BLOCKED: audit/clinical retention period not decided at G2 (open decision); type OPS: DevOps evidence
+  ﹣ TC-AU-10 duplicate of TC-PERF-04: no result of its own (0.086402ms) # n/a: owned by TC-PERF-04 (ENV-LOAD, not provisioned)
+✔ TC-AU (925.818738ms)
+ℹ tests 24
+ℹ suites 2
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 7
+ℹ todo 0
+ℹ duration_ms 2645.120038

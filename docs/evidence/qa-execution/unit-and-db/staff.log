@@ -1,0 +1,180 @@
+$ NODE_ENV=test vitest run --reporter=default --reporter=junit --outputFile.junit="${JUNIT_DIR:-.junit}/staff.xml"
+
+ RUN  v5.1.0 /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-29-sdlc-qa-execution-execute-full-acceptance-cases-and-end-to-end-journeys/apps/staff
+
+stderr | src/features/doctor/doctor.test.tsx > chart summary (BR-34, UI-UX 8) > shows name, date of birth, photo and the allergy block
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > chart summary (BR-34, UI-UX 8) > draws a hidden allergy part as "not shown", never as "none"
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > chart summary (BR-34, UI-UX 8) > says "No allergies recorded" when none are recorded
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > break the glass (BR-14, DR-09) > refuses access until a reason of at least 10 characters is entered, then opens the chart
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > note editor, sign dialog, addenda (DR-03, DR-05, DR-06) > in-progress visit: 409 on POST /encounters lists the drafts and opens only the one the clinician picks (INT03-F20)
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > note editor, sign dialog, addenda (DR-03, DR-05, DR-06) > in-progress visit: 409 on POST /encounters lists the drafts and opens only the one the clinician picks (INT03-F20)
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > note editor, sign dialog, addenda (DR-03, DR-05, DR-06) > lists the drafts with the signed-in principal even when the schedule item carries no clinicianId (INT03-F20-R3)
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > note editor, sign dialog, addenda (DR-03, DR-05, DR-06) > lists the drafts with the signed-in principal even when the schedule item carries no clinicianId (INT03-F20-R3)
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > note editor, sign dialog, addenda (DR-03, DR-05, DR-06) > two drafts for the same patient are never opened automatically (INT03-F20-R1)
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > note editor, sign dialog, addenda (DR-03, DR-05, DR-06) > starts the consultation, saves a draft with If-Match and signs after re-authentication with the same key
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > note editor, sign dialog, addenda (DR-03, DR-05, DR-06) > starts the consultation, saves a draft with If-Match and signs after re-authentication with the same key
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > note editor, sign dialog, addenda (DR-03, DR-05, DR-06) > starts the consultation, saves a draft with If-Match and signs after re-authentication with the same key
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > note editor, sign dialog, addenda (DR-03, DR-05, DR-06) > starts the consultation, saves a draft with If-Match and signs after re-authentication with the same key
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > note editor, sign dialog, addenda (DR-03, DR-05, DR-06) > starts the consultation, saves a draft with If-Match and signs after re-authentication with the same key
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > note editor, sign dialog, addenda (DR-03, DR-05, DR-06) > shows the consent gate reason and requires a reason for the emergency exception
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > note editor, sign dialog, addenda (DR-03, DR-05, DR-06) > shows the consent gate reason and requires a reason for the emergency exception
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > note editor, sign dialog, addenda (DR-03, DR-05, DR-06) > lets a trainee submit for co-signature, without a sign permission
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > note editor, sign dialog, addenda (DR-03, DR-05, DR-06) > lets a trainee submit for co-signature, without a sign permission
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > note editor, sign dialog, addenda (DR-03, DR-05, DR-06) > lets a trainee submit for co-signature, without a sign permission
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > note editor, sign dialog, addenda (DR-03, DR-05, DR-06) > keeps the dialog out of the way when the sign is refused (403) and says why
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > note editor, sign dialog, addenda (DR-03, DR-05, DR-06) > keeps the dialog out of the way when the sign is refused (403) and says why
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > video and notes side by side (DR-04) > joins through the adapter only, admits a waiting patient, and ends the call
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/features/doctor/doctor.test.tsx > video and notes side by side (DR-04) > says video is not connected when no adapter is configured, and notes still work
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222:44444444-4444-4444-8444-444444444444`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ✓ src/features/doctor/doctor.test.tsx (27 tests) 1843ms
+stderr | src/features/preconsult/desk.test.tsx > merge request and approval (7.3, 8) > requests a merge only after the survivor MRN is typed, and shows the reference
+In HTML, <form> cannot be a descendant of <form>.
+This will cause a hydration error.
+
+  <PreconsultDesk runtime={{api:{...}}} path="/arrivals" navigate={function navigate}>
+    <div>
+      <Screens path="/arrivals" api={{...}} locationId="11111111-1..." permissions={[...]} navigate={function navigate}>
+        <h1>
+        <Tabs items={[...]} selected="merge" onSelect={function bound dispatchSetState} label="Pre-consul...">
+          <div className="ehr-tabs">
+            <div>
+            <div>
+            <div>
+            <div>
+            <div>
+            <div role="tabpanel" id="_r_4c_-pan..." aria-labelledby="_r_4c_-tab..." hidden={false} tabIndex={0} ...>
+              <Merge preset={{...}}>
+                <section aria-labelledby="merge-title">
+                  <h2>
+                  <MergeRequestForm preset={{...}}>
+                    <section aria-labelledby="mreq-title" className="ehr-card">
+                      <h3>
+                      <p>
+>                     <form onSubmit={function onSubmit} noValidate={true}>
+                        <ErrorSummary>
+                        <fieldset>
+                          <legend>
+                          <RecordLine>
+                          <PatientPicker idPrefix="ms" chooseLabel="Choose thi..." chosenId={null} ...>
+                            <div>
+>                             <form onSubmit={function onSubmit} noValidate={true} aria-label="Find the patient">
+                        ...
+
+<form> cannot contain a nested <form>.
+See this log for the ancestor stack trace.
+
+ ✓ src/features/preconsult/desk.test.tsx (30 tests) 2347ms
+   ✓ arrivals board and check-in (PC-01, PC-02) (6)
+     ✓ lists today's visits with the three pre-visit items in words 498ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+ ✓ src/features/admin-config/admin-config.test.tsx (36 tests) 3123ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+ ✓ src/features/admin-compliance/admin-compliance.test.tsx (27 tests) 2769ms
+   ✓ Break-the-glass review (AD-02) (5)
+     ✓ tells the holder they cannot review their own access, and a second review that it was done 388ms
+ ✓ src/features/admin-auth/admin-auth.test.tsx (22 tests) 1298ms
+ ✓ src/features/availability/availability.test.tsx (34 tests) 3789ms
+   ✓ weekly hours (DR-11) (11)
+     ✓ shows the appointments a change would leave outside the hours before it saves, and saves only after acknowledgement 364ms
+     ✓ stops using hours only after showing the affected appointments 1080ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+ ✓ src/features/messages/messages.test.tsx (12 tests) 1469ms
+   ✓ axe (jsdom; contrast and target size run in the Playwright spec) (1)
+     ✓ tasks, new task, threads and an open thread have no violations 456ms
+ ✓ src/features/availability/affected.test.ts (8 tests) 22ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+ ✓ src/app/a11y.test.tsx (18 tests) 2571ms
+   ✓ axe on the staff shell (jsdom) (7)
+     ✓ /sign-in 303ms
+   ✓ axe on the administrator screens (jsdom) (11)
+     ✓ /admin/audit 435ms
+     ✓ /admin/clinics 436ms
+ ✓ src/app/StaffApp.test.tsx (39 tests) 4563ms
+   ✓ sign-in screen (SH-03) (5)
+     ✓ offers Continue with Google only, no password, and the plain contact-IT message 309ms
+   ✓ session gate and role navigation (13)
+     ✓ shows the Doctor navigation to a doctor and lands on the first screen 448ms
+     ✓ an administrator session never gets staff navigation; it opens on the audit log 349ms
+   ✓ idle warning and sign-out (4)
+     ✓ shows the session-ended dialog when the deadline has passed and goes to sign-in 2051ms
+   ✓ administrator portal is routed (INT04-F03) (15)
+     ✓ /admin/clinics renders under the admin realm bar 331ms
+ ✓ src/features/auth/auth.test.ts (19 tests) 22ms
+ ✓ src/App.test.tsx (2 tests) 295ms
+ ✓ src/features/documents/DocumentsPage.test.tsx (3 tests) 461ms
+   ✓ DocumentsPage (3)
+     ✓ shows upload, list and the confirm control to a classifier 407ms
+ ✓ src/a11y.test.tsx (2 tests) 568ms
+   ✓ axe smoke on the shell (jsdom) (2)
+     ✓ shell with the non-blocking release bar 373ms
+ ✓ src/features/preconsult/qr.test.ts (3 tests) 8ms
+
+ Test Files  15 passed (15)
+      Tests  282 passed (282)
+   Start at  10:18:42
+   Duration  17.75s (tests 51%, environment 30%, transform 7%, setup 6%, import 6%)
+
+Environment  jsdom was created 15 times · 14.50s total, 30% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+JUNIT report written to /tmp/qa-ev/staff.xml
