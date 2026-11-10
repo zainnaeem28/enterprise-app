@@ -36,6 +36,27 @@ Tags are `r<release_number>` (`RELEASE_TAG_GLOB`, default `r[0-9]*`): the newest
 and writes `previous-release.json` with `"status":"none"`. That is **not a pass of those checks**. Set the repository
 variable `REQUIRE_PREVIOUS_RELEASE_TAG=true` once the first release tag exists; the jobs then fail when no tag is found.
 
+### Rehearsal baselines (before the first production release)
+
+Until the first production release, the newest `r<N>` tag is a **rehearsal baseline**, not a release: no manifest, image or
+G3 exists for it. Rehearsal baselines:
+
+| Tag    | Decision ticket |
+| ------ | --------------- |
+| `r133` | HEAAA-658       |
+| `r206` | HEAAA-676       |
+
+- **P-1 (before the first production release).** When a reviewed, deliberate change (with its own decision ticket) makes the
+  rehearsal baseline's suites fail, the Solution Architect may decide to add a newer rehearsal tag, reviewed by the Solution
+  Architect Reviewer. Existing tags are never moved or deleted. Accidental regressions are never handled this way: they are
+  fixed in the candidate.
+- **P-2 (after the first production release).** The baseline is the deployed release and is never advanced to make CI
+  green. An N-1 failure is fixed with expand/contract in the candidate. A per-test expected-incompatibility list may only be
+  introduced by a separate architecture decision for a change that cannot be made compatible, with a rollout plan that
+  guarantees no N-1 task runs against the new schema.
+
+When the first real release is tagged, set `REQUIRE_PREVIOUS_RELEASE_TAG=true`; rehearsal tags then stop being the newest.
+
 ## Limits
 
 - PostgreSQL in CI is a container, not RDS. Role-level `transaction_timeout` visible to the audit trigger on RDS stays

@@ -141,7 +141,7 @@ scripts/ci/migration-check/seed.sh migration-check                 # seeded-viol
 INTEGRATION_SKIP_N_MINUS_1=true scripts/ci/migration-check/integration-db.sh   # api, worker, kernel and db-foundation suites (about 3 min)
 ```
 
-Without a release tag `r<N>` that is an ancestor of `HEAD`, the N-1 (upgrade) path cannot run; that is why it is skipped, and it is not a pass. `seed.sh integration-db` is the control for the integration job. A single suite: `EHR_TEST_ADMIN_URL=... node --test apps/api/dist/src/<path>.dbtest.js`.
+Without a release tag `r<N>` that is an ancestor of `HEAD`, the N-1 (upgrade) path cannot run; that is why it is skipped, and it is not a pass. N-1 runs against the newest rehearsal baseline tag (currently `r206`; `r133` is kept), which is not a release; see `scripts/ci/migration-check/README.md`. `seed.sh integration-db` is the control for the integration job. A single suite: `EHR_TEST_ADMIN_URL=... node --test apps/api/dist/src/<path>.dbtest.js`.
 
 Cms database tests use their own throwaway CMS-role database and empty it:
 
