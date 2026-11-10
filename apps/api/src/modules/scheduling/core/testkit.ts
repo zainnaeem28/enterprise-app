@@ -25,7 +25,7 @@ import type {
 import { createSchedulingControllers, schedulingResolvers } from './controller.js';
 import { SCHEDULING_CORE_JOBS } from './jobs.js';
 import { nearbyFreeStarts, SchedulingCoreService } from './service.js';
-import type { AvailabilityPort } from './types.js';
+import type { AvailabilityPort, SlotQuery } from './types.js';
 
 const {
   ORG,
@@ -108,6 +108,28 @@ export interface SchedKit {
   close(): Promise<void>;
 }
 
+/**
+ * The overbook answer of the real resolver (availability/search.ts, HEAAA-632 R2) for a doctor registered as overbookable: every
+ * booking is an overbook row, but only where the stored cap is 2 or more (0 or 1 means no overbooking). The key names the slot.
+ */
+export async function stubOverbook(
+  tx: Tx,
+  q: SlotQuery,
+  key: string | undefined,
+): Promise<{ ok: true; overbook?: { sessionKey: string } }> {
+  if (key === undefined) return { ok: true };
+  const r = await tx.query(
+    `SELECT overbook_cap_per_session AS cap FROM organisation.booking_policy
+      WHERE service_id = $1::uuid AND (location_id = $2::uuid OR location_id IS NULL)
+      ORDER BY location_id NULLS LAST LIMIT 1`,
+    [q.serviceId, q.locationId],
+  );
+  const cap = Number((r.rows[0] as { cap?: unknown } | undefined)?.cap ?? 0);
+  return cap >= 2
+    ? { ok: true, overbook: { sessionKey: `${key}:${q.startsAt.toISOString()}` } }
+    : { ok: true };
+}
+
 export async function setupScheduling(name: string): Promise<SchedKit> {
   const holder: { k?: Kit; svc?: SchedulingCoreService } = {};
   const lazyDb = {
@@ -170,12 +192,7 @@ export async function setupScheduling(name: string): Promise<SchedKit> {
   await wc.end();
 
   const availability: AvailabilityPort = {
-    resolve: (_tx, q) =>
-      Promise.resolve(
-        overbook.has(q.clinicianId)
-          ? { ok: true as const, overbook: { sessionKey: overbook.get(q.clinicianId) as string } }
-          : { ok: true as const },
-      ),
+    resolve: (tx, q) => stubOverbook(tx, q, overbook.get(q.clinicianId)),
     alternatives: (tx, q) => nearbyFreeStarts(tx, q),
   };
   const svc = new SchedulingCoreService({

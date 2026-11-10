@@ -100,7 +100,11 @@ const READ_SQL = `
     LEFT JOIN organisation.location l ON l.id = r.location_id
    WHERE r.id = $1::uuid`;
 
-/** Start times after `q.startsAt` at the same clock grid that no active occupancy of the doctor or room covers (helper for availability ports). */
+/**
+ * Start times after `q.startsAt` at the same clock grid that no active occupancy covers: no row of the doctor overlaps it (overbook
+ * rows count, so a slot that holds an overbook row is never offered) and no row of another clinician holds the room (helper for
+ * availability ports; HEAAA-632 R8).
+ */
 export async function nearbyFreeStarts(
   tx: Tx,
   q: SlotQuery,
@@ -114,8 +118,9 @@ export async function nearbyFreeStarts(
     const e = new Date(s.getTime() + step);
     const busy = await tx.query(
       `SELECT 1 FROM scheduling.slot_occupancy o
-        WHERE o.status = ANY($4::text[]) AND NOT o.overbook AND o.period && tstzrange($1::timestamptz, $2::timestamptz, '[)')
-          AND (o.clinician_principal_id = $3::uuid OR ($5::uuid IS NOT NULL AND o.room_id = $5::uuid)) LIMIT 1`,
+        WHERE o.status = ANY($4::text[]) AND o.period && tstzrange($1::timestamptz, $2::timestamptz, '[)')
+          AND (o.clinician_principal_id = $3::uuid
+               OR ($5::uuid IS NOT NULL AND o.room_id = $5::uuid AND o.clinician_principal_id <> $3::uuid)) LIMIT 1`,
       [s.toISOString(), e.toISOString(), q.clinicianId, [...ACTIVE_STATUSES], q.roomId],
     );
     if (busy.rows.length === 0) out.push(s.toISOString());
@@ -283,7 +288,7 @@ export class SchedulingCoreService {
       if (overlap.rows.length > 0) {
         // When the very slot asked for is already someone's (the same patient racing themselves for one slot, TC-BK-13), the honest
         // answer is "taken, here are others"; the overlap answer is for different slots that collide in the patient's own diary.
-        if (await this.slotBusy(tx, q))
+        if (await this.slotBusy(tx, q, policy.overbookCapPerSession))
           throw new SlotTakenError(await this.safeAlternatives(tx, q));
         throw new OverlappingAppointmentError();
       }
@@ -539,6 +544,9 @@ export class SchedulingCoreService {
     const new0 = await this.get(tx, newHoldId);
     if (old0 === undefined || new0 === undefined) throw new ReservationNotFoundError();
     if (old0.patientId !== new0.patientId) throw new SchedulingValidationError(['newHoldId']);
+    // A staff grant is location-bound and the route authorizes only the old appointment's location, so the new hold must be there too.
+    if (tx.scope.audience === 'staff' && old0.locationId !== new0.locationId)
+      throw new ReservationNotFoundError();
     if (o.expectedVersion !== undefined && o.expectedVersion !== old0.version)
       throw new PreconditionFailedError();
     const staff = tx.scope.audience === 'staff';
@@ -628,12 +636,21 @@ export class SchedulingCoreService {
     return v;
   }
 
-  private async slotBusy(tx: Tx, q: SlotQuery): Promise<boolean> {
+  /**
+   * Is the slot asked for taken (as opposed to merely colliding with the patient's own diary)? Busy when another clinician holds the
+   * room, or when the doctor's active rows overlapping the slot (any `overbook` value) have reached the effective cap: the stored
+   * cap when it is 2 or more and an overbook row exists (rows are overbook rows only where the window was overbookable with a cap of
+   * 2 or more when written), else 1. The helper only chooses the error; `scheduling.occupy` stays the authority (HEAAA-632 R8).
+   */
+  private async slotBusy(tx: Tx, q: SlotQuery, cap: number): Promise<boolean> {
     const r = await tx.query(
-      `SELECT 1 FROM scheduling.slot_occupancy o
-        WHERE o.status = ANY($4::text[]) AND NOT o.overbook AND o.period && tstzrange($1::timestamptz, $2::timestamptz, '[)')
+      `SELECT count(*) FILTER (WHERE o.clinician_principal_id = $3::uuid) AS own,
+              coalesce(bool_or(o.overbook) FILTER (WHERE o.clinician_principal_id = $3::uuid), false) AS has_overbook,
+              coalesce(bool_or(true) FILTER (WHERE o.clinician_principal_id <> $3::uuid), false) AS room_taken
+         FROM scheduling.slot_occupancy o
+        WHERE o.status = ANY($4::text[]) AND o.period && tstzrange($1::timestamptz, $2::timestamptz, '[)')
           AND (o.clinician_principal_id = $3::uuid OR ($5::uuid IS NOT NULL AND o.room_id = $5::uuid))
-          AND NOT (o.status = 'held' AND o.expires_at < now()) LIMIT 1`,
+          AND NOT (o.status = 'held' AND o.expires_at < now())`,
       [
         q.startsAt.toISOString(),
         q.endsAt.toISOString(),
@@ -642,7 +659,11 @@ export class SchedulingCoreService {
         q.roomId,
       ],
     );
-    return r.rows.length > 0;
+    const row = r.rows[0] as Row | undefined;
+    if (row === undefined) return false;
+    if (row['room_taken'] === true) return true;
+    const effCap = cap >= 2 && row['has_overbook'] === true ? cap : 1;
+    return Number(row['own']) >= effCap;
   }
 
   private async safeAlternatives(tx: Tx, q: SlotQuery): Promise<string[]> {

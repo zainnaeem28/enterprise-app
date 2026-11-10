@@ -38,10 +38,11 @@ tests TC-DR-01..03, TC-BK-03/04/10 (data half). The booking core (holds, confirm
   and the handler admits a patient-realm session or a google-realm session holding the permission; any other session is `403`, no session `401`.
 - **D2. Slot grid and buffers.** The grid step is the service's `duration_min`. `buffer_min` is **not applied**: a patient transaction cannot read it (22.5.1 does not grant it,
   organisation README N-BE03-4), and one grid must serve both audiences. Needs an Architect decision (expose it, or fold it into the directory view).
-- **D3. `includeOverbook` (staff only).** A slot is offered when nothing occupies it. In an overbookable rule (cap `overbook_cap_per_session` > 0), staff with
-  `includeOverbook: true` also get slots that are already occupied, flagged `overbook: true`, until the session's overbook rows reach the cap; patients never get them and a patient
-  who sends the flag gets `422`. `resolve` (hold) names the session (`ruleId:localDate`) when the slot is occupied and the cap is positive, so `scheduling.occupy` counts it under the
-  session lock; a free slot is booked as a normal row and the exclusion constraint stays the authority. This is one reading of 22.8/BR-02, recorded for the Architect.
+- **D3. `includeOverbook` (staff only), as ruled in HEAAA-632 D-F11-T1.** A slot is offered when no row of the doctor overlaps it and no other clinician holds its room. In an
+  overbookable rule with a stored cap of 2 or more, staff with `includeOverbook: true` also get a slot that already holds 1 to cap-1 bookings, flagged `overbook: true`; a full slot
+  is not offered and does not hide the other slots of the window; patients never get an occupied slot and a patient who sends the flag gets `422`. `resolve` (hold) answers with an
+  overbook row for every booking of such a window, the first included (key `ruleId:slotStart`, traceability only), so the cap is the total in the slot. A cap of 0 or 1 means no
+  overbooking. The database decides: `scheduling.occupy` and `guard_overbook_origin` (0905) count by overlap.
 - **D4. Busy-block freshness** is derived from `busy_block.synced_at` (the doctor's latest row). `calendar_sync.calendar_link.last_synced_at` does not exist yet; BE-14 should supply
   the freshness of a linked calendar that has no rows, otherwise a linked doctor with an empty calendar is never flagged.
 - **D5. `busy_block` has no writer here.** The design names `scheduling.replaceBusyBlocks` (worker); it belongs to calendar-sync (BE-14), which also grants its function owner

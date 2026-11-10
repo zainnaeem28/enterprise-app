@@ -1,0 +1,6 @@
+# Summary only: the full log is not committed because test names trip gitleaks (same as rounds 2 and 3). Full run: exit 0, see exit-codes.txt
+db-foundation: 120 test(s), 0 failure(s), 0 skipped
+kernel: 23 test(s), 0 failure(s), 0 skipped
+api: 1015 test(s), 0 failure(s), 0 skipped
+worker: 121 test(s), 0 failure(s), 0 skipped
+database suites: 4 suite(s), 1279 test(s)

@@ -1,0 +1,5 @@
+Starting filesystem walk for root: /
+Scanned /tmp/sec641/pnpm-lock.yaml file and found 796 packages
+End status: 0 dirs visited, 1 inodes visited, 1 Extract calls, 15.408084ms elapsed, 15.408154ms wall time
+non-blocking: deepmerge@4.3.1 GHSA-gcqx-w48m-w2h4 (deepmerge mergeObject() allows prototype poisoning of returned objects): severity 5.3, no fix
+osv: 1 package(s) with findings, 1 vulnerability, none blocking

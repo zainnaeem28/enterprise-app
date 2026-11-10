@@ -190,7 +190,7 @@ describe('RA-R1-03: parallel booking of one slot (TC-BK-13, 14, 15)', () => {
     }
   });
 
-  test('TC-BK-15 (SA-F-10): an overbookable session with a cap of 2 under 100 parallel bookings: exactly 2 succeed, never more', async () => {
+  test('TC-BK-15 (SA-F-10): an overbookable session with a cap of 2 under 100 parallel bookings: exactly 2 succeed, never more (the stub resolver now answers as the real one does; the real-resolver run is in availability/overbook.dbtest.ts)', async () => {
     const doc = (await t.doctor()).principalId;
     t.overbook.set(doc, 'SESSION-1');
     await t.k.sa.query(
@@ -252,13 +252,22 @@ describe('RA-R1-03: parallel booking of one slot (TC-BK-13, 14, 15)', () => {
     }
   });
 
-  test('an overbook cap of 0 (the default) refuses every overbook row', async () => {
+  test('an overbook cap of 0 (the default) means no overbooking: exactly one booking of the slot (HEAAA-632 T4)', async () => {
     const doc = (await t.doctor()).principalId;
     t.overbook.set(doc, 'SESSION-0');
-    const pid = await t.bare(500);
-    const scope = await t.patientScope(pid);
-    const r = await book(scope, holdInput(pid, doc, slotStart(nextDay()), { serviceId: SVC })); // SVC has no policy row: cap 0
-    assert.ok(!r.ok && r.err instanceof SlotTakenError);
+    const s = slotStart(nextDay());
+    const casts = await Promise.all(
+      Array.from({ length: 5 }, async (_, i) => {
+        const pid = await t.bare(500 + i);
+        return { pid, scope: await t.patientScope(pid) };
+      }),
+    );
+    const out = await Promise.all(
+      casts.map((c) => book(c.scope, holdInput(c.pid, doc, s, { serviceId: SVC }))), // SVC has no policy row: cap 0
+    );
+    assert.equal(wins(out), 1);
+    for (const l of out.filter((x): x is { ok: false; err: unknown } => !x.ok))
+      assert.ok(l.err instanceof SlotTakenError, String(l.err));
     t.overbook.delete(doc);
   });
 });

@@ -328,6 +328,8 @@ export class TelehealthService {
       startsAt: c.startsAt.toISOString(),
       endsAt: c.endsAt.toISOString(),
       clinicTimeZone: c.timeZone,
+      // The same member name as the appointment contract (`locationTimeZone`, TC-TH-02); `clinicTimeZone` is what the portal reads.
+      locationTimeZone: c.timeZone,
       clinicLocalStart: c.clinicLocalStart,
     };
   }

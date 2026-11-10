@@ -68,6 +68,14 @@ const idOf = (v: unknown, name: string): string => {
 /** The handlers of the front door's and the notes' job types; each opens a patients-scope system transaction for the one patient. */
 export function createClinicalWorkflowTasks(deps: ClinicalWorkerTaskDeps): Record<string, Task> {
   return {
+    'clinical.on_questionnaire_red_flag': async (payload) => {
+      const p = payload as Record<string, unknown>;
+      const patientId = idOf(p['patientId'], 'patientId');
+      const responseId = idOf(p['responseId'], 'responseId');
+      await deps.db.withScope(patientsScope(deps.orgId, [patientId]), (tx) =>
+        deps.clinical.raiseQuestionnaireRedFlag(tx, responseId),
+      );
+    },
     'clinical.on_alert_unacknowledged': async (payload) => {
       const p = payload as Record<string, unknown>;
       // An alert without a patient is not a red flag (ADR-022): nothing to re-target.

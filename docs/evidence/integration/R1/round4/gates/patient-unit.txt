@@ -1,0 +1,32 @@
+$ NODE_ENV=test vitest run --reporter=default --reporter=junit --outputFile.junit="${JUNIT_DIR:-.junit}/patient.xml"
+
+ RUN  v5.1.0 /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-141-sdlc-ticket-int-05-integrate-r1-release-candidate-and-run-the-complete-combined-check-set/apps/patient
+
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+ ✓ src/features/previsit/previsit.test.tsx (22 tests) 810ms
+ ✓ src/features/telehealth/telehealth.test.tsx (15 tests) 1413ms
+   ✓ PP-23 device check and join (13)
+     ✓ F02: opens Join by itself when the join window opens 361ms
+ ✓ src/features/booking/flow.test.tsx (28 tests) 1889ms
+   ✓ PP-10..PP-14 book a visit (5)
+     ✓ walks service, doctor and place, time, confirm and booked, with step-1 and step-2 keys that differ 330ms
+ ✓ src/app/App.test.tsx (29 tests) 767ms
+ ✓ src/features/profile/profile.test.tsx (18 tests) 578ms
+ ✓ src/a11y.test.tsx (14 tests) 604ms
+ ✓ src/features/privacy/privacy.test.tsx (8 tests) 457ms
+ ✓ src/features/messages/messages.test.tsx (8 tests) 296ms
+ ✓ src/features/auth/ProblemPage.test.tsx (13 tests) 208ms
+ ✓ src/features/booking/lib.test.ts (10 tests) 45ms
+ ✓ src/features/auth/signIn.test.ts (8 tests) 12ms
+ ✓ src/features/auth/returnTo.test.ts (13 tests) 5ms
+
+ Test Files  12 passed (12)
+      Tests  186 passed (186)
+   Start at  09:51:57
+   Duration  6.29s (tests 42%, environment 42%, setup 8%, import 6%, transform 2%)
+
+Environment  jsdom was created 12 times · 7.08s total, 42% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+JUNIT report written to /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-141-sdlc-ticket-int-05-integrate-r1-release-candidate-and-run-the-complete-combined-check-set/apps/patient/.junit/patient.xml

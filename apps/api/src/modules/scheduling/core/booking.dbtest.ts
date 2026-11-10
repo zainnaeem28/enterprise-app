@@ -898,6 +898,25 @@ describe('cancel and reschedule (25.1, 23.1; TC-BK-05, 06; 38.2 item 2)', () => 
       'rescheduleOf must be an appointment of the patient',
     );
   });
+
+  test('HEAAA635-R1-F01: a staff member with a grant at A1 cannot reschedule onto a hold at B1; nothing changes', async () => {
+    const c = await confirmed(45, inHours(150));
+    const deskA = await t.staffScope([A1]);
+    const h = await t.as(c.scope, (tx) =>
+      t.svc.hold(
+        tx,
+        meta,
+        holdInput(c.pid, c.doc, inHours(160), { locationId: B1, rescheduleOf: c.id }),
+      ),
+    );
+    await rejects(
+      t.as(deskA, (tx) => t.svc.reschedule(tx, meta, c.id, h.reservationId)),
+      ReservationNotFoundError,
+      'new hold at another location',
+    );
+    assert.equal(await status(c.id), 'confirmed');
+    assert.equal(await status(h.reservationId), 'held');
+  });
 });
 
 describe('who sees what (6.5, TC-BK-11, TC-BK-18)', () => {

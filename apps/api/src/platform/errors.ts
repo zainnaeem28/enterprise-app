@@ -26,6 +26,8 @@ export class ApiError extends Error {
     readonly extras: {
       errors?: { path: string; code: string }[];
       retryAfterSeconds?: number;
+      /** `clinical.not_assigned` only (30): the caller may open break-the-glass. */
+      btgAvailable?: boolean;
     } = {},
   ) {
     super(code);
@@ -34,7 +36,7 @@ export class ApiError extends Error {
 }
 
 export function problemBody(e: ApiError, requestId: string): ApiErrorBody {
-  const body: ApiErrorBody & { retryAfterSeconds?: number } = {
+  const body: ApiErrorBody & { retryAfterSeconds?: number; btgAvailable?: boolean } = {
     type: `https://errors.invalid/${e.code.replace('.', '/')}`,
     title: TITLES[e.code] ?? e.code,
     status: e.status,
@@ -44,5 +46,6 @@ export function problemBody(e: ApiError, requestId: string): ApiErrorBody {
   };
   if (e.extras.errors !== undefined) body.errors = e.extras.errors;
   if (e.extras.retryAfterSeconds !== undefined) body.retryAfterSeconds = e.extras.retryAfterSeconds;
+  if (e.extras.btgAvailable !== undefined) body.btgAvailable = e.extras.btgAvailable;
   return body;
 }

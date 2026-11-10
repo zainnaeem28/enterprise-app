@@ -1,0 +1,1 @@
+sbom: CycloneDX 1.7, 949 components (795 npm)

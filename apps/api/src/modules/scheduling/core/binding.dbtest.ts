@@ -213,10 +213,10 @@ describe("F03: scheduling.occupy does not trust the caller's overbook flag and c
     );
   });
 
-  test('with a stored cap of 1 at the location, the arguments cannot raise it: a second row under another invented key is refused', async () => {
+  test('with a stored cap of 2 at the location, the arguments cannot raise it: a third row under another invented key is refused (all active rows of the doctor count, HEAAA-632 T3)', async () => {
     await t.k.sa.query(
       `INSERT INTO organisation.booking_policy (id, organisation_id, service_id, location_id, cutoff_hours, max_future_per_patient, overbook_cap_per_session)
-       VALUES ($1, $2, $3, $4, 24, 3, 1) ON CONFLICT DO NOTHING`,
+       VALUES ($1, $2, $3, $4, 24, 3, 2) ON CONFLICT DO NOTHING`,
       [randomUUID(), ORG, SVC, A2],
     );
     const doc = (await t.doctor()).principalId;
@@ -227,13 +227,14 @@ describe("F03: scheduling.occupy does not trust the caller's overbook flag and c
     await assert.rejects(
       t.as(sa, async (tx) => {
         await tx.query(sql, [randomUUID(), A2, doc, s.toISOString(), 'k1']);
-        await tx.query('SAVEPOINT second');
+        await tx.query(sql, [randomUUID(), A2, doc, s.toISOString(), 'k2']);
+        await tx.query('SAVEPOINT third');
         await rejectsSql(
-          tx.query(sql, [randomUUID(), A2, doc, s.toISOString(), 'k2']),
+          tx.query(sql, [randomUUID(), A2, doc, s.toISOString(), 'k3']),
           '23P01',
-          'second overbook row',
+          'third overbook row',
         );
-        await tx.query('ROLLBACK TO SAVEPOINT second');
+        await tx.query('ROLLBACK TO SAVEPOINT third');
         throw new Error('rollback');
       }),
       /rollback/,

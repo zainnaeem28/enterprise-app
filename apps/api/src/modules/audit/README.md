@@ -36,7 +36,8 @@ schedules; the F-05 runner does not pass a crontab yet (integration step).
 - **AUD-N6 `export_job` has three extra columns** (`last_occurred_at`, `last_event_id`, `chunks_done`): the cursor of the chunked job (queue payloads carry IDs only).
 - **AUD-N7 partitions.** Months after Dec 2027 need an operations migration; `audit.verify_anchors` reports `partitionHorizonDays` and warns under 60. Archive/detach/drop (`audit_archiver`, dual control) is DO-09b; nothing here lets any role drop a partition except the owner `app_owner`, which cannot be restricted by grants.
 - **AUD-N8 `catalog-lists.mjs`.** `audit.event` is exempt from the merge guard by design (22.2, "K, exempt"); `audit.btg_grant` is "K". Both have `patient_id` and no `patient.guard_open_patient` yet, so catalog check `M-5-patient-guard` fails until `db/tools/catalog-lists.mjs` (F-03) lists them in `patientGuardExempt`. Not edited here (outside allowed paths).
-- **Not built:** object-store sink for exports and anchors (infrastructure), HTTP routes of 31 (`/admin/audit-events/search`, `/admin/audit-exports`, `/admin/btg-grants`, `/patients/{id}/break-glass`), the `audit_anchor_mismatch` alert row (notifications handler of `audit.anchor_mismatch`), the ready notice of an export, retention (TC-AU-09, `BLOCKED` until G2 value).
+- `POST /patients/{id}/break-glass` is served by the clinical chart module (`chart/break-glass-controller.ts`; the audit module cannot import identity).
+- **Not built:** object-store sink for exports and anchors (infrastructure), HTTP routes of 31 (`/admin/audit-events/search`, `/admin/audit-exports`, `/admin/btg-grants`), the `audit_anchor_mismatch` alert row (notifications handler of `audit.anchor_mismatch`), the ready notice of an export, retention (TC-AU-09, `BLOCKED` until G2 value).
 
 ## Tests
 

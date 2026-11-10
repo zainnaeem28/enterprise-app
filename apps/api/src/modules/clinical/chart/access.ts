@@ -94,6 +94,6 @@ export class ChartAccess {
       ip: meta.ip ?? null,
       userAgent: meta.userAgent ?? null,
     });
-    throw new NotAssignedError();
+    throw new NotAssignedError(ctx.grants.has('audit.btg.open'));
   }
 }

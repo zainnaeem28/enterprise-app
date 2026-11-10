@@ -26,6 +26,14 @@ export class ExportTooLargeError extends AuditError {
   }
 }
 
+/** 429 kernel.rate_limited: the requester has reached the hourly export limit (setting audit_export_max_per_hour; SEC-D-19 C5, TC-SEC-20). */
+export class ExportRateLimitedError extends AuditError {
+  constructor() {
+    super('kernel.rate_limited', 429, true);
+    this.name = 'ExportRateLimitedError';
+  }
+}
+
 /** 403 audit.self_review: the reviewer is the holder of the grant. */
 export class SelfReviewError extends AuditError {
   constructor() {

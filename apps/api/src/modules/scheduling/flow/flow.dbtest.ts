@@ -724,6 +724,105 @@ describe('arrivals board and queue (29.3, TC-PC-05, TC-PC-06)', () => {
     );
     void p;
   });
+
+  test('QA-EXEC-F05 / TC-BK-17: parallel assignments of one room to visits at the same time: exactly one wins, the rest are 409 scheduling.slot_taken', async () => {
+    t.clock.at = NOW;
+    const visits = [];
+    for (const n of [190, 191, 192]) {
+      const v = await visit(n);
+      await t.as(await desk(), (tx) => t.flow.checkIn(tx, meta(), v.rid, { method: 'desk' }));
+      visits.push(v);
+    }
+    const put = async (rid: string, body: Record<string, unknown>) => {
+      const v = Number(
+        (
+          await one<{ row_version: string }>(
+            `SELECT row_version FROM scheduling.queue_entry WHERE id = $1`,
+            [rid],
+          )
+        ).row_version,
+      );
+      return call(t.k.base, 'PUT', `/api/v1/appointments/${rid}/assignment`, {
+        cookie: t.deskA1.cookie,
+        headers: { ...writeHeaders(t.deskA1), 'if-match': `W/"${v}"` },
+        body,
+      });
+    };
+    const room = ROOM1;
+    const race = await Promise.all(visits.map((v) => put(v.rid, { roomId: room })));
+    assert.deepEqual(
+      race.map((r) => r.status).sort(),
+      [200, 409, 409],
+      race.map((r) => r.body).join(' | '),
+    );
+    assert.ok(
+      race
+        .filter((r) => r.status === 409)
+        .every((r) => r.json()['code'] === 'scheduling.slot_taken'),
+    );
+    const holders = await one<{ n: string }>(
+      `SELECT count(*) AS n FROM scheduling.queue_entry WHERE room_id = $1 AND stage <> 'done'`,
+      [room],
+    );
+    assert.equal(Number(holders.n), 1, 'exactly one queue entry holds the room');
+    // sequentially too: the loser can take the room once the winner has released it
+    const winner = visits[race.findIndex((r) => r.status === 200)];
+    const loser = visits[race.findIndex((r) => r.status === 409)];
+    assert.ok(winner !== undefined && loser !== undefined);
+    assert.equal((await put(loser.rid, { roomId: room })).status, 409);
+    assert.equal((await put(winner.rid, { roomId: null })).status, 200);
+    assert.equal((await put(loser.rid, { roomId: room })).status, 200);
+    // the database refuses a second holder even when the API pre-check is bypassed
+    await assert.rejects(
+      (async () => {
+        const s = await desk();
+        await t.as(s, (tx) =>
+          tx.query(`UPDATE scheduling.queue_entry SET room_id = $2::uuid WHERE id = $1::uuid`, [
+            winner.rid,
+            room,
+          ]),
+        );
+      })(),
+      (e: { code?: string }) => e.code === '23P01',
+    );
+  });
+});
+
+describe('an overbook row holds its room (HEAAA-632 T9 c, R8)', () => {
+  test("a queue reassignment to another doctor and room R, while the first doctor's overbook row holds R, is refused with 409 scheduling.slot_taken", async () => {
+    t.clock.at = NOW;
+    const a = await visit(195);
+    const b = await visit(196);
+    // A's visit holds ROOM1 and is an overbook row (what the real resolver writes in an overbookable window with a cap of 2)
+    await t.k.sa.query('BEGIN');
+    try {
+      await t.k.sa.query(`SET LOCAL session_replication_role = replica`);
+      await t.k.sa.query(
+        `UPDATE scheduling.slot_occupancy SET room_id = $2, overbook = true, session_key = 'SESSION-OB' WHERE id = $1`,
+        [a.rid, ROOM1],
+      );
+      await t.k.sa.query('COMMIT');
+    } catch (e) {
+      await t.k.sa.query('ROLLBACK');
+      throw e;
+    }
+    await t.as(await desk(), (tx) => t.flow.checkIn(tx, meta(), b.rid, { method: 'desk' }));
+    const version = Number(
+      (
+        await one<{ row_version: string }>(
+          `SELECT row_version FROM scheduling.queue_entry WHERE id = $1`,
+          [b.rid],
+        )
+      ).row_version,
+    );
+    const r = await call(t.k.base, 'PUT', `/api/v1/appointments/${b.rid}/assignment`, {
+      cookie: t.deskA1.cookie,
+      headers: { ...writeHeaders(t.deskA1), 'if-match': `W/"${version}"` },
+      body: { roomId: ROOM1 },
+    });
+    assert.equal(r.status, 409, r.body);
+    assert.equal(r.json()['code'], 'scheduling.slot_taken');
+  });
 });
 
 describe('no-show (29.3, 33.1, TC-PC-09)', () => {

@@ -33,9 +33,11 @@ participant (38.2 item 11) and the confirm-versus-merge races (38.2 item 1), all
 - **No double booking** is the database's: `EXCLUDE USING gist (clinician_principal_id WITH =, period WITH &&) WHERE (active status AND NOT
 overbook)`, and the same for a room. `scheduling.occupy` first marks the overlapping stale holds of the doctor and of the room as
   expired (locked in id order, so racing callers wait for each other), then inserts; `23P01` is `409 scheduling.slot_taken`.
-- **Overbookable sessions**: every row of an overbookable session is flagged `overbook` and is counted under
-  `pg_advisory_xact_lock(hashtext('ob:' || doctor || session_key))` against `overbook_cap_per_session` (the API reads it from the booking
-  policy and passes it; a cap of 0 refuses). The cap is the number of appointments in the session (TC-BK-15: cap 2, exactly 2).
+- **Overbookable sessions** (HEAAA-632 D-F11-T1): in an overbookable window with a stored cap of 2 or more, every booking, the first
+  included, is a row flagged `overbook`. `scheduling.occupy` counts the overbook rows of the slot key under the doctor's lock and
+  `guard_overbook_origin` (0905) counts all active rows of the doctor that overlap the period against `overbook_cap_per_session`, so the
+  cap is the number of appointments in the slot (TC-BK-15: cap 2, exactly 2; two slots of one window hold 2 + 2). A cap of 0 or 1 means
+  no overbooking. An overbook row holds its room against every other clinician, and a normal row is refused while an overbook row overlaps.
 - **Lock order (25.2)**: `lockPatients` once at the start (`key_share` for hold and cancel, `no_key_update` where `ensure_care_relationship`
   runs: confirm, reschedule), then `pg_advisory_xact_lock('pt:' || patient)`, then the doctor and room locks (`dr:` / `rm:`, sorted keys),
   then `ob:`, then the occupancy insert.

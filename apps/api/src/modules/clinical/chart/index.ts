@@ -23,6 +23,8 @@ export type { ChartSummary } from './summary.js';
 export { SEARCH_LIMIT, TerminologyService } from './terminology.js';
 export { MAX_VITALS_PER_CALL, VitalsService } from './vitals.js';
 export type { RecordVitalsInput, RecordedVitals, VitalInput } from './vitals.js';
+export { createBreakGlassControllers } from './break-glass-controller.js';
+export type { BreakGlassControllerDeps } from './break-glass-controller.js';
 export { chartResolvers, createChartControllers } from './controller.js';
 export type { ChartControllerDeps } from './controller.js';
 export { careTeamSource, registerChartAssignmentSources, reservationSource } from './assignment.js';

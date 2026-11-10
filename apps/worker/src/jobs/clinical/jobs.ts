@@ -24,6 +24,15 @@ export const CLINICAL_FRONTDOOR_JOBS: readonly JobType[] = [
     jobScope: 'patients',
     jobClass: 'handler',
   },
+  // Handler of `clinical.questionnaire_red_flag` (QA-EXEC-F06): raises the red-flag alert of a questionnaire submitted with a red flag.
+  {
+    name: 'clinical.on_questionnaire_red_flag',
+    maxAttempts: 8,
+    onMerged: 'resolve',
+    carriesPatientIds: true,
+    jobScope: 'patients',
+    jobClass: 'handler',
+  },
 ];
 
 export const CLINICAL_NOTES_JOBS: readonly JobType[] = [

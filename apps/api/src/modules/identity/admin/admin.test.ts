@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { createPrivateKey } from 'node:crypto';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, test } from 'node:test';
@@ -215,9 +215,16 @@ describe('attestation chain (BE05-R1-F07)', () => {
       '-out',
       'leaf.csr',
     );
+    // An explicit extension file makes the leaf an X.509 v3 certificate on every OpenSSL (3.0 on the CI runner issues v1 without one).
+    writeFileSync(
+      join(dir, 'leaf.ext'),
+      'basicConstraints=critical,CA:FALSE\nkeyUsage=critical,digitalSignature\n',
+    );
     sh(
       'x509',
       '-req',
+      '-extfile',
+      'leaf.ext',
       '-in',
       'leaf.csr',
       '-CA',

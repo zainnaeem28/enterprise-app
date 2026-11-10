@@ -92,6 +92,10 @@ jobs:
           tofu version | tee reports/infra-static/tool-versions.txt
           tflint --version | tee -a reports/infra-static/tool-versions.txt
           tofu fmt -check -recursive -diff infra 2>&1 | tee reports/infra-static/fmt.txt
+      - name: Share one provider plugin cache across all roots (one aws provider copy per root filled the runner disk)
+        run: |
+          mkdir -p "$RUNNER_TEMP/tf-plugin-cache"
+          echo "TF_PLUGIN_CACHE_DIR=$RUNNER_TEMP/tf-plugin-cache" >> "$GITHUB_ENV"
       - name: validate every module and root (no backend, no provider credentials)
         run: |
           set -o pipefail

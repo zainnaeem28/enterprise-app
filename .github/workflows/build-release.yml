@@ -87,6 +87,7 @@ jobs:
           corepack enable
           scripts/release/without-oidc.sh pnpm install --frozen-lockfile
           # Probe: the wrapper really removes the token from a child (a step-level env blank does not).
+          # shellcheck disable=SC2016
           scripts/release/without-oidc.sh bash -c 'echo "probe: OIDC request token visible to dependency-running commands = ${#ACTIONS_ID_TOKEN_REQUEST_TOKEN} characters (must be 0)"; [ -z "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]'
           echo "probe: and visible to a plain step = ${#ACTIONS_ID_TOKEN_REQUEST_TOKEN} characters (expected > 0 in publish mode)"
 

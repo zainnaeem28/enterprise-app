@@ -12,7 +12,18 @@ import type { IdentityEnv } from './identity-env.js';
 import type { GuardPolicy } from './platform/guard.js';
 import { MemoryRateLimiter, PgRateLimiter } from './platform/rate-limit.js';
 import { AUDIT_JOBS, AuditService } from './modules/audit/index.js';
-import { createClinicalChart, CLINICAL_CHART_JOBS } from './modules/clinical/chart/index.js';
+import {
+  createTelehealthControllers,
+  registerTelehealthHandlers,
+  TELEHEALTH_JOBS,
+  TelehealthService,
+} from './modules/telehealth/index.js';
+import type { VideoVendorPort } from './modules/telehealth/index.js';
+import {
+  createBreakGlassControllers,
+  createClinicalChart,
+  CLINICAL_CHART_JOBS,
+} from './modules/clinical/chart/index.js';
 import {
   createClinicalFrontdoor,
   createFrontdoorPorts,
@@ -101,13 +112,28 @@ import {
   IntegrationAdminService,
 } from './modules/admin-routes/index.js';
 import type { ConnectionTester, ExportUrlSigner } from './modules/admin-routes/index.js';
-import { ConnectionService, SecretService } from './modules/integration-core/index.js';
+import {
+  ConnectionService,
+  INTEGRATION_CORE_JOBS,
+  SecretService,
+} from './modules/integration-core/index.js';
 import type {
+  InboundKeyProvider,
   OutboundSecretStore,
   PayloadSealer,
   SealedJobEnqueuer,
 } from './modules/integration-core/index.js';
 import { createTemplateAdminController } from './modules/notifications/admin-controller.js';
+import {
+  CALENDAR_SYNC_JOBS,
+  CalendarLinkService,
+  CalendarUnavailableError,
+  calendarResolvers,
+  createCalendarControllers,
+  GoogleCalendarPush,
+  registerCalendarSyncHandlers,
+} from './modules/calendar-sync/index.js';
+import type { OAuthPort } from './modules/calendar-sync/index.js';
 import { createCatalogueControllers, OrganisationService } from './modules/organisation/index.js';
 import {
   createOrganisationAdminController,
@@ -163,6 +189,33 @@ export interface AdminPorts {
   enqueueApply?: SealedJobEnqueuer;
 }
 
+/**
+ * The infrastructure ports of the calendar-sync routes (BE-14). Every one is optional and absent means "refused": no OAuth client makes
+ * `POST /calendar-link/start` 503, no secret store makes the callback 503, and no channel key makes every Google push 401 (nothing is
+ * accepted without a verifiable token). None is replaced by a test value in production.
+ */
+export interface CalendarPorts {
+  oauth?: OAuthPort;
+  store?: OutboundSecretStore;
+  sealer?: PayloadSealer;
+  channelKeys?: InboundKeyProvider;
+  /** Where the browser lands after the OAuth callback; defaults to the doctor portal's calendar page. */
+  returnUrl?: string;
+}
+
+export const refusingOAuth: OAuthPort = {
+  authorizationUrl(): never {
+    throw new CalendarUnavailableError();
+  },
+  exchangeCode(): never {
+    throw new CalendarUnavailableError();
+  },
+};
+
+/** The HMAC key of the OAuth state, derived from the rate key with a fixed label (one secret, no new variable). */
+export const calendarStateKeyOf = (rateKey: string): Buffer =>
+  createHmac('sha256', rateKey).update('ehr:calendar-oauth-state:v1').digest();
+
 export interface Composition {
   /** Present when a LISTEN connection factory was supplied: it replaces the platform's transport-only `GET /alerts/stream` (ALR-N3); the caller runs `start()`/`stop()` with the app. */
   alertStreamHub?: StreamHub;
@@ -187,8 +240,11 @@ export const API_PATH_JOBS: readonly JobType[] = [
   ...NOTES_JOBS,
   ...MESSAGING_JOBS,
   ...PRIVACY_JOBS,
+  ...TELEHEALTH_JOBS,
   ...REPORTING_JOBS,
   ...IDENTITY_ADMIN_JOBS,
+  ...INTEGRATION_CORE_JOBS,
+  ...CALENDAR_SYNC_JOBS,
 ];
 
 /**
@@ -212,6 +268,7 @@ export function buildComposition(deps: {
    */
   admin?: AdminEnv;
   adminPorts?: AdminPorts;
+  calendarPorts?: CalendarPorts;
   /** Test seam only (`main.ts` never passes it): replaces the pinned WebAuthn library port so a test can enrol a software key. */
   webauthnPort?: WebAuthnPort;
   /** A NEW client on its own (non-pooled) connection per call; when given, the alert stream hub is composed. */
@@ -226,6 +283,8 @@ export function buildComposition(deps: {
   registerFrontdoorHandlers(registry);
   registerMessagingHandlers(registry);
   registerComplianceAlertHandlers(registry);
+  registerTelehealthHandlers(registry);
+  registerCalendarSyncHandlers(registry);
   const queue = new Queue(registry, 'api');
   const audit = new AuditService({ logger: deps.logger, queue });
   const organisation = new OrganisationService();
@@ -402,6 +461,19 @@ export function buildComposition(deps: {
     ...(deps.now === undefined ? {} : { now: deps.now }),
   });
   const reporting = createReporting({ db: deps.db });
+  // Telehealth (BE-15): the video vendor is not selected yet (C-11), so the port refuses every call; a join then answers 503
+  // `telehealth.vendor_unavailable`. The session, waiting room, device check and location routes need no vendor.
+  const refusingVideoVendor: VideoVendorPort = {
+    issueJoinToken: () => Promise.reject(new Error('video vendor not configured')),
+  };
+  const telehealth = new TelehealthService({
+    db: deps.db,
+    audit,
+    organisation,
+    vendor: refusingVideoVendor,
+    queue,
+    ...(deps.now === undefined ? {} : { now: deps.now }),
+  });
   // The integrations host (BE-22, INT03-F18): GET /public/v1/services|locations|clinicians. No webhook vendor is configured yet (no
   // verifier, no key store), so the receiver answers 404 for every source until C-01 delivers them.
   const integrationsHost = createIntegrationsHostControllers({
@@ -413,6 +485,34 @@ export function buildComposition(deps: {
     }),
     receiver: { receive: () => Promise.resolve({ status: 404 }) },
   });
+
+  // Calendar sync (BE-14): the doctor's calendar link and the Google push webhook. The ports default to refusing ones (see CalendarPorts).
+  const calendarPorts = deps.calendarPorts ?? {};
+  const calendarControllers = createCalendarControllers({
+    db: deps.db,
+    links: new CalendarLinkService({
+      db: deps.db,
+      audit,
+      queue,
+      store: calendarPorts.store ?? refusingSecretStore,
+      oauth: calendarPorts.oauth ?? refusingOAuth,
+      stateKeys: [calendarStateKeyOf(env.rateKey)],
+      logger: deps.logger,
+      ...(deps.now === undefined ? {} : { now: deps.now }),
+    }),
+    push: new GoogleCalendarPush({
+      db: deps.db,
+      queue,
+      sealer: calendarPorts.sealer ?? refusingPayloadSealer,
+      keys: calendarPorts.channelKeys ?? { keys: () => Promise.resolve([]) },
+      orgId: env.orgId,
+      logger: deps.logger,
+      ...(deps.now === undefined ? {} : { now: deps.now }),
+    }),
+    returnUrl: calendarPorts.returnUrl ?? `https://${env.staffHost}/doctor/calendar`,
+  });
+  for (const [name, fn] of Object.entries(calendarResolvers()))
+    identity.policy.registerResolver(name, fn);
 
   // Documents (BE-10): the patient-portal routes (patient host) and the staff routes (staff host), including the staff variants of the
   // four shared paths (INT03-F21-O1).
@@ -520,7 +620,11 @@ export function buildComposition(deps: {
       ...patient.controllers,
       ...createMergeControllers({ db: deps.db, merges }),
       ...createAvailabilityControllers({ db: deps.db, audit, availability, search }),
-      ...createSchedulingControllers({ db: deps.db, scheduling: core }),
+      ...createSchedulingControllers({
+        db: deps.db,
+        scheduling: core,
+        hosts: { staff: env.staffHost, patient: env.patientHost },
+      }),
       ...createFlowControllers({ db: deps.db, flow, limiter: new MemoryRateLimiter(1) }),
       ...chart.controllers,
       ...frontdoorBuilt.controllers,
@@ -528,6 +632,8 @@ export function buildComposition(deps: {
       ...messaging.controllers,
       ...privacy.controllers,
       ...reporting.controllers,
+      ...createBreakGlassControllers({ db: deps.db, audit }),
+      ...createTelehealthControllers({ db: deps.db, telehealth }),
       ...alertControllers,
       ...createDocumentsControllers({
         db: deps.db,
@@ -536,6 +642,7 @@ export function buildComposition(deps: {
         banner: chart.banner,
       }),
       ...integrationsHost,
+      ...calendarControllers,
       ...adminControllers,
     ],
   };

@@ -770,6 +770,7 @@ describe('organisation module on PostgreSQL 17 (BE-03)', () => {
         upload_max_mb: 20,
         uploads_per_day: 20,
         audit_export_max_rows: 1_000_000,
+        audit_export_max_per_hour: 10,
       };
       for (const [k, v] of Object.entries(want))
         assert.deepEqual(await db.withScope(doctor, (tx) => org.setting(tx, k)), v, k);

@@ -481,7 +481,7 @@ describe('notes read routes (HEAAA-286, draft 8.3) on PostgreSQL 17', () => {
         const no = await get(t.doctor2, `/api/v1/notes/${id}`);
         assert.equal(no.status, 403, no.body);
         assert.equal(code(no), 'clinical.not_assigned');
-        assert.equal(no.json()['btgAvailable'], undefined, 'accepted deviation: not on the wire');
+        assert.equal(no.json()['btgAvailable'], true, 'the member is on the wire (QA-EXEC-F01)');
         const e1 = thrown.pop();
         assert.ok(e1 instanceof NoteNotAssignedError);
         assert.equal(e1.btgAvailable, true);
@@ -493,7 +493,7 @@ describe('notes read routes (HEAAA-286, draft 8.3) on PostgreSQL 17', () => {
         const tr = await get(t.trainee, `/api/v1/notes/${id}`);
         assert.equal(tr.status, 403, tr.body);
         assert.equal(code(tr), 'clinical.not_assigned');
-        assert.equal(tr.json()['btgAvailable'], undefined);
+        assert.equal(tr.json()['btgAvailable'], false);
         const e2 = thrown.pop();
         assert.ok(e2 instanceof NoteNotAssignedError);
         assert.equal(e2.btgAvailable, false, 'the trainee holds no audit.btg.open');

@@ -34,7 +34,7 @@ test('the host routes are google-realm only; the patient routes declare no realm
     assert.equal(x.declaration?.realm, undefined, x.path);
 });
 
-test('the status poll of the patient is passive (26.2); the host poll is not on the closed list until it is added (README D1)', () => {
+test('the status poll of the patient and the host waiting-room poll are passive (26.2, README D1)', () => {
   const passive = (method: string, path: string): boolean =>
     PASSIVE_ROUTES.some((p) => p.method === method && p.pattern.test(path));
   assert.equal(
@@ -42,9 +42,9 @@ test('the status poll of the patient is passive (26.2); the host poll is not on 
     true,
   );
   assert.equal(passive('POST', '/api/v1/appointments/x/video-session/join'), false);
-  // Documents the open decision: with the requested patch (identity/sessions.ts) this becomes true.
+  // The host poll was added to the closed list (identity/sessions.ts).
   assert.equal(
     passive('GET', '/api/v1/appointments/0192abcd-1234-7abc-8def-0123456789ab/video-session/host'),
-    false,
+    true,
   );
 });

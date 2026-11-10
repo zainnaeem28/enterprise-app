@@ -1,0 +1,42 @@
+{
+  "origin": "https://staff.ci.test",
+  "handle": "ci-admin",
+  "ok": true,
+  "steps": [
+    {
+      "step": "enrol the admin principal with the fixture key (token spent, second key registered)",
+      "ok": true,
+      "ms": 117
+    },
+    {
+      "step": "administrator sign-in in the browser with the security key",
+      "ok": true,
+      "ms": 822
+    },
+    {
+      "step": "admin configuration: create a service and see it saved",
+      "ok": true,
+      "ms": 9116
+    },
+    {
+      "step": "admin configuration: the service is still there after a reload (persisted)",
+      "ok": true,
+      "ms": 967
+    },
+    {
+      "step": "audit viewer: the last 24 hours show recorded entries",
+      "ok": true,
+      "ms": 6135
+    },
+    {
+      "step": "break-the-glass review: record a decision on a pending access",
+      "ok": true,
+      "ms": 3390
+    },
+    {
+      "step": "break-the-glass review: the decision is stored (shown under Justified after reload)",
+      "ok": true,
+      "ms": 3093
+    }
+  ]
+}

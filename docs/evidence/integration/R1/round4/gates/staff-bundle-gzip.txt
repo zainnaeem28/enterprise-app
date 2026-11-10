@@ -1,0 +1,16 @@
+DoctorContext-CbKMvlgt.js: 648 bytes gzip (lazy)
+Problem-VUXTNoEr.js: 5493 bytes gzip (lazy)
+admin-compliance-CrkGmQJm.js: 9309 bytes gzip (lazy)
+admin-config-JBWM18Lm.js: 11273 bytes gzip (lazy)
+availability-DO_LyJlh.js: 10561 bytes gzip (lazy)
+doctor-Bybtzywb.js: 13639 bytes gzip (lazy)
+documents-DTFy1o8f.js: 5161 bytes gzip (lazy)
+format-CdYDdX_8.js: 813 bytes gzip (lazy)
+index-Bde_v4qD.js: 83809 bytes gzip (initial)
+messages-BGNp_mm9.js: 6086 bytes gzip (lazy)
+preconsult-BOY1kL7A.js: 15203 bytes gzip (lazy)
+src-BRjLX8RZ.js: 2205 bytes gzip (initial)
+src-K2oFksRl.js: 10873 bytes gzip (initial)
+initial JS gzip: 96887 / 122880
+largest lazy chunk gzip: preconsult-BOY1kL7A.js 15203 / 30720
+total JS gzip: 175073 / 196608

@@ -58,5 +58,6 @@ export const SETTING_CATALOGUE: readonly CatalogueEntry[] = [
   e('upload_max_mb', 20, 'int>=1', '31.1'),
   e('uploads_per_day', 20, 'int>=1', '31.1'),
   e('audit_export_max_rows', 1_000_000, 'int>=1', 'RA-R1-12'),
+  e('audit_export_max_per_hour', 10, 'int>=1', 'SEC-D-19 C5, TC-SEC-20'),
   e('audit_retention_years', null, 'int>=1', 'NFR-13: legal input; no default'),
 ];

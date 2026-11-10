@@ -17,7 +17,7 @@ import {
 } from './modules/notifications/alerts/index.js';
 import { registerMessagingHandlers, runOnCorrectionRequested } from './modules/messaging/index.js';
 import { assembleExport } from './modules/privacy/index.js';
-import { executeMerge } from './modules/patient/index.js';
+import { executeMerge, patientExportContributor } from './modules/patient/index.js';
 import { newRegisteredRegistries } from './register-participants.js';
 import type { PackageWriterPort } from './modules/privacy/index.js';
 import { runRefreshOps } from './modules/reporting/index.js';
@@ -150,6 +150,8 @@ export function buildWorkerPorts(deps: WorkerPortsDeps) {
     clinical: {
       retargetUnacknowledged: (tx: Tx, alertId: string) =>
         triage.retargetUnacknowledged(tx, alertId),
+      raiseQuestionnaireRedFlag: (tx: Tx, responseId: string) =>
+        triage.raiseQuestionnaireRedFlag(tx, responseId),
       noteSignReminder: (tx: Tx, payload: { encounterId: string; patientId: string }) =>
         runNoteSignReminder(reminder, tx, payload),
     },
@@ -161,7 +163,12 @@ export function buildWorkerPorts(deps: WorkerPortsDeps) {
       raise: (
         tx: Tx,
         input: {
-          type: 'btg_opened' | 'privileged_change' | 'kill_switch_used' | 'audit_anchor_mismatch';
+          type:
+            | 'btg_opened'
+            | 'privileged_change'
+            | 'kill_switch_used'
+            | 'audit_anchor_mismatch'
+            | 'scope_drift';
           severity: 'low' | 'medium' | 'high' | 'critical';
           resourceType: string;
           resourceId: string;
@@ -244,6 +251,8 @@ export function buildWorkerPorts(deps: WorkerPortsDeps) {
           audit,
           writer: deps.packageWriter,
           registries,
+          // `patient` is below `privacy`: called downwards, not registered (SHARED-BOUNDARIES 3.2 rule 6; QA-EXEC-F04).
+          downward: [patientExportContributor],
           closureOf: deps.closureOf,
           queue: deps.queue,
           ...(deps.now === undefined ? {} : { now: deps.now }),

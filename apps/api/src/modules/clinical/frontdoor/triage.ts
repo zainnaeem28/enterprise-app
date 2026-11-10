@@ -33,6 +33,10 @@ import type { RequestMeta, TriageCategory, TriageResult, TriageView } from './ty
 export const RED_FLAG_PERMISSION = 'clinical.alert.red_flag.receive';
 export const RED_FLAG_RAISED = 'clinical.red_flag_raised';
 export const ROSTER_GAP = 'clinical.roster_gap';
+/** Published by a patient's questionnaire submit that carries a red flag; the `clinical.on_questionnaire_red_flag` job raises the alert. */
+export const QUESTIONNAIRE_RED_FLAG = 'clinical.questionnaire_red_flag';
+/** Organisation-wide holders of a permission: the location a role assignment without one matches (no location has this ID). */
+const NO_LOCATION = '00000000-0000-0000-0000-000000000000';
 
 export interface TriageDeps {
   audit: ChartAuditPort;
@@ -286,6 +290,95 @@ export class TriageService {
         throw new PreconditionFailedError();
       translateDbError(e);
     }
+  }
+
+  /**
+   * `clinical.on_questionnaire_red_flag` (PRD 8.3, RA-R1-07, BR-10; QA-EXEC-F06): a questionnaire submitted with a red flag raises the
+   * same durable `red_flag` alert for the on-duty doctor that a flagged triage raises. A patient session may not insert a staff alert,
+   * so the submit publishes the event in its own transaction and this runs as the job, in a patients-scope system transaction, a moment
+   * later. The alert row (`created_at`) and its `created` event are the recorded time; the audit event repeats it. Idempotent: a retry
+   * of the job finds the alert of the response and returns it. No recipient at all is an error, so the job retries and then dead-letters
+   * where operations see it; the flag is never dropped silently. Returns the alert ID, or null if the response carries no red flag.
+   */
+  async raiseQuestionnaireRedFlag(tx: Tx, responseId: string): Promise<string | null> {
+    if (!isUuid(responseId)) throw new FrontdoorValidationError(['responseId']);
+    const id = responseId.toLowerCase();
+    const r = (
+      await tx.query(
+        `SELECT patient_id, reservation_id, red_flag, status FROM clinical.questionnaire_response WHERE id = $1::uuid`,
+        [id],
+      )
+    ).rows[0] as Row | undefined;
+    if (r === undefined) throw new FrontdoorNotFoundError();
+    if (r['status'] !== 'submitted' || r['red_flag'] !== true) return null;
+    const patientId = String(r['patient_id']);
+    const existing = (
+      await tx.query(
+        `SELECT id FROM notifications.staff_alert
+          WHERE type = 'red_flag' AND resource_type = 'questionnaire_response' AND resource_id = $1::uuid LIMIT 1`,
+        [id],
+      )
+    ).rows[0] as Row | undefined;
+    if (existing !== undefined) return String(existing['id']);
+
+    let locations: string[] = [];
+    if (r['reservation_id'] !== null) {
+      const res = await this.deps.checkIns.reservation(tx, String(r['reservation_id']));
+      if (res !== undefined) locations = [res.locationId];
+    }
+    if (locations.length === 0)
+      locations = (
+        (
+          await tx.query(
+            `SELECT DISTINCT location_id FROM patient.staff_scope WHERE patient_id = $1::uuid ORDER BY location_id`,
+            [patientId],
+          )
+        ).rows as Row[]
+      ).map((x) => String(x['location_id']));
+    const targets = new Set<string>();
+    for (const loc of locations)
+      for (const p of await this.deps.duty.onDuty(tx, loc, 'on_duty_doctor', this.now()))
+        targets.add(p);
+    if (targets.size === 0) {
+      // No doctor rostered: every holder of the receive permission at the location(s), and the roster gap is reported (25.5).
+      for (const loc of locations.length > 0 ? locations : [NO_LOCATION])
+        for (const p of await this.deps.duty.permissionHoldersAt(tx, RED_FLAG_PERMISSION, loc))
+          targets.add(p);
+      await this.deps.events.publish(tx, ROSTER_GAP, {
+        locationId: locations[0] ?? null,
+        duty: 'on_duty_doctor',
+        responseId: id,
+      });
+    }
+    if (targets.size === 0) throw new RedFlagNoRecipientError();
+    const locationId = locations[0];
+    const raised = await this.deps.alerts.raise(tx, {
+      type: 'red_flag',
+      severity: 'critical',
+      targets: { kind: 'principal', principalIds: [...targets].sort() },
+      resourceType: 'questionnaire_response',
+      resourceId: id,
+      patientId,
+      ...(locationId === undefined ? {} : { locationId }),
+    });
+    await this.deps.audit.record(tx, {
+      requestId: uuidv7(),
+      action: 'create',
+      resourceType: 'clinical.questionnaire_response',
+      resourceId: id,
+      patientId,
+      ...(locationId === undefined ? {} : { locationId }),
+      ip: null,
+      userAgent: null,
+      change: { redFlagAlert: raised.alertId, alertedAt: this.now().toISOString() },
+    });
+    await this.deps.events.publish(tx, RED_FLAG_RAISED, {
+      alertId: raised.alertId,
+      patientId,
+      ...(locationId === undefined ? {} : { locationId }),
+      questionnaireResponseId: id,
+    });
+    return raised.alertId;
   }
 
   /**

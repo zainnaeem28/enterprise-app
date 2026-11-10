@@ -27,6 +27,8 @@ export interface PatientSessionView {
   endsAt: string;
   /** The clinic's IANA zone and the visit start in it (BR-05: both zones are shown; the viewer's own zone is the browser's). */
   clinicTimeZone: string;
+  /** Alias of `clinicTimeZone` under the appointment contract's member name. */
+  locationTimeZone: string;
   clinicLocalStart: string;
 }
 

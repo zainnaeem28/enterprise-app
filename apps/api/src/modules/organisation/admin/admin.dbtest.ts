@@ -361,6 +361,27 @@ describe('TC-AD-02 / 03: services (neutral name) and booking policy (block-only,
     );
     assert.equal(immut.status, 400);
     assert.deepEqual(errors(immut), [{ path: '/serviceId', code: 'kernel.immutable' }]);
+    // HEAAA-632 T6, R5: the cap is the most patients in one slot; scheduling.occupy accepts 100 at most, so the API does too.
+    const over = await api(
+      k,
+      adm,
+      'PATCH',
+      '/booking-policies',
+      { id: j(p)['id'], overbookCapPerSession: 101 },
+      { 'if-match': String(cap.headers['etag']) },
+    );
+    assert.equal(over.status, 400, over.body);
+    assert.equal(errors(over)[0]!.path, '/overbookCapPerSession');
+    const max = await api(
+      k,
+      adm,
+      'PATCH',
+      '/booking-policies',
+      { id: j(p)['id'], overbookCapPerSession: 100 },
+      { 'if-match': String(cap.headers['etag']) },
+    );
+    assert.equal(max.status, 200, max.body);
+    assert.equal(j(max)['overbookCapPerSession'], 100);
   });
 });
 

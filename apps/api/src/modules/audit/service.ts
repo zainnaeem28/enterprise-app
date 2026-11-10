@@ -13,6 +13,7 @@ import {
   AuditEnvelopeError,
   AuditError,
   AuditScopeError,
+  ExportRateLimitedError,
   ExportTooLargeError,
   SelfReviewError,
 } from './errors.js';
@@ -21,6 +22,8 @@ import { isUuid, uuidv7 } from './ids.js';
 
 export const DEFAULT_BTG_SECONDS = 4 * 60 * 60;
 export const DEFAULT_EXPORT_MAX_ROWS = 1_000_000;
+/** Audit export requests one person may make in a rolling hour (SEC-D-19 C5, TC-SEC-20). */
+export const DEFAULT_EXPORT_MAX_PER_HOUR = 10;
 export const SEARCH_PAGE = 100;
 export const SEARCH_PAGE_MAX = 500;
 const ISO_MICROS = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$/;
@@ -243,13 +246,22 @@ export class AuditService {
 
   /** The size limit: setting `audit_export_max_rows` (RA-R1-12), 1,000,000 when the setting is absent. */
   async exportMaxRows(tx: Tx): Promise<number> {
+    return this.positiveIntSetting(tx, 'audit_export_max_rows', DEFAULT_EXPORT_MAX_ROWS);
+  }
+
+  /** The rate limit: setting `audit_export_max_per_hour` (SEC-D-19 C5), 10 when the setting is absent. */
+  async exportMaxPerHour(tx: Tx): Promise<number> {
+    return this.positiveIntSetting(tx, 'audit_export_max_per_hour', DEFAULT_EXPORT_MAX_PER_HOUR);
+  }
+
+  private async positiveIntSetting(tx: Tx, key: string, fallback: number): Promise<number> {
     const r = rowsOf(
-      await tx.query(
-        `SELECT value FROM kernel.setting WHERE key = 'audit_export_max_rows' AND location_id IS NULL`,
-      ),
+      await tx.query(`SELECT value FROM kernel.setting WHERE key = $1 AND location_id IS NULL`, [
+        key,
+      ]),
     )[0] as { value: unknown } | undefined;
     const v = r?.value;
-    return typeof v === 'number' && Number.isInteger(v) && v > 0 ? v : DEFAULT_EXPORT_MAX_ROWS;
+    return typeof v === 'number' && Number.isInteger(v) && v > 0 ? v : fallback;
   }
 
   /**
@@ -270,6 +282,17 @@ export class AuditService {
     if (!isUuid(input.elevationId)) bad.push('elevationId');
     if (bad.length > 0) throw new AuditEnvelopeError(bad);
     if (this.deps.queue === undefined) throw new AuditError('kernel.unavailable', 503, true);
+    // SEC-D-19 C5 / TC-SEC-20: a person may request only so many exports per rolling hour. The requester's lock makes the count and the
+    // insert one step, so parallel requests cannot all pass the check; a refused request creates no job and enqueues nothing.
+    await tx.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [`audit.export:${s.personId}`]);
+    const recent = rowsOf(
+      await tx.query(
+        `SELECT count(*)::int AS n FROM audit.export_job
+          WHERE requested_by_person_id = $1::uuid AND created_at > now() - interval '1 hour'`,
+        [s.personId],
+      ),
+    )[0] as { n: number };
+    if (Number(recent.n) >= (await this.exportMaxPerHour(tx))) throw new ExportRateLimitedError();
     const max = await this.exportMaxRows(tx);
     const { where, params } = filterSql(input.filter);
     const counted = rowsOf(

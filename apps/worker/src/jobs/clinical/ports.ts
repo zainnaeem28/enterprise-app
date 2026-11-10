@@ -6,6 +6,8 @@ import type { Tx } from '@ehr/kernel';
 export interface ClinicalWorkerPort {
   /** `TriageService.retargetUnacknowledged`: the principals added (empty: nobody on call, or the alert is not a red flag). */
   retargetUnacknowledged(tx: Tx, alertId: string): Promise<string[]>;
+  /** `TriageService.raiseQuestionnaireRedFlag`: the alert ID (null: the response carries no red flag). Idempotent. */
+  raiseQuestionnaireRedFlag(tx: Tx, responseId: string): Promise<string | null>;
   /** `runNoteSignReminder`: raises the `note_unsigned` alert unless a note was signed or submitted meanwhile. */
   noteSignReminder(tx: Tx, payload: { encounterId: string; patientId: string }): Promise<unknown>;
 }

@@ -15,8 +15,8 @@ export interface VerifyDeps {
   db: KernelDb;
   orgId: string;
   jobId: string;
-  /** Called after the repair has committed, once per kind of drift found. Must not throw into the job's result. */
-  onDrift?: (kind: 'missing' | 'extra', count: number) => Promise<void> | void;
+  /** Called after the repair has committed, once per kind of drift found, with this run's job ID. Must not throw into the job's result. */
+  onDrift?: (kind: 'missing' | 'extra', count: number, jobId: string) => Promise<void> | void;
 }
 
 export async function runVerifyStaffScope(deps: VerifyDeps): Promise<DriftReport> {
@@ -36,8 +36,8 @@ export async function runVerifyStaffScope(deps: VerifyDeps): Promise<DriftReport
     return counts;
   });
   try {
-    if (report.missingRows > 0) await deps.onDrift?.('missing', report.missingRows);
-    if (report.extraRows > 0) await deps.onDrift?.('extra', report.extraRows);
+    if (report.missingRows > 0) await deps.onDrift?.('missing', report.missingRows, deps.jobId);
+    if (report.extraRows > 0) await deps.onDrift?.('extra', report.extraRows, deps.jobId);
   } catch {
     // The repair is committed; a failing alert hook is the alert path's problem and is surfaced by its own monitoring.
   }

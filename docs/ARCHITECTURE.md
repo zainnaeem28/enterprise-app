@@ -231,7 +231,7 @@ sequenceDiagram
 - Holds and appointments are **one table**, `slot_reservation`, with a `status` (`held`, `confirmed`, `cancelled`, `expired`, …), the doctor, an optional room, a `tstzrange` period and `expires_at` for holds.
 - A **partial exclusion constraint** (GiST with `btree_gist`) forbids two rows for the same doctor with overlapping periods **where `status IN ('held','confirmed')`**. A second partial constraint does the same for a room, **where a room is assigned**. Video visits have no room.
 - Expiry does not depend on the worker. The transaction that inserts a new hold first marks any **overlapping hold for that doctor with `expires_at < now()`** as `expired`, then inserts. Two racing requests serialise on that row lock and on the constraint, so exactly one wins. Confirmation is an `UPDATE` of the same row from `held` to `confirmed` that succeeds only while `expires_at > now()`. The worker sweep only tidies up and triggers waitlist offers. It is not needed for correctness, so a stale hold can never cause a false "taken" answer.
-- Overbookable sessions (BR-02) are rows flagged as overbook capacity. They are excluded from the constraint and counted under a per-session row lock against the configured extra capacity.
+- Overbookable sessions (BR-02): in an overbookable window with a cap ≥ 2, every booking is a row flagged `overbook`, excluded from the constraint, and counted per slot (all active rows of the doctor overlapping the period, the first included) against `overbook_cap_per_session` under the doctor's `dr:` lock. A cap of 0 or 1 means no overbooking. An overbook row holds its room against every other clinician (checked by the guard trigger under the `rm:` lock), and every reader that decides whether a slot is busy counts overbook rows.
 
 RA-R1-03 ("100 parallel confirmations, exactly one succeeds") then holds by construction for normal slots. PRD revision 2 restates RA-R1-03 for non-overbookable slots (SA-F-10). Whether the same patient may hold two overlapping appointments is a product rule for HEAAA-13.
 
@@ -1321,7 +1321,7 @@ Notes:
 
 - The occupancy exclusion constraints, the stale-hold expiry for **doctor and room** (SAR-09) and the deferred twin foreign key (O-3) are **Verified (spike)**: a stale hold on the doctor and a stale hold on the room were both expired by the inserting transaction; a live hold on the same room refused a different doctor's booking; an occupancy row without its reservation failed at commit.
 - `completed` stays in the active set, so the time of a visit that finished early is not offered again. `no_show` and every cancellation leave the set.
-- The overbook cap (BR-02) is checked in `scheduling.occupy` under `pg_advisory_xact_lock(hashtext('ob:' || clinician || session_key))`: count active overbook rows of the session, compare with `overbook_cap_per_session`.
+- The overbook cap (BR-02, RA-R1-03, decision HEAAA-632 D-F11-T1) is enforced under the doctor's `dr:` advisory lock: `scheduling.occupy` counts the overbook rows of the slot key (the key names the slot, `rule:slotStart`) and `scheduling.guard_overbook_origin` (BEFORE INSERT, migration 0905) counts all active rows of the doctor overlapping the period, the first included, and refuses at `count >= cap`. A non-overbook insert is refused when an active overbook row overlaps. The `session_key` is for traceability; the guard's count does not depend on it. A cap of 0 or 1 means no overbooking.
 - **QR check-in token (draft 6, TDR-10): no table.** The token for a location and local day is derived, not stored: `base64url(HMAC-SHA256(qr_key, location_id || local_date))`, truncated to 128 bits. `qr_key` is an application secret in the secret store (`<env>/app/checkin-qr-key`, read by the API, rotated by the DevOps runbook). Staff display it with `GET /locations/{id}/check-in-qr` (29.3); `POST /check-ins` recomputes and compares it in constant time for the location's current local date. A new day gives a new token without any job.
 
 ### 22.9 `calendar-sync`
@@ -2173,6 +2173,7 @@ Settings `signin_ip_failures`, `signin_clinic_ip_failures`, `signin_options_ip_l
 | `red_flag_escalation_minutes` | **no default** (D-12a reviewer sets it) | BR-10 |
 | `upload_max_mb`, `uploads_per_day` | 20, 20 | 31.1 |
 | `audit_export_max_rows` | 1,000,000 | RA-R1-12 |
+| `audit_export_max_per_hour` | 10 export requests per person per rolling hour; over the limit the request is `429 kernel.rate_limited` and creates no job (QA-EXEC-F10, TC-SEC-20; the value is a proposal for the Architect to confirm) | SEC-D-19 C5 |
 | `audit_retention_years` | **no default** (legal input) | NFR-13 |
 
 ## 32. Realtime: the staff alert stream (Fixed; ADR-009)

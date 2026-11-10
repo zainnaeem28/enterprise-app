@@ -14,6 +14,7 @@ import { fromCrontabTaskId, unhandledJobTypes } from './runner.js';
 const M4 = [
   'clinical.terminology_load',
   'clinical.on_alert_unacknowledged',
+  'clinical.on_questionnaire_red_flag',
   'clinical.note_sign_reminder',
   'messaging.on_correction_requested',
   'notifications.escalate_alert',
@@ -106,7 +107,11 @@ test('without the API ports and infrastructure the M4 handlers refuse (nothing p
 
 const API_JOB_LISTS: [string, string, readonly string[]][] = [
   ['clinical/chart/jobs.js', 'CLINICAL_CHART_JOBS', ['clinical.terminology_load']],
-  ['clinical/frontdoor/jobs.js', 'FRONTDOOR_JOBS', ['clinical.on_alert_unacknowledged']],
+  [
+    'clinical/frontdoor/jobs.js',
+    'FRONTDOOR_JOBS',
+    ['clinical.on_alert_unacknowledged', 'clinical.on_questionnaire_red_flag'],
+  ],
   ['clinical/notes/jobs.js', 'NOTES_JOBS', ['clinical.note_sign_reminder']],
   [
     'notifications/alerts/jobs.js',
