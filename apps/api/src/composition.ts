@@ -34,6 +34,7 @@ import {
   createClinicalNotes,
   createNotesPorts,
   NOTES_JOBS,
+  toEncounterView,
 } from './modules/clinical/notes/index.js';
 import {
   createMessaging,
@@ -421,6 +422,16 @@ export function buildComposition(deps: {
     identity,
     patients: patient.patients,
     cursorKey,
+    // The chart summary's history and documents parts (TC-CL-08b, RA-R1-24): rows are as the caller's RLS shows them; `documents` is
+    // composed further down, read only when a request arrives.
+    encounters: async (tx, patientId) =>
+      (
+        await tx.query(
+          `SELECT * FROM clinical.encounter WHERE patient_id = $1::uuid ORDER BY started_at DESC NULLS LAST, id DESC LIMIT 200`,
+          [patientId],
+        )
+      ).rows.map((r) => toEncounterView(r as Parameters<typeof toEncounterView>[0])),
+    documents: (tx, patientId) => documents.list(tx, patientId),
     ...(deps.now === undefined ? {} : { now: deps.now }),
   });
   const frontdoorPorts = createFrontdoorPorts({
