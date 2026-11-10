@@ -12,7 +12,6 @@ import { MESSAGES_PATHS, isMessagesPath } from './paths.js';
 import type { MessagesPath } from './paths.js';
 import './messages.css';
 
-
 type Section = 'tasks' | 'messages';
 
 /**

@@ -11,7 +11,6 @@ import { ADMIN_COMPLIANCE_PATHS, isAdminCompliancePath, ADMIN_COMPLIANCE_NAV } f
 import type { AdminCompliancePath } from './paths.js';
 import './admin-compliance.css';
 
-
 /**
  * Admin audit log, break-the-glass review, users & roles with approvals, and privacy requests (FE-13). The host mounts it inside an
  * `ElevationProvider` (FE-17) under the administrator realm bar. Permissions only decide what the server lets through; the server

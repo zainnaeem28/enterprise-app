@@ -14,7 +14,6 @@ import { ADMIN_CONFIG_PATHS, isAdminConfigPath, ADMIN_CONFIG_NAV } from './paths
 import type { AdminConfigPath } from './paths.js';
 import './admin-config.css';
 
-
 /**
  * Admin configuration: clinics, services, booking policies, templates, integrations, flags & banners and vital ranges (FE-14).
  * The host mounts it inside an `ElevationProvider` (FE-17) under the administrator realm bar. Every route it calls needs a live

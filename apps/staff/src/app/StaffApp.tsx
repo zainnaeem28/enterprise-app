@@ -56,7 +56,9 @@ const DocumentsPage = lazy(() =>
   import('../features/documents/index.js').then((m) => ({ default: m.DocumentsPage })),
 );
 const AdminCompliancePortal = lazy(() =>
-  import('../features/admin-compliance/index.js').then((m) => ({ default: m.AdminCompliancePortal })),
+  import('../features/admin-compliance/index.js').then((m) => ({
+    default: m.AdminCompliancePortal,
+  })),
 );
 const AdminConfigPortal = lazy(() =>
   import('../features/admin-config/index.js').then((m) => ({ default: m.AdminConfigPortal })),
@@ -252,15 +254,15 @@ function Gate({
         />
         <main id="main" className="ehr-main" tabIndex={-1}>
           <Suspense fallback={<LoadingState label={s.loadingSession} />}>
-          {path === ADMIN_LANDING || path === '/' ? (
-            <Home first={ADMIN_HOME} navigate={navigate} />
-          ) : isAdminCompliancePath(path) ? (
-            <AdminCompliancePortal runtime={runtime} path={path} navigate={(p) => navigate(p)} />
-          ) : isAdminConfigPath(path) ? (
-            <AdminConfigPortal runtime={runtime} path={path} navigate={(p) => navigate(p)} />
-          ) : (
-            <NotFoundPage homeHref={ADMIN_HOME} />
-          )}
+            {path === ADMIN_LANDING || path === '/' ? (
+              <Home first={ADMIN_HOME} navigate={navigate} />
+            ) : isAdminCompliancePath(path) ? (
+              <AdminCompliancePortal runtime={runtime} path={path} navigate={(p) => navigate(p)} />
+            ) : isAdminConfigPath(path) ? (
+              <AdminConfigPortal runtime={runtime} path={path} navigate={(p) => navigate(p)} />
+            ) : (
+              <NotFoundPage homeHref={ADMIN_HOME} />
+            )}
           </Suspense>
         </main>
         <HelpFooter />
@@ -281,44 +283,44 @@ function Gate({
       <NavBar items={items} current={path} onNavigate={(p) => navigate(p)} />
       <main id="main" className="ehr-main" tabIndex={-1}>
         <Suspense fallback={<LoadingState label={s.loadingSession} />}>
-        {realm !== 'staff' ? (
-          <Banner tone="info">
-            <p>{s.adminSession}</p>
-          </Banner>
-        ) : firstItem === undefined ? (
-          <Banner tone="info">
-            <p>{s.noNavigation}</p>
-          </Banner>
-        ) : path === '/' ? (
-          <Home first={(first ?? firstItem).path} navigate={navigate} />
-        ) : current !== undefined && isMessagesPath(path) ? (
-          <MessagesPortal runtime={runtime} />
-        ) : current !== undefined && isAvailabilityPath(path) ? (
-          <AvailabilityPortal runtime={runtime} />
-        ) : current !== undefined && isPreconsultPath(path) ? (
-          <PreconsultDesk
-            runtime={runtime}
-            path={path}
-            navigate={(p) => navigate(p)}
-            openChart={(patientId) => {
-              workspace.set({ patientId, label: 'Patient' });
-              navigate('/patients');
-            }}
-          />
-        ) : current !== undefined && isDoctorPath(path) ? (
-          <DoctorPortal
-            runtime={runtime}
-            path={path}
-            navigate={(p) => navigate(p)}
-            renderDocuments={(patientId, permissions) => (
-              <DocumentsPage runtime={runtime} patientId={patientId} permissions={permissions} />
-            )}
-          />
-        ) : current !== undefined ? (
-          <NotAvailable label={current.label} />
-        ) : (
-          <NotFoundPage homeHref={first?.path ?? '/'} />
-        )}
+          {realm !== 'staff' ? (
+            <Banner tone="info">
+              <p>{s.adminSession}</p>
+            </Banner>
+          ) : firstItem === undefined ? (
+            <Banner tone="info">
+              <p>{s.noNavigation}</p>
+            </Banner>
+          ) : path === '/' ? (
+            <Home first={(first ?? firstItem).path} navigate={navigate} />
+          ) : current !== undefined && isMessagesPath(path) ? (
+            <MessagesPortal runtime={runtime} />
+          ) : current !== undefined && isAvailabilityPath(path) ? (
+            <AvailabilityPortal runtime={runtime} />
+          ) : current !== undefined && isPreconsultPath(path) ? (
+            <PreconsultDesk
+              runtime={runtime}
+              path={path}
+              navigate={(p) => navigate(p)}
+              openChart={(patientId) => {
+                workspace.set({ patientId, label: 'Patient' });
+                navigate('/patients');
+              }}
+            />
+          ) : current !== undefined && isDoctorPath(path) ? (
+            <DoctorPortal
+              runtime={runtime}
+              path={path}
+              navigate={(p) => navigate(p)}
+              renderDocuments={(patientId, permissions) => (
+                <DocumentsPage runtime={runtime} patientId={patientId} permissions={permissions} />
+              )}
+            />
+          ) : current !== undefined ? (
+            <NotAvailable label={current.label} />
+          ) : (
+            <NotFoundPage homeHref={first?.path ?? '/'} />
+          )}
         </Suspense>
       </main>
       <HelpFooter />

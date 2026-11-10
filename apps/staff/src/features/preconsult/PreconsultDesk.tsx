@@ -19,7 +19,6 @@ import { PRECONSULT_PATHS, isPreconsultPath } from './paths.js';
 import type { PreconsultPath } from './paths.js';
 import './preconsult.css';
 
-
 /**
  * The pre-consultation desk (FE-09): arrivals, check-in, registration and duplicates, merge, forms review, triage, queue, follow-ups
  * and no-shows. Permissions only decide what is drawn; the server authorizes every call.

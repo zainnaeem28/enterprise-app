@@ -24,7 +24,8 @@ const fail = (msg) => {
 const dist = resolve(process.argv[2] ?? join(import.meta.dirname, '../../../apps/staff/dist'));
 const dir = join(dist, 'assets');
 const indexHtml = join(dist, 'index.html');
-if (!existsSync(indexHtml)) fail(`${indexHtml} is missing (cannot determine the initial JavaScript)`);
+if (!existsSync(indexHtml))
+  fail(`${indexHtml} is missing (cannot determine the initial JavaScript)`);
 if (!existsSync(dir)) fail(`no JavaScript in ${dir} (an empty build fails)`);
 const files = readdirSync(dir).filter((n) => n.endsWith('.js'));
 if (files.length === 0) fail(`no JavaScript in ${dir} (an empty build fails)`);
@@ -63,7 +64,8 @@ for (const f of files) {
   else if (size > largestLazy.size) largestLazy = { name: f, size };
 }
 for (const file of initial) {
-  if (!files.includes(file.slice(dir.length + 1))) fail(`${file} is referenced by index.html but is not a top-level asset`);
+  if (!files.includes(file.slice(dir.length + 1)))
+    fail(`${file} is referenced by index.html but is not a top-level asset`);
 }
 
 console.log(`initial JS gzip: ${initialSum} / ${INITIAL_LIMIT}`);
@@ -75,7 +77,9 @@ if (initialSum > INITIAL_LIMIT) {
   bad = true;
 }
 if (largestLazy.size > CHUNK_LIMIT) {
-  console.error(`::error::budget lazy-chunk: ${largestLazy.name} ${largestLazy.size} > ${CHUNK_LIMIT}`);
+  console.error(
+    `::error::budget lazy-chunk: ${largestLazy.name} ${largestLazy.size} > ${CHUNK_LIMIT}`,
+  );
   bad = true;
 }
 if (total > TOTAL_LIMIT) {
