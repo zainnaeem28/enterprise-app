@@ -4,7 +4,28 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "build": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test:db": "vitest run --config vitest.db.config.ts --reporter=default --reporter=junit --outputFile.junit=\"${JUNIT_DIR:-.junit}/cms-db.xml\"",
+    "test": "NODE_ENV=test vitest run --reporter=default --reporter=junit --outputFile.junit=\"${JUNIT_DIR:-.junit}/cms.xml\"",
+    "dev": "next dev --port 3100",
+    "start": "next start --port 3100",
+    "build:next": "next build"
+  },
+  "dependencies": {
+    "@payloadcms/db-postgres": "3.93.0",
+    "@payloadcms/next": "3.93.0",
+    "@payloadcms/richtext-lexical": "3.93.0",
+    "graphql": "16.15.0",
+    "jose": "6.2.14",
+    "next": "16.4.5",
+    "payload": "3.93.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "vitest": "5.1.0"
   }
 }

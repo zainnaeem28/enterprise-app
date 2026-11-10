@@ -1,0 +1,53 @@
+.ehr-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.ehr-brand__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.5rem;
+  background: #1f5a7a;
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+.ehr-brand__name {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+.ehr-signin {
+  margin-bottom: 1.5rem;
+}
+.ehr-signin__button {
+  display: inline-block;
+  padding: 0.75rem 1.25rem;
+  min-height: 2.75rem;
+  border-radius: 0.375rem;
+  background: #1f5a7a;
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+}
+.ehr-signin__button:focus-visible {
+  outline: 3px solid #0b2a3a;
+  outline-offset: 2px;
+}
+.ehr-brand__mark--icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  font-size: 0.875rem;
+  border-radius: 0.25rem;
+}
+.ehr-signin__error {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border: 2px solid #8a1c1c;
+  border-radius: 0.375rem;
+  background: #fdf0f0;
+  color: #5c0f0f;
+  font-weight: 600;
+}
