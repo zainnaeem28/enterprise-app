@@ -82,7 +82,7 @@ export function translateDbError(err: unknown): never {
 export class NoteNotAssignedError extends ChartError {
   readonly btgAvailable: boolean;
   constructor(btgAvailable: boolean) {
-    super('clinical.not_assigned', 403);
+    super('clinical.not_assigned', 403, false, { btgAvailable });
     this.name = 'NoteNotAssignedError';
     this.btgAvailable = btgAvailable;
   }

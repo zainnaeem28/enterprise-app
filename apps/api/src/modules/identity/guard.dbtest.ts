@@ -453,6 +453,15 @@ describe('permission, realm and location (27.1)', () => {
     const r = await get(as, '/api/v1/admin/t/elevated');
     assert.equal(r.status, 403);
     assert.equal(code(r), 'identity.elevation_required');
+    // QA-EXEC-F02: the refusal is audited as `denied` (8.1 rule 2).
+    const ev = await k.q(
+      `SELECT outcome, denial_reason FROM audit.event WHERE actor_principal_id = $1 AND action = 'denied'`,
+      [adm.principalId],
+    );
+    assert.deepEqual(
+      ev.map((e) => [e['outcome'], e['denial_reason']]),
+      [['denied', 'forbidden']],
+    );
   });
 
   test('a break-glass grant adds the patient to the scope, and the guard lets the staff route through it', async () => {

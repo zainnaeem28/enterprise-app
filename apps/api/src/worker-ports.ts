@@ -17,7 +17,7 @@ import {
 } from './modules/notifications/alerts/index.js';
 import { registerMessagingHandlers, runOnCorrectionRequested } from './modules/messaging/index.js';
 import { assembleExport } from './modules/privacy/index.js';
-import { executeMerge } from './modules/patient/index.js';
+import { executeMerge, patientExportContributor } from './modules/patient/index.js';
 import { newRegisteredRegistries } from './register-participants.js';
 import type { PackageWriterPort } from './modules/privacy/index.js';
 import { runRefreshOps } from './modules/reporting/index.js';
@@ -246,6 +246,8 @@ export function buildWorkerPorts(deps: WorkerPortsDeps) {
           audit,
           writer: deps.packageWriter,
           registries,
+          // `patient` is below `privacy`: called downwards, not registered (SHARED-BOUNDARIES 3.2 rule 6; QA-EXEC-F04).
+          downward: [patientExportContributor],
           closureOf: deps.closureOf,
           queue: deps.queue,
           ...(deps.now === undefined ? {} : { now: deps.now }),

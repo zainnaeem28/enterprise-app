@@ -6,7 +6,7 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { after, before, describe, test } from 'node:test';
-import { createLogger } from '@ehr/kernel';
+import { createLogger, syncTaskTypes } from '@ehr/kernel';
 import { buildComposition } from './composition.js';
 import { loadIdentityEnv } from './identity-env.js';
 import { createApp } from './platform/app.js';
@@ -22,6 +22,7 @@ import {
   id,
   now,
   patientAccount,
+  pg,
   registerViaApi,
   saWrite,
   setup,
@@ -111,6 +112,11 @@ before(async () => {
     identity: loadIdentityEnv(ENV),
     now,
   });
+  // The composed queue publishes `audit.btg_opened` and the like: the database must know the API's task types.
+  const wc = new pg.Client({ connectionString: k.urlFor('app_worker') });
+  await wc.connect();
+  await syncTaskTypes(wc, c.registry);
+  await wc.end();
   const app = await createApp({
     config: {
       minClientRelease: MIN_RELEASE,
@@ -252,5 +258,46 @@ describe('INT03-F13: the patient routes through the composition root', () => {
     // The counter is in the database (shared across instances), not in this process.
     const rows = await k.q<{ n: string }>(`SELECT count(*) AS n FROM kernel.rate_counter`);
     assert.ok(Number(rows[0]?.n) > 0);
+  });
+
+  test('7: break-the-glass and the telehealth routes are mounted (QA-EXEC-F01, F03); an unassigned doctor is told btgAvailable and opens a grant', async () => {
+    const zero = '00000000-0000-7000-8000-000000000001';
+    for (const [m, p] of [
+      ['POST', `/api/v1/patients/${mine}/break-glass`],
+      ['GET', `/api/v1/appointments/${zero}/video-session`],
+      ['GET', `/api/v1/appointments/${zero}/video-session/host`],
+    ] as const) {
+      const r = await send(undefined, m, p);
+      assert.equal(r.status, 401, `${m} ${p} ${r.body}`);
+    }
+    const dr = await staffMember(k, 'doctor', A1, 'Doctor btg');
+    const blocked = await send(dr, 'GET', `/api/v1/patients/${mine}/chart-summary`);
+    assert.equal(blocked.status, 403, blocked.body);
+    assert.equal(code(blocked), 'clinical.not_assigned');
+    assert.equal(blocked.json()['btgAvailable'], true);
+    const short = await send(dr, 'POST', `/api/v1/patients/${mine}/break-glass`, {
+      body: { reason: 'too short' },
+      idem: true,
+    });
+    assert.equal(short.status, 422, short.body);
+    const key = randomUUID();
+    const open = await send(dr, 'POST', `/api/v1/patients/${mine}/break-glass`, {
+      body: { reason: 'Emergency access, synthetic test' },
+      headers: { 'idempotency-key': key },
+    });
+    assert.equal(open.status, 201, open.body);
+    assert.ok(open.json()['grantId'] && open.json()['expiresAt']);
+    const replay = await send(dr, 'POST', `/api/v1/patients/${mine}/break-glass`, {
+      body: { reason: 'Emergency access, synthetic test' },
+      headers: { 'idempotency-key': key },
+    });
+    assert.equal(replay.status, 201, replay.body);
+    assert.equal(replay.json()['grantId'], open.json()['grantId']);
+    const grants = await k.q<{ n: string }>(
+      `SELECT count(*) AS n FROM audit.btg_grant WHERE patient_id = $1`,
+      [mine],
+    );
+    assert.equal(Number(grants[0]?.n), 1, 'the replay opened no second grant');
+    assert.equal((await send(dr, 'GET', `/api/v1/patients/${mine}/chart-summary`)).status, 200);
   });
 });
