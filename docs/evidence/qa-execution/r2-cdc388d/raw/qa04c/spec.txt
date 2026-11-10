@@ -1,0 +1,18 @@
+▶ TC-BK-15 cap variants (D-F11-1)
+  ✔ cap 1 on an overbookable session, 40 parallel patients: exactly 1 succeed (2451.71423ms)
+  ℹ outcomes: {"409:scheduling.slot_taken":39,"ok":1}
+  ✔ cap 0 on an overbookable session, 40 parallel patients: exactly 1 succeed (1995.532133ms)
+  ℹ outcomes: {"ok":1,"409:scheduling.slot_taken":39}
+  ✔ cap 3 on an overbookable session, 40 parallel patients: exactly 3 succeed (2094.957849ms)
+  ℹ outcomes: {"409:scheduling.slot_taken":37,"ok":3}
+  ✔ cap 2, two slots of one session: exactly 2 + 2, the first slot being full does not hide or fill the second (2188.258643ms)
+  ℹ confirmed 4 of 40
+✔ TC-BK-15 cap variants (D-F11-1) (8731.667102ms)
+ℹ tests 4
+ℹ suites 1
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9089.928746

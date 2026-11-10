@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="89" failures="0" errors="0" time="1.861988887">
+    <testsuite name="src/api/client.test.ts" timestamp="2026-11-10T13:38:54.938Z" hostname="314866be9867" tests="5" failures="0" errors="0" skipped="0" time="0.012508963">
+        <testcase classname="src/api/client.test.ts" name="createApiClient &gt; sends X-Client-Release on a relative same-origin URL" time="0.006380152">
+        </testcase>
+        <testcase classname="src/api/client.test.ts" name="createApiClient &gt; notifies on 400 kernel.client_release_unsupported with the requestId" time="0.00207347">
+        </testcase>
+        <testcase classname="src/api/client.test.ts" name="createApiClient &gt; does not notify for other 400s or non-JSON bodies" time="0.001541333">
+        </testcase>
+        <testcase classname="src/api/client.test.ts" name="createApiClient &gt; rejects a malformed release at construction" time="0.000838073">
+        </testcase>
+        <testcase classname="src/api/client.test.ts" name="createApiClient &gt; puts the release in the alert stream query string" time="0.000279935">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/banners/MaintenanceBanners.test.tsx" timestamp="2026-11-10T13:38:54.939Z" hostname="314866be9867" tests="2" failures="0" errors="0" skipped="0" time="0.078766046">
+        <testcase classname="src/banners/MaintenanceBanners.test.tsx" name="MaintenanceBanners &gt; shows each current banner message" time="0.032683201">
+        </testcase>
+        <testcase classname="src/banners/MaintenanceBanners.test.tsx" name="MaintenanceBanners &gt; shows nothing when there are none or the read fails" time="0.044802563">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/documents/documents.test.tsx" timestamp="2026-11-10T13:38:54.939Z" hostname="314866be9867" tests="15" failures="0" errors="0" skipped="0" time="0.745653787">
+        <testcase classname="src/documents/documents.test.tsx" name="list and viewer &gt; opens a clean file through a short-lived URL and never offers Open before clean" time="0.218211209">
+        </testcase>
+        <testcase classname="src/documents/documents.test.tsx" name="list and viewer &gt; shows the link when the browser blocks the pop-up, and the server refusal when not available" time="0.069816171">
+        </testcase>
+        <testcase classname="src/documents/documents.test.tsx" name="list and viewer &gt; shows a quarantined file with its reason and no way to open it" time="0.021370613">
+        </testcase>
+        <testcase classname="src/documents/documents.test.tsx" name="list and viewer &gt; shows empty, load failure with retry, and permission states" time="0.020919295">
+        </testcase>
+        <testcase classname="src/documents/documents.test.tsx" name="list and viewer &gt; hides upload and list controls the caller lacks permission for" time="0.005049807">
+        </testcase>
+        <testcase classname="src/documents/documents.test.tsx" name="list and viewer &gt; refreshes by itself while a file is scanning and shows it clean afterwards" time="0.066387037">
+        </testcase>
+        <testcase classname="src/documents/documents.test.tsx" name="upload &gt; creates, transfers with progress, completes, then shows the scan state" time="0.035798306">
+        </testcase>
+        <testcase classname="src/documents/documents.test.tsx" name="upload &gt; refuses a disallowed type without calling the API" time="0.019835212">
+        </testcase>
+        <testcase classname="src/documents/documents.test.tsx" name="upload &gt; retries from the failed step with the same idempotency key" time="0.030030062">
+        </testcase>
+        <testcase classname="src/documents/documents.test.tsx" name="upload &gt; shows the server refusal for a file that is too large" time="0.018456965">
+        </testcase>
+        <testcase classname="src/documents/documents.test.tsx" name="classification confirm (staff) &gt; shows the suggestion as a suggestion, sends classify then confirm with If-Match, and updates the row" time="0.04895731">
+        </testcase>
+        <testcase classname="src/documents/documents.test.tsx" name="classification confirm (staff) &gt; skips classify when staff accept the current class and refreshes on a stale version" time="0.032365435">
+        </testcase>
+        <testcase classname="src/documents/documents.test.tsx" name="classification confirm (staff) &gt; never invents a version: a contract-shaped list (no version) sends no If-Match and a 428 is explained" time="0.033398383">
+        </testcase>
+        <testcase classname="src/documents/documents.test.tsx" name="classification confirm (staff) &gt; offers no confirm control without the classify permission" time="0.011568769">
+        </testcase>
+        <testcase classname="src/documents/documents.test.tsx" name="accessibility (axe, jsdom) &gt; has no violations with every state on screen" time="0.111310727">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/errors/errors.test.tsx" timestamp="2026-11-10T13:38:54.941Z" hostname="314866be9867" tests="5" failures="0" errors="0" skipped="0" time="0.159314077">
+        <testcase classname="src/errors/errors.test.tsx" name="problemView &gt; maps statuses to the UI-UX 6 states" time="0.003403677">
+        </testcase>
+        <testcase classname="src/errors/errors.test.tsx" name="problemView &gt; leaves 200, 400 and 401 to other handlers" time="0.000600707">
+        </testcase>
+        <testcase classname="src/errors/errors.test.tsx" name="problemView &gt; 403 and 404 never echo server detail" time="0.000376797">
+        </testcase>
+        <testcase classname="src/errors/errors.test.tsx" name="pages &gt; 404 and 403 are plain pages with an h1 and a way home" time="0.135855766">
+        </testcase>
+        <testcase classname="src/errors/errors.test.tsx" name="pages &gt; ErrorBoundary replaces a crash with &quot;Your work is safe&quot; and Retry, then recovers" time="0.017600618">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/realm/RealmBar.test.tsx" timestamp="2026-11-10T13:38:54.942Z" hostname="314866be9867" tests="18" failures="0" errors="0" skipped="0" time="0.128080175">
+        <testcase classname="src/realm/RealmBar.test.tsx" name="realmKind &gt; realm google with audience staff is staff" time="0.001763861">
+        </testcase>
+        <testcase classname="src/realm/RealmBar.test.tsx" name="realmKind &gt; realm admin_pool with audience staff is admin" time="0.000212118">
+        </testcase>
+        <testcase classname="src/realm/RealmBar.test.tsx" name="realmKind &gt; realm patient_pool with audience patient is patient" time="0.000156234">
+        </testcase>
+        <testcase classname="src/realm/RealmBar.test.tsx" name="realmKind &gt; realm partner_pool with audience partner is partner" time="0.000175109">
+        </testcase>
+        <testcase classname="src/realm/RealmBar.test.tsx" name="realmKind &gt; no session is unknown" time="0.000214382">
+        </testcase>
+        <testcase classname="src/realm/RealmBar.test.tsx" name="realmKind &gt; empty session is unknown" time="0.000125756">
+        </testcase>
+        <testcase classname="src/realm/RealmBar.test.tsx" name="realmKind &gt; audience only is unknown" time="0.000108524">
+        </testcase>
+        <testcase classname="src/realm/RealmBar.test.tsx" name="realmKind &gt; invented realm admin is unknown" time="0.000104496">
+        </testcase>
+        <testcase classname="src/realm/RealmBar.test.tsx" name="realmKind &gt; empty realm is unknown" time="0.000147056">
+        </testcase>
+        <testcase classname="src/realm/RealmBar.test.tsx" name="realmKind &gt; proto realm is unknown" time="0.000172023">
+        </testcase>
+        <testcase classname="src/realm/RealmBar.test.tsx" name="realmKind &gt; invented realm staff is unknown" time="0.000104006">
+        </testcase>
+        <testcase classname="src/realm/RealmBar.test.tsx" name="realmKind &gt; upper-case realm is unknown" time="0.000093005">
+        </testcase>
+        <testcase classname="src/realm/RealmBar.test.tsx" name="realmKind &gt; admin realm, patient audience is unknown" time="0.000068078">
+        </testcase>
+        <testcase classname="src/realm/RealmBar.test.tsx" name="realmKind &gt; staff realm, admin_pool audience is unknown" time="0.000070182">
+        </testcase>
+        <testcase classname="src/realm/RealmBar.test.tsx" name="realmKind &gt; missing audience is unknown" time="0.000069901">
+        </testcase>
+        <testcase classname="src/realm/RealmBar.test.tsx" name="realmKind &gt; prototype key is unknown" time="0.000062868">
+        </testcase>
+        <testcase classname="src/realm/RealmBar.test.tsx" name="RealmBar &gt; names the staff realm and offers the switch as a sign-out" time="0.118118081">
+        </testcase>
+        <testcase classname="src/realm/RealmBar.test.tsx" name="RealmBar &gt; always shows the fixed admin banner" time="0.004807852">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/release/ReleasePrompts.test.tsx" timestamp="2026-11-10T13:38:54.945Z" hostname="314866be9867" tests="8" failures="0" errors="0" skipped="0" time="0.278252538">
+        <testcase classname="src/release/ReleasePrompts.test.tsx" name="non-blocking bar &gt; announces politely, reloads at once without unsaved input" time="0.139576579">
+            <system-err>
+The current testing environment is not configured to support act(...)
+
+            </system-err>
+        </testcase>
+        <testcase classname="src/release/ReleasePrompts.test.tsx" name="non-blocking bar &gt; with unsaved input asks first, naming forms and never content" time="0.064279011">
+            <system-err>
+The current testing environment is not configured to support act(...)
+
+The current testing environment is not configured to support act(...)
+
+            </system-err>
+        </testcase>
+        <testcase classname="src/release/ReleasePrompts.test.tsx" name="non-blocking bar &gt; offers save-and-reload only where a draft route exists, and stays on failure" time="0.034231206">
+            <system-err>
+The current testing environment is not configured to support act(...)
+
+The current testing environment is not configured to support act(...)
+
+            </system-err>
+        </testcase>
+        <testcase classname="src/release/ReleasePrompts.test.tsx" name="non-blocking bar &gt; remind me later hides the bar" time="0.005183437">
+            <system-err>
+The current testing environment is not configured to support act(...)
+
+            </system-err>
+        </testcase>
+        <testcase classname="src/release/ReleasePrompts.test.tsx" name="blocking dialog &gt; pulls focus back when it escapes the dialog (backdrop click)" time="0.012322744">
+            <system-err>
+The current testing environment is not configured to support act(...)
+
+            </system-err>
+        </testcase>
+        <testcase classname="src/release/ReleasePrompts.test.tsx" name="blocking dialog &gt; opens on refusal with the exact text, request id and no auto reload" time="0.007485927">
+            <system-err>
+The current testing environment is not configured to support act(...)
+
+            </system-err>
+        </testcase>
+        <testcase classname="src/release/ReleasePrompts.test.tsx" name="blocking dialog &gt; keep-open shows the red bar and closes the dialog" time="0.006669706">
+            <system-err>
+The current testing environment is not configured to support act(...)
+
+            </system-err>
+        </testcase>
+        <testcase classname="src/release/ReleasePrompts.test.tsx" name="blocking dialog &gt; shows the paused-alerts bar so a refused stream never looks like no alerts" time="0.005491585">
+            <system-err>
+The current testing environment is not configured to support act(...)
+
+            </system-err>
+        </testcase>
+    </testsuite>
+    <testsuite name="src/release/release-store.test.ts" timestamp="2026-11-10T13:38:54.947Z" hostname="314866be9867" tests="8" failures="0" errors="0" skipped="0" time="0.006978195">
+        <testcase classname="src/release/release-store.test.ts" name="client release parsing &gt; parses and rejects like the API" time="0.001614399">
+        </testcase>
+        <testcase classname="src/release/release-store.test.ts" name="client release parsing &gt; reads release_number from the manifest" time="0.000309071">
+        </testcase>
+        <testcase classname="src/release/release-store.test.ts" name="ReleaseStore &gt; shows the bar only for a higher release number" time="0.000596529">
+        </testcase>
+        <testcase classname="src/release/release-store.test.ts" name="ReleaseStore &gt; stays silent when the poll fails" time="0.000308799">
+        </testcase>
+        <testcase classname="src/release/release-store.test.ts" name="ReleaseStore &gt; remind-me-later hides the bar for 30 minutes, in memory" time="0.000235563">
+        </testcase>
+        <testcase classname="src/release/release-store.test.ts" name="ReleaseStore &gt; a refused call hides the bar in favour of the blocking dialog" time="0.000972925">
+        </testcase>
+        <testcase classname="src/release/release-store.test.ts" name="ReleaseStore &gt; never reloads by itself; draft save must succeed before reload" time="0.000878089">
+        </testcase>
+        <testcase classname="src/release/release-store.test.ts" name="ReleaseStore &gt; writes nothing to web storage" time="0.000600587">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/runtime.test.ts" timestamp="2026-11-10T13:38:54.948Z" hostname="314866be9867" tests="5" failures="0" errors="0" skipped="0" time="0.019506615">
+        <testcase classname="src/runtime.test.ts" name="shell runtime &gt; loadSession starts the idle clock and keeps the CSRF token for later writes only" time="0.011436401">
+        </testcase>
+        <testcase classname="src/runtime.test.ts" name="shell runtime &gt; every response header moves the deadline, passive or not" time="0.001210782">
+        </testcase>
+        <testcase classname="src/runtime.test.ts" name="shell runtime &gt; 401 auth.session_expired ends the session; 401 auth.unauthenticated does not" time="0.002392999">
+        </testcase>
+        <testcase classname="src/runtime.test.ts" name="shell runtime &gt; a refused release opens the release dialog state" time="0.001190084">
+        </testcase>
+        <testcase classname="src/runtime.test.ts" name="shell runtime &gt; sign-out calls the generated operation and forgets the token" time="0.001935492">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/session/SessionPrompts.test.tsx" timestamp="2026-11-10T13:38:54.949Z" hostname="314866be9867" tests="11" failures="0" errors="0" skipped="0" time="0.395738273">
+        <testcase classname="src/session/SessionPrompts.test.tsx" name="warning dialog &gt; opens at 13 minutes as an alertdialog with focus and a 2:00 countdown" time="0.154395387">
+        </testcase>
+        <testcase classname="src/session/SessionPrompts.test.tsx" name="warning dialog &gt; counts down visibly but announces the time only once" time="0.017240732">
+        </testcase>
+        <testcase classname="src/session/SessionPrompts.test.tsx" name="warning dialog &gt; Stay signed in is the only thing that calls extend" time="0.018174665">
+        </testcase>
+        <testcase classname="src/session/SessionPrompts.test.tsx" name="warning dialog &gt; Escape also stays signed in, so a screen-reader user is not trapped" time="0.008334049">
+        </testcase>
+        <testcase classname="src/session/SessionPrompts.test.tsx" name="warning dialog &gt; shows an alert when extending fails and keeps the dialog" time="0.073720988">
+        </testcase>
+        <testcase classname="src/session/SessionPrompts.test.tsx" name="warning dialog &gt; has no axe violations (jsdom: contrast and target size run in the browser suite)" time="0.06594611">
+        </testcase>
+        <testcase classname="src/session/SessionPrompts.test.tsx" name="session ended and held-back sign-out &gt; shows the 401 dialog and sends the user to sign-in" time="0.007890387">
+        </testcase>
+        <testcase classname="src/session/SessionPrompts.test.tsx" name="session ended and held-back sign-out &gt; warns when a draft could not be saved and offers Sign out anyway" time="0.009020907">
+        </testcase>
+        <testcase classname="src/session/SessionPrompts.test.tsx" name="session ended and held-back sign-out &gt; warns before signing out with forms that cannot be kept as a draft" time="0.018308176">
+        </testcase>
+        <testcase classname="src/session/SessionPrompts.test.tsx" name="session ended and held-back sign-out &gt; go back does not claim to extend, and the countdown stays visible" time="0.010699998">
+        </testcase>
+        <testcase classname="src/session/SessionPrompts.test.tsx" name="session ended and held-back sign-out &gt; tells the user when sign-out failed and stays signed in" time="0.010398613">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/session/session-store.test.ts" timestamp="2026-11-10T13:38:54.950Z" hostname="314866be9867" tests="12" failures="0" errors="0" skipped="0" time="0.037190218">
+        <testcase classname="src/session/session-store.test.ts" name="idle warning &gt; opens at 13 of 15 minutes with 2:00 left" time="0.007615982">
+        </testcase>
+        <testcase classname="src/session/session-store.test.ts" name="idle warning &gt; counts down and ends the session at the deadline" time="0.002030049">
+        </testcase>
+        <testcase classname="src/session/session-store.test.ts" name="idle warning &gt; makes no API call on its own, whatever the elapsed time" time="0.001819144">
+        </testcase>
+        <testcase classname="src/session/session-store.test.ts" name="idle warning &gt; a later server deadline (interactive traffic) cancels a warning" time="0.006759846">
+        </testcase>
+        <testcase classname="src/session/session-store.test.ts" name="idle warning &gt; ignores a malformed deadline" time="0.000487203">
+        </testcase>
+        <testcase classname="src/session/session-store.test.ts" name="extend &gt; calls extend only when asked, then restarts the clock from the answer" time="0.004963613">
+        </testcase>
+        <testcase classname="src/session/session-store.test.ts" name="extend &gt; 401 on extend ends the session; other failures keep the warning" time="0.000792748">
+        </testcase>
+        <testcase classname="src/session/session-store.test.ts" name="sign-out keeps drafts (X-20) &gt; keeps the session and reports when sign-out fails" time="0.000618209">
+        </testcase>
+        <testcase classname="src/session/session-store.test.ts" name="sign-out keeps drafts (X-20) &gt; saves server drafts first, then signs out" time="0.004709799">
+        </testcase>
+        <testcase classname="src/session/session-store.test.ts" name="sign-out keeps drafts (X-20) &gt; holds sign-out back when a draft cannot be saved, until the user forces it" time="0.000718989">
+        </testcase>
+        <testcase classname="src/session/session-store.test.ts" name="sign-out keeps drafts (X-20) &gt; a throwing save counts as not saved; forms without a draft route are listed as lost" time="0.000549631">
+        </testcase>
+        <testcase classname="src/session/session-store.test.ts" name="sign-out keeps drafts (X-20) &gt; writes nothing to web storage" time="0.004454048">
+        </testcase>
+    </testsuite>
+</testsuites>

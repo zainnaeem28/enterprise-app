@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testsuite name="TC-BK-15 cap variants (D-F11-1)" time="8.731667" disabled="0" errors="0" tests="4" failures="0" skipped="0" timestamp="2026-11-10T14:44:41.428Z" hostname="314866be9867">
+		<testcase name="cap 1 on an overbookable session, 40 parallel patients: exactly 1 succeed" time="2.451714" classname="TC-BK-15 cap variants (D-F11-1)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/api/booking/overbook-cap.test.mjs"/>
+		<!-- outcomes: {"409:scheduling.slot_taken":39,"ok":1} -->
+		<testcase name="cap 0 on an overbookable session, 40 parallel patients: exactly 1 succeed" time="1.995532" classname="TC-BK-15 cap variants (D-F11-1)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/api/booking/overbook-cap.test.mjs"/>
+		<!-- outcomes: {"ok":1,"409:scheduling.slot_taken":39} -->
+		<testcase name="cap 3 on an overbookable session, 40 parallel patients: exactly 3 succeed" time="2.094958" classname="TC-BK-15 cap variants (D-F11-1)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/api/booking/overbook-cap.test.mjs"/>
+		<!-- outcomes: {"409:scheduling.slot_taken":37,"ok":3} -->
+		<testcase name="cap 2, two slots of one session: exactly 2 + 2, the first slot being full does not hide or fill the second" time="2.188259" classname="TC-BK-15 cap variants (D-F11-1)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/api/booking/overbook-cap.test.mjs"/>
+		<!-- confirmed 4 of 40 -->
+	</testsuite>
+	<!-- tests 4 -->
+	<!-- suites 1 -->
+	<!-- pass 4 -->
+	<!-- fail 0 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 0 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 9089.928746 -->
+</testsuites>
