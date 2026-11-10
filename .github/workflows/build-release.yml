@@ -51,7 +51,9 @@ jobs:
       contents: read
       id-token: write # used only by aws-login.sh, after every dependency-running step; see the probe step
     env:
-      PUBLISH: ${{ github.ref == 'refs/heads/main' && 'true' || 'false' }}
+      # Publish only from main AND once any release variable is set (then all must be: see the next check). With none set
+      # (not configured) the job builds, scans and validates a dry-run manifest and publishes nothing.
+      PUBLISH: ${{ github.ref == 'refs/heads/main' && (vars.RELEASE_AWS_REGION != '' || vars.RELEASE_BUILD_ROLE_ARN != '' || vars.RELEASE_ECR_REGISTRY != '' || vars.RELEASE_ECR_REPOSITORY_PREFIX != '' || vars.RELEASE_STORE_BUCKET != '' || vars.RELEASE_SIGNING_KEY_ARN != '') && 'true' || 'false' }}
       AWS_REGION: ${{ vars.RELEASE_AWS_REGION }}
       RELEASE_BUILD_ROLE_ARN: ${{ vars.RELEASE_BUILD_ROLE_ARN }}
       RELEASE_ECR_REGISTRY: ${{ vars.RELEASE_ECR_REGISTRY }}
@@ -66,6 +68,12 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
+
+      - name: Not configured - build and validate only, publish nothing
+        if: ${{ env.PUBLISH != 'true' && github.ref == 'refs/heads/main' }}
+        run: |
+          echo "::notice::not configured: RELEASE_AWS_REGION, RELEASE_BUILD_ROLE_ARN, RELEASE_ECR_REGISTRY, RELEASE_ECR_REPOSITORY_PREFIX, RELEASE_STORE_BUCKET, RELEASE_SIGNING_KEY_ARN; dry-run only, no release was published"
+          printf '### Not configured: release variables\nDry-run manifest only. No image was pushed or signed and no release exists.\n' >>"$GITHUB_STEP_SUMMARY"
 
       - name: Publish configuration is present (main only)
         if: ${{ env.PUBLISH == 'true' }}

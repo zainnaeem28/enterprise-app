@@ -41,18 +41,28 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions: {}
+    outputs:
+      enabled: ${{ steps.gate.outputs.enabled }}
     steps:
-      - name: Refuse unless deliberately enabled, from main
+      - name: Gate - from main; skip (with a notice) unless deliberately enabled
+        id: gate
         env:
           ENABLED: ${{ vars.AUDIT_ARCHIVE_ENABLED }}
           REF: ${{ github.ref }}
         run: |
           [ "$REF" = "refs/heads/main" ] || { echo "::error::audit-archive runs from refs/heads/main only (got $REF)"; exit 1; }
-          [ "$ENABLED" = "true" ] || { echo "::error::audit-archive is authored but not enabled (repository variable AUDIT_ARCHIVE_ENABLED is not 'true'). It needs two human approvals of an applied audit-archive record (C-13, RK-5)."; exit 1; }
+          if [ "$ENABLED" != "true" ]; then
+            echo "::notice::not configured: AUDIT_ARCHIVE_ENABLED (repository variable is not 'true'); no audit archive ran. This run is a skip, not a success of the real operation."
+            printf '### Not configured: AUDIT_ARCHIVE_ENABLED\n%s\n' "no audit archive ran. Nothing ran against any cloud account." >>"$GITHUB_STEP_SUMMARY"
+            echo "enabled=false" >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "enabled=true" >>"$GITHUB_OUTPUT"
 
   archive:
     name: archive and drop one audit partition
     needs: [enabled]
+    if: ${{ needs.enabled.outputs.enabled == 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 70
     environment: audit-archive

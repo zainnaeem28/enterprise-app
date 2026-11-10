@@ -50,18 +50,28 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions: {}
+    outputs:
+      enabled: ${{ steps.gate.outputs.enabled }}
     steps:
-      - name: Refuse unless deliberately enabled, from main
+      - name: Gate - from main; skip (with a notice) unless deliberately enabled
+        id: gate
         env:
           ENABLED: ${{ vars.DEPLOY_STAGING_ENABLED }}
           REF: ${{ github.ref }}
         run: |
           [ "$REF" = "refs/heads/main" ] || { echo "::error::staging deploys run from refs/heads/main only (got $REF)"; exit 1; }
-          [ "$ENABLED" = "true" ] || { echo "::error::deploy-staging is authored but not enabled (DEPLOY_STAGING_ENABLED is not 'true'). DPR-37, DPR-38, DPR-39 must be done first (C-14)."; exit 1; }
+          if [ "$ENABLED" != "true" ]; then
+            echo "::notice::not configured: DEPLOY_STAGING_ENABLED (repository variable is not 'true'); no staging deployment happened. This run is a skip, not a success of the real operation."
+            printf '### Not configured: DEPLOY_STAGING_ENABLED\n%s\n' "no staging deployment happened. Nothing ran against any cloud account." >>"$GITHUB_STEP_SUMMARY"
+            echo "enabled=false" >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "enabled=true" >>"$GITHUB_OUTPUT"
 
   deploy:
     name: verify, migrate, roll out, smoke
     needs: [enabled]
+    if: ${{ needs.enabled.outputs.enabled == 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     environment: staging

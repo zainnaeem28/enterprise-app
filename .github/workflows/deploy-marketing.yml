@@ -49,18 +49,28 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions: {}
+    outputs:
+      enabled: ${{ steps.gate.outputs.enabled }}
     steps:
-      - name: Refuse unless deliberately enabled, from main
+      - name: Gate - from main; skip (with a notice) unless deliberately enabled
+        id: gate
         env:
           ENABLED: ${{ vars.DEPLOY_MARKETING_ENABLED }}
           REF: ${{ github.ref }}
         run: |
           [ "$REF" = "refs/heads/main" ] || { echo "::error::marketing deploys run from refs/heads/main only (got $REF)"; exit 1; }
-          [ "$ENABLED" = "true" ] || { echo "::error::deploy-marketing is authored but not enabled (DEPLOY_MARKETING_ENABLED is not 'true')."; exit 1; }
+          if [ "$ENABLED" != "true" ]; then
+            echo "::notice::not configured: DEPLOY_MARKETING_ENABLED (repository variable is not 'true'); no marketing site was published. This run is a skip, not a success of the real operation."
+            printf '### Not configured: DEPLOY_MARKETING_ENABLED\n%s\n' "no marketing site was published. Nothing ran against any cloud account." >>"$GITHUB_STEP_SUMMARY"
+            echo "enabled=false" >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "enabled=true" >>"$GITHUB_OUTPUT"
 
   publish:
     name: verify and publish
     needs: [enabled]
+    if: ${{ needs.enabled.outputs.enabled == 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     environment: ${{ inputs.target }}

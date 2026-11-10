@@ -50,18 +50,28 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions: {}
+    outputs:
+      enabled: ${{ steps.gate.outputs.enabled }}
     steps:
-      - name: Refuse unless deliberately enabled, from main
+      - name: Gate - from main; skip (with a notice) unless deliberately enabled
+        id: gate
         env:
           ENABLED: ${{ vars.DEPLOY_PRODUCTION_ENABLED }}
           REF: ${{ github.ref }}
         run: |
           [ "$REF" = "refs/heads/main" ] || { echo "::error::production deploys run from refs/heads/main only (got $REF)"; exit 1; }
-          [ "$ENABLED" = "true" ] || { echo "::error::deploy-production is authored but not enabled (repository variable DEPLOY_PRODUCTION_ENABLED is not 'true'). A person enables it after G2/G3 and the DPR-37..39 conditions (C-01)."; exit 1; }
+          if [ "$ENABLED" != "true" ]; then
+            echo "::notice::not configured: DEPLOY_PRODUCTION_ENABLED (repository variable is not 'true'); no production deployment happened. This run is a skip, not a success of the real operation."
+            printf '### Not configured: DEPLOY_PRODUCTION_ENABLED\n%s\n' "no production deployment happened. Nothing ran against any cloud account." >>"$GITHUB_STEP_SUMMARY"
+            echo "enabled=false" >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "enabled=true" >>"$GITHUB_OUTPUT"
 
   deploy:
     name: verify, migrate, roll out, switch portals, smoke
     needs: [enabled]
+    if: ${{ needs.enabled.outputs.enabled == 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     environment: production

@@ -56,6 +56,8 @@ jobs:
           "$CI_TOOLS_DIR/bin/actionlint" -color -verbose 2>&1 | tee reports/workflow-hygiene/actionlint.txt
       - name: SHA pins, allow-list, permissions, no swallowed failures
         run: node scripts/ci/check-workflow-hygiene.mjs 2>&1 | tee reports/workflow-hygiene/hygiene.txt
+      - name: AWS-touching workflows skip with a notice when unconfigured (local evaluation of every gate)
+        run: node scripts/ci/check-aws-gates.mjs 2>&1 | tee reports/workflow-hygiene/aws-gates.txt
       - name: CI admin fixture is set only in the admin-run job (never in a deploy workflow, infra or docker file)
         run: |
           node scripts/ci/check-ci-fixture-isolation.mjs --selftest 2>&1 | tee reports/workflow-hygiene/fixture-isolation.txt
@@ -709,6 +711,71 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+  # AWS emulator evidence (HEAAA-698). LocalStack community edition as a service container with DUMMY, test-only credentials:
+  # S3, KMS, Secrets Manager, SES, SNS (SMS publish) and SQS are emulated. NOT emulated by the community edition (no
+  # service stub exists here; code for these is covered by in-repo fakes and unit tests, and verified only on the go-live
+  # checklist, docs/GO-LIVE.md): Textract, Chime SDK, AWS End User Messaging SMS (pinpoint-sms-voice-v2), GuardDuty Malware
+  # Protection for S3, Cognito. MinIO is not used: LocalStack already serves S3. Results here are emulator evidence only.
+  emulator:
+    name: emulator
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    services:
+      localstack:
+        # localstack/localstack 4.9.2 (last free community line), pinned by manifest-list digest (Docker Hub, 2026-11-10).
+        image: localstack/localstack:4.9.2@sha256:59373b4a27dba3ec15c4db0b7455f0cb68c8a42300e2cbbe362b440f9a131697
+        env:
+          SERVICES: s3,kms,secretsmanager,ses,sns,sqs
+          DISABLE_EVENTS: '1'
+        ports:
+          - 127.0.0.1:4566:4566
+        options: >-
+          --health-cmd "curl -sf http://127.0.0.1:4566/_localstack/health"
+          --health-interval 3s
+          --health-timeout 5s
+          --health-retries 30
+    env:
+      # Dummy and test-only; they authorize nothing outside the throwaway container on this runner.
+      AWS_ENDPOINT_URL: http://127.0.0.1:4566
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_REGION: us-east-1
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_S3_FORCE_PATH_STYLE: 'true'
+      JUNIT_DIR: ${{ github.workspace }}/reports/emulator
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Install (frozen lockfile)
+        run: corepack enable && pnpm install --frozen-lockfile
+      - name: Build
+        run: pnpm build
+      - name: Emulator is healthy and serves the expected services
+        run: |
+          mkdir -p reports/emulator
+          curl -sf http://127.0.0.1:4566/_localstack/health | tee reports/emulator/health.json
+          for s in s3 kms secretsmanager ses sns; do
+            jq -e --arg s "$s" '.services[$s] == "available" or .services[$s] == "running"' reports/emulator/health.json >/dev/null \
+              || { echo "::error::LocalStack service $s is not available"; exit 1; }
+          done
+      - name: Runner self-test (no tests passes; a seeded failing file fails)
+        run: node scripts/ci/run-emulator-tests.mjs --selftest
+      - name: pnpm test:emulator (every *.emulator.test.ts; none present passes cleanly)
+        run: pnpm test:emulator --require-endpoint 2>&1 | tee reports/emulator/test-emulator.txt
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: emulator-reports
+          path: reports/emulator
+          if-no-files-found: error
+          retention-days: 30
+
   # Single required check for the branch ruleset (when the plan can enforce one). A skipped or
   # cancelled job is a failure here.
   # FE-16 open request (HEAAA-598): apps/cms typecheck, DB suite against a throwaway CMS-role database, and a real `next build`
@@ -802,6 +869,7 @@ jobs:
         patient-e2e-a11y,
         admin-run,
         cms,
+        emulator,
       ]
     runs-on: ubuntu-24.04
     timeout-minutes: 5

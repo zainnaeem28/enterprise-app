@@ -147,11 +147,34 @@ jobs:
   # ---- pull request: read-only plan as gh-ci-plan ---------------------------------------------------------------------
   # Environment `infra-plan` variables (none is a secret): INFRA_PLAN_ENABLED, INFRA_PLAN_TARGETS (JSON keyed by root, each
   # {"plan_role_arn": ..., "provider_role_arn": ...}), INFRA_AWS_REGION, INFRA_STATE_BUCKET, INFRA_STATE_REGION, INFRA_STATE_KMS_KEY_ARN.
+  plan-gate:
+    name: plan configured?
+    needs: [static]
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
+    outputs:
+      enabled: ${{ steps.gate.outputs.enabled }}
+    steps:
+      - name: Skip with a notice unless deliberately enabled
+        id: gate
+        env:
+          PLAN_ENABLED: ${{ vars.INFRA_PLAN_ENABLED }}
+        run: |
+          if [ "$PLAN_ENABLED" != "true" ]; then
+            echo "::notice::not configured: INFRA_PLAN_ENABLED (repository variable is not 'true'); no infrastructure plan ran. This is a skip, not a clean plan."
+            printf '### Not configured: INFRA_PLAN_ENABLED\nNo plan was made against any cloud account.\n' >>"$GITHUB_STEP_SUMMARY"
+            echo "enabled=false" >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "enabled=true" >>"$GITHUB_OUTPUT"
+
   plan:
     name: plan ${{ matrix.root }} (read-only)
-    needs: [static]
+    needs: [static, plan-gate]
     # Same-repository pull requests only: a fork never obtains an OIDC token or reaches the environment.
-    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && needs.plan-gate.outputs.enabled == 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     environment: infra-plan
@@ -251,16 +274,25 @@ jobs:
       STATE_KMS_KEY_ARN: ${{ vars.INFRA_STATE_KMS_KEY_ARN }}
       OUT: ${{ github.workspace }}/apply-out
     steps:
-      - name: Refuse unless deliberately enabled, from main, for a known target and a well-formed hash
+      - name: From main; skip with a notice unless enabled; known target and well-formed hash
+        id: gate
         run: |
           [ "$REF" = "refs/heads/main" ] || { echo "::error::infra apply runs from refs/heads/main only (got $REF)"; exit 1; }
-          [ "$APPLY_ENABLED" = "true" ] || { echo "::error::infra apply is authored but not enabled (INFRA_APPLY_ENABLED is not 'true'). The $TARGET infra record must be applied by a person first (C-14)."; exit 1; }
+          if [ "$APPLY_ENABLED" != "true" ]; then
+            echo "::notice::not configured: INFRA_APPLY_ENABLED (not 'true' in environment $TARGET-infra); nothing was applied to $TARGET. This is a skip, not an apply."
+            printf '### Not configured: INFRA_APPLY_ENABLED\nNothing was applied to any cloud account.\n' >>"$GITHUB_STEP_SUMMARY"
+            echo "enabled=false" >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "enabled=true" >>"$GITHUB_OUTPUT"
           case "$TARGET" in staging | production) ;; *) echo "::error::unknown target"; exit 1 ;; esac
           [[ "$APPROVED_SHA" =~ ^[0-9a-f]{64}$ ]] || { echo "::error::approved_plan_sha256 must be 64 lowercase hex characters"; exit 1; }
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: ${{ steps.gate.outputs.enabled == 'true' }}
         with:
           persist-credentials: false
       - name: Install OpenTofu (pinned, sha256-verified)
+        if: ${{ steps.gate.outputs.enabled == 'true' }}
         run: |
           mkdir -p "$CI_TOOLS_DIR/bin" "$CI_TOOLS_DIR/dl"
           curl --fail --silent --show-error --location --retry 3 --output "$CI_TOOLS_DIR/dl/tofu.zip" "https://github.com/opentofu/opentofu/releases/download/v${TOFU_VERSION}/tofu_${TOFU_VERSION}_linux_amd64.zip"
@@ -268,8 +300,10 @@ jobs:
           unzip -o -q "$CI_TOOLS_DIR/dl/tofu.zip" tofu -d "$CI_TOOLS_DIR/bin"
           echo "$CI_TOOLS_DIR/bin" >>"$GITHUB_PATH"
       - name: Assume the environment's tf role (OIDC; denied by AWS unless its approved record is applied and unexpired)
+        if: ${{ steps.gate.outputs.enabled == 'true' }}
         run: scripts/deploy/aws-login.sh "$ROLE_ARN" "gh-tf-$TARGET" 7200
       - name: init, plan, compare with the approved plan hash
+        if: ${{ steps.gate.outputs.enabled == 'true' }}
         run: |
           mkdir -p "$OUT"
           cd "infra/accounts/$TARGET"
@@ -288,6 +322,7 @@ jobs:
           fi
           echo "PLAN_EXIT=$rc" >>"$GITHUB_ENV"
       - name: Apply the saved plan (exactly the approved plan; nothing is applied when there are no changes)
+        if: ${{ steps.gate.outputs.enabled == 'true' }}
         run: |
           if [ "$PLAN_EXIT" = "0" ]; then
             echo "no changes: nothing to apply"
@@ -296,7 +331,7 @@ jobs:
           cd "infra/accounts/$TARGET"
           tofu apply -input=false -no-color "$RUNNER_TEMP/tfplan"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: ${{ !cancelled() }}
+        if: ${{ steps.gate.outputs.enabled == 'true' && (!cancelled()) }}
         with:
           name: infra-apply-${{ inputs.target }}-${{ github.run_id }}
           path: apply-out
