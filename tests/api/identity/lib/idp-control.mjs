@@ -6,10 +6,16 @@ import { createServer } from 'node:http';
 import { pathToFileURL } from 'node:url';
 const [kind, portArg, root] = process.argv.slice(2);
 const port = Number(portArg);
-const { LocalIdp } = await import(pathToFileURL(`${root}/apps/api/dist/src/modules/identity/idp.fixture.js`).href);
+const { LocalIdp } = await import(
+  pathToFileURL(`${root}/apps/api/dist/src/modules/identity/idp.fixture.js`).href
+);
 const idp = new LocalIdp();
 const claims = (q) => {
-  const c = { sub: q.get('sub'), email: q.get('email'), email_verified: q.get('ev') === null ? true : q.get('ev') === 'true' };
+  const c = {
+    sub: q.get('sub'),
+    email: q.get('email'),
+    email_verified: q.get('ev') === null ? true : q.get('ev') === 'true',
+  };
   if (kind === 'staff') {
     const hd = q.get('hd') ?? 'example.com';
     if (hd !== 'none') c.hd = hd;

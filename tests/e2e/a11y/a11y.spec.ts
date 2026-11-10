@@ -98,7 +98,10 @@ async function driveBooking(page: Page, step: number) {
   }
   if (step >= 2) {
     await expect(page).toHaveURL(/\/book\/time$/);
-    await page.getByRole('button', { name: /^\d{1,2}:\d{2}\s?[AP]M/ }).first().click();
+    await page
+      .getByRole('button', { name: /^\d{1,2}:\d{2}\s?[AP]M/ })
+      .first()
+      .click();
     await expect(page.getByRole('button', { name: 'Continue' })).toBeEnabled();
     await page.getByRole('button', { name: 'Continue' }).click();
   }

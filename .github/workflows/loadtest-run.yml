@@ -8,20 +8,20 @@ on:
   workflow_dispatch:
     inputs:
       run_id:
-        description: "Unique run id, 3-24 chars: lower-case letters, digits, hyphen (e.g. 20261110-01)"
+        description: 'Unique run id, 3-24 chars: lower-case letters, digits, hyphen (e.g. 20261110-01)'
         required: true
         type: string
       ttl_hours:
-        description: "Hours until expires_at (1-24; hard maximum 24, decision D-1)"
+        description: 'Hours until expires_at (1-24; hard maximum 24, decision D-1)'
         required: true
-        default: "8"
+        default: '8'
         type: string
       run_cost_ceiling_usd:
-        description: "Per-run cost ceiling in USD (from the plan artifact price list)"
+        description: 'Per-run cost ceiling in USD (from the plan artifact price list)'
         required: true
         type: string
       confirm_apply:
-        description: "Type the run id again to confirm this creates billable infrastructure"
+        description: 'Type the run id again to confirm this creates billable infrastructure'
         required: true
         type: string
 
@@ -41,10 +41,10 @@ jobs:
   loadtest:
     name: create, test, teardown
     runs-on: ubuntu-24.04
-    environment: loadtest            # protection rules (required reviewers) gate the whole job
+    environment: loadtest # protection rules (required reviewers) gate the whole job
     timeout-minutes: 600
     permissions:
-      id-token: write                # OIDC token for AWS
+      id-token: write # OIDC token for AWS
       contents: read
     env:
       RUN_ID: ${{ inputs.run_id }}

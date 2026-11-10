@@ -3,7 +3,18 @@
 // REAL enrolment, sign-in and elevation ceremonies against the API with the run's software authenticator. Nothing is bypassed:
 // the fixtures use the same database writes as the stack's own seeding (tests/api/platform/lib/seed.mjs).
 import { randomUUID, randomBytes } from 'node:crypto';
-import { admin, sqlTx, ORG, stateOf, Client, GRANTOR, newEnrolmentToken, attest, assertWith, elevate } from '../../identity/lib/ctx.mjs';
+import {
+  admin,
+  sqlTx,
+  ORG,
+  stateOf,
+  Client,
+  GRANTOR,
+  newEnrolmentToken,
+  attest,
+  assertWith,
+  elevate,
+} from '../../identity/lib/ctx.mjs';
 import { grantRole } from '../../platform/lib/seed.mjs';
 
 const AD = '/api/v1/admin';
@@ -14,8 +25,15 @@ export async function newRole(permissions, { privileged = false } = {}) {
   const key = `qa03_${randomBytes(4).toString('hex')}`;
   const id = randomUUID();
   await sqlTx(async (c) => {
-    await c.query(`INSERT INTO identity.role (id, organisation_id, key, realm, privileged, location_bound, description) VALUES ($1,$2,$3,'admin_pool',$4,false,'QA-03 synthetic role')`, [id, ORG, key, privileged]);
-    for (const p of permissions) await c.query(`INSERT INTO identity.role_permission (organisation_id, role_id, permission_key) VALUES ($1,$2,$3)`, [ORG, id, p]);
+    await c.query(
+      `INSERT INTO identity.role (id, organisation_id, key, realm, privileged, location_bound, description) VALUES ($1,$2,$3,'admin_pool',$4,false,'QA-03 synthetic role')`,
+      [id, ORG, key, privileged],
+    );
+    for (const p of permissions)
+      await c.query(
+        `INSERT INTO identity.role_permission (organisation_id, role_id, permission_key) VALUES ($1,$2,$3)`,
+        [ORG, id, p],
+      );
   });
   return key;
 }
@@ -26,8 +44,14 @@ export async function newAdminPerson({ roles = ['org_admin'], name = 'ADM' } = {
   const principalId = randomUUID();
   const handle = `${name.toLowerCase()}-${randomBytes(4).toString('hex')}`;
   await sqlTx(async (c) => {
-    await c.query(`INSERT INTO identity.person (id, organisation_id, display_name) VALUES ($1,$2,$3)`, [personId, ORG, `Synthetic ${name} ${handle}`]);
-    await c.query(`INSERT INTO identity.principal (id, organisation_id, person_id, realm, subject, status) VALUES ($1,$2,$3,'admin_pool',$4,'active')`, [principalId, ORG, personId, handle]);
+    await c.query(
+      `INSERT INTO identity.person (id, organisation_id, display_name) VALUES ($1,$2,$3)`,
+      [personId, ORG, `Synthetic ${name} ${handle}`],
+    );
+    await c.query(
+      `INSERT INTO identity.principal (id, organisation_id, person_id, realm, subject, status) VALUES ($1,$2,$3,'admin_pool',$4,'active')`,
+      [principalId, ORG, personId, handle],
+    );
     for (const r of roles) await grantRole(c, principalId, r, null);
   });
   return { personId, principalId, handle, name };
@@ -37,7 +61,13 @@ export async function newAdminPerson({ roles = ['org_admin'], name = 'ADM' } = {
 export async function enrolmentSecret(p) {
   const secret = randomBytes(32).toString('base64url');
   const sa = await admin();
-  await newEnrolmentToken(sa, { principalId: p.principalId }, { personId: GRANTOR.requester.person }, { personId: GRANTOR.approver.person }, secret);
+  await newEnrolmentToken(
+    sa,
+    { principalId: p.principalId },
+    { personId: GRANTOR.requester.person },
+    { personId: GRANTOR.approver.person },
+    secret,
+  );
   return secret;
 }
 
@@ -49,27 +79,46 @@ const adopt = (c, r) => {
 /** The real enrolment ceremony (token, first key, second key). Returns the signed-in client. */
 export async function enrol(p, secret) {
   const c = new Client(origin(), p.handle);
-  const o1 = await c.post(`${AD}/auth/enrolment/options`, { handle: p.handle, token: secret }, { bearerless: true });
+  const o1 = await c.post(
+    `${AD}/auth/enrolment/options`,
+    { handle: p.handle, token: secret },
+    { bearerless: true },
+  );
   if (o1.status !== 200) throw new Error(`enrolment options ${o1.status} ${o1.text}`);
   const a1 = await attest(o1.json.publicKey);
-  const v1 = await c.post(`${AD}/auth/enrolment/verify`, { challengeId: o1.json.challengeId, handle: p.handle, token: secret, attestation: a1.json }, { bearerless: true });
+  const v1 = await c.post(
+    `${AD}/auth/enrolment/verify`,
+    { challengeId: o1.json.challengeId, handle: p.handle, token: secret, attestation: a1.json },
+    { bearerless: true },
+  );
   if (v1.status !== 200) throw new Error(`enrolment verify ${v1.status} ${v1.text}`);
   adopt(c, v1);
   const o2 = await c.post(`${AD}/auth/enrolment/second-key/options`, {});
   if (o2.status !== 200) throw new Error(`second key options ${o2.status} ${o2.text}`);
   const a2 = await attest(o2.json.publicKey);
-  const v2 = await c.post(`${AD}/auth/enrolment/second-key/verify`, { challengeId: o2.json.challengeId, attestation: a2.json });
+  const v2 = await c.post(`${AD}/auth/enrolment/second-key/verify`, {
+    challengeId: o2.json.challengeId,
+    attestation: a2.json,
+  });
   if (v2.status !== 200) throw new Error(`second key verify ${v2.status} ${v2.text}`);
   return c;
 }
 
 /** Signs in a fresh browser (client) for an enrolled admin with the real key. */
 export async function signIn(p, client = new Client(origin(), p.handle)) {
-  const opt = await client.post(`${AD}/auth/sign-in/options`, { handle: p.handle }, { bearerless: true });
+  const opt = await client.post(
+    `${AD}/auth/sign-in/options`,
+    { handle: p.handle },
+    { bearerless: true },
+  );
   if (opt.status !== 200) return { client, response: opt };
   const a = await assertWith(opt.json.publicKey ?? opt.json);
   if (a.status !== 200) return { client, response: { status: 401, json: a.json, text: 'no key' } };
-  const ver = await client.post(`${AD}/auth/sign-in/verify`, { challengeId: opt.json.challengeId, handle: p.handle, assertion: a.json }, { bearerless: true });
+  const ver = await client.post(
+    `${AD}/auth/sign-in/verify`,
+    { challengeId: opt.json.challengeId, handle: p.handle, assertion: a.json },
+    { bearerless: true },
+  );
   adopt(client, ver);
   return { client, response: ver };
 }

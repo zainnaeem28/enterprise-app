@@ -18,16 +18,24 @@ export const SVC = {
 export const SENS_INTERNAL_NAME = 'Synthetic HIV clinic';
 export const SENS_DISPLAY_NAME = 'General appointment';
 
-
 // Role grants go through the real two-person request states (identity.role_assignment.granted_via_request_id is a foreign key).
 // Two fixed admin_pool persons act as requester and approver; they hold no role themselves.
-export const GRANTOR = { requester: { person: id(900001), principal: id(900002) }, approver: { person: id(900003), principal: id(900004) } };
+export const GRANTOR = {
+  requester: { person: id(900001), principal: id(900002) },
+  approver: { person: id(900003), principal: id(900004) },
+};
 export async function ensureGrantors(sa) {
   for (const [name, g] of Object.entries(GRANTOR)) {
     const has = await sa.query('SELECT 1 FROM identity.person WHERE id = $1', [g.person]);
     if (has.rowCount) continue;
-    await sa.query(`INSERT INTO identity.person (id, organisation_id, display_name) VALUES ($1,$2,$3)`, [g.person, ORG, `Synthetic grantor ${name}`]);
-    await sa.query(`INSERT INTO identity.principal (id, organisation_id, person_id, realm, subject, status) VALUES ($1,$2,$3,'admin_pool',$4,'active')`, [g.principal, ORG, g.person, `seed-${name}`]);
+    await sa.query(
+      `INSERT INTO identity.person (id, organisation_id, display_name) VALUES ($1,$2,$3)`,
+      [g.person, ORG, `Synthetic grantor ${name}`],
+    );
+    await sa.query(
+      `INSERT INTO identity.principal (id, organisation_id, person_id, realm, subject, status) VALUES ($1,$2,$3,'admin_pool',$4,'active')`,
+      [g.principal, ORG, g.person, `seed-${name}`],
+    );
   }
 }
 /** Grants `roleKey` (optionally at a location) to a principal through a requested -> approved -> applied request. Call inside a transaction. */
@@ -43,12 +51,17 @@ export async function grantRole(c, principalId, roleKey, locationId) {
     [requestId, ORG, GRANTOR.requester.person, principalId],
   );
   await as(GRANTOR.approver.person);
-  await c.query(`UPDATE identity.role_change_request SET status='approved', approver_person_id=$2, decided_at=now() WHERE id=$1`, [requestId, GRANTOR.approver.person]);
+  await c.query(
+    `UPDATE identity.role_change_request SET status='approved', approver_person_id=$2, decided_at=now() WHERE id=$1`,
+    [requestId, GRANTOR.approver.person],
+  );
   await c.query(
     `INSERT INTO identity.role_assignment (id, organisation_id, principal_id, role_id, location_id, granted_via_request_id) VALUES ($1,$2,$3,$4,$5,$6)`,
     [randomUUID(), ORG, principalId, r.rows[0].id, locationId ?? null, requestId],
   );
-  await c.query(`UPDATE identity.role_change_request SET status='applied' WHERE id=$1`, [requestId]);
+  await c.query(`UPDATE identity.role_change_request SET status='applied' WHERE id=$1`, [
+    requestId,
+  ]);
 }
 
 const emailOf = (key) => `${key.toLowerCase()}@example.com`;
@@ -123,20 +136,21 @@ export async function addPatient(sa, n, over = {}) {
     ],
   );
   // Staff see a patient through an open care relationship at their location (the registration location).
-  for (const loc of over.locations ?? [A1])
-  {
+  for (const loc of over.locations ?? [A1]) {
     // The definer functions need a staff scope; the fixture writes the two rows they would write (care relationship, derived scope).
     await sa.query(
       `INSERT INTO patient.care_relationship (id, organisation_id, patient_id, location_id, reason) VALUES ($1,$2,$3,$4,'registration')`,
       [randomUUID(), ORG, patientId(n), loc],
     );
-    await sa.query(`INSERT INTO patient.staff_scope (patient_id, location_id, organisation_id) VALUES ($1,$2,$3)`, [patientId(n), loc, ORG]);
+    await sa.query(
+      `INSERT INTO patient.staff_scope (patient_id, location_id, organisation_id) VALUES ($1,$2,$3)`,
+      [patientId(n), loc, ORG],
+    );
   }
-  await sa.query(`INSERT INTO identity.person (id, organisation_id, display_name) VALUES ($1,$2,$3)`, [
-    patientPersonId(n),
-    ORG,
-    `${given} ${family}`,
-  ]);
+  await sa.query(
+    `INSERT INTO identity.person (id, organisation_id, display_name) VALUES ($1,$2,$3)`,
+    [patientPersonId(n), ORG, `${given} ${family}`],
+  );
   await sa.query(
     `INSERT INTO identity.principal (id, organisation_id, person_id, realm, subject, email, status)
      VALUES ($1,$2,$3,'patient_pool',$4,$5,'active')`,
@@ -151,9 +165,14 @@ export async function addPatient(sa, n, over = {}) {
 export async function seed(sa) {
   const q = (s, p) => sa.query(s, p);
   await q('BEGIN');
-  await q("SELECT set_config('app.org_id', $1, true), set_config('app.audience', 'system', true)", [ORG]);
+  await q("SELECT set_config('app.org_id', $1, true), set_config('app.audience', 'system', true)", [
+    ORG,
+  ]);
   await ensureGrantors(sa);
-  await q(`INSERT INTO organisation.jurisdiction (code, organisation_id, name) VALUES ('NY', $1, 'New York'), ('CA', $1, 'California')`, [ORG]);
+  await q(
+    `INSERT INTO organisation.jurisdiction (code, organisation_id, name) VALUES ('NY', $1, 'New York'), ('CA', $1, 'California')`,
+    [ORG],
+  );
   await q(
     `INSERT INTO organisation.location (id, organisation_id, name, kind, time_zone, state_code, active) VALUES
        ($1,$3,'Synthetic Clinic A1','clinic','America/New_York','NY',true),
@@ -181,33 +200,31 @@ export async function seed(sa) {
   await svc(SVC.SENS, SENS_INTERNAL_NAME, SENS_DISPLAY_NAME, 'in_person');
   for (const s of Object.values(SVC))
     for (const loc of [A1, B1])
-      await q(`INSERT INTO organisation.service_location (organisation_id, service_id, location_id) VALUES ($1,$2,$3)`, [ORG, s, loc]);
+      await q(
+        `INSERT INTO organisation.service_location (organisation_id, service_id, location_id) VALUES ($1,$2,$3)`,
+        [ORG, s, loc],
+      );
 
   for (const key of Object.keys(STAFF)) await addStaff({ query: (s, p) => sa.query(s, p) }, key);
   // Doctors: licensed, serve every service, DOC-TPL-1 (Mon-Fri 09:00-12:00) at their own location.
   for (const key of DOCTORS) {
     const loc = key === 'STF-DR-B1' ? B1 : A1;
     const state = key === 'STF-DR-B1' ? 'CA' : 'NY';
-    await q(`INSERT INTO identity.licensed_state (principal_id, jurisdiction_code, organisation_id, licence_number) VALUES ($1,$2,$3,$4)`, [
-      principalId(key),
-      state,
-      ORG,
-      `SYNTH-${key}`,
-    ]);
+    await q(
+      `INSERT INTO identity.licensed_state (principal_id, jurisdiction_code, organisation_id, licence_number) VALUES ($1,$2,$3,$4)`,
+      [principalId(key), state, ORG, `SYNTH-${key}`],
+    );
     for (const s of Object.values(SVC))
-      await q(`INSERT INTO organisation.service_clinician (organisation_id, service_id, clinician_principal_id) VALUES ($1,$2,$3)`, [
-        ORG,
-        s,
-        principalId(key),
-      ]);
+      await q(
+        `INSERT INTO organisation.service_clinician (organisation_id, service_id, clinician_principal_id) VALUES ($1,$2,$3)`,
+        [ORG, s, principalId(key)],
+      );
     if (key === 'STF-TRN-A' || key === 'STF-ONCALL') continue;
     const T = randomUUID();
-    await q(`INSERT INTO scheduling.availability_template (id, organisation_id, clinician_principal_id, location_id, valid_from) VALUES ($1,$2,$3,$4,'2020-01-01')`, [
-      T,
-      ORG,
-      principalId(key),
-      loc,
-    ]);
+    await q(
+      `INSERT INTO scheduling.availability_template (id, organisation_id, clinician_principal_id, location_id, valid_from) VALUES ($1,$2,$3,$4,'2020-01-01')`,
+      [T, ORG, principalId(key), loc],
+    );
     for (let d = 1; d <= 5; d++)
       await q(
         `INSERT INTO scheduling.template_rule (id, organisation_id, template_id, clinician_principal_id, weekday, start_local, end_local, service_ids, mode, room_id)
@@ -241,8 +258,14 @@ export async function seedAdmins(sa, token) {
     const principalId = randomUUID();
     await sa.query('BEGIN');
     try {
-      await sa.query(`INSERT INTO identity.person (id, organisation_id, display_name) VALUES ($1,$2,$3)`, [personId, ORG, `Synthetic ${subject}`]);
-      await sa.query(`INSERT INTO identity.principal (id, organisation_id, person_id, realm, subject, status) VALUES ($1,$2,$3,'admin_pool',$4,'active')`, [principalId, ORG, personId, subject]);
+      await sa.query(
+        `INSERT INTO identity.person (id, organisation_id, display_name) VALUES ($1,$2,$3)`,
+        [personId, ORG, `Synthetic ${subject}`],
+      );
+      await sa.query(
+        `INSERT INTO identity.principal (id, organisation_id, person_id, realm, subject, status) VALUES ($1,$2,$3,'admin_pool',$4,'active')`,
+        [principalId, ORG, personId, subject],
+      );
       await sa.query('COMMIT');
     } catch (e) {
       await sa.query('ROLLBACK');
@@ -267,14 +290,19 @@ export async function seedAdmins(sa, token) {
         [requestId, ORG, requester.personId, p.principalId],
       );
       await as(approver.personId);
-      await sa.query(`UPDATE identity.role_change_request SET status='approved', approver_person_id=$2, decided_at=now() WHERE id=$1`, [requestId, approver.personId]);
+      await sa.query(
+        `UPDATE identity.role_change_request SET status='approved', approver_person_id=$2, decided_at=now() WHERE id=$1`,
+        [requestId, approver.personId],
+      );
       const ins = await sa.query(
         `INSERT INTO identity.role_assignment (id, organisation_id, principal_id, role_id, location_id, granted_via_request_id)
          SELECT $1,$2,$3,r.id,NULL,$4 FROM identity.role r WHERE r.organisation_id=$2 AND r.key=$5`,
         [randomUUID(), ORG, p.principalId, requestId, role],
       );
       if (ins.rowCount !== 1) throw new Error(`role ${role} is missing from the reference data`);
-      await sa.query(`UPDATE identity.role_change_request SET status='applied' WHERE id=$1`, [requestId]);
+      await sa.query(`UPDATE identity.role_change_request SET status='applied' WHERE id=$1`, [
+        requestId,
+      ]);
       await sa.query('COMMIT');
     } catch (e) {
       await sa.query('ROLLBACK');

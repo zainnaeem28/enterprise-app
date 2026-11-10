@@ -15,7 +15,8 @@ const root = resolve(process.argv[2]);
 const stateFile = resolve(process.argv[3]);
 const logDir = resolve(dirname(stateFile), 'logs');
 mkdirSync(logDir, { recursive: true });
-if (!process.env.EHR_TEST_ADMIN_URL) throw new Error('EHR_TEST_ADMIN_URL is required (ci database admin)');
+if (!process.env.EHR_TEST_ADMIN_URL)
+  throw new Error('EHR_TEST_ADMIN_URL is required (ci database admin)');
 const pg = createRequire(root + '/package.json')('pg');
 const db = `ehr_qa04_${randomBytes(4).toString('hex')}`;
 const admin = new URL(process.env.EHR_TEST_ADMIN_URL);
@@ -31,15 +32,24 @@ await a.connect();
 await a.query(`CREATE DATABASE ${db}`);
 await a.end();
 
-const env0 = { PATH: process.env.PATH, EHR_DB_ADMIN_URL: urlFor(admin.username), EHR_DB_MIGRATE_URL: urlFor('app_owner') };
+const env0 = {
+  PATH: process.env.PATH,
+  EHR_DB_ADMIN_URL: urlFor(admin.username),
+  EHR_DB_MIGRATE_URL: urlFor('app_owner'),
+};
 for (const cmd of ['bootstrap', 'migrate'])
-  execFileSync(process.execPath, [`${root}/db/tools/migrate.mjs`, cmd], { env: env0, stdio: 'inherit' });
+  execFileSync(process.execPath, [`${root}/db/tools/migrate.mjs`, cmd], {
+    env: env0,
+    stdio: 'inherit',
+  });
 const imp = (p) => import(pathToFileURL(`${root}/${p}`).href);
 await (await imp('packages/kernel/dist/queue/install.js')).installQueue(urlFor('app_owner'));
 const { KernelDb } = await imp('packages/kernel/dist/index.js');
 const pool = new pg.Pool({ connectionString: urlFor('app_worker'), max: 2 });
 const wdb = new KernelDb(pool);
-await (await imp('apps/worker/dist/jobs/identity/index.js')).runApplyReferenceData({ db: wdb, orgId: ORG });
+await (
+  await imp('apps/worker/dist/jobs/identity/index.js')
+).runApplyReferenceData({ db: wdb, orgId: ORG });
 const { OrganisationService } = await imp('apps/api/dist/src/modules/organisation/index.js');
 await wdb.withScope({ audience: 'system', realm: 'worker', orgId: ORG, jobScope: 'org' }, (tx) =>
   new OrganisationService().applySettingDefaults(tx, undefined),
@@ -65,16 +75,29 @@ const start = (name, cmd, args, env) => {
 const idpJson = async (name, kind, port) => {
   const out = `${logDir}/${name}.json`;
   const fd = openSync(out, 'w');
-  const p = spawn(process.execPath, [resolve(dirname(new URL(import.meta.url).pathname), 'idp-control.mjs'), kind, String(port), root], {
-    stdio: ['ignore', fd, openSync(`${logDir}/${name}.log`, 'a')],
-    detached: true,
-  });
+  const p = spawn(
+    process.execPath,
+    [
+      resolve(dirname(new URL(import.meta.url).pathname), 'idp-control.mjs'),
+      kind,
+      String(port),
+      root,
+    ],
+    {
+      stdio: ['ignore', fd, openSync(`${logDir}/${name}.log`, 'a')],
+      detached: true,
+    },
+  );
   p.unref();
   pids[name] = p.pid;
   const fsm = await import('node:fs');
   for (let i = 0; i < 40; i++) {
     await new Promise((r) => setTimeout(r, 500));
-    try { return JSON.parse(fsm.readFileSync(out, 'utf8')); } catch { /* not written yet */ }
+    try {
+      return JSON.parse(fsm.readFileSync(out, 'utf8'));
+    } catch {
+      /* not written yet */
+    }
   }
   throw new Error(`IdP ${name} did not start; see ${logDir}/${name}.log`);
 };
@@ -116,8 +139,16 @@ const base = {
   EHR_STAFF_OIDC_REDIRECT_URI: `http://localhost:${ports.api}/api/v1/auth/callback`,
   EHR_STAFF_WORKSPACE_DOMAIN: 'example.com',
 };
-start('api', process.execPath, [`${root}/apps/api/dist/src/main.js`], { ...base, EHR_DEPLOYABLE: 'api', EHR_DATABASE_URL: urlFor('app_api') });
-start('worker', process.execPath, [`${root}/apps/worker/dist/main.js`], { ...base, EHR_DEPLOYABLE: 'worker', EHR_DATABASE_URL: urlFor('app_worker') });
+start('api', process.execPath, [`${root}/apps/api/dist/src/main.js`], {
+  ...base,
+  EHR_DEPLOYABLE: 'api',
+  EHR_DATABASE_URL: urlFor('app_api'),
+});
+start('worker', process.execPath, [`${root}/apps/worker/dist/main.js`], {
+  ...base,
+  EHR_DEPLOYABLE: 'worker',
+  EHR_DATABASE_URL: urlFor('app_worker'),
+});
 let ready = false;
 for (let i = 0; i < 40 && !ready; i++) {
   await new Promise((r) => setTimeout(r, 1000));
@@ -129,7 +160,11 @@ for (let i = 0; i < 40 && !ready; i++) {
 }
 writeFileSync(
   stateFile,
-  JSON.stringify({ db, ports, pids, fixtures, startedAt: new Date().toISOString(), ready, runId: randomUUID() }, null, 2),
+  JSON.stringify(
+    { db, ports, pids, fixtures, startedAt: new Date().toISOString(), ready, runId: randomUUID() },
+    null,
+    2,
+  ),
 );
 if (!ready) {
   console.error('API did not become ready; see logs');

@@ -21,14 +21,23 @@ const host = BASE_URL.replace(/^https?:\/\//, '').split(/[/:]/)[0];
 export function guard() {
   if (!BASE_URL) throw new Error('BASE_URL is required (the loadtest API origin).');
   if (SELFTEST) {
-    if (!/^(127\.0\.0\.1|localhost)$/.test(host)) throw new Error('FIXTURE_SELFTEST=1 is allowed against localhost only.');
+    if (!/^(127\.0\.0\.1|localhost)$/.test(host))
+      throw new Error('FIXTURE_SELFTEST=1 is allowed against localhost only.');
     return;
   }
-  if (__ENV.ENV_NAME !== 'loadtest') throw new Error('ENV_NAME must be "loadtest": load cases run on ENV-LOAD only (C-17).');
+  if (__ENV.ENV_NAME !== 'loadtest')
+    throw new Error('ENV_NAME must be "loadtest": load cases run on ENV-LOAD only (C-17).');
   if (!BASE_URL.startsWith('https://')) throw new Error('BASE_URL must be https on loadtest.');
-  const allowed = (__ENV.LOADTEST_HOSTS || '').split(',').map((s) => s.trim()).filter(Boolean);
-  if (!allowed.includes(host)) throw new Error(`host ${host} is not in LOADTEST_HOSTS (explicit allow-list of loadtest origins).`);
-  if (!__ENV.CANDIDATE_COMMIT) throw new Error('CANDIDATE_COMMIT is required: it is recorded with the run.');
+  const allowed = (__ENV.LOADTEST_HOSTS || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (!allowed.includes(host))
+    throw new Error(
+      `host ${host} is not in LOADTEST_HOSTS (explicit allow-list of loadtest origins).`,
+    );
+  if (!__ENV.CANDIDATE_COMMIT)
+    throw new Error('CANDIDATE_COMMIT is required: it is recorded with the run.');
 }
 guard();
 
@@ -85,7 +94,9 @@ export function latencyThresholds({ apiP95 = 500, slotP95 = 1000 } = {}) {
 // SESSIONS_FILE: JSON array of {key, audience:'staff'|'patient', cookie, csrf, patientId?, clinicianId?, locationId?}
 //   minted by the loadtest seeder task (harness/seed.sh) from the synthetic accounts. IDS_FILE: JSON {serviceId, locationIds[],
 //   clinicianIds[], slots[], windowFrom, windowTo, ...}. Both are read in the init context.
-export const sessions = new SharedArray('sessions', () => JSON.parse(open(__ENV.SESSIONS_FILE || '../selftest/sessions.json')));
+export const sessions = new SharedArray('sessions', () =>
+  JSON.parse(open(__ENV.SESSIONS_FILE || '../selftest/sessions.json')),
+);
 export const ids = JSON.parse(open(__ENV.IDS_FILE || '../selftest/ids.json'));
 export const RELEASE = __ENV.CLIENT_RELEASE || 'r1.000000000000';
 
@@ -104,8 +115,13 @@ export function headers(s, extra = {}) {
   };
 }
 export function get(s, path, cls = 'api', name) {
-  const res = http.get(`${BASE_URL}${path}`, { headers: headers(s), tags: { class: cls, name: name || path.replace(/[0-9a-f-]{36}/g, ':id') } });
-  check(res, { [`GET ${name || path.split('?')[0]} 2xx`]: (r) => r.status >= 200 && r.status < 300 });
+  const res = http.get(`${BASE_URL}${path}`, {
+    headers: headers(s),
+    tags: { class: cls, name: name || path.replace(/[0-9a-f-]{36}/g, ':id') },
+  });
+  check(res, {
+    [`GET ${name || path.split('?')[0]} 2xx`]: (r) => r.status >= 200 && r.status < 300,
+  });
   return res;
 }
 export function post(s, path, body, cls = 'api', extra = {}, okStatuses = [200, 201], name) {
@@ -121,14 +137,24 @@ export const idem = () => ({ 'Idempotency-Key': uuidv4() });
 
 export function slotSearch(s) {
   const loc = ids.locationIds;
-  return post(s, '/api/v1/availability/search', {
-    serviceId: ids.serviceId,
-    // all locations when ALL_LOCATIONS=1 (TC-PERF-02: "across all locations"); otherwise a single location
-    ...(__ENV.ALL_LOCATIONS === '1' ? {} : { locationId: loc[Math.floor(Math.random() * loc.length)] }),
-    mode: 'in_person',
-    from: ids.windowFrom,
-    to: ids.windowTo,
-  }, 'slot_search', {}, [200], '/api/v1/availability/search');
+  return post(
+    s,
+    '/api/v1/availability/search',
+    {
+      serviceId: ids.serviceId,
+      // all locations when ALL_LOCATIONS=1 (TC-PERF-02: "across all locations"); otherwise a single location
+      ...(__ENV.ALL_LOCATIONS === '1'
+        ? {}
+        : { locationId: loc[Math.floor(Math.random() * loc.length)] }),
+      mode: 'in_person',
+      from: ids.windowFrom,
+      to: ids.windowTo,
+    },
+    'slot_search',
+    {},
+    [200],
+    '/api/v1/availability/search',
+  );
 }
 
 /** Machine-readable evidence next to the console summary: run identity + thresholds, so a report is never anonymous. */
@@ -145,10 +171,17 @@ export function summaryWithMeta(id, data) {
     startedAt: new Date().toISOString(),
   };
   const out = {};
-  out[`${__ENV.REPORT_DIR || 'reports'}/${id}.summary.json`] = JSON.stringify({ meta, metrics: data.metrics, root_group: undefined }, null, 2);
-  const lines = [`${id} ${meta.notEvidence ? '[FIXTURE SELFTEST - NOT EVIDENCE]' : ''} candidate=${meta.candidateCommit}`];
+  out[`${__ENV.REPORT_DIR || 'reports'}/${id}.summary.json`] = JSON.stringify(
+    { meta, metrics: data.metrics, root_group: undefined },
+    null,
+    2,
+  );
+  const lines = [
+    `${id} ${meta.notEvidence ? '[FIXTURE SELFTEST - NOT EVIDENCE]' : ''} candidate=${meta.candidateCommit}`,
+  ];
   for (const [name, m] of Object.entries(data.metrics)) {
-    for (const [expr, t] of Object.entries(m.thresholds || {})) lines.push(`${t.ok ? 'PASS' : 'FAIL'}  ${name}  ${expr}`);
+    for (const [expr, t] of Object.entries(m.thresholds || {}))
+      lines.push(`${t.ok ? 'PASS' : 'FAIL'}  ${name}  ${expr}`);
   }
   out.stdout = lines.join('\n') + '\n';
   return out;

@@ -5,20 +5,27 @@ import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { personaEmail, subjectOf } from './seed.mjs';
 
-const req = createRequire(process.env.QA_PLAYWRIGHT_FROM ?? new URL('../../../../apps/staff/package.json', import.meta.url).pathname);
+const req = createRequire(
+  process.env.QA_PLAYWRIGHT_FROM ??
+    new URL('../../../../apps/staff/package.json', import.meta.url).pathname,
+);
 const { request } = req('@playwright/test');
 
-export const state = () => JSON.parse(readFileSync(process.env.QA_STACK_STATE ?? 'reports/qa04/stack.json', 'utf8'));
+export const state = () =>
+  JSON.parse(readFileSync(process.env.QA_STACK_STATE ?? 'reports/qa04/stack.json', 'utf8'));
 const RELEASE = 'r1.000000000000';
 // The API trusts X-Forwarded-For from loopback (trust proxy), and the unauthenticated rate limit is keyed by source IP. Each
 // signed-in persona is a separate client, so each one gets its own synthetic address (10.200.x.y, never routable).
 let ipSeq = Math.floor(Math.random() * 60000);
-const nextIp = () => `10.200.${(ipSeq >> 8) & 255}.${(ipSeq++ & 255) || 1}`;
+const nextIp = () => `10.200.${(ipSeq >> 8) & 255}.${ipSeq++ & 255 || 1}`;
 
 // The fixture IdP signs in "whoever is next", so two sign-ins must never overlap: one queue for all of them.
 let signIn = Promise.resolve();
 export function login(kind, key, over = {}) {
-  const run = signIn.then(() => loginNow(kind, key, over), () => loginNow(kind, key, over));
+  const run = signIn.then(
+    () => loginNow(kind, key, over),
+    () => loginNow(kind, key, over),
+  );
   signIn = run.catch(() => {});
   return run;
 }
@@ -32,7 +39,10 @@ async function loginNow(kind, key, over = {}) {
     `http://127.0.0.1:${idpPort}/next?sub=${encodeURIComponent(over.sub ?? subjectOf(key))}&email=${encodeURIComponent(over.email ?? personaEmail(key))}`,
   );
   if (!ctl.ok) throw new Error('IdP control failed');
-  const ctx = await request.newContext({ baseURL: origin, extraHTTPHeaders: { 'x-client-release': RELEASE, 'x-forwarded-for': over.ip ?? nextIp() } });
+  const ctx = await request.newContext({
+    baseURL: origin,
+    extraHTTPHeaders: { 'x-client-release': RELEASE, 'x-forwarded-for': over.ip ?? nextIp() },
+  });
   await ctx.get('/api/v1/auth/sign-in?returnTo=/', { maxRedirects: 10 });
   const sres = await ctx.get('/api/v1/auth/session');
   const session = sres.ok() ? await sres.json() : null;
@@ -63,10 +73,22 @@ export class Client {
     }
     return { status: r.status(), headers: r.headers(), text, json };
   }
-  get(path, o) { return this.call('GET', path, o); }
-  post(path, body, o) { return this.call('POST', path, { body, ...o }); }
-  patch(path, body, o) { return this.call('PATCH', path, { body, ...o }); }
-  put(path, body, o) { return this.call('PUT', path, { body, ...o }); }
-  delete(path, o) { return this.call('DELETE', path, o); }
-  close() { return this.ctx.dispose(); }
+  get(path, o) {
+    return this.call('GET', path, o);
+  }
+  post(path, body, o) {
+    return this.call('POST', path, { body, ...o });
+  }
+  patch(path, body, o) {
+    return this.call('PATCH', path, { body, ...o });
+  }
+  put(path, body, o) {
+    return this.call('PUT', path, { body, ...o });
+  }
+  delete(path, o) {
+    return this.call('DELETE', path, o);
+  }
+  close() {
+    return this.ctx.dispose();
+  }
 }

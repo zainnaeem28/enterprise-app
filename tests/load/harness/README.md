@@ -2,16 +2,16 @@
 
 Tooling the load scripts (QA-07) run on. Environment: `infra/modules/loadtest`.
 
-| File | Purpose |
-| --- | --- |
-| `k6.version`, `install-k6.sh`, `run-k6.sh` | Pinned, checksum-verified, **unmodified** k6 (AGPL-3.0, test tooling only, never shipped). `run-k6.sh` sets `K6_BINARY_PROVISIONING=false`: k6 v2 otherwise silently downloads a custom (extension) binary when a script imports `k6/x/*`, which decision D-2 forbids. |
-| `k6/sse-probe.js` | Capability probe for SSE with built-in k6 only. |
-| `sse-client/sse-load.mjs` | Own SSE client (Node built-ins, no dependencies): concurrent streams, time to first event, event rate, heartbeat gaps, unexpected closes, reconnect with `Last-Event-ID`, peak open streams. |
-| `sse-fixture/server.mjs` | Local SSE stand-in used to prove the above. Not the API. |
-| `seed.sh` | Runs the synthetic-data seeder task and waits. |
-| `teardown.sh <root> <run_id>`, `reap-expired.sh`, `guard-cost.sh` (+ `lib-tagged.sh`) | Always-run destroy with all-Region verification, TTL reaper, per-run cost guard. |
-| `check-equivalence.mjs` | Compares the loadtest `profile` output with production's; unjustified differences fail. |
-| `evidence/` | Raw reports. |
+| File                                                                                  | Purpose                                                                                                                                                                                                                                                                |
+| ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `k6.version`, `install-k6.sh`, `run-k6.sh`                                            | Pinned, checksum-verified, **unmodified** k6 (AGPL-3.0, test tooling only, never shipped). `run-k6.sh` sets `K6_BINARY_PROVISIONING=false`: k6 v2 otherwise silently downloads a custom (extension) binary when a script imports `k6/x/*`, which decision D-2 forbids. |
+| `k6/sse-probe.js`                                                                     | Capability probe for SSE with built-in k6 only.                                                                                                                                                                                                                        |
+| `sse-client/sse-load.mjs`                                                             | Own SSE client (Node built-ins, no dependencies): concurrent streams, time to first event, event rate, heartbeat gaps, unexpected closes, reconnect with `Last-Event-ID`, peak open streams.                                                                           |
+| `sse-fixture/server.mjs`                                                              | Local SSE stand-in used to prove the above. Not the API.                                                                                                                                                                                                               |
+| `seed.sh`                                                                             | Runs the synthetic-data seeder task and waits.                                                                                                                                                                                                                         |
+| `teardown.sh <root> <run_id>`, `reap-expired.sh`, `guard-cost.sh` (+ `lib-tagged.sh`) | Always-run destroy with all-Region verification, TTL reaper, per-run cost guard.                                                                                                                                                                                       |
+| `check-equivalence.mjs`                                                               | Compares the loadtest `profile` output with production's; unjustified differences fail.                                                                                                                                                                                |
+| `evidence/`                                                                           | Raw reports.                                                                                                                                                                                                                                                           |
 
 ## k6 and SSE: result
 

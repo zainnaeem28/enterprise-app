@@ -4,7 +4,25 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  SVC, A1, B1, login, newPatient, search, hold, holdBody, book, sql, closeAdmin, uuid, nextDay, until, principalId, newService, setPolicy, sleep, newDoctor,
+  SVC,
+  A1,
+  B1,
+  login,
+  newPatient,
+  search,
+  hold,
+  holdBody,
+  book,
+  sql,
+  closeAdmin,
+  uuid,
+  nextDay,
+  until,
+  principalId,
+  newService,
+  setPolicy,
+  sleep,
+  newDoctor,
 } from '../../e2e/journeys/lib/world.mjs';
 
 const slotOf = async (p, o) => {
@@ -25,19 +43,46 @@ describe('TC-BK booking and rescheduling', () => {
     assert.equal(b.appointment.status, 'confirmed');
     assert.equal(b.appointment.patientId, p.id);
     const rows = () =>
-      sql(`SELECT template_key, channel, status FROM notifications.notification WHERE patient_id = $1 AND dedupe_key LIKE $2`, [p.id, `%${b.reservationId}%`]);
-    const n = (await until(async () => { const r = await rows(); return r.rows.some((x) => x.template_key.startsWith('appointment_reminder_')) && r.rows.some((x) => x.template_key === 'appointment_confirmation') ? r : null; })) ?? (await rows());
+      sql(
+        `SELECT template_key, channel, status FROM notifications.notification WHERE patient_id = $1 AND dedupe_key LIKE $2`,
+        [p.id, `%${b.reservationId}%`],
+      );
+    const n =
+      (await until(async () => {
+        const r = await rows();
+        return r.rows.some((x) => x.template_key.startsWith('appointment_reminder_')) &&
+          r.rows.some((x) => x.template_key === 'appointment_confirmation')
+          ? r
+          : null;
+      })) ?? (await rows());
     const conf = n.rows.filter((r) => r.template_key === 'appointment_confirmation');
     assert.ok(conf.length >= 1, 'a confirmation notification row exists');
-    assert.ok(conf.some((r) => r.channel === 'in_app' && r.status === 'sent'), 'in-app confirmation was sent');
+    assert.ok(
+      conf.some((r) => r.channel === 'in_app' && r.status === 'sent'),
+      'in-app confirmation was sent',
+    );
     const rem = n.rows.filter((r) => r.template_key.startsWith('appointment_reminder_'));
-    assert.ok(rem.some((r) => r.template_key === 'appointment_reminder_48h') && rem.some((r) => r.template_key === 'appointment_reminder_4h'), 'both reminders are scheduled');
+    assert.ok(
+      rem.some((r) => r.template_key === 'appointment_reminder_48h') &&
+        rem.some((r) => r.template_key === 'appointment_reminder_4h'),
+      'both reminders are scheduled',
+    );
     const au = await sql(
       `SELECT action, resource_type FROM audit.event WHERE resource_id = $1 OR patient_id = $2`,
       [b.reservationId, p.id],
     );
-    assert.ok(au.rows.some((r) => r.resource_type === 'scheduling.slot_reservation' && r.action === 'create'), 'hold audited');
-    assert.ok(au.rows.some((r) => r.resource_type === 'scheduling.slot_reservation' && r.action === 'update'), 'confirmation audited');
+    assert.ok(
+      au.rows.some(
+        (r) => r.resource_type === 'scheduling.slot_reservation' && r.action === 'create',
+      ),
+      'hold audited',
+    );
+    assert.ok(
+      au.rows.some(
+        (r) => r.resource_type === 'scheduling.slot_reservation' && r.action === 'update',
+      ),
+      'confirmation audited',
+    );
   });
 
   it('TC-BK-01a the .ics of a confirmed appointment is served (`GET /appointments/{id}/calendar.ics`, RA-R1-02)', async () => {
@@ -95,7 +140,11 @@ describe('TC-BK booking and rescheduling', () => {
     const r = await hold(b, slot);
     assert.equal(r.status, 409, r.text);
     assert.equal(r.json.code, 'scheduling.slot_taken');
-    assert.ok(Array.isArray(r.json.errors) && r.json.errors.every((e) => e.path.startsWith('/alternatives/')), 'alternatives travel as errors[]');
+    assert.ok(
+      Array.isArray(r.json.errors) &&
+        r.json.errors.every((e) => e.path.startsWith('/alternatives/')),
+      'alternatives travel as errors[]',
+    );
   });
 
   it('TC-BK-05 cancel inside the cut-off is blocked (D-3 default), cancel outside is free [G2 setting: cut-off set by SQL]', async () => {
@@ -104,14 +153,22 @@ describe('TC-BK booking and rescheduling', () => {
     await setPolicy(svc, { cutoff: 24 * 400, late: 'block' }); // every visit is "inside the cut-off"
     const s = await slotOf(p, { serviceId: svc });
     const b = await book(p, s.slots[0], svc);
-    const r = await p.client.post(`/api/v1/appointments/${b.reservationId}/cancel`, { reason: 'qa' }, { headers: { 'if-match': wmatch(b.appointment.version) } });
+    const r = await p.client.post(
+      `/api/v1/appointments/${b.reservationId}/cancel`,
+      { reason: 'qa' },
+      { headers: { 'if-match': wmatch(b.appointment.version) } },
+    );
     assert.equal(r.status, 422, r.text);
     assert.equal(r.json.code, 'scheduling.cutoff_passed');
     const still = await p.client.get(`/api/v1/appointments/${b.reservationId}`);
     assert.equal(still.json.status, 'confirmed', 'blocked cancel leaves the appointment confirmed');
     await setPolicy(svc, { cutoff: 24, late: 'block' }); // the visit is days away: outside a 24 h cut-off
     const cur = await p.client.get(`/api/v1/appointments/${b.reservationId}`);
-    const ok = await p.client.post(`/api/v1/appointments/${b.reservationId}/cancel`, { reason: 'qa' }, { headers: { 'if-match': wmatch(cur.json.version) } });
+    const ok = await p.client.post(
+      `/api/v1/appointments/${b.reservationId}/cancel`,
+      { reason: 'qa' },
+      { headers: { 'if-match': wmatch(cur.json.version) } },
+    );
     assert.equal(ok.status, 200, ok.text);
     assert.match(ok.json.status, /cancelled/);
   });
@@ -124,23 +181,48 @@ describe('TC-BK booking and rescheduling', () => {
     const s2 = await slotOf(p, { day: day2 });
     const h = await hold(p, s2.slots[0]);
     assert.equal(h.status, 201, h.text);
-    const r = await p.client.post(`/api/v1/appointments/${b.reservationId}/reschedule`, { newHoldId: h.json.reservationId }, { headers: { 'if-match': wmatch(b.appointment.version) } });
+    const r = await p.client.post(
+      `/api/v1/appointments/${b.reservationId}/reschedule`,
+      { newHoldId: h.json.reservationId },
+      { headers: { 'if-match': wmatch(b.appointment.version) } },
+    );
     assert.equal(r.status, 200, r.text);
     assert.equal(r.json.startsAt, s2.slots[0].startsAt);
     const back = await search(p.client, { day: s.day, clinicianId: s.slots[0].clinicianId });
-    assert.ok(back.slots.some((x) => x.startsAt === s.slots[0].startsAt), 'the old slot is bookable again');
+    assert.ok(
+      back.slots.some((x) => x.startsAt === s.slots[0].startsAt),
+      'the old slot is bookable again',
+    );
     const remQ = () =>
-      sql(`SELECT dedupe_key, template_key, status FROM notifications.notification WHERE patient_id = $1 AND template_key LIKE 'appointment_reminder_%'`, [p.id]);
+      sql(
+        `SELECT dedupe_key, template_key, status FROM notifications.notification WHERE patient_id = $1 AND template_key LIKE 'appointment_reminder_%'`,
+        [p.id],
+      );
     const rem = await until(async () => {
       const r = await remQ();
-      return r.rows.some((x) => x.dedupe_key.includes(h.json.reservationId) && x.status === 'queued') ? r : null;
+      return r.rows.some(
+        (x) => x.dedupe_key.includes(h.json.reservationId) && x.status === 'queued',
+      )
+        ? r
+        : null;
     });
     assert.ok(rem, 'reminders are queued for the new appointment');
-    const forNew = rem.rows.filter((x) => x.dedupe_key.includes(h.json.reservationId) && x.status === 'queued');
-    assert.ok(forNew.some((x) => x.template_key === 'appointment_reminder_48h') && forNew.some((x) => x.template_key === 'appointment_reminder_4h'));
+    const forNew = rem.rows.filter(
+      (x) => x.dedupe_key.includes(h.json.reservationId) && x.status === 'queued',
+    );
+    assert.ok(
+      forNew.some((x) => x.template_key === 'appointment_reminder_48h') &&
+        forNew.some((x) => x.template_key === 'appointment_reminder_4h'),
+    );
     const forOld = rem.rows.filter((x) => x.dedupe_key.includes(b.reservationId));
-    assert.ok(forOld.length > 0 && forOld.every((x) => x.status === 'cancelled'), 'every reminder of the old appointment is cancelled');
-    const au = await sql(`SELECT action FROM audit.event WHERE resource_id = $1 OR resource_id = $2`, [b.reservationId, h.json.reservationId]);
+    assert.ok(
+      forOld.length > 0 && forOld.every((x) => x.status === 'cancelled'),
+      'every reminder of the old appointment is cancelled',
+    );
+    const au = await sql(
+      `SELECT action FROM audit.event WHERE resource_id = $1 OR resource_id = $2`,
+      [b.reservationId, h.json.reservationId],
+    );
     assert.ok(au.rows.length >= 3, 'reschedule is audited');
   });
 
@@ -174,8 +256,13 @@ describe('TC-BK booking and rescheduling', () => {
     const c = await p.client.post(`/api/v1/appointments/${h.json.reservationId}/confirm`, {});
     assert.equal(c.status, 409, c.text);
     assert.equal(c.json.code, 'scheduling.hold_expired');
-    assert.ok(c.json.errors?.some((e) => e.path.startsWith('/alternatives/')), 'alternatives are offered');
-    const row = await sql(`SELECT status FROM scheduling.slot_occupancy WHERE id = $1`, [h.json.reservationId]);
+    assert.ok(
+      c.json.errors?.some((e) => e.path.startsWith('/alternatives/')),
+      'alternatives are offered',
+    );
+    const row = await sql(`SELECT status FROM scheduling.slot_occupancy WHERE id = $1`, [
+      h.json.reservationId,
+    ]);
     assert.ok(!row.rows[0] || row.rows[0].status !== 'confirmed', 'no appointment exists');
   });
 
@@ -189,13 +276,26 @@ describe('TC-BK booking and rescheduling', () => {
     assert.equal(r1.status, 201, r1.text);
     assert.equal(r2.status, 201, r2.text);
     assert.equal(r1.json.reservationId, r2.json.reservationId, 'replay returns the same hold');
-    const n = await sql(`SELECT count(*)::int c FROM scheduling.slot_reservation WHERE patient_id = $1`, [p.id]);
+    const n = await sql(
+      `SELECT count(*)::int c FROM scheduling.slot_reservation WHERE patient_id = $1`,
+      [p.id],
+    );
     assert.equal(n.rows[0].c, 1);
-    const r3 = await p.client.post('/api/v1/holds', holdBody(p, s.slots[1]), { headers: { 'idempotency-key': key } });
+    const r3 = await p.client.post('/api/v1/holds', holdBody(p, s.slots[1]), {
+      headers: { 'idempotency-key': key },
+    });
     assert.equal(r3.status, 409, r3.text);
     assert.equal(r3.json.code, 'kernel.idempotency_conflict');
-    const c1 = await p.client.post(`/api/v1/appointments/${r1.json.reservationId}/confirm`, {}, { headers: { 'idempotency-key': key } });
-    assert.equal(c1.status, 200, `the hold's key reused on the confirm route must not collide: ${c1.text}`);
+    const c1 = await p.client.post(
+      `/api/v1/appointments/${r1.json.reservationId}/confirm`,
+      {},
+      { headers: { 'idempotency-key': key } },
+    );
+    assert.equal(
+      c1.status,
+      200,
+      `the hold's key reused on the confirm route must not collide: ${c1.text}`,
+    );
   });
 
   it('TC-BK-10 time zones: stored UTC, shown in the location zone across a daylight-saving change (LOC-B1)', async () => {
@@ -204,7 +304,11 @@ describe('TC-BK booking and rescheduling', () => {
     const out = {};
     for (const date of ['2027-03-12', '2027-03-15']) {
       const day = { from: `${date}T00:00:00.000Z`, to: `${date}T23:59:59.000Z`, date };
-      const s = await search(p.client, { day, locationId: B1, clinicianId: principalId('STF-DR-B1') });
+      const s = await search(p.client, {
+        day,
+        locationId: B1,
+        clinicianId: principalId('STF-DR-B1'),
+      });
       assert.equal(s.status, 200, s.text);
       assert.ok(s.slots.length > 0, `slots exist on ${date}`);
       out[date] = s.slots[0].startsAt;
@@ -220,7 +324,11 @@ describe('TC-BK booking and rescheduling', () => {
     const sB = await search(fd, { locationId: B1, clinicianId: principalId('STF-DR-B1') });
     assert.equal(sA.status, 200, sA.text);
     const hA = await fd.post('/api/v1/holds', holdBody(p, sA.slots[0]));
-    assert.equal(hA.status, 201, `front desk hold at the assigned location answered ${hA.status} ${hA.text.slice(0, 160)}`);
+    assert.equal(
+      hA.status,
+      201,
+      `front desk hold at the assigned location answered ${hA.status} ${hA.text.slice(0, 160)}`,
+    );
     const hB = await fd.post('/api/v1/holds', holdBody(p, sB.slots[0]));
     assert.ok([403, 404].includes(hB.status), `hold at LOC-B1 must be refused, got ${hB.status}`);
   });

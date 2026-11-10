@@ -23,7 +23,8 @@ const root = resolve(process.argv[2]);
 const stateFile = resolve(process.argv[3]);
 const logDir = resolve(dirname(stateFile), 'logs');
 mkdirSync(logDir, { recursive: true });
-if (!process.env.EHR_TEST_ADMIN_URL) throw new Error('EHR_TEST_ADMIN_URL is required (ci database admin)');
+if (!process.env.EHR_TEST_ADMIN_URL)
+  throw new Error('EHR_TEST_ADMIN_URL is required (ci database admin)');
 const pg = createRequire(root + '/package.json')('pg');
 const imp = (p) => import(pathToFileURL(`${root}/${p}`).href);
 const db = `ehr_qa05_${randomBytes(4).toString('hex')}`;
@@ -50,12 +51,25 @@ await a.connect();
 await a.query(`CREATE DATABASE ${db}`);
 await a.end();
 
-const env0 = { PATH: process.env.PATH, EHR_DB_ADMIN_URL: urlFor(admin.username), EHR_DB_MIGRATE_URL: urlFor('app_owner') };
+const env0 = {
+  PATH: process.env.PATH,
+  EHR_DB_ADMIN_URL: urlFor(admin.username),
+  EHR_DB_MIGRATE_URL: urlFor('app_owner'),
+};
 for (const cmd of ['bootstrap', 'migrate'])
-  execFileSync(process.execPath, [`${root}/db/tools/migrate.mjs`, cmd], { env: env0, stdio: 'inherit' });
+  execFileSync(process.execPath, [`${root}/db/tools/migrate.mjs`, cmd], {
+    env: env0,
+    stdio: 'inherit',
+  });
 await (await imp('packages/kernel/dist/queue/install.js')).installQueue(urlFor('app_owner'));
 
-const ports = { api: await freePort(), patientIdp: 0, staffIdp: 0, tls: await freePort(), ctl: await freePort() };
+const ports = {
+  api: await freePort(),
+  patientIdp: 0,
+  staffIdp: 0,
+  tls: await freePort(),
+  ctl: await freePort(),
+};
 // each fixture IdP uses two consecutive ports (idp, control)
 const pair = async () => {
   for (;;) {
@@ -104,11 +118,19 @@ await sa.query(
   [ORG],
 );
 const k = () => randomBytes(24).toString('hex');
-const env1 = { PATH: process.env.PATH, HOME: process.env.HOME ?? '/tmp', EHR_ENV: 'ci', EHR_ORGANISATION_ID: ORG, EHR_MIN_CLIENT_RELEASE: '1' };
+const env1 = {
+  PATH: process.env.PATH,
+  HOME: process.env.HOME ?? '/tmp',
+  EHR_ENV: 'ci',
+  EHR_ORGANISATION_ID: ORG,
+  EHR_MIN_CLIENT_RELEASE: '1',
+};
 {
   const pool = new pg.Pool({ connectionString: urlFor('app_worker'), max: 2 });
   const wdb = new (await imp('packages/kernel/dist/index.js')).KernelDb(pool);
-  await (await imp('apps/worker/dist/jobs/identity/index.js')).runApplyReferenceData({ db: wdb, orgId: ORG });
+  await (
+    await imp('apps/worker/dist/jobs/identity/index.js')
+  ).runApplyReferenceData({ db: wdb, orgId: ORG });
   const { OrganisationService } = await imp('apps/api/dist/src/modules/organisation/index.js');
   await wdb.withScope({ audience: 'system', realm: 'worker', orgId: ORG, jobScope: 'org' }, (tx) =>
     new OrganisationService().applySettingDefaults(tx, undefined),
@@ -133,10 +155,19 @@ const start = (name, cmd, args, env) => {
 const idpJson = async (name, kind, port) => {
   const out = `${logDir}/${name}.json`;
   const fd = openSync(out, 'w');
-  const p = spawn(process.execPath, [resolve(dirname(new URL(import.meta.url).pathname), 'idp-control.mjs'), kind, String(port), root], {
-    stdio: ['ignore', fd, openSync(`${logDir}/${name}.log`, 'a')],
-    detached: true,
-  });
+  const p = spawn(
+    process.execPath,
+    [
+      resolve(dirname(new URL(import.meta.url).pathname), 'idp-control.mjs'),
+      kind,
+      String(port),
+      root,
+    ],
+    {
+      stdio: ['ignore', fd, openSync(`${logDir}/${name}.log`, 'a')],
+      detached: true,
+    },
+  );
   p.unref();
   pids[name] = p.pid;
   await new Promise((r) => setTimeout(r, 2500));
@@ -172,29 +203,54 @@ const base = {
   EHR_STAFF_WORKSPACE_DOMAIN: 'example.com',
 };
 // Public fixture values only (root certificate, AAGUID, decoy key); only the API reads them.
-start('api', process.execPath, [`${root}/apps/api/dist/src/main.js`], { ...base, EHR_DEPLOYABLE: 'api', EHR_DATABASE_URL: urlFor('app_api'), ...fxEnv });
-start('worker', process.execPath, [`${root}/apps/worker/dist/main.js`], { ...base, EHR_DEPLOYABLE: 'worker', EHR_DATABASE_URL: urlFor('app_worker') });
+start('api', process.execPath, [`${root}/apps/api/dist/src/main.js`], {
+  ...base,
+  EHR_DEPLOYABLE: 'api',
+  EHR_DATABASE_URL: urlFor('app_api'),
+  ...fxEnv,
+});
+start('worker', process.execPath, [`${root}/apps/worker/dist/main.js`], {
+  ...base,
+  EHR_DEPLOYABLE: 'worker',
+  EHR_DATABASE_URL: urlFor('app_worker'),
+});
 
 // TLS front (loopback only): every request goes to the API with the Host kept and x-forwarded-proto https. Unlike the INT-04 admin
 // front it keeps the synthetic x-forwarded-for each test client sends, so per-IP rate limits are per client (as with QA-04).
 const front = await new Promise((resolve, reject) => {
-  const server = https.createServer({ key: tls.key, cert: tls.cert, minVersion: 'TLSv1.2' }, (req, res) => {
-    const headers = { ...req.headers };
-    for (const h of ['x-forwarded-host', 'x-forwarded-proto', 'forwarded']) delete headers[h];
-    headers['x-forwarded-proto'] = 'https';
-    headers['x-forwarded-for'] = req.headers['x-forwarded-for'] ?? req.socket.remoteAddress ?? '127.0.0.1';
-    const up = httpRequest({ host: '127.0.0.1', port: ports.api, method: req.method, path: req.url, headers }, (ur) => {
-      res.writeHead(ur.statusCode ?? 502, ur.headers);
-      ur.pipe(res);
-    });
-    up.on('error', () => {
-      if (!res.headersSent) res.writeHead(502, { 'content-type': 'text/plain' });
-      res.end('bad gateway');
-    });
-    req.pipe(up);
-  });
+  const server = https.createServer(
+    { key: tls.key, cert: tls.cert, minVersion: 'TLSv1.2' },
+    (req, res) => {
+      const headers = { ...req.headers };
+      for (const h of ['x-forwarded-host', 'x-forwarded-proto', 'forwarded']) delete headers[h];
+      headers['x-forwarded-proto'] = 'https';
+      headers['x-forwarded-for'] =
+        req.headers['x-forwarded-for'] ?? req.socket.remoteAddress ?? '127.0.0.1';
+      const up = httpRequest(
+        { host: '127.0.0.1', port: ports.api, method: req.method, path: req.url, headers },
+        (ur) => {
+          res.writeHead(ur.statusCode ?? 502, ur.headers);
+          ur.pipe(res);
+        },
+      );
+      up.on('error', () => {
+        if (!res.headersSent) res.writeHead(502, { 'content-type': 'text/plain' });
+        res.end('bad gateway');
+      });
+      req.pipe(up);
+    },
+  );
   server.once('error', reject);
-  server.listen(ports.tls, '127.0.0.1', () => resolve({ server, close: () => new Promise((r) => { server.close(() => r()); server.closeAllConnections?.(); }) }));
+  server.listen(ports.tls, '127.0.0.1', () =>
+    resolve({
+      server,
+      close: () =>
+        new Promise((r) => {
+          server.close(() => r());
+          server.closeAllConnections?.();
+        }),
+    }),
+  );
 });
 
 let ready = false;
@@ -223,7 +279,8 @@ const ctl = createServer(async (req, res) => {
     res.writeHead(code, { 'content-type': 'application/json' });
     res.end(JSON.stringify(obj));
   };
-  if (req.headers.authorization !== `Bearer ${ctlToken}`) return send(401, { error: 'unauthorised' });
+  if (req.headers.authorization !== `Bearer ${ctlToken}`)
+    return send(401, { error: 'unauthorised' });
   const u = new URL(req.url, 'http://x');
   try {
     const body = req.method === 'POST' ? JSON.parse((await readBody(req)) || '{}') : {};
@@ -250,7 +307,10 @@ const ctl = createServer(async (req, res) => {
       const ids = (body.options.allowCredentials ?? []).map((c) => c.id);
       const key = ids.map((i) => softKeys.get(i)).find((x) => x !== undefined);
       if (!key) return send(404, { error: 'no matching credential' });
-      return send(200, key.assert(body.options, { origin: staffOrigin, rpId: staffHost, ...(body.opts ?? {}) }));
+      return send(
+        200,
+        key.assert(body.options, { origin: staffOrigin, rpId: staffHost, ...(body.opts ?? {}) }),
+      );
     }
     return send(404, { error: 'unknown route' });
   } catch (e) {
@@ -267,7 +327,11 @@ writeFileSync(
       ports,
       pids: { ...pids, stack: process.pid },
       fixtures,
-      admins: Object.fromEntries(Object.entries(admins).filter(([x]) => !x.startsWith('_')).map(([x, v]) => [x, v])),
+      admins: Object.fromEntries(
+        Object.entries(admins)
+          .filter(([x]) => !x.startsWith('_'))
+          .map(([x, v]) => [x, v]),
+      ),
       staffHost,
       integrationsHost,
       tlsCertPem: tls.cert, // public certificate only

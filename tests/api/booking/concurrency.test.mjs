@@ -3,7 +3,21 @@
 import { describe, it, after } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  SVC, login, newPatient, patientClient, search, hold, holdBody, sql, closeAdmin, principalId, newService, setPolicy, newDoctor, sleep, nextDay,
+  SVC,
+  login,
+  newPatient,
+  patientClient,
+  search,
+  hold,
+  holdBody,
+  sql,
+  closeAdmin,
+  principalId,
+  newService,
+  setPolicy,
+  newDoctor,
+  sleep,
+  nextDay,
 } from '../../e2e/journeys/lib/world.mjs';
 
 after(closeAdmin);
@@ -11,15 +25,32 @@ after(closeAdmin);
 const BATCH = 20;
 async function inBatches(n, fn) {
   const out = [];
-  for (let i = 0; i < n; i += BATCH) out.push(...(await Promise.all(Array.from({ length: Math.min(BATCH, n - i) }, (_, j) => fn(i + j)))));
+  for (let i = 0; i < n; i += BATCH)
+    out.push(
+      ...(await Promise.all(Array.from({ length: Math.min(BATCH, n - i) }, (_, j) => fn(i + j)))),
+    );
   return out;
 }
 /** hold then confirm, the way a patient session does; resolves to the first failing response or the confirmation. */
 async function bookOnce(p, slot, svc, mode = 'in_person') {
   const h = await hold(p, slot, svc, mode);
-  if (h.status !== 201) return { ok: false, step: 'hold', status: h.status, code: h.json?.code, alt: (h.json?.errors ?? []).some((e) => e.path?.startsWith('/alternatives/')) };
+  if (h.status !== 201)
+    return {
+      ok: false,
+      step: 'hold',
+      status: h.status,
+      code: h.json?.code,
+      alt: (h.json?.errors ?? []).some((e) => e.path?.startsWith('/alternatives/')),
+    };
   const c = await p.client.post(`/api/v1/appointments/${h.json.reservationId}/confirm`, {});
-  if (c.status !== 200) return { ok: false, step: 'confirm', status: c.status, code: c.json?.code, alt: (c.json?.errors ?? []).some((e) => e.path?.startsWith('/alternatives/')) };
+  if (c.status !== 200)
+    return {
+      ok: false,
+      step: 'confirm',
+      status: c.status,
+      code: c.json?.code,
+      alt: (c.json?.errors ?? []).some((e) => e.path?.startsWith('/alternatives/')),
+    };
   return { ok: true, id: h.json.reservationId };
 }
 const tally = (rs) => {
@@ -41,18 +72,37 @@ describe('TC-BK concurrency (100 parallel sessions)', () => {
     const svc = await newService();
     const doc = await newDoctor({ services: [svc] });
     const first = await newPatient();
-    const sessions = [first, ...(await inBatches(99, async () => ({ ...first, client: await login('patient', first.key) })))];
+    const sessions = [
+      first,
+      ...(await inBatches(99, async () => ({
+        ...first,
+        client: await login('patient', first.key),
+      }))),
+    ];
     const s = await search(first.client, { serviceId: svc, clinicianId: doc.id });
     const slot = s.slots[0];
     const rs = await Promise.all(sessions.map((p) => bookOnce(p, slot, svc)));
     t.diagnostic(`outcomes: ${JSON.stringify(tally(rs))}`);
     assert.equal(rs.filter((r) => r.ok).length, 1, 'exactly one confirmation');
-    assert.equal((await occupied(doc.id, slot.startsAt)).rows[0].c, 1, 'exactly one occupancy row in the database');
-    const apps = await sql(`SELECT count(*)::int c FROM scheduling.slot_reservation r JOIN scheduling.slot_occupancy o ON o.id = r.id WHERE r.patient_id = $1 AND o.status = 'confirmed'`, [first.id]);
+    assert.equal(
+      (await occupied(doc.id, slot.startsAt)).rows[0].c,
+      1,
+      'exactly one occupancy row in the database',
+    );
+    const apps = await sql(
+      `SELECT count(*)::int c FROM scheduling.slot_reservation r JOIN scheduling.slot_occupancy o ON o.id = r.id WHERE r.patient_id = $1 AND o.status = 'confirmed'`,
+      [first.id],
+    );
     assert.equal(apps.rows[0].c, 1, 'exactly one confirmed appointment for the patient');
     const losers = rs.filter((r) => !r.ok);
-    assert.ok(losers.every((r) => [409, 422].includes(r.status)), `every loser got a clean refusal: ${JSON.stringify(tally(losers))}`);
-    assert.ok(losers.every((r) => r.status !== 422 || r.code === 'scheduling.overlapping_appointment'), 'a 422 can only be the same-patient overlap rule');
+    assert.ok(
+      losers.every((r) => [409, 422].includes(r.status)),
+      `every loser got a clean refusal: ${JSON.stringify(tally(losers))}`,
+    );
+    assert.ok(
+      losers.every((r) => r.status !== 422 || r.code === 'scheduling.overlapping_appointment'),
+      'a 422 can only be the same-patient overlap rule',
+    );
   });
 
   it('TC-BK-14 one slot, 100 DIFFERENT patients: exactly one wins, losers see alternatives, none sees another reservation', async (t) => {
@@ -67,8 +117,14 @@ describe('TC-BK concurrency (100 parallel sessions)', () => {
     assert.equal((await occupied(doc.id, slot.startsAt)).rows[0].c, 1);
     const losers = rs.filter((r) => !r.ok);
     assert.equal(losers.length, 99);
-    assert.ok(losers.every((r) => r.status === 409 && r.code === 'scheduling.slot_taken'), JSON.stringify(tally(losers)));
-    assert.ok(losers.every((r) => r.alt), 'every loser receives alternatives');
+    assert.ok(
+      losers.every((r) => r.status === 409 && r.code === 'scheduling.slot_taken'),
+      JSON.stringify(tally(losers)),
+    );
+    assert.ok(
+      losers.every((r) => r.alt),
+      'every loser receives alternatives',
+    );
   });
 
   it('TC-BK-15 overbookable session, cap 2, 100 patients: exactly 2 succeed, no more (written expectation; see QA04-F07)', async (t) => {
@@ -76,7 +132,13 @@ describe('TC-BK concurrency (100 parallel sessions)', () => {
     await setPolicy(svc, { overbook: 2, max: 50 });
     const doc = await newDoctor({ services: [svc], overbookable: true });
     const pats = await inBatches(100, () => newPatient());
-    const s = await search(pats[0].client, { serviceId: svc, clinicianId: doc.id, extra: { includeOverbook: true } }).then((r) => (r.status === 200 ? r : search(pats[0].client, { serviceId: svc, clinicianId: doc.id })));
+    const s = await search(pats[0].client, {
+      serviceId: svc,
+      clinicianId: doc.id,
+      extra: { includeOverbook: true },
+    }).then((r) =>
+      r.status === 200 ? r : search(pats[0].client, { serviceId: svc, clinicianId: doc.id }),
+    );
     const slot = s.slots[0];
     const rs = await Promise.all(pats.map((p) => bookOnce(p, slot, svc)));
     t.diagnostic(`outcomes: ${JSON.stringify(tally(rs))}`);
@@ -102,7 +164,11 @@ describe('TC-BK concurrency (100 parallel sessions)', () => {
     t.diagnostic(`outcomes: ${JSON.stringify(tally(rs))}`);
     assert.equal(rs.filter((r) => r.ok).length, 1, 'exactly one of B and C wins');
     const loser = rs.find((r) => !r.ok);
-    assert.equal(loser.status, 409, 'the loser is refused as slot_taken because the winner now holds it');
+    assert.equal(
+      loser.status,
+      409,
+      'the loser is refused as slot_taken because the winner now holds it',
+    );
     assert.equal((await occupied(doc.id, slot.startsAt)).rows[0].c, 1);
   });
 });

@@ -5,7 +5,9 @@ import { createServer } from 'node:http';
 import { pathToFileURL } from 'node:url';
 const [kind, portArg, root] = process.argv.slice(2);
 const port = Number(portArg);
-const { LocalIdp } = await import(pathToFileURL(`${root}/apps/api/dist/src/modules/identity/idp.fixture.js`).href);
+const { LocalIdp } = await import(
+  pathToFileURL(`${root}/apps/api/dist/src/modules/identity/idp.fixture.js`).href
+);
 const idp = new LocalIdp();
 const claims = (sub, email) =>
   kind === 'staff'

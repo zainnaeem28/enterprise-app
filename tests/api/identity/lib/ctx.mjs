@@ -6,6 +6,17 @@ import { randomUUID } from 'node:crypto';
 export * from '../../platform/lib/world.mjs';
 export { Client, rawRequest, state as stateOf } from '../../platform/lib/http.mjs';
 export * as clinical from '../../platform/lib/clinical.mjs';
-export { adminClient, signInAdmin, elevate, attest, assertWith } from '../../platform/lib/admin.mjs';
-export { GRANTOR, ensureGrantors, newEnrolmentToken, personId as staffPersonId } from '../../platform/lib/seed.mjs';
+export {
+  adminClient,
+  signInAdmin,
+  elevate,
+  attest,
+  assertWith,
+} from '../../platform/lib/admin.mjs';
+export {
+  GRANTOR,
+  ensureGrantors,
+  newEnrolmentToken,
+  personId as staffPersonId,
+} from '../../platform/lib/seed.mjs';
 export const rid = randomUUID;

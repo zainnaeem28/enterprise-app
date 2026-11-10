@@ -8,18 +8,36 @@
 import http from 'k6/http';
 import { Counter } from 'k6/metrics';
 import { check } from 'k6';
-import { guard, pick, headers, BASE_URL, idem, ids, noteRequest, summaryWithMeta, PEAK_RPS } from '../lib/common.js';
+import {
+  guard,
+  pick,
+  headers,
+  BASE_URL,
+  idem,
+  ids,
+  noteRequest,
+  summaryWithMeta,
+  PEAK_RPS,
+} from '../lib/common.js';
 
 guard();
 const CASE = __ENV.REC_CASE;
-if (CASE !== 'TC-REC-04' && CASE !== 'TC-REC-07') throw new Error('REC_CASE must be TC-REC-04 or TC-REC-07.');
+if (CASE !== 'TC-REC-04' && CASE !== 'TC-REC-07')
+  throw new Error('REC_CASE must be TC-REC-04 or TC-REC-07.');
 const failed = new Counter('rec_failed_requests');
 const acked = new Counter('rec_acked_writes');
 const DURATION_S = Number(__ENV.REC_DURATION_S || (__ENV.FIXTURE_SELFTEST === '1' ? 20 : 3600)); // the disruption happens inside this window
 
 export const options = {
   scenarios: {
-    load: { executor: 'constant-arrival-rate', rate: PEAK_RPS.staff + PEAK_RPS.patient, timeUnit: '1s', duration: `${DURATION_S}s`, preAllocatedVUs: 500, maxVUs: 3000 },
+    load: {
+      executor: 'constant-arrival-rate',
+      rate: PEAK_RPS.staff + PEAK_RPS.patient,
+      timeUnit: '1s',
+      duration: `${DURATION_S}s`,
+      preAllocatedVUs: 500,
+      maxVUs: 3000,
+    },
   },
   thresholds: {
     // TC-REC-07: VUs stuck on a dead primary may exhaust maxVUs and drop iterations during the outage; recovery is judged by
@@ -39,10 +57,25 @@ export default function () {
     // write path whose effect is countable later: an encounter note carrying a unique marker (idempotent by key)
     const enc = ids.encounters[Math.floor(Math.random() * ids.encounters.length)];
     const marker = `rec-${CASE}-${key['Idempotency-Key']}`;
-    res = http.post(`${BASE_URL}/api/v1/encounters/${enc}/notes`, JSON.stringify(noteRequest(marker)), { headers: headers(s, key), tags: { name: 'note-write' }, responseCallback: http.expectedStatuses({ min: 200, max: 499 }) });
-    if (res.status === 200 || res.status === 201) { acked.add(1); console.log(`ACK ${enc} ${marker}`); }
+    res = http.post(
+      `${BASE_URL}/api/v1/encounters/${enc}/notes`,
+      JSON.stringify(noteRequest(marker)),
+      {
+        headers: headers(s, key),
+        tags: { name: 'note-write' },
+        responseCallback: http.expectedStatuses({ min: 200, max: 499 }),
+      },
+    );
+    if (res.status === 200 || res.status === 201) {
+      acked.add(1);
+      console.log(`ACK ${enc} ${marker}`);
+    }
   } else {
-    res = http.get(`${BASE_URL}/api/v1/auth/session`, { headers: headers(s), tags: { name: 'session' }, responseCallback: http.expectedStatuses({ min: 200, max: 499 }) });
+    res = http.get(`${BASE_URL}/api/v1/auth/session`, {
+      headers: headers(s),
+      tags: { name: 'session' },
+      responseCallback: http.expectedStatuses({ min: 200, max: 499 }),
+    });
   }
   // outage = transport error or 5xx; 4xx business answers are not an outage. Windows are computed after the run by
   // check-recovery.mjs from the raw `--out json` points (a VU-local view would be wrong).

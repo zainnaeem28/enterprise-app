@@ -22,7 +22,8 @@ const AD = '/api/v1/admin';
 
 /** Sets session state from a sign-in/enrolment/elevation response: the cookie goes into the jar, csrf into the client. */
 function adopt(c, r) {
-  if (r.status === 200 && r.json?.csrfToken) c.session = { csrfToken: r.json.csrfToken, ...(c.session ?? {}) , ...r.json };
+  if (r.status === 200 && r.json?.csrfToken)
+    c.session = { csrfToken: r.json.csrfToken, ...(c.session ?? {}), ...r.json };
   return r;
 }
 
@@ -34,8 +35,13 @@ export async function signInAdmin(key, { client } = {}) {
   const opt = await c.post(`${AD}/auth/sign-in/options`, { handle }, { bearerless: true });
   if (opt.status !== 200) return { client: c, response: opt };
   const a = await assertWith(opt.json.publicKey ?? opt.json);
-  if (a.status !== 200) return { client: c, response: { status: 401, json: a.json, text: 'no key' } };
-  const ver = await c.post(`${AD}/auth/sign-in/verify`, { challengeId: opt.json.challengeId, handle, assertion: a.json }, { bearerless: true });
+  if (a.status !== 200)
+    return { client: c, response: { status: 401, json: a.json, text: 'no key' } };
+  const ver = await c.post(
+    `${AD}/auth/sign-in/verify`,
+    { challengeId: opt.json.challengeId, handle, assertion: a.json },
+    { bearerless: true },
+  );
   adopt(c, ver);
   return { client: c, response: ver };
 }
@@ -48,16 +54,32 @@ export async function adminClient(key) {
   const t = await ctl(`/enrolment-token?key=${encodeURIComponent(key)}`);
   if (t.status !== 200) throw new Error(`no enrolment token for ${key}`);
   const c = new Client(adminOrigin(), key);
-  const o1 = await c.post(`${AD}/auth/enrolment/options`, { handle: t.json.handle, token: t.json.token }, { bearerless: true });
+  const o1 = await c.post(
+    `${AD}/auth/enrolment/options`,
+    { handle: t.json.handle, token: t.json.token },
+    { bearerless: true },
+  );
   if (o1.status !== 200) throw new Error(`enrolment options ${o1.status} ${o1.text}`);
   const a1 = await attest(o1.json.publicKey);
-  const v1 = await c.post(`${AD}/auth/enrolment/verify`, { challengeId: o1.json.challengeId, handle: t.json.handle, token: t.json.token, attestation: a1.json }, { bearerless: true });
+  const v1 = await c.post(
+    `${AD}/auth/enrolment/verify`,
+    {
+      challengeId: o1.json.challengeId,
+      handle: t.json.handle,
+      token: t.json.token,
+      attestation: a1.json,
+    },
+    { bearerless: true },
+  );
   if (v1.status !== 200) throw new Error(`enrolment verify ${v1.status} ${v1.text}`);
   adopt(c, v1);
   const o2 = await c.post(`${AD}/auth/enrolment/second-key/options`, {});
   if (o2.status !== 200) throw new Error(`second key options ${o2.status} ${o2.text}`);
   const a2 = await attest(o2.json.publicKey);
-  const v2 = await c.post(`${AD}/auth/enrolment/second-key/verify`, { challengeId: o2.json.challengeId, attestation: a2.json });
+  const v2 = await c.post(`${AD}/auth/enrolment/second-key/verify`, {
+    challengeId: o2.json.challengeId,
+    attestation: a2.json,
+  });
   if (v2.status !== 200) throw new Error(`second key verify ${v2.status} ${v2.text}`);
   void s;
   return c;
@@ -69,7 +91,10 @@ export async function elevate(c) {
   if (o.status !== 200) return o;
   const a = await assertWith(o.json.publicKey ?? o.json);
   if (a.status !== 200) return { status: 401, json: a.json, text: 'no key' };
-  const v = await c.post(`${AD}/auth/elevation/verify`, { challengeId: o.json.challengeId, assertion: a.json });
+  const v = await c.post(`${AD}/auth/elevation/verify`, {
+    challengeId: o.json.challengeId,
+    assertion: a.json,
+  });
   return v;
 }
 export { rawRequest };

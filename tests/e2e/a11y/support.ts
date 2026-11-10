@@ -97,7 +97,9 @@ export async function mockBooking(page: Page) {
     const ok = (body: unknown) =>
       r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
     if (pathname === '/api/v1/services')
-      return ok({ items: [{ id: UUID, name: 'General visit', durationMin: 30, mode: 'in_person' }] });
+      return ok({
+        items: [{ id: UUID, name: 'General visit', durationMin: 30, mode: 'in_person' }],
+      });
     if (pathname === '/api/v1/locations')
       return ok({ items: [{ id: UUID, name: 'Main clinic', timeZone: 'UTC' }] });
     if (pathname === '/api/v1/clinicians')
