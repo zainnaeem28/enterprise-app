@@ -319,3 +319,16 @@ SELECT id FROM patient.consent WHERE patient_id = :A;      -- must be 0 rows
 1. Independent Security Reviewer reads this exact revision (`SEC-03-rls-assessment.md` as committed on the SEC-03 branch).
 2. Routing done by Cybersecurity (children of HEAAA-25, none depends on SEC-03): HEAAA-177 = F01 (Backend Engineer), HEAAA-178 = F02–F05 (Backend Engineer), HEAAA-179 = F06 (Solution Architect), HEAAA-180 = F07 (QA Engineer), HEAAA-181 = F08–F13 (Backend Engineer, low priority). Orchestrator: make HEAAA-177..180 block INT-01 and the G3 consumers of BE-08/09/11 (Cybersecurity did not edit other tickets' links), and keep SEC-03 consumers waiting for the fixes' independent review and retest.
 3. No code is changed by this ticket. Human gates are not touched: BUILD_REVIEW, ACCEPTANCE, G3 and OPERATIONS_RECEIPT remain human decisions.
+
+## 10. Dispositions for QS-03 (HEAAA-636, acceptance round 1)
+
+Status: **PROPOSED, pending Solution Architect acceptance** (via the Orchestrator, recorded in the `decision-log` of HEAAA-636). All four findings are Low and non-blocking (section 2).
+
+| Item | Disposition | Reason / compensating control | Revisit |
+| --- | --- | --- | --- |
+| F11 (SEC03-F11, worker re-pointing grants) | Not fixed in this correction. Accept as residual risk. | The grants exist only for patients-scope worker jobs; no API path reaches them, and a patients-scope job is created by the system, not by users. Changing them means moving re-pointing into `patient_scope_owner` definer functions, a contract change owned by the Architect. | Before G3 hardening, or when the merge job is next changed. |
+| F10a (duplicate-flag visibility) | Accept as residual risk. | The flag row is visible only to staff who already see one of the two patients. The candidate UUID is an opaque identifier; the candidate's root record stays invisible (patient policy). The API response does not expose the flag to out-of-scope staff beyond the same rows. | Revisit if the duplicate-flag UI shows the candidate. |
+| F10b (`get_merge_request` returns both IDs and reason) | Accept as residual risk, with a process control. | Callers need `patient.merge.read`; the reason field is staff free text. Restricting the read to requester and approvers changes the approved function contract (6.2/21.6), so it needs an Architect revision. Until then the form must tell users not to enter identifiers. | With the next revision of 6.2/21.6. |
+| F13.5 (`caller_sees` parity test) | Accept as residual risk. | F01 is fixed and covered by the behavioural AN-1 matrix, which reads real rows under RLS and would catch drift between `caller_sees` and the policies. A separate generated-predicate parity test is an additional hardening. | QA-03 follow-up. |
+
+The F11 overbook finding (SEC03-F03, TC-BK-15) is **fixed** in this correction (candidate 4806e8a, migration 0905, `overbook.dbtest.ts`).
