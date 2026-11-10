@@ -4,15 +4,15 @@
 | --- | --- |
 | Gate | BUILD_REVIEW, Paperclip HEAAA-28 (the task text calls it "INV-27"; the live gate task is HEAAA-28) |
 | Prepared by | Orchestrator, task HEAAA-27 `[SDLC:build-package]`, 2026-11-10 |
-| Exact combined revision | product tree `af278307f70c626e451389bd55b86aea9e4016ce`; evidence commit `3cb45ed6a64c9bac74e9f720bbad86760626a02a`; branch `HEAAA-141-sdlc-ticket-int-05-integrate-r1-release-candidate-and-run-the-complete-combined-check-set` (on `origin`) |
+| Exact combined revision | product tree `af278307f70c626e451389bd55b86aea9e4016ce`; evidence commit `3cb45ed6a64c9bac74e9f720bbad86760626a02a`; built on local branch `HEAAA-141-sdlc-ticket-int-05-integrate-r1-release-candidate-and-run-the-complete-combined-check-set` (local only, not pushed); the commits are reachable on `origin` through `HEAAA-27-sdlc-build-package-prepare-milestone-build-evidence-and-real-screenshots` (head `83f3bdb` at review) |
 | Lockfile | `pnpm-lock.yaml` sha256 `9688c96f669208aa1c8329cfdb5a04334b7c85348c495d8356d654e2916442d2` |
 | Scope | G2-approved Release 1 (83 tickets, milestones M0..M5) as in `docs/TICKETS.md`. No scope added. |
 | Package documents | `COMPLETED-TICKETS.md`, `VERIFICATION-RESULTS.md`, `RUN-GUIDE.md`, `APP-SCREENSHOTS.md`, this file; all at `docs/build-review/R1/` and as documents on HEAAA-28 |
-| Status | **AWAITING_HUMAN_REVIEW.** This package is not human approval, QA acceptance, G3 or deployment approval. |
+| Status | **AWAITING_GATE_DECISION.** Autonomous mode: no human confirmations exist; the BUILD_REVIEW decision belongs to Product Owner Reviewer on HEAAA-28 after the Solution Architect Reviewer's document review. This package is not that decision, QA acceptance, G3 or deployment approval, QA acceptance, G3 or deployment approval. |
 
 ## 1. What is being decided
 
-Whether the human owner accepts candidate `af27830` as the build to carry into quality/security execution, acceptance and release planning. Accepting it authorizes those next phases only. It does not authorize release to any environment (G3, named per environment).
+Whether the gate owner (Product Owner Reviewer) accepts candidate `af27830` as the build to carry into quality/security execution, acceptance and release planning. Accepting it authorizes those next phases only. It does not authorize release to any environment (G3, named per environment).
 
 ## 2. Summary of the build
 
@@ -45,5 +45,5 @@ See `VERIFICATION-RESULTS.md` section 5. INT-05 used 4 cumulative rounds with es
 
 ## 6. Next permitted actions
 
-* **Human, BUILD_REVIEW:** accept, request changes or reject, by confirming or declining each document revision on HEAAA-28. Changes reopen the affected reviews.
+* **Gate owner (Product Owner Reviewer), BUILD_REVIEW on HEAAA-28:** record PASS or CHANGES REQUIRED on the exact document revisions; no confirmations are used. Changes reopen the affected reviews.
 * **After acceptance (Orchestrator):** release HEAAA-29 (qa-execution) and HEAAA-30 (quality-security); the pending checks above are their entry list.

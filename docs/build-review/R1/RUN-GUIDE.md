@@ -1,6 +1,6 @@
 # RUN-GUIDE — building, testing and running the Release 1 candidate
 
-Candidate `af278307f70c626e451389bd55b86aea9e4016ce` (branch `HEAAA-141-sdlc-ticket-int-05-integrate-r1-release-candidate-and-run-the-complete-combined-check-set`; evidence commit `3cb45ed`). Commands below are the ones the INT-05 run used (`scripts/ci/README.md`, `README.md`, `tools.lock`). Synthetic data only. This guide is for local review and CI, not for production. I verified these commands exist in the repository; I did not run them in this task.
+Candidate `af278307f70c626e451389bd55b86aea9e4016ce` (local branch `HEAAA-141-sdlc-ticket-int-05-integrate-r1-release-candidate-and-run-the-complete-combined-check-set`, not pushed; check out `origin/HEAAA-27-sdlc-build-package-prepare-milestone-build-evidence-and-real-screenshots` to get these commits; evidence commit `3cb45ed`). Commands below are the ones the INT-05 run used (`scripts/ci/README.md`, `README.md`, `tools.lock`). Synthetic data only. This guide is for local review and CI, not for production. I verified these commands exist in the repository; I did not run them in this task.
 
 ## 1. Prerequisites
 

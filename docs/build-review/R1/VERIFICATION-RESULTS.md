@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | Candidate | `af278307f70c626e451389bd55b86aea9e4016ce`; evidence commit `3cb45ed6a64c9bac74e9f720bbad86760626a02a` |
-| Branch | `HEAAA-141-sdlc-ticket-int-05-integrate-r1-release-candidate-and-run-the-complete-combined-check-set` (pushed to `origin`) |
+| Branch | `HEAAA-141-sdlc-ticket-int-05-integrate-r1-release-candidate-and-run-the-complete-combined-check-set` (local only; commits reachable on `origin` via `HEAAA-27-sdlc-build-package-prepare-milestone-build-evidence-and-real-screenshots`, head `83f3bdb` at review) |
 | `pnpm-lock.yaml` sha256 | `9688c96f669208aa1c8329cfdb5a04334b7c85348c495d8356d654e2916442d2` |
 | Run by | Integrator, INT-05 round 4 (HEAAA-141), 2026-11-10; reviewed from raw reports by QA (HEAAA-26 PASS) |
 | This task | Orchestrator compiled this file from the committed raw reports under `docs/evidence/integration/R1/round4/gates/`. **I did not re-execute the checks.** Executed ≠ verified by me; QA verified the roll-up against raw reports. |

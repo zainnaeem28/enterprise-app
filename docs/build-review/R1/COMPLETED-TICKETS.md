@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | Task | HEAAA-27 `[SDLC:build-package]` (Orchestrator) for gate HEAAA-28 |
-| Candidate | `af278307f70c626e451389bd55b86aea9e4016ce` (product tree); evidence commit `3cb45ed6a64c9bac74e9f720bbad86760626a02a`, branch `HEAAA-141-sdlc-ticket-int-05-integrate-r1-release-candidate-and-run-the-complete-combined-check-set` |
+| Candidate | `af278307f70c626e451389bd55b86aea9e4016ce` (product tree); evidence commit `3cb45ed6a64c9bac74e9f720bbad86760626a02a`, local branch `HEAAA-141-sdlc-ticket-int-05-integrate-r1-release-candidate-and-run-the-complete-combined-check-set` (not pushed; commits reachable on `origin` via `HEAAA-27-sdlc-build-package-prepare-milestone-build-evidence-and-real-screenshots`) |
 | Source of the ticket list | `docs/TICKETS.md` index (Draft 3, G2 scope); status read from Paperclip on 2026-11-10 |
 | Not | Human approval, QA acceptance, G3 or deployment approval |
 
