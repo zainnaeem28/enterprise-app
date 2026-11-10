@@ -88,6 +88,21 @@ export class PublicDirectoryService {
     return { items: items.map(locationBody), nextCursor: null };
   }
 
+  /** Amendment A-8: current `site` banners from the view `public_banner`, exactly four fields each. */
+  async banners(query: Record<string, unknown>) {
+    onlyParams(query, []);
+    const items = await this.read((tx) => this.d.organisation.directoryBanners(tx));
+    return {
+      items: items.map((b) => ({
+        id: b.id,
+        message: b.message,
+        startsAt: b.startsAt,
+        endsAt: b.endsAt,
+      })),
+      nextCursor: null,
+    };
+  }
+
   async services(query: Record<string, unknown>) {
     onlyParams(query, ['locationId']);
     const locationId = uuidParam(query, 'locationId');

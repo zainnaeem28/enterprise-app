@@ -20,6 +20,12 @@ export interface DirectoryLocation {
   geo: unknown;
   phone: string | null;
 }
+export interface MaintenanceBanner {
+  id: string;
+  message: string;
+  startsAt: string;
+  endsAt: string;
+}
 export interface DirectoryService {
   id: string;
   patientDisplayName: string;
@@ -97,6 +103,13 @@ function toService(r: Row): ServiceRecord {
     active: r.active === true,
   };
 }
+
+const toBanner = (r: Row): MaintenanceBanner => ({
+  id: str(r.id),
+  message: str(r.message),
+  startsAt: new Date(r.starts_at as string | Date).toISOString(),
+  endsAt: new Date(r.ends_at as string | Date).toISOString(),
+});
 
 const toDirectoryLocation = (r: Row): DirectoryLocation => ({
   id: str(r.id),
@@ -234,6 +247,25 @@ export class OrganisationService {
       durationMin: num(x.duration_min),
       mode: x.mode as DirectoryService['mode'],
     }));
+  }
+
+  /** Current `site` banners (amendment A-8): the view `public_banner` only, never the base table. */
+  async directoryBanners(tx: Tx): Promise<MaintenanceBanner[]> {
+    const r = await tx.query(
+      `SELECT id, message, starts_at, ends_at FROM organisation.public_banner ORDER BY starts_at, id LIMIT 10`,
+    );
+    return r.rows.map(toBanner);
+  }
+
+  /** Current banners of one portal surface under the caller's scope (amendment A-8); RLS `banner_read` bounds the organisation. */
+  async currentBanners(tx: Tx, surface: 'patient' | 'staff'): Promise<MaintenanceBanner[]> {
+    const r = await tx.query(
+      `SELECT id, message, starts_at, ends_at FROM organisation.banner
+        WHERE surface = $1 AND starts_at <= now() AND ends_at > now()
+        ORDER BY starts_at, id LIMIT 10`,
+      [surface],
+    );
+    return r.rows.map(toBanner);
   }
 
   /** Principal IDs of the clinicians eligible for the service. The route intersects them with the identity and scheduling views (22.5.1). */

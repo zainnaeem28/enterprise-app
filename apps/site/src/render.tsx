@@ -4,7 +4,7 @@ import type { Template } from './analytics.js';
 import type { SiteConfig } from './config.js';
 import type { ContentSource } from './content.js';
 import { UUID_RE, loadDirectory } from './directory.js';
-import type { Directory, DirectoryClient, Freshness, NextSlot } from './directory.js';
+import type { Directory, DirectoryClient, Freshness, NextSlot, SiteBanner } from './directory.js';
 import { Layout } from './components/Layout.js';
 import { bookUrl } from './handoff.js';
 import {
@@ -45,6 +45,7 @@ interface PageSpec {
   body: ReactNode;
   jsonLd: unknown[];
   noindex?: boolean;
+  banners?: SiteBanner[];
 }
 
 export interface RenderDeps {
@@ -85,6 +86,7 @@ export async function route(path: string, deps: RenderDeps): Promise<Rendered> {
   const { config, client, content } = deps;
   const fresh: Freshness = { stale: false };
   const dir = await readDirectory(client, fresh);
+  const banners = (await client.banners?.()) ?? [];
   const ctx: Ctx = { patientOrigin: config.patientOrigin, content, dir };
   const o = config.siteOrigin;
   const desc = 'Find a service, choose a doctor and a location, and start your booking.';
@@ -247,7 +249,7 @@ export async function route(path: string, deps: RenderDeps): Promise<Rendered> {
     status: spec.status,
     // Built from the stale fallback means no-store: the CDN must not keep an unlisted clinician past the TTL (PB-4).
     cacheable: spec.status === 200 && (spec.template === 'legal' || (dir !== null && !fresh.stale)),
-    html: document(spec, config),
+    html: document({ ...spec, banners }, config),
   };
 }
 
@@ -299,7 +301,7 @@ function document(p: PageSpec, config: SiteConfig): string {
         ))}
       </head>
       <body data-template={p.template} data-analytics-src={config.analyticsSrc ?? ''}>
-        <Layout current={p.path} bookHref={bookHref}>
+        <Layout current={p.path} bookHref={bookHref} banners={p.banners ?? []}>
           {p.body}
         </Layout>
         <div id="consent-root" />

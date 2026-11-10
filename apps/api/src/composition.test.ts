@@ -312,7 +312,7 @@ describe('M4 composition (INT03-F01)', () => {
 });
 
 describe('integrations host composition (INT03-F18)', () => {
-  test('GET /public/v1/services|locations|clinicians is mounted and answers 200 without a session', async () => {
+  test('GET /public/v1/services|locations|clinicians|banners is mounted and answers 200 without a session', async () => {
     const tx = { query: () => Promise.resolve({ rows: [] }) };
     const db = {
       withScope: (_s: unknown, fn: (x: unknown) => unknown) => fn(tx),
@@ -324,7 +324,7 @@ describe('integrations host composition (INT03-F18)', () => {
     });
     const run = await start({ controllers: comp.controllers, policy: comp.policy });
     try {
-      for (const p of ['services', 'locations', 'clinicians']) {
+      for (const p of ['services', 'locations', 'clinicians', 'banners']) {
         const r = await fetch(`${run.base}/public/v1/${p}`, {
           headers: { 'x-client-release': R(MIN_RELEASE) },
         });

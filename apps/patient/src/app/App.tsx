@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { PlaceholderMark, SkipLink } from '@ehr/ui';
-import { ReleasePrompts, SessionPrompts } from '@ehr/app-shell';
+import { MaintenanceBanners, ReleasePrompts, SessionPrompts } from '@ehr/app-shell';
 import type { PatientRuntime } from './runtime.js';
 import { useLocation } from './router.js';
 import { EntryPage } from '../features/auth/EntryPage.js';
@@ -110,6 +110,7 @@ export function App({
         <PlaceholderMark />
       </header>
       <ReleasePrompts store={runtime.releases} />
+      <MaintenanceBanners api={runtime.api} />
       <SessionPrompts
         store={runtime.session}
         onSignIn={() => toContinue('sign-in', location.path)}

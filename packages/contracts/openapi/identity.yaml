@@ -497,7 +497,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/enrolment-tokens
-          catalogueRow: 29.4#121
+          catalogueRow: 29.4#122
       security:
         - sessionCookie: []
       parameters:
@@ -584,7 +584,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/enrolment-tokens/{id}/approve
-          catalogueRow: 29.4#121
+          catalogueRow: 29.4#122
       security:
         - sessionCookie: []
       parameters:
@@ -666,7 +666,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/person-links
-          catalogueRow: 29.4#122
+          catalogueRow: 29.4#123
       security:
         - sessionCookie: []
       parameters:
@@ -753,7 +753,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/person-links/{id}/approve
-          catalogueRow: 29.4#122
+          catalogueRow: 29.4#123
       security:
         - sessionCookie: []
       parameters:
@@ -834,7 +834,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/principals
-          catalogueRow: 29.4#115
+          catalogueRow: 29.4#116
       security:
         - sessionCookie: []
       parameters:
@@ -921,7 +921,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/principals
-          catalogueRow: 29.4#116
+          catalogueRow: 29.4#117
       security:
         - sessionCookie: []
       parameters:
@@ -1008,7 +1008,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/principals/{id}/kill-switch
-          catalogueRow: 29.4#120
+          catalogueRow: 29.4#121
       security:
         - sessionCookie: []
       parameters:
@@ -1097,7 +1097,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/role-change-requests
-          catalogueRow: 29.4#118
+          catalogueRow: 29.4#119
       security:
         - sessionCookie: []
       parameters:
@@ -1190,7 +1190,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/role-change-requests/{id}/approve
-          catalogueRow: 29.4#119
+          catalogueRow: 29.4#120
       security:
         - sessionCookie: []
       parameters:
@@ -1274,7 +1274,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/role-change-requests/{id}/cancel
-          catalogueRow: 29.4#119
+          catalogueRow: 29.4#120
       security:
         - sessionCookie: []
       parameters:
@@ -1359,7 +1359,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/role-change-requests/{id}/reject
-          catalogueRow: 29.4#119
+          catalogueRow: 29.4#120
       security:
         - sessionCookie: []
       parameters:
@@ -1443,7 +1443,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/roles
-          catalogueRow: 29.4#117
+          catalogueRow: 29.4#118
       security:
         - sessionCookie: []
       parameters:
@@ -1519,7 +1519,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/staff-profiles/{principalId}
-          catalogueRow: 29.4#123
+          catalogueRow: 29.4#124
       security:
         - sessionCookie: []
       parameters:
@@ -1600,7 +1600,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/staff-profiles/{principalId}
-          catalogueRow: 29.4#123
+          catalogueRow: 29.4#124
       security:
         - sessionCookie: []
       parameters:
@@ -1692,7 +1692,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/staff-support
-          catalogueRow: 29.4#124
+          catalogueRow: 29.4#125
       security:
         - sessionCookie: []
       parameters:
@@ -1768,7 +1768,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/staff-support
-          catalogueRow: 29.4#124
+          catalogueRow: 29.4#125
       security:
         - sessionCookie: []
       parameters:
@@ -1855,7 +1855,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/staff-support/{id}
-          catalogueRow: 29.4#124
+          catalogueRow: 29.4#125
       security:
         - sessionCookie: []
       parameters:
@@ -2397,7 +2397,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/me
-          catalogueRow: 29.2#11
+          catalogueRow: 29.2#12
       security:
         - sessionCookie: []
       parameters:
@@ -2473,7 +2473,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/patients/{patientId}/proxies
-          catalogueRow: 29.2#18
+          catalogueRow: 29.2#19
       security:
         - sessionCookie: []
       parameters:
@@ -2557,7 +2557,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/patients/{patientId}/proxies/{grantId}
-          catalogueRow: 29.2#20
+          catalogueRow: 29.2#21
       security:
         - sessionCookie: []
       parameters:
@@ -2641,7 +2641,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/patients/{patientId}/proxy-requests
-          catalogueRow: 29.2#19
+          catalogueRow: 29.2#20
       security:
         - sessionCookie: []
       parameters:

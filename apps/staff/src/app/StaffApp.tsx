@@ -3,6 +3,7 @@ import { LoadingState, Banner, SkipLink } from '@ehr/ui';
 import {
   NotFoundPage,
   RealmBar,
+  MaintenanceBanners,
   ReleasePrompts,
   ServerErrorPage,
   SessionPrompts,
@@ -246,6 +247,7 @@ function Gate({
           displayName={session.displayName}
         />
         <ReleasePrompts store={runtime.releases} />
+        <MaintenanceBanners api={runtime.api} />
         <SessionPrompts store={runtime.session} onSignIn={() => assign(signInUrl(path))} />
         <NavBar
           items={ADMIN_AREAS}
@@ -279,6 +281,7 @@ function Gate({
         store={runtime.session}
       />
       <ReleasePrompts store={runtime.releases} />
+      <MaintenanceBanners api={runtime.api} />
       <SessionPrompts store={runtime.session} onSignIn={() => assign(signInUrl(path))} />
       <NavBar items={items} current={path} onNavigate={(p) => navigate(p)} />
       <main id="main" className="ehr-main" tabIndex={-1}>

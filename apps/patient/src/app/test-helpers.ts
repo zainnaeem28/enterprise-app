@@ -31,6 +31,9 @@ export function runtimeWith(respond: Respond) {
     baseUrl: 'http://portal.test',
     navigate: (to) => navigations.push(to),
     fetch: async (request) => {
+      // The maintenance banner read is covered in app-shell; keep this log to the calls under test.
+      if (new URL(request.url).pathname === '/api/v1/banners')
+        return json(200, { items: [], nextCursor: null });
       calls.push(
         `${request.method} ${new URL(request.url).pathname}${new URL(request.url).search}`,
       );

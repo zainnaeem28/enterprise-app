@@ -21,11 +21,19 @@ export interface PublicService {
   mode: string;
 }
 
+export interface PublicBanner {
+  id: string;
+  message: string;
+  startsAt: string;
+  endsAt: string;
+}
+
 /** `organisation.directory*` (24): each reads only the C0 views of 22.5.1. */
 export interface DirectoryOrganisationPort {
   directoryLocations(tx: Tx): Promise<PublicLocation[]>;
   directoryServices(tx: Tx, filter?: { locationId?: string }): Promise<PublicService[]>;
   directoryServiceClinicians(tx: Tx, serviceId: string): Promise<string[]>;
+  directoryBanners(tx: Tx): Promise<PublicBanner[]>;
 }
 
 /** `scheduling.directoryClinicianLocations`: (clinician, location) pairs with an active, unended template, from the C0 view. */

@@ -298,6 +298,8 @@ paths:
     $ref: ./identity.yaml#/paths/~1api~1v1~1auth~1sign-out
   /api/v1/availability/search:
     $ref: ./scheduling.yaml#/paths/~1api~1v1~1availability~1search
+  /api/v1/banners:
+    $ref: ./organisation.yaml#/paths/~1api~1v1~1banners
   /api/v1/calendar-link:
     $ref: ./calendar-sync.yaml#/paths/~1api~1v1~1calendar-link
   /api/v1/calendar-link/callback:
@@ -502,6 +504,8 @@ paths:
     $ref: ./scheduling.yaml#/paths/~1api~1v1~1waitlist-offers~1{offerId}~1accept
   /api/v1/waitlist-offers/{offerId}/decline:
     $ref: ./scheduling.yaml#/paths/~1api~1v1~1waitlist-offers~1{offerId}~1decline
+  /public/v1/banners:
+    $ref: ./organisation.yaml#/paths/~1public~1v1~1banners
   /public/v1/clinicians:
     $ref: ./organisation.yaml#/paths/~1public~1v1~1clinicians
   /public/v1/clinicians/{id}/next-available:

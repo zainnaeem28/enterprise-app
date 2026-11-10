@@ -1,5 +1,5 @@
 // The routes of the `integrations.` host that this module owns (ARCHITECTURE 29.5, SHARED-BOUNDARIES 5.1):
-//   GET  /public/v1/services | /locations | /clinicians   no authentication, audience `public`, C0 only, `max-age=60`
+//   GET  /public/v1/services | /locations | /clinicians | /banners   no authentication, audience `public`, C0 only, `max-age=60`
 //   POST /webhooks/video/{vendor}, /webhooks/messaging/{vendor}   vendor signature + replay window, recorded by integration-core
 // (`POST /webhooks/google/calendar` stays with calendar-sync; `GET /public/v1/clinicians/{id}/next-available` needs the definer
 // function `scheduling.next_available`, which does not exist yet, and belongs to scheduling.)
@@ -82,6 +82,12 @@ export function createIntegrationsHostControllers(d: IntegrationsHostDeps): Type
     @Route(PUBLIC_ROUTE)
     async locations(@ReqParam() req: Req, @ResParam() res: Res): Promise<void> {
       sendPublic(res, await d.directory.locations(req.query));
+    }
+
+    @Get('banners')
+    @Route(PUBLIC_ROUTE)
+    async banners(@ReqParam() req: Req, @ResParam() res: Res): Promise<void> {
+      sendPublic(res, await d.directory.banners(req.query));
     }
 
     @Get('clinicians')

@@ -210,3 +210,155 @@ describe('admin routes behind the realm guard, composed (INT04-F01, BE-23 N-2)',
     assert.ok(secret.status >= 400, `secret write without a store: ${secret.status}`);
   });
 });
+
+describe('TC-AD-09 (server half): maintenance banner read routes, composed (HEAAA-645, amendment A-8)', () => {
+  const PUBLIC_HOST = 'site.example.test';
+  const OTHER_ORG = '00000000-0000-7000-8000-0000000000e9';
+  const hour = 3_600_000;
+  const iso = (offset: number): string => new Date(Date.now() + offset).toISOString();
+  const ids: Record<string, string> = {};
+  let patient: Awaited<ReturnType<typeof seedSession>>;
+  let google: Awaited<ReturnType<typeof seedSession>>;
+
+  const read = (host: string, path: string, s?: { cookie: string }): ReturnType<typeof call> =>
+    call(k.adminBase, 'GET', path, {
+      host,
+      ...(s === undefined ? {} : { cookie: s.cookie }),
+    });
+  const readIds = (r: { json(): Record<string, unknown> }): string[] =>
+    (r.json()['items'] as { id: string }[]).map((x) => x.id).sort();
+  const post = async (surface: string, message: string, startsAt: string, endsAt: string) => {
+    const r = await api(k, org, 'PUT', '/banners', { surface, message, startsAt, endsAt });
+    assert.equal(r.status, 200, r.body);
+    return String(r.json()['id']);
+  };
+
+  before(async () => {
+    for (const surface of ['site', 'patient', 'staff', 'partner'])
+      ids[surface] = await post(surface, `Current ${surface} notice`, iso(-hour), iso(hour));
+    ids['expired'] = await post('patient', 'Expired patient notice', iso(-3 * hour), iso(-hour));
+    ids['future'] = await post('staff', 'Future staff notice', iso(hour), iso(3 * hour));
+    // A banner of another organisation, inserted as the superuser (the admin API cannot write across organisations).
+    for (const surface of ['site', 'patient', 'staff'])
+      await kit.sa.query(
+        `INSERT INTO organisation.banner (id, organisation_id, surface, message, starts_at, ends_at)
+         VALUES (gen_random_uuid(), $1, $2, 'Other organisation notice', now() - interval '1 hour', now() + interval '1 hour')`,
+        [OTHER_ORG, surface],
+      );
+    patient = await seedSession(
+      kit,
+      await seedPrincipal(kit, 'patient_pool', { name: 'Banner Patient' }),
+      'patient_pool',
+    );
+    google = await seedSession(
+      kit,
+      await seedPrincipal(kit, 'google', { subject: 'banner-staff-sub' }),
+      'google',
+    );
+  });
+
+  test('1: a patient session on my. gets the current patient banner only, in the four-field shape', async () => {
+    const r = await read(PATIENT_HOST, '/api/v1/banners', patient);
+    assert.equal(r.status, 200, r.body);
+    assert.deepEqual(readIds(r), [ids['patient']]);
+    assert.equal(r.json()['nextCursor'], null);
+    assert.deepEqual(Object.keys((r.json()['items'] as object[])[0]!).sort(), [
+      'endsAt',
+      'id',
+      'message',
+      'startsAt',
+    ]);
+    assert.equal(r.headers['cache-control'], 'no-store');
+  });
+
+  test('2: google and admin_pool sessions on staff. get the current staff banner only', async () => {
+    const g = await read(STAFF_HOST, '/api/v1/banners', google);
+    assert.equal(g.status, 200, g.body);
+    assert.deepEqual(readIds(g), [ids['staff']]);
+    const a = await read(STAFF_HOST, '/api/v1/banners', org.session);
+    assert.equal(a.status, 200, a.body);
+    assert.deepEqual(readIds(a), [ids['staff']]);
+  });
+
+  test('3: no session is 401 auth.unauthenticated; any query parameter is 400 kernel.validation_failed', async () => {
+    const none = await read(PATIENT_HOST, '/api/v1/banners');
+    assert.equal(none.status, 401);
+    assert.equal(code(none), 'auth.unauthenticated');
+    for (const [host, s] of [
+      [PATIENT_HOST, patient],
+      [STAFF_HOST, google],
+    ] as const) {
+      const r = await read(host, '/api/v1/banners?surface=site', s);
+      assert.equal(r.status, 400, r.body);
+      assert.equal(code(r), 'kernel.validation_failed');
+    }
+  });
+
+  test('4: GET /public/v1/banners needs no cookie, returns current site banners only, max-age=60, four fields', async () => {
+    const r = await call(k.adminBase, 'GET', '/public/v1/banners', {
+      host: PUBLIC_HOST,
+      release: false,
+    });
+    assert.equal(r.status, 200, r.body);
+    assert.deepEqual(readIds(r), [ids['site']]);
+    assert.equal(r.headers['cache-control'], 'public, max-age=60');
+    assert.deepEqual(Object.keys((r.json()['items'] as object[])[0]!).sort(), [
+      'endsAt',
+      'id',
+      'message',
+      'startsAt',
+    ]);
+    const q = await call(k.adminBase, 'GET', '/public/v1/banners?x=1', {
+      host: PUBLIC_HOST,
+      release: false,
+    });
+    assert.equal(q.status, 400, q.body);
+    assert.equal(code(q), 'kernel.validation_failed');
+    const w = await call(k.adminBase, 'POST', '/public/v1/banners', {
+      host: PUBLIC_HOST,
+      release: false,
+      body: {},
+    });
+    assert.ok([404, 405].includes(w.status), `POST /public/v1/banners: ${w.status}`);
+  });
+
+  test('5: a banner of another organisation is never returned by either route', async () => {
+    const all = [
+      ...readIds(await read(PATIENT_HOST, '/api/v1/banners', patient)),
+      ...readIds(await read(STAFF_HOST, '/api/v1/banners', google)),
+      ...readIds(
+        await call(k.adminBase, 'GET', '/public/v1/banners', { host: PUBLIC_HOST, release: false }),
+      ),
+    ];
+    const foreign = await kit.q<{ id: string }>(
+      `SELECT id FROM organisation.banner WHERE organisation_id = $1`,
+      [OTHER_ORG],
+    );
+    assert.equal(foreign.length, 3);
+    for (const f of foreign) assert.ok(!all.includes(f.id), `foreign banner ${f.id} leaked`);
+  });
+
+  test('6: after PUT /admin/banners {id, remove: true} the banner is absent from the next read', async () => {
+    const extra = await post('patient', 'Second patient notice', iso(-hour), iso(2 * hour));
+    assert.deepEqual(
+      readIds(await read(PATIENT_HOST, '/api/v1/banners', patient)),
+      [ids['patient']!, extra].sort(),
+    );
+    const del = await api(k, org, 'PUT', '/banners', { id: extra, remove: true });
+    assert.equal(del.status, 200, del.body);
+    assert.deepEqual(readIds(await read(PATIENT_HOST, '/api/v1/banners', patient)), [
+      ids['patient'],
+    ]);
+  });
+
+  test('7: audience public cannot read the base table organisation.banner (DR-5)', async () => {
+    const rows = await kit.db.withScope({ audience: 'public', orgId: ORG }, async (tx) => {
+      try {
+        return (await tx.query(`SELECT id FROM organisation.banner`)).rows;
+      } catch (e) {
+        return (e as { code?: string }).code === '42501' ? [] : Promise.reject(e);
+      }
+    });
+    assert.equal(rows.length, 0);
+  });
+});
