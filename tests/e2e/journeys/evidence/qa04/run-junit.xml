@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testsuite name="TC-BK booking and rescheduling" time="64.667380" disabled="0" errors="0" tests="12" failures="2" skipped="0" timestamp="2026-11-09T09:36:44.345Z" hostname="314866be9867">
+		<testcase name="TC-BK-01 book: appointment Confirmed, confirmation + reminders recorded, audit rows, no patient on any calendar surface [no mailbox] [no Google]" time="0.757543" classname="TC-BK booking and rescheduling" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/booking.test.mjs"/>
+		<testcase name="TC-BK-01a the .ics of a confirmed appointment is served (`GET /appointments/{id}/calendar.ics`, RA-R1-02)" time="0.117284" classname="TC-BK booking and rescheduling" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/booking.test.mjs" failure="documented route answered 404: {&quot;type&quot;:&quot;https://errors.invalid/kernel/not_found&quot;,&quot;title&quot;:&quot;Not found&quot;,&quot;status&quot;:404,&quot;code&quot;:&quot;kernel.not_found&quot;,&quot;requestId&quot;:&quot;21b9d1a3-7a6e-4b9b-ab8e-3c6bf4ee4fc9&quot;,&quot;retryable&quot;:false}&#10;&#10;404 !== 200&#10;">
+			<failure type="testCodeFailure" message="documented route answered 404: {&quot;type&quot;:&quot;https://errors.invalid/kernel/not_found&quot;,&quot;title&quot;:&quot;Not found&quot;,&quot;status&quot;:404,&quot;code&quot;:&quot;kernel.not_found&quot;,&quot;requestId&quot;:&quot;21b9d1a3-7a6e-4b9b-ab8e-3c6bf4ee4fc9&quot;,&quot;retryable&quot;:false}&#10;&#10;404 !== 200">
+[Error [ERR_TEST_FAILURE]: documented route answered 404: {"type":"https://errors.invalid/kernel/not_found","title":"Not found","status":404,"code":"kernel.not_found","requestId":"21b9d1a3-7a6e-4b9b-ab8e-3c6bf4ee4fc9","retryable":false}
+
+404 !== 200
+] {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: AssertionError [ERR_ASSERTION]: documented route answered 404: {"type":"https://errors.invalid/kernel/not_found","title":"Not found","status":404,"code":"kernel.not_found","requestId":"21b9d1a3-7a6e-4b9b-ab8e-3c6bf4ee4fc9","retryable":false}
+  
+  404 !== 200
+  
+      at TestContext.&lt;anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/booking.test.mjs:48:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 404,
+    expected: 200,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+}
+			</failure>
+		</testcase>
+		<testcase name="TC-BK-02 video visit: appointment carries the clinic time zone; patient and clinic zones both derivable (BR-05)" time="0.159291" classname="TC-BK booking and rescheduling" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/booking.test.mjs"/>
+		<testcase name="TC-BK-03 availability = template - bookings (mechanics: busy block by SQL) [no Google: the sync itself is TC-CAL]" time="0.181854" classname="TC-BK booking and rescheduling" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/booking.test.mjs"/>
+		<testcase name="TC-BK-04 stale search: second patient gets 409 scheduling.slot_taken with alternatives" time="0.184058" classname="TC-BK booking and rescheduling" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/booking.test.mjs"/>
+		<testcase name="TC-BK-05 cancel inside the cut-off is blocked (D-3 default), cancel outside is free [G2 setting: cut-off set by SQL]" time="0.201318" classname="TC-BK booking and rescheduling" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/booking.test.mjs"/>
+		<testcase name="TC-BK-06 reschedule: old slot released, new slot confirmed, reminders recomputed, audit" time="0.758513" classname="TC-BK booking and rescheduling" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/booking.test.mjs"/>
+		<testcase name="TC-BK-07 max future appointments per service: 4th refused (BR-04) [G2 setting: 3 by SQL]" time="0.301517" classname="TC-BK booking and rescheduling" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/booking.test.mjs"/>
+		<testcase name="TC-BK-08 hold expiry: confirm after expiry gives 409 scheduling.hold_expired with alternatives; no appointment [G2 setting: hold 1 min, real wait]" time="61.661308" classname="TC-BK booking and rescheduling" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/booking.test.mjs"/>
+		<testcase name="TC-BK-09 idempotency: same key and body = one hold; same key other body = 409; same key on another route is a different key" time="0.131016" classname="TC-BK booking and rescheduling" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/booking.test.mjs"/>
+		<testcase name="TC-BK-10 time zones: stored UTC, shown in the location zone across a daylight-saving change (LOC-B1)" time="0.070886" classname="TC-BK booking and rescheduling" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/booking.test.mjs"/>
+		<testcase name="TC-BK-11 front desk books for a patient at the assigned location only, refused at another (RA-R1-02)" time="0.140642" classname="TC-BK booking and rescheduling" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/booking.test.mjs" failure="front desk hold at the assigned location answered 403 {&quot;type&quot;:&quot;https://errors.invalid/auth/forbidden&quot;,&quot;title&quot;:&quot;Forbidden&quot;,&quot;status&quot;:403,&quot;code&quot;:&quot;auth.forbidden&quot;,&quot;requestId&quot;:&quot;38c66720-d51e-484a-967e-6115ff079bac&quot;,&quot;ret&#10;&#10;403 !== 201&#10;">
+			<failure type="testCodeFailure" message="front desk hold at the assigned location answered 403 {&quot;type&quot;:&quot;https://errors.invalid/auth/forbidden&quot;,&quot;title&quot;:&quot;Forbidden&quot;,&quot;status&quot;:403,&quot;code&quot;:&quot;auth.forbidden&quot;,&quot;requestId&quot;:&quot;38c66720-d51e-484a-967e-6115ff079bac&quot;,&quot;ret&#10;&#10;403 !== 201">
+[Error [ERR_TEST_FAILURE]: front desk hold at the assigned location answered 403 {"type":"https://errors.invalid/auth/forbidden","title":"Forbidden","status":403,"code":"auth.forbidden","requestId":"38c66720-d51e-484a-967e-6115ff079bac","ret
+
+403 !== 201
+] {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: AssertionError [ERR_ASSERTION]: front desk hold at the assigned location answered 403 {"type":"https://errors.invalid/auth/forbidden","title":"Forbidden","status":403,"code":"auth.forbidden","requestId":"38c66720-d51e-484a-967e-6115ff079bac","ret
+  
+  403 !== 201
+  
+      at TestContext.&lt;anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/booking.test.mjs:223:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 403,
+    expected: 201,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+}
+			</failure>
+		</testcase>
+	</testsuite>
+	<testsuite name="TC-CAL calendar sync mechanics (no Google tenant on ci)" time="0.245688" disabled="0" errors="0" tests="4" failures="1" skipped="0" timestamp="2026-11-09T09:37:49.353Z" hostname="314866be9867">
+		<testcase name="TC-CAL-01/02 structure: a calendar block and its event map hold no patient, reason, diagnosis or service name" time="0.027832" classname="TC-CAL calendar sync mechanics (no Google tenant on ci)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/calendar.test.mjs"/>
+		<testcase name="TC-CAL-03 synced busy time makes that time unavailable within one search (no cache)" time="0.122918" classname="TC-CAL calendar sync mechanics (no Google tenant on ci)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/calendar.test.mjs"/>
+		<testcase name="TC-CAL-04 stale sync: busy rows are still used and the answer is flagged; fresh data is not flagged; threshold from the setting" time="0.089372" classname="TC-CAL calendar sync mechanics (no Google tenant on ci)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/calendar.test.mjs"/>
+		<testcase name="TC-CAL-05 steps 1-2 the push webhook refuses a wrong HMAC token and an unknown channel; nothing is stored or enqueued" time="0.003786" classname="TC-CAL calendar sync mechanics (no Google tenant on ci)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/calendar.test.mjs" failure="wrong HMAC: 404 {&quot;type&quot;:&quot;https://errors.invalid/kernel/not_found&quot;,&quot;title&quot;:&quot;Not found&quot;,&quot;status&quot;:404,&quot;code&quot;:&quot;kernel.not_found&quot;,&quot;requestId&quot;&#10;&#10;404 !== 401&#10;">
+			<failure type="testCodeFailure" message="wrong HMAC: 404 {&quot;type&quot;:&quot;https://errors.invalid/kernel/not_found&quot;,&quot;title&quot;:&quot;Not found&quot;,&quot;status&quot;:404,&quot;code&quot;:&quot;kernel.not_found&quot;,&quot;requestId&quot;&#10;&#10;404 !== 401">
+[Error [ERR_TEST_FAILURE]: wrong HMAC: 404 {"type":"https://errors.invalid/kernel/not_found","title":"Not found","status":404,"code":"kernel.not_found","requestId"
+
+404 !== 401
+] {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: AssertionError [ERR_ASSERTION]: wrong HMAC: 404 {"type":"https://errors.invalid/kernel/not_found","title":"Not found","status":404,"code":"kernel.not_found","requestId"
+  
+  404 !== 401
+  
+      at TestContext.&lt;anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/calendar.test.mjs:87:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 404,
+    expected: 401,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+}
+			</failure>
+		</testcase>
+	</testsuite>
+	<testsuite name="TC-BK concurrency (100 parallel sessions)" time="76.854019" disabled="0" errors="0" tests="4" failures="1" skipped="0" timestamp="2026-11-09T09:37:49.935Z" hostname="314866be9867">
+		<testcase name="TC-BK-13 one slot, ONE patient account on 100 sessions: exactly one appointment" time="4.769440" classname="TC-BK concurrency (100 parallel sessions)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/concurrency.test.mjs"/>
+		<!-- outcomes: {"hold:409:scheduling.slot_taken":99,"confirmed":1} -->
+		<testcase name="TC-BK-14 one slot, 100 DIFFERENT patients: exactly one wins, losers see alternatives, none sees another reservation" time="4.933276" classname="TC-BK concurrency (100 parallel sessions)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/concurrency.test.mjs"/>
+		<!-- outcomes: {"confirmed":1,"hold:409:scheduling.slot_taken":99} -->
+		<testcase name="TC-BK-15 overbookable session, cap 2, 100 patients: exactly 2 succeed, no more (written expectation; see QA04-F07)" time="4.817523" classname="TC-BK concurrency (100 parallel sessions)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/concurrency.test.mjs" failure="TC-BK-15 written expectation: exactly 2 succeed (cap 2)&#10;&#10;3 !== 2&#10;">
+			<failure type="testCodeFailure" message="TC-BK-15 written expectation: exactly 2 succeed (cap 2)&#10;&#10;3 !== 2">
+[Error [ERR_TEST_FAILURE]: TC-BK-15 written expectation: exactly 2 succeed (cap 2)
+
+3 !== 2
+] {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: AssertionError [ERR_ASSERTION]: TC-BK-15 written expectation: exactly 2 succeed (cap 2)
+  
+  3 !== 2
+  
+      at TestContext.&lt;anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/concurrency.test.mjs:86:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 3,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+}
+			</failure>
+		</testcase>
+		<!-- outcomes: {"confirmed":3,"hold:409:scheduling.slot_taken":97} -->
+		<testcase name="TC-BK-16 hold expiry race: after A's hold expires, B and C race; exactly one wins, neither gets a false &quot;taken&quot; [G2 setting: hold 1 min, real wait]" time="62.332422" classname="TC-BK concurrency (100 parallel sessions)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/concurrency.test.mjs"/>
+		<!-- outcomes: {"hold:409:scheduling.slot_taken":1,"confirmed":1} -->
+	</testsuite>
+	<testsuite name="TC-BK rooms, leakage, merge" time="1.029599" disabled="0" errors="0" tests="2" failures="1" skipped="0" timestamp="2026-11-09T09:39:07.158Z" hostname="314866be9867">
+		<testcase name="TC-BK-17 room: three checked-in visits at one time, three parallel assignments of the SAME room: exactly one succeeds (SAR-09)" time="0.710293" classname="TC-BK rooms, leakage, merge" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/isolation.test.mjs" failure="exactly one assignment succeeds&#10;&#10;3 !== 1&#10;">
+			<failure type="testCodeFailure" message="exactly one assignment succeeds&#10;&#10;3 !== 1">
+Error [ERR_TEST_FAILURE]: exactly one assignment succeeds
+
+3 !== 1
+
+    at async Promise.all (index 0) {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: AssertionError [ERR_ASSERTION]: exactly one assignment succeeds
+  
+  3 !== 1
+  
+      at TestContext.&lt;anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/isolation.test.mjs:54:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 3,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+}
+			</failure>
+		</testcase>
+		<!-- assignment statuses: 200:ok, 200:ok, 200:ok -->
+		<!-- queue entries holding the room (all three share one start time): 3 -->
+		<testcase name="TC-BK-18 slot search and /public/v1 show no identifiers of other patients, reservations or rooms" time="0.318205" classname="TC-BK rooms, leakage, merge" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/isolation.test.mjs"/>
+	</testsuite>
+	<testsuite name="TC-BK waitlist and merge" time="2.353249" disabled="0" errors="0" tests="1" failures="0" skipped="0" timestamp="2026-11-09T09:39:08.187Z" hostname="314866be9867">
+		<testcase name="TC-BK-22 a waitlisted patient is merged into another: the freed slot is offered once, to the survivor" time="2.352996" classname="TC-BK waitlist and merge" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/isolation.test.mjs"/>
+	</testsuite>
+	<testsuite name="TC-NT notifications and PHI-free messages" time="6.629367" disabled="0" errors="0" tests="7" failures="0" skipped="0" timestamp="2026-11-09T09:39:10.885Z" hostname="314866be9867">
+		<testcase name="TC-NT-01 every published template, in every channel and language, binds only allowlisted variables and carries no condition-revealing text" time="0.015818" classname="TC-NT notifications and PHI-free messages" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/notifications.test.mjs"/>
+		<testcase name="TC-NT-01/06 a sensitive-service booking by a patient whose own name is a condition/medicine: every queued message holds only allowlisted values" time="0.655959" classname="TC-NT notifications and PHI-free messages" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/notifications.test.mjs"/>
+		<testcase name="TC-NT-02 confirmation plus two reminders at the configured offsets, each with the portal links and no clinical text" time="0.598085" classname="TC-NT notifications and PHI-free messages" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/notifications.test.mjs"/>
+		<testcase name="TC-NT-04 provider failure: the send is retried (attempts > 1, error class recorded), the in-app message is still delivered, and the failure is visible in the queue view" time="4.634821" classname="TC-NT notifications and PHI-free messages" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/notifications.test.mjs"/>
+		<testcase name="TC-NT-05 application logs contain no health data after the booking, check-in and note journeys" time="0.013743" classname="TC-NT notifications and PHI-free messages" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/notifications.test.mjs"/>
+		<testcase name="TC-NT-07 an alert reaches only the principals it targets; another staff session does not see it" time="0.081583" classname="TC-NT notifications and PHI-free messages" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/notifications.test.mjs"/>
+		<testcase name="TC-NT-08 notification preferences: with SMS off and email on, a booking sends email and suppresses SMS (security messages: PM-confirm-3, not asserted)" time="0.627703" classname="TC-NT notifications and PHI-free messages" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/notifications.test.mjs"/>
+	</testsuite>
+	<testsuite name="TC-BK waitlist offers" time="124.286568" disabled="0" errors="0" tests="3" failures="0" skipped="0" timestamp="2026-11-09T09:39:17.839Z" hostname="314866be9867">
+		<testcase name="TC-BK-19 first on the list is offered first; ignoring lets the offer lapse and it passes to the next [G2 setting: 1 min]" time="60.963602" classname="TC-BK waitlist offers" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/waitlist.test.mjs"/>
+		<testcase name="TC-BK-20 accept races: two accepts of one offer, and an accept against a direct booking, yield exactly one appointment" time="0.849879" classname="TC-BK waitlist offers" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/waitlist.test.mjs"/>
+		<testcase name="TC-BK-21 slot starting within 24 h uses the within-24-hours acceptance time; late accept is refused and the offer passes on [G2 setting: default 3 min, within 24 h 1 min]" time="62.471601" classname="TC-BK waitlist offers" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/booking/waitlist.test.mjs"/>
+	</testsuite>
+	<testsuite name="TC-PC check-in, queue, triage, referrals" time="2.307303" disabled="0" errors="0" tests="7" failures="0" skipped="0" timestamp="2026-11-09T09:41:22.481Z" hostname="314866be9867">
+		<testcase name="TC-PC-01 desk check-in moves the visit to checked-in and it appears in the queue with a stage and wait time" time="0.367387" classname="TC-PC check-in, queue, triage, referrals" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/clinical/frontdoor.test.mjs"/>
+		<testcase name="TC-PC-08 check-in with a required consent unsigned raises the missing-consent flag" time="0.215320" classname="TC-PC check-in, queue, triage, referrals" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/clinical/frontdoor.test.mjs"/>
+		<testcase name="TC-PC-05 four checked-in patients: category and wait time displayed for each, none dropped (order asserted only after PM-confirm-2)" time="0.800904" classname="TC-PC check-in, queue, triage, referrals" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/clinical/frontdoor.test.mjs"/>
+		<testcase name="TC-PC-06 two nurses on one triage record: the second save is refused (412 stale ETag, 428 without one); no silent overwrite" time="0.324772" classname="TC-PC check-in, queue, triage, referrals" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/clinical/frontdoor.test.mjs"/>
+		<testcase name="TC-CL-10 step 1 a vital with no range configured is stored and reported as no_range, never refused" time="0.186053" classname="TC-PC check-in, queue, triage, referrals" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/clinical/frontdoor.test.mjs"/>
+		<testcase name="TC-PC-12 front desk without referral/follow-up permission is refused for both and the refusal is audited" time="0.185142" classname="TC-PC check-in, queue, triage, referrals" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/clinical/frontdoor.test.mjs"/>
+		<testcase name="TC-PC-11 coordinator records a follow-up and a referral; both are audited; no lab-collection booking exists" time="0.226184" classname="TC-PC check-in, queue, triage, referrals" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/clinical/frontdoor.test.mjs"/>
+	</testsuite>
+	<testsuite name="TC-SAF red-flag mechanics (rules are synthetic fixtures; acceptance blocked on D-12a)" time="21.868592" disabled="0" errors="0" tests="5" failures="2" skipped="0" timestamp="2026-11-09T09:41:24.789Z" hostname="314866be9867">
+		<testcase name="TC-SAF-03a near-miss and non-flag answers do not alert (exact comparison)" time="0.657070" classname="TC-SAF red-flag mechanics (rules are synthetic fixtures; acceptance blocked on D-12a)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/clinical/frontdoor.test.mjs"/>
+		<testcase name="TC-SAF-03b a blank or missing red-flag answer is rejected and nothing is saved as &quot;no red flag&quot;" time="0.225295" classname="TC-SAF red-flag mechanics (rules are synthetic fixtures; acceptance blocked on D-12a)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/clinical/frontdoor.test.mjs"/>
+		<testcase name="TC-SAF-01/03c every configured red flag alerts the on-duty doctor at once (durable alert row, listed, audited)" time="0.192134" classname="TC-SAF red-flag mechanics (rules are synthetic fixtures; acceptance blocked on D-12a)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/clinical/frontdoor.test.mjs" failure="a red-flag triage must be saved and alert: 403 {&quot;type&quot;:&quot;https://errors.invalid/auth/forbidden&quot;,&quot;title&quot;:&quot;Forbidden&quot;,&quot;status&quot;:403,&quot;code&quot;:&quot;auth.forbidden&quot;,&quot;requestId&quot;:&quot;4dc554c1-6c9e-411f-b756-431b76a53013&quot;,&quot;retryable&quot;:false}&#10;&#10;403 !== 201&#10;">
+			<failure type="testCodeFailure" message="a red-flag triage must be saved and alert: 403 {&quot;type&quot;:&quot;https://errors.invalid/auth/forbidden&quot;,&quot;title&quot;:&quot;Forbidden&quot;,&quot;status&quot;:403,&quot;code&quot;:&quot;auth.forbidden&quot;,&quot;requestId&quot;:&quot;4dc554c1-6c9e-411f-b756-431b76a53013&quot;,&quot;retryable&quot;:false}&#10;&#10;403 !== 201">
+[Error [ERR_TEST_FAILURE]: a red-flag triage must be saved and alert: 403 {"type":"https://errors.invalid/auth/forbidden","title":"Forbidden","status":403,"code":"auth.forbidden","requestId":"4dc554c1-6c9e-411f-b756-431b76a53013","retryable":false}
+
+403 !== 201
+] {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: AssertionError [ERR_ASSERTION]: a red-flag triage must be saved and alert: 403 {"type":"https://errors.invalid/auth/forbidden","title":"Forbidden","status":403,"code":"auth.forbidden","requestId":"4dc554c1-6c9e-411f-b756-431b76a53013","retryable":false}
+  
+  403 !== 201
+  
+      at TestContext.&lt;anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/clinical/frontdoor.test.mjs:167:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 403,
+    expected: 201,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+}
+			</failure>
+		</testcase>
+		<testcase name="TC-SAF-01/04a the patient sees the configured emergency advice when a red flag is submitted (independent of the alert stream)" time="0.190824" classname="TC-SAF red-flag mechanics (rules are synthetic fixtures; acceptance blocked on D-12a)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/clinical/frontdoor.test.mjs"/>
+		<testcase name="TC-SAF-01/04b the durable alert exists with no alert stream open, stays open and visible until acknowledged" time="20.602515" classname="TC-SAF red-flag mechanics (rules are synthetic fixtures; acceptance blocked on D-12a)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/clinical/frontdoor.test.mjs" failure="a durable red_flag alert exists for the on-duty doctor (rows in the table for this patient: 0; visible to the doctor through the API: no)">
+			<failure type="testCodeFailure" message="a durable red_flag alert exists for the on-duty doctor (rows in the table for this patient: 0; visible to the doctor through the API: no)">
+[Error [ERR_TEST_FAILURE]: a durable red_flag alert exists for the on-duty doctor (rows in the table for this patient: 0; visible to the doctor through the API: no)] {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: AssertionError [ERR_ASSERTION]: a durable red_flag alert exists for the on-duty doctor (rows in the table for this patient: 0; visible to the doctor through the API: no)
+      at TestContext.&lt;anonymous> (file:///paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/clinical/frontdoor.test.mjs:208:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+}
+			</failure>
+		</testcase>
+	</testsuite>
+	<testsuite name="TC-CL clinical notes" time="2.580097" disabled="0" errors="0" tests="5" failures="0" skipped="0" timestamp="2026-11-09T09:41:47.008Z" hostname="314866be9867">
+		<testcase name="TC-CL-01 a note locks on signing; edits fail with note_locked; changes only by addendum (BR-11)" time="0.486466" classname="TC-CL clinical notes" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/clinical/notes.test.mjs"/>
+		<testcase name="TC-CL-02 / CL-07 step 3 addendum: author, time, original unchanged; the note row never changes" time="0.764894" classname="TC-CL clinical notes" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/clinical/notes.test.mjs"/>
+		<testcase name="TC-CL-05 two sessions on one draft: the second save gets 412 and the draft stays recoverable" time="0.405426" classname="TC-CL clinical notes" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/clinical/notes.test.mjs"/>
+		<testcase name="TC-CL-07 a signed note: PATCH with a valid If-Match, DELETE and SQL UPDATE/DELETE as app_api all fail; hash unchanged" time="0.437436" classname="TC-CL clinical notes" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/clinical/notes.test.mjs"/>
+		<testcase name="TC-CL-03 trainee note: release needs the supervisor; a non-supervisor co-sign is refused; supervisor co-sign releases" time="0.484490" classname="TC-CL clinical notes" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/clinical/notes.test.mjs"/>
+	</testsuite>
+	<testsuite name="TC-SAF consent gate (mechanics; the required consents are D-12a data)" time="1.509555" disabled="0" errors="0" tests="3" failures="0" skipped="0" timestamp="2026-11-09T09:41:49.588Z" hostname="314866be9867">
+		<testcase name="TC-SAF-05 consultation cannot start without the required signed consent; the message names the template and carries no PHI" time="0.202303" classname="TC-SAF consent gate (mechanics; the required consents are D-12a data)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/clinical/notes.test.mjs"/>
+		<testcase name="TC-SAF-06 emergency exception: with a reason it starts and is recorded and audited; without a reason it is refused" time="0.316242" classname="TC-SAF consent gate (mechanics; the required consents are D-12a data)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/clinical/notes.test.mjs"/>
+		<testcase name="TC-SAF-08 two consents: only-A blocks naming B; superseded A blocks naming A; both valid starts; sign-then-reopen is immediate; withdrawal blocks again" time="0.990467" classname="TC-SAF consent gate (mechanics; the required consents are D-12a data)" file="/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-140-sdlc-ticket-qa-04-automated-cases-booking-calendar-notifications-pre-consultation-safety-mechanics-clinical/tests/api/clinical/notes.test.mjs"/>
+	</testsuite>
+	<!-- tests 53 -->
+	<!-- suites 11 -->
+	<!-- pass 46 -->
+	<!-- fail 7 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 0 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 307133.625653 -->
+</testsuites>
