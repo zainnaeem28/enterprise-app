@@ -49,8 +49,14 @@ expect_fail() {
   fi
 }
 
-add_migration() { # add_migration <dir> <file name> (SQL on stdin)
-  cat >"$1/db/migrations/$2"
+# add_migration <dir> <name> (SQL on stdin): the seeded migration gets a version ABOVE the newest real migration (computed,
+# never hard-coded), so it cannot collide with a real version (DUPLICATE_VERSION) and is applied last.
+add_migration() {
+  local last next
+  last="$(find "$1/db/migrations" -maxdepth 1 -name '[0-9]*_*.sql' -printf '%f\n' | sed -E 's/^([0-9]+)_.*/\1/' | sort -n | tail -n 1)"
+  [ -n "$last" ] || { echo "seed.sh: no existing migration found in $1/db/migrations" >&2; exit 2; }
+  next="$(printf '%04d' $((10#$last + 1)))"
+  cat >"$1/db/migrations/${next}_$2"
 }
 SEED_TABLE='CREATE SCHEMA seedmod;
 CREATE TABLE seedmod.thing (id uuid PRIMARY KEY, patient_id uuid);
@@ -61,31 +67,31 @@ mc() { bash scripts/ci/migration-check/migration-check.sh; }
 
 if [ "$JOB" = migration-check ]; then
   d="$(fresh_copy m-no-rls)"
-  printf -- '-- migration-class: expand\nCREATE SCHEMA seedmod;\nCREATE TABLE seedmod.thing (id uuid PRIMARY KEY);\n' | add_migration "$d" 0900_seed.sql
+  printf -- '-- migration-class: expand\nCREATE SCHEMA seedmod;\nCREATE TABLE seedmod.thing (id uuid PRIMARY KEY);\n' | add_migration "$d" seed.sql
   expect_fail "RLS/FORCE missing on a table" 'check M-1 FAILED' "$d" mc
 
   d="$(fresh_copy m-public-policy)"
-  { echo '-- migration-class: expand'; echo "$SEED_TABLE"; echo 'CREATE POLICY seed_all ON seedmod.thing TO PUBLIC USING (true);'; } | add_migration "$d" 0900_seed.sql
+  { echo '-- migration-class: expand'; echo "$SEED_TABLE"; echo 'CREATE POLICY seed_all ON seedmod.thing TO PUBLIC USING (true);'; } | add_migration "$d" seed.sql
   expect_fail "policy TO PUBLIC" 'check M-2 FAILED' "$d" mc
 
   d="$(fresh_copy m-view)"
-  { echo '-- migration-class: expand'; echo "$SEED_TABLE"; echo 'CREATE POLICY seed_p ON seedmod.thing TO app_api USING (false);'; echo 'CREATE VIEW seedmod.v AS SELECT id FROM seedmod.thing;'; } | add_migration "$d" 0900_seed.sql
+  { echo '-- migration-class: expand'; echo "$SEED_TABLE"; echo 'CREATE POLICY seed_p ON seedmod.thing TO app_api USING (false);'; echo 'CREATE VIEW seedmod.v AS SELECT id FROM seedmod.thing;'; } | add_migration "$d" seed.sql
   expect_fail "view without security_invoker" 'check M-4-views FAILED' "$d" mc
 
   d="$(fresh_copy m-patient-guard)"
-  { echo '-- migration-class: expand'; echo "$SEED_TABLE"; echo 'CREATE POLICY seed_p ON seedmod.thing TO app_api USING (false);'; } | add_migration "$d" 0900_seed.sql
+  { echo '-- migration-class: expand'; echo "$SEED_TABLE"; echo 'CREATE POLICY seed_p ON seedmod.thing TO app_api USING (false);'; } | add_migration "$d" seed.sql
   expect_fail "patient_id table without the merge write guard" 'check M-5-patient-guard FAILED' "$d" mc
 
   d="$(fresh_copy m-definer)"
-  printf -- '-- migration-class: expand\nCREATE SCHEMA seedmod;\nCREATE FUNCTION seedmod.f() RETURNS int LANGUAGE sql SECURITY DEFINER AS $$ SELECT 1 $$;\n' | add_migration "$d" 0900_seed.sql
+  printf -- '-- migration-class: expand\nCREATE SCHEMA seedmod;\nCREATE FUNCTION seedmod.f() RETURNS int LANGUAGE sql SECURITY DEFINER AS $$ SELECT 1 $$;\n' | add_migration "$d" seed.sql
   expect_fail "SECURITY DEFINER function outside the inventory, no search_path" 'check M-5-definer FAILED' "$d" mc
 
   d="$(fresh_copy m-dml)"
-  printf -- '-- migration-class: expand\nCREATE SCHEMA seedmod;\nCREATE TABLE seedmod.thing (id int);\nINSERT INTO seedmod.thing VALUES (1);\n' | add_migration "$d" 0900_seed.sql
+  printf -- '-- migration-class: expand\nCREATE SCHEMA seedmod;\nCREATE TABLE seedmod.thing (id int);\nINSERT INTO seedmod.thing VALUES (1);\n' | add_migration "$d" seed.sql
   expect_fail "DML in a migration" 'DML' "$d" mc
 
   d="$(fresh_copy m-destructive)"
-  printf -- '-- migration-class: expand\nALTER TABLE kernel.setting DROP COLUMN value;\n' | add_migration "$d" 0900_seed.sql
+  printf -- '-- migration-class: expand\nALTER TABLE kernel.setting DROP COLUMN value;\n' | add_migration "$d" seed.sql
   expect_fail "expand/contract: DROP COLUMN in an expand migration" 'EXPAND_DESTRUCTIVE' "$d" mc
 
   d="$(fresh_copy m-master-user)"
@@ -112,12 +118,12 @@ if [ "$JOB" = migration-check ]; then
   sql_case "administrator owns a function in a module schema" 'check X-admin-owns-nothing FAILED' "CREATE FUNCTION scheduling.seed_admin_fn() RETURNS int LANGUAGE sql AS 'SELECT 1';"
   sql_case "administrator created an extension" 'check X-extensions-allowlisted FAILED' 'CREATE EXTENSION citext SCHEMA clinical;'
   sql_case "app_owner created an extension that is not on the allow-list" 'check X-extensions-allowlisted FAILED' 'SET ROLE app_owner; CREATE EXTENSION citext SCHEMA clinical; RESET ROLE;'
-  sql_case "app_owner can INSERT into an audit table" 'check R-app-owner-no-audit-insert FAILED' 'CREATE SCHEMA audit; CREATE TABLE audit.seed_event (i int); ALTER TABLE audit.seed_event OWNER TO app_owner;'
+  sql_case "app_owner can INSERT into an audit table" 'check R-app-owner-no-audit-insert FAILED' 'CREATE TABLE audit.seed_event (i int); ALTER TABLE audit.seed_event OWNER TO app_owner;'
 fi
 
 if [ "$JOB" = integration-db ]; then
   d="$(fresh_copy i-failing-suite)"
-  printf -- '-- migration-class: expand\nCREATE SCHEMA seedmod;\nCREATE TABLE seedmod.thing (id uuid PRIMARY KEY);\n' | add_migration "$d" 0900_seed.sql
+  printf -- '-- migration-class: expand\nCREATE SCHEMA seedmod;\nCREATE TABLE seedmod.thing (id uuid PRIMARY KEY);\n' | add_migration "$d" seed.sql
   expect_fail "a database suite fails on a schema defect" 'FAILED|suite db-foundation' "$d" env INTEGRATION_SUITES=db-foundation INTEGRATION_SKIP_N_MINUS_1=true bash scripts/ci/migration-check/integration-db.sh
 
   d="$(fresh_copy i-empty-suite)"
@@ -131,7 +137,7 @@ if [ "$JOB" = integration-db ]; then
   expect_fail "a suite that ran zero tests" 'ran zero tests' "$CI_ROOT" node scripts/ci/migration-check/check-junit.mjs "$WORK/junit-zero" s
 
   d="$(fresh_copy i-n-minus-1 git)"
-  printf -- '-- migration-class: expand\nCREATE FUNCTION kernel.seed_block() RETURNS trigger LANGUAGE plpgsql SET search_path = pg_catalog AS $$ BEGIN RAISE EXCEPTION '"'"'seeded incompatibility'"'"'; END $$;\nCREATE TRIGGER seed_block BEFORE INSERT ON kernel.idempotency_key FOR EACH ROW EXECUTE FUNCTION kernel.seed_block();\n' | add_migration "$d" 0900_seed.sql
+  printf -- '-- migration-class: expand\nCREATE FUNCTION kernel.seed_block() RETURNS trigger LANGUAGE plpgsql SET search_path = pg_catalog AS $$ BEGIN RAISE EXCEPTION '"'"'seeded incompatibility'"'"'; END $$;\nCREATE TRIGGER seed_block BEFORE INSERT ON kernel.idempotency_key FOR EACH ROW EXECUTE FUNCTION kernel.seed_block();\n' | add_migration "$d" seed.sql
   (cd "$d" && git add -A && git commit -q -m "seeded schema change")
   expect_fail "N-1: the previous release does not pass against the new schema" 'N-1: the previous release' "$d" env INTEGRATION_SUITES=db-foundation bash scripts/ci/migration-check/integration-db.sh
 fi
