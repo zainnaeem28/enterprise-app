@@ -38,7 +38,23 @@ export interface Freshness {
   stale: boolean;
 }
 
+/** A current maintenance banner from `GET /public/v1/banners` (C0; exactly these fields are kept). */
+export interface SiteBanner {
+  id: string;
+  message: string;
+}
+
+export function parseBanner(v: unknown): SiteBanner | null {
+  if (!isRecord(v)) return null;
+  const id = str(v['id']);
+  const message = str(v['message']);
+  if (id === null || !UUID_RE.test(id) || message === null) return null;
+  return { id: id.toLowerCase(), message };
+}
+
 export interface DirectoryClient {
+  /** Optional so existing fakes keep working; a missing or failing read means no banner, never a failed page. */
+  banners?(): Promise<SiteBanner[]>;
   services(q?: { locationId?: string }, fresh?: Freshness): Promise<Service[]>;
   locations(fresh?: Freshness): Promise<Location[]>;
   clinicians(
@@ -206,6 +222,13 @@ export function createDirectoryClient(o: DirectoryOptions): DirectoryClient {
         await get('/public/v1/services', { locationId: q.locationId }, fresh),
         parseService,
       );
+    },
+    async banners() {
+      try {
+        return parseAll(await get('/public/v1/banners'), parseBanner);
+      } catch {
+        return [];
+      }
     },
     async locations(fresh) {
       return parseAll(await get('/public/v1/locations', {}, fresh), parseLocation);

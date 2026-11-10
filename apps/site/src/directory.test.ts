@@ -160,3 +160,32 @@ describe('client cache and failure handling', () => {
     expect(dir.doctors).toEqual([{ id: D, name: 'Dr A', serviceIds: [S], locationIds: [L] }]);
   });
 });
+
+describe('maintenance banners', () => {
+  const B = '44444444-4444-4444-8444-444444444444';
+  it('keeps only id and message and drops malformed rows', async () => {
+    const f = vi.fn(async () =>
+      ok({
+        items: [
+          { id: B, message: 'Planned maintenance', startsAt: 'x', endsAt: 'y', extra: 'ignored' },
+          { id: 'nope', message: 'bad id' },
+          { id: B, message: '  ' },
+        ],
+        nextCursor: null,
+      }),
+    );
+    const c = createDirectoryClient({
+      baseUrl: 'http://api',
+      fetchFn: f as unknown as typeof fetch,
+    });
+    expect(await c.banners?.()).toEqual([{ id: B, message: 'Planned maintenance' }]);
+  });
+  it('returns none when the read fails', async () => {
+    const f = vi.fn(async () => new Response(null, { status: 503 }));
+    const c = createDirectoryClient({
+      baseUrl: 'http://api',
+      fetchFn: f as unknown as typeof fetch,
+    });
+    expect(await c.banners?.()).toEqual([]);
+  });
+});

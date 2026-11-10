@@ -26,6 +26,9 @@ function setup(opts: {
     afterSignOut: () => assign('/signed-out'),
     fetch: async (r) => {
       const path = new URL(r.url).pathname;
+      // The maintenance banner read is covered in app-shell; keep this log to the session calls under test.
+      if (path === '/api/v1/banners')
+        return new Response(JSON.stringify({ items: [], nextCursor: null }), { status: 200 });
       seen.push({ method: r.method, path });
       if (path.endsWith('/auth/session') && r.method === 'GET') {
         sessionReads += 1;

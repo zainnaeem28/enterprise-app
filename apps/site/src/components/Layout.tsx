@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { AppBar, SkipLink } from '@ehr/ui';
+import { AppBar, MaintenanceBanner, SkipLink } from '@ehr/ui';
+import type { SiteBanner } from '../directory.js';
 import { SITE_NAME } from '../seo.js';
 
 const NAV = [
@@ -21,10 +22,12 @@ const FOOTER = [
 export function Layout({
   current,
   bookHref,
+  banners = [],
   children,
 }: {
   current: string;
   bookHref: string;
+  banners?: SiteBanner[];
   children: ReactNode;
 }) {
   return (
@@ -46,6 +49,9 @@ export function Layout({
           Book appointment
         </a>
       </AppBar>
+      {banners.map((b) => (
+        <MaintenanceBanner key={b.id}>{b.message}</MaintenanceBanner>
+      ))}
       <main id="main" className="site-main" tabIndex={-1}>
         {children}
       </main>
