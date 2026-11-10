@@ -55,7 +55,9 @@ for s in db-foundation kernel api worker; do
     continue
   fi
   suites+=("$s")
-  run_db_suite "$PREV_TREE" "$s" "$J" "$OUT/n-minus-1-$s.txt" || rc=1
+  # node --test exits non-zero for a pinned (expected) failure; check-junit below is the sole judge of pass/fail
+  # (accepts pins, hard-fails zero tests, no report, unpinned failures, skips), so the suite status is not used here.
+  run_db_suite "$PREV_TREE" "$s" "$J" "$OUT/n-minus-1-$s.txt" || true
 done
 [ "${#suites[@]}" -gt 0 ] || { echo "::error::previous release $TAG has no database suite to run (empty N-1 suite)"; exit 1; }
 node "$MC_DIR/check-junit.mjs" --pins "$PINS_PRESENT" --catalog "$PREV_TREE/db/tools/catalog-lists.mjs" --report "$PIN_REPORT" "$J" "${suites[@]}" || rc=1
