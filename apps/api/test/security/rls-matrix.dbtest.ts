@@ -1517,4 +1517,131 @@ describe('TC-AZ-07: each definer function refuses the callers that must not hold
   );
 });
 
+// ---------------------------------------------------------------------------------------------------------------------------------
+// DF-13 (ARCHITECTURE 21.6, A-2.4; SEC03-F13 item 5, SEC03-F07): patient.caller_sees(id) is the hand-written twin of the patient-root
+// policies of 0702. For every audience and realm, a second location, a second clinic, a second organisation, a proxy and a break-glass
+// grant, it must equal "the root row is visible to that caller under RLS". caller_sees is internal (no application role holds EXECUTE),
+// so it is called as patient_scope_owner, which is how the definer functions reach it.
+// ---------------------------------------------------------------------------------------------------------------------------------
+describe('DF-13: patient.caller_sees(id) equals "the patient root is visible under RLS" for every audience and realm', () => {
+  const extra: CallerSpec[] = [
+    {
+      name: 'staff of A2 holding a break-glass grant on B',
+      db: 'app_api',
+      settings: () => staff([A2], { btgPatientIds: [B] }),
+      own: () => [B],
+    },
+    {
+      name: 'staff of A1 holding a break-glass grant on B',
+      db: 'app_api',
+      settings: () => staff([A1], { btgPatientIds: [B] }),
+      own: () => [A, A_other, B],
+    },
+    {
+      name: 'staff of another organisation holding a break-glass grant on A',
+      db: 'app_api',
+      settings: () => staff([A1], { orgId: ORG2, btgPatientIds: [A] }),
+      own: () => [],
+    },
+    {
+      name: 'admin_pool holding a break-glass grant on A',
+      db: 'app_api',
+      settings: () => ({
+        audience: 'staff',
+        realm: 'admin_pool',
+        orgId: ORG,
+        principalId: staffPrincipalA.principalId as string,
+        phiAccess: 'limited',
+        btgPatientIds: [A],
+      }),
+      own: () => [A],
+    },
+    {
+      name: 'staff in a realm that is neither google nor admin_pool, with a break-glass grant on A and location A1',
+      db: 'app_api',
+      settings: () => staff([A1], { realm: 'partner_pool', btgPatientIds: [A] }),
+      own: () => [],
+    },
+    {
+      name: 'patient of another organisation with A in the patient list',
+      db: 'app_api',
+      settings: () => ({
+        audience: 'patient',
+        realm: 'patient_pool',
+        orgId: ORG2,
+        principalId: linkA.principalId,
+        personId: linkA.personId,
+        patientIds: [A],
+      }),
+      own: () => [],
+    },
+    {
+      name: 'worker, system, organisation-wide job',
+      db: 'app_worker',
+      settings: () => ({ audience: 'system', realm: 'worker', orgId: ORG, jobScope: 'org' }),
+      own: () => [A, A_other, B, B_other],
+    },
+    {
+      name: 'worker, system, job scope of another organisation',
+      db: 'app_worker',
+      settings: () => ({ audience: 'system', realm: 'worker', orgId: ORG2, jobScope: 'org' }),
+      own: () => [],
+    },
+  ];
+  /**
+   * The one intended difference (2502 header): a proxy holds the patient in its list and is "seen" by caller_sees (the booking and
+   * referral functions act for the proxied patient, D-7), but never reads the root row itself (T-PAT-OWN excludes proxy_patient_ids).
+   */
+  const isProxy = (c: CallerSpec): boolean => c.name.startsWith('proxy of');
+  const rootScope = (c: CallerSpec): string[] => (isProxy(c) ? [] : c.own());
+  const bothWays = { seen: 0, hidden: 0 };
+  for (const caller of [...CALLERS, ...extra])
+    test(`as ${caller.name}: caller_sees agrees with the RLS-visible root for A, A_other, B, B_other and an unknown ID`, async () => {
+      const rls = await new Caller(t, caller.db, caller.settings()).open();
+      const fn = await new Caller(t, superUser(), caller.settings(), 'patient_scope_owner').open();
+      const mismatches: string[] = [];
+      try {
+        for (const [tag, pid] of [
+          ['A', A],
+          ['A_other', A_other],
+          ['B', B],
+          ['B_other', B_other],
+          ['unknown', uid()],
+        ] as const) {
+          const visible =
+            (await rls.count(`SELECT count(*)::int AS n FROM patient.patient WHERE id = $1`, [
+              pid,
+            ])) === 1;
+          const r = await fn.run(`SELECT patient.caller_sees($1::uuid) AS s`, [pid]);
+          assert.ok(
+            !('error' in r),
+            `caller_sees failed for ${tag}: ${'error' in r ? r.message : ''}`,
+          );
+          const sees = (r.rows[0] as Row)['s'];
+          const expected = visible || (isProxy(caller) && caller.own().includes(pid));
+          if (sees !== expected)
+            mismatches.push(
+              `${tag}: caller_sees=${String(sees)}, RLS-visible=${visible}, expected ${expected}`,
+            );
+          if (visible) bothWays.seen++;
+          else bothWays.hidden++;
+          // and the intended scope of the caller, so a pair of wrong-in-the-same-way answers cannot pass
+          if (tag !== 'unknown')
+            assert.equal(
+              visible,
+              rootScope(caller).includes(pid),
+              `${caller.name}: RLS visibility of ${tag} is not the intended one`,
+            );
+        }
+      } finally {
+        await rls.close();
+        await fn.close();
+      }
+      assert.deepEqual(mismatches, [], `caller_sees differs from RLS for ${caller.name}`);
+    });
+  test('the comparison is not vacuous: both visible and hidden roots occur', () => {
+    assert.ok(bothWays.seen >= 10 && bothWays.hidden >= 50, JSON.stringify(bothWays));
+  });
+});
+
 void id;

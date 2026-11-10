@@ -2887,7 +2887,7 @@ export interface paths {
     };
     /**
      * GET /api/v1/patient-merges/{id}
-     * @description staff.: Status, counts after completion
+     * @description staff.: Status, counts after completion. survivorId and mergedId only for a patient the caller sees; reason only for the requester or a caller who sees both patients; no requester or approver identifier (ARCHITECTURE 21.6 DF-10).
      */
     get: operations['getPatientMergesById'];
     put?: never;
@@ -5036,6 +5036,35 @@ export interface components {
       /** Format: uuid */
       mergedId: string;
       reason: string;
+    };
+    PatientMergeRequestView: {
+      /** Format: uuid */
+      id: string;
+      /** @enum {string} */
+      status:
+        'requested' | 'approved' | 'rejected' | 'executing' | 'completed' | 'failed' | 'cancelled';
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      decidedAt: string | null;
+      failureCode: string | null;
+      /** @description Present after completion only. */
+      counts: {
+        [key: string]: unknown;
+      } | null;
+      callerIsRequester: boolean;
+      /**
+       * Format: uuid
+       * @description Null unless the caller sees the survivor patient.
+       */
+      survivorId: string | null;
+      /**
+       * Format: uuid
+       * @description Null unless the caller sees the merged patient.
+       */
+      mergedId: string | null;
+      /** @description Null unless the caller is the requester or sees both patients. */
+      reason: string | null;
     };
     PostPatientsRequest: {
       /** Format: uuid */
@@ -13911,7 +13940,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['OpaqueObject'];
+          'application/json': components['schemas']['PatientMergeRequestView'];
         };
       };
       /** @description Codes: kernel.client_release_unsupported, kernel.validation_failed. */
@@ -13958,7 +13987,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['OpaqueObject'];
+          'application/json': components['schemas']['PatientMergeRequestView'];
         };
       };
       /** @description Codes: kernel.client_release_unsupported, kernel.idempotency_key_required, kernel.validation_failed. */
@@ -14005,7 +14034,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['OpaqueObject'];
+          'application/json': components['schemas']['PatientMergeRequestView'];
         };
       };
       /** @description Codes: kernel.client_release_unsupported, kernel.idempotency_key_required, kernel.validation_failed. */
