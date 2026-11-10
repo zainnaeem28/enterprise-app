@@ -53,6 +53,7 @@ const db = {
 
 const SCOPE = { audience: 'patient', orgId: ORG } as unknown as ScopeSettings;
 const organisation = {
+  currentBanners: () => Promise.resolve([]),
   directoryLocations: () =>
     Promise.resolve([
       {

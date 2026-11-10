@@ -4,6 +4,7 @@ export type {
   DirectoryLocation,
   DirectoryService,
   LicensingResult,
+  MaintenanceBanner,
   NewBookingPolicy,
   NewService,
   ServiceRecord,

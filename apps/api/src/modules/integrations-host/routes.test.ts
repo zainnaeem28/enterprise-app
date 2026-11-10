@@ -75,6 +75,7 @@ const organisation = {
         (s) => f.locationId === undefined || (f.locationId === L1 ? s.id === S1 : s.id === S2),
       ),
     ),
+  directoryBanners: () => Promise.resolve([]),
   directoryServiceClinicians: (_tx: Tx, serviceId: string) =>
     Promise.resolve(serviceId === S1 ? [D1, D2] : serviceId === S2 ? [D3] : []),
 };
@@ -145,10 +146,11 @@ function http(
   });
 }
 
-test('route inventory: three public GET routes and two webhook POST routes, all declared public and release-exempt', () => {
+test('route inventory: four public GET routes and two webhook POST routes, all declared public and release-exempt', () => {
   const r = inventory(controllers as never);
   assert.deepEqual(r.failures, []);
   assert.deepEqual(r.routes.map((x) => `${x.method} ${x.path}`).sort(), [
+    'GET /public/v1/banners',
     'GET /public/v1/clinicians',
     'GET /public/v1/locations',
     'GET /public/v1/services',
