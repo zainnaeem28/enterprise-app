@@ -53,6 +53,7 @@ import {
   createPatientTasks,
   createSurvivorOf,
   patientRecipientContributor,
+  scopeDriftAlerter,
 } from './jobs/patient/index.js';
 import { createSchedulingFlowTasks } from './jobs/scheduling/index.js';
 import type { SchedulingFlowPort } from './jobs/scheduling/index.js';
@@ -234,6 +235,14 @@ export function composeTasks(opts: ComposeOptions & { queue: Queue }): TaskTable
     ...createPatientTasks({
       db,
       orgId,
+      // QA-EXEC-F10 / TC-AZ-09: a drift found by the daily check is a compliance alert, not only a repaired table.
+      onDrift: scopeDriftAlerter({
+        db,
+        orgId,
+        alerts:
+          opts.api?.complianceAlerts ?? refusingPort<ComplianceAlertPort>('compliance_alerts'),
+        log,
+      }),
       executeMerge:
         opts.api?.executeMerge ??
         (() => Promise.reject(new PortNotConfiguredError('patient_execute_merge'))),

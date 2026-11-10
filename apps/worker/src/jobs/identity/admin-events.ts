@@ -9,7 +9,12 @@ import { ADMIN_EVENT_KINDS, ADMIN_EVENT_NOTICE_JOB, type AdminEventKind } from '
 import { isUuid, systemScope } from './scope.js';
 
 export interface ComplianceAlertInput {
-  type: 'btg_opened' | 'privileged_change' | 'kill_switch_used' | 'audit_anchor_mismatch';
+  type:
+    | 'btg_opened'
+    | 'privileged_change'
+    | 'kill_switch_used'
+    | 'audit_anchor_mismatch'
+    | 'scope_drift';
   severity: 'low' | 'medium' | 'high' | 'critical';
   resourceType: string;
   resourceId: string;

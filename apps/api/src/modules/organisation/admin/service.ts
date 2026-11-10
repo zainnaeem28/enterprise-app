@@ -531,7 +531,7 @@ export class OrganisationAdminService {
         f('lateChange', 'late_change', 'enum', { values: ['block', 'fee'] }),
         f('maxFuturePerPatient', 'max_future_per_patient', 'int', { min: 1, max: 1000 }),
         f('waitlistEnabled', 'waitlist_enabled', 'bool'),
-        f('overbookCapPerSession', 'overbook_cap_per_session', 'int', { min: 0, max: 1000 }),
+        f('overbookCapPerSession', 'overbook_cap_per_session', 'int', { min: 0, max: 100 }),
         f('holdMinutes', 'hold_minutes', 'int', { min: 1, max: 120, nullable: true }),
         f('noShowGraceMin', 'no_show_grace_min', 'int', { min: 0, max: 240, nullable: true }),
       ],

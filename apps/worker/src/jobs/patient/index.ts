@@ -12,6 +12,7 @@ export { PATIENT_CRONTAB, PATIENT_JOBS } from './jobs.js';
 export { runVerifyStaffScope } from './verify-staff-scope.js';
 export type { DriftReport, VerifyDeps } from './verify-staff-scope.js';
 export { runPurgeMatchChecks } from './purge-match-checks.js';
+export { scopeDriftAlerter } from './scope-drift-alert.js';
 export { createSurvivorOf, patientRecipientContributor } from './recipient.js';
 
 export function definePatientJobs(registry: JobRegistry): void {

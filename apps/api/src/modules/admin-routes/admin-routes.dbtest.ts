@@ -181,6 +181,34 @@ describe('audit export: asynchronous, size limited, itself audited, elevation ga
     );
   });
 
+  test('TC-SEC-20: repeated exports hit the hourly limit: 429 kernel.rate_limited, no job, nothing enqueued for the refused request', async () => {
+    const mine = async (): Promise<number> =>
+      (
+        await k.q<{ n: number }>(
+          `SELECT count(*)::int AS n FROM audit.export_job WHERE created_at > now() - interval '1 hour'`,
+        )
+      )[0]!.n;
+    const before = await mine();
+    await k.sa.query(
+      `INSERT INTO kernel.setting (id, organisation_id, key, value, value_schema) VALUES (gen_random_uuid(), $1, 'audit_export_max_per_hour', '1'::jsonb, 'int')`,
+      [ORG],
+    );
+    try {
+      const who = await adminWith(k, ['compliance_officer'], { elevated: true });
+      const ask = () => api(k, who, 'POST', '/audit-exports', { ...range(), reason: 'Repeat' });
+      const first = await ask();
+      assert.equal(first.status, 200, first.body);
+      const second = await ask();
+      assert.equal(second.status, 429, second.body);
+      assert.equal(j(second)['code'], 'kernel.rate_limited');
+      assert.equal(await mine(), before + 1, 'the refused request created no job');
+    } finally {
+      await k.sa.query(
+        `DELETE FROM kernel.setting WHERE key = 'audit_export_max_per_hour' AND location_id IS NULL`,
+      );
+    }
+  });
+
   test('a reason is required; an unelevated caller cannot export or download', async () => {
     const noReason = await api(k, ops, 'POST', '/audit-exports', range());
     assert.equal(noReason.status, 400);

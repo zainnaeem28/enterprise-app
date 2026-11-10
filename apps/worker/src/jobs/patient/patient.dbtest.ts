@@ -10,7 +10,7 @@ import { join } from 'node:path';
 import { after, before, describe, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { KernelDb } from '@ehr/kernel';
-import { runPurgeMatchChecks, runVerifyStaffScope } from './index.js';
+import { runPurgeMatchChecks, runVerifyStaffScope, scopeDriftAlerter } from './index.js';
 
 const PG: string = 'pg';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -172,6 +172,67 @@ describe('patient on PostgreSQL 17 (BE-08, worker side)', () => {
       onDrift: () => Promise.reject(new Error('alert path down')),
     });
     assert.equal(r.extraRows, 1);
+    assert.equal(
+      await count(`SELECT count(*) n FROM patient.staff_scope WHERE patient_id = $1`, [P2]),
+      0,
+    );
+  });
+
+  test('QA-EXEC-F10 / TC-AZ-09: the drift check raises a scope_drift compliance alert for an extra row (high) and for a missing row (medium); the alert holds no patient and no location; a failing alert path is logged, not silent', async () => {
+    const raised: {
+      type: string;
+      severity: string;
+      resourceType: string;
+      resourceId: string;
+      permission: string;
+    }[] = [];
+    const logged: string[] = [];
+    let down = false;
+    const onDrift = scopeDriftAlerter({
+      db,
+      orgId: ORG,
+      alerts: {
+        raise: (_tx, input) => {
+          if (down) return Promise.reject(new Error('alert path down'));
+          raised.push(input);
+          return Promise.resolve();
+        },
+      },
+      log: { error: (m: string) => void logged.push(m) },
+    });
+    // an extra row (P2 is not cared for at L2) and a missing row (P1 loses its scope row at L1)
+    await seed(
+      `INSERT INTO patient.staff_scope (patient_id, location_id, organisation_id) VALUES ($1,$2,$3)`,
+      [P2, L2, ORG],
+    );
+    await seed(`DELETE FROM patient.staff_scope WHERE patient_id = $1 AND location_id = $2`, [
+      P1,
+      L1,
+    ]);
+    const r = await runVerifyStaffScope({ db, orgId: ORG, jobId: JOB, onDrift });
+    assert.deepEqual(r, { missingRows: 1, extraRows: 1 });
+    assert.deepEqual(raised.map((a) => [a.type, a.severity, a.resourceType, a.permission]).sort(), [
+      ['scope_drift', 'high', 'patient_staff_scope', 'audit.btg.review'],
+      ['scope_drift', 'medium', 'patient_staff_scope', 'audit.btg.review'],
+    ]);
+    assert.ok(raised.every((a) => /^[0-9a-f-]{36}$/.test(a.resourceId)));
+    assert.notEqual(raised[0]?.resourceId, raised[1]?.resourceId);
+    // no drift: no alert
+    raised.length = 0;
+    assert.deepEqual(await runVerifyStaffScope({ db, orgId: ORG, jobId: JOB, onDrift }), {
+      missingRows: 0,
+      extraRows: 0,
+    });
+    assert.equal(raised.length, 0);
+    // the alert path is down: the repair stands, the job does not fail, the loss is logged
+    down = true;
+    await seed(
+      `INSERT INTO patient.staff_scope (patient_id, location_id, organisation_id) VALUES ($1,$2,$3)`,
+      [P2, L2, ORG],
+    );
+    const r2 = await runVerifyStaffScope({ db, orgId: ORG, jobId: JOB, onDrift });
+    assert.equal(r2.extraRows, 1);
+    assert.equal(logged.length, 1);
     assert.equal(
       await count(`SELECT count(*) n FROM patient.staff_scope WHERE patient_id = $1`, [P2]),
       0,

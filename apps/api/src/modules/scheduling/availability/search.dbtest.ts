@@ -657,34 +657,42 @@ describe('the availability port of the booking core (hold validation, alternativ
 });
 
 describe('overbookable sessions (BR-02, RA-R1-03 for the overbookable case)', () => {
-  test('staff with includeOverbook see occupied slots of an overbookable session up to the cap; patients never do; cap 0 means no overbooking', async () => {
+  test('staff with includeOverbook see a booked slot of an overbookable window while it holds fewer than the cap; patients never do; a full slot hides nothing else; cap 0 means no overbooking (HEAAA-632 T5)', async () => {
     const d = await doctorWithTemplate({ rules: weekRules({ overbookable: true }) });
     const day = await t.futureDate(34);
     const [nine, half] = await at(day, '09:00', '09:30');
     const p = await Promise.all([newPatient(), newPatient(), newPatient(), newPatient()]);
-    // cap 0 (no policy row): a second booking of the same slot is just taken
+    // cap 0 (no policy row): the first booking takes the slot, a second one is just taken
     await hold(p[0] as P, d, nine as string);
     await rejects(hold(p[1] as P, d, nine as string), SlotTakenError, 'cap 0');
-    // cap 2 for this service at this place
+    const dd = await doctorWithTemplate({ rules: weekRules({ overbookable: true }) });
+    // cap 2 for this service at this place: the cap is the total in the slot, the first booking included
     await saWrite(
       t.k,
       `INSERT INTO organisation.booking_policy (id, organisation_id, service_id, location_id, cutoff_hours, max_future_per_patient, overbook_cap_per_session) VALUES ($1, $2, $3, $4, 24, 5, 2)`,
       [randomUUID(), ORG, SVC, A1],
     );
     try {
-      const plain = await search(d, day);
+      const free = await search(dd, day, { includeOverbook: true }, 'staff');
+      assert.equal(
+        free.slots.find((s: Slot) => s.startsAt === nine)?.overbook,
+        undefined,
+        'an empty slot is offered as a normal slot, not flagged',
+      );
+      await hold(p[1] as P, dd, nine as string);
+      const plain = await search(dd, day);
       assert.ok(
         !starts(plain).includes(nine as string),
         'a patient does not see the occupied slot',
       );
-      const staffPlain = await search(d, day, {}, 'staff');
+      const staffPlain = await search(dd, day, {}, 'staff');
       assert.ok(
         !starts(staffPlain).includes(nine as string),
         'staff without the flag do not either',
       );
-      const extra = await search(d, day, { includeOverbook: true }, 'staff');
+      const extra = await search(dd, day, { includeOverbook: true }, 'staff');
       const row = extra.slots.find((s: Slot) => s.startsAt === nine);
-      assert.ok(row, 'staff with includeOverbook see the occupied slot');
+      assert.ok(row, 'staff with includeOverbook see the slot that holds 1 of 2');
       assert.equal(row.overbook, true);
       assert.equal(
         extra.slots.find((s: Slot) => s.startsAt === half)?.overbook,
@@ -692,20 +700,19 @@ describe('overbookable sessions (BR-02, RA-R1-03 for the overbookable case)', ()
         'a free slot is not flagged',
       );
 
-      // two extra bookings are allowed, the third is refused (the database counts under the session lock)
-      await hold(p[1] as P, d, nine as string);
-      await hold(p[2] as P, d, nine as string);
-      await rejects(hold(p[3] as P, d, nine as string), SlotTakenError, 'cap reached');
-      const full = await search(d, day, { includeOverbook: true }, 'staff');
+      // exactly one more booking is allowed (2 in total), the third is refused (the database counts under the doctor lock)
+      await hold(p[2] as P, dd, nine as string);
+      await rejects(hold(p[3] as P, dd, nine as string), SlotTakenError, 'cap reached');
+      const full = await search(dd, day, { includeOverbook: true }, 'staff');
       assert.equal(
         full.slots.find((s: Slot) => s.startsAt === nine),
         undefined,
         'the cap is reached, the slot is no longer offered',
       );
-      // a free slot of the session in the same session is also counted against the cap
+      // a full slot does not hide the other slots of the window
       assert.ok(
-        full.slots.find((s: Slot) => s.startsAt === half) === undefined ||
-          full.slots.find((s: Slot) => s.startsAt === half)?.overbook !== true,
+        starts(full).includes(half as string),
+        'the next slot of the same window is still offered',
       );
     } finally {
       await saWrite(

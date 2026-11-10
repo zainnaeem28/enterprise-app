@@ -324,10 +324,11 @@ export const POLICIES: ResourceSpec = {
     { name: 'waitlistEnabled', label: 'Waitlist on', type: 'bool' },
     {
       name: 'overbookCapPerSession',
-      label: 'Overbooking cap per session',
+      label: 'Maximum patients per slot (overbookable session)',
       type: 'int',
       min: 0,
-      max: 1000,
+      max: 100,
+      hint: '0 or 1 = no overbooking.',
     },
     {
       name: 'holdMinutes',

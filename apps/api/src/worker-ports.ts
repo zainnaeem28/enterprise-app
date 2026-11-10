@@ -163,7 +163,12 @@ export function buildWorkerPorts(deps: WorkerPortsDeps) {
       raise: (
         tx: Tx,
         input: {
-          type: 'btg_opened' | 'privileged_change' | 'kill_switch_used' | 'audit_anchor_mismatch';
+          type:
+            | 'btg_opened'
+            | 'privileged_change'
+            | 'kill_switch_used'
+            | 'audit_anchor_mismatch'
+            | 'scope_drift';
           severity: 'low' | 'medium' | 'high' | 'critical';
           resourceType: string;
           resourceId: string;

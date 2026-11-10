@@ -13,6 +13,7 @@ import type { ScopeSettings, Tx } from '@ehr/kernel';
 import {
   AuditEnvelopeError,
   AuditService,
+  ExportRateLimitedError,
   ExportTooLargeError,
   SelfReviewError,
   type AuditEnvelope,
@@ -804,6 +805,67 @@ describe('audit module on PostgreSQL 17 (BE-01)', () => {
           key: `${exportId}:0`,
         },
       ]);
+    });
+    test('QA-EXEC-F10 / TC-SEC-20: a person is held to audit_export_max_per_hour; parallel requests cannot all pass; a refusal creates no job and enqueues nothing; an export older than an hour does not count', async () => {
+      const from = new Date(Date.now() - 86400_000);
+      const to = new Date(Date.now() + 3600_000);
+      const mine = async (): Promise<number> =>
+        Number(
+          (
+            await admin.query(
+              `SELECT count(*)::int AS n FROM audit.export_job WHERE requested_by_person_id = $1 AND created_at > now() - interval '1 hour'`,
+              [CMP_PERSON],
+            )
+          ).rows[0]?.n,
+        );
+      const ask = (i: number) =>
+        db.withScope(compliance, (tx) =>
+          audit.requestExport(tx, {
+            requestId: REQ(100 + i),
+            filter: { from, to, patientId: PAT2, action: 'btg_open' },
+            reason: 'rate limit test',
+            elevationId: REQ(91),
+          }),
+        );
+      await admin.query(
+        `DELETE FROM kernel.setting WHERE key = 'audit_export_max_rows' AND location_id IS NULL`,
+      );
+      const before = await mine();
+      await admin.query(
+        `INSERT INTO kernel.setting (id, organisation_id, key, value, value_schema) VALUES (gen_random_uuid(), $1, 'audit_export_max_per_hour', $2::jsonb, 'int')`,
+        [ORG, String(before + 2)],
+      );
+      try {
+        // five at once against room for two: exactly two are accepted
+        const out = await Promise.allSettled([1, 2, 3, 4, 5].map(ask));
+        assert.equal(out.filter((o) => o.status === 'fulfilled').length, 2);
+        for (const o of out.filter((x) => x.status === 'rejected'))
+          assert.ok((o as PromiseRejectedResult).reason instanceof ExportRateLimitedError);
+        assert.equal(await mine(), before + 2);
+        queue.enqueued.length = 0;
+        const refused = await ask(9).then(
+          () => null,
+          (e: unknown) => e,
+        );
+        assert.ok(refused instanceof ExportRateLimitedError);
+        assert.deepEqual(
+          [(refused as ExportRateLimitedError).status, (refused as ExportRateLimitedError).code],
+          [429, 'kernel.rate_limited'],
+        );
+        assert.equal(await mine(), before + 2, 'no job for a refused request');
+        assert.deepEqual(queue.enqueued, [], 'nothing enqueued for a refused request');
+        // an export older than an hour does not count
+        await admin.query(
+          `UPDATE audit.export_job SET created_at = now() - interval '2 hours' WHERE id IN (SELECT id FROM audit.export_job WHERE requested_by_person_id = $1 ORDER BY created_at DESC LIMIT 1)`,
+          [CMP_PERSON],
+        );
+        await ask(10);
+        assert.equal(await mine(), before + 2);
+      } finally {
+        await admin.query(
+          `DELETE FROM kernel.setting WHERE key = 'audit_export_max_per_hour' AND location_id IS NULL`,
+        );
+      }
     });
     test('a principal without the audit_events slice cannot create an export job; the time range is required', async () => {
       await rejectsCode(
