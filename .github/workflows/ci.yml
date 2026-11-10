@@ -711,6 +711,74 @@ jobs:
 
   # Single required check for the branch ruleset (when the plan can enforce one). A skipped or
   # cancelled job is a failure here.
+  # FE-16 open request (HEAAA-598): apps/cms typecheck, DB suite against a throwaway CMS-role database, and a real `next build`
+  # (the package `build` script is `tsc --noEmit`, so `build:next` is the only step that proves the Payload/Next admin compiles).
+  # The unit suite for apps/cms already runs in `unit` (every workspace `test` script). Settings below are synthetic, non-secret CI values.
+  cms:
+    name: cms
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    services:
+      postgres:
+        image: postgres:17@sha256:748a18a54d3842d43bc156f0840d78029b8d349e0feca98c12b9c4ce3404a6b3
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: postgres
+        ports:
+          - 127.0.0.1:55433:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Install (frozen lockfile)
+        run: corepack enable && pnpm install --frozen-lockfile
+      - name: Typecheck
+        run: pnpm --filter @ehr/cms typecheck
+      - name: Throwaway CMS-role database
+        run: |
+          psql "postgres://postgres@127.0.0.1:55433/postgres" -v ON_ERROR_STOP=1 \
+            -c "CREATE ROLE cms_ci LOGIN SUPERUSER" -c "CREATE DATABASE cms_test OWNER cms_ci"
+      - name: Database suite (a skipped suite fails)
+        env:
+          CMS_TEST_DATABASE_URL: postgres://cms_ci@127.0.0.1:55433/cms_test
+          JUNIT_DIR: ${{ github.workspace }}/reports/cms/junit
+        run: |
+          mkdir -p reports/cms/junit
+          pnpm --filter @ehr/cms test:db
+          grep -q 'skipped="0"' reports/cms/junit/cms-db.xml
+          grep -Eq 'tests="[1-9]' reports/cms/junit/cms-db.xml
+      - name: next build (production build of the Payload admin)
+        env:
+          NODE_ENV: production
+          NEXT_TELEMETRY_DISABLED: '1'
+          CMS_DATABASE_URL: postgres://cms_ci@127.0.0.1:55433/cms_test
+          PAYLOAD_SECRET: ci-only-payload-secret-0123456789abcdef
+          CMS_PREVIEW_SECRET: ci-only-preview-secret-fedcba9876543210
+          CMS_PUBLIC_URL: https://cms.ci.invalid
+          CMS_SITE_PREVIEW_URL: https://www.ci.invalid
+          CMS_GOOGLE_CLIENT_ID: ci-client-id
+          CMS_GOOGLE_CLIENT_SECRET: ci-client-secret
+          CMS_GOOGLE_HOSTED_DOMAIN: ci.invalid
+          CMS_ALLOWED_EMAILS: ci@ci.invalid
+        run: pnpm --filter @ehr/cms build:next
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: cms-reports
+          path: reports/cms
+          if-no-files-found: error
+          retention-days: 30
+
   ci-status:
     name: ci-status
     if: ${{ always() }}
@@ -733,6 +801,7 @@ jobs:
         bundle-budget,
         patient-e2e-a11y,
         admin-run,
+        cms,
       ]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
