@@ -268,3 +268,32 @@ paths = [
   '''(^|/)docs/evidence/integration/M5/sec05-reread/w-jobs_notifications_notifications\.txt$''',
 ]
 regexes = ['''^2406_notifications_staff_scope_allows_patient\.sql$''']
+
+# HEAAA-671 (owner: DevOps Engineer; reviewer: DevOps Reviewer). Merging the reviewed R2 evidence (QA
+# execution 182d66a, quality-security 36d7c9a) and its history adds 124 generic-api-key hits, each
+# triaged: none is a credential. Same false positive as INT04-F18/F33/F36: the integration-db logs print
+# the applied migration file names as JSON and the rule reads migration 2406's file name as a key (120
+# hits, a public file name). Pinned to these exact evidence files AND the exact value (condition = "AND")
+# and to this rule only. Covers history and the tree; evidence stays byte-identical. No expiry: frozen.
+[[allowlists]]
+description = "HEAAA-671: migration file name in R1/R2 QA and quality-security integration-db evidence logs"
+condition = "AND"
+targetRules = ["generic-api-key"]
+paths = [
+  '''(^|/)docs/evidence/qa-execution/r2-cdc388d/raw/integration-db\.txt$''',
+  '''(^|/)docs/evidence/qa-execution/unit-and-db/(api-integration-db|kernel-integration-db|worker-integration-db)\.txt$''',
+  '''(^|/)docs/evidence/qa-execution/unit-and-db/integration-db-run\.log$''',
+  '''(^|/)docs/quality-security/R1/integration-db\.log$''',
+]
+regexes = ['''^2406_notifications_staff_scope_allows_patient\.sql$''']
+
+# HEAAA-671 (continued). History only: commit 19cea0d4 of tests/api/platform/admin.test.mjs (QA-05) holds
+# the throw-away feature-flag names qa05_probe_flag and qa05_probe_flag2 (4 hits; the same public
+# identifiers as INT05-F05-b, in another commit). Pinned to the commit AND file AND exact value.
+[[allowlists]]
+description = "HEAAA-671: QA-05 probe feature-flag names in admin.test.mjs (commit 19cea0d4 + file + value)"
+condition = "AND"
+targetRules = ["generic-api-key"]
+commits = ["19cea0d45f44cc0b2313439200566a61bba04b21"]
+paths = ['''(^|/)tests/api/platform/admin\.test\.mjs$''']
+regexes = ['''^qa05_probe_flag2?$''']
