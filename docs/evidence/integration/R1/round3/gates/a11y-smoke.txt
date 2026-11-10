@@ -1,0 +1,14 @@
+
+Running 8 tests using 1 worker
+
+Skipping host requirements validation logic because `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` env variable is set.
+  ✓  1 [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:57:9 › desktop 1280 › sign-in page (signed-out visitor redirected from /) (601ms)
+  ✓  2 [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:68:9 › desktop 1280 › server error state (441ms)
+  ✓  3 [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:83:9 › desktop 1280 › blocking release dialog (583ms)
+  ✓  4 [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:96:9 › desktop 1280 › non-blocking release bar (signed in) (441ms)
+  ✓  5 [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:57:9 › phone 360 › sign-in page (signed-out visitor redirected from /) (483ms)
+  ✓  6 [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:68:9 › phone 360 › server error state (441ms)
+  ✓  7 [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:83:9 › phone 360 › blocking release dialog (536ms)
+  ✓  8 [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:96:9 › phone 360 › non-blocking release bar (signed in) (449ms)
+
+  8 passed (5.1s)

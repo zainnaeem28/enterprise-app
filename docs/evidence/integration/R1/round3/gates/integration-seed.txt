@@ -1,0 +1,21 @@
+PASS (rc=1, matched /FAILED|suite db-foundation/)  a database suite fails on a schema defect
+PASS (rc=1, matched /an empty suite fails/)  empty suite (no database test file)
+PASS (rc=1, matched /skipped 1 test/)  a skipped test
+PASS (rc=1, matched /ran zero tests/)  a suite that ran zero tests
+FAIL (rc=1, pattern /N-1: the previous release/ NOT found)  N-1: the previous release does not pass against the new schema
+          where: 'PL/pgSQL function kernel.seed_block() line 1 at RAISE',
+          schema: undefined,
+          table: undefined,
+          column: undefined,
+          dataType: undefined,
+          constraint: undefined,
+          file: 'pl_exec.c',
+          line: '3911',
+          routine: 'exec_stmt_raise'
+        }
+      ::error::suite db-foundation FAILED
+      db-foundation: 120 test(s), 13 failure(s), 0 skipped
+      ::error::suite db-foundation has 13 failing test(s)
+      database suites: 1 suite(s), 120 test(s)
+      ::error::integration-db FAILED
+seeded violations: 1 not caught (results in /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-141-sdlc-ticket-int-05-integrate-r1-release-candidate-and-run-the-complete-combined-check-set/reports/seeded-integration-db.txt)

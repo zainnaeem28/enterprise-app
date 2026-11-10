@@ -1,0 +1,20 @@
+PASS (rc=1, matched /check M-1 FAILED/)  RLS/FORCE missing on a table
+PASS (rc=1, matched /check M-2 FAILED/)  policy TO PUBLIC
+PASS (rc=1, matched /check M-4-views FAILED/)  view without security_invoker
+PASS (rc=1, matched /check M-5-patient-guard FAILED/)  patient_id table without the merge write guard
+PASS (rc=1, matched /check M-5-definer FAILED/)  SECURITY DEFINER function outside the inventory, no search_path
+PASS (rc=1, matched /DML/)  DML in a migration
+PASS (rc=1, matched /EXPAND_DESTRUCTIVE/)  expand/contract: DROP COLUMN in an expand migration
+PASS (rc=1, matched /master/admin user/)  RDS master user in an application connection string
+PASS (rc=1, matched /RDS master secret/)  RDS master secret referenced by a task definition
+PASS (rc=1, matched /check R-attributes FAILED/)  function-owner role can log in
+PASS (rc=1, matched /check X-bypassrls FAILED/)  application role has BYPASSRLS
+PASS (rc=1, matched /check R-timeouts FAILED/)  audit-writing role lost transaction_timeout
+PASS (rc=1, matched /check M-4-reporting FAILED/)  reporting_ro granted an object outside the C0/C1 list
+PASS (rc=1, matched /check R-no-owned-tables FAILED/)  application role owns a table
+PASS (rc=1, matched /check X-admin-owns-nothing FAILED/)  administrator (RDS master user) owns an object
+PASS (rc=1, matched /check X-admin-owns-nothing FAILED/)  administrator owns a function in a module schema
+PASS (rc=1, matched /check X-extensions-allowlisted FAILED/)  administrator created an extension
+PASS (rc=1, matched /check X-extensions-allowlisted FAILED/)  app_owner created an extension that is not on the allow-list
+PASS (rc=1, matched /check R-app-owner-no-audit-insert FAILED/)  app_owner can INSERT into an audit table
+seeded violations: 0 not caught (results in /paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-141-sdlc-ticket-int-05-integrate-r1-release-candidate-and-run-the-complete-combined-check-set/reports/seeded-migration-check.txt)
