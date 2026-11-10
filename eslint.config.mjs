@@ -5,7 +5,7 @@ import globals from 'globals';
 import boundaries from './eslint/boundaries-plugin.mjs';
 
 export default tseslint.config(
-  { ignores: ['**/dist/**', '**/node_modules/**', 'docs/**', 'eslint/fixtures/**'] },
+  { ignores: ['**/dist/**', '**/node_modules/**', '**/.next/**', 'docs/**', 'eslint/fixtures/**'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   prettier,
