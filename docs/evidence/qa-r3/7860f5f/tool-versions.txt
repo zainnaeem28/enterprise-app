@@ -1,0 +1,5 @@
+node v24.22.2
+postgres embedded 17.11 (@embedded-postgres/linux-x64 17.11.0-beta.19), isolated, loopback, trust
+candidate: origin/main 7860f5f (clean detached worktree); N-1 baseline r206 aa5b051
+typecheck: pass; lint: 0 errors, 49 warnings
+CI run 42897164037 on 7860f5f: all 19 jobs failed unstarted - GitHub billing/spending limit annotation
