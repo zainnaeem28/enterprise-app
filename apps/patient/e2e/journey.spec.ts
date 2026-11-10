@@ -20,6 +20,17 @@ async function mockApi(page: Page, opts: { signIn?: number; session?: number } =
     switch (url.pathname) {
       case '/api/v1/auth/sign-in':
         if (opts.signIn !== undefined) return problem(opts.signIn, 'kernel.unavailable');
+        // The page navigation never reaches the IdP, and Chromium does not route the follow-up of a fulfilled 302
+        // through page.route, so a hop to the callback would fall through to the preview proxy (127.0.0.1:3000,
+        // nothing listening: INT05-F09). The navigation therefore completes the callback itself (session set,
+        // 302 -> returnTo); the probe (fetch, redirect: manual) still gets the documented 302 -> callback.
+        if (route.request().isNavigationRequest()) {
+          signedIn = true;
+          return route.fulfill({
+            status: 302,
+            headers: { location: url.searchParams.get('returnTo') ?? '/' },
+          });
+        }
         return route.fulfill({
           status: 302,
           headers: {
