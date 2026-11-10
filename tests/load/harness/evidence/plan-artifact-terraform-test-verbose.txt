@@ -1,0 +1,673 @@
+# terraform v1.9.8 test -verbose (mock providers, nothing created); module merged with DO-01/02/03 siblings in a scratch tree
+tests/plan.tftest.hcl... in progress
+  run "production_equivalent_profile"... pass
+
+# data.aws_region.current:
+data "aws_region" "current" {
+    description = "2wcz9wy3"
+    endpoint    = "tsv0p6s1"
+    id          = "ysyz03g1"
+    name        = "us-east-2"
+}
+
+# aws_budgets_budget.run:
+resource "aws_budgets_budget" "run" {
+    account_id        = "jk74jixk"
+    arn               = "64k496za"
+    budget_type       = "COST"
+    id                = "1o5x29le"
+    limit_amount      = "100"
+    limit_unit        = "USD"
+    name              = "loadtest-20261110-01-run"
+    name_prefix       = "ywgdsea4"
+    tags_all          = {}
+    time_period_start = "vi9axt58"
+    time_unit         = "DAILY"
+
+    cost_filter {
+        name   = "TagKeyValue"
+        values = [
+            "user:RunId${var.run_id}",
+        ]
+    }
+
+    notification {
+        comparison_operator        = "GREATER_THAN"
+        notification_type          = "ACTUAL"
+        subscriber_email_addresses = [
+            "ops@example.test",
+        ]
+        threshold                  = 80
+        threshold_type             = "PERCENTAGE"
+    }
+    notification {
+        comparison_operator        = "GREATER_THAN"
+        notification_type          = "FORECASTED"
+        subscriber_email_addresses = [
+            "ops@example.test",
+        ]
+        threshold                  = 100
+        threshold_type             = "PERCENTAGE"
+    }
+}
+
+# aws_cloudwatch_log_group.seeder:
+resource "aws_cloudwatch_log_group" "seeder" {
+    arn               = "n88zqb4k"
+    id                = "dct511xk"
+    kms_key_id        = "arn:aws:kms:us-east-2:111111111111:key/33333333-3333-3333-3333-333333333333"
+    log_group_class   = "1pc1wfdq"
+    name              = "/loadtest-20261110-01/seeder"
+    name_prefix       = "899a0pst"
+    retention_in_days = 14
+    tags              = {
+        "DataClass"   = "synthetic-only"
+        "Environment" = "loadtest"
+        "ManagedBy"   = "opentofu"
+        "RunId"       = "20261110-01"
+        "owner"       = "devops-engineer"
+        "ttl"         = "2026-11-11T08:00:00Z"
+    }
+    tags_all          = {}
+}
+
+# aws_ecs_task_definition.seeder:
+resource "aws_ecs_task_definition" "seeder" {
+    arn                      = "qakx00gy"
+    arn_without_revision     = "8jqs4r3x"
+    container_definitions    = jsonencode(
+        [
+            {
+                environment            = [
+                    {
+                        name  = "SEED"
+                        value = "20261110"
+                    },
+                    {
+                        name  = "SEED_COUNTS"
+                        value = jsonencode(
+                            {
+                                appointments = 2000000
+                                patients     = 200000
+                            }
+                        )
+                    },
+                    {
+                        name  = "LOADTEST_SYNTHETIC_ONLY"
+                        value = "true"
+                    },
+                ]
+                essential              = true
+                image                  = "111111111111.dkr.ecr.us-east-2.amazonaws.com/seeder@sha256:2222222222222222222222222222222222222222222222222222222222222222"
+                logConfiguration       = {
+                    logDriver = "awslogs"
+                    options   = {
+                        awslogs-group         = "/loadtest-20261110-01/seeder"
+                        awslogs-region        = "us-east-2"
+                        awslogs-stream-prefix = "seeder"
+                    }
+                }
+                name                   = "seeder"
+                readonlyRootFilesystem = true
+            },
+        ]
+    )
+    cpu                      = "2048"
+    enable_fault_injection   = false
+    execution_role_arn       = "arn:aws:iam::111111111111:role/lt-exec"
+    family                   = "loadtest-20261110-01-seeder"
+    id                       = "t22gg0mr"
+    memory                   = "4096"
+    network_mode             = "awsvpc"
+    requires_compatibilities = [
+        "FARGATE",
+    ]
+    revision                 = 0
+    tags                     = {
+        "DataClass"   = "synthetic-only"
+        "Environment" = "loadtest"
+        "ManagedBy"   = "opentofu"
+        "RunId"       = "20261110-01"
+        "owner"       = "devops-engineer"
+        "ttl"         = "2026-11-11T08:00:00Z"
+    }
+    tags_all                 = {}
+    task_role_arn            = "arn:aws:iam::111111111111:role/lt-seeder"
+}
+
+# aws_kms_replica_key.data_recovery:
+resource "aws_kms_replica_key" "data_recovery" {
+    arn                     = "2wp2fb8b"
+    deletion_window_in_days = 7
+    description             = "loadtest-20261110-01 data key replica (document-bucket replication target)"
+    id                      = "8jebfs8w"
+    key_id                  = "cw5rw1m5"
+    key_rotation_enabled    = false
+    key_spec                = "1t9hly2b"
+    key_usage               = "g9zynl1o"
+    policy                  = "096qrnhg"
+    primary_key_arn         = "arn:aws:kms:us-east-2:111111111111:key/mrk-11111111111111111111111111111111"
+    tags                    = {
+        "DataClass"   = "synthetic-only"
+        "Environment" = "loadtest"
+        "ManagedBy"   = "opentofu"
+        "RunId"       = "20261110-01"
+        "owner"       = "devops-engineer"
+        "ttl"         = "2026-11-11T08:00:00Z"
+    }
+    tags_all                = {}
+}
+
+
+Outputs:
+
+alb_dns_name = "lt-1.us-east-2.elb.amazonaws.com"
+cluster_name = "lt"
+environment = {
+    expires_at = "2026-11-11T08:00:00Z"
+    name       = "loadtest-20261110-01"
+    run_id     = "20261110-01"
+}
+profile = {
+    alb_idle_timeout_seconds               = 60
+    az_count                               = 3
+    cloudfront_origin_read_timeout_seconds = 30
+    database                               = {
+        allocated_storage_gb     = 1000
+        backup_retention_days    = 35
+        engine_version           = "17"
+        instance_class           = "db.r6i.xlarge"
+        max_allocated_storage_gb = 4000
+        multi_az                 = true
+    }
+    nat_per_az                             = true
+    services                               = {
+        api    = {
+            attach_to_alb  = true
+            container_port = 8080
+            cpu            = 2048
+            desired_count  = 4
+            max_count      = 8
+            memory         = 4096
+            min_count      = 2
+        }
+        worker = {
+            attach_to_alb = false
+            cpu           = 1024
+            desired_count = 2
+            max_count     = 4
+            memory        = 2048
+            min_count     = 2
+        }
+    }
+    sse_heartbeat_seconds                  = 15
+}
+seeder_run_task = {
+    cluster         = "lt"
+    security_groups = [
+        "sg-0aaa",
+    ]
+    subnets         = [
+        "subnet-d",
+        "subnet-e",
+        "subnet-f",
+    ]
+    task_definition = "qakx00gy"
+}
+teardown_tag = {
+    key   = "RunId"
+    value = "20261110-01"
+}
+
+  run "service_ceilings_match_connection_budget"... pass
+
+# data.aws_region.current:
+data "aws_region" "current" {
+    description = "y8czlfxi"
+    endpoint    = "mwb1v9t5"
+    id          = "j3n0hmqu"
+    name        = "us-east-2"
+}
+
+# aws_budgets_budget.run:
+resource "aws_budgets_budget" "run" {
+    account_id        = "jk74jixk"
+    arn               = "64k496za"
+    budget_type       = "COST"
+    id                = "1o5x29le"
+    limit_amount      = "100"
+    limit_unit        = "USD"
+    name              = "loadtest-20261110-01-run"
+    name_prefix       = "ywgdsea4"
+    tags_all          = {}
+    time_period_start = "vi9axt58"
+    time_unit         = "DAILY"
+
+    cost_filter {
+        name   = "TagKeyValue"
+        values = [
+            "user:RunId${var.run_id}",
+        ]
+    }
+
+    notification {
+        comparison_operator        = "GREATER_THAN"
+        notification_type          = "ACTUAL"
+        subscriber_email_addresses = [
+            "ops@example.test",
+        ]
+        threshold                  = 80
+        threshold_type             = "PERCENTAGE"
+    }
+    notification {
+        comparison_operator        = "GREATER_THAN"
+        notification_type          = "FORECASTED"
+        subscriber_email_addresses = [
+            "ops@example.test",
+        ]
+        threshold                  = 100
+        threshold_type             = "PERCENTAGE"
+    }
+}
+
+# aws_cloudwatch_log_group.seeder:
+resource "aws_cloudwatch_log_group" "seeder" {
+    arn               = "n88zqb4k"
+    id                = "dct511xk"
+    kms_key_id        = "arn:aws:kms:us-east-2:111111111111:key/33333333-3333-3333-3333-333333333333"
+    log_group_class   = "1pc1wfdq"
+    name              = "/loadtest-20261110-01/seeder"
+    name_prefix       = "899a0pst"
+    retention_in_days = 14
+    tags              = {
+        "DataClass"   = "synthetic-only"
+        "Environment" = "loadtest"
+        "ManagedBy"   = "opentofu"
+        "RunId"       = "20261110-01"
+        "owner"       = "devops-engineer"
+        "ttl"         = "2026-11-11T08:00:00Z"
+    }
+    tags_all          = {}
+}
+
+# aws_ecs_task_definition.seeder:
+resource "aws_ecs_task_definition" "seeder" {
+    arn                      = "qakx00gy"
+    arn_without_revision     = "8jqs4r3x"
+    container_definitions    = jsonencode(
+        [
+            {
+                environment            = [
+                    {
+                        name  = "SEED"
+                        value = "20261110"
+                    },
+                    {
+                        name  = "SEED_COUNTS"
+                        value = jsonencode(
+                            {
+                                appointments = 2000000
+                                patients     = 200000
+                            }
+                        )
+                    },
+                    {
+                        name  = "LOADTEST_SYNTHETIC_ONLY"
+                        value = "true"
+                    },
+                ]
+                essential              = true
+                image                  = "111111111111.dkr.ecr.us-east-2.amazonaws.com/seeder@sha256:2222222222222222222222222222222222222222222222222222222222222222"
+                logConfiguration       = {
+                    logDriver = "awslogs"
+                    options   = {
+                        awslogs-group         = "/loadtest-20261110-01/seeder"
+                        awslogs-region        = "us-east-2"
+                        awslogs-stream-prefix = "seeder"
+                    }
+                }
+                name                   = "seeder"
+                readonlyRootFilesystem = true
+            },
+        ]
+    )
+    cpu                      = "2048"
+    enable_fault_injection   = false
+    execution_role_arn       = "arn:aws:iam::111111111111:role/lt-exec"
+    family                   = "loadtest-20261110-01-seeder"
+    id                       = "t22gg0mr"
+    memory                   = "4096"
+    network_mode             = "awsvpc"
+    requires_compatibilities = [
+        "FARGATE",
+    ]
+    revision                 = 0
+    tags                     = {
+        "DataClass"   = "synthetic-only"
+        "Environment" = "loadtest"
+        "ManagedBy"   = "opentofu"
+        "RunId"       = "20261110-01"
+        "owner"       = "devops-engineer"
+        "ttl"         = "2026-11-11T08:00:00Z"
+    }
+    tags_all                 = {}
+    task_role_arn            = "arn:aws:iam::111111111111:role/lt-seeder"
+}
+
+# aws_kms_replica_key.data_recovery:
+resource "aws_kms_replica_key" "data_recovery" {
+    arn                     = "2wp2fb8b"
+    deletion_window_in_days = 7
+    description             = "loadtest-20261110-01 data key replica (document-bucket replication target)"
+    id                      = "8jebfs8w"
+    key_id                  = "cw5rw1m5"
+    key_rotation_enabled    = false
+    key_spec                = "1t9hly2b"
+    key_usage               = "g9zynl1o"
+    policy                  = "096qrnhg"
+    primary_key_arn         = "arn:aws:kms:us-east-2:111111111111:key/mrk-11111111111111111111111111111111"
+    tags                    = {
+        "DataClass"   = "synthetic-only"
+        "Environment" = "loadtest"
+        "ManagedBy"   = "opentofu"
+        "RunId"       = "20261110-01"
+        "owner"       = "devops-engineer"
+        "ttl"         = "2026-11-11T08:00:00Z"
+    }
+    tags_all                = {}
+}
+
+
+Outputs:
+
+alb_dns_name = "lt-1.us-east-2.elb.amazonaws.com"
+cluster_name = "lt"
+environment = {
+    expires_at = "2026-11-11T08:00:00Z"
+    name       = "loadtest-20261110-01"
+    run_id     = "20261110-01"
+}
+profile = {
+    alb_idle_timeout_seconds               = 60
+    az_count                               = 3
+    cloudfront_origin_read_timeout_seconds = 30
+    database                               = {
+        allocated_storage_gb     = 1000
+        backup_retention_days    = 35
+        engine_version           = "17"
+        instance_class           = "db.r6i.xlarge"
+        max_allocated_storage_gb = 4000
+        multi_az                 = true
+    }
+    nat_per_az                             = true
+    services                               = {
+        api    = {
+            attach_to_alb  = true
+            container_port = 8080
+            cpu            = 2048
+            desired_count  = 4
+            max_count      = 8
+            memory         = 4096
+            min_count      = 2
+        }
+        worker = {
+            attach_to_alb = false
+            cpu           = 1024
+            desired_count = 2
+            max_count     = 4
+            memory        = 2048
+            min_count     = 2
+        }
+    }
+    sse_heartbeat_seconds                  = 15
+}
+seeder_run_task = {
+    cluster         = "lt"
+    security_groups = [
+        "sg-0aaa",
+    ]
+    subnets         = [
+        "subnet-d",
+        "subnet-e",
+        "subnet-f",
+    ]
+    task_definition = "qakx00gy"
+}
+teardown_tag = {
+    key   = "RunId"
+    value = "20261110-01"
+}
+
+  run "synthetic_only_and_tagged"... pass
+
+# data.aws_region.current:
+data "aws_region" "current" {
+    description = "uabcub6i"
+    endpoint    = "581m294g"
+    id          = "epxzmsyz"
+    name        = "us-east-2"
+}
+
+# aws_budgets_budget.run:
+resource "aws_budgets_budget" "run" {
+    account_id        = "jk74jixk"
+    arn               = "64k496za"
+    budget_type       = "COST"
+    id                = "1o5x29le"
+    limit_amount      = "100"
+    limit_unit        = "USD"
+    name              = "loadtest-20261110-01-run"
+    name_prefix       = "ywgdsea4"
+    tags_all          = {}
+    time_period_start = "vi9axt58"
+    time_unit         = "DAILY"
+
+    cost_filter {
+        name   = "TagKeyValue"
+        values = [
+            "user:RunId${var.run_id}",
+        ]
+    }
+
+    notification {
+        comparison_operator        = "GREATER_THAN"
+        notification_type          = "ACTUAL"
+        subscriber_email_addresses = [
+            "ops@example.test",
+        ]
+        threshold                  = 80
+        threshold_type             = "PERCENTAGE"
+    }
+    notification {
+        comparison_operator        = "GREATER_THAN"
+        notification_type          = "FORECASTED"
+        subscriber_email_addresses = [
+            "ops@example.test",
+        ]
+        threshold                  = 100
+        threshold_type             = "PERCENTAGE"
+    }
+}
+
+# aws_cloudwatch_log_group.seeder:
+resource "aws_cloudwatch_log_group" "seeder" {
+    arn               = "n88zqb4k"
+    id                = "dct511xk"
+    kms_key_id        = "arn:aws:kms:us-east-2:111111111111:key/33333333-3333-3333-3333-333333333333"
+    log_group_class   = "1pc1wfdq"
+    name              = "/loadtest-20261110-01/seeder"
+    name_prefix       = "899a0pst"
+    retention_in_days = 14
+    tags              = {
+        "DataClass"   = "synthetic-only"
+        "Environment" = "loadtest"
+        "ManagedBy"   = "opentofu"
+        "RunId"       = "20261110-01"
+        "owner"       = "devops-engineer"
+        "ttl"         = "2026-11-11T08:00:00Z"
+    }
+    tags_all          = {}
+}
+
+# aws_ecs_task_definition.seeder:
+resource "aws_ecs_task_definition" "seeder" {
+    arn                      = "qakx00gy"
+    arn_without_revision     = "8jqs4r3x"
+    container_definitions    = jsonencode(
+        [
+            {
+                environment            = [
+                    {
+                        name  = "SEED"
+                        value = "20261110"
+                    },
+                    {
+                        name  = "SEED_COUNTS"
+                        value = jsonencode(
+                            {
+                                appointments = 2000000
+                                patients     = 200000
+                            }
+                        )
+                    },
+                    {
+                        name  = "LOADTEST_SYNTHETIC_ONLY"
+                        value = "true"
+                    },
+                ]
+                essential              = true
+                image                  = "111111111111.dkr.ecr.us-east-2.amazonaws.com/seeder@sha256:2222222222222222222222222222222222222222222222222222222222222222"
+                logConfiguration       = {
+                    logDriver = "awslogs"
+                    options   = {
+                        awslogs-group         = "/loadtest-20261110-01/seeder"
+                        awslogs-region        = "us-east-2"
+                        awslogs-stream-prefix = "seeder"
+                    }
+                }
+                name                   = "seeder"
+                readonlyRootFilesystem = true
+            },
+        ]
+    )
+    cpu                      = "2048"
+    enable_fault_injection   = false
+    execution_role_arn       = "arn:aws:iam::111111111111:role/lt-exec"
+    family                   = "loadtest-20261110-01-seeder"
+    id                       = "t22gg0mr"
+    memory                   = "4096"
+    network_mode             = "awsvpc"
+    requires_compatibilities = [
+        "FARGATE",
+    ]
+    revision                 = 0
+    tags                     = {
+        "DataClass"   = "synthetic-only"
+        "Environment" = "loadtest"
+        "ManagedBy"   = "opentofu"
+        "RunId"       = "20261110-01"
+        "owner"       = "devops-engineer"
+        "ttl"         = "2026-11-11T08:00:00Z"
+    }
+    tags_all                 = {}
+    task_role_arn            = "arn:aws:iam::111111111111:role/lt-seeder"
+}
+
+# aws_kms_replica_key.data_recovery:
+resource "aws_kms_replica_key" "data_recovery" {
+    arn                     = "2wp2fb8b"
+    deletion_window_in_days = 7
+    description             = "loadtest-20261110-01 data key replica (document-bucket replication target)"
+    id                      = "8jebfs8w"
+    key_id                  = "cw5rw1m5"
+    key_rotation_enabled    = false
+    key_spec                = "1t9hly2b"
+    key_usage               = "g9zynl1o"
+    policy                  = "096qrnhg"
+    primary_key_arn         = "arn:aws:kms:us-east-2:111111111111:key/mrk-11111111111111111111111111111111"
+    tags                    = {
+        "DataClass"   = "synthetic-only"
+        "Environment" = "loadtest"
+        "ManagedBy"   = "opentofu"
+        "RunId"       = "20261110-01"
+        "owner"       = "devops-engineer"
+        "ttl"         = "2026-11-11T08:00:00Z"
+    }
+    tags_all                = {}
+}
+
+
+Outputs:
+
+alb_dns_name = "lt-1.us-east-2.elb.amazonaws.com"
+cluster_name = "lt"
+environment = {
+    expires_at = "2026-11-11T08:00:00Z"
+    name       = "loadtest-20261110-01"
+    run_id     = "20261110-01"
+}
+profile = {
+    alb_idle_timeout_seconds               = 60
+    az_count                               = 3
+    cloudfront_origin_read_timeout_seconds = 30
+    database                               = {
+        allocated_storage_gb     = 1000
+        backup_retention_days    = 35
+        engine_version           = "17"
+        instance_class           = "db.r6i.xlarge"
+        max_allocated_storage_gb = 4000
+        multi_az                 = true
+    }
+    nat_per_az                             = true
+    services                               = {
+        api    = {
+            attach_to_alb  = true
+            container_port = 8080
+            cpu            = 2048
+            desired_count  = 4
+            max_count      = 8
+            memory         = 4096
+            min_count      = 2
+        }
+        worker = {
+            attach_to_alb = false
+            cpu           = 1024
+            desired_count = 2
+            max_count     = 4
+            memory        = 2048
+            min_count     = 2
+        }
+    }
+    sse_heartbeat_seconds                  = 15
+}
+seeder_run_task = {
+    cluster         = "lt"
+    security_groups = [
+        "sg-0aaa",
+    ]
+    subnets         = [
+        "subnet-d",
+        "subnet-e",
+        "subnet-f",
+    ]
+    task_definition = "qakx00gy"
+}
+teardown_tag = {
+    key   = "RunId"
+    value = "20261110-01"
+}
+
+  run "overlapping_cidr_rejected"... pass
+
+Planning failed. Terraform encountered an error while generating this plan.
+
+
+  run "tag_image_rejected"... pass
+
+Planning failed. Terraform encountered an error while generating this plan.
+
+
+tests/plan.tftest.hcl... tearing down
+tests/plan.tftest.hcl... pass
+
+Success! 5 passed, 0 failed.

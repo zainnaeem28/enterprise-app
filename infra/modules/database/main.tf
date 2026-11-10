@@ -42,13 +42,13 @@ resource "aws_security_group" "db" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "from_clients" {
-  for_each                     = toset(var.client_security_group_ids)
+  for_each                     = var.client_security_group_ids
   security_group_id            = aws_security_group.db.id
   referenced_security_group_id = each.value
   from_port                    = 5432
   to_port                      = 5432
   ip_protocol                  = "tcp"
-  description                  = "PostgreSQL from application security group"
+  description                  = "PostgreSQL from ${each.key}"
 }
 
 resource "aws_db_parameter_group" "this" {

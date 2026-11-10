@@ -17,8 +17,8 @@ variable "data_subnet_ids" {
 }
 
 variable "client_security_group_ids" {
-  description = "Security groups (api, worker, migration task) allowed to connect on 5432. Nothing else can reach the database."
-  type        = list(string)
+  description = "Security groups allowed to connect on 5432, as logical name => security group id (for example api, worker, migration). The keys must be known at plan time (static literals or keys of a plan-time-known map); the ids may be apply-time values. Nothing else can reach the database."
+  type        = map(string)
 }
 
 variable "kms_key_arn" {
