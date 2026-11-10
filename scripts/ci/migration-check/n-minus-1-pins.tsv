@@ -1,0 +1,8 @@
+# N-1 expected pin failures (HEAAA-739 Q1 (d), amends HEAAA-722 D2). A previous-release test that asserts the literal size of the
+# definer catalog is RUN; check-junit.mjs accepts its failure only as exactly this assertion (strictEqual, expected = the literal,
+# actual = the candidate catalog size, first stack frame = path:line). Anything else, or the test passing, fails N-1. A pin is "not a pass".
+# No behavioural, RLS, grant-refusal or audit assertion may be the recorded pin. Columns (TAB): suite, exact test name, path:line, literal, reason.
+# Candidate tests carrying the same assertions that must pass in the fresh-database stage: T-RA-29 -> candidate "T-RA-29: catalog"; I-10 -> candidate I-10 and messaging T-9; T2 -> none (nothing follows the pin).
+db-foundation	I-10: M-5-definer passes with 28 entries (25 of F03B, the two referral definers of F08d and identity.bootstrap_admins of A-6); is_creator does not exist; patient_scope_owner holds only the four participant columns	db/tools/db-test.mjs:1465	28	pins the literal definer-catalog size (28) that the candidate catalog legitimately grows beyond
+db-foundation	owners, SECURITY DEFINER, search_path, EXECUTE lists and inventory	db/tests/referral-accept-scope.test.mjs:930	28	pins definerInventory.length === 28; the candidate catalog is 36
+db-foundation	T2: app_owner holds no EXECUTE on the guard, the ten refused functions are gone, all 33 tables carry the trigger	db/tools/db-test.mjs:1142	28	pins definerInventory.length === 28 as its last assertion; the candidate catalog is 36
