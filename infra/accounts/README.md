@@ -8,9 +8,9 @@ cross-Region-replicated bucket created by `../bootstrap` in the `tooling` accoun
 | ------------- | ------------------------ | -------------------------------------------------------------------------------- |
 | `management`  | Organizations management | OUs, member accounts, three SCPs (guardrails, region restriction, control plane) |
 | `tooling`     | tooling                  | none yet (state backend is `../bootstrap`)                                       |
-| `log-archive` | log-archive              | KMS key and bucket for VPC flow logs                                             |
-| `staging`     | staging                  | 2-AZ network, data and secrets KMS keys                                          |
-| `production`  | production               | 3-AZ network (NAT per AZ), keys, recovery-Region VPC and replica key             |
+| `log-archive` | log-archive              | KMS key and bucket for VPC flow logs; Object Lock audit archive for production anchors (`archive.tf`) |
+| `staging`     | staging                  | 2-AZ network, data and secrets KMS keys; AWS adapters wiring (`adapters.tf`: roles, buckets, SES, GuardDuty, Cognito, anchor archive) |
+| `production`  | production               | 3-AZ network (NAT per AZ), keys, recovery-Region VPC and replica key; AWS adapters wiring (`adapters.tf`) |
 | `marketing`   | marketing                | 2-AZ network, keys (no path to production data)                                  |
 
 Not in this ticket: ECS, RDS, ALB, CloudFront, WAF, Cognito, CloudTrail/GuardDuty/Config,
