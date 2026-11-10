@@ -54,6 +54,22 @@ Resolved production tree of `@ehr/api`: 95 packages (excluding workspace links),
 
 Caveats for the reviewer: Nest 12.3.x is 9 days old at pinning (12.3.0 on 2026-10-27); it is the latest line and the version named by the F-05 ticket. `apps/api` build now emits to `dist/src` and `dist/test` (`rootDir` is `.`); `pnpm --filter @ehr/api test` runs `node --test "dist/test/**/*.test.js"`. `check:routes` delegates to the existing contracts document-versus-OpenAPI check (`@ehr/contracts openapi:check-routes`); F-05 may repoint it at an implementation-route inventory script it owns. CI wiring of either is F-09.
 
+## CMS dependencies (`apps/cms`, FE-16, HEAAA-598)
+
+Exact pins from `apps/cms/package.json`; licences read from installed manifests by the FE-16 author (`apps/cms/REQUESTS.md`). The Integrator re-resolves the lockfile and re-runs `pnpm audit --prod`; the OSV job remains authoritative.
+
+| Package | Version | Licence | Reason |
+| --- | --- | --- | --- |
+| payload, @payloadcms/next, @payloadcms/db-postgres, @payloadcms/richtext-lexical | 3.93.0 | MIT | C-19 / UX-O-02: off-the-shelf self-hosted headless CMS and editor (ARCHITECTURE 7). No paid licence or plan; Google sign-in is our own OIDC code. `apps/cms` only. |
+| next | 16.4.5 | MIT | Required by Payload 3's admin (peer range `>=16.3.3 <17`). `apps/cms` only; the brand site stays on Vite SSR. |
+| graphql | 16.15.0 | MIT | Payload peer dependency (`^16.8.1`); the GraphQL endpoint is disabled. |
+| jose | 6.2.14 | MIT | ID-token and session JWT verification (6.2.15/6.2.16 were under the release-age policy). |
+| react, react-dom | 19.3.1 | MIT | Same pin as `apps/site`. |
+| @types/react, @types/react-dom (dev) | 19.3.0 | MIT | Types for the Payload admin components. |
+| vitest (dev) | 5.1.0 | MIT | Same pin as `apps/site`. |
+
+Licence notes for the owner/Architect: the production tree has one `LGPL-3.0-or-later` package (`@img/sharp-libvips-linux-x64`, dynamically linked through `sharp`, optional dependency of `next`), plus `CC-BY-4.0` data (`caniuse-lite`), `Python-2.0` (`argparse`), `WTFPL` (`truncate-utf8-bytes`), `BlueOak-1.0.0` (`sax`). If the DELIVERY-PLAN section 9 licence policy denies LGPL, `sharp` must be excluded for `apps/cms` (no media collection; no image processing needed). Open decision, owner: Architect.
+
 ## Not chosen here
 
 - Framework and library choices (Kysely/Drizzle, Next.js, React, test runner) are made by the tickets that first need them, inside their own app or package manifest.
