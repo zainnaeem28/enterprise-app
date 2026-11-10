@@ -12,7 +12,8 @@
     "format:check": "prettier --check .",
     "typecheck": "pnpm --filter @ehr/kernel --filter @ehr/contracts run build && pnpm -r run typecheck",
     "build": "pnpm -r run build",
-    "test:boundary": "node eslint/test-boundary-fixture.mjs"
+    "test:boundary": "node eslint/test-boundary-fixture.mjs",
+    "test:emulator": "pnpm -r --if-present run test:emulator"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

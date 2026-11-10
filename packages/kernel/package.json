@@ -10,6 +10,7 @@
     "check:static": "pnpm run build && node dist/scope/check-static.js --signin-allow src/scope/ --skip src/scope/with-scope.ts src"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "3.1164.0",
     "graphile-worker": "0.18.0",
     "pg": "8.23.1"
   },

@@ -41,3 +41,5 @@ export {
   registerMergeParticipant,
 } from './registry/registry.js';
 export type { ExportContributor, MergeParticipant } from './registry/registry.js';
+export { AwsConfigError, awsSettings, createS3Client, selectByEnv } from './aws/config.js';
+export type { AwsSettings, Env } from './aws/config.js';

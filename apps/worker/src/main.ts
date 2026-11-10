@@ -1,5 +1,6 @@
 // Worker process entry. A bad variable stops the start with its NAME (never its value).
 import { ConfigError, createLogger, describeDatabase, loadConfig } from '@ehr/kernel';
+import { selectS3WorkerInfra } from './aws/s3-adapters.js';
 import { composeWorker } from './compose.js';
 import { WORKER_CRONTAB } from './job-registry.js';
 import { createPool, startWorker } from './runner.js';
@@ -22,6 +23,8 @@ async function main(): Promise<void> {
     cfg,
     pool,
     log,
+    // A half-configured S3 adapter stops the start; an absent one leaves the refusing port.
+    infra: selectS3WorkerInfra(env, log),
     ...(env['EHR_PATIENT_HOST'] ? { patientHost: env['EHR_PATIENT_HOST'] } : {}),
     ...(env['EHR_CHECKIN_QR_KEY'] ? { qrKey: env['EHR_CHECKIN_QR_KEY'] } : {}),
     ...(env['EHR_CALENDAR_WEBHOOK_URL']
