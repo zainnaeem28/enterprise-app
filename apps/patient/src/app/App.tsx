@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { PlaceholderMark, SkipLink } from '@ehr/ui';
+import { BrandWordmark, resolveBrandName, SkipLink } from '@ehr/ui';
 import { MaintenanceBanners, ReleasePrompts, SessionPrompts } from '@ehr/app-shell';
 import type { PatientRuntime } from './runtime.js';
 import { useLocation } from './router.js';
@@ -122,7 +122,9 @@ export function App({
       <SkipLink targetId="main">Skip to main content</SkipLink>
       <header className="ehr-appbar">
         <p className="ehr-appbar__name">Patient portal</p>
-        <PlaceholderMark />
+        <BrandWordmark
+          name={resolveBrandName(import.meta.env.VITE_ORGANISATION_NAME, 'Patient portal')}
+        />
       </header>
       <ReleasePrompts store={runtime.releases} />
       <MaintenanceBanners api={runtime.api} />

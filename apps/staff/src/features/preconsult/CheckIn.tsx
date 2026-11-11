@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { Banner, Button, EmptyState, LoadingState } from '@ehr/ui';
+import { Banner, Button, EmptyState, LoadingState, PatientBanner } from '@ehr/ui';
 import { useDesk } from './DeskContext.js';
 import { PatientPicker } from './PatientPicker.js';
 import { ActionError, LoadError } from './Problem.js';
 import { QrCode } from './QrCode.js';
 import { CheckInButton, PrevisitChips, StatusCell, canCheckIn } from './VisitRows.js';
 import { preStrings as p } from './strings.js';
-import { timeOf } from './format.js';
+import { ageOf, timeOf } from './format.js';
 import { useLoad } from './useLoad.js';
 import { useVisitActions } from './useCheckIn.js';
 import type { Failure } from './http.js';
@@ -46,6 +46,7 @@ function FindAndCheckIn() {
         chosenId={patient?.id ?? null}
         onChoose={setPatient}
       />
+      {patient !== null && <ChosenBanner key={patient.id} patientId={patient.id} />}
       {patient !== null && (
         <section aria-label={p.visitsToday}>
           <h3>
@@ -129,5 +130,24 @@ function QrPanel() {
         </>
       )}
     </section>
+  );
+}
+
+/** BR-34: the chosen patient's banner (name, date of birth, allergies) from `GET /patients/{id}/banner`. */
+function ChosenBanner({ patientId }: { patientId: string }) {
+  const { api } = useDesk();
+  const banner = useLoad(() => api.banner(patientId), [patientId]);
+  if (banner.state.kind === 'loading') return <LoadingState label={p.checkInTitle} lines={2} />;
+  if (banner.state.kind === 'error')
+    return <LoadError failure={banner.state.failure} onRetry={banner.reload} />;
+  const b = banner.state.data;
+  return (
+    <PatientBanner
+      name={b.displayName}
+      dob={b.dateOfBirth}
+      age={ageOf(b.dateOfBirth)}
+      mrn={b.mrn}
+      allergies={b.allergies}
+    />
   );
 }

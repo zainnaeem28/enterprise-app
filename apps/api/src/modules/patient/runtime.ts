@@ -7,6 +7,7 @@ import type { RateLimiter } from '../../platform/rate-limit.js';
 import type { AuditService } from '../audit/index.js';
 import type { Identity } from '../identity/index.js';
 import { createPatientControllers, patientResolvers } from './controller.js';
+import type { PatientControllerDeps } from './controller.js';
 import { PatientRecordsService } from './records.js';
 import type { ConsentTemplatePort, StaffDirectoryPort } from './records.js';
 import { patientScopeContributor } from './scope.js';
@@ -27,6 +28,7 @@ export interface PatientDeps {
   attachEnabled?: (tx: Tx) => Promise<boolean>;
   labelLimitPerHour?: number;
   proxyRulesConfigured?: boolean;
+  banner?: PatientControllerDeps['banner'];
   now?: () => Date;
 }
 
@@ -60,6 +62,7 @@ export function createPatient(deps: PatientDeps): Patient {
     records,
     proxies: deps.identity.proxies,
     limiter: deps.limiter,
+    ...(deps.banner === undefined ? {} : { banner: deps.banner }),
     ...(deps.labelLimitPerHour === undefined ? {} : { labelLimitPerHour: deps.labelLimitPerHour }),
     ...(deps.proxyRulesConfigured === undefined
       ? {}

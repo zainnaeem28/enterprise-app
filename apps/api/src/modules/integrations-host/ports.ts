@@ -54,3 +54,8 @@ export interface WebhookReceiverPort {
     rawBody: Buffer;
   }): Promise<WebhookStatus>;
 }
+
+/** The SNS delivery-receipt receiver (`SnsReceiptReceiver`): the raw request bytes in, the status to send out. */
+export interface SnsReceiptPort {
+  receive(rawBody: Buffer): Promise<{ status: number }>;
+}

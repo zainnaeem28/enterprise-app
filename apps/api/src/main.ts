@@ -8,6 +8,7 @@ import { selectChimeVideoVendor } from './platform/aws/chime-video.js';
 import { selectApiSecretPorts } from './platform/aws/secrets-kms.js';
 import { provisionR1Templates } from './modules/notifications/index.js';
 import { loadAdminEnv } from './admin-env.js';
+import { loadReceiptEnv } from './receipt-env.js';
 import { loadIdentityEnv } from './identity-env.js';
 import { createApp } from './platform/app.js';
 import { loadPlatformConfig } from './platform/config.js';
@@ -18,13 +19,14 @@ import { StreamRegistry } from './platform/stream.js';
 
 async function main(): Promise<void> {
   const logger = createLogger({ sink: (l) => process.stdout.write(`${l}\n`), level: 'info' });
-  let kernelCfg, platformCfg, identityEnv, adminEnv;
+  let kernelCfg, platformCfg, identityEnv, adminEnv, receiptEnv;
   try {
     kernelCfg = loadConfig({ ...process.env, EHR_DEPLOYABLE: 'api' });
     platformCfg = loadPlatformConfig(process.env);
     identityEnv = loadIdentityEnv(process.env);
     // Fail closed (SEC02-F01): no attestation roots, AAGUIDs or decoy key means no start, never a test value.
     adminEnv = loadAdminEnv(process.env, identityEnv);
+    receiptEnv = loadReceiptEnv(process.env);
   } catch (e) {
     if (e instanceof ConfigError) {
       for (const p of e.problems) logger.error(`invalid configuration: ${p}`);
@@ -71,6 +73,7 @@ async function main(): Promise<void> {
       ...(secrets.inboundKeys === undefined ? {} : { channelKeys: secrets.inboundKeys }),
     },
     admin: adminEnv,
+    ...(receiptEnv === undefined ? {} : { receiptPorts: receiptEnv }),
     listen: () =>
       new pg.Client({ connectionString: kernelCfg.databaseUrl, application_name: 'api-listen' }),
   });

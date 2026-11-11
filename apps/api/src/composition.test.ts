@@ -2,7 +2,10 @@
 // A fake database is enough: this proves wiring (route inventory, job registry, guard in front of each route), not persistence.
 // Negative control: the same checks run against the composition with one module's controllers removed and must fail.
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
+import { createSign } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { after, before, describe, test } from 'node:test';
@@ -13,6 +16,7 @@ import type { Running } from '../test/platform/harness.js';
 import { buildComposition } from './composition.js';
 import type { Composition } from './composition.js';
 import { loadIdentityEnv } from './identity-env.js';
+import { stringToSign } from './modules/integrations-host/index.js';
 import { inventory } from './platform/inventory.js';
 
 const K = 'k'.repeat(40);
@@ -333,6 +337,125 @@ describe('integrations host composition (INT03-F18)', () => {
       }
     } finally {
       await run.close();
+    }
+  });
+
+  test('POST /webhooks/sns/receipts is mounted by buildComposition: a signed SES delivery is sealed and stored through receive_inbound, and unconfigured it is 404 (INT-N2)', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'sns-comp-'));
+    try {
+      const sh = (...a: string[]): void =>
+        void execFileSync('openssl', a, { cwd: dir, stdio: 'pipe' });
+      sh(
+        'req',
+        '-x509',
+        '-newkey',
+        'rsa:2048',
+        '-nodes',
+        '-keyout',
+        'k.pem',
+        '-out',
+        'c.pem',
+        '-days',
+        '2',
+        '-subj',
+        '/CN=sns.amazonaws.com',
+      );
+      const key = readFileSync(join(dir, 'k.pem'), 'utf8');
+      const topic = 'arn:aws:sns:eu-west-2:123456789012:ehr-ses-events';
+      const f: Record<string, string> = {
+        Type: 'Notification',
+        MessageId: 'm-comp-1',
+        TopicArn: topic,
+        Message: JSON.stringify({
+          eventType: 'Delivery',
+          mail: { messageId: 'ses-1' },
+          delivery: { timestamp: new Date().toISOString() },
+        }),
+        Timestamp: new Date().toISOString(),
+      };
+      const body = JSON.stringify({
+        ...f,
+        SignatureVersion: '2',
+        Signature: createSign('RSA-SHA256')
+          .update(stringToSign('Notification', f), 'utf8')
+          .sign(key, 'base64'),
+        SigningCertURL: 'https://sns.eu-west-2.amazonaws.com/SimpleNotificationService-abc123.pem',
+      });
+      const sql: { text: string; params: unknown[] }[] = [];
+      const tx = {
+        query: (text: string, params: unknown[] = []) => {
+          sql.push({ text, params });
+          return Promise.resolve({
+            rows: [{ outcome: 'inserted', message_id: '00000000-0000-7000-8000-000000000001' }],
+            rowCount: 1,
+          });
+        },
+      };
+      const sealed: string[] = [];
+      const logs: string[] = [];
+      const db = {
+        withScope: (_s: unknown, fn: (x: unknown) => unknown) => fn(tx),
+      } as unknown as KernelDb;
+      const comp = buildComposition({
+        db,
+        logger: createLogger({ sink: (l) => logs.push(l) }),
+        identity: loadIdentityEnv(ENV),
+        receiptPorts: {
+          region: 'eu-west-2',
+          topics: new Map([[topic, 'email']]),
+          sealer: {
+            seal: (plain, ctx) => {
+              sealed.push(ctx);
+              return Promise.resolve(Buffer.concat([Buffer.from('sealed:'), plain]));
+            },
+          },
+          fetchCertificate: () => Promise.resolve(readFileSync(join(dir, 'c.pem'), 'utf8')),
+        },
+      });
+      const run = await start({ controllers: comp.controllers, policy: comp.policy });
+      try {
+        const post = (b: string) =>
+          fetch(`${run.base}/webhooks/sns/receipts`, {
+            method: 'POST',
+            headers: {
+              'content-type': 'text/plain; charset=UTF-8',
+              'x-client-release': R(MIN_RELEASE),
+            },
+            body: b,
+          });
+        assert.equal((await post(body)).status, 200, logs.join('\n'));
+        assert.deepEqual(sealed, ['inbound:email\nm-comp-1']);
+        const recv = sql.find((q) => /receive_inbound/.test(q.text));
+        assert.deepEqual(recv?.params.slice(0, 3), ['email', 'm-comp-1', 'delivery_receipt']);
+        assert.ok(
+          sql.some((q) => JSON.stringify(q.params).includes('integration_core.dispatch_inbound')),
+          'a dispatch job is enqueued with the message: ' +
+            sql.map((q) => q.text.slice(0, 60)).join(' | '),
+        );
+        assert.equal((await post(body.replace('Delivery', 'Bounce'))).status, 401);
+        assert.equal(sealed.length, 1, 'a tampered request seals and stores nothing');
+      } finally {
+        await run.close();
+      }
+      // Unconfigured: the same route answers 404.
+      const bare = buildComposition({
+        db,
+        logger: createLogger({ sink: () => undefined }),
+        identity: loadIdentityEnv(ENV),
+      });
+      const run2 = await start({ controllers: bare.controllers, policy: bare.policy });
+      try {
+        const r = await fetch(`${run2.base}/webhooks/sns/receipts`, {
+          method: 'POST',
+          headers: { 'content-type': 'text/plain', 'x-client-release': R(MIN_RELEASE) },
+          body: body,
+        });
+        assert.equal(r.status, 404);
+      } finally {
+        await run2.close();
+      }
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
     }
   });
 

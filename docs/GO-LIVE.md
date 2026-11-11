@@ -235,8 +235,7 @@ Each stays refusing until its configuration group (Part 2) is complete. This is 
 
 Known gaps with no code yet, so they stay on this list rather than being configured:
 
-- No inbound receipt route (INT-N2) and no SNS signature verifier: no SES or SMS delivery receipts are recorded until a ticket adds them
-  with the SES event destination.
+- Delivery receipts (INT-N2): the inbound route `POST /webhooks/sns/receipts` (SNS signature version 2, pinned certificate and subscribe host, TopicArn allowlist, freshness and replay checks, SES and SMS event mapping into `notifications.delivery_receipt` through the worker's `on_receipt`) and the IaC (`infra/modules/aws-adapters/receipts.tf`, opt-in with `receipt_endpoint_url`) now exist; `docs/runbooks/AWS-ADAPTERS.md` "Receipts" has the detail. **Tested only with self-generated certificates and signatures, a fake database and `tofu validate`/`tofu test`; never against SNS, SES or End User Messaging, and not run against PostgreSQL (no database was available), so the sealed-store-to-`delivery_receipt` path is unit-wired but not proven end to end.** Remaining: (1) no payload sealer is composed in `main.ts` and no KMS sealer exists in the repository, so a verified message is answered 503 at the store until one is added (nothing is stored unsealed); (2) the pinned AWS provider (`~> 5.80`) has no SMS event-destination resource, so that one destination is a CLI step in the runbook; (3) the SES/SMS event shapes and the SNS confirmation handshake are from documentation, unverified; (4) `receipt_endpoint_url` is not set in the account roots (needs the integrations host name).
 - The partner identity pool has no sign-in code in R1 (partner portal is R2).
 - The `telehealth.close_meeting` dead-job alarm is configured on the worker's generic `job_dead` line, but no `telehealth.close_meeting` job type exists in the repository yet, so it fires only once that job is added.
 - The payload KMS key replica is `aws_kms_replica_key.payload_recovery` in `infra/accounts/production/adapters.tf` (same policy, `aws.recovery`); authored only, not applied.
@@ -253,6 +252,14 @@ Known gaps with no code yet, so they stay on this list rather than being configu
 - Chime offers no per-token lifetime: the "short-lived" bound is only in our own record.
 - Load scenarios (QA-07) are wired into `loadtest-run.yml` between the two cost guards through `tests/load/run-suite.sh` (perf-01..04, 06..08, rec-04, rec-07; TC-PERF-05 stays with Lighthouse). **Mechanics only, not a capacity result:** the suite was run only against the localhost fixture at tiny scale (`tests/load/evidence/suite-mechanics-HEAAA-776.txt`); the workflow was never run (no AWS account, no hosted CI) and no NFR-6..9 result exists. A case that cannot run is `NOT_RUN` and fails the job, never a pass. Remaining: the seeder does not yet emit the sessions and ids files or the API URL (variables `LOADTEST_BASE_URL`, `LOADTEST_HOSTS`, `LOADTEST_SESSIONS_S3_URI`, `LOADTEST_IDS_S3_URI`); perf-06 needs `LOADTEST_VENDOR_SANDBOX=1`; the SQL reconciliations (`check-audit`, `check-exactly-one`, `check-recovery`) need `LOADTEST_RO_DATABASE_URL_SECRET_ID`; TC-REC-04/07 disruptions are DevOps' OPS part and are not injected; perf-08 leak/queue-growth has no checker.
 - Bootstrap interface points and deploy permission gaps (`scripts/bootstrap/README.md`, `scripts/deploy/README.md`): G-1 (token-secret delete), G-2 (task log read, rotation), G-4 (record field names) and deploy permission gaps 1-3 are now IaC in `infra/modules/ci-trust` (authored, `tofu test` with mock providers only, never applied; the production/staging roots must still pass the new `refs`). Remaining: G-3 and the result field names depend on the bootstrap task (not built); G-5 (audit archive task and `audit_archiver` grants) is application and database work; deploy gaps 4-5 need workflow edits (`gh run download` retention, a release-store source bucket variable for `portal-switch --source-bucket`) and a cross-account bucket policy; G-6 needs an AWS account and a second human (TC-SEC-11).
+
+## Brand (C-16): default applied (autonomous)
+
+Task HEAAA-842. Owner ruling C: the recommended default is applied in full and stays configurable.
+
+- Organisation name: `ORGANISATION_NAME` (CMS, site) and `VITE_ORGANISATION_NAME` (patient, staff). When it is not entered, a neutral product title is shown ("Patient portal", "Staff portal", "Website editor", "Practice website"); no name or fact is invented.
+- A plain text wordmark in the current accessible palette (WCAG 2.2 AA). No "placeholder" text is rendered in any app.
+- **Owner items:** supply the logo and the brand palette, and set the organisation name in each environment.
 
 ## Evidence rules
 

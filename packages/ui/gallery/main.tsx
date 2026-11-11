@@ -118,7 +118,7 @@ function Gallery() {
           <p>
             <ui.Button variant="primary">Save and queue for doctor</ui.Button>{' '}
             <ui.Button>Cancel</ui.Button> <ui.Button disabled>Disabled</ui.Button>{' '}
-            <ui.PlaceholderMark />
+            <ui.BrandWordmark name="Example Clinic" />
           </p>
           <p>
             <ui.StatusChip tone="neutral">Confirmed</ui.StatusChip>{' '}

@@ -2,6 +2,7 @@
 // TC-AD-01..03, 06..10 data-level parts, the view/grant catalog tests (ARCHITECTURE 22.5.1, 21.2) and the settings.
 //   EHR_TEST_ADMIN_URL=postgres://postgres@127.0.0.1:5432/postgres node --test dist/src/modules/organisation/organisation.dbtest.js
 // The URL names a superuser on a throwaway server (synthetic data only). Missing configuration FAILS; nothing skips.
+import { FIXTURE_STATES } from '../../platform/fixture-states.js';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -186,14 +187,14 @@ describe('organisation module on PostgreSQL 17 (BE-03)', () => {
 
     // Fixtures through the superuser (policies are tested separately below).
     await q(
-      `INSERT INTO organisation.jurisdiction (code, organisation_id, name) VALUES ('NY', $1, 'New York'), ('CA', $1, 'California'), ('TX', $1, 'Texas')`,
+      `INSERT INTO organisation.jurisdiction (code, organisation_id, name) VALUES ('${FIXTURE_STATES.licensed}', $1, 'New York'), ('${FIXTURE_STATES.unlicensed}', $1, 'California'), ('${FIXTURE_STATES.closed}', $1, 'Texas')`,
       [ORG],
     );
     await q(
       `INSERT INTO organisation.location (id, organisation_id, name, kind, time_zone, state_code, active, phone) VALUES
-      ($2, $1, 'Main Clinic', 'clinic', 'America/New_York', 'NY', true, '555-0100'),
-      ($3, $1, 'Closed Clinic', 'clinic', 'America/New_York', 'NY', false, null),
-      ($4, $1, 'Video Clinic', 'virtual', 'America/Chicago', 'TX', true, null)`,
+      ($2, $1, 'Main Clinic', 'clinic', 'America/New_York', '${FIXTURE_STATES.licensed}', true, '555-0100'),
+      ($3, $1, 'Closed Clinic', 'clinic', 'America/New_York', '${FIXTURE_STATES.licensed}', false, null),
+      ($4, $1, 'Video Clinic', 'virtual', 'America/Chicago', '${FIXTURE_STATES.closed}', true, null)`,
       [ORG, L_ACTIVE, L_INACTIVE, L_VIRTUAL],
     );
     await q(
@@ -282,7 +283,7 @@ describe('organisation module on PostgreSQL 17 (BE-03)', () => {
     test('TC-AD-01: an elevated admin creates clinics, rooms, hours, holidays through the module tables; audited fields are set', async () => {
       await db.withScope(admin, async (tx) => {
         await tx.query(
-          `INSERT INTO organisation.location (id, organisation_id, name, kind, time_zone, state_code, created_by) VALUES ($1, $2, 'North', 'clinic', 'America/Los_Angeles', 'CA', $3)`,
+          `INSERT INTO organisation.location (id, organisation_id, name, kind, time_zone, state_code, created_by) VALUES ($1, $2, 'North', 'clinic', 'America/Los_Angeles', '${FIXTURE_STATES.unlicensed}', $3)`,
           [id(51), ORG, ADMIN_P],
         );
         await tx.query(
@@ -358,8 +359,8 @@ describe('organisation module on PostgreSQL 17 (BE-03)', () => {
       // the worker writes reference data only
       await wdb.withScope(worker, (tx) =>
         tx.query(
-          `INSERT INTO organisation.jurisdiction (code, organisation_id, name) VALUES ('WA', $1, 'Washington')`,
-          [ORG],
+          `INSERT INTO organisation.jurisdiction (code, organisation_id, name) VALUES ($2, $1, 'Fixture state') ON CONFLICT DO NOTHING`,
+          [ORG, FIXTURE_STATES.licensed],
         ),
       );
       await rejectsCode(
@@ -1021,33 +1022,49 @@ describe('organisation module on PostgreSQL 17 (BE-03)', () => {
   describe('licensing check (BD-17)', () => {
     test('with no operating state it refuses every video booking; with one it distinguishes licensed from unlicensed', async () => {
       assert.equal(
-        await db.withScope(patient, (tx) => org.licensingCheck(tx, ['NY'], 'NY')),
+        await db.withScope(patient, (tx) =>
+          org.licensingCheck(tx, [FIXTURE_STATES.licensed], FIXTURE_STATES.licensed),
+        ),
         'refused_not_operating',
       );
       await db.withScope(admin, async (tx) => {
         await tx.query(
-          `INSERT INTO organisation.operating_state (organisation_id, jurisdiction_code, telehealth_allowed, effective_from) VALUES ($1, 'NY', true, '2020-01-01'), ($1, 'CA', true, '2999-01-01'), ($1, 'TX', true, '2020-01-01'), ($1, 'TX', false, '2021-01-01')`,
+          `INSERT INTO organisation.operating_state (organisation_id, jurisdiction_code, telehealth_allowed, effective_from) VALUES ($1, '${FIXTURE_STATES.licensed}', true, '2020-01-01'), ($1, '${FIXTURE_STATES.unlicensed}', true, '2999-01-01'), ($1, '${FIXTURE_STATES.closed}', true, '2020-01-01'), ($1, '${FIXTURE_STATES.closed}', false, '2021-01-01')`,
           [ORG],
         );
       });
       assert.equal(
-        await db.withScope(patient, (tx) => org.licensingCheck(tx, ['NY', 'CA'], 'NY')),
+        await db.withScope(patient, (tx) =>
+          org.licensingCheck(
+            tx,
+            [FIXTURE_STATES.licensed, FIXTURE_STATES.unlicensed],
+            FIXTURE_STATES.licensed,
+          ),
+        ),
         'allowed',
       );
       assert.equal(
-        await db.withScope(patient, (tx) => org.licensingCheck(tx, ['CA'], 'NY')),
+        await db.withScope(patient, (tx) =>
+          org.licensingCheck(tx, [FIXTURE_STATES.unlicensed], FIXTURE_STATES.licensed),
+        ),
         'refused_not_licensed',
       );
       assert.equal(
-        await db.withScope(patient, (tx) => org.licensingCheck(tx, ['CA'], 'CA')),
+        await db.withScope(patient, (tx) =>
+          org.licensingCheck(tx, [FIXTURE_STATES.unlicensed], FIXTURE_STATES.unlicensed),
+        ),
         'refused_not_operating',
       ); // not yet in effect
       assert.equal(
-        await db.withScope(patient, (tx) => org.licensingCheck(tx, ['TX'], 'TX')),
+        await db.withScope(patient, (tx) =>
+          org.licensingCheck(tx, [FIXTURE_STATES.closed], FIXTURE_STATES.closed),
+        ),
         'refused_not_operating',
       ); // latest row says no
       await assert.rejects(
-        db.withScope(patient, (tx) => org.licensingCheck(tx, ['NY'], 'New York')),
+        db.withScope(patient, (tx) =>
+          org.licensingCheck(tx, [FIXTURE_STATES.licensed], 'New York'),
+        ),
         OrganisationValidationError,
       );
     });

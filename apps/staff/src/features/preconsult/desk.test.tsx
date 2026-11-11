@@ -270,6 +270,16 @@ describe('arrivals board and check-in (PC-01, PC-02)', () => {
           ],
           nextCursor: null,
         });
+      if (r.path === `/api/v1/patients/${PAT}/banner`)
+        return json(200, {
+          patientBanner: {
+            patientId: PAT,
+            displayName: 'Amira Okafor',
+            dateOfBirth: '1984-03-27',
+            mrn: 'MRN-0000123',
+            allergies: null,
+          },
+        });
       return undefined;
     });
     await user.click(await screen.findByRole('tab', { name: 'Check in' }));
@@ -277,6 +287,10 @@ describe('arrivals board and check-in (PC-01, PC-02)', () => {
     await user.click(screen.getByRole('button', { name: 'Search' }));
     await user.click(await screen.findByRole('button', { name: /Show visits: Amira Okafor/ }));
     expect(await screen.findByText(/Visits today: Amira Okafor/)).toBeVisible();
+    // BR-34 (R3-F01 F-2): the chosen patient's banner, from the real `{ patientBanner }` response shape.
+    const pb = await screen.findByRole('region', { name: 'Patient' });
+    expect(within(pb).getByText('Amira Okafor')).toBeVisible();
+    expect(within(pb).getByText(/1984-03-27/)).toBeVisible();
     expect(screen.queryByText('Other Person')).toBeNull();
     expect(seen.find((s) => s.path === '/api/v1/patients/search')?.body).toEqual({
       name: 'Okafor',
@@ -371,7 +385,8 @@ describe('triage with vitals and the red-flag bar (PC-04, PC-06)', () => {
     return (r) => {
       const x = extra(r);
       if (x !== undefined) return x;
-      if (r.path === `/api/v1/patients/${PAT}/banner`) return json(200, banner(allergies));
+      if (r.path === `/api/v1/patients/${PAT}/banner`)
+        return json(200, { patientBanner: banner(allergies) });
       if (r.path === `/api/v1/check-ins/${RES}/triage` && r.method === 'GET')
         return json(200, { triage: null }, { ETag: 'W/"0"' });
       return undefined;
@@ -382,6 +397,15 @@ describe('triage with vitals and the red-flag bar (PC-04, PC-06)', () => {
       ...arrival({ checkedInAt: '2031-06-10T09:01:00.000Z' }),
       status: 'checked_in',
     } as never);
+
+  it('shows the banner from the wrapped response when no triage is recorded (R3-F01 F-3, F-7)', async () => {
+    open();
+    mount(NURSE, '/triage', triageHandler());
+    const pb = await screen.findByRole('region', { name: 'Patient' });
+    expect(within(pb).getByText('Amira Okafor')).toBeVisible();
+    expect(within(pb).getByText(/1984-03-27/)).toBeVisible();
+    expect(screen.queryByText(/Something went wrong/)).toBeNull();
+  });
 
   it('shows out-of-range vitals in words with the stored range, never blocking the save', async () => {
     const user = userEvent.setup();
@@ -515,7 +539,7 @@ describe('triage with vitals and the red-flag bar (PC-04, PC-06)', () => {
           },
           { ETag: 'W/"2"' },
         );
-      if (r.path.endsWith('/banner')) return json(200, banner(null));
+      if (r.path.endsWith('/banner')) return json(200, { patientBanner: banner(null) });
       return undefined;
     });
     expect(await screen.findByText('Current assessment: Standard')).toBeVisible();

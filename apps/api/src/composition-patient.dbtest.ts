@@ -300,4 +300,35 @@ describe('INT03-F13: the patient routes through the composition root', () => {
     assert.equal(Number(grants[0]?.n), 1, 'the replay opened no second grant');
     assert.equal((await send(dr, 'GET', `/api/v1/patients/${mine}/chart-summary`)).status, 200);
   });
+
+  test('8: R3-F01 / BR-34: GET /patients/{id} carries the same ARCH 28.2 banner as GET /patients/{id}/banner (displayName, allergies with coded and uncoded marks)', async () => {
+    await saWrite(
+      k,
+      `INSERT INTO clinical.allergy (id, organisation_id, patient_id, code_system, code, display, coded, category, severity, recorded_by)
+       VALUES (gen_random_uuid(), $1, $2, 'rxnorm', '70001', 'Synthetic coded allergy', true, 'drug', 'severe', $3),
+              (gen_random_uuid(), $1, $2, NULL, NULL, 'Synthetic free-text allergy', false, 'food', 'mild', $3)`,
+      [ORG, mine, desk.seeded.principalId],
+    );
+    const full = await send(desk, 'GET', `/api/v1/patients/${mine}`);
+    const only = await send(desk, 'GET', `/api/v1/patients/${mine}/banner`);
+    assert.equal(full.status, 200, full.body);
+    assert.equal(only.status, 200, only.body);
+    const a = full.json()['patientBanner'] as Record<string, unknown>;
+    const b = only.json()['patientBanner'] as Record<string, unknown>;
+    assert.deepEqual(a, b, 'the two routes return the same banner');
+    assert.equal(a['displayName'], 'Comp1 Fam1');
+    assert.equal(a['patientId'], mine);
+    const al = a['allergies'] as {
+      state: string;
+      items: { coded: boolean }[];
+      uncodedCount: number;
+    };
+    assert.equal(al.state, 'recorded');
+    assert.equal(al.items.length, 2);
+    assert.equal(al.uncodedCount, 1);
+    assert.deepEqual(al.items.map((i) => i.coded).sort(), [false, true]);
+    assert.equal(a['givenName'], undefined, 'no legacy PatientBanner fields');
+    assert.ok(full.json()['patient'], 'the demographics remain');
+    assert.ok(full.headers['etag']);
+  });
 });

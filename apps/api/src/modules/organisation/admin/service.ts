@@ -986,6 +986,100 @@ export class OrganisationAdminService {
     });
   }
 
+  // --- clinician licensed states (ruling C item 4, D-2 / C-06) -----------------------------------------------------------------
+
+  private async licensedOf(tx: Tx, principalId: string): Promise<string[]> {
+    const r = await tx.query(
+      `SELECT jurisdiction_code AS c FROM identity.licensed_state WHERE principal_id = $1::uuid ORDER BY jurisdiction_code`,
+      [principalId],
+    );
+    return (r.rows as { c: string }[]).map((x) => x.c);
+  }
+
+  private async profileOf(tx: Tx, principalId: string): Promise<Row> {
+    const r = await tx.query(
+      `SELECT display_name AS "displayName" FROM identity.staff_profile WHERE principal_id = $1::uuid`,
+      [principalId],
+    );
+    if (r.rows.length === 0) throw notFound();
+    return r.rows[0] as Row;
+  }
+
+  /** GET `/staff-profiles/{principalId}`: the clinician's recorded licensed states (nothing is assumed when none are recorded). */
+  getLicensedStates(scope: ScopeSettings, principalId: string): Promise<One> {
+    if (!isUuid(principalId)) throw notFound();
+    return this.read(scope, async (tx) => {
+      const p = await this.profileOf(tx, principalId);
+      return {
+        body: {
+          principalId,
+          displayName: p['displayName'],
+          licensedStates: await this.licensedOf(tx, principalId),
+        },
+        etag: null,
+      };
+    });
+  }
+
+  /**
+   * PUT `/staff-profiles/{principalId}` `{licensedStates: ["<code>", ...]}`: the clinician's licensed states become exactly this set.
+   * Each state added or removed writes its own audit row in the same transaction, and takes effect at once: the booking and join
+   * checks read the table on every call. Only `licensedStates` is accepted here; the other profile fields are not handled by this route.
+   */
+  async putLicensedStates(
+    scope: ScopeSettings,
+    principalId: string,
+    body: unknown,
+    meta: Meta,
+  ): Promise<One> {
+    if (!isUuid(principalId)) throw notFound();
+    const o = asObject(body);
+    const errors = onlyKeys(o, ['licensedStates']);
+    if (errors.length > 0) throw invalid(errors);
+    const raw = o['licensedStates'];
+    if (!Array.isArray(raw) || raw.length > 100)
+      throw invalidField(
+        'licensedStates',
+        raw === undefined ? 'kernel.required' : 'kernel.invalid_format',
+      );
+    const want = new Set<string>();
+    for (const c of raw) {
+      if (typeof c !== 'string' || !/^[A-Z]{2}$/.test(c)) throw invalidField('licensedStates');
+      want.add(c);
+    }
+    return this.write(scope, async (tx) => {
+      await this.profileOf(tx, principalId);
+      await lockKey(tx, `licensed_state:${principalId}`);
+      const have = new Set(await this.licensedOf(tx, principalId));
+      const removed = [...have].filter((c) => !want.has(c)).sort();
+      const added = [...want].filter((c) => !have.has(c)).sort();
+      for (const code of removed) {
+        await tx.query(
+          `DELETE FROM identity.licensed_state WHERE principal_id = $1::uuid AND jurisdiction_code = $2`,
+          [principalId, code],
+        );
+        await this.changed(tx, meta, 'identity.licensed_state', principalId, null, {
+          jurisdictionCode: code,
+          before: { licensed: true },
+          after: { licensed: false },
+        });
+      }
+      for (const code of added) {
+        await tx.query(
+          `INSERT INTO identity.licensed_state (principal_id, jurisdiction_code, organisation_id, created_by)
+           VALUES ($1::uuid, $2, $3, $4)`,
+          [principalId, code, tx.scope.orgId, tx.scope.principalId ?? null],
+        );
+        await this.changed(tx, meta, 'identity.licensed_state', principalId, null, {
+          jurisdictionCode: code,
+          before: { licensed: false },
+          after: { licensed: true },
+        });
+      }
+      return { body: { principalId, licensedStates: [...want].sort() }, etag: null };
+    });
+  }
+
   // --- consent and questionnaire templates (drafts, then publish) ----------------------------------------------------------------
 
   private static readonly CONSENT_SELECT = `id, key, version, language, title, body_text AS "bodyText", status, row_version::text AS "rowVersion"`;

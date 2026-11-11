@@ -232,6 +232,11 @@ export function parseBanner(v: unknown): Banner | undefined {
   };
 }
 
+/** `GET /patients/{id}/banner` wraps the banner as `{ patientBanner }`; the other banner-carrying routes embed the same key. */
+export function parseBannerResponse(v: unknown): Banner | undefined {
+  return parseBanner(rec(v)['patientBanner']);
+}
+
 export interface VitalsResult {
   vitals: Vital[];
   outOfRange: string[];

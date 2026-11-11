@@ -44,6 +44,7 @@ const FLAG = 'organisation.flag.manage';
 const BANNER = 'organisation.banner.manage';
 const SETTING = 'organisation.setting.manage';
 const STATE = 'organisation.operating_state.manage';
+const STAFF_PROFILE = 'identity.staff_profile.manage';
 
 export function createOrganisationAdminController(d: AdminControllerDeps): Type<unknown> {
   const s = d.service;
@@ -273,6 +274,30 @@ export function createOrganisationAdminController(d: AdminControllerDeps): Type<
     @route(STATE)
     async putState(@ReqParam() req: Req, @ResParam({ passthrough: true }) res: Res) {
       return one(res, await s.putOperatingState(d.scopeOf(req), req.body, metaOf(req)));
+    }
+
+    // --- clinician licensed states (identity.staff_profile.manage; ruling C item 4) --------------------------------------
+    @Get('staff-profiles/:principalId')
+    @route(STAFF_PROFILE)
+    async getLicensed(
+      @ReqParam() req: Req,
+      @ResParam({ passthrough: true }) res: Res,
+      @Param('principalId') principalId: string,
+    ) {
+      return one(res, await s.getLicensedStates(d.scopeOf(req), principalId));
+    }
+    @Put('staff-profiles/:principalId')
+    @HttpCode(200)
+    @route(STAFF_PROFILE)
+    async putLicensed(
+      @ReqParam() req: Req,
+      @ResParam({ passthrough: true }) res: Res,
+      @Param('principalId') principalId: string,
+    ) {
+      return one(
+        res,
+        await s.putLicensedStates(d.scopeOf(req), principalId, req.body, metaOf(req)),
+      );
     }
   }
   return OrganisationAdminController;

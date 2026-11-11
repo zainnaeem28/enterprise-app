@@ -2,7 +2,7 @@ import { arr, guard, matchHeader, rec, str } from './http.js';
 import type { Api, Outcome } from './http.js';
 import {
   parseArrival,
-  parseBanner,
+  parseBannerResponse,
   parseCheckIn,
   parseConsent,
   parseCurrentTriage,
@@ -211,7 +211,7 @@ export function createPreconsultApi(api: Api) {
           api.GET('/api/v1/patients/{patientId}/banner', {
             params: { header, path: { patientId } },
           }),
-        parseBanner,
+        parseBannerResponse,
       ),
 
     patient: (patientId: string): Promise<Outcome<PatientHit>> =>

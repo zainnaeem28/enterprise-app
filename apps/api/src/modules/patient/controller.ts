@@ -50,6 +50,12 @@ export interface PatientControllerDeps {
   labelLimitPerHour?: number;
   /** D-7: the proxy verification rule values (RA-R1-20b) do not exist yet. Until they do, a proxy request is refused. */
   proxyRulesConfigured?: boolean;
+  /**
+   * The ARCH 28.2 banner (displayName, allergies, photoUrl) for `GET /patients/{id}`: the same composition as
+   * `GET /patients/{id}/banner` (`clinical` owns it). Late-bound by the composition root; absent, the patient module's own
+   * allergy-less banner is returned.
+   */
+  banner?: (tx: Tx, req: Req, patientId: string) => Promise<unknown>;
 }
 
 const metaOf = (req: Req): RequestMeta => ({
@@ -556,7 +562,12 @@ export function createPatientControllers(d: PatientControllerDeps): Type<unknown
       const out = await run(req, async (tx) => {
         const p = await d.patients.view(tx, metaOf(req), id);
         if (p === undefined) throw new PatientNotFoundError();
-        return { p, banner: (await d.patients.patientBanner(tx, id)) as PatientBanner };
+        const banner =
+          d.banner === undefined
+            ? ((await d.patients.patientBanner(tx, id)) as PatientBanner)
+            : await d.banner(tx, req, id);
+        if (banner === undefined) throw new PatientNotFoundError();
+        return { p, banner };
       });
       send(
         res,

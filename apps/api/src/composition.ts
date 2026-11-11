@@ -22,6 +22,7 @@ import type { VideoVendorPort } from './modules/telehealth/index.js';
 import {
   createBreakGlassControllers,
   createClinicalChart,
+  type BannerService,
   CLINICAL_CHART_JOBS,
 } from './modules/clinical/chart/index.js';
 import {
@@ -60,8 +61,12 @@ import { createPrivacy, PRIVACY_JOBS } from './modules/privacy/index.js';
 import type { PackageStorePort } from './modules/privacy/index.js';
 import {
   createIntegrationsHostControllers,
+  httpsConfirmSubscription,
+  httpsFetchCertificate,
+  SnsReceiptReceiver,
   PublicDirectoryService,
 } from './modules/integrations-host/index.js';
+import type { ReceiptChannel } from './modules/integrations-host/index.js';
 import { createReporting, REPORTING_JOBS } from './modules/reporting/index.js';
 import { createIdentityAdmin, IDENTITY_ADMIN_JOBS } from './modules/identity/admin/index.js';
 import type { WebAuthnPort } from './modules/identity/admin/index.js';
@@ -116,6 +121,7 @@ import type { ConnectionTester, ExportUrlSigner } from './modules/admin-routes/i
 import {
   ConnectionService,
   INTEGRATION_CORE_JOBS,
+  InboundReceiver,
   SecretService,
 } from './modules/integration-core/index.js';
 import type {
@@ -204,6 +210,22 @@ export interface CalendarPorts {
   returnUrl?: string;
 }
 
+/**
+ * The SNS delivery-receipt route (INT-N2): `POST /webhooks/sns/receipts`. Absent means the route answers 404. With no `sealer` the
+ * route verifies, then answers 503 at the store (a payload is never stored unsealed); `main.ts` supplies the sealer once one exists.
+ */
+export interface ReceiptPorts {
+  region: string;
+  /** TopicArn -> channel. Also the allowlist of topics the route accepts. */
+  topics: ReadonlyMap<string, ReceiptChannel>;
+  sealer?: PayloadSealer;
+  trustAnchorsPem?: readonly string[];
+  maxAgeSeconds?: number;
+  /** Test seams: default to HTTPS GETs on the pinned SNS host. */
+  fetchCertificate?: (url: string) => Promise<string>;
+  confirmSubscription?: (url: string) => Promise<number>;
+}
+
 export const refusingOAuth: OAuthPort = {
   authorizationUrl(): never {
     throw new CalendarUnavailableError();
@@ -272,6 +294,7 @@ export function buildComposition(deps: {
   admin?: AdminEnv;
   adminPorts?: AdminPorts;
   calendarPorts?: CalendarPorts;
+  receiptPorts?: ReceiptPorts;
   /** Test seam only (`main.ts` never passes it): replaces the pinned WebAuthn library port so a test can enrol a software key. */
   webauthnPort?: WebAuthnPort;
   /** A NEW client on its own (non-pooled) connection per call; when given, the alert stream hub is composed. */
@@ -356,7 +379,22 @@ export function buildComposition(deps: {
   // The patient module registers its scope contributor and resolvers with identity; its records service is the flow's consent probe.
   // Its portal, staff and admin controllers and the merge controllers are mounted below (INT03-F13). The label and lookup limits are
   // compliance controls (6.7, 31.3), so the limiter is the shared one: a per-process counter would multiply them by the replica count.
+  // `GET /patients/{id}` returns the clinical banner (ARCH 28.2); the chart is built after the patient module, so bind it late.
+  const lateChart: { banner?: BannerService } = {};
   const patient = createPatient({
+    banner: (tx, req, patientId) => {
+      if (lateChart.banner === undefined) throw new Error('clinical chart is not composed yet');
+      return lateChart.banner.bannerFor(
+        tx,
+        requireAuthContext(req),
+        {
+          requestId: req.requestId ?? null,
+          ip: req.ip ?? null,
+          userAgent: req.header('user-agent') ?? null,
+        },
+        patientId,
+      );
+    },
     db: deps.db,
     audit,
     identity,
@@ -436,6 +474,7 @@ export function buildComposition(deps: {
     documents: (tx, patientId) => documents.list(tx, patientId),
     ...(deps.now === undefined ? {} : { now: deps.now }),
   });
+  lateChart.banner = chart.banner;
   const frontdoorPorts = createFrontdoorPorts({
     flow,
     alerts,
@@ -497,6 +536,36 @@ export function buildComposition(deps: {
       scheduling: availability,
     }),
     receiver: { receive: () => Promise.resolve({ status: 404 }) },
+    ...(deps.receiptPorts === undefined
+      ? {}
+      : {
+          snsReceipts: new SnsReceiptReceiver({
+            region: deps.receiptPorts.region,
+            topics: deps.receiptPorts.topics,
+            store: new InboundReceiver({
+              db: deps.db,
+              queue,
+              sealer: deps.receiptPorts.sealer ?? refusingPayloadSealer,
+              keys: { keys: () => Promise.resolve([]) },
+              orgId: env.orgId,
+              verifiers: new Map(),
+              logger: deps.logger,
+            }),
+            fetchCertificate:
+              deps.receiptPorts.fetchCertificate ?? httpsFetchCertificate(deps.receiptPorts.region),
+            confirmSubscription:
+              deps.receiptPorts.confirmSubscription ??
+              httpsConfirmSubscription(deps.receiptPorts.region),
+            ...(deps.receiptPorts.trustAnchorsPem === undefined
+              ? {}
+              : { trustAnchorsPem: deps.receiptPorts.trustAnchorsPem }),
+            ...(deps.receiptPorts.maxAgeSeconds === undefined
+              ? {}
+              : { maxAgeSeconds: deps.receiptPorts.maxAgeSeconds }),
+            logger: deps.logger,
+            ...(deps.now === undefined ? {} : { now: deps.now }),
+          }),
+        }),
   });
 
   // Calendar sync (BE-14): the doctor's calendar link and the Google push webhook. The ports default to refusing ones (see CalendarPorts).
