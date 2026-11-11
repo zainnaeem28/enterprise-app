@@ -24,7 +24,7 @@ import { ApiError } from '../../platform/errors.js';
 import type { Req, Res } from '../../platform/http.js';
 import type { RateLimiter } from '../../platform/rate-limit.js';
 import { Route } from '../../platform/route.js';
-import { requireAuthContext } from '../identity/index.js';
+import { ProxyInviteInvalidError, requireAuthContext } from '../identity/index.js';
 import type { ProxyService, ResourceResolver } from '../identity/index.js';
 import {
   PatientNotFoundError,
@@ -32,7 +32,6 @@ import {
   PreconditionFailedError,
   PreconditionRequiredError,
   PatientValidationError,
-  ProxyRulesNotConfiguredError,
 } from './errors.js';
 import { isUuid } from './ids.js';
 import type { PatientRecordsService } from './records.js';
@@ -48,8 +47,6 @@ export interface PatientControllerDeps {
   limiter: RateLimiter;
   /** 60 per hour per principal (6.7 planning value). */
   labelLimitPerHour?: number;
-  /** D-7: the proxy verification rule values (RA-R1-20b) do not exist yet. Until they do, a proxy request is refused. */
-  proxyRulesConfigured?: boolean;
   /**
    * The ARCH 28.2 banner (displayName, allergies, photoUrl) for `GET /patients/{id}`: the same composition as
    * `GET /patients/{id}/banner` (`clinical` owns it). Late-bound by the composition root; absent, the patient module's own
@@ -425,12 +422,58 @@ export function createPatientControllers(d: PatientControllerDeps): Type<unknown
       send(res, 200, itemsOf(await run(req, (tx) => d.proxies.listForPatient(tx, id))));
     }
 
-    /** Blocked on D-7 (RA-R1-20b): without the verification rule values the request is refused, not queued. */
+    /**
+     * Ruling C item 3 (D-7): the adult patient invites a proxy by e-mail. The route keeps the name of the blocked draft
+     * (`proxy-requests`, 29.2 row 20); it creates the invitation (`invited`), the worker mails the code, the proxy accepts.
+     * `422 identity.proxy_rules_not_configured` only when a rule value is missing from the settings.
+     */
     @Post('patients/:patientId/proxy-requests')
     @Route({ permission: 'patient', resolver: 'patient' })
-    proxyRequest(): Promise<void> {
-      if (d.proxyRulesConfigured !== true) throw new ProxyRulesNotConfiguredError();
-      throw new ProxyRulesNotConfiguredError();
+    async proxyRequest(
+      @Param('patientId') id: string,
+      @ReqParam() req: Req,
+      @ResParam() res: Res,
+    ): Promise<void> {
+      await idempotent(
+        req,
+        res,
+        'POST /patients/{patientId}/proxy-requests',
+        [id],
+        req.body,
+        async (tx) => {
+          await open(tx, id);
+          const b = (typeof req.body === 'object' && req.body !== null ? req.body : {}) as Record<
+            string,
+            unknown
+          >;
+          const g = await d.proxies.invite(tx, metaOf(req), id, {
+            email: b['email'],
+            relationship: b['relationship'],
+            scopes: b['scopes'],
+          });
+          return { status: 201, body: g };
+        },
+      );
+    }
+
+    @Put('patients/:patientId/proxies/:grantId/scopes')
+    @Route({ permission: 'patient', resolver: 'patient' })
+    async proxyScopes(
+      @Param('patientId') id: string,
+      @Param('grantId') grantId: string,
+      @ReqParam() req: Req,
+      @ResParam() res: Res,
+    ): Promise<void> {
+      const body = (typeof req.body === 'object' && req.body !== null ? req.body : {}) as Record<
+        string,
+        unknown
+      >;
+      const g = await run(req, async (tx) => {
+        await open(tx, id);
+        return d.proxies.setScopes(tx, metaOf(req), id, grantId, body['scopes']);
+      });
+      if (g === undefined) throw new PatientNotFoundError();
+      send(res, 200, g);
     }
 
     @Delete('patients/:patientId/proxies/:grantId')
@@ -443,11 +486,39 @@ export function createPatientControllers(d: PatientControllerDeps): Type<unknown
     ): Promise<void> {
       const ok = await run(req, async (tx) => {
         await open(tx, id);
-        // the grant must be one of THIS patient's: the policy limits to the caller's own patients, the id check ties it to the path
-        const g = (await d.proxies.listForPatient(tx, id)).find((x) => x.id === grantId);
-        if (g === undefined) return false;
-        return d.proxies.revokeByPatient(tx, grantId);
+        return d.proxies.revokeByPatient(tx, metaOf(req), id, grantId);
       });
+      if (!ok) throw new PatientNotFoundError();
+      res.status(204).end();
+    }
+
+    /** The proxy accepts an invitation addressed to their account's own e-mail, with the code that was mailed there. */
+    @Post('proxy-invites/:grantId/accept')
+    @Route({ permission: 'patient', resolver: 'none' })
+    async acceptInvite(
+      @Param('grantId') grantId: string,
+      @ReqParam() req: Req,
+      @ResParam() res: Res,
+    ): Promise<void> {
+      const body = (typeof req.body === 'object' && req.body !== null ? req.body : {}) as Record<
+        string,
+        unknown
+      >;
+      // A wrong code is counted and committed first; the refusal is raised after the transaction ends.
+      const out = await run(req, (tx) => d.proxies.accept(tx, metaOf(req), grantId, body['code']));
+      if (out.kind === 'invalid') throw new ProxyInviteInvalidError();
+      send(res, 200, out.grant);
+    }
+
+    /** A proxy leaves: their own access to that patient ends now. */
+    @Post('proxy-grants/:grantId/leave')
+    @Route({ permission: 'proxy', resolver: 'none' })
+    async leaveProxy(
+      @Param('grantId') grantId: string,
+      @ReqParam() req: Req,
+      @ResParam() res: Res,
+    ): Promise<void> {
+      const ok = await run(req, (tx) => d.proxies.leave(tx, metaOf(req), grantId));
       if (!ok) throw new PatientNotFoundError();
       res.status(204).end();
     }
@@ -550,6 +621,62 @@ export function createPatientControllers(d: PatientControllerDeps): Type<unknown
           return { status: 200, body: r };
         },
       );
+    }
+
+    // ===== proxy rules, staff side (ruling C item 3): link a guardian, see and revoke any grant ============================
+
+    @Get('patients/:patientId/proxy-grants')
+    @Route({ permission: 'identity.proxy.verify', resolver: 'patient' })
+    async staffProxyGrants(
+      @Param('patientId') id: string,
+      @ReqParam() req: Req,
+      @ResParam() res: Res,
+    ): Promise<void> {
+      send(res, 200, itemsOf(await run(req, (tx) => d.proxies.listForPatient(tx, id))));
+    }
+
+    /** Staff link a parent or guardian of a minor after checking the relationship document; the guardian then accepts with the code. */
+    @Post('patients/:patientId/guardian-links')
+    @Route({ permission: 'identity.proxy.verify', resolver: 'patient' })
+    async staffGuardianLink(
+      @Param('patientId') id: string,
+      @ReqParam() req: Req,
+      @ResParam() res: Res,
+    ): Promise<void> {
+      await idempotent(
+        req,
+        res,
+        'POST /patients/{patientId}/guardian-links',
+        [id],
+        req.body,
+        async (tx) => {
+          await open(tx, id);
+          const b = (typeof req.body === 'object' && req.body !== null ? req.body : {}) as Record<
+            string,
+            unknown
+          >;
+          const g = await d.proxies.staffLink(tx, metaOf(req), id, {
+            email: b['email'],
+            relationship: b['relationship'],
+            documentId: b['documentId'],
+            scopes: b['scopes'],
+          });
+          return { status: 201, body: g };
+        },
+      );
+    }
+
+    @Post('patients/:patientId/proxies/:grantId/revoke')
+    @Route({ permission: 'identity.proxy.revoke', resolver: 'patient' })
+    async staffRevokeProxy(
+      @Param('patientId') id: string,
+      @Param('grantId') grantId: string,
+      @ReqParam() req: Req,
+      @ResParam() res: Res,
+    ): Promise<void> {
+      const ok = await run(req, (tx) => d.proxies.staffRevoke(tx, metaOf(req), id, grantId));
+      if (!ok) throw new PatientNotFoundError();
+      res.status(204).end();
     }
 
     @Get('patients/:patientId')

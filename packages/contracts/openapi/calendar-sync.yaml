@@ -19,7 +19,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/calendar-link
-          catalogueRow: 29.3#79
+          catalogueRow: 29.3#82
       security:
         - sessionCookie: []
       parameters:
@@ -90,7 +90,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/calendar-link
-          catalogueRow: 29.3#79
+          catalogueRow: 29.3#82
       security:
         - sessionCookie: []
       parameters:
@@ -166,7 +166,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/calendar-link/callback
-          catalogueRow: 29.3#79
+          catalogueRow: 29.3#82
       security:
         - sessionCookie: []
       x-error-codes:
@@ -235,7 +235,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/calendar-link/start
-          catalogueRow: 29.3#79
+          catalogueRow: 29.3#82
       security:
         - sessionCookie: []
       parameters:

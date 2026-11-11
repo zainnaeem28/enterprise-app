@@ -12,7 +12,6 @@ import {
 } from './merge.js';
 import { IdentityScopeError, IdentityValidationError } from './errors.js';
 import { uuidv7 } from './ids.js';
-import { ProxyService } from './proxy.js';
 import { assignRole, id, ORG, pg, seedPrincipal, setup } from './testkit.js';
 import type { Kit } from './testkit.js';
 
@@ -113,6 +112,7 @@ const TABLES = [
   'licensed_state',
   'patient_link',
   'proxy_grant',
+  'proxy_invite_code',
   'push_subscription',
   'staff_support',
   // BE-05 (B2 admin realm)
@@ -245,10 +245,15 @@ describe('catalog (M-1, M-2, M-3, M-5, 21.3 lists)', () => {
     // revoked_at: a role removal and the kill switch (BE-05)
     assert.deepEqual(await cols('app_api', 'identity.role_assignment'), ['revoked_at']);
     assert.deepEqual(await cols('app_api', 'identity.proxy_grant'), [
+      'accepted_at',
+      'ended_by',
+      'proxy_principal_id',
       'revoke_reason',
       'revoked_at',
+      'scopes',
       'status',
     ]);
+    assert.deepEqual(await cols('app_api', 'identity.proxy_invite_code'), ['attempts']);
   });
 
   test('identity_signin_ro and directory_ro hold no table-level SELECT on the identity base tables; directory_ro has exactly the 22.5.1 columns', async () => {
@@ -947,7 +952,8 @@ describe('isolation between principals (T-PRINCIPAL, T-PAT-OWN)', () => {
       `INSERT INTO identity.patient_link (principal_id, patient_id, organisation_id, kind) VALUES ($1, $2, $3, 'self')`,
       [owner.principalId, P, ORG],
     );
-    const svc = new ProxyService();
+    const svc = k.identity.proxies;
+    const meta = { requestId: uuidv7() };
     const proxyScope: ScopeSettings = {
       audience: 'patient',
       realm: 'patient_pool',
@@ -982,11 +988,11 @@ describe('isolation between principals (T-PRINCIPAL, T-PAT-OWN)', () => {
       (e: unknown) => e instanceof IdentityScopeError,
     );
     // A proxy cannot revoke (neither its own nor anyone's) through the patient path.
-    assert.equal(
-      await k.db.withScope({ ...proxyScope, patientIds: [P], proxyPatientIds: [P] }, (tx) =>
-        svc.revokeByPatient(tx, grantId),
+    await assert.rejects(
+      k.db.withScope({ ...proxyScope, patientIds: [P], proxyPatientIds: [P] }, (tx) =>
+        svc.revokeByPatient(tx, meta, P, grantId),
       ),
-      false,
+      (e: unknown) => e instanceof IdentityScopeError,
     );
     // It cannot insert itself an active grant.
     await assert.rejects(
@@ -1010,9 +1016,12 @@ describe('isolation between principals (T-PRINCIPAL, T-PAT-OWN)', () => {
       (await k.db.withScope(ownerScope, (tx) => svc.listForPatient(tx, P))).map((g) => g.id),
       [grantId],
     );
-    assert.equal(await k.db.withScope(ownerScope, (tx) => svc.revokeByPatient(tx, grantId)), true);
     assert.equal(
-      await k.db.withScope(ownerScope, (tx) => svc.revokeByPatient(tx, grantId)),
+      await k.db.withScope(ownerScope, (tx) => svc.revokeByPatient(tx, meta, P, grantId)),
+      true,
+    );
+    assert.equal(
+      await k.db.withScope(ownerScope, (tx) => svc.revokeByPatient(tx, meta, P, grantId)),
       false,
       'already revoked: nothing to do',
     );

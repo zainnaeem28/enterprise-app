@@ -113,6 +113,6 @@ export function createIdentity(deps: IdentityDeps): Identity {
     sessions,
     scopes,
     assignment,
-    proxies: new ProxyService(),
+    proxies: new ProxyService({ audit: deps.audit, queue: deps.queue, now }),
   };
 }

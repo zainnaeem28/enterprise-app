@@ -65,11 +65,16 @@ export class PermissionGrants {
   }
 }
 
+export const PROXY_SCOPES = ['appointments', 'messages', 'documents'] as const;
+export type ProxyScope = (typeof PROXY_SCOPES)[number];
+
 export interface PatientAccess {
   patientId: string;
   relation: 'self' | 'proxy';
-  /** `full` for the patient's own records, `appointments` for a proxy (D-7 default). */
+  /** `full` for the patient's own records, `appointments` for a proxy (D-7 default); what more a proxy holds is in `scopes`. */
   scope: 'full' | 'appointments';
+  /** The scopes in force today (granted, then narrowed by the age rules). A patient's own record lists all of them. */
+  scopes: readonly ProxyScope[];
   /** Given name and initial, so a proxy can tell linked patients apart (22.4). Proxy rows only. */
   displayName?: string;
 }

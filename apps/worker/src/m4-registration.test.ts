@@ -63,7 +63,7 @@ test('negative control: a table without the M4 handlers reports them unhandled',
   assert.deepEqual(unhandledJobTypes(registry, without).sort(), [...M4].sort());
 });
 
-test('the crontab holds the privacy expiry and retention, the operations refresh and the audit anchor jobs, each with a handler (SEC05-F01)', () => {
+test('the crontab holds the privacy expiry and retention, the operations refresh, the audit anchor jobs and the daily proxy age-out, each with a handler (SEC05-F01)', () => {
   const { tasks } = table();
   const entries = WORKER_CRONTAB.split('\n');
   assert.deepEqual(entries, [
@@ -73,6 +73,7 @@ test('the crontab holds the privacy expiry and retention, the operations refresh
     '* * * * * audit/anchor',
     '* * * * * audit/archive_anchors',
     '10 3 * * * audit/verify_anchors',
+    '30 2 * * * identity/proxy_age_out',
   ]);
   for (const e of entries)
     assert.equal(typeof tasks[fromCrontabTaskId(e.split(/\s+/)[5] as string)], 'function', e);
@@ -81,7 +82,7 @@ test('the crontab holds the privacy expiry and retention, the operations refresh
 test('INT03-F11: graphile-worker parseCrontab accepts WORKER_CRONTAB and every entry maps to a registered task', () => {
   const { registry, tasks } = table();
   const items = parseCrontab(WORKER_CRONTAB);
-  assert.equal(items.length, 6);
+  assert.equal(items.length, 7);
   const registered = registry.list().map((j) => j.name);
   for (const item of items) {
     const name = fromCrontabTaskId(item.task);

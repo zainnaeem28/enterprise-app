@@ -222,6 +222,7 @@ export function createAuthController(d: AuthControllerDeps): Type<unknown> {
           patientId: p.patientId,
           relation: p.relation,
           scope: p.scope,
+          scopes: p.scopes,
         })),
       };
     }
@@ -285,6 +286,7 @@ export function createMeController(): Type<unknown> {
           patientId: p.patientId,
           relation: p.relation,
           scope: p.scope,
+          scopes: p.scopes,
         })),
       };
     }

@@ -11,6 +11,7 @@ import type { Req, Res } from '../../platform/http.js';
 import { PATIENT_REALM, PUBLIC } from '../../platform/permissions.js';
 import type { Realm, RouteDeclaration } from '../../platform/route.js';
 import { ASSIGNMENT_BOUND_PERMISSIONS } from './assignment.js';
+import { proxyScopeCoversRoute } from './proxy-scopes.js';
 import type { AssignmentResolver } from './assignment.js';
 import { ForbiddenError, UnauthenticatedError } from './errors.js';
 import type { ScopeBuilder } from './scope.js';
@@ -192,10 +193,15 @@ export class IdentityGuardPolicy implements GuardPolicy {
       }
     } else if (!staff && res.patientId !== undefined) {
       // Patient realm: only the patients of the scope. A `patient` route is for the patient's own records; only a `proxy`
-      // route (the appointment routes) is open to a proxy, whose scope is appointments only (D-7 default, RA-R1-20a).
+      // route (the appointment routes) is open to a proxy, whose scope is appointments only (D-7 default, RA-R1-20a), and the
+      // listed read routes of the scopes the patient granted (proxy-scopes.ts).
       const access = ctx.patients.find((p) => p.patientId === res.patientId);
       if (access === undefined) return this.deny(req, ctx, decl, 'not_visible', res);
-      if (access.scope === 'appointments' && decl.permission !== 'proxy')
+      if (
+        access.scope === 'appointments' &&
+        decl.permission !== 'proxy' &&
+        !proxyScopeCoversRoute(access.scopes, req.method, req.path)
+      )
         return this.deny(req, ctx, decl, 'not_visible', res);
     }
   }

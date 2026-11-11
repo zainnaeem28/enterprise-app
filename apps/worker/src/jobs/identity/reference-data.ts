@@ -1,6 +1,6 @@
 // The permission catalogue (ARCHITECTURE 27.2) and the default role-to-permission mapping (27.3) as DATA. The mapping is a
 // PROPOSAL until the G2 settings are confirmed (27.3 heading): it is stored with that label (`identity.role.description`,
-// `kernel.reference_data_version` version `27.3-proposal-1`), and changing it is a data change plus a re-run of
+// `kernel.reference_data_version` version `27.3-proposal-2`), and changing it is a data change plus a re-run of
 // `identity.apply_reference_data`, not a code path. Migrations are DDL only (SBR-17), so this job is the only loader.
 //
 // Interpretations of 27.3 that a reviewer should confirm (each is a Proposal):
@@ -656,6 +656,9 @@ export const ROLES: readonly RoleSeed[] = [
       'patient.attach',
       'patient.merge.request',
       'scheduling.roster.manage',
+      // Ruling C item 3 (D-7): linking a guardian is a verification act (relationship document), so the lead holds it, not every desk.
+      'identity.proxy.verify',
+      'identity.proxy.revoke',
     ],
   },
   {
@@ -767,5 +770,5 @@ export const ROLES: readonly RoleSeed[] = [
 ];
 
 export const REFERENCE_DATASET = 'identity.role_permission';
-export const REFERENCE_VERSION = '27.3-proposal-1';
+export const REFERENCE_VERSION = '27.3-proposal-2';
 export const PROPOSAL_NOTE = 'Proposal until the G2 settings are confirmed (ARCHITECTURE 27.3)';

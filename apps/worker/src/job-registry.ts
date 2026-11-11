@@ -11,6 +11,8 @@ import {
   IDENTITY_ADMIN_JOBS,
   IDENTITY_ADMIN_WORKER_JOBS,
   IDENTITY_JOBS,
+  IDENTITY_PROXY_WORKER_JOBS,
+  PROXY_CRONTAB,
 } from './jobs/identity/jobs.js';
 import { INTEGRATION_CORE_JOBS } from './jobs/integration-core/jobs.js';
 import { MESSAGING_JOBS } from './jobs/messaging/jobs.js';
@@ -31,6 +33,7 @@ export const WORKER_JOBS: readonly JobType[] = [
   ...IDENTITY_JOBS,
   ...IDENTITY_ADMIN_JOBS,
   ...IDENTITY_ADMIN_WORKER_JOBS,
+  ...IDENTITY_PROXY_WORKER_JOBS,
   ...AUDIT_JOBS,
   ...PATIENT_JOBS,
   ...NOTIFICATIONS_JOBS,
@@ -47,9 +50,9 @@ export const WORKER_JOBS: readonly JobType[] = [
   ...REPORTING_JOBS,
 ];
 
-/** The recurring entries the worker runs (graphile-worker crontab text). Privacy expiry, the operations refresh (M4) and the audit anchor and its verification (M5, SEC05-F01). */
+/** The recurring entries the worker runs (graphile-worker crontab text). Privacy expiry, the operations refresh (M4), the audit anchor and its verification (M5, SEC05-F01) and the proxy age-out (ruling C item 3). */
 export const WORKER_CRONTAB: string = toCrontabText(
-  [PRIVACY_CRONTAB, REPORTING_CRONTAB, AUDIT_CRONTAB].join('\n'),
+  [PRIVACY_CRONTAB, REPORTING_CRONTAB, AUDIT_CRONTAB, PROXY_CRONTAB].join('\n'),
 );
 
 export function buildWorkerRegistry(): JobRegistry {
