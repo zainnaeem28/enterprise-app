@@ -34,6 +34,7 @@ export interface TelehealthWorkerPort {
     vendor: string,
     meetingId: string,
   ): Promise<boolean>;
+  meetingToClose(tx: Tx, sessionId: string): Promise<{ vendor: string; meetingId: string } | null>;
   staleSessions(tx: Tx, limit?: number): Promise<StaleSession[]>;
   endStale(tx: Tx, meta: TelehealthMeta, sessionId: string): Promise<EndedStale>;
 }

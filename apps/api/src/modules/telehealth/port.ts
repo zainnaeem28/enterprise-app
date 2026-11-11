@@ -1,9 +1,11 @@
 import type { TelehealthJobService } from './job-service.js';
 
-// What the telehealth API side needs from the video vendor, as a port. The API cannot call a vendor itself: the call log and the circuit
-// of integration-core belong to the worker's VendorGateway (BE-02). The composition root implements this port over that gateway
-// (`callVendor('video', 'join_token' | 'end_meeting', ...)`); the worker's video adapter (apps/worker/src/jobs/telehealth) is the vendor
-// side. A token returned here is handed to the caller once and is never logged, stored or put in an audit row.
+// What the telehealth API side needs from the video vendor, as a port: issuing a join token, and nothing else (DL-1, HEAAA-738). ARCHITECTURE
+// 35.2 allows the join token as a request-path vendor call, and `app_api` has no write right on `outbound_call` (BE-02), so the production
+// port (`platform/aws/chime-video.ts`) calls the vendor directly with bounded timeouts and logs one `vendor_call` line per call. Meeting
+// creation (`telehealth.create_meeting`) and closing (`telehealth.close_meeting`) are worker jobs behind the VendorGateway; the worker's
+// video adapter (apps/worker/src/jobs/telehealth) is the vendor side. A token returned here is handed to the caller once and is never
+// logged, stored or put in an audit row. The dbtest kit (`testkit.ts`) runs this port over the gateway to test the worker's adapter.
 
 export interface JoinTokenRequest {
   vendor: string;
@@ -24,8 +26,6 @@ export interface JoinTokenGrant {
 
 export interface VideoVendorPort {
   issueJoinToken(req: JoinTokenRequest): Promise<JoinTokenGrant>;
-  /** Best effort after the session ended in our database. A failure is the stale-session job's to retry. */
-  endMeeting?(req: { vendor: string; meetingId: string; idempotencyToken: string }): Promise<void>;
 }
 
 // The port the worker's telehealth jobs are written against (apps/worker/src/jobs/telehealth/ports.ts), backed by the job service. The
@@ -35,6 +35,7 @@ export interface VideoVendorPort {
 export interface TelehealthWorkerPort {
   ensureSession: TelehealthJobService['ensureSession'];
   recordMeeting: TelehealthJobService['recordMeeting'];
+  meetingToClose: TelehealthJobService['meetingToClose'];
   staleSessions: TelehealthJobService['staleSessions'];
   endStale: TelehealthJobService['endStale'];
 }
@@ -44,6 +45,7 @@ export function telehealthPort(s: TelehealthJobService): TelehealthWorkerPort {
     ensureSession: (tx, meta, rid) => s.ensureSession(tx, meta, rid),
     recordMeeting: (tx, meta, sid, vendor, meetingId) =>
       s.recordMeeting(tx, meta, sid, vendor, meetingId),
+    meetingToClose: (tx, sid) => s.meetingToClose(tx, sid),
     staleSessions: (tx, limit) => s.staleSessions(tx, limit),
     endStale: (tx, meta, sid) => s.endStale(tx, meta, sid),
   };

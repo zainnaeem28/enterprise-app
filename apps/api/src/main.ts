@@ -4,6 +4,7 @@ import { ConfigError, createLogger, describeDatabase, KernelDb, loadConfig } fro
 import type { PoolLike } from '@ehr/kernel';
 import { buildComposition, registerAllParticipants } from './composition.js';
 import { selectS3Presigners } from './platform/aws/s3-presigners.js';
+import { selectChimeVideoVendor } from './platform/aws/chime-video.js';
 import { selectApiSecretPorts } from './platform/aws/secrets-kms.js';
 import { provisionR1Templates } from './modules/notifications/index.js';
 import { loadAdminEnv } from './admin-env.js';
@@ -53,11 +54,13 @@ async function main(): Promise<void> {
   // A half-configured S3 adapter stops the start here; an absent one leaves the refusing port in place.
   const s3 = selectS3Presigners(process.env, logger);
   const secrets = selectApiSecretPorts(process.env, logger);
+  const videoVendor = selectChimeVideoVendor(process.env, logger);
   const composition = buildComposition({
     db,
     logger,
     identity: identityEnv,
     ...s3,
+    ...(videoVendor === undefined ? {} : { videoVendor }),
     adminPorts: {
       ...(secrets.secretStore === undefined ? {} : { secretStore: secrets.secretStore }),
       ...(secrets.sealer === undefined ? {} : { sealer: secrets.sealer }),

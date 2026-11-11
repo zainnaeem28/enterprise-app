@@ -151,6 +151,58 @@ tested against the real `web-push` library offline (request building and encrypt
 (docs/GO-LIVE.md): SES production access and verified identity, DKIM/SPF/DMARC, bounce and complaint event destination and the real event shape, an SMS
 origination identity registered and out of the sandbox, 10DLC/toll-free registration where required, a push delivered to a real browser.
 
+## Video, malware scan, OCR, identity (AWS-BE-4)
+
+Code: `apps/api/src/platform/aws/chime-video.ts` (API side), `apps/worker/src/aws/chime-video.ts`, `guardduty-scan.ts`, `textract-ocr.ts`
+(worker). All sit behind ports that already existed (`VideoVendorPort`, worker `VideoTransport`/`VideoAdapter`, `ScanCaller` with
+`TagScannerAdapter`, `OcrProviderClient`/`OcrAdapter`); no job, route or table changed.
+
+| Group (adapter) | Variables | Process |
+|---|---|---|
+| Video (Chime SDK Meetings) | required: `EHR_CHIME_MEDIA_REGION` (e.g. `us-east-1`, a Chime media region) | api (join token only), worker (create and close meeting) |
+| Malware scan (GuardDuty tag reader) | `EHR_MALWARE_SCAN=guardduty`; also needs `EHR_S3_DOCS_QUARANTINE_BUCKET`, `EHR_S3_DOCS_CLEAN_BUCKET` (start fails naming the missing one) | worker |
+| OCR (Textract) | `EHR_OCR=textract`; also needs the same two bucket variables | worker |
+| Patient identity (Cognito) | no new variables: the existing `EHR_PATIENT_OIDC_*` | api |
+
+Absent variables keep the refusing ports: a join answers 503 `telehealth.vendor_unavailable`; the scan job treats the missing scanner as an
+error (never `clean`); OCR suggestions are `skipped`. The video and OCR kinds also need an enabled `integration_core.connection` row
+(`video` vendor `chime`, `ocr` vendor `textract`); the adapters ignore its credentials (the task role is used). The scan needs no row.
+
+Behaviour and decisions:
+
+- **Chime.** The worker creates the meeting with our idempotency token as `ClientRequestToken` (a retry returns the same meeting) and
+  `ExternalMeetingId` = our external ID. **Recording is off**: no media-capture pipeline is ever created and an argument asking for recording is refused.
+  The API creates one attendee per join with `ExternalUserId` = our opaque participant ID and returns the join token once; it is not logged,
+  stored or put in an error (only the SDK error name and status leave an adapter). The waiting room, the 15-minute token record and the
+  single-use rule stay in our database and are unchanged. **Limit:** Chime offers no per-token lifetime, so the "short-lived" bound is OUR record's;
+  the Chime token itself lives as long as the attendee/meeting (a go-live check). Ending a session enqueues `telehealth.close_meeting`; the worker deletes the meeting through the gateway (`NotFoundException` = already ended), with retries, and a job that reaches `dead` shows in the operations view.
+- **GuardDuty.** The adapter does not scan; it reads the object tag `GuardDutyMalwareScanStatus` (`s3:GetObjectTagging`). `NO_THREATS_FOUND` = clean,
+  `THREATS_FOUND` = infected, **no tag = pending** (the existing 30-minute wait, then alert), `UNSUPPORTED`, `ACCESS_DENIED`, `FAILED` or any other value =
+  error, an unreadable object or an outage throws. A missing result is never clean. Tag name and values are from the AWS documentation and are
+  Unverified until a real scan (go-live).
+- **Textract.** `DetectDocumentText` reads the object by S3 reference (no bytes pass through the worker) and a small phrase table maps the
+  text to one of the closed classification list (`id_document`, `insurance_card`, `referral_letter`, `consent`) or no suggestion. The text is never logged or
+  returned. Multi-page PDFs and unsupported files (synchronous API limits) give no suggestion; throttling (including Textract's HTTP 400 `ProvisionedThroughputExceededException`) and 5xx are retried. It only suggests; staff confirm.
+  The phrase table is a first rule set to be tuned on real documents. Textract has no free probe call, so health means "configured".
+- **Cognito (patient).** Already complete; not reopened. The patient realm is a generic OIDC client that verifies the id token against the
+  issuer's JWKS (RS256/ES256, issuer, audience, nonce, expiry). Cognito is configured, not coded: `EHR_PATIENT_OIDC_ISSUER=https://cognito-idp.<region>.amazonaws.com/<poolId>`,
+  `..._JWKS_URI=<issuer>/.well-known/jwks.json`, `..._AUTHORIZATION_ENDPOINT=https://<domain>/oauth2/authorize`, `..._TOKEN_ENDPOINT=https://<domain>/oauth2/token`,
+  `..._CLIENT_ID`, `..._REDIRECT_URI` (secret optional with PKCE). Pool settings (passkeys, MFA, Essentials plan) are IaC, not code.
+  **The partner pool has no sign-in code in R1** (the partner portal is R2, ARCHITECTURE section 4 `pharmacy-network`); adding it then is the same configuration with a second prefix.
+
+Required IAM (task roles):
+
+- worker, video: `chime:CreateMeeting`, `chime:DeleteMeeting`, `chime:GetMeeting` (health probe). api, video: `chime:CreateAttendee` only, scoped to meetings in the account and region (no `CreateMeeting`, `DeleteMeeting`, media-pipeline or recording actions; DL-1 C4).
+- worker, scan: `s3:GetObjectTagging` on the quarantine and clean buckets; `s3:ListBucket` on the quarantine bucket (health `HeadBucket`).
+- worker, OCR: `textract:DetectDocumentText`; `s3:GetObject` on the clean and quarantine buckets and `kms:Decrypt` on the documents key (Textract reads the object with the caller's permissions).
+- GuardDuty Malware Protection for S3 itself (plan, service role, tagging on) is IaC.
+
+Evidence: unit tests with recorded-response stubs of the SDK clients (`apps/worker/src/aws/ai-adapters.test.ts`, `apps/api/src/platform/aws/chime-video.test.ts`,
+`identity-env.test.ts`): **stub evidence only**; Chime, Textract and GuardDuty have no emulator. `guardduty-scan.emulator.test.ts` checks tag reading
+against LocalStack S3 with a tag the test writes itself (emulator evidence for the S3 tagging API, not for GuardDuty). Go-live checks (docs/GO-LIVE.md):
+a real meeting with two attendees and no recording; the real token lifetime and revocation after `DeleteMeeting`; a real scan result tag for clean, EICAR and unsupported
+files and its latency; Textract on real insurance cards and ID documents (accuracy, multi-page PDFs); a Cognito sign-in end to end incl. passkey and the replica.
+
 ## Tests
 
 - Unit (stubbed clients, run by `pnpm test` in each app): `apps/worker/src/aws/notify-adapters.test.ts`, `web-push.test.ts`, `receipt-events.test.ts`,
@@ -172,3 +224,5 @@ origination identity registered and out of the sandbox, 10DLC/toll-free registra
   `docs/GO-LIVE.md`. The AWS-BE-2 emulator tests are `packages/kernel/src/aws/secrets-kms.emulator.test.ts` (same `EHR_EMULATOR_S3_ENDPOINT` LocalStack edge URL;
   `pnpm test:emulator` runs the kernel too). Real-KMS checks for the go-live list: the key policy and `kms:EncryptionContextKeys` conditions, that the api
   role cannot Decrypt, and that a rotated key still opens old blobs.
+
+**Hand-off to DevOps (DL-1, HEAAA-738):** (C3) a log-metric filter and alarm on `event = vendor_call, kind = video, outcome != ok` (rate over 5 min) in the API log group, and an alarm on `telehealth.close_meeting` jobs reaching `dead`; (C4) the API task role gets only `chime:CreateAttendee` as above.

@@ -263,6 +263,8 @@ export function buildComposition(deps: {
   packageStore?: PackageStorePort;
   /** Presigner of the documents store; defaults to the refusing one. */
   objectStore?: ObjectStorePort;
+  /** Video vendor (Chime SDK, AWS-BE-4); absent means the port refuses and a join answers 503. */
+  videoVendor?: VideoVendorPort;
   /**
    * The admin realm (BE-05, BE-23, BE-24): `/api/v1/admin/*` and the admin ceremonies. Absent means the realm is NOT mounted and no elevation
    * checker is installed (every elevated route is then refused by the guard); `main.ts` always supplies it (fail-closed, SEC02-F01).
@@ -472,7 +474,7 @@ export function buildComposition(deps: {
     ...(deps.now === undefined ? {} : { now: deps.now }),
   });
   const reporting = createReporting({ db: deps.db });
-  // Telehealth (BE-15): the video vendor is not selected yet (C-11), so the port refuses every call; a join then answers 503
+  // Telehealth (BE-15): with no video vendor configured the port refuses every call; a join then answers 503
   // `telehealth.vendor_unavailable`. The session, waiting room, device check and location routes need no vendor.
   const refusingVideoVendor: VideoVendorPort = {
     issueJoinToken: () => Promise.reject(new Error('video vendor not configured')),
@@ -481,7 +483,7 @@ export function buildComposition(deps: {
     db: deps.db,
     audit,
     organisation,
-    vendor: refusingVideoVendor,
+    vendor: deps.videoVendor ?? refusingVideoVendor,
     queue,
     ...(deps.now === undefined ? {} : { now: deps.now }),
   });

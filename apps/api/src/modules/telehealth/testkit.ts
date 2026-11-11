@@ -41,9 +41,12 @@ interface WorkerTelehealth {
     listed: number;
     ended: number;
     failed: number;
-    vendorClosed: number;
-    vendorFailed: number;
+    closeQueued: number;
   }>;
+  runCloseMeeting(
+    deps: TelehealthKit['jobs'],
+    payload: Record<string, unknown>,
+  ): Promise<'closed' | 'nothing'>;
   createTelehealthTasks(deps: TelehealthKit['jobs']): Record<string, unknown>;
 }
 
@@ -164,7 +167,8 @@ export async function setupTelehealth(name: string): Promise<TelehealthKit> {
     sleep: () => Promise.resolve(),
   });
 
-  // The API side's port over the same gateway.
+  // The API side's port over the same gateway: the dbtests exercise the worker's adapter this way. In production the API's port is
+  // platform/aws/chime-video.ts (join token only); closing a meeting is the `telehealth.close_meeting` job.
   const vendor: VideoVendorPort = {
     async issueJoinToken(req) {
       const r = await gateway.callVendor(
@@ -180,14 +184,6 @@ export async function setupTelehealth(name: string): Promise<TelehealthKit> {
       );
       const d = r.data as { attendeeId: string; attendeeToken: string };
       return { attendeeId: d.attendeeId, attendeeToken: d.attendeeToken };
-    },
-    async endMeeting(req) {
-      await gateway.callVendor(
-        'video',
-        'end_meeting',
-        { meetingId: req.meetingId },
-        { type: 'telehealth.session', idempotencyToken: req.idempotencyToken },
-      );
     },
   };
 

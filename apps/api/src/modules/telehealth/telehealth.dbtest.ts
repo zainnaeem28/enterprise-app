@@ -848,8 +848,15 @@ describe('the end of a visit and stale sessions (25.x, 33.1 telehealth.end_stale
     await t.telehealth.join(t.hostScope(v.d), meta(), v.rid);
     const r1 = await asH(v.d, (tx) => t.telehealth.end(tx, meta(), v.rid));
     assert.equal(r1.view.status, 'ended');
-    assert.ok(r1.vendorClose !== undefined);
-    assert.equal(await t.telehealth.closeAtVendor(r1.vendorClose as never), true);
+    const sid1 = ((await t.sessionOf(v.rid)) as { id: string }).id;
+    // the close at the vendor is a durable job enqueued in the same transaction: one, keyed by the session, IDs only (DL-1)
+    const queued = async (sid: string): Promise<Record<string, unknown>[]> =>
+      (
+        (await t.f.jobsInQueue('telehealth.close_meeting')) as unknown as Record<string, unknown>[]
+      ).filter((j) => j['key'] === `telehealth.close_meeting:close_meeting_${sid}`);
+    const q1 = await queued(sid1);
+    assert.equal(q1.length, 1);
+    assert.deepEqual(q1[0]?.['payload'], { sessionId: sid1, patientId: v.p.patientId });
     assert.equal(
       await nrows(
         `SELECT count(*) AS n FROM telehealth.join_token j JOIN telehealth.video_session s ON s.id = j.session_id WHERE s.reservation_id = $1 AND j.status = 'issued'`,
@@ -874,11 +881,23 @@ describe('the end of a visit and stale sessions (25.x, 33.1 telehealth.end_stale
       ),
       0,
     );
-    // again: the same answer, no second vendor close
+    // again: the same answer, no second close job
     const r2 = await asH(v.d, (tx) => t.telehealth.end(tx, meta(), v.rid));
     assert.equal(r2.view.status, 'ended');
-    assert.equal(r2.vendorClose, undefined);
-    assert.ok(t.video.meetings.get(((await t.sessionOf(v.rid)) as { id: string }).id)?.ended);
+    assert.equal((await queued(sid1)).length, 1);
+    // the job closes the room through the gateway: one call log row, and a repeat of the job is harmless
+    assert.equal(
+      await t.W.runCloseMeeting(t.jobs, { sessionId: sid1, patientId: v.p.patientId }),
+      'closed',
+    );
+    assert.ok(t.video.meetings.get(sid1)?.ended);
+    assert.equal(
+      await nrows(
+        `SELECT count(*) AS n FROM integration_core.outbound_call WHERE operation = 'end_meeting' AND correlation_id = $1`,
+        [sid1],
+      ),
+      1,
+    );
     // closed to the patient and the host
     await rejectsWith(t.telehealth.join(v.p.scope, meta(), v.rid), 'telehealth.session_closed');
     await rejectsWith(
@@ -983,11 +1002,56 @@ describe('the end of a visit and stale sessions (25.x, 33.1 telehealth.end_stale
       ),
       0,
     );
+    assert.equal(r.closeQueued >= 1, true);
+    // the sweep does not call the vendor itself: it enqueued the close job (the same path as the host's end)
+    assert.equal(t.video.meetings.get(sid)?.ended, false);
+    assert.equal(
+      await t.W.runCloseMeeting(t.jobs, { sessionId: sid, patientId: stale.p.patientId }),
+      'closed',
+    );
     assert.ok(t.video.meetings.get(sid)?.ended);
     // a second run finds nothing more for these
     const again = await t.W.runEndStale(t.jobs);
     assert.equal(again.ended + again.failed, 0);
     assert.equal(((await t.sessionOf(stale.rid)) as { status: string }).status, 'ended');
+  });
+});
+
+describe('telehealth.close_meeting (DL-1)', () => {
+  test('a visit without a room enqueues no close; a transport failure rethrows so the queue retries; a session that is not ended makes no vendor call', async () => {
+    const noRoom = await visit({ room: false });
+    const sidNo = ((await t.sessionOf(noRoom.rid)) as { id: string }).id;
+    await asH(noRoom.d, (tx) => t.telehealth.end(tx, meta(), noRoom.rid));
+    assert.equal(
+      (
+        (await t.f.jobsInQueue('telehealth.close_meeting')) as unknown as Record<string, unknown>[]
+      ).filter((j) => j['key'] === `telehealth.close_meeting:close_meeting_${sidNo}`).length,
+      0,
+    );
+    const live = await visit();
+    const sidLive = ((await t.sessionOf(live.rid)) as { id: string }).id;
+    const before = t.video.calls.length;
+    assert.equal(
+      await t.W.runCloseMeeting(t.jobs, { sessionId: sidLive, patientId: live.p.patientId }),
+      'nothing',
+    );
+    assert.equal(t.video.calls.length, before);
+    await asH(live.d, (tx) => t.telehealth.end(tx, meta(), live.rid));
+    t.video.unavailable = true;
+    await assert.rejects(
+      t.W.runCloseMeeting(t.jobs, { sessionId: sidLive, patientId: live.p.patientId }),
+    );
+    t.video.unavailable = false;
+    assert.equal(
+      await t.W.runCloseMeeting(t.jobs, { sessionId: sidLive, patientId: live.p.patientId }),
+      'closed',
+    );
+    // closing again: the vendor no longer has the meeting, which counts as done
+    assert.equal(
+      await t.W.runCloseMeeting(t.jobs, { sessionId: sidLive, patientId: live.p.patientId }),
+      'closed',
+    );
+    await assert.rejects(t.W.runCloseMeeting(t.jobs, { sessionId: 'x', patientId: 'y' }));
   });
 });
 

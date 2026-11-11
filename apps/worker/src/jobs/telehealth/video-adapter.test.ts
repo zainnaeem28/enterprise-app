@@ -172,6 +172,7 @@ test('the job list is pinned (the API side pins the same one)', () => {
     [
       'telehealth.on_reservation_confirmed|handler|patients|resolve|5',
       'telehealth.create_meeting|job|patients|resolve|8',
+      'telehealth.close_meeting|job|patients|resolve|8',
       'telehealth.end_stale|system|org|none|3',
     ],
   );

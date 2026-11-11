@@ -2255,6 +2255,7 @@ Every job type declares: scope (`patients` or `org`, SHARED-BOUNDARIES 6.1), `on
 | `calendar_sync.renew_watch` | daily | org | — | channel ID | Registers channels with the HMAC channel token under the current key version (29.5) |
 | `telehealth.create_meeting` | `reservation_confirmed` (video) | patients | resolve | reservation ID | Vendor call; the meeting is created ahead of time (start − 15 min at the latest) |
 | `telehealth.end_stale` | every 15 min | org | — | window | Ends sessions 2 h after their slot |
+| `telehealth.close_meeting` | host `end` or `telehealth.end_stale` ends a session that has a room (enqueued in that transaction) | patients | resolve | session ID | Vendor call `end_meeting` through the gateway; the vendor's "not found" counts as done. Issued Chime tokens stay usable until the meeting closes, so this job is part of token lifetime (ST-4) |
 | `clinical.note_sign_reminder` | encounter end + 24 h | patients | resolve | note ID | Alert type `note_unsigned` to the author |
 | `clinical.on_alert_unacknowledged` | event | patients | resolve | alert ID + level | Red-flag re-targeting (25.5) |
 | `clinical.terminology_load` | admin trigger or release | org | — | dataset + version | Chunked; class `data_repair` not needed (reference data) |
