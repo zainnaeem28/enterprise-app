@@ -520,8 +520,6 @@ describe('merge participant (22.16, 38.2 items 1 and 11)', () => {
     assert.equal(rep.length, 1);
     assert.ok(rep[0]!.change.overlapsAfterMerge >= 1);
     // nothing writes to the kept row afterwards, for any role (K state, 21.5), and nobody can book for the merged ID
-    // HEAAA-722 D6: depending on the grants of the worker role this is refused by the K-state guard (PS001) or by the
-    // missing column grant (42501); either way the write is refused.
     await assert.rejects(
       t.worker.withScope(
         {
@@ -537,7 +535,8 @@ describe('merge participant (22.16, 38.2 items 1 and 11)', () => {
             x.S,
           ]),
       ),
-      (e: { code?: string }) => e.code === 'PS001' || e.code === '42501',
+      // SEC03-F11: app_worker no longer holds UPDATE on slot_reservation at all (42501); before 2503 the K-state trigger (PS001) refused it.
+      (e: { code?: string }) => e.code === '42501',
     );
     await assert.rejects(
       t.as(x.scD, (tx) => t.svc.hold(tx, meta, holdInput(x.D, x.doc, slotStart(nextDay())))),
