@@ -200,7 +200,7 @@ export const preStrings = {
   dob: 'Date of birth',
   dobHint: 'Year-month-day, for example 1984-03-27.',
   stateCode: 'State',
-  stateHint: 'Two letters, for example NY.',
+  stateHint: 'Two letters.',
   phone: 'Phone',
   email: 'Email',
   checkExisting: 'Check for an existing record',

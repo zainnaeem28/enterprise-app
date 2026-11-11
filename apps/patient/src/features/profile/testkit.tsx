@@ -23,7 +23,7 @@ export const profileBody = (over: Record<string, unknown> = {}) => ({
   phone: '+15550100100',
   email: 'sam@example.test',
   address: { line1: '1 Test Street', city: 'Testville', postalCode: '10001' },
-  stateCode: 'NY',
+  stateCode: 'AA',
   preferredLanguage: 'en',
   preferredPharmacy: { name: 'Corner Pharmacy' },
   version: 3,

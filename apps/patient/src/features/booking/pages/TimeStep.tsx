@@ -221,7 +221,7 @@ export function TimeStep({
         <TextField
           id="patient-state"
           label="State you will be in during the video visit"
-          hint="Two letters, for example NY. We can only offer video visits in some states."
+          hint="Two letters. We can only offer video visits in some states."
           maxLength={2}
           autoComplete="address-level1"
           value={draft.patientState}

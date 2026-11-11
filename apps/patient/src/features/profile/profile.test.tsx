@@ -37,7 +37,7 @@ describe('PP-35 profile and contact details', () => {
       line2: '',
       city: 'Testville',
       postalCode: '10001',
-      stateCode: 'NY',
+      stateCode: 'AA',
       preferredLanguage: 'en',
       pharmacyName: '',
     };

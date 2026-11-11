@@ -43,7 +43,7 @@ export const location = (n: number, over: Record<string, unknown> = {}) => ({
   kind: 'clinic',
   timeZone: 'America/New_York',
   address: null,
-  stateCode: 'NY',
+  stateCode: 'AA',
   phone: null,
   active: true,
   rowVersion: 1,

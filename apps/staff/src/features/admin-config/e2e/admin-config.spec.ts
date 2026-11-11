@@ -73,7 +73,7 @@ async function mock(page: Page) {
               name: 'Downtown clinic',
               kind: 'clinic',
               timeZone: 'America/New_York',
-              stateCode: 'NY',
+              stateCode: 'AA',
               phone: null,
               active: true,
               rowVersion: 1,

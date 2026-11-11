@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { json, runtimeWith } from '../../app/test-helpers.js';
 import { createTelehealthApi } from './api.js';
 import { JoinPage } from './JoinPage.js';
+import { parseStates } from './states.js';
 import { isTelehealthPath, matchTelehealthRoute } from './routes.js';
 import { zoneLabels } from './time.js';
 import type { DeviceCheck } from './types.js';
@@ -17,7 +18,12 @@ afterEach(() => {
 
 const RES = '33333333-3333-4333-8333-333333333333';
 const BASE = `/api/v1/appointments/${RES}/video-session`;
-const STARTS = '2031-06-02T13:30:00.000Z'; // 9:30 AM in New York
+// Placeholder states standing in for the deployment configuration (VITE_OPERATING_STATES).
+const FIXTURE_STATES = [
+  ['AA', 'State A'],
+  ['BB', 'State B'],
+] as const;
+const STARTS = '2031-06-02T13:30:00.000Z'; // 9:30 AM in the clinic zone
 const view = (over: Record<string, unknown> = {}) => ({
   status: 'open',
   admission: 'waiting',
@@ -68,6 +74,7 @@ function setup(
       viewer="America/Los_Angeles"
       now={() => NOW}
       pollMs={20}
+      states={FIXTURE_STATES}
       {...props}
     />,
   );
@@ -76,7 +83,7 @@ function setup(
 const click = (name: string | RegExp) => fireEvent.click(screen.getByRole('button', { name }));
 const confirm = async () => {
   fireEvent.change(await screen.findByLabelText('The state you are in right now'), {
-    target: { value: 'NY' },
+    target: { value: 'AA' },
   });
   click('Confirm my location');
   await screen.findByText(/You said you are in/);
@@ -134,7 +141,7 @@ describe('PP-23 device check and join', () => {
     expect(screen.getByRole('button', { name: 'Join the visit' })).toBeDisabled();
     await confirm();
     expect(screen.getByRole('button', { name: 'Join the visit' })).toBeEnabled();
-    expect(m.seen.find((s) => s.path === `${BASE}/location`)?.body).toEqual({ state: 'NY' });
+    expect(m.seen.find((s) => s.path === `${BASE}/location`)?.body).toEqual({ state: 'AA' });
     cleanup();
     setup({ [`GET ${BASE}`]: () => json(200, view({ joinOpensAt: '2031-06-02T13:40:00.000Z' })) });
     expect(await screen.findByText('Joining opens soon')).toBeInTheDocument();
@@ -151,7 +158,7 @@ describe('PP-23 device check and join', () => {
     expect(await screen.findByText('Choose the state you are in right now')).toBeInTheDocument();
     expect(m.seen.some((s) => s.path === `${BASE}/location`)).toBe(false);
     fireEvent.change(screen.getByLabelText('The state you are in right now'), {
-      target: { value: 'CA' },
+      target: { value: 'BB' },
     });
     click('Confirm my location');
     expect(
@@ -305,5 +312,15 @@ describe('PP-23 device check and join', () => {
     await screen.findByText('One more step');
     await confirm();
     expect(screen.queryByText('One more step')).not.toBeInTheDocument();
+  });
+});
+
+describe('configured states', () => {
+  it('parses CODE=Name pairs and ignores malformed entries', () => {
+    expect(parseStates('aa=State A, BB=State B,bad,=x,CCC=y')).toEqual([
+      ['AA', 'State A'],
+      ['BB', 'State B'],
+    ]);
+    expect(parseStates(undefined)).toEqual([]);
   });
 });

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
-import { Banner, Button, LoadingState, SelectField, StatusChip } from '@ehr/ui';
+import { Banner, Button, LoadingState, SelectField, StatusChip, TextField } from '@ehr/ui';
 import { useHeadingFocus, usePageTitle } from '../profile/lib/hooks.js';
 import { Problem } from '../profile/lib/Problem.js';
 import type { Failure } from '../profile/lib/core.js';
@@ -8,7 +8,8 @@ import type { TelehealthApi } from './api.js';
 import { browserProbe } from './probe.js';
 import type { Probe } from './probe.js';
 import { clockIn, zoneLabels } from './time.js';
-import { US_STATES } from './types.js';
+import { configuredStates } from './states.js';
+import type { StateOption } from './states.js';
 import type { DeviceCheck, JoinGrant, SessionView } from './types.js';
 
 export interface JoinPageProps {
@@ -25,6 +26,8 @@ export interface JoinPageProps {
   /** The viewer's IANA zone (tests). */
   viewer?: string;
   now?: () => number;
+  /** The states offered (code, name). Defaults to the deployment configuration; empty means a code is typed instead. */
+  states?: readonly StateOption[];
 }
 
 const VERDICT: Record<string, string> = { pass: 'Working', fail: 'Not working' };
@@ -41,6 +44,7 @@ export function JoinPage({
   pollMs = 5000,
   viewer,
   now = Date.now,
+  states = configuredStates(),
 }: JoinPageProps) {
   const ref = useHeadingFocus<HTMLHeadingElement>();
   usePageTitle('Video visit');
@@ -293,24 +297,35 @@ export function JoinPage({
             {confirmed !== undefined ? (
               <p role="status">
                 <StatusChip tone="success">Confirmed</StatusChip> You said you are in{' '}
-                {US_STATES.find(([c]) => c === confirmed)?.[1] ?? confirmed}.
+                {states.find(([c]) => c === confirmed)?.[1] ?? confirmed}.
               </p>
             ) : (
               <form onSubmit={(e) => void confirmLocation(e)} noValidate>
-                <SelectField
-                  id="th-state"
-                  label="The state you are in right now"
-                  value={state}
-                  onChange={(e) => setState(e.target.value)}
-                  {...(stateError !== undefined ? { error: stateError } : {})}
-                >
-                  <option value="">Choose a state</option>
-                  {US_STATES.map(([code, name]) => (
-                    <option key={code} value={code}>
-                      {name}
-                    </option>
-                  ))}
-                </SelectField>
+                {states.length > 0 ? (
+                  <SelectField
+                    id="th-state"
+                    label="The state you are in right now"
+                    value={state}
+                    onChange={(e) => setState(e.target.value)}
+                    {...(stateError !== undefined ? { error: stateError } : {})}
+                  >
+                    <option value="">Choose a state</option>
+                    {states.map(([code, name]) => (
+                      <option key={code} value={code}>
+                        {name}
+                      </option>
+                    ))}
+                  </SelectField>
+                ) : (
+                  <TextField
+                    id="th-state"
+                    label="The state you are in right now"
+                    hint="Two-letter state code"
+                    value={state}
+                    onChange={(e) => setState(e.target.value.toUpperCase())}
+                    {...(stateError !== undefined ? { error: stateError } : {})}
+                  />
+                )}
                 <Button type="submit">Confirm my location</Button>
               </form>
             )}
