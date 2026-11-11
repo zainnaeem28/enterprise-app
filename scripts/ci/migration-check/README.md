@@ -41,10 +41,12 @@ variable `REQUIRE_PREVIOUS_RELEASE_TAG=true` once the first release tag exists; 
 Until the first production release, the newest `r<N>` tag is a **rehearsal baseline**, not a release: no manifest, image or
 G3 exists for it. Rehearsal baselines:
 
-| Tag    | Decision ticket |
-| ------ | --------------- |
-| `r133` | HEAAA-658       |
-| `r206` | HEAAA-676       |
+| Tag    | Decision ticket       |
+| ------ | --------------------- |
+| `r133` | HEAAA-658             |
+| `r206` | HEAAA-676             |
+| `r208` | HEAAA-722 / HEAAA-763 |
+| `r209` | HEAAA-879 / HEAAA-884 |
 
 - **P-1 (before the first production release).** When a reviewed, deliberate change (with its own decision ticket) makes the
   rehearsal baseline's suites fail, the Solution Architect may decide to add a newer rehearsal tag, reviewed by the Solution
