@@ -33,7 +33,7 @@ FE-16's allowed path is `apps/cms/**`. These changes are needed for the branch t
 3. **CI** — a job for `apps/cms` (typecheck, `test`, and `test:db` against the existing PostgreSQL service with a `cms`-named role
    and a throwaway database) is not wired; `.github/**` is outside FE-16's paths. Root `eslint .` also lints `apps/cms/.next`
    in a developer tree; add `**/.next/**` to the ignores in `eslint.config.mjs` (a clean CI checkout is unaffected).
-4. **Brand site integration** (`apps/site`, FE-15's paths) — implement `ContentSource` from the CMS content API and a `/preview`
+4. **Brand site integration** — `ContentSource` from the CMS is done (HEAAA-799). Still open: a `/preview`
    route that calls `verifyPreviewToken` (`apps/cms/src/admin/preview.ts`) with the shared `CMS_PREVIEW_SECRET`. Not done here.
 5. **Deploy** (`deploy-marketing`) — `cms.` host, WAF, optional IP allow-list, CMS-only database and role, secret delivery, container image,
    and the Workspace-side OAuth client restricted to the marketing group. The CMS only enforces its own start-up guards.

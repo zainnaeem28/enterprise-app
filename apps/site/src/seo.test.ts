@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { doctorLd, jsonLdText, locationLd, robotsTxt, sitemapXml } from './seo.js';
+import { doctorLd, jsonLdText, locationLd, organisationLd, robotsTxt, sitemapXml } from './seo.js';
 
 const D = '33333333-3333-4333-8333-333333333333';
 
@@ -10,13 +10,26 @@ describe('seo (TC-BS-05)', () => {
   });
   it('doctor structured data has name and url only', () => {
     expect(
-      doctorLd('https://www.example.org', { id: D, name: 'Dr A', serviceIds: [], locationIds: [] }),
+      doctorLd(
+        'https://www.example.org',
+        { id: D, name: 'Dr A', serviceIds: [], locationIds: [] },
+        null,
+      ),
     ).toEqual({
       '@context': 'https://schema.org',
       '@type': 'Physician',
       name: 'Dr A',
       url: `https://www.example.org/doctors/${D}`,
-      worksFor: { '@type': 'MedicalOrganization', name: '[Product name]' },
+    });
+  });
+  it('names the organisation only when the CMS has it', () => {
+    const d = { id: D, name: 'Dr A', serviceIds: [], locationIds: [] };
+    expect(doctorLd('https://www.example.org', d, 'Example Practice')).toMatchObject({
+      worksFor: { name: 'Example Practice' },
+    });
+    expect(organisationLd('https://www.example.org', null)).not.toHaveProperty('name');
+    expect(organisationLd('https://www.example.org', 'Example Practice')).toMatchObject({
+      name: 'Example Practice',
     });
   });
   it('location structured data omits what is absent', () => {

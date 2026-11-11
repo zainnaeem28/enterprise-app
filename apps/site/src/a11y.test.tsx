@@ -40,9 +40,20 @@ const dir: Directory = {
   ],
   doctors: [{ id: D, name: 'Dr. Sample Doctor', serviceIds: [S], locationIds: [L] }],
 };
-const ctx = (d: Directory | null): Ctx => ({
+const filled = {
+  ...placeholderContent,
+  organisation: {
+    name: 'Example Practice',
+    addressLines: ['1 Example Street', 'Springfield'],
+    phone: '+1 555 0100',
+    email: 'hello@example.org',
+    hours: 'Mon-Fri 9-5',
+    clinicians: [{ name: 'Dr. Sample Doctor', title: 'Physician' }],
+  },
+};
+const ctx = (d: Directory | null, content = placeholderContent): Ctx => ({
   patientOrigin: 'https://my.example.org',
-  content: placeholderContent,
+  content,
   dir: d,
 });
 const slots = new Map([
@@ -53,6 +64,8 @@ const slots = new Map([
 const pages: Record<string, () => React.ReactNode> = {
   home: () => <HomePage ctx={ctx(dir)} />,
   about: () => <AboutPage ctx={ctx(dir)} />,
+  'about, organisation entered': () => <AboutPage ctx={ctx(dir, filled)} />,
+  'contact, organisation entered': () => <ContactPage ctx={ctx(dir, filled)} />,
   'about, directory down': () => <AboutPage ctx={ctx(null)} />,
   services: () => <ServicesPage ctx={ctx(dir)} />,
   doctors: () => <DoctorsPage ctx={ctx(dir)} slots={slots} />,
@@ -84,7 +97,7 @@ describe('axe (jsdom) on every page state', () => {
       expect(
         await violations(
           renderToStaticMarkup(
-            <Layout current="/" bookHref="https://my.example.org/book">
+            <Layout current="/" bookHref="https://my.example.org/book" siteName={null}>
               {page()}
             </Layout>,
           ),

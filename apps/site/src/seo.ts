@@ -2,8 +2,6 @@
 // only: no patient, appointment or health information exists in the data this site reads.
 import type { Directory, Doctor, Location, Service } from './directory.js';
 
-export const SITE_NAME = '[Product name]';
-
 export const jsonLdText = (data: unknown): string =>
   JSON.stringify(data)
     .replace(/</g, '\\u003c')
@@ -12,11 +10,12 @@ export const jsonLdText = (data: unknown): string =>
 
 const url = (origin: string, path: string) => new URL(path, origin).toString();
 
-export function organisationLd(origin: string) {
+/** `name` is the organisation's own name from the CMS; when it has not been entered the property is omitted. */
+export function organisationLd(origin: string, name: string | null) {
   return {
     '@context': 'https://schema.org',
     '@type': 'MedicalOrganization',
-    name: SITE_NAME,
+    ...(name !== null ? { name } : {}),
     url: url(origin, '/'),
   };
 }
@@ -43,17 +42,17 @@ export function locationLd(origin: string, l: Location) {
   };
 }
 
-export function doctorLd(origin: string, d: Doctor) {
+export function doctorLd(origin: string, d: Doctor, orgName: string | null) {
   return {
     '@context': 'https://schema.org',
     '@type': 'Physician',
     name: d.name,
     url: url(origin, `/doctors/${d.id}`),
-    worksFor: { '@type': 'MedicalOrganization', name: SITE_NAME },
+    ...(orgName !== null ? { worksFor: { '@type': 'MedicalOrganization', name: orgName } } : {}),
   };
 }
 
-export function servicesLd(origin: string, services: Service[]) {
+export function servicesLd(origin: string, services: Service[], orgName: string | null) {
   return {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
@@ -63,7 +62,11 @@ export function servicesLd(origin: string, services: Service[]) {
       item: {
         '@type': 'Service',
         name: s.name,
-        provider: { '@type': 'MedicalOrganization', name: SITE_NAME, url: url(origin, '/') },
+        provider: {
+          '@type': 'MedicalOrganization',
+          ...(orgName !== null ? { name: orgName } : {}),
+          url: url(origin, '/'),
+        },
       },
     })),
   };
@@ -97,8 +100,16 @@ export const STATIC_PATHS = [
 
 const xml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-export function sitemapXml(origin: string, dir: Directory | null): string {
-  const paths: string[] = [...STATIC_PATHS, ...(dir?.doctors.map((d) => `/doctors/${d.id}`) ?? [])];
+export function sitemapXml(
+  origin: string,
+  dir: Directory | null,
+  extraPaths: readonly string[] = [],
+): string {
+  const paths: string[] = [
+    ...STATIC_PATHS,
+    ...extraPaths,
+    ...(dir?.doctors.map((d) => `/doctors/${d.id}`) ?? []),
+  ];
   const body = paths.map((p) => `  <url><loc>${xml(url(origin, p))}</loc></url>`).join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`;
 }
