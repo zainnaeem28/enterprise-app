@@ -1,6 +1,6 @@
 # Site copy review: first-release seed (HEAAA-799)
 
-Seed version: `2026-11-11.2`. Source: `apps/cms/src/seed/copy.ts`. This file is generated from it and a test fails if they differ.
+Seed version: `2026-11-11.3`. Source: `apps/cms/src/seed/copy.ts`. This file is generated from it and a test fails if they differ.
 
 **Review status: authored by the Frontend Engineer; awaiting independent review. Not legal or clinical advice. Every legal page is a complete conservative default applied under the autonomous rule (go-live item 25, "default applied (autonomous)"); each statement describes only what this website does (HEAAA-838).** Owner ruling 2026-11-11 (C) item 5: no medical claims; the site never shows invented facts. † = counsel must confirm before go-live.
 
@@ -28,6 +28,6 @@ Organisation name, address, phone, e-mail, hours and clinicians. The privacy and
 | `legal.cookies.body` | This website sets one cookie. Its name is site_consent. It stores your choice, either essential only or accept all. It belongs to this website only, is sent only to this website, and lasts about six months. It is essential, because it is what remembers your choice, and it is not used to identify you. ⏎ This website sets no other cookies and does not use local storage or session storage in your browser. ⏎ Analytics are off until you choose Accept all. They count page visits and Book appointment clicks by type of page. They never receive names, doctors, services, locations or any health information. If analytics is switched on for this website and you choose Accept all, the analytics provider's script loads and may set its own cookies. Nothing from the provider loads if you choose essential only. ⏎ You can change your choice at any time with Cookie settings in the footer. ⏎ The patient portal is a separate site with its own cookies, described in its own notice. | none | † |
 | `legal.accessibility.title` | Accessibility statement | none | † |
 | `legal.accessibility.description` | How accessible this website is and how to ask for help. | none | † |
-| `legal.accessibility.body` | We aim to meet WCAG 2.2 level AA. This statement does not claim a full manual audit. ⏎ If you cannot use part of this website, or find a barrier, contact us using the Contact page. Tell us the page, what you were trying to do, and any assistive technology you use, if you wish. ⏎ We aim to reply within five business days and, where we can, to offer another way to get what you need. | none | † |
+| `legal.accessibility.body` | We aim to meet WCAG 2.2 level AA. This statement does not claim a full manual audit. ⏎ If you cannot use part of this website, or find a barrier, contact us using the Contact page. Tell us the page, what you were trying to do, and any assistive technology you use, if you wish. | none | † |
 
 Medical-claim screen (automated, see `review-doc.ts`): every string above is checked against a list of claim terms (cure, treat, heal, diagnose, guarantee, best, leading, proven, effective, expert, specialist, outcome, prevent, therapy, safe, clinically). A word list is a screen, not a substitute for the reviewer reading each line.

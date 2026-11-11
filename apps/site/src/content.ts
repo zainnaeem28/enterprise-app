@@ -94,7 +94,6 @@ export const placeholderContent: ContentSource = {
       paragraphs: [
         'We aim to meet WCAG 2.2 level AA. This statement does not claim a full manual audit.',
         'If you cannot use part of this website, or find a barrier, contact us using the Contact page. Tell us the page, what you were trying to do, and any assistive technology you use, if you wish.',
-        'We aim to reply within five business days and, where we can, to offer another way to get what you need.',
       ],
     },
     npp: null,

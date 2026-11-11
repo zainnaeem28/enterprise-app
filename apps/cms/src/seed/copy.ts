@@ -3,7 +3,7 @@
 // go-live (`organisation` global) and are deliberately absent here. Every string is listed in docs/content/SITE-COPY-REVIEW.md
 // (a test keeps the two in step). This file is pure data: apps/site imports it in tests to prove its static fallback
 // equals it. Legal wording is a conservative default, NOT legal advice (marked † in the review doc: counsel confirms).
-export const SEED_VERSION = '2026-11-11.2';
+export const SEED_VERSION = '2026-11-11.3';
 
 export interface LegalSeed {
   title: string;
@@ -76,7 +76,6 @@ export const siteContentSeed: SiteContentSeed = {
       body: [
         'We aim to meet WCAG 2.2 level AA. This statement does not claim a full manual audit.',
         'If you cannot use part of this website, or find a barrier, contact us using the Contact page. Tell us the page, what you were trying to do, and any assistive technology you use, if you wish.',
-        'We aim to reply within five business days and, where we can, to offer another way to get what you need.',
       ].join('\n\n'),
     },
   },
