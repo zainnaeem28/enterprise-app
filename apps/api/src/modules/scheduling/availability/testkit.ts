@@ -3,6 +3,7 @@
 // (including 1100-1103), the real Nest application with the identity guard, the booking core (with this module's search as its
 // availability port) and the availability controllers, seeded sessions, and a second pool with enough connections for real concurrency.
 // Synthetic data only.
+import { FIXTURE_STATES, seedFixtureJurisdictions } from '../../organisation/fixture-states.js';
 import { randomUUID } from 'node:crypto';
 import { KernelDb, Queue, syncTaskTypes } from '@ehr/kernel';
 import type { ScopeSettings, Tx } from '@ehr/kernel';
@@ -138,8 +139,9 @@ export async function setupAvailability(name: string): Promise<AvailKit> {
           `INSERT INTO organisation.room (id, organisation_id, location_id, name, active) VALUES ($1, $2, $3, 'Room 1', true)`,
           [ROOM1, ORG, A1],
         );
+        await seedFixtureJurisdictions(f.sa, ORG);
         await f.sa.query(
-          `INSERT INTO organisation.operating_state (organisation_id, jurisdiction_code, telehealth_allowed, effective_from) VALUES ($1, 'NY', true, '2020-01-01')`,
+          `INSERT INTO organisation.operating_state (organisation_id, jurisdiction_code, telehealth_allowed, effective_from) VALUES ($1, '${FIXTURE_STATES.licensed}', true, '2020-01-01')`,
           [ORG],
         );
       },
@@ -249,7 +251,7 @@ export async function setupAvailability(name: string): Promise<AvailKit> {
       await saWrite(
         k,
         `INSERT INTO patient.patient (id, organisation_id, mrn, given_name, family_name, date_of_birth, state_code, created_via)
-         VALUES ($1, $2, $3, $4, $5, '1975-01-01', 'NY', 'front_desk')`,
+         VALUES ($1, $2, $3, $4, $5, '1975-01-01', '${FIXTURE_STATES.licensed}', 'front_desk')`,
         [patientId, ORG, `MRN-${String(8_000_000 + n)}`, `Avail${n}`, `Patient${n}`],
       );
       const p = await seedPrincipal(k, 'patient_pool', { name: `Patient account ${n}` });

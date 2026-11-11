@@ -2,6 +2,7 @@
 // (0900-0903) and the real Nest application: exclusion constraints, stale-hold expiry, the deferred twin, terminal reservations,
 // hold / confirm / cancel / reschedule, the cut-off and fee behaviour, BR-04, licensing, RLS, the HTTP routes (TC-BK-01, 04..09, 11, 18).
 //   EHR_TEST_ADMIN_URL=postgres://postgres@host:5432/postgres node --test dist/src/modules/scheduling/core/booking.dbtest.js
+import { FIXTURE_STATES } from '../../organisation/fixture-states.js';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { after, before, describe, test } from 'node:test';
@@ -575,7 +576,7 @@ describe('BR-04, overlap, licensing (25.1 steps 3-4)', () => {
         t.svc.hold(
           tx,
           meta,
-          holdInput(pid, doc, slotStart(nextDay()), { mode: 'video', patientState: 'NJ' }),
+          holdInput(pid, doc, slotStart(nextDay()), { mode: 'video', patientState: FIXTURE_STATES.closed }),
         ),
       ),
       LicensingRefusedError,
@@ -586,21 +587,21 @@ describe('BR-04, overlap, licensing (25.1 steps 3-4)', () => {
         t.svc.hold(
           tx,
           meta,
-          holdInput(pid, doc, slotStart(nextDay()), { mode: 'video', patientState: 'NY' }),
+          holdInput(pid, doc, slotStart(nextDay()), { mode: 'video', patientState: FIXTURE_STATES.licensed }),
         ),
       ),
       LicensingRefusedError,
       'not licensed',
     );
     await t.k.sa.query(
-      `INSERT INTO identity.licensed_state (principal_id, jurisdiction_code, organisation_id) VALUES ($1, 'NY', $2)`,
+      `INSERT INTO identity.licensed_state (principal_id, jurisdiction_code, organisation_id) VALUES ($1, '${FIXTURE_STATES.licensed}', $2)`,
       [doc, ORG],
     );
     const h = await t.as(scope, (tx) =>
       t.svc.hold(
         tx,
         meta,
-        holdInput(pid, doc, slotStart(nextDay()), { mode: 'video', patientState: 'NY' }),
+        holdInput(pid, doc, slotStart(nextDay()), { mode: 'video', patientState: FIXTURE_STATES.licensed }),
       ),
     );
     assert.equal(
@@ -620,7 +621,7 @@ describe('BR-04, overlap, licensing (25.1 steps 3-4)', () => {
       t.svc.hold(
         tx,
         meta,
-        holdInput(pid, doc2, slotStart(nextDay()), { mode: 'video', patientState: 'NY' }),
+        holdInput(pid, doc2, slotStart(nextDay()), { mode: 'video', patientState: FIXTURE_STATES.licensed }),
       ),
     );
     assert.equal(

@@ -4,6 +4,7 @@
 // patients and doctors, and on top of it the telehealth service, the job service, the worker's real telehealth jobs and its real video
 // adapter behind integration-core's real `VendorGateway`. The vendor itself is the in-memory contract stub (FakeVideoTransport): it proves
 // nothing about a real vendor (C-11, C-10). Synthetic data only.
+import { FIXTURE_STATES } from '../organisation/fixture-states.js';
 import { randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { Queue, createLogger, syncTaskTypes } from '@ehr/kernel';
@@ -115,13 +116,13 @@ export async function setupTelehealth(name: string): Promise<TelehealthKit> {
   const w = await W<WorkerTelehealth>('jobs/telehealth/index.js');
   const core = await W<WorkerCore>('jobs/integration-core/index.js');
 
-  // The placeholder states of the ticket (D-2 is not answered): NY allowed, NJ known but not an operating state (flow kit), CA allowed here.
+  // Configured fixture states (organisation/fixture-states.ts): licensed and closed come from the flow kit; the unlicensed one is made an operating state here.
   await k.sa.query(
-    `INSERT INTO organisation.jurisdiction (code, organisation_id, name) VALUES ('CA', $1, 'California') ON CONFLICT DO NOTHING`,
+    `INSERT INTO organisation.jurisdiction (code, organisation_id, name) VALUES ('${FIXTURE_STATES.unlicensed}', $1, 'Fixture state') ON CONFLICT DO NOTHING`,
     [ORG],
   );
   await k.sa.query(
-    `INSERT INTO organisation.operating_state (organisation_id, jurisdiction_code, telehealth_allowed, effective_from) VALUES ($1, 'CA', true, '2020-01-01')`,
+    `INSERT INTO organisation.operating_state (organisation_id, jurisdiction_code, telehealth_allowed, effective_from) VALUES ($1, '${FIXTURE_STATES.unlicensed}', true, '2020-01-01')`,
     [ORG],
   );
 

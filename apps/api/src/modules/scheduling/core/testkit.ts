@@ -2,6 +2,7 @@
 // executor (BE-09): a throwaway database migrated by the real pipeline (including 0900-0903), the real Nest application with the
 // identity guard, the patient, merge and booking controllers, seeded sessions, and a second pool with enough connections for real
 // concurrency. Synthetic data only.
+import { FIXTURE_STATES, seedFixtureJurisdictions } from '../../organisation/fixture-states.js';
 import { randomUUID } from 'node:crypto';
 import { JobRegistry, KernelDb, ParticipantRegistries, Queue, syncTaskTypes } from '@ehr/kernel';
 import type { ScopeSettings, Tx } from '@ehr/kernel';
@@ -161,8 +162,9 @@ export async function setupScheduling(name: string): Promise<SchedKit> {
           `INSERT INTO organisation.room (id, organisation_id, location_id, name, active) VALUES ($1, $3, $4, 'Room 1', true), ($2, $3, $4, 'Room 2', true)`,
           [ROOM1, ROOM2, ORG, A1],
         );
+        await seedFixtureJurisdictions(f.sa, ORG);
         await f.sa.query(
-          `INSERT INTO organisation.operating_state (organisation_id, jurisdiction_code, telehealth_allowed, effective_from) VALUES ($1, 'NY', true, '2020-01-01'), ($1, 'NJ', false, '2020-01-01')`,
+          `INSERT INTO organisation.operating_state (organisation_id, jurisdiction_code, telehealth_allowed, effective_from) VALUES ($1, '${FIXTURE_STATES.licensed}', true, '2020-01-01'), ($1, '${FIXTURE_STATES.closed}', false, '2020-01-01')`,
           [ORG],
         );
       },
@@ -269,7 +271,7 @@ export async function setupScheduling(name: string): Promise<SchedKit> {
       await saWrite(
         k,
         `INSERT INTO patient.patient (id, organisation_id, mrn, given_name, family_name, date_of_birth, state_code, created_via)
-         VALUES ($1, $2, $3, $4, $5, '1975-01-01', 'NY', 'front_desk')`,
+         VALUES ($1, $2, $3, $4, $5, '1975-01-01', '${FIXTURE_STATES.licensed}', 'front_desk')`,
         [pid, ORG, `MRN-${String(9_000_000 + n)}`, `Bare${n}`, `Patient${n}`],
       );
       return pid;

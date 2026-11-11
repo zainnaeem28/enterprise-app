@@ -4,6 +4,7 @@
 // TC-AD-01..03, 06..10 (the data-level parts of 04/05 belong to the notifications and identity tickets) and INT03-F17 1(c).
 //   EHR_TEST_ADMIN_URL=postgres://postgres@127.0.0.1:5432/postgres node --test dist/src/modules/organisation/admin/admin.dbtest.js
 // Missing configuration FAILS; nothing skips. All data is synthetic.
+import { FIXTURE_STATES } from '../../organisation/fixture-states.js';
 import assert from 'node:assert/strict';
 import { after, before, describe, test } from 'node:test';
 import { ORG, adminWith, api, orgAdminSetup, seedReference } from './testkit.js';
@@ -43,7 +44,7 @@ async function newLocation(name = `Clinic ${++locSeq}`): Promise<string> {
     name,
     kind: 'clinic',
     timeZone: 'America/New_York',
-    stateCode: 'NY',
+    stateCode: FIXTURE_STATES.licensed,
     address: { line1: '1 Main St', city: 'Albany' },
   });
   assert.equal(r.status, 200, r.body);
@@ -56,7 +57,7 @@ describe('TC-AD-01: clinics, rooms, hours, holidays are saved, audited with befo
       name: 'Synthetic North',
       kind: 'clinic',
       timeZone: 'America/Chicago',
-      stateCode: 'TX',
+      stateCode: FIXTURE_STATES.closed,
       phone: '555-0100',
     });
     assert.equal(created.status, 200, created.body);
@@ -424,7 +425,7 @@ describe('TC-AD-06 / 10: realm, permission and elevation are enforced by the ser
       0,
     );
     for (const [m, p, b] of [
-      ['POST', '/locations', { name: 'X', kind: 'clinic', timeZone: 'UTC', stateCode: 'NY' }],
+      ['POST', '/locations', { name: 'X', kind: 'clinic', timeZone: 'UTC', stateCode: FIXTURE_STATES.licensed }],
       ['POST', '/services', { internalName: 'X', durationMin: 20, mode: 'video' }],
       [
         'PUT',
@@ -440,7 +441,7 @@ describe('TC-AD-06 / 10: realm, permission and elevation are enforced by the ser
       [
         'PUT',
         '/operating-states',
-        { jurisdictionCode: 'NY', effectiveFrom: '2030-01-01', telehealthAllowed: true },
+        { jurisdictionCode: FIXTURE_STATES.licensed, effectiveFrom: '2030-01-01', telehealthAllowed: true },
       ],
       ['GET', '/settings', undefined],
     ] as const) {
@@ -774,19 +775,19 @@ describe('settings and operating states: schema-validated, audited, reference da
 
   test('operating states upsert by (state, effective date), feed the licensing check and are audited', async () => {
     const put = await api(k, adm, 'PUT', '/operating-states', {
-      jurisdictionCode: 'NY',
+      jurisdictionCode: FIXTURE_STATES.licensed,
       effectiveFrom: '2020-01-01',
       telehealthAllowed: true,
     });
     assert.equal(put.status, 200, put.body);
     const put2 = await api(k, adm, 'PUT', '/operating-states', {
-      jurisdictionCode: 'NY',
+      jurisdictionCode: FIXTURE_STATES.licensed,
       effectiveFrom: '2020-01-01',
       telehealthAllowed: false,
     });
     assert.equal(put2.status, 200);
     const list = items(await api(k, adm, 'GET', '/operating-states')).filter(
-      (x) => x['jurisdictionCode'] === 'NY',
+      (x) => x['jurisdictionCode'] === FIXTURE_STATES.licensed,
     );
     assert.equal(list.length, 1);
     assert.equal(list[0]!['telehealthAllowed'], false);
@@ -797,16 +798,16 @@ describe('settings and operating states: schema-validated, audited, reference da
       principalId: adm.principalId,
     } as const;
     assert.equal(
-      await k.db.withScope(scope, (tx) => k.organisation.licensingCheck(tx, ['NY'], 'NY')),
+      await k.db.withScope(scope, (tx) => k.organisation.licensingCheck(tx, [FIXTURE_STATES.licensed], FIXTURE_STATES.licensed)),
       'refused_not_operating',
     );
     await api(k, adm, 'PUT', '/operating-states', {
-      jurisdictionCode: 'NY',
+      jurisdictionCode: FIXTURE_STATES.licensed,
       effectiveFrom: '2021-01-01',
       telehealthAllowed: true,
     });
     assert.equal(
-      await k.db.withScope(scope, (tx) => k.organisation.licensingCheck(tx, ['NY'], 'NY')),
+      await k.db.withScope(scope, (tx) => k.organisation.licensingCheck(tx, [FIXTURE_STATES.licensed], FIXTURE_STATES.licensed)),
       'allowed',
     );
     const unknown = await api(k, adm, 'PUT', '/operating-states', {
@@ -1027,7 +1028,7 @@ describe('request hygiene, secrets and integrity', () => {
       name: 'Zed',
       kind: 'clinic',
       timeZone: 'Mars/Base',
-      stateCode: 'NY',
+      stateCode: FIXTURE_STATES.licensed,
       secretNote: 'x',
       extra: 1,
     });
@@ -1133,7 +1134,7 @@ describe('request hygiene, secrets and integrity', () => {
     await assert.rejects(() =>
       failing.createLocation(
         scope,
-        { name: 'Ghost', kind: 'clinic', timeZone: 'UTC', stateCode: 'NY' },
+        { name: 'Ghost', kind: 'clinic', timeZone: 'UTC', stateCode: FIXTURE_STATES.licensed },
         { requestId: null, ip: null, userAgent: null },
       ),
     );

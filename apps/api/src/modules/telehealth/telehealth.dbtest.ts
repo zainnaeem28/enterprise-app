@@ -4,6 +4,7 @@
 // PostgreSQL 17, the real migrations, the real booking core, the worker's real jobs and video adapter behind integration-core's real
 // gateway. The VENDOR is an in-memory contract stub: TC-TH-01, 02, 04 and 05 against a real vendor sandbox are BLOCKED (C-10, C-11).
 //   EHR_TEST_ADMIN_URL=postgres://postgres@host:5432/postgres node --test dist/src/modules/telehealth/telehealth.dbtest.js
+import { FIXTURE_STATES } from '../organisation/fixture-states.js';
 import { newRegisteredRegistries } from '../../register-participants.js';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
@@ -62,12 +63,12 @@ const sys = async (sql: string, p: unknown[] = [], replica = false) => {
 };
 
 let seq = 100;
-/** A doctor licensed in NY and a registered patient with a confirmed VIDEO visit starting in `startInMin` minutes (window open at -10). */
+/** A doctor licensed in the fixture licensed state and a registered patient with a confirmed VIDEO visit starting in `startInMin` minutes (window open at -10). */
 async function visit(
   o: { startInMin?: number; minutes?: number; room?: boolean; states?: string[] } = {},
 ): Promise<{ d: Doctor; p: PatientKit; rid: string }> {
   const d = await t.f.doctor();
-  await t.license(d.principalId, o.states ?? ['NY']);
+  await t.license(d.principalId, o.states ?? [FIXTURE_STATES.licensed]);
   const p = await t.f.patient(++seq);
   const rid = await t.video_visit(p, d, inMin(o.startInMin ?? 5), {
     ...(o.minutes === undefined ? {} : { minutes: o.minutes }),
@@ -76,17 +77,17 @@ async function visit(
   return { d, p, rid };
 }
 
-/** Patient confirms NY, host admits, patient has an admitted seat: ready to join. */
+/** Patient confirms the licensed fixture state, host admits, patient has an admitted seat: ready to join. */
 async function admitted(v: { d: Doctor; p: PatientKit; rid: string }): Promise<void> {
-  await asP(v.p, (tx) => t.telehealth.confirmLocation(tx, meta(), v.rid, { state: 'NY' }));
+  await asP(v.p, (tx) => t.telehealth.confirmLocation(tx, meta(), v.rid, { state: FIXTURE_STATES.licensed }));
   await rejectsWith(t.telehealth.join(v.p.scope, meta(), v.rid), 'telehealth.not_admitted');
   await asH(v.d, (tx) => t.telehealth.admit(tx, meta(), v.rid, {}));
 }
 
-describe('licensing at booking (RA-R1-28, TL-1; TC-TH-06, placeholder states: NY allowed and licensed, CA allowed but not licensed, NJ not an operating state)', () => {
+describe('licensing at booking (RA-R1-28, TL-1; TC-TH-06, configured fixture states: licensed and operating, operating but not licensed, not operating)', () => {
   test('a video booking with a stated state outside the clinician’s licensed states is refused; in-state is allowed; nothing is stored for a refusal', async () => {
     const d = await t.f.doctor();
-    await t.license(d.principalId, ['NY', 'NJ']);
+    await t.license(d.principalId, [FIXTURE_STATES.licensed, FIXTURE_STATES.closed]);
     const p = await t.f.patient(++seq);
     const hold = (state: string, slot: number) =>
       asP(p, (tx) =>
@@ -100,15 +101,15 @@ describe('licensing at booking (RA-R1-28, TL-1; TC-TH-06, placeholder states: NY
           patientState: state,
         }),
       );
-    await rejectsWith(hold('CA', 0), 'scheduling.licensing_refused');
-    // licensed in NJ, but NJ is not an operating state (D-2 not answered for it): refused
-    await rejectsWith(hold('NJ', 1), 'scheduling.licensing_refused');
+    await rejectsWith(hold(FIXTURE_STATES.unlicensed, 0), 'scheduling.licensing_refused');
+    // licensed in the closed state, but it is not an operating state: refused
+    await rejectsWith(hold(FIXTURE_STATES.closed, 1), 'scheduling.licensing_refused');
     const before = await nrows(
       `SELECT count(*) AS n FROM scheduling.slot_reservation WHERE patient_id = $1`,
       [p.patientId],
     );
     assert.equal(before, 0);
-    const ok = await hold('NY', 2);
+    const ok = await hold(FIXTURE_STATES.licensed, 2);
     const row = await one<{ licensing_result: string }>(
       `SELECT licensing_result FROM scheduling.slot_reservation WHERE id = $1`,
       [ok.reservationId],
@@ -118,7 +119,7 @@ describe('licensing at booking (RA-R1-28, TL-1; TC-TH-06, placeholder states: NY
 
   test('flag mode: the booking is made and marked; the default mode refuses', async () => {
     const d = await t.f.doctor();
-    await t.license(d.principalId, ['NY']);
+    await t.license(d.principalId, [FIXTURE_STATES.licensed]);
     const p = await t.f.patient(++seq);
     await t.f.k.sa.query(
       `UPDATE kernel.setting SET value = '"flag"' WHERE key = 'telehealth_licensing_mode'`,
@@ -132,7 +133,7 @@ describe('licensing at booking (RA-R1-28, TL-1; TC-TH-06, placeholder states: NY
           clinicianId: d.principalId,
           startsAt: slotStart(21).toISOString(),
           mode: 'video',
-          patientState: 'CA',
+          patientState: FIXTURE_STATES.unlicensed,
         }),
       );
       const row = await one<{ licensing_result: string }>(
@@ -282,7 +283,7 @@ describe('the waiting room, admit and the join token (SEC-D-14, 29.2, 29.3; TC-T
   test('TC-TH-05: before the window opens the join is refused with the start; after the slot it is closed', async () => {
     const early = await visit({ startInMin: 60 });
     await asP(early.p, (tx) =>
-      t.telehealth.confirmLocation(tx, meta(), early.rid, { state: 'NY' }),
+      t.telehealth.confirmLocation(tx, meta(), early.rid, { state: FIXTURE_STATES.licensed }),
     );
     await assert.rejects(
       t.telehealth.join(early.p.scope, meta(), early.rid),
@@ -300,7 +301,7 @@ describe('the waiting room, admit and the join token (SEC-D-14, 29.2, 29.3; TC-T
     assert.equal(view.status, 'scheduled');
 
     const late = await visit({ startInMin: -120, minutes: 30 });
-    await asP(late.p, (tx) => t.telehealth.confirmLocation(tx, meta(), late.rid, { state: 'NY' }));
+    await asP(late.p, (tx) => t.telehealth.confirmLocation(tx, meta(), late.rid, { state: FIXTURE_STATES.licensed }));
     await rejectsWith(
       t.telehealth.join(late.p.scope, meta(), late.rid),
       'telehealth.session_closed',
@@ -322,7 +323,7 @@ describe('the waiting room, admit and the join token (SEC-D-14, 29.2, 29.3; TC-T
       (await asP(v.p, (tx) => t.telehealth.patientView(tx, v.rid))).needsLocationConfirmation,
       true,
     );
-    await asP(v.p, (tx) => t.telehealth.confirmLocation(tx, meta(), v.rid, { state: 'NY' }));
+    await asP(v.p, (tx) => t.telehealth.confirmLocation(tx, meta(), v.rid, { state: FIXTURE_STATES.licensed }));
     assert.equal(
       (await asP(v.p, (tx) => t.telehealth.patientView(tx, v.rid))).needsLocationConfirmation,
       false,
@@ -361,7 +362,7 @@ describe('the waiting room, admit and the join token (SEC-D-14, 29.2, 29.3; TC-T
 
   test('the host must admit by participant ID; an unknown one is 404, and the patient cannot admit themselves (database rule)', async () => {
     const v = await visit();
-    await asP(v.p, (tx) => t.telehealth.confirmLocation(tx, meta(), v.rid, { state: 'NY' }));
+    await asP(v.p, (tx) => t.telehealth.confirmLocation(tx, meta(), v.rid, { state: FIXTURE_STATES.licensed }));
     await rejectsWith(t.telehealth.join(v.p.scope, meta(), v.rid), 'telehealth.not_admitted');
     await rejectsWith(
       asH(v.d, (tx) => t.telehealth.admit(tx, meta(), v.rid, { participantId: randomUUID() })),
@@ -613,7 +614,7 @@ describe('the waiting room, admit and the join token (SEC-D-14, 29.2, 29.3; TC-T
     // the check puts the patient in the list but NOT in the waiting room (they have not asked to join)
     assert.equal((await asH(v.d, (tx) => t.telehealth.hostView(tx, v.rid))).waiting.length, 0);
     // the device check shows to the host only once they ask to join
-    await asP(v.p, (tx) => t.telehealth.confirmLocation(tx, meta(), v.rid, { state: 'NY' }));
+    await asP(v.p, (tx) => t.telehealth.confirmLocation(tx, meta(), v.rid, { state: FIXTURE_STATES.licensed }));
     await rejectsWith(t.telehealth.join(v.p.scope, meta(), v.rid), 'telehealth.not_admitted');
     const w = await asH(v.d, (tx) => t.telehealth.hostView(tx, v.rid));
     assert.deepEqual(w.waiting[0]?.deviceCheck, { camera: 'pass', mic: 'pass', bandwidth: 'fail' });
@@ -638,7 +639,7 @@ describe('the waiting room, admit and the join token (SEC-D-14, 29.2, 29.3; TC-T
       'kernel.not_found',
     );
     await rejectsWith(
-      asP(other, (tx) => t.telehealth.confirmLocation(tx, meta(), v.rid, { state: 'NY' })),
+      asP(other, (tx) => t.telehealth.confirmLocation(tx, meta(), v.rid, { state: FIXTURE_STATES.licensed })),
       'kernel.not_found',
     );
     await rejectsWith(t.telehealth.join(other.scope, meta(), v.rid), 'kernel.not_found');
@@ -652,7 +653,7 @@ describe('the waiting room, admit and the join token (SEC-D-14, 29.2, 29.3; TC-T
     const ins = await asP(other, (tx) =>
       tx.query(
         `INSERT INTO telehealth.location_confirmation (id, organisation_id, reservation_id, patient_id, principal_id, stated_state, result, created_by)
-         SELECT gen_random_uuid(), kernel.uuid1('app.org_id'), r.id, r.patient_id, $1::uuid, 'NY', 'allowed', $1::uuid FROM scheduling.slot_reservation r WHERE r.id = $2::uuid`,
+         SELECT gen_random_uuid(), kernel.uuid1('app.org_id'), r.id, r.patient_id, $1::uuid, '${FIXTURE_STATES.licensed}', 'allowed', $1::uuid FROM scheduling.slot_reservation r WHERE r.id = $2::uuid`,
         [other.scope.principalId, v.rid],
       ),
     );
@@ -662,7 +663,7 @@ describe('the waiting room, admit and the join token (SEC-D-14, 29.2, 29.3; TC-T
       asP(other, (tx) =>
         tx.query(
           `INSERT INTO telehealth.location_confirmation (id, organisation_id, reservation_id, patient_id, principal_id, stated_state, result, created_by)
-           VALUES (gen_random_uuid(), kernel.uuid1('app.org_id'), $2::uuid, $3::uuid, $1::uuid, 'NY', 'allowed', $1::uuid)`,
+           VALUES (gen_random_uuid(), kernel.uuid1('app.org_id'), $2::uuid, $3::uuid, $1::uuid, '${FIXTURE_STATES.licensed}', 'allowed', $1::uuid)`,
           [other.scope.principalId, v.rid, other.patientId],
         ),
       ),
@@ -680,9 +681,9 @@ describe('the waiting room, admit and the join token (SEC-D-14, 29.2, 29.3; TC-T
 
 describe('licensing at join (RA-R1-28, TL-1; TC-TH-07, TC-TH-08)', () => {
   test('TC-TH-07: outside the licensed states the join is refused and the answer is kept; inside, the join goes on', async () => {
-    const v = await visit({ states: ['NY'] });
+    const v = await visit({ states: [FIXTURE_STATES.licensed] });
     const out = await asP(v.p, (tx) =>
-      t.telehealth.confirmLocation(tx, meta(), v.rid, { state: 'ca' }),
+      t.telehealth.confirmLocation(tx, meta(), v.rid, { state: FIXTURE_STATES.unlicensed.toLowerCase() }),
     );
     assert.equal(out.result, 'refused_not_licensed');
     assert.equal(out.flagged, false);
@@ -696,19 +697,19 @@ describe('licensing at join (RA-R1-28, TL-1; TC-TH-07, TC-TH-08)', () => {
     );
     assert.deepEqual(k1, {
       result: 'refused_not_licensed',
-      stated_state: 'CA',
+      stated_state: FIXTURE_STATES.unlicensed,
       override_reason: null,
     });
-    // not operating: NJ
+    // not operating: the closed fixture state
     const nj = await asP(v.p, (tx) =>
-      t.telehealth.confirmLocation(tx, meta(), v.rid, { state: 'NJ' }),
+      t.telehealth.confirmLocation(tx, meta(), v.rid, { state: FIXTURE_STATES.closed }),
     );
     assert.equal(nj.result, 'refused_not_operating');
     // the join is refused while the latest answer fails the rule
     await rejectsWith(t.telehealth.join(v.p.scope, meta(), v.rid), 'telehealth.licensing_refused');
     // "I am in X": allowed, and the join goes on
     const ok = await asP(v.p, (tx) =>
-      t.telehealth.confirmLocation(tx, meta(), v.rid, { state: 'NY' }),
+      t.telehealth.confirmLocation(tx, meta(), v.rid, { state: FIXTURE_STATES.licensed }),
     );
     assert.equal(ok.result, 'allowed');
     await rejectsWith(t.telehealth.join(v.p.scope, meta(), v.rid), 'telehealth.not_admitted');
@@ -737,7 +738,7 @@ describe('licensing at join (RA-R1-28, TL-1; TC-TH-07, TC-TH-08)', () => {
     );
     assert.equal(
       await nrows(
-        `SELECT count(*) AS n FROM audit.event WHERE resource_type = 'telehealth.location_confirmation' AND change::text LIKE '%CA%'`,
+        `SELECT count(*) AS n FROM audit.event WHERE resource_type = 'telehealth.location_confirmation' AND change::text LIKE '%' || $1 || '%'`,
       ),
       0,
     );
@@ -745,10 +746,10 @@ describe('licensing at join (RA-R1-28, TL-1; TC-TH-07, TC-TH-08)', () => {
 
   test('the confirmation rows are append-only for every role', async () => {
     const v = await visit();
-    await asP(v.p, (tx) => t.telehealth.confirmLocation(tx, meta(), v.rid, { state: 'NY' }));
+    await asP(v.p, (tx) => t.telehealth.confirmLocation(tx, meta(), v.rid, { state: FIXTURE_STATES.licensed }));
     await rejectsSqlState(
       sys(
-        `UPDATE telehealth.location_confirmation SET stated_state = 'CA' WHERE reservation_id = $1`,
+        `UPDATE telehealth.location_confirmation SET stated_state = '${FIXTURE_STATES.unlicensed}' WHERE reservation_id = $1`,
         [v.rid],
       ),
       'PS001',
@@ -764,13 +765,13 @@ describe('licensing at join (RA-R1-28, TL-1; TC-TH-07, TC-TH-08)', () => {
   });
 
   test('flag mode: the rule says no, the visit goes on, and the row says so', async () => {
-    const v = await visit({ states: ['NY'] });
+    const v = await visit({ states: [FIXTURE_STATES.licensed] });
     await t.f.k.sa.query(
       `UPDATE kernel.setting SET value = '"flag"' WHERE key = 'telehealth_licensing_mode'`,
     );
     try {
       const out = await asP(v.p, (tx) =>
-        t.telehealth.confirmLocation(tx, meta(), v.rid, { state: 'CA' }),
+        t.telehealth.confirmLocation(tx, meta(), v.rid, { state: FIXTURE_STATES.unlicensed }),
       );
       assert.deepEqual(out, { result: 'refused_not_licensed', flagged: true });
       TelehealthService.assertAllowed(out);
@@ -798,7 +799,7 @@ describe('licensing at join (RA-R1-28, TL-1; TC-TH-07, TC-TH-08)', () => {
   });
 
   test('TC-TH-08: a licence removed after the answer refuses the join again with a safe message; re-adding it allows it', async () => {
-    const v = await visit({ states: ['NY'] });
+    const v = await visit({ states: [FIXTURE_STATES.licensed] });
     await admitted(v);
     await t.telehealth.join(v.p.scope, meta(), v.rid);
     await t.license(v.d.principalId, []); // X removed from the clinician's licensed states
@@ -812,11 +813,11 @@ describe('licensing at join (RA-R1-28, TL-1; TC-TH-07, TC-TH-08)', () => {
         assert.equal(e.code, 'telehealth.licensing_refused');
         assert.equal(e.status, 422);
         // a safe message: the code only, no state, no name, no clinician
-        assert.ok(!/NY|New York|Doctor/i.test(JSON.stringify({ m: e.message, x: e.extras })));
+        assert.ok(!new RegExp(`${FIXTURE_STATES.licensed}|Doctor`, 'i').test(JSON.stringify({ m: e.message, x: e.extras })));
         return true;
       },
     );
-    await t.license(v.d.principalId, ['NY']);
+    await t.license(v.d.principalId, [FIXTURE_STATES.licensed]);
     assert.equal(
       (await asP(v.p, (tx) => t.telehealth.patientView(tx, v.rid))).needsLocationConfirmation,
       false,
@@ -995,8 +996,8 @@ describe('merge participant and export (22.16, 38.2 item 11; HEAAA-88 registry)'
   test('the count test: sessions, participants and tokens in R are re-pointed, K rows stay, found = re-pointed + resolved + kept, no R row is left', async () => {
     const d1 = await t.f.doctor();
     const d2 = await t.f.doctor();
-    await t.license(d1.principalId, ['NY']);
-    await t.license(d2.principalId, ['NY']);
+    await t.license(d1.principalId, [FIXTURE_STATES.licensed]);
+    await t.license(d2.principalId, [FIXTURE_STATES.licensed]);
     const merged = await t.f.patient(++seq);
     const survivor = await t.f.patient(++seq);
     const live = await t.video_visit(merged, d1, inMin(5));
@@ -1009,7 +1010,7 @@ describe('merge participant and export (22.16, 38.2 item 11; HEAAA-88 registry)'
     await t.telehealth.join(t.hostScope(d2), meta(), done);
     await asH(d2, (tx) => t.telehealth.end(tx, meta(), done));
     await asP(merged, (tx) =>
-      t.telehealth.confirmLocation(tx, meta(), done, { state: 'NY' }),
+      t.telehealth.confirmLocation(tx, meta(), done, { state: FIXTURE_STATES.licensed }),
     ).catch(() => undefined);
 
     const { result } = await t.f.merge(survivor.patientId, merged.patientId);
@@ -1073,7 +1074,7 @@ describe('merge participant and export (22.16, 38.2 item 11; HEAAA-88 registry)'
 
   test('a module that holds patient data and has no participant fails the merge before anything is written', async () => {
     const d = await t.f.doctor();
-    await t.license(d.principalId, ['NY']);
+    await t.license(d.principalId, [FIXTURE_STATES.licensed]);
     const merged = await t.f.patient(++seq);
     const survivor = await t.f.patient(++seq);
     const rid = await t.video_visit(merged, d, inMin(5));

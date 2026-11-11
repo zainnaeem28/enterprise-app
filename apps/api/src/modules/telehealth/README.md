@@ -40,7 +40,7 @@ Design: ARCHITECTURE 22.10, 22.16, 24, 29.2, 29.3, 30, 33.1 (`telehealth.*`), 38
 - **D10. `participant.admission = 'removed'`** has a state and a trigger but no route (29.3 has none); a "let back in" is `removed -> admitted`.
 - **D11. The window is a constant** (10 minutes before the start; TC-TH-05), not a setting; no setting is listed in 31.4. A setting is a one-line change in `rules.ts` and the Architect's list.
 - **D12. `patient_stated_state` at booking vs. the answer at join.** The booking stores the state the patient gave; the join re-asks (RA-R1-28) and keeps every answer. The licensed states are read from `identity.licensed_state` exactly as BE-11 does (an expired licence does not count).
-- **D13. Real states.** All state values in tests are placeholders (NY allowed and licensed, CA allowed but not licensed, NJ not an operating state). Production values wait for D-2.
+- **D13. Real states (ruling C item 4, D-2 / C-06).** No state list exists in code, seeds or migrations. The tests take three synthetic codes from `organisation/fixture-states.ts` (licensed, operating-but-unlicensed, not operating; override with `EHR_FIXTURE_STATES="AA,BB,CC"`). **Go-live (the organisation enters real values):** (1) as an admin with `organisation.operating_state.manage`, `PUT /api/v1/admin/operating-states` to set the states the organisation operates telehealth in (needs the matching `organisation.jurisdiction` rows); (2) for each clinician, as an admin with `identity.staff_profile.manage`, `PUT /api/v1/admin/staff-profiles/{principalId}` with `{"licensedStates": ["<code>", ...]}` (GET reads them back). Each add and remove is audited, and takes effect at once: booking and the join re-read `identity.licensed_state` on every call. A clinician with no recorded licence is refused for telehealth with a message that carries no PHI. Counsel must confirm the values before go-live (†).
 
 ## Tests
 
@@ -52,7 +52,7 @@ Real PostgreSQL 17 (superuser URL, throwaway server; missing configuration FAILS
 
 | Case                                                                        | Test                                                                                                                         |
 | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| TC-TH-06 (booking refused or flagged; in-state allowed; placeholder states) | "licensing at booking"                                                                                                       |
+| TC-TH-06 (booking refused or flagged; in-state allowed; configured fixture states) | "licensing at booking"                                                                                                       |
 | TC-TH-07 (confirm location at join; outside refuses; inside joins)          | "TC-TH-07: outside the licensed states ..." and the flag-mode case                                                           |
 | TC-TH-08 (licence removed after the answer; re-added)                       | "TC-TH-08: a licence removed ..."                                                                                            |
 | TC-TH-03 (another patient's session: refused)                               | "TC-TH-03: nobody reaches another patient's session" (the guard's audit of the denial is the identity guard's, not run here) |
