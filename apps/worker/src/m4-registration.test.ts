@@ -216,12 +216,13 @@ test('HEAAA-860: the secret-replica check is on the crontab only with the replic
   const { registry, tasks } = table();
   assert.equal(workerCrontab({ secretReplica: false }), WORKER_CRONTAB);
   const on = workerCrontab({ secretReplica: true });
-  assert.deepEqual(on.split('\n').slice(5), [
+  const baseLines = WORKER_CRONTAB.split('\n').length;
+  assert.deepEqual(on.split('\n').slice(baseLines), [
     '*/15 * * * * integration_core/check_secret_replicas',
   ]);
   const items = parseCrontab(on);
-  assert.equal(items.length, 6);
-  const name = fromCrontabTaskId(items[5]!.task);
+  assert.equal(items.length, parseCrontab(WORKER_CRONTAB).length + 1);
+  const name = fromCrontabTaskId(items[items.length - 1]!.task);
   assert.equal(name, 'integration_core.check_secret_replicas');
   assert.ok(registry.list().some((j) => j.name === name));
   assert.equal(typeof tasks[name], 'function');
