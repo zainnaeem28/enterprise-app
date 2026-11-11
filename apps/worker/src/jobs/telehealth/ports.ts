@@ -10,7 +10,13 @@ export interface TelehealthMeta {
 }
 
 export type EnsureOutcome =
-  | { outcome: 'created' | 'exists'; sessionId: string; startsAt: string; hasMeeting: boolean }
+  | {
+      outcome: 'created' | 'exists';
+      sessionId: string;
+      startsAt: string;
+      endsAt: string;
+      hasMeeting: boolean;
+    }
   | { outcome: 'skipped' }
   | { outcome: 'gone' };
 
@@ -25,6 +31,10 @@ export interface EndedStale {
   meetingId: string | null;
 }
 
+export type CloseOutcome =
+  | { outcome: 'none' | 'not_due' }
+  | { outcome: 'close'; sessionId: string; vendor: string; meetingId: string };
+
 export interface TelehealthWorkerPort {
   ensureSession(tx: Tx, meta: TelehealthMeta, reservationId: string): Promise<EnsureOutcome>;
   recordMeeting(
@@ -36,6 +46,8 @@ export interface TelehealthWorkerPort {
   ): Promise<boolean>;
   staleSessions(tx: Tx, limit?: number): Promise<StaleSession[]>;
   endStale(tx: Tx, meta: TelehealthMeta, sessionId: string): Promise<EndedStale>;
+  meetingToClose(tx: Tx, meta: TelehealthMeta, reservationId: string): Promise<CloseOutcome>;
+  recordMeetingClosed(tx: Tx, meta: TelehealthMeta, sessionId: string): Promise<void>;
 }
 
 export interface VendorPort {

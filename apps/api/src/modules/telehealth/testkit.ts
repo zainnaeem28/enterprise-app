@@ -34,6 +34,11 @@ interface WorkerTelehealth {
     payload: Record<string, unknown>,
     jobRef?: string,
   ): Promise<'created' | 'exists' | 'skipped' | 'gone'>;
+  runCloseMeeting(
+    deps: TelehealthKit['jobs'],
+    payload: Record<string, unknown>,
+    jobRef?: string,
+  ): Promise<'closed' | 'none' | 'not_due' | 'gone'>;
   runEndStale(
     deps: TelehealthKit['jobs'],
     jobRef?: string,

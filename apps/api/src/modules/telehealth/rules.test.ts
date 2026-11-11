@@ -100,6 +100,9 @@ test('the job list is pinned (the worker side pins the same one)', () => {
     [
       'telehealth.on_reservation_confirmed|handler|patients|resolve|5',
       'telehealth.create_meeting|job|patients|resolve|8',
+      'telehealth.on_reservation_cancelled|handler|patients|resolve|5',
+      'telehealth.on_no_show|handler|patients|resolve|5',
+      'telehealth.close_meeting|job|patients|resolve|8',
       'telehealth.end_stale|system|org|none|3',
     ],
   );

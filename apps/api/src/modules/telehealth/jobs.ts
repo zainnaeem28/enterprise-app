@@ -25,6 +25,32 @@ export const TELEHEALTH_JOBS: readonly JobType[] = [
     jobScope: 'patients',
     jobClass: 'job',
   },
+  {
+    name: 'telehealth.on_reservation_cancelled',
+    maxAttempts: 5,
+    onMerged: 'resolve',
+    carriesPatientIds: true,
+    jobScope: 'patients',
+    jobClass: 'handler',
+  },
+  {
+    name: 'telehealth.on_no_show',
+    maxAttempts: 5,
+    onMerged: 'resolve',
+    carriesPatientIds: true,
+    jobScope: 'patients',
+    jobClass: 'handler',
+  },
+  // Ends the vendor room once the visit is over (cancelled, no-show, ended) or its join window has closed, whichever comes first. One per
+  // reservation (job key), idempotent; a dead job raises the `telehealth.close_meeting` alarm.
+  {
+    name: 'telehealth.close_meeting',
+    maxAttempts: 8,
+    onMerged: 'resolve',
+    carriesPatientIds: true,
+    jobScope: 'patients',
+    jobClass: 'job',
+  },
   // Every 15 minutes: ends sessions 2 h after their slot, revoking their tokens first.
   {
     name: 'telehealth.end_stale',
@@ -45,4 +71,6 @@ export const TELEHEALTH_EVENTS = ['telehealth.patient_waiting'] as const;
 /** Registers this module as the handler of the one event it consumes. Call once per registry, before `publish` is used. */
 export function registerTelehealthHandlers(registry: JobRegistry): void {
   registry.registerHandler('scheduling.reservation_confirmed', 'telehealth');
+  registry.registerHandler('scheduling.reservation_cancelled', 'telehealth');
+  registry.registerHandler('scheduling.no_show', 'telehealth');
 }

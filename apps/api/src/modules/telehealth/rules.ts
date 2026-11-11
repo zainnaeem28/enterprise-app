@@ -7,6 +7,8 @@ export const JOIN_OPENS_MINUTES = 10;
 export const MEETING_LEAD_MINUTES = 15;
 /** A stale session is ended this long after the end of its slot (33.1 `telehealth.end_stale`). */
 export const STALE_AFTER_HOURS = 2;
+/** `telehealth.close_meeting`: the vendor room is closed this long after the end of its slot at the latest (the join window closes). */
+export const CLOSE_AFTER_MINUTES = 30;
 /** The lifetime of a join token record and of the vendor token asked for (the table caps it at 15 minutes). */
 export const TOKEN_TTL_SECONDS = 300;
 /** A confirmation of location is good for this long (a visit never lasts that long; a new day needs a new answer). */

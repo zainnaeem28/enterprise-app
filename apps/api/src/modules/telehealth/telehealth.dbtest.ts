@@ -991,6 +991,35 @@ describe('the end of a visit and stale sessions (25.x, 33.1 telehealth.end_stale
   });
 });
 
+describe('telehealth.close_meeting (33.1): the vendor room is closed once the visit is over or its join window has closed', () => {
+  test('after the window it ends the live session (tokens revoked), tells the vendor and audits the close; before it, nothing; a repeat is harmless', async () => {
+    const over = await visit({ startInMin: -100, minutes: 30 }); // ended 70 min ago: window (30 min) closed
+    const open = await visit({ startInMin: -20, minutes: 30 }); // still in its slot
+    const noRoom = await visit({ startInMin: -100, minutes: 30, room: false });
+    const sid = ((await t.sessionOf(over.rid)) as { id: string }).id;
+    const job = (v: { rid: string; p: PatientKit }) => ({
+      reservationId: v.rid,
+      patientId: v.p.patientId,
+    });
+    assert.equal(await t.W.runCloseMeeting(t.jobs, job(open)), 'not_due');
+    assert.equal(await t.W.runCloseMeeting(t.jobs, job(noRoom)), 'none');
+    assert.equal(await t.W.runCloseMeeting(t.jobs, job(over)), 'closed');
+    assert.equal(((await t.sessionOf(over.rid)) as { status: string }).status, 'ended');
+    assert.ok(t.video.meetings.get(sid)?.ended);
+    assert.equal(((await t.sessionOf(open.rid)) as { status: string }).status, 'scheduled');
+    assert.equal(
+      await nrows(
+        `SELECT count(*) AS n FROM audit.event WHERE resource_id = $1 AND change->>'meeting' = 'closed'`,
+        [sid],
+      ),
+      1,
+    );
+    // a repeat (the room is already ended at the vendor) succeeds and changes nothing in the session
+    assert.equal(await t.W.runCloseMeeting(t.jobs, job(over)), 'closed');
+    assert.equal(((await t.sessionOf(over.rid)) as { status: string }).status, 'ended');
+  });
+});
+
 describe('merge participant and export (22.16, 38.2 item 11; HEAAA-88 registry)', () => {
   test('the count test: sessions, participants and tokens in R are re-pointed, K rows stay, found = re-pointed + resolved + kept, no R row is left', async () => {
     const d1 = await t.f.doctor();

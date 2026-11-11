@@ -37,6 +37,8 @@ export interface TelehealthWorkerPort {
   recordMeeting: TelehealthJobService['recordMeeting'];
   staleSessions: TelehealthJobService['staleSessions'];
   endStale: TelehealthJobService['endStale'];
+  meetingToClose: TelehealthJobService['meetingToClose'];
+  recordMeetingClosed: TelehealthJobService['recordMeetingClosed'];
 }
 
 export function telehealthPort(s: TelehealthJobService): TelehealthWorkerPort {
@@ -46,5 +48,7 @@ export function telehealthPort(s: TelehealthJobService): TelehealthWorkerPort {
       s.recordMeeting(tx, meta, sid, vendor, meetingId),
     staleSessions: (tx, limit) => s.staleSessions(tx, limit),
     endStale: (tx, meta, sid) => s.endStale(tx, meta, sid),
+    meetingToClose: (tx, meta, rid) => s.meetingToClose(tx, meta, rid),
+    recordMeetingClosed: (tx, meta, sid) => s.recordMeetingClosed(tx, meta, sid),
   };
 }

@@ -5,7 +5,7 @@ import type { Tx } from '@ehr/kernel';
 import type { AuditService } from '../audit/index.js';
 import { SessionNotFoundError, TelehealthValidationError, translateDbError } from './errors.js';
 import { isUuid, uuidv7 } from './ids.js';
-import { STALE_AFTER_HOURS } from './rules.js';
+import { CLOSE_AFTER_MINUTES, STALE_AFTER_HOURS } from './rules.js';
 import type { TelehealthMeta } from './types.js';
 
 type Row = Record<string, unknown>;
@@ -16,7 +16,13 @@ export interface TelehealthJobDeps {
 }
 
 export type EnsureOutcome =
-  | { outcome: 'created' | 'exists'; sessionId: string; startsAt: string; hasMeeting: boolean }
+  | {
+      outcome: 'created' | 'exists';
+      sessionId: string;
+      startsAt: string;
+      endsAt: string;
+      hasMeeting: boolean;
+    }
   | { outcome: 'skipped' }
   | { outcome: 'gone' };
 
@@ -30,6 +36,20 @@ export interface EndedStale {
   vendor: string | null;
   meetingId: string | null;
 }
+
+export type CloseOutcome =
+  | { outcome: 'none' | 'not_due' }
+  | { outcome: 'close'; sessionId: string; vendor: string; meetingId: string };
+
+/** `scheduling.slot_occupancy.status` values after which the visit cannot happen (or has happened). */
+const OVER = [
+  'completed',
+  'cancelled_patient',
+  'cancelled_clinic',
+  'rescheduled',
+  'no_show',
+  'expired',
+];
 
 export class TelehealthJobService {
   constructor(private readonly deps: TelehealthJobDeps) {}
@@ -52,7 +72,7 @@ export class TelehealthJobService {
       await tx.lockPatients([patientId], 'key_share');
       const r = (
         await tx.query(
-          `SELECT r.id, r.patient_id, r.clinician_principal_id, r.mode, o.status, lower(o.period) AS starts_at
+          `SELECT r.id, r.patient_id, r.clinician_principal_id, r.mode, o.status, lower(o.period) AS starts_at, upper(o.period) AS ends_at
              FROM scheduling.slot_reservation r JOIN scheduling.slot_occupancy o ON o.id = r.id
             WHERE r.id = $1::uuid AND r.patient_id = $2::uuid`,
           [reservationId.toLowerCase(), patientId],
@@ -71,6 +91,7 @@ export class TelehealthJobService {
           outcome: 'exists',
           sessionId: String(existing['id']),
           startsAt: iso(r['starts_at']),
+          endsAt: iso(r['ends_at']),
           hasMeeting: existing['vendor_meeting_id'] !== null,
         };
       if (!['confirmed', 'checked_in', 'in_consultation'].includes(String(r['status'])))
@@ -96,6 +117,7 @@ export class TelehealthJobService {
         outcome: 'created',
         sessionId: id,
         startsAt: iso(r['starts_at']),
+        endsAt: iso(r['ends_at']),
         hasMeeting: false,
       };
     } catch (e) {
@@ -210,6 +232,90 @@ export class TelehealthJobService {
         vendor: s['vendor'] === null ? null : String(s['vendor']),
         meetingId: s['vendor_meeting_id'] === null ? null : String(s['vendor_meeting_id']),
       };
+    } catch (e) {
+      translateDbError(e);
+    }
+  }
+
+  /**
+   * `telehealth.close_meeting`, step 1 (patients scope): is the vendor room of this reservation's session due to be closed? It is when the
+   * visit is over (completed, cancelled, rescheduled, no-show, expired), the session already ended, or the join window (the slot's end
+   * plus CLOSE_AFTER_MINUTES) has closed. A session still live is ended here, join tokens revoked first (the database refuses otherwise).
+   * No session, or no room ever made, is `none`. The vendor is told by the job afterwards; repeating this changes nothing.
+   */
+  async meetingToClose(tx: Tx, meta: TelehealthMeta, reservationId: string): Promise<CloseOutcome> {
+    if (!isUuid(reservationId)) throw new TelehealthValidationError(['reservationId']);
+    const patientId = this.patientOf(tx);
+    try {
+      await tx.lockPatients([patientId], 'key_share');
+      const s = (
+        await tx.query(
+          `SELECT v.id, v.status, v.vendor, v.vendor_meeting_id, o.status AS occ_status,
+                  upper(o.period) + make_interval(mins => $3::int) <= now() AS window_closed
+             FROM telehealth.video_session v JOIN scheduling.slot_occupancy o ON o.id = v.reservation_id
+            WHERE v.reservation_id = $1::uuid AND v.patient_id = $2::uuid FOR UPDATE OF v`,
+          [reservationId.toLowerCase(), patientId, CLOSE_AFTER_MINUTES],
+        )
+      ).rows[0] as Row | undefined;
+      if (s === undefined || s['vendor_meeting_id'] === null || s['vendor'] === null)
+        return { outcome: 'none' };
+      const live = s['status'] === 'scheduled' || s['status'] === 'open';
+      const due = !live || OVER.includes(String(s['occ_status'])) || s['window_closed'] === true;
+      if (!due) return { outcome: 'not_due' };
+      const sessionId = String(s['id']);
+      if (live) {
+        await tx.query(
+          `UPDATE telehealth.participant SET left_at = now()
+            WHERE session_id = $1::uuid AND joined_at IS NOT NULL AND left_at IS NULL`,
+          [sessionId],
+        );
+        await tx.query(
+          `UPDATE telehealth.join_token SET status = 'revoked', revoke_reason = 'session_ended'
+            WHERE session_id = $1::uuid AND status = 'issued'`,
+          [sessionId],
+        );
+        await tx.query(`UPDATE telehealth.video_session SET status = 'ended' WHERE id = $1::uuid`, [
+          sessionId,
+        ]);
+        await this.deps.audit.record(tx, {
+          requestId: null,
+          jobId: meta.jobId ?? null,
+          action: 'update',
+          resourceType: 'telehealth.video_session',
+          resourceId: sessionId,
+          patientId,
+          change: { status: 'ended', closeMeeting: true },
+          ip: null,
+          userAgent: null,
+        });
+      }
+      return {
+        outcome: 'close',
+        sessionId,
+        vendor: String(s['vendor']),
+        meetingId: String(s['vendor_meeting_id']),
+      };
+    } catch (e) {
+      translateDbError(e);
+    }
+  }
+
+  /** `telehealth.close_meeting`, step 3: the vendor confirmed the room is closed (or gone); the visit audit records it. */
+  async recordMeetingClosed(tx: Tx, meta: TelehealthMeta, sessionId: string): Promise<void> {
+    if (!isUuid(sessionId)) throw new TelehealthValidationError(['sessionId']);
+    const patientId = this.patientOf(tx);
+    try {
+      await this.deps.audit.record(tx, {
+        requestId: null,
+        jobId: meta.jobId ?? null,
+        action: 'update',
+        resourceType: 'telehealth.video_session',
+        resourceId: sessionId.toLowerCase(),
+        patientId,
+        change: { meeting: 'closed' },
+        ip: null,
+        userAgent: null,
+      });
     } catch (e) {
       translateDbError(e);
     }

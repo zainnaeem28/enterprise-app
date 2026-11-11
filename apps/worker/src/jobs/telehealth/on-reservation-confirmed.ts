@@ -2,7 +2,7 @@
 // For a VIDEO booking it makes the session row now (so a device check can start at once) and schedules `telehealth.create_meeting` for
 // start - 15 minutes. An in-person visit is skipped. A reservation re-pointed by a merge is not the old patient's any more: the handler
 // asks for the survivor and runs again.
-import { MEETING_LEAD_MINUTES } from './jobs.js';
+import { CLOSE_AFTER_MINUTES, MEETING_LEAD_MINUTES } from './jobs.js';
 import { isUuid } from './ids.js';
 import { nowOf } from './ports.js';
 import type { TelehealthJobDeps } from './ports.js';
@@ -22,6 +22,10 @@ export async function asPatient<T extends string>(
     if (survivor !== undefined && survivor !== patientId.toLowerCase()) r = await fn(survivor);
   }
   return r;
+}
+
+export function closeRunAt(endsAt: Date): Date {
+  return new Date(endsAt.getTime() + CLOSE_AFTER_MINUTES * 60_000);
 }
 
 export function meetingRunAt(startsAt: Date, now: Date): Date {
@@ -54,6 +58,13 @@ export async function runOnReservationConfirmed(
         'telehealth.create_meeting',
         { reservationId: rid, patientId: pid },
         { runAt: meetingRunAt(new Date(r.startsAt), nowOf(deps)), jobKey: `create_meeting_${rid}` },
+      );
+      // The join window closes CLOSE_AFTER_MINUTES after the slot; a cancel or no-show brings this forward (same job key).
+      await deps.queue.enqueue(
+        tx,
+        'telehealth.close_meeting',
+        { reservationId: rid, patientId: pid },
+        { runAt: closeRunAt(new Date(r.endsAt)), jobKey: `close_meeting_${rid}` },
       );
       return 'scheduled' as const;
     }),
