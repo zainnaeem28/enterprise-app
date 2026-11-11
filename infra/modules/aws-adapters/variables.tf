@@ -198,3 +198,29 @@ variable "video_failure_threshold" {
   type        = number
   default     = 5
 }
+
+# ---- recovery Region (no compute exists there; policies only) ----
+
+variable "recovery_region" {
+  description = "Recovery Region (for example us-west-2). When set, the three task roles may be assumed by ECS tasks of this Region and get a second inline policy naming the recovery-Region replicas. No compute is created either way. Null keeps the roles primary-Region only."
+  type        = string
+  default     = null
+}
+
+variable "recovery_data_kms_key_arn" {
+  description = "Replica of the data key in the recovery Region (aws_kms_replica_key). Required with recovery_region."
+  type        = string
+  default     = null
+}
+
+variable "recovery_secrets_kms_key_arn" {
+  description = "Key that encrypts the replicas of the secrets in the recovery Region (not a replica key: Secrets Manager takes any key of that Region). Required with recovery_region."
+  type        = string
+  default     = null
+}
+
+variable "recovery_docs_clean_bucket_arn" {
+  description = "Recovery-Region replica of the clean documents bucket (storage module output replica_bucket_arn). Required with recovery_region."
+  type        = string
+  default     = null
+}

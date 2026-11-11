@@ -69,7 +69,7 @@ variable "recovery_region" {
 }
 
 variable "replica_kms_key_arn" {
-  description = "Replica of the multi-Region secrets key in the recovery Region. Required when recovery_region is set."
+  description = "Customer-managed key in the recovery Region that encrypts the replicas (any key of that Region; it need not be a multi-Region replica). Required when recovery_region is set."
   type        = string
   default     = null
 }

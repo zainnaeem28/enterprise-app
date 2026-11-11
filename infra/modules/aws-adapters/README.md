@@ -28,13 +28,24 @@ policy documents, not AWS behaviour. Real-service checks are on the go-live list
 level); `textract:DetectDocumentText` and `chime:CreateMeeting` (no resource-level permission; limited by `aws:RequestedRegion`). Everything else
 names a bucket prefix, key, secret path, identity or meeting ARN. Secret ARNs for the execution role end in `-??????` (the 6-character suffix AWS adds).
 
+## Recovery Region (R1-GAP-4, authored only)
+
+The payload key replica itself (`aws_kms_replica_key.payload_recovery`, provider `aws.recovery`, primary key's policy via `payload_key_policy_json`) is declared in the production root, `infra/accounts/production/adapters.tf`, not in this module. Authored only, not applied.
+
+`recovery.tf`, active when `recovery_region` is set (production root only). IAM roles are global, and the payload key replica carries the
+primary key policy that names these roles, so the primary roles double as the recovery roles: the trust policy also admits ECS tasks of the
+recovery Region (same account), and a second inline policy `recovery-region` per role names the replicas only (documents replica bucket
+read, data key replica decrypt through S3, payload key replica seal/open split as in the primary, the replicated VAPID secret and the
+replicated image repository for the execution role). The secret replica and its key (`production-secrets-dr`, single-Region) are made in
+the production root through the `secrets` module (`recovery_region`, `replica_kms_key_arn`). **No compute is created.** Whether the
+replicated secret needs its own resource policy in the recovery Region is not verified.
+
 ## Not done here
 
 - The compute module is not instantiated in the roots (it needs image digests); the roots expose `service_wiring`, the exact `services.*` and
   `execution_role_arn` values.
-- Recovery-Region role policies: no compute exists in the recovery Region (DEVOPS-PLAN 3.2); the payload key has a replica with the same key policy.
 - SES bounce/complaint event destination and SNS signature check (no receipt route exists, INT-N2), SMS origination identity, DNS, SES/SMS production access.
-- Recovery replication of the VAPID secret (the secrets key in the roots is single-Region).
+- Recovery-Region compute (DEVOPS-PLAN 3.2), and in the recovery Region: document upload, package and export buckets, runtime integration secrets, SES/SMS sending, the anchor archive and malware scanning (see `recovery.tf` header for why each is absent).
 - IAM and key-policy writes need the human platform-admin apply (DEVOPS-PLAN 7.5); the `gh-tf-*` roles cannot create roles.
 
 ## Tests
@@ -54,4 +65,5 @@ anchors limited to put/get/get-version, outbound/inbound secret split).
 4. **No SNS topic or event destination for SES receipts**: nothing consumes them yet (AWS-ADAPTERS.md "Receipts"); adding an unverified
    topic would only look complete.
 5. **api `GetObject` on the whole clean bucket** (key layout after promotion is not fixed in the code); quarantine and packages are prefix-limited (`q/`, `p/`).
-6. Not run: `tofu plan/apply` (no account), checkov (the repository's policy scan is Trivy), any AWS call.
+6. Recovery policies are static plan-shape only: not applied, not exercised by a task in us-west-2.
+7. Not run: `tofu plan/apply` (no account), checkov (the repository's policy scan is Trivy), any AWS call.
