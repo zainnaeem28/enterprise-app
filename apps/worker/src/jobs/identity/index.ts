@@ -49,7 +49,12 @@ export { PERMISSIONS, ROLES, REFERENCE_DATASET, REFERENCE_VERSION } from './refe
 export { eventIdFor, runRecordSignIn } from './record-sign-in.js';
 export { runPurgeSessions, PURGE_AFTER_HOURS } from './purge-sessions.js';
 export { hashInviteCode, runProxyAgeOut, runSendProxyInvite } from './proxy-rules.js';
-export type { AgeOutResult, ProxyMailPort, ProxyRulesDeps, SendInviteResult } from './proxy-rules.js';
+export type {
+  AgeOutResult,
+  ProxyMailPort,
+  ProxyRulesDeps,
+  SendInviteResult,
+} from './proxy-rules.js';
 
 export function defineIdentityJobs(registry: JobRegistry): void {
   for (const j of IDENTITY_JOBS) registry.defineJob(j);

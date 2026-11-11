@@ -103,7 +103,7 @@ export class ChannelUnavailableError extends PatientError {
   }
 }
 
-export { ProxyRulesNotConfiguredError } from '../identity/errors.js';
+export { ProxyRulesNotConfiguredError } from '../identity/index.js';
 
 export class PreconditionRequiredError extends PatientError {
   constructor() {

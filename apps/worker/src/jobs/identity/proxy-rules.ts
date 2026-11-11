@@ -41,17 +41,18 @@ export interface ProxyRulesDeps {
   mail: ProxyMailPort;
 }
 
-const SETTINGS = [
-  'proxy_age_of_majority',
-  'proxy_adolescent_min_age',
-  'proxy_age_out_notice_days',
-  'proxy_invite_hours',
-  'proxy_code_max_attempts',
-] as const;
-type SettingKey = (typeof SETTINGS)[number];
+type SettingKey =
+  | 'proxy_age_of_majority'
+  | 'proxy_adolescent_min_age'
+  | 'proxy_age_out_notice_days'
+  | 'proxy_invite_hours'
+  | 'proxy_code_max_attempts';
 
 async function intSetting(tx: Tx, key: SettingKey): Promise<number> {
-  const r = await tx.query(`SELECT value FROM kernel.setting WHERE key = $1 AND location_id IS NULL`, [key]);
+  const r = await tx.query(
+    `SELECT value FROM kernel.setting WHERE key = $1 AND location_id IS NULL`,
+    [key],
+  );
   const v = r.rows[0]?.['value'];
   // A missing rule value fails closed: the job errors (and retries, then dead-letters) rather than guessing an age.
   if (typeof v !== 'number' || !Number.isInteger(v) || v < 1)
@@ -190,10 +191,18 @@ export async function runProxyAgeOut(
         `UPDATE identity.proxy_grant SET status = 'expired', revoke_reason = 'age_out', ended_by = 'age_out' WHERE id = $1`,
         [g['id']],
       );
-      await audit(tx, deps.orgId, jobRef, 'proxy_age_out', g['id'] as string, g['patient_id'] as string, {
-        event: 'proxy_aged_out',
-        validUntil: String(g['valid_until']).slice(0, 10),
-      });
+      await audit(
+        tx,
+        deps.orgId,
+        jobRef,
+        'proxy_age_out',
+        g['id'] as string,
+        g['patient_id'] as string,
+        {
+          event: 'proxy_aged_out',
+          validUntil: String(g['valid_until']).slice(0, 10),
+        },
+      );
     }
     return due.length;
   });
@@ -216,9 +225,17 @@ export async function runProxyAgeOut(
         `UPDATE identity.proxy_grant SET status = 'expired', revoke_reason = 'age_out', ended_by = 'invite_expired' WHERE id = $1`,
         [g['id']],
       );
-      await audit(tx, deps.orgId, jobRef, 'proxy_invite_expired', g['id'] as string, g['patient_id'] as string, {
-        event: 'proxy_invite_expired',
-      });
+      await audit(
+        tx,
+        deps.orgId,
+        jobRef,
+        'proxy_invite_expired',
+        g['id'] as string,
+        g['patient_id'] as string,
+        {
+          event: 'proxy_invite_expired',
+        },
+      );
     }
     return stale.length;
   });
@@ -244,16 +261,29 @@ export async function runProxyAgeOut(
       await deps.mail.sendAgeOutNotice({
         to: g['email'] as string,
         grantId: g['id'] as string,
-        endsOn: String(g['ends_on'] instanceof Date ? g['ends_on'].toISOString() : g['ends_on']).slice(0, 10),
+        endsOn: String(
+          g['ends_on'] instanceof Date ? g['ends_on'].toISOString() : g['ends_on'],
+        ).slice(0, 10),
         daysLeft: Number(g['days_left']),
         jobRef,
       });
       await deps.db.withScope(scope, async (tx) => {
-        await tx.query(`UPDATE identity.proxy_grant SET age_out_notice_at = now() WHERE id = $1 AND age_out_notice_at IS NULL`, [g['id']]);
-        await audit(tx, deps.orgId, jobRef, 'proxy_age_out_notice', g['id'] as string, g['patient_id'] as string, {
-          event: 'proxy_age_out_notice_sent',
-          daysLeft: Number(g['days_left']),
-        });
+        await tx.query(
+          `UPDATE identity.proxy_grant SET age_out_notice_at = now() WHERE id = $1 AND age_out_notice_at IS NULL`,
+          [g['id']],
+        );
+        await audit(
+          tx,
+          deps.orgId,
+          jobRef,
+          'proxy_age_out_notice',
+          g['id'] as string,
+          g['patient_id'] as string,
+          {
+            event: 'proxy_age_out_notice_sent',
+            daysLeft: Number(g['days_left']),
+          },
+        );
       });
       result.noticed += 1;
     } catch (e) {
@@ -262,6 +292,8 @@ export async function runProxyAgeOut(
   }
   // Everything that could be done is done; a failed notice makes the job fail so it retries (the notice is sent once, then marked).
   if (failures.length > 0)
-    throw new Error(`identity.proxy_age_out: ${failures.length} notice(s) not sent (${result.expired} expired, ${result.noticed} noticed)`);
+    throw new Error(
+      `identity.proxy_age_out: ${failures.length} notice(s) not sent (${result.expired} expired, ${result.noticed} noticed)`,
+    );
   return result;
 }

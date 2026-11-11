@@ -91,7 +91,11 @@ const scopesOf = (v: unknown): ProxyScope[] =>
   );
 
 const iso = (v: unknown): string | undefined =>
-  v instanceof Date ? v.toISOString().slice(0, 10) : typeof v === 'string' ? v.slice(0, 10) : undefined;
+  v instanceof Date
+    ? v.toISOString().slice(0, 10)
+    : typeof v === 'string'
+      ? v.slice(0, 10)
+      : undefined;
 
 const view = (r: Record<string, unknown>): ProxyGrantView => {
   const open = r['status'] === 'requested' || r['status'] === 'verified';
@@ -139,9 +143,7 @@ export interface ProxyServiceDeps {
   now?: () => Date;
 }
 
-export type AcceptOutcome =
-  | { kind: 'accepted'; grant: ProxyGrantView }
-  | { kind: 'invalid' };
+export type AcceptOutcome = { kind: 'accepted'; grant: ProxyGrantView } | { kind: 'invalid' };
 
 export class ProxyService {
   constructor(private readonly deps: ProxyServiceDeps) {}
@@ -157,7 +159,8 @@ export class ProxyService {
       [key],
     );
     const v = r.rows[0]?.['value'];
-    if (typeof v !== 'number' || !Number.isInteger(v) || v < 1) throw new ProxyRulesNotConfiguredError();
+    if (typeof v !== 'number' || !Number.isInteger(v) || v < 1)
+      throw new ProxyRulesNotConfiguredError();
     return v;
   }
 
@@ -190,7 +193,11 @@ export class ProxyService {
     input: { patientId: string; relationship: ProxyRelationship; patientDisplayName: string },
   ): Promise<string> {
     const principalId = tx.scope.principalId;
-    if (tx.scope.audience !== 'patient' || principalId === undefined || tx.scope.orgId === undefined)
+    if (
+      tx.scope.audience !== 'patient' ||
+      principalId === undefined ||
+      tx.scope.orgId === undefined
+    )
       throw new IdentityScopeError();
     const bad: string[] = [];
     if (!isUuid(input.patientId)) bad.push('patientId');
@@ -222,7 +229,12 @@ export class ProxyService {
   }
 
   private async queueInvite(tx: Tx, grantId: string): Promise<void> {
-    await this.deps.queue.enqueue(tx, SEND_INVITE_JOB, { grantId }, { jobKey: `proxy_invite_${grantId}` });
+    await this.deps.queue.enqueue(
+      tx,
+      SEND_INVITE_JOB,
+      { grantId },
+      { jobKey: `proxy_invite_${grantId}` },
+    );
   }
 
   /**
@@ -350,7 +362,19 @@ export class ProxyService {
                 (pt.date_of_birth + make_interval(years => $10::int))::date - 1,
                 $8::uuid, $11::uuid, $8::uuid
            FROM patient.patient pt WHERE pt.id = $3::uuid`,
-        [id, s.orgId, patientId, relationship, scopes, display, email, s.principalId, adolescent, majority, input.documentId],
+        [
+          id,
+          s.orgId,
+          patientId,
+          relationship,
+          scopes,
+          display,
+          email,
+          s.principalId,
+          adolescent,
+          majority,
+          input.documentId,
+        ],
       );
     } catch (e) {
       if ((e as { code?: string }).code === '23505') throw new ProxyConflictError();
@@ -371,12 +395,22 @@ export class ProxyService {
    * attempt that was counted stays counted). The grant is visible only to the account whose own address was invited (RLS); the code
    * is the second factor. Wrong code, expired, used up, unknown id and another person's invitation are all the same answer.
    */
-  async accept(tx: Tx, meta: ProxyRequestMeta, grantId: string, code: unknown): Promise<AcceptOutcome> {
+  async accept(
+    tx: Tx,
+    meta: ProxyRequestMeta,
+    grantId: string,
+    code: unknown,
+  ): Promise<AcceptOutcome> {
     const principalId = tx.scope.principalId;
-    if (tx.scope.audience !== 'patient' || principalId === undefined || tx.scope.orgId === undefined)
+    if (
+      tx.scope.audience !== 'patient' ||
+      principalId === undefined ||
+      tx.scope.orgId === undefined
+    )
       throw new IdentityScopeError();
     if (!isUuid(grantId)) throw new IdentityValidationError(['grantId']);
-    if (typeof code !== 'string' || !/^[0-9]{6,10}$/.test(code)) throw new IdentityValidationError(['code']);
+    if (typeof code !== 'string' || !/^[0-9]{6,10}$/.test(code))
+      throw new IdentityValidationError(['code']);
     const maxAttempts = await this.intSetting(tx, 'proxy_code_max_attempts');
 
     const g = (
@@ -393,8 +427,12 @@ export class ProxyService {
         [grantId],
       )
     ).rows[0];
-    if (c === undefined || c['live'] !== true || Number(c['attempts']) >= maxAttempts) return { kind: 'invalid' };
-    await tx.query(`UPDATE identity.proxy_invite_code SET attempts = attempts + 1 WHERE grant_id = $1`, [grantId]);
+    if (c === undefined || c['live'] !== true || Number(c['attempts']) >= maxAttempts)
+      return { kind: 'invalid' };
+    await tx.query(
+      `UPDATE identity.proxy_invite_code SET attempts = attempts + 1 WHERE grant_id = $1`,
+      [grantId],
+    );
     const given = hashInviteCode(c['salt'] as Buffer, code);
     const want = c['code_hash'] as Buffer;
     if (given.length !== want.length || !timingSafeEqual(given, want)) return { kind: 'invalid' };
@@ -443,7 +481,10 @@ export class ProxyService {
     ).rows[0];
     if (before === undefined) return undefined;
     if (before['guardian'] === true) throw new ProxyNotAllowedError();
-    await tx.query(`UPDATE identity.proxy_grant SET scopes = $2::text[] WHERE id = $1`, [grantId, next]);
+    await tx.query(`UPDATE identity.proxy_grant SET scopes = $2::text[] WHERE id = $1`, [
+      grantId,
+      next,
+    ]);
     await this.audit(tx, meta, 'update', grantId, patientId, {
       event: 'proxy_scopes_changed',
       from: scopesOf(before['scopes']),
@@ -468,12 +509,20 @@ export class ProxyService {
       [grantId, patientId],
     );
     if ((r.rowCount ?? 0) !== 1) return false;
-    await this.audit(tx, meta, 'update', grantId, patientId, { event: 'proxy_revoked', by: 'patient' });
+    await this.audit(tx, meta, 'update', grantId, patientId, {
+      event: 'proxy_revoked',
+      by: 'patient',
+    });
     return true;
   }
 
   /** Staff revoke a grant or invitation at any time (`identity.proxy.revoke`; the policy limits them to patients of their locations). */
-  async staffRevoke(tx: Tx, meta: ProxyRequestMeta, patientId: string, grantId: string): Promise<boolean> {
+  async staffRevoke(
+    tx: Tx,
+    meta: ProxyRequestMeta,
+    patientId: string,
+    grantId: string,
+  ): Promise<boolean> {
     if (tx.scope.audience !== 'staff') throw new IdentityScopeError();
     if (!isUuid(patientId) || !isUuid(grantId)) throw new IdentityValidationError(['grantId']);
     const r = await tx.query(
@@ -482,14 +531,18 @@ export class ProxyService {
       [grantId, patientId],
     );
     if ((r.rowCount ?? 0) !== 1) return false;
-    await this.audit(tx, meta, 'update', grantId, patientId, { event: 'proxy_revoked', by: 'staff' });
+    await this.audit(tx, meta, 'update', grantId, patientId, {
+      event: 'proxy_revoked',
+      by: 'staff',
+    });
     return true;
   }
 
   /** A proxy leaves: ends their own access to the patient. False when they hold no active grant with that id. */
   async leave(tx: Tx, meta: ProxyRequestMeta, grantId: string): Promise<boolean> {
     const principalId = tx.scope.principalId;
-    if (tx.scope.audience !== 'patient' || principalId === undefined) throw new IdentityScopeError();
+    if (tx.scope.audience !== 'patient' || principalId === undefined)
+      throw new IdentityScopeError();
     if (!isUuid(grantId)) throw new IdentityValidationError(['grantId']);
     const r = await tx.query(
       `UPDATE identity.proxy_grant SET status = 'revoked', revoked_at = now(), revoke_reason = 'patient', ended_by = 'proxy'

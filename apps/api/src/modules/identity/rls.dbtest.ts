@@ -1008,7 +1008,10 @@ describe('isolation between principals (T-PRINCIPAL, T-PAT-OWN)', () => {
       (await k.db.withScope(ownerScope, (tx) => svc.listForPatient(tx, P))).map((g) => g.id),
       [grantId],
     );
-    assert.equal(await k.db.withScope(ownerScope, (tx) => svc.revokeByPatient(tx, meta, P, grantId)), true);
+    assert.equal(
+      await k.db.withScope(ownerScope, (tx) => svc.revokeByPatient(tx, meta, P, grantId)),
+      true,
+    );
     assert.equal(
       await k.db.withScope(ownerScope, (tx) => svc.revokeByPatient(tx, meta, P, grantId)),
       false,

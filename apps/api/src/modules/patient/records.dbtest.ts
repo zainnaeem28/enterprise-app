@@ -826,7 +826,9 @@ describe('proxy access uses identity.proxy_grant, with no table of its own (D-7 
     const del = await mine(acct, 'DELETE', `/api/v1/patients/${pid}/proxies/${grant.id}`);
     assert.ok(del.status === 200 || del.status === 204);
     assert.equal(
-      (await k.q(`SELECT status FROM identity.proxy_grant WHERE id = $1`, [grant.id]))[0]?.['status'],
+      (await k.q(`SELECT status FROM identity.proxy_grant WHERE id = $1`, [grant.id]))[0]?.[
+        'status'
+      ],
       'revoked',
     );
   });
