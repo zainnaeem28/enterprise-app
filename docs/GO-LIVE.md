@@ -237,7 +237,7 @@ Known gaps with no code yet, so they stay on this list rather than being configu
 - No inbound receipt route (INT-N2) and no SNS signature verifier: no SES or SMS delivery receipts are recorded until a ticket adds them
   with the SES event destination.
 - The partner identity pool has no sign-in code in R1 (partner portal is R2).
-- The alarm for dead `telehealth.close_meeting` jobs: the worker log line is not in the repository.
+- The `telehealth.close_meeting` dead-job alarm is configured on the worker's generic `job_dead` line, but no `telehealth.close_meeting` job type exists in the repository yet, so it fires only once that job is added.
 - Recovery-Region role policies and VAPID secret replication (no compute exists in the recovery Region).
 - Chime offers no per-token lifetime: the "short-lived" bound is only in our own record.
 - Load scenarios (QA-07) are a placeholder step in `loadtest-run.yml`.
