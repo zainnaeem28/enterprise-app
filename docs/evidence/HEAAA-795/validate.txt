@@ -1,0 +1,46 @@
+::group::validate infra/accounts/log-archive
+Success! The configuration is valid.
+::group::validate infra/accounts/management
+Success! The configuration is valid.
+::group::validate infra/accounts/marketing
+Success! The configuration is valid.
+::group::validate infra/accounts/production
+Success! The configuration is valid.
+::group::validate infra/accounts/staging
+Success! The configuration is valid.
+::group::validate infra/accounts/tooling
+Success! The configuration is valid.
+::group::validate infra/approvals
+Success! The configuration is valid.
+::group::validate infra/bootstrap
+Success! The configuration is valid.
+::group::validate infra/modules/archive
+Success! The configuration is valid.
+::group::validate infra/modules/aws-adapters
+Success! The configuration is valid.
+::group::validate infra/modules/ci-trust
+Success! The configuration is valid.
+::group::validate infra/modules/compute
+Success! The configuration is valid.
+::group::validate infra/modules/database
+Success! The configuration is valid.
+::group::validate infra/modules/dr/rehearsal
+Success! The configuration is valid.
+::group::validate infra/modules/dr/restore-boundary
+Success! The configuration is valid.
+::group::validate infra/modules/edge
+Success! The configuration is valid.
+::group::validate infra/modules/identity
+Success! The configuration is valid.
+::group::validate infra/modules/kms
+Success! The configuration is valid.
+::group::validate infra/modules/loadtest
+Success! The configuration is valid.
+::group::validate infra/modules/network
+Success! The configuration is valid.
+::group::validate infra/modules/observability
+Success! The configuration is valid.
+::group::validate infra/modules/secrets
+Success! The configuration is valid.
+::group::validate infra/modules/storage
+Success! The configuration is valid.
