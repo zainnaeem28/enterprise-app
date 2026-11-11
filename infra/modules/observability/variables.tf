@@ -239,9 +239,24 @@ variable "data_protection_managed_identifiers" {
   default     = ["EmailAddress", "Ssn-US", "PhoneNumber-US", "Address", "Name"]
 }
 
+variable "log_retention_days" {
+  description = "Log group retention for the collector, metric-format and backup-lag logs: 90 days (owner ruling C item 2 †; infra/RETENTION.md)."
+  type        = number
+  default     = 90
+  validation {
+    condition     = var.log_retention_days >= 90
+    error_message = "log_retention_days must be at least 90."
+  }
+}
+
 variable "findings_retention_days" {
-  type    = number
-  default = 90
+  description = "Data-protection findings log retention: 90 days like application logs (owner ruling C item 2 †; infra/RETENTION.md)."
+  type        = number
+  default     = 90
+  validation {
+    condition     = var.findings_retention_days >= 90
+    error_message = "findings_retention_days must be at least 90."
+  }
 }
 
 # --- Synthetic checks ---------------------------------------------------------

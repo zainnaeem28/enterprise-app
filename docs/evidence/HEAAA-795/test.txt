@@ -1,0 +1,75 @@
+== tofu test infra/modules/archive
+  run "vault_policies_keep_a_repair_path"... pass
+  run "writers_are_scoped_to_their_own_prefix"... pass
+
+Success! 10 passed, 0 failed.
+== tofu test infra/modules/aws-adapters
+  run "buckets_refuse_foreign_writers_and_plain_http"... pass
+  run "guardduty_role_is_scoped_to_the_quarantine_bucket"... pass
+
+Success! 16 passed, 0 failed.
+== tofu test infra/modules/ci-trust
+  run "tf_roles_read_their_record_through_ssm_and_cannot_edit_protecting_controls"... pass
+  run "infra_roles_cannot_edit_signing_restore_secrets_keys_or_secret_policies"... pass
+
+Success! 11 passed, 0 failed.
+== tofu test infra/modules/compute
+  run "backend_is_https_by_default"... pass
+  run "plaintext_backend_rejected_in_production"... pass
+
+Success! 8 passed, 0 failed.
+== tofu test infra/modules/database
+  run "monthly_retention_above_vault_lock_maximum_rejected"... pass
+  run "backup_role_has_no_restore_policy"... pass
+
+Success! 10 passed, 0 failed.
+== tofu test infra/modules/dr/rehearsal
+  run "refused_for_a_name_that_could_be_mistaken_for_an_environment"... pass
+  run "refused_for_a_malformed_expiry"... pass
+
+Success! 6 passed, 0 failed.
+== tofu test infra/modules/dr/restore-boundary
+  run "without_an_alert_topic_the_rule_has_no_target"... pass
+  run "with_an_alert_topic_the_rule_has_a_target"... pass
+
+Success! 7 passed, 0 failed.
+== tofu test infra/modules/edge
+  run "bot_control_with_paths"... pass
+  run "wrong_portal_keys_rejected"... pass
+
+Success! 10 passed, 0 failed.
+== tofu test infra/modules/identity
+  run "dev_pp04_b_allowed_once_endorsed"... pass
+  run "http_callbacks_rejected"... pass
+
+Success! 5 passed, 0 failed.
+== tofu test infra/modules/kms
+  run "rotation_is_on_and_alias_prefixed"... pass
+  run "deletion_window_validated"... pass
+
+Success! 2 passed, 0 failed.
+== tofu test infra/modules/loadtest
+  run "tag_image_rejected"... pass
+  run "lifetime_over_24h_rejected"... pass
+
+Success! 6 passed, 0 failed.
+== tofu test infra/modules/network
+  run "three_az_nat_per_az"... pass
+  run "one_az_rejected"... pass
+
+Success! 3 passed, 0 failed.
+== tofu test infra/modules/observability
+  run "phi_alarm_uses_findings_metric_filter"... pass
+  run "bare_module_with_no_inputs_plans"... pass
+
+Success! 20 passed, 0 failed.
+== tofu test infra/modules/secrets
+  run "runtime_secrets_are_not_containers"... pass
+  run "replica_requires_key"... pass
+
+Success! 6 passed, 0 failed.
+== tofu test infra/modules/storage
+  run "unrestricted_clean_writers_need_explicit_opt_in"... pass
+  run "unrestricted_clean_writers_allowed_when_opted_in"... pass
+
+Success! 7 passed, 0 failed.

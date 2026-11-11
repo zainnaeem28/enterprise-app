@@ -51,10 +51,10 @@ data "aws_iam_policy_document" "lag" {
 }
 
 resource "aws_cloudwatch_log_group" "lag" {
-  # checkov:skip=CKV_AWS_338:Operational log, 30-90 day retention by design; application and security log retention is set in DEVOPS-PLAN 11.1 (final periods need counsel)
+  # checkov:skip=CKV_AWS_338:Log retention is var.log_retention_days (90 days, owner ruling C item 2, counsel confirmation pending); the 1-year archive stage is described in infra/RETENTION.md
   count             = local.lag_enabled ? 1 : 0
   name              = "/aws/lambda/${var.name}-backup-lag"
-  retention_in_days = 30
+  retention_in_days = var.log_retention_days
   kms_key_id        = var.kms_key_arn
   tags              = var.tags
 }
