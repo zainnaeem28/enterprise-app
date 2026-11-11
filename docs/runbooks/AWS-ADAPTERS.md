@@ -136,10 +136,7 @@ Behaviour and decisions:
 - **Attachments** (at most 2, from the existing adapter contract) go as a raw MIME message; otherwise SES simple content is used.
 - **Health.** `ses:GetAccount`; `sms-voice:DescribeAccountAttributes`; push has no cheap authenticated call, so configured keys count as healthy.
 - **Receipts.** `receipt-events.ts` maps an SES event (Delivery, permanent/transient Bounce, Complaint; bare or inside an SNS
-  Notification) and an End User Messaging SMS event to the body `notifications.on_receipt` parses. **Nothing calls them**: the repository has
-  no inbound HTTP route yet (`integration-core/inbound.ts`: route not built, INT-N2) and no SNS signature verifier, and this ticket did not
-  invent either. The ticket that adds the route wires them, with the SES event destination (SNS topic) and an SNS signature check. Field names
-  follow the AWS formats and must be compared with a real event at go-live. Until then no receipt row is written for these providers.
+  Notification) and an End User Messaging SMS event to the body `notifications.on_receipt` parses. The inbound route `POST /webhooks/sns/receipts` (`apps/api`, integrations-host) calls them and the worker registers the receipt handlers for `email` and `sms`; see "Receipts" below. Field names follow the AWS formats and must be compared with a real event at go-live. The route answers 503 at the store until the API passes the payload sealer to the receipt ports (`docs/GO-LIVE.md`).
 - **Security notice** goes straight to the configured mailbox through SES (not the gateway, the address is configuration). Content is the
   event kind, job reference, principal IDs and, for `bootstrap_run`, the run, CI and ticket references and token expiry: no name or credential detail.
 
@@ -270,7 +267,7 @@ SMS `TEXT_DELIVERED` is `delivered`; `TEXT_INVALID`, `TEXT_INVALID_MESSAGE`, `TE
 **Infrastructure.** `infra/modules/aws-adapters/receipts.tf` (set `receipt_endpoint_url = "https://<integrations host>/webhooks/sns/receipts"`): encrypted topics with a
 publish policy limited to the account and the configuration set, the SES event destination, and the HTTPS subscriptions (raw message delivery off, auto-confirm off).
 
-**SMS event destination (manual, once).** The pinned Terraform provider cannot create it. After the module is applied, with the `sms` topic ARN from output `receipt_topic_arns`:
+**SMS event destination (manual, once).** The pinned Terraform provider cannot create it (schema check: `docs/evidence/HEAAA-773/provider-schema-pinpointsmsvoicev2.txt`). After the module is applied, with the `sms` topic ARN from output `receipt_topic_arns`:
 
 ```sh
 aws pinpoint-sms-voice-v2 create-event-destination \
