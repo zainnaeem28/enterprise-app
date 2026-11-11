@@ -4,6 +4,7 @@
 //   CN-12 unknown fields), PB-2 (a public transaction cannot write), the ticket's acceptance for `/public/v1/*` and the cookie-less host.
 //   EHR_TEST_ADMIN_URL=postgres://postgres:...@host:port/postgres node --test dist/src/modules/integrations-host/integrations-host.dbtest.js
 // Synthetic data only. Missing configuration FAILS (the testkit throws); nothing skips.
+import { FIXTURE_STATES } from '../../platform/fixture-states.js';
 import assert from 'node:assert/strict';
 import { createHmac, randomUUID } from 'node:crypto';
 import { request } from 'node:http';
@@ -123,7 +124,7 @@ before(async () => {
   admin = await t.adminScope();
   // Not in the standard fixtures: an inactive location and service, and a condition-revealing internal name that must never appear.
   await t.k.q(
-    `INSERT INTO organisation.location (id, organisation_id, name, kind, time_zone, state_code, active) VALUES ($1, $2, 'Closed Clinic', 'clinic', 'America/New_York', 'NY', false)`,
+    `INSERT INTO organisation.location (id, organisation_id, name, kind, time_zone, state_code, active) VALUES ($1, $2, 'Closed Clinic', 'clinic', 'America/New_York', '${FIXTURE_STATES.licensed}', false)`,
     [L_INACTIVE, ORG],
   );
   await t.k.q(
@@ -393,7 +394,7 @@ describe('PB-2: a public transaction cannot write; base tables return nothing to
 
   test("with the route's read-only setting, INSERT, UPDATE and DELETE are refused with 25006", async () => {
     for (const sql of [
-      `INSERT INTO organisation.location (id, organisation_id, name, kind, time_zone, state_code) VALUES (gen_random_uuid(), '${ORG}', 'x', 'clinic', 'UTC', 'NY')`,
+      `INSERT INTO organisation.location (id, organisation_id, name, kind, time_zone, state_code) VALUES (gen_random_uuid(), '${ORG}', 'x', 'clinic', 'UTC', '${FIXTURE_STATES.licensed}')`,
       `UPDATE organisation.location SET name = 'x'`,
       `DELETE FROM organisation.location`,
       `UPDATE organisation.public_location SET name = 'x'`,
@@ -412,7 +413,7 @@ describe('PB-2: a public transaction cannot write; base tables return nothing to
     for (const sql of [
       `UPDATE organisation.location SET name = 'x'`,
       `DELETE FROM organisation.location`,
-      `INSERT INTO organisation.location (id, organisation_id, name, kind, time_zone, state_code) VALUES (gen_random_uuid(), '${ORG}', 'x', 'clinic', 'UTC', 'NY')`,
+      `INSERT INTO organisation.location (id, organisation_id, name, kind, time_zone, state_code) VALUES (gen_random_uuid(), '${ORG}', 'x', 'clinic', 'UTC', '${FIXTURE_STATES.licensed}')`,
     ]) {
       const outcome = await run((tx) => tx.query(sql)).then(
         (r) => ({ rows: r.rowCount }),

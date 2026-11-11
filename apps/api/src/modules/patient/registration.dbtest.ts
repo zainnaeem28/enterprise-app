@@ -2,6 +2,7 @@
 // care relationships and the staff-scope derivation (6.6, SBR-11).
 //   EHR_TEST_ADMIN_URL=postgres://postgres@host:5432/postgres node --test dist/src/modules/patient/registration.dbtest.js
 // The URL names a superuser on a throwaway server (synthetic data only). Missing configuration FAILS; nothing skips.
+import { FIXTURE_STATES } from '../../platform/fixture-states.js';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { after, before, describe, test } from 'node:test';
@@ -74,7 +75,7 @@ describe('registration at the front desk (25.3)', () => {
     const r = await post(
       deskA1,
       '/api/v1/patients',
-      { ...person(1), stateCode: 'NY', locationId: A1 },
+      { ...person(1), stateCode: FIXTURE_STATES.licensed, locationId: A1 },
       idem(),
     );
     assert.equal(r.status, 422);
@@ -121,7 +122,13 @@ describe('registration at the front desk (25.3)', () => {
     let r = await post(
       deskA1,
       '/api/v1/patients',
-      { ...who, givenName: 'Changed', stateCode: 'NY', locationId: A1, matchCheckId: checkId },
+      {
+        ...who,
+        givenName: 'Changed',
+        stateCode: FIXTURE_STATES.licensed,
+        locationId: A1,
+        matchCheckId: checkId,
+      },
       idem(),
     );
     assert.equal(r.status, 422);
@@ -131,7 +138,7 @@ describe('registration at the front desk (25.3)', () => {
     r = await post(
       leadA1,
       '/api/v1/patients',
-      { ...who, stateCode: 'NY', locationId: A1, matchCheckId: checkId },
+      { ...who, stateCode: FIXTURE_STATES.licensed, locationId: A1, matchCheckId: checkId },
       idem(),
     );
     assert.equal(r.status, 422);
@@ -140,7 +147,7 @@ describe('registration at the front desk (25.3)', () => {
     r = await post(
       deskA1,
       '/api/v1/patients',
-      { ...who, stateCode: 'NY', locationId: A1, matchCheckId: checkId },
+      { ...who, stateCode: FIXTURE_STATES.licensed, locationId: A1, matchCheckId: checkId },
       idem(),
     );
     assert.equal(r.status, 201);
@@ -148,7 +155,7 @@ describe('registration at the front desk (25.3)', () => {
     r = await post(
       deskA1,
       '/api/v1/patients',
-      { ...who, stateCode: 'NY', locationId: A1, matchCheckId: checkId },
+      { ...who, stateCode: FIXTURE_STATES.licensed, locationId: A1, matchCheckId: checkId },
       idem(),
     );
     assert.equal(r.status, 422);
@@ -165,7 +172,12 @@ describe('registration at the front desk (25.3)', () => {
     r = await post(
       deskA1,
       '/api/v1/patients',
-      { ...person(4), stateCode: 'NY', locationId: A1, matchCheckId: m2.json()['matchCheckId'] },
+      {
+        ...person(4),
+        stateCode: FIXTURE_STATES.licensed,
+        locationId: A1,
+        matchCheckId: m2.json()['matchCheckId'],
+      },
       idem(),
     );
     assert.equal(r.status, 422);
@@ -178,7 +190,12 @@ describe('registration at the front desk (25.3)', () => {
     const r = await post(
       deskA1,
       '/api/v1/patients',
-      { ...person(5), stateCode: 'NY', locationId: B1, matchCheckId: randomUUID() },
+      {
+        ...person(5),
+        stateCode: FIXTURE_STATES.licensed,
+        locationId: B1,
+        matchCheckId: randomUUID(),
+      },
       idem(),
     );
     assert.equal(r.status, 403);
@@ -211,7 +228,7 @@ describe('registration at the front desk (25.3)', () => {
     let r = await post(
       deskA2,
       '/api/v1/patients',
-      { ...person(6), stateCode: 'NY', locationId: A2, matchCheckId: checkId },
+      { ...person(6), stateCode: FIXTURE_STATES.licensed, locationId: A2, matchCheckId: checkId },
       idem(),
     );
     assert.equal(r.status, 422, 'no acknowledgement');
@@ -221,7 +238,7 @@ describe('registration at the front desk (25.3)', () => {
       '/api/v1/patients',
       {
         ...person(6),
-        stateCode: 'NY',
+        stateCode: FIXTURE_STATES.licensed,
         locationId: A2,
         matchCheckId: checkId,
         duplicateAcknowledged: true,
@@ -235,7 +252,7 @@ describe('registration at the front desk (25.3)', () => {
       '/api/v1/patients',
       {
         ...person(6),
-        stateCode: 'NY',
+        stateCode: FIXTURE_STATES.licensed,
         locationId: A2,
         matchCheckId: checkId,
         duplicateAcknowledged: true,
@@ -341,7 +358,7 @@ describe('registration at the front desk (25.3)', () => {
     const m = await post(deskA1, '/api/v1/patients/match', { ...who, locationId: A1 });
     const body = {
       ...who,
-      stateCode: 'NY',
+      stateCode: FIXTURE_STATES.licensed,
       locationId: A1,
       matchCheckId: m.json()['matchCheckId'],
     };
@@ -372,7 +389,7 @@ describe('self-registration on my. (6.6)', () => {
     const r = await post(
       acct,
       '/api/v1/patients/self-registration',
-      { ...person(20), stateCode: 'NY' },
+      { ...person(20), stateCode: FIXTURE_STATES.licensed },
       idem(),
       PATIENT_HOST,
     );
@@ -409,7 +426,7 @@ describe('self-registration on my. (6.6)', () => {
     const again = await post(
       acct,
       '/api/v1/patients/self-registration',
-      { ...person(21), stateCode: 'NY' },
+      { ...person(21), stateCode: FIXTURE_STATES.licensed },
       idem(),
       PATIENT_HOST,
     );
@@ -422,7 +439,7 @@ describe('self-registration on my. (6.6)', () => {
     const r = await post(
       acct,
       '/api/v1/patients/self-registration',
-      { ...person(22), stateCode: 'NY' },
+      { ...person(22), stateCode: FIXTURE_STATES.licensed },
       idem(),
       PATIENT_HOST,
     );
@@ -457,7 +474,7 @@ describe('self-registration on my. (6.6)', () => {
     const r = await post(
       acct,
       '/api/v1/patients/self-registration',
-      { ...person(23), stateCode: 'NY', locationId: A1 },
+      { ...person(23), stateCode: FIXTURE_STATES.licensed, locationId: A1 },
       idem(),
       PATIENT_HOST,
     );
@@ -465,7 +482,7 @@ describe('self-registration on my. (6.6)', () => {
     const s = await post(
       deskA1,
       '/api/v1/patients/self-registration',
-      { ...person(24), stateCode: 'NY' },
+      { ...person(24), stateCode: FIXTURE_STATES.licensed },
       idem(),
     );
     assert.ok(s.status === 403 || s.status === 404, 'a staff session is not a patient session');
@@ -570,7 +587,7 @@ describe('tenancy and isolation (RA-R1-17; TC-AZ-01..03)', () => {
   test("TC-AZ-03: another organisation's patient is not found, not even by the BTG-free staff of the first organisation", async () => {
     const pid = randomUUID();
     await k.sa.query(
-      `INSERT INTO patient.patient (id, organisation_id, mrn, given_name, family_name, date_of_birth, state_code, created_via) VALUES ($1,$2,'MRN-9999991','Orgtwo','Person','1970-01-01','NY','front_desk')`,
+      `INSERT INTO patient.patient (id, organisation_id, mrn, given_name, family_name, date_of_birth, state_code, created_via) VALUES ($1,$2,'MRN-9999991','Orgtwo','Person','1970-01-01','${FIXTURE_STATES.licensed}','front_desk')`,
       [pid, ORG2],
     );
     assert.equal((await get(deskA1, `/api/v1/patients/${pid}`)).status, 404);

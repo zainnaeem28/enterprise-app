@@ -4,6 +4,7 @@
 // by prefix, row-level security of the four tables, state/immutability triggers, and the merge/export participants.
 //   EHR_TEST_ADMIN_URL=postgres://postgres@127.0.0.1:5432/postgres node --test dist/src/modules/notifications/notifications.dbtest.js
 // The URL names a superuser on a throwaway server (synthetic data only). Missing configuration FAILS; nothing skips.
+import { FIXTURE_STATES } from '../../platform/fixture-states.js';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -145,7 +146,7 @@ describe('notifications on PostgreSQL 17 (BE-06, API side)', () => {
     await adminDb.connect();
     // Patient rows the notifications fixtures point at: patient.guard_open_patient (BE-08, migration 0701) refuses writes for a patient that does not exist.
     await adminDb.query(
-      `INSERT INTO organisation.jurisdiction (code, organisation_id, name) VALUES ('NY', $1, 'New York') ON CONFLICT DO NOTHING`,
+      `INSERT INTO organisation.jurisdiction (code, organisation_id, name) VALUES ('${FIXTURE_STATES.licensed}', $1, 'Fixture state ${FIXTURE_STATES.licensed}') ON CONFLICT DO NOTHING`,
       [ORG],
     );
     let mrn = 8000000;
@@ -157,7 +158,7 @@ describe('notifications on PostgreSQL 17 (BE-06, API side)', () => {
       '00000000-0000-7000-8000-0000000000e9',
     ])
       await adminDb.query(
-        `INSERT INTO patient.patient (id, organisation_id, mrn, given_name, family_name, date_of_birth, state_code, created_via) VALUES ($1, $2, $3, 'Fixture', 'Patient', '1980-01-01', 'NY', 'front_desk')`,
+        `INSERT INTO patient.patient (id, organisation_id, mrn, given_name, family_name, date_of_birth, state_code, created_via) VALUES ($1, $2, $3, 'Fixture', 'Patient', '1980-01-01', '${FIXTURE_STATES.licensed}', 'front_desk')`,
         [pid, ORG, `MRN-${mrn++}`],
       );
     // The guard reads the patient root as its owner under row-level security, so this superuser session carries an organisation and an audience too.

@@ -10,7 +10,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { after, before, describe, test } from 'node:test';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { installQueue } from '@ehr/kernel/dist/queue/install.js';
 import { createLogger, JobRegistry, KernelDb, Queue, syncTaskTypes } from '@ehr/kernel';
 import { AdapterRegistry, VendorGateway } from '../integration-core/index.js';
@@ -35,6 +35,12 @@ import { runSendMessage, type SendDeps } from './send-message.js';
 const PG: string = 'pg';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const pg: any = (await import(PG)).default;
+// The one shared fixture module lives in the API (apps/api/src/platform/fixture-states.ts); the worker reads its built copy, as compose.dbtest.ts reads the API build.
+const { FIXTURE_STATES } = (await import(
+  pathToFileURL(
+    fileURLToPath(new URL('../../../../api/dist/src/platform/fixture-states.js', import.meta.url)),
+  ).href
+)) as { FIXTURE_STATES: { licensed: string; unlicensed: string; closed: string } };
 const adminUrl = process.env.EHR_TEST_ADMIN_URL;
 if (!adminUrl) throw new Error('EHR_TEST_ADMIN_URL is not set');
 let root = fileURLToPath(new URL('.', import.meta.url));
@@ -291,13 +297,13 @@ describe('notifications on PostgreSQL 17 (BE-06, worker side)', () => {
     await admin.connect();
     // Patient rows the notifications fixtures point at: patient.guard_open_patient (BE-08, migration 0701) refuses writes for a patient that does not exist.
     await admin.query(
-      `INSERT INTO organisation.jurisdiction (code, organisation_id, name) VALUES ('NY', $1, 'New York') ON CONFLICT DO NOTHING`,
+      `INSERT INTO organisation.jurisdiction (code, organisation_id, name) VALUES ('${FIXTURE_STATES.licensed}', $1, 'Fixture state ${FIXTURE_STATES.licensed}') ON CONFLICT DO NOTHING`,
       [ORG],
     );
     let mrn = 8000000;
     for (const pid of [P1, P2, '00000000-0000-7000-8000-0000000000e7'])
       await admin.query(
-        `INSERT INTO patient.patient (id, organisation_id, mrn, given_name, family_name, date_of_birth, state_code, created_via) VALUES ($1, $2, $3, 'Fixture', 'Patient', '1980-01-01', 'NY', 'front_desk')`,
+        `INSERT INTO patient.patient (id, organisation_id, mrn, given_name, family_name, date_of_birth, state_code, created_via) VALUES ($1, $2, $3, 'Fixture', 'Patient', '1980-01-01', '${FIXTURE_STATES.licensed}', 'front_desk')`,
         [pid, ORG, `MRN-${mrn++}`],
       );
     // The guard reads the patient root as its owner under row-level security, so this superuser session carries an organisation and an audience too.

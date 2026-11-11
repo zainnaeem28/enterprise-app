@@ -4,6 +4,7 @@
 // worker and `reporting_ro` (C0/C1 only, M-4), and the absence of PHI in the models and the feed.
 //   EHR_TEST_ADMIN_URL=postgres://postgres@127.0.0.1:5432/postgres node --test dist/src/modules/reporting/reporting.dbtest.js
 // The URL names a superuser on a throwaway server (synthetic data only). Missing configuration FAILS; nothing skips.
+import { FIXTURE_STATES } from '../../platform/fixture-states.js';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { after, before, describe, test } from 'node:test';
@@ -443,7 +444,7 @@ describe('reporting (BE-21) on PostgreSQL 17', () => {
       await saWrite(
         t.k,
         `INSERT INTO patient.patient (id, organisation_id, mrn, given_name, family_name, date_of_birth, state_code, created_via)
-         VALUES ($1, $2, 'MRN-9908001', 'Canary', 'Patient', '1970-01-01', 'NY', 'front_desk')`,
+         VALUES ($1, $2, 'MRN-9908001', 'Canary', 'Patient', '1970-01-01', '${FIXTURE_STATES.licensed}', 'front_desk')`,
         [CANARY_PATIENT, ORG],
       );
       await saWrite(

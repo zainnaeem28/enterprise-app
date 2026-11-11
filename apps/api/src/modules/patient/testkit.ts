@@ -2,6 +2,7 @@
 // installed, the identity reference data applied by the real worker job, the real Nest application with the identity guard, the
 // identity and patient controllers, and seeded sessions (the sign-in itself is BE-04's and is tested there). Not a test file; it
 // is imported by the *.dbtest.ts files. Synthetic data only.
+import { FIXTURE_STATES } from '../../platform/fixture-states.js';
 import { execFileSync } from 'node:child_process';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
@@ -488,7 +489,7 @@ export async function registerViaApi(
     cookie: s.cookie,
     headers: writeHeaders(s, STAFF_HOST, randomUUID()),
     body: {
-      stateCode: 'NY',
+      stateCode: FIXTURE_STATES.licensed,
       ...who,
       locationId,
       matchCheckId: checkId,
@@ -559,7 +560,7 @@ export class ProbeController {
 
 export const standardFixtures = async ({ sa }: { sa: Client }): Promise<void> => {
   await sa.query(
-    `INSERT INTO organisation.jurisdiction (code, organisation_id, name) VALUES ('NY', $1, 'New York'), ('NJ', $1, 'New Jersey')`,
+    `INSERT INTO organisation.jurisdiction (code, organisation_id, name) VALUES ('${FIXTURE_STATES.licensed}', $1, 'Fixture state A'), ('${FIXTURE_STATES.unlicensed}', $1, 'Fixture state B')`,
     [ORG],
   );
   for (const [lid, name] of [
@@ -568,7 +569,7 @@ export const standardFixtures = async ({ sa }: { sa: Client }): Promise<void> =>
     [id(201), 'Clinic B1'],
   ] as const)
     await sa.query(
-      `INSERT INTO organisation.location (id, organisation_id, name, kind, time_zone, state_code, active) VALUES ($1, $2, $3, 'clinic', 'America/New_York', 'NY', true)`,
+      `INSERT INTO organisation.location (id, organisation_id, name, kind, time_zone, state_code, active) VALUES ($1, $2, $3, 'clinic', 'America/New_York', '${FIXTURE_STATES.licensed}', true)`,
       [lid, ORG, name],
     );
 };
