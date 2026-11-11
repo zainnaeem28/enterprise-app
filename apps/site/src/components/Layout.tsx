@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import { AppBar, MaintenanceBanner, SkipLink } from '@ehr/ui';
 import type { SiteBanner } from '../directory.js';
-import { SITE_NAME } from '../seo.js';
 
 const NAV = [
   { href: '/about', label: 'About' },
@@ -23,17 +22,20 @@ export function Layout({
   current,
   bookHref,
   banners = [],
+  siteName,
   children,
 }: {
   current: string;
   bookHref: string;
   banners?: SiteBanner[];
+  /** The organisation's name from the CMS; `null` until entered (then nothing is shown in its place). */
+  siteName: string | null;
   children: ReactNode;
 }) {
   return (
     <>
       <SkipLink targetId="main">Skip to main content</SkipLink>
-      <AppBar portalName="Visit us" productName={SITE_NAME}>
+      <AppBar portalName="Visit us" productName={siteName ?? ''}>
         <nav aria-label="Main" className="site-nav">
           <ul>
             {NAV.map((n) => (
@@ -71,7 +73,7 @@ export function Layout({
             </li>
           </ul>
         </nav>
-        <p>© {SITE_NAME}</p>
+        {siteName !== null && <p>© {siteName}</p>}
       </footer>
     </>
   );

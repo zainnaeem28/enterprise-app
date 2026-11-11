@@ -10,6 +10,8 @@ import { loadConfig } from './config.js';
 import type { SiteConfig } from './config.js';
 import { placeholderContent } from './content.js';
 import type { ContentSource } from './content.js';
+import { createCmsContent } from './cms-content.js';
+import type { ContentProvider } from './cms-content.js';
 import { createDirectoryClient } from './directory.js';
 import type { DirectoryClient, Freshness } from './directory.js';
 import { directoryOrNull, route } from './render.js';
@@ -58,12 +60,16 @@ export const PAGE_CACHE = 'public, max-age=60, stale-while-revalidate=30, stale-
 export interface SiteDeps {
   config: SiteConfig;
   client: DirectoryClient;
+  /** Fixed content (tests, no CMS configured). Ignored when `contentProvider` is given. */
   content?: ContentSource;
+  contentProvider?: ContentProvider;
 }
 
 export function createSite(deps: SiteDeps): Server {
   const { config, client } = deps;
-  const content = deps.content ?? placeholderContent;
+  const provider: ContentProvider =
+    deps.contentProvider ??
+    (async () => ({ content: deps.content ?? placeholderContent, degraded: false }));
   const clientRoot = resolve(config.clientDir);
 
   async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> {
@@ -117,7 +123,8 @@ export function createSite(deps: SiteDeps): Server {
       return;
     }
     const trimmed = path.length > 1 && path.endsWith('/') ? path.slice(0, -1) : path;
-    const r = await route(trimmed, { config, client, content });
+    const { content, degraded } = await provider();
+    const r = await route(trimmed, { config, client, content, contentDegraded: degraded });
     send(r.status, 'text/html; charset=utf-8', r.html, r.cacheable ? PAGE_CACHE : 'no-store');
   }
 
@@ -134,7 +141,9 @@ if (entry !== undefined && resolve(entry) === resolve(fileURLToPath(import.meta.
   const here = dirname(fileURLToPath(import.meta.url));
   const config = loadConfig(process.env, join(here, '..', 'client'));
   const client = createDirectoryClient({ baseUrl: config.publicApiOrigin });
-  createSite({ config, client }).listen(config.port, () => {
+  const contentProvider =
+    config.cmsOrigin === null ? undefined : createCmsContent({ baseUrl: config.cmsOrigin });
+  createSite({ config, client, contentProvider }).listen(config.port, () => {
     process.stdout.write(`site listening on ${config.port}\n`);
   });
 }

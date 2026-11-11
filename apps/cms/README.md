@@ -10,6 +10,7 @@ configuration only: collections, Google sign-in, login/preview branding and star
 | Marketing sign-in: separate Google Workspace OAuth client, PKCE + state + nonce, ID-token checks, marketing allow-list | `src/auth/google.ts`, `src/auth/endpoints.ts`                        |
 | Session (custom Payload strategy; allow-list re-checked on every request)                                              | `src/auth/session.ts`                                                |
 | No path or credential to the production database                                                                       | `src/lib/env.ts` (fails closed at start-up)                          |
+| Site text and organisation facts for the brand site (globals `site-content`, `organisation`), idempotent reviewed seed | `src/globals/`, `src/seed/` (`pnpm --filter @ehr/cms seed`)          |
 | Branding of the login and nav (placeholder tokens until C-16 supplies the brand)                                       | `src/admin/`                                                         |
 | Preview link to the brand site (signed, short-lived)                                                                   | `src/admin/preview.ts`, `Pages.admin.preview`                        |
 | Schema                                                                                                                 | `migrations/` (production runs `prodMigrations`; development pushes) |
@@ -35,8 +36,8 @@ pnpm --filter @ehr/cms build:next  # production build (needs the settings in .en
 
 ## Known limits
 
-- The brand site does not yet read from, or verify previews of, this CMS (`apps/site` is outside FE-16's paths). The
-  seam is `ContentSource` in `apps/site/src/content.ts`; the preview token verifier is `verifyPreviewToken`.
+- The brand site reads `site-content` and `organisation` through `ContentSource` (`apps/site/src/cms-content.ts`, HEAAA-799). It does not yet
+  verify previews: the `/preview` route that calls `verifyPreviewToken` is not built. The `pages`, `banners` and `faqs` collections are not read by the site.
 - The real Google consent screen, the marketing group, the `cms.` host/WAF/allow-list and the AWS network isolation
   are not exercised here (deploy-marketing, human Workspace setup).
 - Root-level changes this package needs (lockfile, workspace overrides, dependency register, CI job) are in

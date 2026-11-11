@@ -1,17 +1,37 @@
-// Page copy that is not directory data. PLACEHOLDER wording (BRAND-BRIEF 1: no brand files, no product name, no legal text yet).
-// This is the seam for the content source decided by C-19 (self-hosted CMS or SaaS CMS, FE-16): when it lands, an
-// implementation of `ContentSource` replaces `placeholderContent` and nothing else in the site changes.
+// Page copy that is not directory data, and the organisation's own facts. The live source is the self-hosted CMS
+// (`apps/cms`, `cms-content.ts`; C-19, no SaaS CMS). `placeholderContent` is the static fallback used only while the CMS
+// has not answered: it is the same reviewed first-release copy and holds NO organisation fact (name, address, phone,
+// e-mail, hours and clinicians are empty), so falling back can never show an invented fact.
 export interface LegalPage {
   title: string;
   description: string;
   paragraphs: string[];
 }
+/** Organisation facts, entered in the CMS by the organisation at go-live. `null` / empty means "not entered": show nothing. */
+export interface Organisation {
+  name: string | null;
+  addressLines: string[];
+  phone: string | null;
+  email: string | null;
+  hours: string | null;
+  clinicians: { name: string; title: string | null }[];
+}
 export interface ContentSource {
   home: { heading: string; intro: string };
   about: { intro: string; booking: string };
-  contact: { intro: string; email: string | null; phone: string | null; hours: string | null };
+  contact: { intro: string };
+  organisation: Organisation;
   legal: Record<'privacy' | 'terms' | 'cookies' | 'accessibility', LegalPage>;
 }
+
+export const emptyOrganisation: Organisation = {
+  name: null,
+  addressLines: [],
+  phone: null,
+  email: null,
+  hours: null,
+  clinicians: [],
+};
 
 const pending = 'This text is a placeholder until the organisation supplies its reviewed wording.';
 
@@ -22,19 +42,15 @@ export const placeholderContent: ContentSource = {
       'Find a service, choose a doctor and a location, and start your booking in a few steps. You sign in or create an account when you book, not before.',
   },
   about: {
-    // PM-drafted first-release copy (HEAAA-275): plain words, no claims. Brand-supplied copy (C-16/C-19) replaces it.
-    intro:
-      'We are a medical practice. You can see our services, locations, hours and doctors on this site.',
+    intro: 'On this site you can see our services, locations and doctors.',
     booking:
       'You can book an appointment online. Choose a service, a doctor and a location, then sign in or create an account to finish. If you need to reach us, use the Contact page.',
   },
   contact: {
     intro:
       'Choose the location nearest to you for its address and phone number. For anything urgent, call 911.',
-    email: null,
-    phone: null,
-    hours: null,
   },
+  organisation: emptyOrganisation,
   legal: {
     privacy: {
       title: 'Privacy',
