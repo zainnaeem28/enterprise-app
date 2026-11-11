@@ -236,7 +236,7 @@ regexes = ['''^2406_notifications_staff_scope_allows_patient\.sql$''']
 # F05-a: scripts/bootstrap/test/aws-result.test.mjs line 110 (commit 1836e0ae; the tree fixture was renamed to a non-key-shaped value): the last segment of a
 # fake Secrets Manager ARN (account 111111111111) used as a negative test input for the result parser.
 [[allowlists]]
-description = "INT05-F05-a: fake secret ARN suffix in the aws-result parser negative test (commit + file + value)"
+description = "INT05-F05-a: fake secret ARN suffix in the aws-result parser negative test (file + value)"
 condition = "AND"
 targetRules = ["generic-api-key"]
 commits = ["1836e0ae147613fd2fe13c98aef5200f1309dd5d"]
@@ -246,7 +246,7 @@ regexes = ['''^other-AbC123$''']
 # F05-b: tests/api/platform/admin.test.mjs lines 146, 149, 185, 189 (commit e8378fdd): the names of
 # throw-away feature flags the QA-05 test creates (public identifiers, not secrets).
 [[allowlists]]
-description = "INT05-F05-b: QA-05 probe feature-flag names in admin.test.mjs (commit + file + value)"
+description = "INT05-F05-b: QA-05 probe feature-flag names in admin.test.mjs (file + value)"
 condition = "AND"
 targetRules = ["generic-api-key"]
 commits = ["e8378fdd7ed38091b489a0fef0ee7337fb917a38"]
@@ -309,3 +309,40 @@ condition = "AND"
 targetRules = ["generic-api-key"]
 paths = ['''(^|/)tests/api/platform/admin\.test\.mjs$''']
 regexes = ['''^qa05_probe_flag2?$''']
+
+# HEAAA-930 / QA F-03 (owner: Cybersecurity; reviewer: Security Reviewer). The full-history scan at dev
+# b63f1a7 reported 24 generic-api-key hits, each triaged individually (decision-log on HEAAA-930): none is
+# a credential. History may not be rewritten. No expiry: the commits are frozen history/evidence.
+# F03-a: 22 hits. The R2/R3 QA evidence logs print the applied/pending migration file names as JSON;
+# the rule reads migration 2406's file name as a key (public file name; same false positive as
+# INT04-F18/F33/F36). Pinned to the exact files AND the exact value; this rule only.
+[[allowlists]]
+description = "HEAAA-930 F-03-a: migration file name 2406 in QA evidence logs (file + value)"
+condition = "AND"
+targetRules = ["generic-api-key"]
+paths = [
+  '''(^|/)docs/evidence/HEAAA-791/migration-check\.txt$''',
+  '''(^|/)docs/evidence/qa-execution-r2/screens-(chromium|firefox)/stack\.out$''',
+  '''(^|/)docs/evidence/qa-r3/(7860f5f|ae1f6c9)/n-minus-1-r(133|206)/upgrade-path\.txt$''',
+]
+regexes = ['''^2406_notifications_staff_scope_allows_patient\.sql$''']
+
+# F03-b: apps/worker/src/aws/web-push.test.ts line 18 (commit 59a3ee6a): auth 'tBHItJI5svbpez7KI4CCXg' is
+# the public sample push-subscription auth secret from RFC 8291 Appendix A (the p256dh key beside it is the
+# RFC's sample receiver public key). Not a credential. Pinned to file AND exact value (tree and history; the constant is still in the tree).
+[[allowlists]]
+description = "HEAAA-930 F-03-b: RFC 8291 sample web-push auth secret in web-push.test.ts (file + value)"
+condition = "AND"
+targetRules = ["generic-api-key"]
+paths = ['''(^|/)apps/worker/src/aws/web-push\.test\.ts$''']
+regexes = ['''^tBHItJI5svbpez7KI4CCXg$''']
+
+# F03-c: apps/api/src/platform/aws/s3-presigners.test.ts line 22 (commit 72ed7aed): KEY =
+# 'q/0123456789abcdef0123456789abcdef', a counting-pattern S3 object key used as a test input. Not a
+# credential. Pinned to file AND exact value (tree and history; the constant is still in the tree).
+[[allowlists]]
+description = "HEAAA-930 F-03-c: synthetic S3 object key in s3-presigners.test.ts (file + value)"
+condition = "AND"
+targetRules = ["generic-api-key"]
+paths = ['''(^|/)apps/api/src/platform/aws/s3-presigners\.test\.ts$''']
+regexes = ['''^q/0123456789abcdef0123456789abcdef$''']
