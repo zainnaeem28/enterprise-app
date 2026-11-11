@@ -6,11 +6,15 @@ This file is referenced from the `aws-adapters` module and `docs/GO-LIVE.md`. It
 
 Delivery receipts for e-mail (SES) and SMS (End User Messaging SMS) reach the API as Amazon SNS HTTPS notifications.
 
+> **Status: the end-to-end path does not record receipts yet.** Only the API half (verify, map, store) exists. The worker never registers the receipt handler
+> (`registerReceiptHandlers` in `apps/worker/src/jobs/notifications/receipt.ts` has no caller; `apps/worker/src/compose.ts` registers only the Google push handler),
+> and no payload opener/sealer is composed, so no row reaches `notifications.delivery_receipt`. The flow below describes the intended design, not current behaviour.
+
 **Flow.** SES configuration-set event destination (events `DELIVERY`, `BOUNCE`, `COMPLAINT`) and the SMS configuration-set event destination each publish to
 their own SNS topic. Each topic has an HTTPS subscription to `POST https://<integrations host>/webhooks/sns/receipts`
 (`apps/api/src/modules/integrations-host`). The route verifies the message, maps the event to `{providerMessageId, eventId, status, occurredAt}`, seals it and
 stores it through integration-core's inbound path with source `email` or `sms`, type `delivery_receipt`, event ID = the SNS `MessageId`. The worker's
-`notifications.on_receipt` then writes the append-only `notifications.delivery_receipt` row, idempotent by `(organisation, notification, vendor_event_id)`.
+`notifications.on_receipt` is intended to write the append-only `notifications.delivery_receipt` row, idempotent by `(organisation, notification, vendor_event_id)`.
 Only those four fields are kept: no address, phone number or bounce diagnostic is stored or logged.
 
 **Verification (every message, no exceptions).**
@@ -36,7 +40,7 @@ SMS `TEXT_DELIVERED` is `delivered`; `TEXT_INVALID`, `TEXT_INVALID_MESSAGE`, `TE
 **Infrastructure.** `infra/modules/aws-adapters/receipts.tf` (set `receipt_endpoint_url = "https://<integrations host>/webhooks/sns/receipts"`): encrypted topics with a
 publish policy limited to the account and the configuration set, the SES event destination, and the HTTPS subscriptions (raw message delivery off, auto-confirm off).
 
-**SMS event destination (manual, once).** The pinned Terraform provider cannot create it. After the module is applied, with the `sms` topic ARN from output `receipt_topic_arns`:
+**SMS event destination (manual, once).** The pinned Terraform provider cannot create it (`aws_pinpointsmsvoicev2_event_destination` is absent from the aws 5.100.0 schema; see `docs/evidence/HEAAA-773/provider-schema-pinpointsmsvoicev2.txt`). After the module is applied, with the `sms` topic ARN from output `receipt_topic_arns`:
 
 ```sh
 aws pinpoint-sms-voice-v2 create-event-destination \
@@ -48,7 +52,7 @@ aws pinpoint-sms-voice-v2 create-event-destination \
 **Before this works for real (all unverified, nothing was run against AWS).**
 
 - The API must be reachable from SNS on the integrations host and able to reach `sns.<region>.amazonaws.com` (certificate and confirmation GETs) from its subnets.
-- The payload sealer for inbound messages is not composed in `main.ts` yet: until it is, a verified message is answered 503 at the store (nothing is stored unsealed).
+- The worker does not register the receipt handler and no payload opener/sealer is composed in `main.ts`: a verified message is answered 503 at the store (nothing is stored unsealed), and even once stored nothing would process it.
 - The SES/SMS event field names and event types are taken from the vendors' documentation, never seen in a real delivery. The SNS signing rules are implemented from the SNS documentation and tested only against signatures generated in the test suite.
 - After the first apply each subscription is `PendingConfirmation` until the running API answers its `SubscriptionConfirmation`.
 - The SNS topic key policy lets `ses.amazonaws.com` and `sms-voice.amazonaws.com` use the key for this account only; whether those services need more is untested.

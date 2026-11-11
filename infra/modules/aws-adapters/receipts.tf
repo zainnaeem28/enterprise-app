@@ -130,7 +130,7 @@ resource "aws_sesv2_configuration_set_event_destination" "receipts" {
 }
 
 # SMS: NOT in IaC. The pinned provider (hashicorp/aws ~> 5.80) has no resource for an End User Messaging SMS event destination
-# (checked: `aws_pinpointsmsvoicev2_event_destination` is not in its schema; only the configuration set, opt-out list and phone number are).
+# (checked with `tofu providers schema` on aws 5.100.0, docs/evidence/HEAAA-773/provider-schema-pinpointsmsvoicev2.txt: `aws_pinpointsmsvoicev2_event_destination` is not in its schema; only the configuration set, opt-out list and phone number are).
 # The topic, its policy and the subscription below exist; the destination is created once with the CLI step in the runbook
 # (docs/runbooks/AWS-ADAPTERS.md "Receipts"), listing the final states the API maps (receipt-events.ts). It moves into IaC with a provider
 # upgrade that has the resource.
