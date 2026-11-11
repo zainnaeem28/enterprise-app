@@ -112,6 +112,7 @@ const TABLES = [
   'licensed_state',
   'patient_link',
   'proxy_grant',
+  'proxy_invite_code',
   'push_subscription',
   'staff_support',
   // BE-05 (B2 admin realm)
@@ -236,10 +237,15 @@ describe('catalog (M-1, M-2, M-3, M-5, 21.3 lists)', () => {
     // revoked_at: a role removal and the kill switch (BE-05)
     assert.deepEqual(await cols('app_api', 'identity.role_assignment'), ['revoked_at']);
     assert.deepEqual(await cols('app_api', 'identity.proxy_grant'), [
+      'accepted_at',
+      'ended_by',
+      'proxy_principal_id',
       'revoke_reason',
       'revoked_at',
+      'scopes',
       'status',
     ]);
+    assert.deepEqual(await cols('app_api', 'identity.proxy_invite_code'), ['attempts']);
   });
 
   test('identity_signin_ro and directory_ro hold no table-level SELECT on the identity base tables; directory_ro has exactly the 22.5.1 columns', async () => {
@@ -939,7 +945,7 @@ describe('isolation between principals (T-PRINCIPAL, T-PAT-OWN)', () => {
       [owner.principalId, P, ORG],
     );
     const svc = k.identity.proxies;
-    const meta = { requestId: null };
+    const meta = { requestId: uuidv7() };
     const proxyScope: ScopeSettings = {
       audience: 'patient',
       realm: 'patient_pool',
