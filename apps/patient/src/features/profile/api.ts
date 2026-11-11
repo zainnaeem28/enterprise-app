@@ -1,8 +1,9 @@
+import type { components } from '@ehr/contracts';
 import type { PatientRuntime } from '../../app/runtime.js';
 import { guard, ifMatch, versionOf } from './lib/core.js';
 import type { Outcome } from './lib/core.js';
 import { parseContact, parseList, parsePreferences, parseProfile, parseProxy } from './types.js';
-import type { Contact, Preferences, Profile, ProxyGrant, ProxyRelationship } from './types.js';
+import type { Contact, Preferences, Profile, ProxyGrant } from './types.js';
 
 export type ProfileApi = ReturnType<typeof createProfileApi>;
 
@@ -120,7 +121,7 @@ export function createProfileApi(runtime: PatientRuntime) {
     /** Blocked on D-7: the server answers `422 identity.proxy_rules_not_configured` until the rule values exist. */
     requestProxy: (
       patientId: string,
-      body: { relationship: ProxyRelationship; patientDisplayName: string },
+      body: components['schemas']['ProxyInviteRequest'],
       key: string,
     ): Promise<Outcome<true>> =>
       guard(

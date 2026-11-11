@@ -24,7 +24,7 @@ const LABEL: Record<ProxyRelationship, string> = {
 export function AddProxyPage() {
   const { api, selfId, go } = useAccountCtx();
   const [relationship, setRelationship] = useState<ProxyRelationship>('parent');
-  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [failure, setFailure] = useState<Failure | undefined>();
   const [notOpen, setNotOpen] = useState(false);
@@ -38,9 +38,10 @@ export function AddProxyPage() {
     e.preventDefault();
     if (selfId === undefined) return;
     const found: Record<string, string> = {};
-    const trimmed = name.trim();
-    if (trimmed === '' || trimmed.length > 100)
-      found['proxy-name'] = 'Their name: enter a name of up to 100 characters.';
+    const trimmed = email.trim();
+    if (trimmed === '') found['proxy-email'] = 'Their email address: enter it.';
+    else if (trimmed.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed))
+      found['proxy-email'] = 'Their email address: enter it like name@example.com.';
     setErrors(found);
     setFailure(undefined);
     setNotOpen(false);
@@ -48,14 +49,14 @@ export function AddProxyPage() {
     await run(async () => {
       const r = await api.requestProxy(
         selfId,
-        { relationship, patientDisplayName: trimmed },
+        { relationship, email: trimmed },
         key.current,
       );
       if (r.ok) return setSent(true);
       if (r.code === 'identity.proxy_rules_not_configured') return setNotOpen(true);
-      if (r.status === 400)
+      if (r.status === 400 || (r.status === 422 && r.fields.includes('email')))
         return setErrors({
-          'proxy-name': 'Their name: this was not accepted. Check it and try again.',
+          'proxy-email': 'Their email address: this was not accepted. Check it and try again.',
         });
       setFailure(r);
     });
@@ -119,13 +120,14 @@ export function AddProxyPage() {
           ))}
         </SelectField>
         <TextField
-          id="proxy-name"
-          label="Their name"
-          hint="First name and last initial is enough."
+          id="proxy-email"
+          type="email"
+          label="Their email address"
+          hint="The clinic sends the invitation here."
           autoComplete="off"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          error={errors['proxy-name']}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          error={errors['proxy-email']}
         />
         <p className="profile-actions">
           <Button type="submit" variant="primary" disabled={busy} aria-busy={busy}>
