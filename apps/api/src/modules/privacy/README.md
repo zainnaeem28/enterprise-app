@@ -19,6 +19,35 @@ The jobs are in `apps/worker/src/jobs/privacy`.
 | Worker: `check-legal-holds`, `expire-packages`, ports, adapters over the documents and merge tables                                                 | `apps/worker/src/jobs/privacy/`                                   |
 | Wiring                                                                                                                                              | `runtime.ts` (`createPrivacy`), `index.ts` (composition notes)    |
 
+## Retention settings: the key names DevOps (C-DO-RET) consumes (HEAAA-789, owner ruling 2026-11-11 C item 2, PRD C-20 †)
+
+One typed, validated module: `retention.ts` (`RETENTION_KEYS`, `RETENTION_DEFAULTS`, `loadRetentionSettings(env)`, `exportRetentionSettings`). The values
+are the owner's conservative product defaults, **not legal advice; † counsel must confirm before go-live**. Each is an integer overridable by the
+environment variable named here; an unset variable means the default; a bad one stops start-up and is reported **by name, never by value**.
+`node apps/api/dist/src/modules/privacy/retention-cli.js` prints the resolved values as JSON (`{settings: [{key, value, unit, consumer}]}`, no PHI, no
+secrets) from the same environment, so DevOps provisions exactly what the application enforces.
+
+| Environment variable (the contract)                       | Default | Unit   | Consumer | Governs                                                                                   |
+| --------------------------------------------------------- | ------- | ------ | -------- | ----------------------------------------------------------------------------------------- |
+| `EHR_RETENTION_MEDICAL_RECORD_YEARS_AFTER_LAST_ENCOUNTER` | 10      | years  | app      | medical record: years after the last encounter                                            |
+| `EHR_RETENTION_AGE_OF_MAJORITY_YEARS`                     | 18      | years  | app      | younger than this at the last encounter = minor for the minors rule                       |
+| `EHR_RETENTION_MINOR_UNTIL_AGE_YEARS`                     | 21      | years  | app      | minors: kept until this age, or the next key after the last encounter, whichever is later |
+| `EHR_RETENTION_MINOR_YEARS_AFTER_LAST_ENCOUNTER`          | 10      | years  | app      | minors: years after the last encounter                                                    |
+| `EHR_RETENTION_AUDIT_TRAIL_YEARS`                         | 7       | years  | devops   | audit trail (archive Object Lock; the application never deletes audit rows)               |
+| `EHR_RETENTION_AUDIT_ANCHOR_YEARS`                        | 7       | years  | devops   | audit anchors (archive Object Lock)                                                       |
+| `EHR_RETENTION_HIPAA_DOCUMENTATION_YEARS`                 | 6       | years  | app      | HIPAA documentation: privacy requests, incidents, deletion records                        |
+| `EHR_RETENTION_BACKUP_DAILY_DAYS`                         | 35      | days   | devops   | daily backups                                                                             |
+| `EHR_RETENTION_BACKUP_MONTHLY_MONTHS`                     | 12      | months | devops   | monthly backups                                                                           |
+| `EHR_RETENTION_APPLICATION_LOG_DAYS`                      | 90      | days   | devops   | application logs, searchable period                                                       |
+| `EHR_RETENTION_APPLICATION_LOG_ARCHIVE_YEARS`             | 1       | years  | devops   | application logs, archived period after the searchable period                             |
+| `EHR_RETENTION_NETWORK_FLOW_LOG_YEARS`                    | 1       | years  | devops   | network flow logs                                                                         |
+| `EHR_RETENTION_EXPORT_PACKAGE_DAYS`                       | 7       | days   | app      | privacy export packages: days after creation until removal                                |
+
+Interpretation recorded for counsel (†): "application logs 90 days archived 1 year" is read as 90 days searchable, then one further year in the
+archive; "minors" means younger than `EHR_RETENTION_AGE_OF_MAJORITY_YEARS` (18) at the last encounter; with no encounter the registration date stands
+in for it; adding years to 29 February lands on 1 March (the record is kept a day longer, never shorter).
+Keys are additive-only: renaming or removing one breaks DevOps and needs a coordinated change.
+
 ## Tests (real PostgreSQL 17, superuser URL on a throwaway server, synthetic data; missing configuration fails)
 
 ```
