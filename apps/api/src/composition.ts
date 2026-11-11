@@ -22,6 +22,7 @@ import type { VideoVendorPort } from './modules/telehealth/index.js';
 import {
   createBreakGlassControllers,
   createClinicalChart,
+  type BannerService,
   CLINICAL_CHART_JOBS,
 } from './modules/clinical/chart/index.js';
 import {
@@ -376,7 +377,22 @@ export function buildComposition(deps: {
   // The patient module registers its scope contributor and resolvers with identity; its records service is the flow's consent probe.
   // Its portal, staff and admin controllers and the merge controllers are mounted below (INT03-F13). The label and lookup limits are
   // compliance controls (6.7, 31.3), so the limiter is the shared one: a per-process counter would multiply them by the replica count.
+  // `GET /patients/{id}` returns the clinical banner (ARCH 28.2); the chart is built after the patient module, so bind it late.
+  let chartBanner: BannerService | undefined;
   const patient = createPatient({
+    banner: (tx, req, patientId) => {
+      if (chartBanner === undefined) throw new Error('clinical chart is not composed yet');
+      return chartBanner.bannerFor(
+        tx,
+        requireAuthContext(req),
+        {
+          requestId: req.requestId ?? null,
+          ip: req.ip ?? null,
+          userAgent: req.header('user-agent') ?? null,
+        },
+        patientId,
+      );
+    },
     db: deps.db,
     audit,
     identity,
@@ -456,6 +472,7 @@ export function buildComposition(deps: {
     documents: (tx, patientId) => documents.list(tx, patientId),
     ...(deps.now === undefined ? {} : { now: deps.now }),
   });
+  chartBanner = chart.banner;
   const frontdoorPorts = createFrontdoorPorts({
     flow,
     alerts,

@@ -927,7 +927,7 @@ paths:
       tags:
         - patient
       summary: GET /api/v1/patients/{patientId}
-      description: 'staff.: Banner + demographics; `ETag`'
+      description: 'staff.: `{patientBanner, patient}`; `ETag`. `patientBanner` is the ARCH 28.2 banner, the same composition as `GET /patients/{patientId}/banner` (displayName, photoUrl, allergies with coded/uncoded marks; allergies null without chart access)'
       x-access:
         staff:
           permission: patient.read
@@ -981,7 +981,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: common.yaml#/components/schemas/OpaqueObject
+                $ref: '#/components/schemas/GetPatientsByPatientIdResponse'
         '400':
           $ref: common.yaml#/components/responses/Error400
           description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
@@ -3284,6 +3284,16 @@ components:
           oneOf:
             - type: string
             - type: 'null'
+    GetPatientsByPatientIdResponse:
+      type: object
+      properties:
+        patientBanner:
+          $ref: common.yaml#/components/schemas/PatientBanner
+        patient:
+          $ref: common.yaml#/components/schemas/OpaqueObject
+      required:
+        - patientBanner
+        - patient
     GetPatientsByPatientIdBannerResponse:
       type: object
       properties:

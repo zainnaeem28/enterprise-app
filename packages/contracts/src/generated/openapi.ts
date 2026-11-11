@@ -2967,7 +2967,7 @@ export interface paths {
     };
     /**
      * GET /api/v1/patients/{patientId}
-     * @description staff.: Banner + demographics; `ETag`
+     * @description staff.: `{patientBanner, patient}`; `ETag`. `patientBanner` is the ARCH 28.2 banner, the same composition as `GET /patients/{patientId}/banner` (displayName, photoUrl, allergies with coded/uncoded marks; allergies null without chart access)
      */
     get: operations['getPatientsByPatientId'];
     put?: never;
@@ -5074,6 +5074,10 @@ export interface components {
       acknowledgeReason: string;
     } & {
       [key: string]: unknown;
+    };
+    GetPatientsByPatientIdResponse: {
+      patientBanner: components['schemas']['PatientBanner'];
+      patient: components['schemas']['OpaqueObject'];
     };
     GetPatientsByPatientIdAllergiesResponse: {
       items: components['schemas']['OpaqueObject'][];
@@ -14132,7 +14136,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['OpaqueObject'];
+          'application/json': components['schemas']['GetPatientsByPatientIdResponse'];
         };
       };
       /** @description Codes: kernel.client_release_unsupported, kernel.validation_failed. */
