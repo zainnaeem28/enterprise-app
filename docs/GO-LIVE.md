@@ -166,7 +166,7 @@ their kind. The adapters ignore the row's credentials. Roles: `<env>-ehr-api-tas
 
 ## Part 3. Go-live checklist
 
-Every item is **NOT DONE**. "Owner" is who must act; "Unblocks" is what stays blocked or unverified until then. Condition IDs are
+Items 12-15 and 17 are **decided by delegation (ruling C)**: product defaults set by the owner's delegation (`HEAAA-33` ruling comment 56261f7e-58eb-4b31-a1d3-81c5fc2240cb), not legal or clinical advice, every value a setting; † = counsel confirmation pending before go-live (items 12, 13). Deciding is not doing: nothing is deployed and the organisation still enters its operating-state values and CMS facts at go-live. Every other item is **NOT DONE** and open, including clinical safety review (D-12a, item 11), counsel confirmation of deletion and retention (items 12, 13), Google Workspace tenant (C-10, item 18), UMLS (C-09, item 19), AWS account, BAA and cost (items 1-4), and the second human (C-13, item 5). "Owner" is who must act; "Unblocks" is what stays blocked or unverified until then. Condition IDs are
 from the register in `docs/DELIVERY-PLAN.md`.
 
 | # | Item | Owner | Status | Unblocks |
@@ -182,12 +182,12 @@ from the register in `docs/DELIVERY-PLAN.md`.
 | 9 | Human assistive-technology checks (screen reader, keyboard, zoom) and real-device checks (phones, tablets) | QA, Product owner | NOT DONE | accessibility and device acceptance; automation (axe) is not a substitute |
 | 10 | Real adapters verified on staging, section "Real-service checks" below | DevOps, QA | NOT DONE | each adapter in Part 2 as "verified" |
 | 11 | Clinician safety reviewer named (D-12a, C-03) | Product owner | NOT DONE | red-flag alert and consent-gate rules (RA-R1-07, RA-R1-08); every rule text and threshold |
-| 12 | Counsel on the meaning of deletion (D-8, C-05) | Product owner, counsel | NOT DONE | deletion requests (nothing is deleted today); TC-PR-03 |
-| 13 | Retention periods for audit, log, backup, export, flow-log and anchor data (C-20) | Product owner, counsel | NOT DONE | replacing the placeholder day counts in the IaC; TC-AU-09, TC-DOC-07 |
-| 14 | Operating states and state privacy rules (D-2, C-06) | Product owner | NOT DONE | real licensing-state values; telehealth rules (TC-TH-06..08) |
-| 15 | Proxy rules (D-7, C-04) | Product owner | NOT DONE | link creation, verification, age-out, revocation (RA-R1-20b, AC-32) |
+| 12 | Counsel on the meaning of deletion (D-8, C-05) Values decided by delegation (ruling C); counsel confirmation pending † | Product owner, counsel | DECIDED by delegation (ruling C); counsel confirmation pending † | deletion requests (nothing is deleted today); TC-PR-03 |
+| 13 | Retention periods for audit, log, backup, export, flow-log and anchor data (C-20) Values decided by delegation (ruling C) as settings; counsel confirmation pending †; replacing the IaC placeholders is a configuration change | Product owner, counsel | DECIDED by delegation (ruling C); counsel confirmation pending † | replacing the placeholder day counts in the IaC; TC-AU-09, TC-DOC-07 |
+| 14 | Operating states and state privacy rules (D-2, C-06) The organisation enters the real operating-state values (clinician licensed states) at go-live | Product owner | DECIDED by delegation (ruling C) | real licensing-state values; telehealth rules (TC-TH-06..08) |
+| 15 | Proxy rules (D-7, C-04) Rules decided by delegation (ruling C) | Product owner | DECIDED by delegation (ruling C) | link creation, verification, age-out, revocation (RA-R1-20b, AC-32) |
 | 16 | On-call rota (D-29, C-18) | Product owner, operations owner | NOT DONE | alert-delivery evidence and the go-live itself; 99.9 % stays a target |
-| 17 | CMS runtime versus SaaS CMS (C-19) | Product owner | NOT DONE | FE-16 marketing CMS path; cost of the marketing account |
+| 17 | CMS runtime versus SaaS CMS (C-19) Decided: self-hosted `apps/cms`, no SaaS CMS; the organisation enters its facts (name, address, phone, clinicians) as CMS entries at go-live | Product owner | DECIDED by delegation (ruling C) | FE-16 marketing CMS path; cost of the marketing account |
 | 18 | Google Workspace test tenant (C-10) for staff identity and calendar | Product owner | NOT DONE | real Google sign-in and calendar sync checks |
 | 19 | UMLS licence (C-09) | Product owner | NOT DONE | real terminology content, TC-CL-04 |
 | 20 | Production GitHub environments, reviewers and the approved-release records (section 1.3 and 1.4); staging conditions C-14 (DPR-37..39) applied and proven | Platform admin, second human | NOT DONE | every `*_ENABLED` variable |
