@@ -123,3 +123,14 @@ resource "aws_secretsmanager_secret_rotation" "this" {
     }
   }
 }
+
+# A replica does not inherit the resource policy of its primary (AWS documents resource policies per secret and Region), so the
+# same policy is attached to the replica explicitly. Without it the replica would be governed by identity policies alone and lose
+# the reader pin, the organisation condition and the TLS condition. The replica ARN is the primary ARN with the Region replaced
+# (a replica keeps the random suffix).
+resource "aws_secretsmanager_secret_policy" "replica" {
+  for_each   = var.recovery_region == null ? {} : var.secrets
+  provider   = aws.recovery
+  secret_arn = replace(aws_secretsmanager_secret.this[each.key].arn, "/^(arn:[^:]+:secretsmanager:)[^:]+(:.*)$/", "$${1}${var.recovery_region}$${2}")
+  policy     = aws_secretsmanager_secret_policy.this[each.key].policy
+}

@@ -72,7 +72,7 @@ Use when data was corrupted or deleted and the incident commander has declared i
 
 **Region loss.** The same restore runs in the recovery Region from the cross-Region automated backup replication (`--source-db-instance-automated-backups-arn`), with the recovery-Region KMS key. Replication lag is **expected to be minutes and is not verified**: the rehearsal measures it. If it exceeds 15 minutes, switch to a cross-Region read replica (an added instance of cost; DEVOPS-PLAN 10.4).
 
-**Recovery-Region identity and secrets.** The task roles (`<env>-ehr-api-task`, `-worker-task`, `-task-execution`) already trust ECS tasks of the recovery Region and carry a `recovery-region` policy naming only the replicas (`infra/modules/aws-adapters/recovery.tf`); the VAPID private key is replicated under `production-secrets-dr`. The recovery compute is created during the declared failover, not before. Authored only, not exercised: confirm the first recovery-Region task can start and read the replicated secret during the rehearsal.
+**Recovery-Region identity and secrets.** The task roles (`<env>-ehr-api-task`, `-worker-task`, `-task-execution`) already trust ECS tasks of the recovery Region and carry a `recovery-region` policy naming only recovery-Region resources (`infra/modules/aws-adapters/recovery.tf`); the VAPID private key is replicated under `production-secrets-dr`. What runs there and each degraded mode (anchor archive, pre-failover runtime secrets, SMS) is in `docs/runbooks/recovery-region.md`. The recovery compute is created during the declared failover, not before. Authored only, not exercised: confirm the first recovery-Region task can start and read the replicated secret during the rehearsal.
 
 ## 6. DR rehearsal stack (`ENV-DR`)
 

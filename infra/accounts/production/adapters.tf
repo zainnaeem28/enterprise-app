@@ -64,6 +64,12 @@ variable "sms_origination_identity_arn" {
   default     = null
 }
 
+variable "recovery_sms_origination_identity_arn" {
+  description = "End User Messaging phone number, pool or sender ID in the recovery Region (a purchase and a carrier registration, so an input). Null leaves SMS in degraded mode in the recovery Region (docs/runbooks/recovery-region.md)."
+  type        = string
+  default     = null
+}
+
 variable "sms_caller_role_arn" {
   description = "Role Cognito assumes for SMS (owned by the approvals root)."
   type        = string
@@ -116,7 +122,8 @@ locals {
 }
 
 module "aws_adapters" {
-  source = "../../modules/aws-adapters"
+  source    = "../../modules/aws-adapters"
+  providers = { aws = aws, aws.recovery = aws.recovery }
 
   env                            = local.env
   compute_name                   = local.compute_name
@@ -127,28 +134,30 @@ module "aws_adapters" {
   recovery_data_kms_key_arn      = aws_kms_replica_key.data_recovery.arn
   recovery_secrets_kms_key_arn   = module.kms_secrets_recovery.key_arn
   recovery_docs_clean_bucket_arn = module.storage.replica_bucket_arn
-  payload_previous_key_arns      = var.payload_previous_key_arns
-  docs_quarantine_bucket_name    = "${var.bucket_name_prefix}-docs-quarantine"
-  docs_clean_bucket_name         = "${var.bucket_name_prefix}-docs-clean"
-  bucket_name_prefix             = var.bucket_name_prefix
-  access_log_bucket              = var.access_log_bucket_name
-  anchor_archive_bucket_name     = var.anchor_archive_bucket_name
-  anchor_archive_kms_key_arn     = var.anchor_archive_kms_key_arn
-  ses_domain                     = var.ses_domain
-  ses_from_address               = var.ses_from_address
-  security_contact_email         = var.security_contact_email
-  sms_origination_identity_arn   = var.sms_origination_identity_arn
-  vapid_public_key               = var.vapid_public_key
-  vapid_subject                  = var.vapid_subject
-  vapid_private_key_secret_name  = "${local.env}/${local.vapid_secret}"
-  patient_oidc_issuer            = module.identity.patient_issuer
-  patient_oidc_client_id         = module.identity.patient_client_id
-  patient_auth_domain            = var.patient_auth_domain
-  patient_oidc_redirect_uri      = var.patient_callback_urls[0]
-  ecr_repository_arns            = var.ecr_repository_arns
-  execution_secret_names         = concat(["${local.env}/${local.vapid_secret}"], var.extra_execution_secret_names)
-  alarm_topic_arns               = var.alarm_topic_arns
-  tags                           = local.tags
+
+  recovery_sms_origination_identity_arn = var.recovery_sms_origination_identity_arn
+  payload_previous_key_arns             = var.payload_previous_key_arns
+  docs_quarantine_bucket_name           = "${var.bucket_name_prefix}-docs-quarantine"
+  docs_clean_bucket_name                = "${var.bucket_name_prefix}-docs-clean"
+  bucket_name_prefix                    = var.bucket_name_prefix
+  access_log_bucket                     = var.access_log_bucket_name
+  anchor_archive_bucket_name            = var.anchor_archive_bucket_name
+  anchor_archive_kms_key_arn            = var.anchor_archive_kms_key_arn
+  ses_domain                            = var.ses_domain
+  ses_from_address                      = var.ses_from_address
+  security_contact_email                = var.security_contact_email
+  sms_origination_identity_arn          = var.sms_origination_identity_arn
+  vapid_public_key                      = var.vapid_public_key
+  vapid_subject                         = var.vapid_subject
+  vapid_private_key_secret_name         = "${local.env}/${local.vapid_secret}"
+  patient_oidc_issuer                   = module.identity.patient_issuer
+  patient_oidc_client_id                = module.identity.patient_client_id
+  patient_auth_domain                   = var.patient_auth_domain
+  patient_oidc_redirect_uri             = var.patient_callback_urls[0]
+  ecr_repository_arns                   = var.ecr_repository_arns
+  execution_secret_names                = concat(["${local.env}/${local.vapid_secret}"], var.extra_execution_secret_names)
+  alarm_topic_arns                      = var.alarm_topic_arns
+  tags                                  = local.tags
 }
 
 module "storage" {
@@ -165,7 +174,8 @@ module "storage" {
 }
 
 module "secrets" {
-  source = "../../modules/secrets"
+  source    = "../../modules/secrets"
+  providers = { aws = aws, aws.recovery = aws.recovery }
 
   env             = local.env
   kms_key_arn     = module.kms_secrets.key_arn
@@ -248,4 +258,14 @@ output "worker_task_role_arn" {
 
 output "ses_dkim_tokens" {
   value = module.aws_adapters.ses_dkim_tokens
+}
+
+output "recovery_ses_dkim_tokens" {
+  description = "CNAME tokens to publish in DNS for the recovery-Region SES identity (a go-live step)."
+  value       = module.aws_adapters.recovery_ses_dkim_tokens
+}
+
+output "recovery_environment" {
+  description = "Overrides for the recovery-Region task definitions (docs/runbooks/recovery-region.md)."
+  value       = module.aws_adapters.recovery_environment
 }
