@@ -1,0 +1,128 @@
+▶ TC-AD
+  ✔ TC-AD-01 clinics, rooms, hours and holidays are saved, audited with before/after, and visible in the catalogue (213.71869ms)
+  ✔ TC-AD-02 a service that reveals a condition needs a neutral patient-visible name, which is the only one patients see (83.252398ms)
+  ✔ TC-AD-03 booking policy: block-only works; a fee is stored and nothing is charged (D-3 default) (30.248279ms)
+  ﹣ TC-AD-04 message templates: variables restricted to the allowlist; a free-text binding is rejected (0.166715ms) # NOT DELIVERED: the API has no message-template admin route (probed /admin/message-templates: 404; README BE-23 N-BE23-4 lists message templates as not built). Coverage gap recorded as QA05-F07, not a pass
+  ✔ TC-AD-05 role assignment needs the second approver; no role is effective before approval (140.427319ms)
+  ✔ TC-AD-06 front desk cannot open admin routes (99.521574ms)
+  ✔ TC-AD-07 future-appointment cap set in admin applies at the boundary (226.57407ms)
+  ✔ TC-AD-08 a feature flag set for LOC-A1 only is stored per location, readable per location, and audited (37.055168ms)
+  ✔ TC-AD-09 a maintenance banner is visible on all three hosts without PHI and removed cleanly (189.908128ms)
+  ✔ TC-AD-10 flag change without a live elevation grant is refused (C1) (108.800747ms)
+  ﹣ TC-AD-11 integration health shows OK/failed correctly with a real failure injected [sandboxes] (0.167126ms) # BLOCKED: no Google, e-mail, SMS, push or analytics sandbox in ENV-INT/ci (C-10); health depends on a real vendor probe
+  ﹣ TC-AD-12 secrets are write-only: never displayed, logged or exported [secret store] (0.043863ms) # BLOCKED: no secret store (OutboundSecretStore) in ENV-INT/ci (INT-N8); the write cannot complete without it. Needs ENV-INT/staging
+  ✔ TC-AD-13 integration setting change is audited with who, what, before and after (27.697907ms)
+  ✔ TC-AD-14 compromised api: the api role cannot write an approval or an inbound-verification secret itself (16.102502ms)
+  ﹣ TC-AD-15 disabling an integration makes dependent features fail visibly [sandboxes] (0.124785ms) # BLOCKED: needs a working e-mail integration and booking confirmation against a sandbox (C-10)
+✔ TC-AD (1451.251665ms)
+▶ TC-API
+  ﹣ TC-API-01 every module returns the standard problem body [deployed stack] (0.660597ms) # BLOCKED: needs ENV-INT/staging with the fault-injection endpoint and every R1 module routable; see TC-API-02/10 for the ci-level body checks
+  ﹣ TC-API-09 contract test over the published OpenAPI documents [Schemathesis + contracts/openapi] (0.094769ms) # BLOCKED in this suite: run by tests/api/harness/schemathesis-run.mjs (QA-02) against the published documents, not by tests/api/platform
+  ✔ TC-API-02 401 without a session, 403 without the right, 404 for a patient outside the caller's scope; bodies are problem+json without PHI (126.795209ms)
+  ✔ TC-API-03 patient search is POST-only: PHI in a GET URL is refused (79.329574ms)
+  ✔ TC-API-04 PATCH without If-Match is 428, a stale If-Match is 412, the current one succeeds with a new ETag (patient record; notes route not in this stack) (109.791517ms)
+  ✔ TC-API-05 list limit is capped at 100 and a tampered cursor is refused (54.894747ms)
+  ✔ TC-API-06 Cache-Control: no-store on API responses (success, error, redirect, anonymous) (100.416563ms)
+  ✔ TC-API-07 above the per-principal write limit the next call is 429 kernel.rate_limited with Retry-After (675.931277ms)
+  ✔ TC-API-08 a body over 1 MB is 413; unknown fields: ignored on portal endpoints (41.145676ms)
+  ✔ TC-API-10 client release: missing and malformed are 400 kernel.client_release_unsupported with no side effect; exempt routes work without it; N-1/N/N+1 accepted (67.192005ms)
+  ✔ TC-API-10b the X-Request-Id of a request appears in the response and in the audit event it caused (79.90564ms)
+✔ TC-API (1338.112602ms)
+▶ TC-AU
+  ✔ setup: STF-DR-A1 is on the care team of PAT-01 (assignment rule, BQ-5) (13.962883ms)
+  ✔ TC-AU-01 chart view and patient search each create an audit event with user, time, IP/device and no clinical values (129.520951ms)
+  ﹣ TC-AU-01b chart export and print each create an audit event (0.211459ms) # NOT TESTABLE: the API has no chart export or print route in R1 (probed chart-export, chart-print, export: 404); the view and search half is TC-AU-01. Recorded as a coverage gap, not a pass
+  ✔ TC-AU-02 audit insert failure: the read fails and the change rolls back; with the fault removed it works (100.18799ms)
+  ✔ TC-AU-03 denial-write failure: the caller still gets the denial (fail closed) and the failure is logged (54.719465ms)
+  ✔ TC-AU-04 audit.require_bounded_tx: unset and over-bound refused (PA001), app_owner has no INSERT (42501), at-bound succeeds (34.03178ms)
+  ✔ TC-AU-05 nobody can edit or delete audit rows: not via API routes, not as any app_* role (the attempt is refused) (100.75516ms)
+  ✔ TC-AU-06 audit viewer: filters who/what/when, required fields shown, no PHI (198.420458ms)
+  ✔ TC-AU-07 audit export is an asynchronous, size-limited, audited job (121.544616ms)
+  ﹣ TC-AU-07b the export reaches ready and the requester downloads it (0.234112ms) # BLOCKED: the audit export sink (object store, infrastructure) is not provisioned in ENV-INT/ci; the worker's sink is a refusing port, so the job ends failed. Needs the staging object store
+  ﹣ TC-AU-08 tampering with a stored audit row is detected by the anchor verification (0.058741ms) # BLOCKED: audit.verify_anchors treats the Object Lock archive as the authority (INT04-F10 D-2); the archive store is infrastructure that does not exist in ENV-INT/ci
+  ﹣ TC-AU-10 duplicate of TC-PERF-04: no result of its own (0.039945ms) # n/a: owned by TC-PERF-04 (ENV-LOAD, not provisioned)
+✔ TC-AU (755.511164ms)
+▶ TC-DOC
+  ﹣ TC-DOC-01 upload of a clean PDF: unavailable until scanned clean, then classified and confirmed [store + scanner] (0.66783ms) # BLOCKED: no object store, malware scanner or OCR vendor in ENV-INT/ci (C-01, C-10); the API composition has the refusing presigner. Needs ENV-INT/staging with the bucket and scanner
+  ﹣ TC-DOC-02 EICAR upload is quarantined, uploader told, clinicians cannot open it [real scanner] (0.118514ms) # BLOCKED: no object store, malware scanner or OCR vendor in ENV-INT/ci (C-01, C-10); the API composition has the refusing presigner. Needs ENV-INT/staging with the bucket and scanner
+  ﹣ TC-DOC-05 pre-signed URLs go to the object store, expire, and cannot read another patient's file [store] (0.088998ms) # BLOCKED: no object store, malware scanner or OCR vendor in ENV-INT/ci (C-01, C-10); the API composition has the refusing presigner. Needs ENV-INT/staging with the bucket and scanner
+  ﹣ TC-DOC-08 scanner outage: file stays unavailable, visible failure, no bypass [scanner] (0.088877ms) # BLOCKED: no object store, malware scanner or OCR vendor in ENV-INT/ci (C-01, C-10); the API composition has the refusing presigner. Needs ENV-INT/staging with the bucket and scanner
+  ✔ TC-DOC-00 observation: without a store an upload request is refused (never faked) (78.998257ms)
+  ✔ TC-DOC-03 disallowed type, double extension and oversize are rejected with a safe error (69.832758ms)
+  ✔ TC-DOC-04 deletion of a document under legal hold is refused with the reason recorded (188.726742ms)
+  ✔ TC-DOC-06 another patient's file ID is 404 and the attempt is logged (95.286439ms)
+✔ TC-DOC (435.501931ms)
+▶ TC-MG
+  ✔ TC-MG-01 registering a patient who matches an existing one warns (probable/exact match) and shows nothing out of scope (158.922501ms)
+  ✔ TC-MG-02 a merge needs a second approver; after approval the survivor holds both histories and the merge is audited (689.732732ms)
+  ✔ TC-MG-03 staff without patient.merge.request cannot request a merge (86.509171ms)
+  ✔ TC-MG-04 a requester who sees only one patient: the whole merge still completes (job runs with exact IDs) (651.817017ms)
+  ✔ TC-MG-06 an injected failure in a participant module rolls everything back, fails the request, and leaves no partial merge (674.706153ms)
+  ✔ TC-MG-07 after a merge, a stale session writing to the merged patient gets 409 patient.merged and nothing is written (715.685716ms)
+  ✔ TC-MG-12 two simultaneous merge requests that chain (A into B, B into C): one wins, the other is patient.already_merged or pending; no deadlock (743.510975ms)
+  ﹣ TC-MG-05 signed note keeps its original patient_id after merge [signed-note flow] (0.182134ms) # BLOCKED: needs a signed clinical note authored under the merged patient; the note authoring/sign flow is not driven by the platform harness (QA-04 owns clinical journeys)
+  ﹣ TC-MG-08 hold-vs-merge ordering [test hooks] (0.092083ms) # BLOCKED: needs controllable test hooks to order the hold and merge transactions; the product exposes none in ENV-INT/ci
+  ﹣ TC-MG-09 note-vs-merge ordering [test hooks] (0.182916ms) # BLOCKED: needs controllable test hooks to order transactions; none exposed
+  ﹣ TC-MG-10 job types declare on_merged; undeclared fails CI [registry check] (0.101261ms) # BLOCKED: needs the job-type on_merged registry check from CI; no runner for it in tests/api/platform
+  ﹣ TC-MG-11 addendum on a signed note of a merged patient [signed-note flow] (0.086503ms) # BLOCKED: depends on the signed-note flow (see TC-MG-05)
+  ﹣ TC-MG-13 chained merge visibility across locations and care-relationship end [multi-step location flow] (0.046838ms) # BLOCKED: needs location care-relationship end and new-location booking flows not driven by this harness
+  ﹣ TC-MG-14 merge of a 10x chart finishes within the 60 s bound or rolls back [volume dataset] (0.03776ms) # BLOCKED: needs the 10x ARCH 35.3 chart dataset generator; not in scope of this ticket's harness
+✔ TC-MG (3723.448016ms)
+▶ TC-MSG
+  ✔ TC-MSG-01 a task and a secure message reach the recipient, are audited, and no notice carries their content (4191.260111ms)
+  ✔ TC-MSG-02 a message or task cannot be sent or assigned to a user of another organisation (83.260935ms)
+  ✔ TC-MSG-03 patient messaging: N/A while D-5 keeps it off; the flag cannot be enabled and the route is not available (114.02827ms)
+  ✔ TC-MSG-04 a script string in a message is stored as text and served as inert JSON (88.114132ms)
+✔ TC-MSG (4478.045495ms)
+▶ TC-PP
+  ✔ TC-PP-01 the patient edits demographics, language, pharmacy and a contact; changes persist and are audited (123.830446ms)
+  ✔ TC-PP-02 hostile and invalid input is rejected or stored as inert text (172.526988ms)
+  ﹣ TC-PP-06 patient completes the pre-visit request, questionnaire and e-signs; staff see status [clinical flow] (0.179159ms) # BLOCKED: the pre-visit request/questionnaire/e-sign journey is the QA-04 clinical suite and insurance-card upload needs the object store (C-01)
+  ﹣ TC-PP-07 partial completion shows "incomplete" and which items [clinical flow] (0.096342ms) # BLOCKED: same flow as TC-PP-06 (QA-04)
+✔ TC-PP (297.861203ms)
+▶ TC-PR
+  ✔ TC-PR-01 notification preferences: SMS off, email on, saved and read back after reload (106.178614ms)
+  ✔ TC-PR-02 export request: identity check, compliance sees it, assembled in chunks (each audited), delivered via the portal (658.021356ms)
+  ﹣ TC-PR-02b the finished export is downloaded through the portal with a short-lived link and no PHI in the e-mail (0.212872ms) # BLOCKED: no package store or presigner in ENV-INT/ci (C-01); the API composition has the refusing presigner. Needs ENV-INT/staging
+  ✔ TC-PR-04 another patient's request and export cannot be read or downloaded (93.090523ms)
+  ✔ TC-PR-05 processing before the identity check is refused; a refusal needs a reason and is recorded (64.334473ms)
+✔ TC-PR (923.319883ms)
+▶ TC-PR-03 deletion semantics (ruling C item 1; counsel confirmation pending)
+  ✔ request -> identity check -> approval: account deactivated at once, data outside the medical record deleted, record and audit kept, legal hold untouched, statement stored (951.254072ms)
+  ✔ a refusal (with a reason) deletes nothing; a held request cannot be approved before identity is verified (98.156713ms)
+✔ TC-PR-03 deletion semantics (ruling C item 1; counsel confirmation pending) (1050.695057ms)
+▶ TC-AU-09 retention values equal ruling C; the job removes only what is past retention; retrieval is audited
+  ✔ step 1: the configured retention values equal the ruling (124.523091ms)
+  ✔ step 1b: a bad override stops the CLI by key name, never by value (129.825989ms)
+  ✔ step 2: the daily job purges only a deletion whose retention ended, defers under a legal hold, and never removes audit rows (1287.272729ms)
+  ✔ step 3: an old audit row is retrievable by compliance and the retrieval is itself audited (15.896358ms)
+✔ TC-AU-09 retention values equal ruling C; the job removes only what is past retention; retrieval is audited (1558.130942ms)
+▶ TC-DOC-07 document retention from the configured value
+  ✔ a confirmed document gets retention_until = confirmation date + the configured medical-record years (10); deletion follows the dates and the hold (442.608654ms)
+✔ TC-DOC-07 document retention from the configured value (442.975576ms)
+▶ TC-PP-03/04/05 proxy link, default scope, per-scope grants, revocation, leave (adult patient)
+  ✔ TC-PP-04 invite by e-mail: pending until the proxy accepts with the e-mail code; wrong codes are counted; the default scope is appointments only (TC-PP-03) (789.220199ms)
+  ✔ TC-PP-05 messages and documents are granted per scope and withdrawn at once; revocation by the patient and leaving are immediate; each change is audited (1351.870004ms)
+  ✔ RA-R1-20b staff link a guardian of a minor after a relationship document; ages 13-17 appointments only; access ends the day before the 18th birthday; staff revoke is immediate (829.340371ms)
+  ✔ RA-R1-20b age-out: the notice is due 30 days before the 18th birthday; access ends on the birthday with no job having run; the daily job records the expiry (1152.688437ms)
+✔ TC-PP-03/04/05 proxy link, default scope, per-scope grants, revocation, leave (adult patient) (4123.630205ms)
+▶ TC-TH-06..08 licensing with configured fixture states
+  ✔ TC-TH-06 booking: telehealth only where the clinician holds a recorded licence for an operating state; otherwise refused (265.362574ms)
+  ✔ TC-TH-07 join: the patient confirms the current location; outside the clinician licensed states refused, inside accepted; every answer kept (203.586273ms)
+  ✔ TC-TH-08 licence removed by an administrator: join refused with a safe message; re-added: allowed; both changes audited (212.405966ms)
+✔ TC-TH-06..08 licensing with configured fixture states (681.699615ms)
+▶ TC-TH
+  ﹣ TC-TH-01 visit runs with both parties, notes pane doctor only [AUTO+H real devices] (0.58303ms) # BLOCKED: no video vendor selected (C-11) and no vendor sandbox (C-10); nothing here proves a real vendor
+  ✔ TC-TH-02 join page shows the time in the viewer zone and the clinic zone (needs the join page and an Eastern/Pacific browser pair) (136.304724ms)
+  ✔ TC-TH-03 another patient cannot join, view or check devices of someone else's session (and it is logged) (196.472839ms)
+  ﹣ TC-TH-04 vendor outage: visible failure, retry message, no data loss [AUTO against a vendor sandbox set to unavailable] (0.179869ms) # BLOCKED: no video vendor selected (C-11) and no vendor sandbox (C-10); nothing here proves a real vendor
+  ✔ TC-TH-05 join window: refused too early with the start time, joins at the window, refused after the end (109.022099ms)
+✔ TC-TH (443.979366ms)
+ℹ tests 92
+ℹ suites 14
+ℹ pass 66
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 26
+ℹ todo 0
+ℹ duration_ms 22514.584805
