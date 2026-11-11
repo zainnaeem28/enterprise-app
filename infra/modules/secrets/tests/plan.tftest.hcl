@@ -128,7 +128,7 @@ run "replica_in_the_recovery_region_with_its_own_key" {
     error_message = "every secret has exactly one replica, in the recovery Region, under the recovery-Region key"
   }
 
-  # A replica does not inherit the resource policy of its primary: the same policy is attached to it in the recovery Region.
+  # AWS replicates the resource policy to a replica; the same policy is also attached explicitly in the recovery Region (guards against drift).
   assert {
     condition = alltrue([for k, p in aws_secretsmanager_secret_policy.replica :
       strcontains(p.secret_arn, ":secretsmanager:us-west-2:") && !strcontains(p.secret_arn, "us-east-2")

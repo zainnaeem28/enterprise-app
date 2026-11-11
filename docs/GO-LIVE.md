@@ -242,7 +242,7 @@ Known gaps with no code yet, so they stay on this list rather than being configu
   nothing was exercised by a task there. Every service has an outcome (`docs/runbooks/recovery-region.md`):
   - **granted:** document upload (Region-bound quarantine bucket, promotion into the clean replica), package and export (Region-bound buckets), malware
     scanning (GuardDuty plan on the recovery quarantine bucket), SES (identity and configuration set; add the `recovery_ses_dkim_tokens` CNAMEs and request SES
-    production access in the recovery Region), runtime integration secrets for secrets created there, and the resource policy of the secret replicas (now explicit);
+    production access in the recovery Region), runtime integration secrets for secrets created there, and the resource policy of the secret replicas (AWS replicates it from the primary; the module also attaches it explicitly to guard against drift);
   - **degraded, runbook section 2:** the Object Lock anchor archive (anchors queue in the database and the archive job catches up after failback, the "anchor not
     archived" alert is expected), runtime integration secrets created before the failover (not replicated: copy them while the home Region answers, otherwise the
     owners re-enter them), and SMS when `recovery_sms_origination_identity_arn` is null (SMS refused; failed sends follow the job retry and dead-job policy, re-send from the dead-job list after failback);
