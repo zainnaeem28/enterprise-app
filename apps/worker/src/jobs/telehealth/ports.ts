@@ -25,6 +25,17 @@ export interface EndedStale {
   meetingId: string | null;
 }
 
+export type VisitOverReason = 'cancelled' | 'no_show' | 'rescheduled';
+
+export type EndedForVisitOver =
+  | {
+      status: 'ended' | 'failed';
+      sessionId: string;
+      vendor: string | null;
+      meetingId: string | null;
+    }
+  | { status: 'already' | 'none' | 'gone' };
+
 export interface TelehealthWorkerPort {
   ensureSession(tx: Tx, meta: TelehealthMeta, reservationId: string): Promise<EnsureOutcome>;
   recordMeeting(
@@ -37,6 +48,13 @@ export interface TelehealthWorkerPort {
   meetingToClose(tx: Tx, sessionId: string): Promise<{ vendor: string; meetingId: string } | null>;
   staleSessions(tx: Tx, limit?: number): Promise<StaleSession[]>;
   endStale(tx: Tx, meta: TelehealthMeta, sessionId: string): Promise<EndedStale>;
+  endForVisitOver(
+    tx: Tx,
+    meta: TelehealthMeta,
+    reservationId: string,
+    reason: VisitOverReason,
+  ): Promise<EndedForVisitOver>;
+  recordMeetingClosed(tx: Tx, meta: TelehealthMeta, sessionId: string): Promise<boolean>;
 }
 
 export interface VendorPort {

@@ -9,7 +9,8 @@ import { newRegisteredRegistries } from '../../register-participants.js';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { after, before, describe, test } from 'node:test';
-import { A1, ORG, SVC, setupTelehealth, slotStart } from './testkit.js';
+import { Queue } from '@ehr/kernel';
+import { A1, ORG, SVC, newId, setupTelehealth, slotStart } from './testkit.js';
 import type { Doctor, PatientKit, TelehealthKit } from './testkit.js';
 import { TelehealthService } from './service.js';
 import { telehealthExportContributor } from './merge.js';
@@ -1074,6 +1075,200 @@ describe('telehealth.close_meeting (DL-1)', () => {
       'closed',
     );
     await assert.rejects(t.W.runCloseMeeting(t.jobs, { sessionId: 'x', patientId: 'y' }));
+  });
+});
+
+describe('every path that ends a visit queues the vendor close in its own transaction (HEAAA-916 SA-916-2; HEAAA-846 F1/F2)', () => {
+  type V = { d: Doctor; p: PatientKit; rid: string };
+  const queuedClose = async (sid: string): Promise<Record<string, unknown>[]> =>
+    (
+      (await t.f.jobsInQueue('telehealth.close_meeting')) as unknown as Record<string, unknown>[]
+    ).filter((j) => j['key'] === `telehealth.close_meeting:close_meeting_${sid}`);
+  const queuedCreate = async (rid: string): Promise<Record<string, unknown>[]> =>
+    (
+      (await t.f.jobsInQueue('telehealth.create_meeting')) as unknown as Record<string, unknown>[]
+    ).filter((j) => j['key'] === `telehealth.create_meeting:create_meeting_${rid}`);
+  const setOcc = (rid: string, status: string) =>
+    sys(`UPDATE scheduling.slot_occupancy SET status = $2 WHERE id = $1`, [rid, status], true);
+  const NAMES = {
+    cancelled: 'telehealth.on_reservation_cancelled',
+    no_show: 'telehealth.on_no_show',
+    rescheduled: 'telehealth.on_reservation_rescheduled',
+  } as const;
+  const OCC = { cancelled: 'cancelled_patient', no_show: 'no_show', rescheduled: 'rescheduled' };
+  const run = (
+    v: V,
+    reason: keyof typeof NAMES,
+    extra: Record<string, unknown> = {},
+  ): Promise<'ended' | 'nothing' | 'gone'> =>
+    t.W.runOnVisitOver(
+      t.jobs,
+      { reservationId: v.rid, patientId: v.p.patientId, ...extra },
+      NAMES[reason],
+      reason,
+    );
+  const newRes = (v: V, mode: 'video' | 'in_person' = 'video'): Promise<string> =>
+    t.f.seed(v.p, v.d.principalId, inMin(2 * 24 * 60), { mode });
+
+  for (const reason of ['cancelled', 'no_show', 'rescheduled'] as const) {
+    describe(reason, () => {
+      const extra = async (v: V): Promise<Record<string, unknown>> =>
+        reason === 'rescheduled' ? { newReservationId: await newRes(v, 'in_person') } : {};
+
+      test('a live session with a room ends, its tokens are revoked and exactly one close job is queued; replay changes nothing', async () => {
+        const v = await visit(); // the join window is open: a live token exists when the visit ends
+        await admitted(v);
+        await t.telehealth.join(v.p.scope, meta(), v.rid);
+        const sid = ((await t.sessionOf(v.rid)) as { id: string }).id;
+        await setOcc(v.rid, OCC[reason]);
+        const x = await extra(v);
+        assert.equal(await run(v, reason, x), 'ended');
+        assert.equal(((await t.sessionOf(v.rid)) as { status: string }).status, 'ended');
+        assert.equal(
+          await nrows(
+            `SELECT count(*) AS n FROM telehealth.join_token WHERE session_id = $1 AND status = 'issued'`,
+            [sid],
+          ),
+          0,
+        );
+        const q1 = await queuedClose(sid);
+        assert.equal(q1.length, 1);
+        assert.deepEqual(q1[0]?.['payload'], { sessionId: sid, patientId: v.p.patientId });
+        assert.equal(
+          await nrows(
+            `SELECT count(*) AS n FROM audit.event WHERE resource_id = $1 AND change->>'visitOver' = $2`,
+            [sid, reason],
+          ),
+          1,
+        );
+        // replay: nothing new
+        assert.equal(await run(v, reason, x), 'nothing');
+        assert.equal((await queuedClose(sid)).length, 1);
+        // the queued job then closes the room and audits the close
+        assert.equal(
+          await t.W.runCloseMeeting(t.jobs, { sessionId: sid, patientId: v.p.patientId }),
+          'closed',
+        );
+        assert.ok(t.video.meetings.get(sid)?.ended);
+      });
+
+      test('a session with no room ends failed and nothing is queued', async () => {
+        const v = await visit({ startInMin: 3 * 24 * 60, room: false });
+        const sid = ((await t.sessionOf(v.rid)) as { id: string }).id;
+        await setOcc(v.rid, OCC[reason]);
+        assert.equal(await run(v, reason, await extra(v)), 'nothing');
+        assert.equal(((await t.sessionOf(v.rid)) as { status: string }).status, 'failed');
+        assert.equal((await queuedClose(sid)).length, 0);
+      });
+
+      test('an already ended session is left alone; an occupancy that is not over changes nothing', async () => {
+        const done = await visit({ startInMin: 3 * 24 * 60 });
+        const sidDone = ((await t.sessionOf(done.rid)) as { id: string }).id;
+        await asH(done.d, (tx) => t.telehealth.end(tx, meta(), done.rid));
+        assert.equal((await queuedClose(sidDone)).length, 1);
+        await setOcc(done.rid, OCC[reason]);
+        assert.equal(await run(done, reason, await extra(done)), 'nothing');
+        assert.equal((await queuedClose(sidDone)).length, 1);
+
+        const live = await visit({ startInMin: 3 * 24 * 60 });
+        const sidLive = ((await t.sessionOf(live.rid)) as { id: string }).id;
+        assert.equal(await run(live, reason, await extra(live)), 'nothing'); // still confirmed
+        assert.equal(((await t.sessionOf(live.rid)) as { status: string }).status, 'scheduled');
+        assert.equal((await queuedClose(sidLive)).length, 0);
+      });
+    });
+  }
+
+  describe('rescheduled: the new reservation (SA-916-5)', () => {
+    test('a video visit: the old session ends; the new reservation gets a scheduled session with a create audit and exactly one create_meeting at max(now, start - 15 min); replay keeps the keys single', async () => {
+      const v = await visit({ startInMin: 3 * 24 * 60 });
+      const sid = ((await t.sessionOf(v.rid)) as { id: string }).id;
+      const nrid = await newRes(v);
+      assert.equal(await t.sessionOf(nrid), undefined);
+      await setOcc(v.rid, 'rescheduled');
+      const x = { newReservationId: nrid };
+      assert.equal(await run(v, 'rescheduled', x), 'ended');
+      assert.equal(((await t.sessionOf(v.rid)) as { status: string }).status, 'ended');
+      const ns = (await t.sessionOf(nrid)) as { id: string; status: string };
+      assert.equal(ns.status, 'scheduled');
+      assert.equal(
+        await nrows(
+          `SELECT count(*) AS n FROM audit.event WHERE resource_id = $1 AND action = 'create'`,
+          [ns.id],
+        ),
+        1,
+      );
+      const c = await queuedCreate(nrid);
+      assert.equal(c.length, 1);
+      const start = new Date(
+        (
+          await one<{ s: Date }>(
+            `SELECT lower(period) AS s FROM scheduling.slot_occupancy WHERE id = $1`,
+            [nrid],
+          )
+        ).s,
+      );
+      const want = Math.max(Date.now(), start.getTime() - 15 * 60_000);
+      const got = new Date(String(c[0]?.['run_at'] ?? c[0]?.['runAt'])).getTime();
+      assert.ok(Math.abs(got - want) < 60_000, `run_at ${got} vs ${want}`);
+      assert.equal((await queuedClose(sid)).length, 1);
+      // replay
+      assert.equal(await run(v, 'rescheduled', x), 'nothing');
+      assert.equal((await queuedCreate(nrid)).length, 1);
+      assert.equal((await queuedClose(sid)).length, 1);
+      assert.equal(
+        await nrows(
+          `SELECT count(*) AS n FROM telehealth.video_session WHERE reservation_id = $1`,
+          [nrid],
+        ),
+        1,
+      );
+    });
+
+    test('an in-person new reservation: no session for it and no create job', async () => {
+      const v = await visit({ startInMin: 3 * 24 * 60 });
+      const nrid = await newRes(v, 'in_person');
+      await setOcc(v.rid, 'rescheduled');
+      assert.equal(await run(v, 'rescheduled', { newReservationId: nrid }), 'ended');
+      assert.equal(await t.sessionOf(nrid), undefined);
+      assert.equal((await queuedCreate(nrid)).length, 0);
+    });
+
+    test('the new reservation is no longer confirmed: it gets no session, the old one still ends', async () => {
+      const v = await visit({ startInMin: 3 * 24 * 60 });
+      const sid = ((await t.sessionOf(v.rid)) as { id: string }).id;
+      const nrid = await newRes(v);
+      await setOcc(v.rid, 'rescheduled');
+      await setOcc(nrid, 'cancelled_patient');
+      assert.equal(await run(v, 'rescheduled', { newReservationId: nrid }), 'ended');
+      assert.equal(await t.sessionOf(nrid), undefined);
+      assert.equal((await queuedCreate(nrid)).length, 0);
+      assert.equal((await queuedClose(sid)).length, 1);
+    });
+
+    test('the event reaches the handler through the kernel (publish names telehealth.on_reservation_rescheduled)', async () => {
+      const v = await visit({ startInMin: 3 * 24 * 60 });
+      const names = await asP(v.p, (tx) =>
+        new Queue(t.f.k.registry, 'api').publish(tx, 'scheduling.reservation_rescheduled', {
+          reservationId: v.rid,
+          newReservationId: newId(),
+          patientId: v.p.patientId,
+        }),
+      );
+      assert.ok(names.includes('telehealth.on_reservation_rescheduled'));
+      for (const e of ['scheduling.reservation_cancelled', 'scheduling.no_show'] as const) {
+        const n = await asP(v.p, (tx) =>
+          new Queue(t.f.k.registry, 'api').publish(tx, e, {
+            reservationId: v.rid,
+            patientId: v.p.patientId,
+          }),
+        );
+        assert.ok(
+          n.some((x) => x.startsWith('telehealth.on_')),
+          e,
+        );
+      }
+    });
   });
 });
 

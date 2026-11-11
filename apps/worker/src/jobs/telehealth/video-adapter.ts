@@ -23,7 +23,7 @@ import {
 import { AdapterFailure } from '../integration-core/errors.js';
 import { isUuid } from './ids.js';
 
-/** The vendor-specific half. Every method honours `signal` (the gateway's timeout) and throws `AdapterFailure` for a failed call. */
+/** The vendor-specific half. `endMeeting` on a meeting the vendor no longer has throws a 404 `AdapterFailure` (or class `not_found`), which the adapter treats as closed. Every method honours `signal` (the gateway's timeout) and throws `AdapterFailure` for a failed call. */
 export interface VideoTransport {
   /** True when the vendor accepts our idempotency token on create (checked per vendor at G2). Otherwise `findMeeting` is used. */
   readonly supportsIdempotencyToken: boolean;
@@ -116,13 +116,18 @@ export class VideoAdapter implements VendorAdapter<'video'> {
       }
       case 'end_meeting': {
         const id = meetingId(a);
+        // A meeting the vendor no longer has is closed: ending is idempotent (`telehealth.close_meeting` repeats it freely).
         await guarded(() =>
           this.transport.endMeeting({
             meetingId: id,
             idempotencyToken: req.idempotencyToken,
             signal: req.signal,
           }),
-        );
+        ).catch((e: unknown) => {
+          if (e instanceof AdapterFailure && (e.httpStatus === 404 || e.errorClass === 'not_found'))
+            return;
+          throw e;
+        });
         return { data: { ended: true }, vendorRef: id };
       }
       case 'join_token': {

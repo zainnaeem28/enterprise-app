@@ -31,8 +31,30 @@ export interface EndedStale {
   meetingId: string | null;
 }
 
+export type VisitOverReason = 'cancelled' | 'no_show' | 'rescheduled';
+
+/** Occupancy states that mean the visit is over (a stale or replayed event on any other state changes nothing). */
+const VISIT_OVER_STATUSES = ['cancelled_patient', 'cancelled_clinic', 'rescheduled', 'no_show'];
+
+export type EndedForVisitOver =
+  | {
+      status: 'ended' | 'failed';
+      sessionId: string;
+      vendor: string | null;
+      meetingId: string | null;
+    }
+  | { status: 'already' | 'none' | 'gone' };
+
 export class TelehealthJobService {
   constructor(private readonly deps: TelehealthJobDeps) {}
+
+  /** The kernel allows one `lockPatients` per transaction; a handler that ends one visit and makes another's session calls this twice. */
+  private readonly locked = new WeakSet<Tx>();
+  private async lock(tx: Tx, patientId: string): Promise<void> {
+    if (this.locked.has(tx)) return;
+    await tx.lockPatients([patientId], 'key_share');
+    this.locked.add(tx);
+  }
 
   private patientOf(tx: Tx): string {
     const ids = tx.scope.jobPatientIds ?? [];
@@ -49,7 +71,7 @@ export class TelehealthJobService {
     if (!isUuid(reservationId)) throw new TelehealthValidationError(['reservationId']);
     const patientId = this.patientOf(tx);
     try {
-      await tx.lockPatients([patientId], 'key_share');
+      await this.lock(tx, patientId);
       const r = (
         await tx.query(
           `SELECT r.id, r.patient_id, r.clinician_principal_id, r.mode, o.status, lower(o.period) AS starts_at
@@ -114,7 +136,7 @@ export class TelehealthJobService {
     if (!isUuid(sessionId)) throw new TelehealthValidationError(['sessionId']);
     const patientId = this.patientOf(tx);
     try {
-      await tx.lockPatients([patientId], 'key_share');
+      await this.lock(tx, patientId);
       const r = await tx.query(
         `UPDATE telehealth.video_session SET vendor = $2, vendor_meeting_id = $3
           WHERE id = $1::uuid AND vendor_meeting_id IS NULL AND status IN ('scheduled', 'open')`,
@@ -188,7 +210,7 @@ export class TelehealthJobService {
     if (!isUuid(sessionId)) throw new TelehealthValidationError(['sessionId']);
     const patientId = this.patientOf(tx);
     try {
-      await tx.lockPatients([patientId], 'key_share');
+      await this.lock(tx, patientId);
       const s = (
         await tx.query(
           `SELECT v.status, v.vendor, v.vendor_meeting_id FROM telehealth.video_session v
@@ -200,21 +222,108 @@ export class TelehealthJobService {
       ).rows[0] as Row | undefined;
       if (s === undefined || (s['status'] !== 'scheduled' && s['status'] !== 'open'))
         return { status: 'already', vendor: null, meetingId: null };
-      await tx.query(
-        `UPDATE telehealth.participant SET left_at = now()
-          WHERE session_id = $1::uuid AND joined_at IS NOT NULL AND left_at IS NULL`,
-        [sessionId.toLowerCase()],
+      return await this.endLive(tx, meta, sessionId, patientId, s, { stale: true });
+    } catch (e) {
+      translateDbError(e);
+    }
+  }
+
+  /** The steps shared by every system end of a live session: participants leave, issued tokens are revoked (the database refuses to end a session that holds one), the status changes, one audit row. */
+  private async endLive(
+    tx: Tx,
+    meta: TelehealthMeta,
+    sessionId: string,
+    patientId: string,
+    s: Row,
+    why: Record<string, unknown>,
+  ): Promise<EndedStale> {
+    await tx.query(
+      `UPDATE telehealth.participant SET left_at = now()
+        WHERE session_id = $1::uuid AND joined_at IS NOT NULL AND left_at IS NULL`,
+      [sessionId.toLowerCase()],
+    );
+    await tx.query(
+      `UPDATE telehealth.join_token SET status = 'revoked', revoke_reason = 'session_ended'
+        WHERE session_id = $1::uuid AND status = 'issued'`,
+      [sessionId.toLowerCase()],
+    );
+    const to = s['vendor_meeting_id'] === null ? 'failed' : 'ended';
+    await tx.query(`UPDATE telehealth.video_session SET status = $2 WHERE id = $1::uuid`, [
+      sessionId.toLowerCase(),
+      to,
+    ]);
+    await this.deps.audit.record(tx, {
+      requestId: null,
+      jobId: meta.jobId ?? null,
+      action: 'update',
+      resourceType: 'telehealth.video_session',
+      resourceId: sessionId.toLowerCase(),
+      patientId,
+      change: { status: to, ...why },
+      ip: null,
+      userAgent: null,
+    });
+    return {
+      status: to,
+      vendor: s['vendor'] === null ? null : String(s['vendor']),
+      meetingId: s['vendor_meeting_id'] === null ? null : String(s['vendor_meeting_id']),
+    };
+  }
+
+  /**
+   * The visit of `reservationId` is over (cancelled, no-show, rescheduled; HEAAA-916 SA-916-2): under the one patient's scope, ends its
+   * live session (tokens revoked first). `gone` when the reservation is not this patient's (a merge: the job asks for the survivor);
+   * `none` when there is no session or the occupancy is not over; `already` when the session is not live (whoever ended it queued the
+   * close). The caller enqueues `telehealth.close_meeting` in this transaction when the result is `ended` with a room.
+   */
+  async endForVisitOver(
+    tx: Tx,
+    meta: TelehealthMeta,
+    reservationId: string,
+    reason: VisitOverReason,
+  ): Promise<EndedForVisitOver> {
+    if (!isUuid(reservationId)) throw new TelehealthValidationError(['reservationId']);
+    const patientId = this.patientOf(tx);
+    try {
+      await this.lock(tx, patientId);
+      const own = await tx.query(
+        `SELECT 1 FROM scheduling.slot_reservation WHERE id = $1::uuid AND patient_id = $2::uuid`,
+        [reservationId.toLowerCase(), patientId],
       );
-      await tx.query(
-        `UPDATE telehealth.join_token SET status = 'revoked', revoke_reason = 'session_ended'
-          WHERE session_id = $1::uuid AND status = 'issued'`,
-        [sessionId.toLowerCase()],
+      if (own.rows.length === 0) return { status: 'gone' };
+      const s = (
+        await tx.query(
+          `SELECT v.id, v.status, v.vendor, v.vendor_meeting_id FROM telehealth.video_session v
+             JOIN scheduling.slot_occupancy o ON o.id = v.reservation_id
+            WHERE v.reservation_id = $1::uuid AND v.patient_id = $2::uuid AND o.status = ANY($3::text[])
+              FOR UPDATE OF v`,
+          [reservationId.toLowerCase(), patientId, VISIT_OVER_STATUSES],
+        )
+      ).rows[0] as Row | undefined;
+      if (s === undefined) return { status: 'none' };
+      if (s['status'] !== 'scheduled' && s['status'] !== 'open') return { status: 'already' };
+      const sessionId = String(s['id']);
+      const r = await this.endLive(tx, meta, sessionId, patientId, s, { visitOver: reason });
+      return { ...r, sessionId, status: r.status as 'ended' | 'failed' };
+    } catch (e) {
+      translateDbError(e);
+    }
+  }
+
+  /**
+   * Audit of the vendor close (`telehealth.close_meeting`, after the vendor call succeeded): false when the session is not in the one
+   * patient's scope (another merge between the steps), so the job retries.
+   */
+  async recordMeetingClosed(tx: Tx, meta: TelehealthMeta, sessionId: string): Promise<boolean> {
+    if (!isUuid(sessionId)) throw new TelehealthValidationError(['sessionId']);
+    const patientId = this.patientOf(tx);
+    try {
+      await this.lock(tx, patientId);
+      const r = await tx.query(
+        `SELECT 1 FROM telehealth.video_session WHERE id = $1::uuid AND patient_id = $2::uuid`,
+        [sessionId.toLowerCase(), patientId],
       );
-      const to = s['vendor_meeting_id'] === null ? 'failed' : 'ended';
-      await tx.query(`UPDATE telehealth.video_session SET status = $2 WHERE id = $1::uuid`, [
-        sessionId.toLowerCase(),
-        to,
-      ]);
+      if (r.rows.length === 0) return false;
       await this.deps.audit.record(tx, {
         requestId: null,
         jobId: meta.jobId ?? null,
@@ -222,15 +331,11 @@ export class TelehealthJobService {
         resourceType: 'telehealth.video_session',
         resourceId: sessionId.toLowerCase(),
         patientId,
-        change: { status: to, stale: true },
+        change: { meeting: 'closed' },
         ip: null,
         userAgent: null,
       });
-      return {
-        status: to,
-        vendor: s['vendor'] === null ? null : String(s['vendor']),
-        meetingId: s['vendor_meeting_id'] === null ? null : String(s['vendor_meeting_id']),
-      };
+      return true;
     } catch (e) {
       translateDbError(e);
     }
