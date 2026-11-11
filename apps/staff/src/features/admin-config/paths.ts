@@ -9,6 +9,7 @@ export const ADMIN_CONFIG_PATHS = [
   '/admin/integrations',
   '/admin/flags',
   '/admin/vital-ranges',
+  '/admin/licensing',
 ] as const;
 export type AdminConfigPath = (typeof ADMIN_CONFIG_PATHS)[number];
 export const isAdminConfigPath = (path: string): path is AdminConfigPath =>
@@ -22,4 +23,5 @@ export const ADMIN_CONFIG_NAV: { path: AdminConfigPath; label: string }[] = [
   { path: '/admin/integrations', label: s.navIntegrations },
   { path: '/admin/flags', label: s.navFlags },
   { path: '/admin/vital-ranges', label: s.navVitals },
+  { path: '/admin/licensing', label: s.navLicensing },
 ];

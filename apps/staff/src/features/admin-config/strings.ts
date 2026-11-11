@@ -8,6 +8,7 @@ export const configStrings = {
   navIntegrations: 'Integrations',
   navFlags: 'Flags & banners',
   navVitals: 'Vital ranges',
+  navLicensing: 'Licensed states',
 
   loading: 'Loading',
   lockedTitle: 'Confirm with your security key to see this',
@@ -38,6 +39,30 @@ export const configStrings = {
     'Every change on this page is recorded in the audit log with who made it, what it was and what it became.',
   elevateSave: 'Save organisation settings',
   elevateRead: 'Read organisation settings',
+
+  // Licensed states (ruling C item 4)
+  licTitle: 'Clinician licensed states',
+  licIntro:
+    'A video visit is only offered when the clinician is licensed in the state the patient is in and the clinic operates telehealth there. Changes take effect at once.',
+  licFind: 'Find a clinician',
+  licFindHint: 'Type part of a name and search.',
+  licSearch: 'Search',
+  licNoResult: 'Nobody matches that search.',
+  licChoose: 'Choose',
+  licNoProfile: 'This person has no clinician profile, so no licensed states can be recorded.',
+  licNone:
+    'No licensed states are recorded. This clinician is not offered for video visits anywhere.',
+  licStatesLegend: 'States this clinician is licensed in',
+  licAddLabel: 'Add a state',
+  licAddHint: 'Two capital letters, for example NY.',
+  licAddInvalid: 'Use two capital letters.',
+  licAdd: 'Add state',
+  licOperating: 'Telehealth in the clinic’s operating states',
+  licOperatingAllowed: 'Telehealth allowed',
+  licOperatingOff: 'Telehealth not allowed',
+  licSaved: 'Saved. The change is recorded in the audit log and applies to the next booking.',
+  licElevateRead: 'Read clinician licensed states',
+  licElevateSave: 'Save clinician licensed states',
 
   // Clinics (AD-04)
   clinicsTitle: 'Clinics, rooms, hours and holidays',
