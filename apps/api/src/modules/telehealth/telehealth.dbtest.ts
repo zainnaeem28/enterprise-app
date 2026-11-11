@@ -739,6 +739,7 @@ describe('licensing at join (RA-R1-28, TL-1; TC-TH-07, TC-TH-08)', () => {
     assert.equal(
       await nrows(
         `SELECT count(*) AS n FROM audit.event WHERE resource_type = 'telehealth.location_confirmation' AND change::text LIKE '%' || $1 || '%'`,
+        [FIXTURE_STATES.unlicensed],
       ),
       0,
     );
