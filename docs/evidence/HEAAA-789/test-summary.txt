@@ -1,0 +1,15 @@
+head bbcc637122a5aa59d409617e79c80678bbec2149
+kernel: 23 test(s), 0 failure(s), 0 skipped
+db-foundation: 120 test(s), 0 failure(s), 0 skipped, 3 accepted pin failure(s)
+kernel: 23 test(s), 0 failure(s), 0 skipped
+api: 1082 test(s), 2 failure(s), 0 skipped
+::error::suite api has 2 failing test(s)
+worker: 122 test(s), 0 failure(s), 0 skipped
+::error::N-1: the previous release (r208) does not pass against the candidate schema
+::error::integration-db FAILED
+
+candidate suites (fresh db, from /tmp/h789/idb2.log):
+db-foundation: 120 test(s), 0 failure(s), 0 skipped
+kernel: 23 test(s), 0 failure(s), 0 skipped
+api: 1101 test(s), 0 failure(s), 0 skipped
+worker: 122 test(s), 0 failure(s), 0 skipped
