@@ -21,13 +21,22 @@ const opt = {};
 while (args[0]?.startsWith('--')) opt[args.shift().slice(2)] = args.shift();
 const [dir, ...names] = args;
 if (!dir || names.length === 0 || (opt.pins && !opt.catalog)) {
-  console.error('usage: check-junit.mjs [--pins <tsv> --catalog <catalog-lists.mjs> [--report <file>]] <dir> <suite>...');
+  console.error(
+    'usage: check-junit.mjs [--pins <tsv> --catalog <catalog-lists.mjs> [--report <file>]] <dir> <suite>...',
+  );
   process.exit(2);
 }
 
 const unesc = (s) =>
-  s.replace(/&#(x[0-9a-fA-F]+|\d+);/g, (_, n) => String.fromCodePoint(n[0] === 'x' ? parseInt(n.slice(1), 16) : Number(n)))
-    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, '&');
+  s
+    .replace(/&#(x[0-9a-fA-F]+|\d+);/g, (_, n) =>
+      String.fromCodePoint(n[0] === 'x' ? parseInt(n.slice(1), 16) : Number(n)),
+    )
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&amp;/g, '&');
 const attr = (a, k) => {
   const m = new RegExp(`(?:^|\\s)${k}="([^"]*)"`).exec(a);
   return m ? unesc(m[1]) : '';
@@ -37,22 +46,32 @@ let pins = [];
 let candidateSize = 0;
 if (opt.pins) {
   candidateSize = (await import(pathToFileURL(opt.catalog).href)).definerInventory.length;
-  pins = readFileSync(opt.pins, 'utf8').split('\n').filter((l) => l && !l.startsWith('#')).map((l) => {
-    const [suite, name, loc, literal] = l.split('\t');
-    const i = loc.lastIndexOf(':');
-    const growth = literal.startsWith('growth:') ? literal.slice('growth:'.length).split(',') : null;
-    return { suite, name, path: loc.slice(0, i), line: loc.slice(i + 1), literal, growth, used: false };
-  });
+  pins = readFileSync(opt.pins, 'utf8')
+    .split('\n')
+    .filter((l) => l && !l.startsWith('#'))
+    .map((l) => {
+      const [suite, name, loc, literal] = l.split('\t');
+      const i = loc.lastIndexOf(':');
+      const growth = literal.startsWith('growth:')
+        ? literal.slice('growth:'.length).split(',')
+        : null;
+      return {
+        suite,
+        name,
+        path: loc.slice(0, i),
+        line: loc.slice(i + 1),
+        literal,
+        growth,
+        used: false,
+      };
+    });
 }
 
 const GROWTH_ALLOWED = {
-  'every identity table has ENABLE and FORCE row level security, a data class and no PUBLIC policy': ['proxy_invite_code'],
-  'app_api has no UPDATE of identity columns beyond the 21.2 list; app_worker none on principal or person': [
-    'accepted_at',
-    'ended_by',
-    'proxy_principal_id',
-    'scopes',
-  ],
+  'every identity table has ENABLE and FORCE row level security, a data class and no PUBLIC policy':
+    ['proxy_invite_code'],
+  'app_api has no UPDATE of identity columns beyond the 21.2 list; app_worker none on principal or person':
+    ['accepted_at', 'ended_by', 'proxy_principal_id', 'scopes'],
 };
 
 // A node inspect list of strings -> the strings, or null when it holds anything else (numbers, objects, '... more items').
@@ -84,7 +103,8 @@ function growthFailure(pin, body) {
   if (JSON.stringify([...extra].sort()) !== JSON.stringify(added)) {
     return `added names [${extra}] are not exactly the pinned [${added}]`;
   }
-  if (new Set(actual).size !== actual.length || new Set(expected).size !== expected.length) return `duplicate entries`;
+  if (new Set(actual).size !== actual.length || new Set(expected).size !== expected.length)
+    return `duplicate entries`;
   if (JSON.stringify(actual.filter((x) => expected.includes(x))) !== JSON.stringify(expected)) {
     return `an expected entry is missing or reordered`;
   }
@@ -129,27 +149,44 @@ for (const n of names) {
   const skipped = (xml.match(/<skipped\b/g) ?? []).length;
   let failed = 0;
   let accepted = 0;
-  for (const m of xml.matchAll(/<testcase\b((?:[^>"]|"[^"]*")*?)(?:\/>|>([\s\S]*?)<\/testcase>)/g)) {
+  for (const m of xml.matchAll(
+    /<testcase\b((?:[^>"]|"[^"]*")*?)(?:\/>|>([\s\S]*?)<\/testcase>)/g,
+  )) {
     const body = m[2] ?? '';
     const name = attr(m[1], 'name');
     const file = attr(m[1], 'file');
-    const pin = pins.find((p) => p.suite === n && p.name === name && file.endsWith(`/${p.path}`) && !p.used);
+    const pin = pins.find(
+      (p) => p.suite === n && p.name === name && file.endsWith(`/${p.path}`) && !p.used,
+    );
     const isFail = /<(failure|error)\b/.test(body);
     if (pin) pin.used = true;
     if (!isFail) {
       if (pin) {
-        console.error(`::error::N-1 PIN is stale: [${n}] ${name} passes; remove it from n-minus-1-pins.tsv`);
+        console.error(
+          `::error::N-1 PIN is stale: [${n}] ${name} passes; remove it from n-minus-1-pins.tsv`,
+        );
         bad++;
       }
       continue;
     }
-    const why = !pin ? 'not a listed pin' : pin.growth ? growthFailure(pin, body) : pinFailure(pin, body);
+    const why = !pin
+      ? 'not a listed pin'
+      : pin.growth
+        ? growthFailure(pin, body)
+        : pinFailure(pin, body);
     if (pin && !why) {
       accepted++;
-      const found = pin.growth ? `candidate adds ${pin.growth.join(',')}` : `expected ${pin.literal}, actual ${candidateSize}`;
-      console.log(`::notice::N-1 PIN (not a pass) [${n}] ${name} -- ${found} at ${pin.path}:${pin.line}`);
+      const found = pin.growth
+        ? `candidate adds ${pin.growth.join(',')}`
+        : `expected ${pin.literal}, actual ${candidateSize}`;
+      console.log(
+        `::notice::N-1 PIN (not a pass) [${n}] ${name} -- ${found} at ${pin.path}:${pin.line}`,
+      );
       if (opt.report) {
-        appendFileSync(opt.report, `${n}\t${name}\t${pin.path}:${pin.line}\t${pin.literal}\t${pin.growth ? pin.growth.join(',') : candidateSize}\n`);
+        appendFileSync(
+          opt.report,
+          `${n}\t${name}\t${pin.path}:${pin.line}\t${pin.literal}\t${pin.growth ? pin.growth.join(',') : candidateSize}\n`,
+        );
       }
     } else {
       failed++;
@@ -157,7 +194,9 @@ for (const n of names) {
     }
   }
   total += tests;
-  console.log(`${n}: ${tests} test(s), ${failed} failure(s), ${skipped} skipped${accepted ? `, ${accepted} accepted pin failure(s)` : ''}`);
+  console.log(
+    `${n}: ${tests} test(s), ${failed} failure(s), ${skipped} skipped${accepted ? `, ${accepted} accepted pin failure(s)` : ''}`,
+  );
   if (tests === 0) {
     console.error(`::error::suite ${n} ran zero tests (an empty suite fails)`);
     bad++;
