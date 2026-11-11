@@ -228,3 +228,15 @@ variable "recovery_docs_clean_bucket_arn" {
   type        = string
   default     = null
 }
+
+variable "recovery_quarantine_expiry_days" {
+  description = "Objects left in the recovery-Region quarantine bucket are expired after this many days (same default as the storage module)."
+  type        = number
+  default     = 7
+}
+
+variable "recovery_sms_origination_identity_arn" {
+  description = "End User Messaging phone number, pool or sender ID in the RECOVERY Region (identities are per Region; acquiring one is a purchase and a carrier registration, so it is an input). Null leaves SMS out of the recovery Region: SMS is the documented degraded mode (docs/runbooks/recovery-region.md)."
+  type        = string
+  default     = null
+}

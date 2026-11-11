@@ -11,6 +11,17 @@ provider "aws" {
   skip_region_validation      = true
 }
 
+provider "aws" {
+  alias                       = "recovery"
+  region                      = "us-west-2"
+  access_key                  = "not-a-key"
+  secret_key                  = "not-a-secret"
+  skip_credentials_validation = true
+  skip_metadata_api_check     = true
+  skip_requesting_account_id  = true
+  skip_region_validation      = true
+}
+
 override_data {
   target = data.aws_caller_identity.current
   values = { account_id = "111111111111" }
@@ -197,6 +208,71 @@ variables {
   execution_secret_names        = ["staging/app/vapid_private_key"]
 }
 
+override_resource {
+  target = aws_s3_bucket.recovery
+  values = { arn = "arn:aws:s3:::mock-dr", id = "mock-dr" }
+}
+
+override_resource {
+  target = aws_s3_bucket_versioning.recovery
+  values = {}
+}
+
+override_resource {
+  target = aws_s3_bucket_server_side_encryption_configuration.recovery
+  values = {}
+}
+
+override_resource {
+  target = aws_s3_bucket_public_access_block.recovery
+  values = {}
+}
+
+override_resource {
+  target = aws_s3_bucket_ownership_controls.recovery
+  values = {}
+}
+
+override_resource {
+  target = aws_s3_bucket_notification.recovery_quarantine
+  values = {}
+}
+
+override_resource {
+  target = aws_s3_bucket_lifecycle_configuration.recovery
+  values = {}
+}
+
+override_resource {
+  target = aws_s3_bucket_policy.recovery
+  values = {}
+}
+
+override_resource {
+  target = aws_iam_role_policy.recovery_guardduty
+  values = {}
+}
+
+override_resource {
+  target = aws_guardduty_malware_protection_plan.recovery_quarantine
+  values = {}
+}
+
+override_resource {
+  target = aws_sesv2_configuration_set.recovery
+  values = {}
+}
+
+override_resource {
+  target = aws_sesv2_email_identity.recovery
+  values = { arn = "arn:aws:ses:us-west-2:111111111111:identity/example.org", dkim_signing_attributes = { tokens = ["d", "e", "f"] } }
+}
+
+override_resource {
+  target = aws_pinpointsmsvoicev2_configuration_set.recovery
+  values = {}
+}
+
 run "api_policy_is_exact" {
   command = apply
 
@@ -342,32 +418,68 @@ run "recovery_policies_name_only_recovery_region_replicas" {
   assert {
     condition = alltrue(flatten([for d in [data.aws_iam_policy_document.recovery_api[0], data.aws_iam_policy_document.recovery_worker[0], data.aws_iam_policy_document.recovery_execution[0]] :
       [for s in jsondecode(d.json).Statement : alltrue([for r in flatten([s.Resource]) :
-        r == "*" || strcontains(r, "us-west-2") || strcontains(r, "docs-clean-replica") || strcontains(r, ":chime:")
+        r == "*" || strcontains(r, "us-west-2") || strcontains(r, "docs-clean-replica") || strcontains(r, "-dr") || strcontains(r, ":chime:")
       ])]
     ]))
-    error_message = "every resource of the recovery policies is in the recovery Region, the replica bucket or a Chime meeting"
+    error_message = "every resource of the recovery policies is in the recovery Region, the replica bucket, a recovery-Region bucket (-dr) or a Chime meeting"
   }
 
   # "*" resources: only the AWS-limited actions, and the Region-bound ones carry aws:RequestedRegion.
   assert {
     condition = alltrue(flatten([for d in [data.aws_iam_policy_document.recovery_api[0], data.aws_iam_policy_document.recovery_worker[0], data.aws_iam_policy_document.recovery_execution[0]] :
-      [for s in jsondecode(d.json).Statement : !contains(flatten([s.Resource]), "*") || contains(["EcrToken", "OcrDetectTextInRecoveryRegion", "CreateMeeting"], s.Sid)]
+      [for s in jsondecode(d.json).Statement : !contains(flatten([s.Resource]), "*") || contains(["EcrToken", "OcrDetectTextInRecoveryRegion", "AccountLevelReadsInRecoveryRegion", "CreateMeeting"], s.Sid)]
     ]))
-    error_message = "no wildcard resource beyond ecr:GetAuthorizationToken, textract and chime:CreateMeeting"
+    error_message = "no wildcard resource beyond ecr:GetAuthorizationToken, textract, the SES/SMS account reads and chime:CreateMeeting"
   }
 
+  # api: seals only (never opens a payload); the only writes are the presigned quarantine upload and its own outbound secrets.
   assert {
     condition = !anytrue(flatten([for s in jsondecode(data.aws_iam_policy_document.recovery_api[0].json).Statement :
-      [for a in flatten([s.Action]) : contains(["kms:Decrypt", "kms:Encrypt", "kms:ReEncrypt*", "s3:PutObject", "s3:DeleteObject"], a) && s.Sid != "DataKeyReplicaForSignedRequests"]
+      [for a in flatten([s.Action]) : (contains(["kms:Decrypt", "kms:Encrypt", "kms:ReEncrypt*"], a) && !contains(["DataKeyReplicaForSignedRequests", "SecretsKeyRecoveryThroughSecretsManager"], s.Sid)) ||
+        (contains(["s3:PutObject", "s3:DeleteObject"], a) && s.Sid != "PresignDocumentUploadToRecoveryQuarantine")
+      || (contains(["secretsmanager:PutSecretValue", "secretsmanager:CreateSecret"], a) && s.Sid != "WriteOutboundSecretsInRecovery")]
     ]))
-    error_message = "recovery api cannot open payloads, upload or delete"
+    error_message = "recovery api cannot open payloads, delete, or write anything beyond the quarantine upload and outbound secrets"
+  }
+
+  # worker: never seals (SC-2) and writes only the recovery buckets, the clean replica and inbound secrets.
+  assert {
+    condition = !anytrue(flatten([for s in jsondecode(data.aws_iam_policy_document.recovery_worker[0].json).Statement :
+      [for a in flatten([s.Action]) : (contains(["kms:GenerateDataKey", "kms:GenerateDataKey*", "kms:Encrypt", "kms:ReEncrypt*"], a) && !contains(["DataKeyReplicaDecrypt", "SecretsKeyRecoveryThroughSecretsManager"], s.Sid)) ||
+        (contains(["s3:PutObject", "s3:DeleteObject"], a) && !contains(["CleanReplicaPromotion", "QuarantineObjects", "PackageObjectsInRecovery", "ExportObjectsInRecovery"], s.Sid))
+      || (contains(["secretsmanager:PutSecretValue", "secretsmanager:CreateSecret"], a) && s.Sid != "WriteInboundSecretsInRecovery")]
+    ]))
+    error_message = "recovery worker cannot seal payloads (SC-2); its writes are limited to the recovery buckets, the clean replica and inbound secrets"
   }
 
   assert {
-    condition = !anytrue(flatten([for s in jsondecode(data.aws_iam_policy_document.recovery_worker[0].json).Statement :
-      [for a in flatten([s.Action]) : contains(["kms:GenerateDataKey", "kms:GenerateDataKey*", "kms:Encrypt", "s3:PutObject", "s3:DeleteObject", "secretsmanager:PutSecretValue"], a)]
-    ]))
-    error_message = "recovery worker cannot seal, write or delete (SC-2)"
+    condition     = !anytrue(flatten([for s in jsondecode(data.aws_iam_policy_document.recovery_worker[0].json).Statement : [for r in flatten([s.Resource]) : strcontains(r, "anchor")]]))
+    error_message = "the anchor archive is a degraded mode in the recovery Region: no grant names it"
+  }
+
+  # The new recovery services: everything named has a recovery-Region counterpart, and SMS stays out without an identity.
+  assert {
+    condition = alltrue([for sid in ["PresignDocumentUploadToRecoveryQuarantine", "PresignPackageDownloadFromRecovery", "WriteOutboundSecretsInRecovery"] :
+      anytrue([for s in jsondecode(data.aws_iam_policy_document.recovery_api[0].json).Statement : s.Sid == sid])
+      ]) && alltrue([for sid in ["QuarantineObjects", "PackageObjectsInRecovery", "ExportObjectsInRecovery", "ReadIntegrationSecretsInRecovery", "SendMailFromRecoveryRegion"] :
+      anytrue([for s in jsondecode(data.aws_iam_policy_document.recovery_worker[0].json).Statement : s.Sid == sid])
+    ])
+    error_message = "upload, package, export, runtime secrets and mail are granted in the recovery Region"
+  }
+
+  assert {
+    condition     = !anytrue([for s in jsondecode(data.aws_iam_policy_document.recovery_worker[0].json).Statement : s.Sid == "SendSmsFromRecoveryRegion"])
+    error_message = "no SMS grant without recovery_sms_origination_identity_arn (degraded mode)"
+  }
+
+  assert {
+    condition     = length(aws_s3_bucket.recovery) == 3 && length(aws_guardduty_malware_protection_plan.recovery_quarantine) == 1 && length(aws_sesv2_email_identity.recovery) == 1 && length(aws_pinpointsmsvoicev2_configuration_set.recovery) == 1
+    error_message = "three recovery buckets, a malware plan, an SES identity and an SMS configuration set exist in the recovery Region"
+  }
+
+  assert {
+    condition     = output.recovery_environment.common.EHR_S3_DOCS_QUARANTINE_BUCKET == "ehr-staging-docs-quarantine-dr" && contains(output.recovery_environment.worker_unset, "EHR_S3_ANCHOR_ARCHIVE_BUCKET") && contains(output.recovery_environment.worker_unset, "EHR_SMS_ORIGINATION_IDENTITY")
+    error_message = "the recovery environment points at the recovery buckets and unsets the anchor archive and SMS variables"
   }
 
   assert {
@@ -382,6 +494,31 @@ run "recovery_policies_name_only_recovery_region_replicas" {
   assert {
     condition     = strcontains(data.aws_iam_policy_document.ecs_tasks_assume_with_recovery.json, "ecs:us-west-2:111111111111") && strcontains(data.aws_iam_policy_document.ecs_tasks_assume_with_recovery.json, "ecs:us-east-2:111111111111")
     error_message = "trust admits ECS tasks of the primary and the recovery Region of this account only"
+  }
+}
+
+run "recovery_sms_is_granted_with_a_recovery_identity" {
+  command = apply
+
+  variables {
+    payload_key_multi_region              = true
+    recovery_region                       = "us-west-2"
+    recovery_data_kms_key_arn             = "arn:aws:kms:us-west-2:111111111111:key/mrk-data"
+    recovery_secrets_kms_key_arn          = "arn:aws:kms:us-west-2:111111111111:key/secrets-dr"
+    recovery_docs_clean_bucket_arn        = "arn:aws:s3:::ehr-staging-docs-clean-replica"
+    recovery_sms_origination_identity_arn = "arn:aws:sms-voice:us-west-2:111111111111:phone-number/phone-0001"
+  }
+
+  assert {
+    condition = anytrue([for s in jsondecode(data.aws_iam_policy_document.recovery_worker[0].json).Statement :
+      s.Sid == "SendSmsFromRecoveryRegion" && alltrue([for r in flatten([s.Resource]) : strcontains(r, "us-west-2")])
+    ])
+    error_message = "SMS is granted on the recovery-Region identity and configuration set only"
+  }
+
+  assert {
+    condition     = !contains(output.recovery_environment.worker_unset, "EHR_SMS_ORIGINATION_IDENTITY") && output.recovery_environment.worker.EHR_SMS_ORIGINATION_IDENTITY == var.recovery_sms_origination_identity_arn
+    error_message = "the recovery environment carries the recovery SMS identity"
   }
 }
 
@@ -412,7 +549,7 @@ run "without_recovery_region_nothing_recovery_exists" {
   command = plan
 
   assert {
-    condition     = length(aws_iam_role_policy.recovery_api) + length(aws_iam_role_policy.recovery_worker) + length(aws_iam_role_policy.recovery_execution) + length(terraform_data.recovery_inputs) == 0
+    condition     = length(aws_iam_role_policy.recovery_api) + length(aws_iam_role_policy.recovery_worker) + length(aws_iam_role_policy.recovery_execution) + length(terraform_data.recovery_inputs) + length(aws_s3_bucket.recovery) + length(aws_guardduty_malware_protection_plan.recovery_quarantine) + length(aws_sesv2_email_identity.recovery) == 0
     error_message = "no recovery policy without recovery_region"
   }
 }

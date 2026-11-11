@@ -67,3 +67,38 @@ output "payload_key_policy_json" {
 output "ses_configuration_set_name" {
   value = aws_sesv2_configuration_set.this.configuration_set_name
 }
+
+output "recovery_ses_dkim_tokens" {
+  description = "CNAME tokens of the recovery-Region SES identity (a go-live DNS step); empty without recovery_region."
+  value       = one(aws_sesv2_email_identity.recovery[*].dkim_signing_attributes[0].tokens)
+}
+
+output "recovery_environment" {
+  description = "Environment overrides for the recovery-Region task definitions (docs/runbooks/recovery-region.md); null without recovery_region. Merge over api_environment / worker_environment. The anchor archive variables are left out on purpose: the anchor archive is a degraded mode there."
+  value = local.recovery_enabled ? {
+    common = {
+      AWS_REGION                    = local.rr
+      EHR_SECRETS_KMS_KEY_ID        = local.rr_secrets_key
+      EHR_KMS_PAYLOAD_KEY_ID        = local.rr_payload_key_arn
+      EHR_S3_DOCS_QUARANTINE_BUCKET = local.rr_bucket_names["quarantine"]
+      EHR_S3_DOCS_CLEAN_BUCKET      = reverse(split(":::", local.rr_docs_bucket))[0]
+      EHR_S3_DOCS_KMS_KEY_ID        = local.rr_data_key
+      EHR_S3_PACKAGE_BUCKET         = local.rr_bucket_names["packages"]
+      EHR_S3_PACKAGE_KMS_KEY_ID     = local.rr_data_key
+    }
+    worker = merge(
+      {
+        EHR_S3_EXPORT_BUCKET     = local.rr_bucket_names["exports"]
+        EHR_S3_EXPORT_KMS_KEY_ID = local.rr_data_key
+      },
+      local.rr_sms_enabled ? {
+        EHR_SMS_ORIGINATION_IDENTITY = var.recovery_sms_origination_identity_arn
+        EHR_SMS_CONFIGURATION_SET    = "${var.env}-ehr-sms"
+      } : {},
+    )
+    worker_unset = concat(
+      ["EHR_S3_ANCHOR_ARCHIVE_BUCKET", "EHR_S3_ANCHOR_ARCHIVE_KMS_KEY_ID"],
+      local.rr_sms_enabled ? [] : ["EHR_SMS_ORIGINATION_IDENTITY", "EHR_SMS_CONFIGURATION_SET"],
+    )
+  } : null
+}

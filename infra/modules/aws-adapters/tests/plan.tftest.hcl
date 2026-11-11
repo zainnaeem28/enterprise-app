@@ -28,6 +28,10 @@ mock_provider "aws" {
   }
 }
 
+mock_provider "aws" {
+  alias = "recovery"
+}
+
 variables {
   env                           = "staging"
   compute_name                  = "ehr-staging"

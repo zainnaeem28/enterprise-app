@@ -36,16 +36,20 @@ The payload key replica itself (`aws_kms_replica_key.payload_recovery`, provider
 primary key policy that names these roles, so the primary roles double as the recovery roles: the trust policy also admits ECS tasks of the
 recovery Region (same account), and a second inline policy `recovery-region` per role names the replicas only (documents replica bucket
 read, data key replica decrypt through S3, payload key replica seal/open split as in the primary, the replicated VAPID secret and the
-replicated image repository for the execution role). The secret replica and its key (`production-secrets-dr`, single-Region) are made in
-the production root through the `secrets` module (`recovery_region`, `replica_kms_key_arn`). **No compute is created.** Whether the
-replicated secret needs its own resource policy in the recovery Region is not verified.
+replicated image repository for the execution role). Since HEAAA-850 the same policy also covers the services that have a recovery-Region
+counterpart: Region-bound quarantine, package and export buckets (`<name>-dr`, made here with `aws.recovery`), a GuardDuty plan on the recovery quarantine bucket,
+the SES identity and configuration set, the SMS configuration set (sending when `recovery_sms_origination_identity_arn` is set), and create/read of the runtime
+integration secrets under the recovery secrets key. The anchor archive is a documented degraded mode. Output `recovery_environment` is the override set for the recovery
+task definitions; `docs/runbooks/recovery-region.md` holds the degraded modes. The caller must pass `providers = { aws.recovery = ... }`. The secret replica and its key (`production-secrets-dr`, single-Region) are made in
+the production root through the `secrets` module (`recovery_region`, `replica_kms_key_arn`). **No compute is created.** The `secrets` module attaches the primary's resource policy to every
+replica explicitly (a replica does not inherit it); that AWS applies it as authored is confirmed in the rehearsal.
 
 ## Not done here
 
 - The compute module is not instantiated in the roots (it needs image digests); the roots expose `service_wiring`, the exact `services.*` and
   `execution_role_arn` values.
 - SES bounce/complaint event destination and SNS signature check (no receipt route exists, INT-N2), SMS origination identity, DNS, SES/SMS production access.
-- Recovery-Region compute (DEVOPS-PLAN 3.2), and in the recovery Region: document upload, package and export buckets, runtime integration secrets, SES/SMS sending, the anchor archive and malware scanning (see `recovery.tf` header for why each is absent).
+- Recovery-Region compute (DEVOPS-PLAN 3.2), and in the recovery Region the Object Lock anchor archive (degraded mode, `docs/runbooks/recovery-region.md`), SMS unless `recovery_sms_origination_identity_arn` is given, and runtime secrets created before a failover (not replicated).
 - IAM and key-policy writes need the human platform-admin apply (DEVOPS-PLAN 7.5); the `gh-tf-*` roles cannot create roles.
 
 ## Tests

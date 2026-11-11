@@ -315,6 +315,42 @@ data "aws_iam_policy_document" "replica" {
       values   = ["false"]
     }
   }
+
+  # Scan promotion writes here during a failover (replication itself uses s3:ReplicateObject, which these denies do not touch).
+  statement {
+    sid       = "DenyUnencryptedWrites"
+    effect    = "Deny"
+    actions   = ["s3:PutObject"]
+    resources = ["${aws_s3_bucket.replica[0].arn}/*"]
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+    condition {
+      test     = "StringNotEqualsIfExists"
+      variable = "s3:x-amz-server-side-encryption"
+      values   = ["aws:kms"]
+    }
+  }
+
+  dynamic "statement" {
+    for_each = length(var.clean_writer_principal_arns) > 0 ? [1] : []
+    content {
+      sid       = "OnlyPromotionRoleWritesClean"
+      effect    = "Deny"
+      actions   = ["s3:PutObject", "s3:DeleteObject", "s3:DeleteObjectVersion"]
+      resources = ["${aws_s3_bucket.replica[0].arn}/*"]
+      principals {
+        type        = "*"
+        identifiers = ["*"]
+      }
+      condition {
+        test     = "ArnNotEquals"
+        variable = "aws:PrincipalArn"
+        values   = var.clean_writer_principal_arns
+      }
+    }
+  }
 }
 
 resource "aws_s3_bucket_policy" "replica" {
