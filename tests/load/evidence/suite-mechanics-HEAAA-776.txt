@@ -1,0 +1,16 @@
+# HEAAA-776 suite wiring: MECHANICS ONLY, NOT A CAPACITY RESULT. Localhost fixture (selftest/fixture-api.mjs), FIXTURE_SELFTEST=1.
+# k6 v2.3.0 (harness/install-k6.sh, sha256-verified), 3 s phases, RACE_ROUNDS=2, REC_DURATION_S=10. Nothing here describes the system.
+$ SUITE_MECHANICS=1 tests/load/run-suite.sh        -> suite exit 1 (correct: four cases NOT_RUN, never counted as pass)
+| perf-01 | PASS | (k6 thresholds on fixture)
+| perf-02 | PASS |
+| perf-03 | PASS |
+| perf-04 | NOT_RUN | k6 thresholds passed; check-audit needs LOADTEST_RO_DATABASE_URL (no database in this run)
+| perf-06 | PASS | (VENDOR_SANDBOX forced to 1 for the fixture only)
+| perf-07 | NOT_RUN | k6 thresholds passed (one winner per round on fixture); check-exactly-one needs LOADTEST_RO_DATABASE_URL
+| perf-08 | PASS | k6 latency thresholds only; leak/queue-growth NOT judged (no check-soak)
+| rec-04  | NOT_RUN | check-recovery needs LOADTEST_RO_DATABASE_URL; no disruption injected by this workflow
+| rec-07  | NOT_RUN | same
+Negative checks: FAIL_RATE=0.02 fixture, perf-01 -> FAIL (k6 exit 99), suite exit 1.
+                 real mode without ENV_NAME etc. -> exit 78, nothing run.
+Not run: check-audit.mjs, check-exactly-one.mjs, check-recovery.mjs (need Postgres); the workflow itself (no hosted CI, no AWS);
+         TC-PERF-05 (Lighthouse). Full-length phases (10/30/5 min, 4 h soak) were not run.

@@ -187,13 +187,56 @@ jobs:
       - name: Cost guard (after seed)
         run: tests/load/harness/guard-cost.sh "$RUN_ID" "$CEILING" "$START_DATE"
 
-      # QA-07 owns the scenarios; they are added here as steps between the two cost guards.
+      # QA-07 scenarios (HEAAA-776): perf-01..04, 06..08, rec-04/rec-07 via tests/load/run-load.sh (run-suite.sh runs them in order and
+      # prints one verdict table). TC-PERF-05 is Lighthouse, not here. Inputs the seeder does not yet emit (sessions, ids, API URL) come
+      # from the variables below; if any is missing the step FAILS (nothing measured). A case that cannot run (no vendor sandbox, no
+      # read-only DB URL) is NOT_RUN and also fails the run: it is never a pass. No disruption (TC-REC OPS part) is injected here.
+      # continue-on-error so the cost guard below still runs; "Scenario verdict" then fails the job.
       - name: Run load scenarios
+        id: scenarios
+        continue-on-error: true
+        env:
+          ENV_NAME: loadtest
+          BASE_URL: ${{ vars.LOADTEST_BASE_URL }}
+          LOADTEST_HOSTS: ${{ vars.LOADTEST_HOSTS }}
+          CANDIDATE_COMMIT: ${{ github.sha }}
+          VENDOR_SANDBOX: ${{ vars.LOADTEST_VENDOR_SANDBOX }}
+          LOADTEST_SESSIONS_S3_URI: ${{ vars.LOADTEST_SESSIONS_S3_URI }}
+          LOADTEST_IDS_S3_URI: ${{ vars.LOADTEST_IDS_S3_URI }}
+          LOADTEST_RO_DATABASE_URL_SECRET_ID: ${{ vars.LOADTEST_RO_DATABASE_URL_SECRET_ID }}
+          INFRA_SIZING_NOTE: loadtest run ${{ inputs.run_id }} (sizing recorded in the plan artifact)
         run: |
-          echo "::warning title=no scenarios::No QA-07 scenarios are wired yet. The environment was created and seeded only; NO load test ran and no performance result exists."
+          set -euo pipefail
+          export K6_BIN="$RUNNER_TEMP/k6/k6" REPORT_ROOT="$RUNNER_TEMP/load-reports"
+          for v in LOADTEST_SESSIONS_S3_URI LOADTEST_IDS_S3_URI; do
+            [ -n "${!v:-}" ] || { echo "::error title=load inputs missing::$v is not set; NO load test ran." >&2; exit 78; }
+          done
+          aws s3 cp "$LOADTEST_SESSIONS_S3_URI" "$RUNNER_TEMP/sessions.json"
+          aws s3 cp "$LOADTEST_IDS_S3_URI" "$RUNNER_TEMP/ids.json"
+          export SESSIONS_FILE="$RUNNER_TEMP/sessions.json" IDS_FILE="$RUNNER_TEMP/ids.json"
+          if [ -n "${LOADTEST_RO_DATABASE_URL_SECRET_ID:-}" ]; then
+            LOADTEST_RO_DATABASE_URL="$(aws secretsmanager get-secret-value --secret-id "$LOADTEST_RO_DATABASE_URL_SECRET_ID" --query SecretString --output text)"
+            echo "::add-mask::$LOADTEST_RO_DATABASE_URL"; export LOADTEST_RO_DATABASE_URL
+          fi
+          tests/load/run-suite.sh
+
+      - name: Upload load reports
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: loadtest-reports-${{ inputs.run_id }}
+          path: ${{ runner.temp }}/load-reports
+          if-no-files-found: ignore
+          retention-days: 30
 
       - name: Cost guard (after tests)
         run: tests/load/harness/guard-cost.sh "$RUN_ID" "$CEILING" "$START_DATE"
+
+      - name: Scenario verdict
+        if: always() && steps.scenarios.outcome == 'failure'
+        run: |
+          echo "::error title=load scenarios not green::At least one scenario failed or was NOT_RUN (see the verdict table). Not a pass."
+          exit 1
 
       # Always runs once the job is past input checks and init was attempted, including after
       # failure, cancellation by timeout, and a failed apply (partial resources).
