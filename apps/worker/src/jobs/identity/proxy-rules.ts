@@ -41,6 +41,9 @@ export interface ProxyRulesDeps {
   mail: ProxyMailPort;
 }
 
+/** The age-out job needs the mail port for its notice step only; expiry runs without it. */
+export type ProxyAgeOutDeps = Omit<ProxyRulesDeps, 'mail'> & { mail?: ProxyMailPort };
+
 type SettingKey =
   | 'proxy_age_of_majority'
   | 'proxy_adolescent_min_age'
@@ -107,6 +110,8 @@ export async function runSendProxyInvite(
 ): Promise<SendInviteResult> {
   const grantId = payload['grantId'];
   if (!isUuid(grantId)) throw new Error('identity.send_proxy_invite: grantId is required');
+  // A retry only happens after a failed send (nothing was mailed, so no code is in anyone's hands): resetting `attempts` to 0 on the
+  // new code cannot give a guesser extra tries against a code that was delivered.
   const prepared = await deps.db.withScope(systemScope(deps.orgId), async (tx) => {
     const g = (
       await tx.query(
@@ -154,7 +159,7 @@ export interface AgeOutResult {
 }
 
 export async function runProxyAgeOut(
-  deps: ProxyRulesDeps,
+  deps: ProxyAgeOutDeps,
   jobRef = 'identity.proxy_age_out',
 ): Promise<AgeOutResult> {
   const scope = systemScope(deps.orgId);
@@ -241,6 +246,12 @@ export async function runProxyAgeOut(
   });
 
   // 4. notice ----------------------------------------------------------------------------------------------------------------------
+  // Steps 1-3 are committed. Without the mail port (C-10 not wired) only this step fails, so the job retries and dead-letters visibly.
+  const mail = deps.mail;
+  if (mail === undefined)
+    throw new Error(
+      `identity.proxy_age_out: the proxy mail port is not configured; notices not sent (${result.expired} expired, ${result.invitesExpired} invitations expired)`,
+    );
   const failures: unknown[] = [];
   const toNotify = await deps.db.withScope(scope, async (tx) => {
     const days = await intSetting(tx, 'proxy_age_out_notice_days');
@@ -258,7 +269,7 @@ export async function runProxyAgeOut(
   });
   for (const g of toNotify) {
     try {
-      await deps.mail.sendAgeOutNotice({
+      await mail.sendAgeOutNotice({
         to: g['email'] as string,
         grantId: g['id'] as string,
         endsOn: String(

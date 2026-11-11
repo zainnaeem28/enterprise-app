@@ -658,3 +658,281 @@ describe('staff link a guardian of a minor; age rules; age-out', () => {
     assert.ok((await reach(guardians.get(g2) as never))[pid2], 'still active');
   });
 });
+
+describe('a proxy cannot widen its own scopes in SQL (BR-PROXY-01)', () => {
+  test('an active proxy and an accepting invitee both fail to change scopes; the owning patient still can', async () => {
+    const o = await adult(1940, 'owner1940@example.test');
+    const proxy = await seedPrincipal(k, 'patient_pool', { email: 'proxy1940@example.test' });
+    const svc = k.identity.proxies;
+    const g = await k.db.withScope(patientScope(o.p, [o.pid]), (tx) =>
+      svc.invite(tx, meta(), o.pid, {
+        email: 'proxy1940@example.test',
+        relationship: 'carer',
+        scopes: ['documents'],
+      }),
+    );
+    await sendInvite(g.id);
+    const widen = `UPDATE identity.proxy_grant SET scopes = ARRAY['appointments','messages','documents'] WHERE id = $1`;
+    // The invitee, while accepting, tries to take every scope in the same statement.
+    await assert.rejects(
+      k.db.withScope(patientScope(proxy), (tx) =>
+        tx.query(
+          `UPDATE identity.proxy_grant SET scopes = ARRAY['appointments','messages','documents'], proxy_principal_id = $2, status = 'active' WHERE id = $1`,
+          [g.id, proxy.principalId],
+        ),
+      ),
+      /only the patient changes the scopes/,
+    );
+    await k.db.withScope(patientScope(proxy), (tx) => svc.accept(tx, meta(), g.id, lastCode(g.id)));
+    const proxyScope = { ...patientScope(proxy, [o.pid]), proxyPatientIds: [o.pid] };
+    await assert.rejects(
+      k.db.withScope(proxyScope, (tx) => tx.query(widen, [g.id])),
+      /only the patient changes the scopes/,
+    );
+    // Also without the proxy list in its scope (a proxy scope that was built without it is still the proxy).
+    await assert.rejects(
+      k.db.withScope(patientScope(proxy, [o.pid]), (tx) => tx.query(widen, [g.id])),
+      /only the patient changes the scopes/,
+    );
+    assert.deepEqual(await reach(proxy), { [o.pid]: ['appointments', 'documents'] });
+    // The owner, as themselves, still changes them.
+    await k.db.withScope(patientScope(o.p, [o.pid]), (tx) => tx.query(widen, [g.id]));
+    assert.deepEqual(await reach(proxy), { [o.pid]: ['appointments', 'documents', 'messages'] });
+    // Staff cannot change the scopes either (refused by the trigger or by no matching row).
+    staffVisible.add(o.pid);
+    const narrowed = await k.db
+      .withScope(staffScope(), (tx) =>
+        tx.query(`UPDATE identity.proxy_grant SET scopes = ARRAY['appointments'] WHERE id = $1`, [
+          g.id,
+        ]),
+      )
+      .then((r) => r.rowCount ?? 0)
+      .catch(() => 0);
+    assert.equal(narrowed, 0);
+    assert.deepEqual(await reach(proxy), { [o.pid]: ['appointments', 'documents', 'messages'] });
+  });
+});
+
+describe('the scopes become data access only through row-level security (BR-PROXY-02)', () => {
+  async function doc(pid: string, classification: string, status: string): Promise<string> {
+    const did = uuidv7();
+    await k.sa.query(`SET session_replication_role = replica`);
+    await k.sa.query(
+      `INSERT INTO documents.document (id, organisation_id, patient_id, classification, status, uploaded_by, upload_channel, confirmed_by, confirmed_at)
+       VALUES ($1, $2, $3, $4, $5, $6, 'staff', $7, $8)`,
+      [
+        did,
+        ORG,
+        pid,
+        classification,
+        status,
+        staff.principalId,
+        status === 'confirmed' ? staff.principalId : null,
+        status === 'confirmed' ? new Date() : null,
+      ],
+    );
+    await k.sa.query(
+      `INSERT INTO documents.document_version (document_id, version, organisation_id, patient_id, object_key, bucket, sha256, size_bytes, content_type, declared_content_type, scan_status, scanned_at)
+       VALUES ($1, 1, $2, $3, $4, 'clean', decode(repeat('ab', 32), 'hex'), 10, 'application/pdf', 'application/pdf', 'clean', now())`,
+      [did, ORG, pid, `c/${did.replaceAll('-', '')}`],
+    );
+    await k.sa.query(`SET session_replication_role = origin`);
+    return did;
+  }
+  async function thread(pid: string): Promise<string> {
+    const tid = uuidv7();
+    await k.sa.query(`SET session_replication_role = replica`); // fixture: the thread guard wants the caller as creator
+    await k.sa.query(
+      `INSERT INTO messaging.thread (id, organisation_id, kind, patient_id, subject, created_by) VALUES ($1, $2, 'patient', $3, 'Hello', $4)`,
+      [tid, ORG, pid, staff.principalId],
+    );
+    await k.sa.query(`SET session_replication_role = origin`);
+    return tid;
+  }
+  const seen = async (
+    scope: ScopeSettings,
+    table: 'documents.document' | 'documents.document_version' | 'messaging.thread',
+  ): Promise<string[]> =>
+    (
+      await k.db.withScope(scope, (tx) =>
+        tx.query(
+          `SELECT patient_id, ${table === 'documents.document_version' ? 'document_id' : 'id'} AS id FROM ${table} ORDER BY 2`,
+        ),
+      )
+    ).rows.map((r) => `${r['patient_id']}:${r['id']}`);
+  const asProxy = (
+    p: { principalId: string; personId: string },
+    ...pids: string[]
+  ): ScopeSettings => ({
+    ...patientScope(p, pids),
+    proxyPatientIds: pids,
+  });
+
+  test('documents and threads are visible only with the scope, only for the patient who granted it, and stop at once on removal, revoke and leave', async () => {
+    const a = await adult(1950, 'owner1950@example.test');
+    const b = await adult(1951, 'owner1951@example.test');
+    const proxy = await seedPrincipal(k, 'patient_pool', { email: 'proxy1950@example.test' });
+    const svc = k.identity.proxies;
+    const g = await k.db.withScope(patientScope(a.p, [a.pid]), (tx) =>
+      svc.invite(tx, meta(), a.pid, {
+        email: 'proxy1950@example.test',
+        relationship: 'carer',
+        scopes: ['documents', 'messages'],
+      }),
+    );
+    await sendInvite(g.id);
+    await k.db.withScope(patientScope(proxy), (tx) => svc.accept(tx, meta(), g.id, lastCode(g.id)));
+    const released = await doc(a.pid, 'consent', 'clean');
+    const confirmed = await doc(a.pid, 'insurance_card', 'confirmed');
+    await doc(a.pid, 'id_document', 'clean'); // class the patient never sees
+    await doc(a.pid, 'consent', 'quarantined'); // not released
+    await doc(a.pid, 'consent', 'deleted').catch(() => undefined);
+    await doc(b.pid, 'consent', 'clean'); // another patient
+    const t = await thread(a.pid);
+    await thread(b.pid);
+    // A scope list that wrongly names both patients (an API defect) still reads only the one the proxy holds a scope for.
+    const scope = asProxy(proxy, a.pid, b.pid);
+    const want = [`${a.pid}:${released}`, `${a.pid}:${confirmed}`].sort();
+    assert.deepEqual(await seen(scope, 'documents.document'), want);
+    assert.deepEqual(
+      await seen(scope, 'documents.document_version'),
+      want.map((x) => x),
+    );
+    assert.deepEqual(await seen(scope, 'messaging.thread'), [`${a.pid}:${t}`]);
+    // Writes stay closed to a proxy.
+    const upd = await k.db
+      .withScope(scope, (tx) =>
+        tx.query(
+          `UPDATE documents.document SET status = 'deleted', deleted_at = now() WHERE id = $1`,
+          [released],
+        ),
+      )
+      .then((r) => r.rowCount ?? 0)
+      .catch(() => 0);
+    assert.equal(upd, 0, 'a proxy updates no document');
+    await assert.rejects(
+      k.db.withScope(scope, (tx) =>
+        tx.query(
+          `INSERT INTO messaging.thread (id, organisation_id, kind, patient_id, subject, created_by) VALUES ($1, $2, 'patient', $3, 'x', $4)`,
+          [uuidv7(), ORG, a.pid, proxy.principalId],
+        ),
+      ),
+    );
+    // One scope at a time: removing documents leaves threads, removing messages leaves nothing.
+    await k.db.withScope(patientScope(a.p, [a.pid]), (tx) =>
+      svc.setScopes(tx, meta(), a.pid, g.id, ['messages']),
+    );
+    assert.deepEqual(await seen(scope, 'documents.document'), []);
+    assert.deepEqual(await seen(scope, 'documents.document_version'), []);
+    assert.deepEqual(await seen(scope, 'messaging.thread'), [`${a.pid}:${t}`]);
+    await k.db.withScope(patientScope(a.p, [a.pid]), (tx) =>
+      svc.setScopes(tx, meta(), a.pid, g.id, ['documents']),
+    );
+    assert.deepEqual(await seen(scope, 'messaging.thread'), []);
+    assert.equal((await seen(scope, 'documents.document')).length, 2);
+    // Revocation cuts it at once, on the very next statement and with the stale scope the request began with.
+    await k.db.withScope(patientScope(a.p, [a.pid]), (tx) =>
+      svc.revokeByPatient(tx, meta(), a.pid, g.id),
+    );
+    assert.deepEqual(await seen(scope, 'documents.document'), []);
+    // Leaving: a new grant, then the proxy leaves.
+    const g2 = await k.db.withScope(patientScope(a.p, [a.pid]), (tx) =>
+      svc.invite(tx, meta(), a.pid, {
+        email: 'proxy1950@example.test',
+        relationship: 'carer',
+        scopes: ['documents', 'messages'],
+      }),
+    );
+    await sendInvite(g2.id);
+    await k.db.withScope(patientScope(proxy), (tx) =>
+      svc.accept(tx, meta(), g2.id, lastCode(g2.id)),
+    );
+    assert.equal((await seen(scope, 'documents.document')).length, 2);
+    await k.db.withScope(patientScope(proxy), (tx) => svc.leave(tx, meta(), g2.id));
+    assert.deepEqual(await seen(scope, 'documents.document'), []);
+    assert.deepEqual(await seen(scope, 'messaging.thread'), []);
+  });
+
+  test('the appointments-only default reads no document and no thread; age-out and the 13-17 narrowing cut a guardian', async () => {
+    const a = await adult(1952, 'owner1952@example.test');
+    const proxy = await seedPrincipal(k, 'patient_pool', { email: 'proxy1952@example.test' });
+    const svc = k.identity.proxies;
+    const g = await k.db.withScope(patientScope(a.p, [a.pid]), (tx) =>
+      svc.invite(tx, meta(), a.pid, { email: 'proxy1952@example.test', relationship: 'carer' }),
+    );
+    await sendInvite(g.id);
+    await k.db.withScope(patientScope(proxy), (tx) => svc.accept(tx, meta(), g.id, lastCode(g.id)));
+    await doc(a.pid, 'consent', 'clean');
+    await thread(a.pid);
+    const scope = asProxy(proxy, a.pid);
+    assert.deepEqual(await seen(scope, 'documents.document'), []);
+    assert.deepEqual(await seen(scope, 'messaging.thread'), []);
+    // A guardian holding documents: visible for a child under 13, hidden from 13 (appointments only), hidden after the last day.
+    const child = id(1953);
+    await patient(child, dob(10));
+    await doc(child, 'consent', 'clean');
+    const guardian = await seedPrincipal(k, 'patient_pool', { email: 'guardian1953@example.test' });
+    const gid = uuidv7();
+    await k.sa.query(
+      `INSERT INTO identity.proxy_grant (id, organisation_id, proxy_principal_id, patient_id, relationship, patient_display_name, status, scopes, guardian, source, patient_birth_date, adolescent_from, valid_until)
+       VALUES ($1,$2,$3,$4,'parent','Kid','active',ARRAY['appointments','documents'],true,'staff_link', current_date - 3650, current_date + 1000, current_date + 2000)`,
+      [gid, ORG, guardian.principalId, child],
+    );
+    const gscope = asProxy(guardian, child);
+    assert.equal((await seen(gscope, 'documents.document')).length, 1);
+    await k.sa.query(
+      `UPDATE identity.proxy_grant SET adolescent_from = current_date WHERE id = $1`,
+      [gid],
+    );
+    assert.deepEqual(await seen(gscope, 'documents.document'), []);
+    await k.sa.query(
+      `UPDATE identity.proxy_grant SET adolescent_from = current_date + 1000, valid_until = current_date - 1 WHERE id = $1`,
+      [gid],
+    );
+    assert.deepEqual(await seen(gscope, 'documents.document'), []);
+  });
+});
+
+describe('the age-out job without the mail port (BR-PROXY-03)', () => {
+  test('grants and invitations still expire and are audited; only the notice step fails', async () => {
+    const later = id(1960);
+    await patient(later, dob(18, -3)); // turned 18 three days ago
+    const guardian = await seedPrincipal(k, 'patient_pool', { email: 'guardian1960@example.test' });
+    const gid = uuidv7();
+    await k.sa.query(
+      `INSERT INTO identity.proxy_grant (id, organisation_id, proxy_principal_id, patient_id, relationship, patient_display_name, status, scopes, guardian, source, patient_birth_date, adolescent_from, valid_until)
+       VALUES ($1,$2,$3,$4,'parent','Kid','active',ARRAY['appointments'],true,'staff_link', $5, $6, $7)`,
+      [gid, ORG, guardian.principalId, later, dob(18, -3), dob(5, -3), dob(0, -4)],
+    );
+    // An invitation nobody accepted in time.
+    const o = await adult(1961, 'owner1961@example.test');
+    const inv = await k.db.withScope(patientScope(o.p, [o.pid]), (tx) =>
+      k.identity.proxies.invite(tx, meta(), o.pid, {
+        email: 'nobody1961@example.test',
+        relationship: 'carer',
+      }),
+    );
+    await k.sa.query(
+      `UPDATE identity.proxy_grant SET created_at = now() - interval '10 days' WHERE id = $1`,
+      [inv.id],
+    );
+    await assert.rejects(
+      (k.worker['runProxyAgeOut'] as unknown as Job)({ db: k.wdb, orgId: ORG }),
+      /mail port is not configured/,
+    );
+    const rows = await k.q<{ id: string; status: string }>(
+      `SELECT id, status FROM identity.proxy_grant WHERE id = ANY($1)`,
+      [[gid, inv.id]],
+    );
+    assert.deepEqual(Object.fromEntries(rows.map((r) => [r.id, r.status])), {
+      [gid]: 'expired',
+      [inv.id]: 'expired',
+    });
+    const ev = await k.q<{ change: { event: string } }>(
+      `SELECT change FROM audit.event WHERE resource_id = ANY($1)`,
+      [[gid, inv.id]],
+    );
+    const names = ev.map((e) => e.change.event);
+    assert.ok(names.includes('proxy_aged_out') && names.includes('proxy_invite_expired'));
+  });
+});

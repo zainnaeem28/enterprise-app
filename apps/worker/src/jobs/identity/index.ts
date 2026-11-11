@@ -69,7 +69,7 @@ export interface IdentityTaskDeps {
   workspaceDomain?: string;
   /** Ports of `identity.admin_event` (the alert) and `identity.admin_event_notice` (the security-contact notice). Absent: the handler refuses, so the job retries and dead-letters. */
   adminEvents?: { alerts: AdminEventDeps['alerts']; notice: SecurityNoticePort };
-  /** The mail port of the proxy rules (invitation code, age-out notice). Absent: both handlers refuse, so the job retries and dead-letters. */
+  /** The mail port of the proxy rules (invitation code, age-out notice). Absent: the invitation handler refuses; the age-out job still expires grants and fails only at its notice step. */
   proxyMail?: ProxyMailPort;
 }
 
@@ -128,8 +128,6 @@ export function createIdentityTasks(deps: IdentityTaskDeps): Record<string, Task
       );
     },
     'identity.proxy_age_out': async (_payload, helpers) => {
-      if (deps.proxyMail === undefined)
-        throw new Error('identity.proxy_age_out: the proxy mail port is not configured');
       await runProxyAgeOut(
         { db: deps.db, orgId: deps.orgId, mail: deps.proxyMail },
         `identity.proxy_age_out:${String(helpers.job.id)}`,
