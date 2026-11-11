@@ -19,6 +19,8 @@ export const noLoginRoles = [
   'directory_ro',
   // INT04-F02b (HEAAA-466): owns identity.bootstrap_admins only.
   'identity_bootstrap_owner',
+  // HEAAA-789 (C-BE-DEL, migration 2601): owns the account-deletion and retention-purge definer functions of the privacy module.
+  'privacy_retention_owner',
 ];
 export const functionOwnerRoles = [
   'scheduling_booking_owner',
@@ -26,6 +28,7 @@ export const functionOwnerRoles = [
   'patient_match_owner',
   'integration_receiver_owner',
   'identity_bootstrap_owner',
+  'privacy_retention_owner',
 ];
 /** Roles that may be the target of a policy (M-2, M-3). */
 export const policyRoles = [
@@ -55,6 +58,7 @@ export const expectedMemberships = {
     'directory_ro',
     'queue_owner',
     'identity_bootstrap_owner',
+    'privacy_retention_owner',
   ],
   app_api: ['identity_signin_ro'],
 };
@@ -144,6 +148,13 @@ export const definerInventory = [
   // referral accept/decline, bound to a sent internal referral with a pending inbox row (R-REF-2). Owner patient_scope_owner.
   'patient.lock_referral_patient',
   'patient.ensure_referral_care_relationship',
+  // HEAAA-789 (C-BE-DEL, migration 2601): account deletion and retention purge, owner privacy_retention_owner. Inventory entries need the
+  // Solution Architect's sign-off (HEAAA-789 decision log D2). EXECUTE to app_worker for the three entry points; the two helpers are owner-only.
+  'privacy.patient_closure',
+  'privacy.deletion_job_check',
+  'privacy.delete_nonrecord_data',
+  'privacy.purge_medical_record',
+  'privacy.purge_hipaa_documentation',
 ];
 
 /**
