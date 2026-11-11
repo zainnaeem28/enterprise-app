@@ -289,7 +289,7 @@ run "api_policy_is_exact" {
 
   assert {
     condition = alltrue([for s in jsondecode(data.aws_iam_policy_document.api.json).Statement :
-      !contains(flatten([s.Resource]), "*")
+      !contains(flatten([s.Resource]), "*") || s.Effect == "Deny"
     ])
     error_message = "api policy has a wildcard resource"
   }
@@ -312,7 +312,7 @@ run "api_policy_is_exact" {
     condition = anytrue([for s in jsondecode(data.aws_iam_policy_document.api.json).Statement :
       s.Sid == "WriteOutboundSecrets" && flatten([s.Resource]) == ["arn:aws:secretsmanager:us-east-2:111111111111:secret:staging/integration/outbound/*"]
       ]) && !anytrue([for s in jsondecode(data.aws_iam_policy_document.api.json).Statement :
-      contains(flatten([s.Action]), "secretsmanager:PutSecretValue") && length(regexall("inbound", join(",", flatten([s.Resource])))) > 0
+      s.Effect == "Allow" && contains(flatten([s.Action]), "secretsmanager:PutSecretValue") && length(regexall("inbound", join(",", flatten([s.Resource])))) > 0
     ])
     error_message = "the api writes outbound secrets and never inbound ones (SC-3)"
   }
@@ -333,7 +333,7 @@ run "worker_policy_is_exact" {
 
   assert {
     condition = alltrue([for s in jsondecode(data.aws_iam_policy_document.worker.json).Statement :
-      !contains(flatten([s.Resource]), "*") || contains([
+      !contains(flatten([s.Resource]), "*") || s.Effect == "Deny" || contains([
         "AccountLevelReads", "OcrDetectText", "CreateMeeting",
       ], s.Sid)
     ])
@@ -361,6 +361,78 @@ run "worker_policy_is_exact" {
       s.Sid == "WriteInboundSecrets" && flatten([s.Resource]) == ["arn:aws:secretsmanager:us-east-2:111111111111:secret:staging/integration/inbound/*"]
     ])
     error_message = "the worker writes inbound secrets only"
+  }
+}
+
+# SC-2 (ARCHITECTURE 25.9 item 6, HEAAA-870 D-4a): explicit, tested denies on the secret store and the key policies.
+run "app_roles_have_explicit_secret_and_key_policy_denies" {
+  command = apply
+
+  assert {
+    condition = anytrue([for s in jsondecode(data.aws_iam_policy_document.api.json).Statement :
+      s.Sid == "ApiCannotWriteInboundSecrets" && s.Effect == "Deny" &&
+      join(",", sort(flatten([s.Action]))) == "secretsmanager:CreateSecret,secretsmanager:PutSecretValue,secretsmanager:ReplicateSecretToRegions,secretsmanager:UpdateSecret" &&
+      flatten([s.Resource]) == ["arn:aws:secretsmanager:*:111111111111:secret:staging/integration/inbound/*"]
+    ])
+    error_message = "api must explicitly deny writes to inbound secrets in every Region"
+  }
+
+  assert {
+    condition = anytrue([for s in jsondecode(data.aws_iam_policy_document.worker.json).Statement :
+      s.Sid == "WorkerCannotWriteOutboundSecrets" && s.Effect == "Deny" &&
+      join(",", sort(flatten([s.Action]))) == "secretsmanager:CreateSecret,secretsmanager:PutSecretValue,secretsmanager:ReplicateSecretToRegions,secretsmanager:UpdateSecret" &&
+      flatten([s.Resource]) == ["arn:aws:secretsmanager:*:111111111111:secret:staging/integration/outbound/*"]
+    ])
+    error_message = "worker must explicitly deny writes to outbound secrets in every Region"
+  }
+
+  assert {
+    condition = alltrue([for doc in [data.aws_iam_policy_document.api.json, data.aws_iam_policy_document.worker.json] :
+      anytrue([for s in jsondecode(doc).Statement :
+        s.Sid == "CannotChangeSecretPolicyOrReplication" && s.Effect == "Deny" &&
+        join(",", sort(flatten([s.Action]))) == "secretsmanager:DeleteResourcePolicy,secretsmanager:PutResourcePolicy,secretsmanager:RemoveRegionsFromReplication,secretsmanager:StopReplicationToReplica" &&
+        flatten([s.Resource]) == ["*"]
+      ])
+    ])
+    error_message = "both app roles must deny secret policy and replication changes"
+  }
+
+  assert {
+    condition = alltrue([for doc in [data.aws_iam_policy_document.api.json, data.aws_iam_policy_document.worker.json] :
+      anytrue([for s in jsondecode(doc).Statement :
+        s.Sid == "CannotChangeKeyPolicy" && s.Effect == "Deny" && flatten([s.Action]) == ["kms:PutKeyPolicy"] && flatten([s.Resource]) == ["*"]
+      ])
+    ])
+    error_message = "both app roles must deny kms:PutKeyPolicy"
+  }
+
+  # No Allow names a denied action on a denied resource (or through a wildcard action).
+  assert {
+    condition = !anytrue(flatten([
+      for doc in [data.aws_iam_policy_document.api.json, data.aws_iam_policy_document.worker.json] : [
+        for s in jsondecode(doc).Statement : s.Effect == "Allow" && length(setintersection(toset(flatten([s.Action])), toset([
+          "secretsmanager:PutResourcePolicy", "secretsmanager:DeleteResourcePolicy", "secretsmanager:RemoveRegionsFromReplication",
+          "secretsmanager:StopReplicationToReplica", "kms:PutKeyPolicy", "secretsmanager:*", "kms:*", "*",
+        ]))) > 0
+      ]
+    ]))
+    error_message = "an app role allows a secret-policy, replication or key-policy action"
+  }
+
+  assert {
+    condition = !anytrue([for s in jsondecode(data.aws_iam_policy_document.api.json).Statement :
+      s.Effect == "Allow" && length(setintersection(toset(flatten([s.Action])), toset(["secretsmanager:CreateSecret", "secretsmanager:PutSecretValue", "secretsmanager:UpdateSecret", "secretsmanager:ReplicateSecretToRegions"]))) > 0 &&
+      anytrue([for r in flatten([s.Resource]) : r != "arn:aws:secretsmanager:us-east-2:111111111111:secret:staging/integration/outbound/*"])
+    ])
+    error_message = "a api Allow of secret writes reaches anything but outbound secrets"
+  }
+
+  assert {
+    condition = !anytrue([for s in jsondecode(data.aws_iam_policy_document.worker.json).Statement :
+      s.Effect == "Allow" && length(setintersection(toset(flatten([s.Action])), toset(["secretsmanager:CreateSecret", "secretsmanager:PutSecretValue", "secretsmanager:UpdateSecret", "secretsmanager:ReplicateSecretToRegions"]))) > 0 &&
+      anytrue([for r in flatten([s.Resource]) : r != "arn:aws:secretsmanager:us-east-2:111111111111:secret:staging/integration/inbound/*"])
+    ])
+    error_message = "a worker Allow of secret writes reaches anything but inbound secrets"
   }
 }
 
@@ -494,6 +566,26 @@ run "recovery_policies_name_only_recovery_region_replicas" {
   assert {
     condition     = strcontains(data.aws_iam_policy_document.ecs_tasks_assume_with_recovery.json, "ecs:us-west-2:111111111111") && strcontains(data.aws_iam_policy_document.ecs_tasks_assume_with_recovery.json, "ecs:us-east-2:111111111111")
     error_message = "trust admits ECS tasks of the primary and the recovery Region of this account only"
+  }
+
+  # SC-2: no recovery identity allows a denied action on the class the matching app role is denied. The recovery roles
+  # legitimately write their own class in the recovery Region (api: outbound, worker: inbound); policy, replication and
+  # key-policy changes are never allowed to either.
+  assert {
+    condition = alltrue([for pair in [
+      { doc = data.aws_iam_policy_document.recovery_api[0].json, other = "inbound" },
+      { doc = data.aws_iam_policy_document.recovery_worker[0].json, other = "outbound" },
+      ] : !anytrue([for s in jsondecode(pair.doc).Statement :
+        s.Effect == "Allow" && (
+          length(setintersection(toset(flatten([s.Action])), toset([
+            "secretsmanager:PutResourcePolicy", "secretsmanager:DeleteResourcePolicy", "secretsmanager:RemoveRegionsFromReplication",
+            "secretsmanager:StopReplicationToReplica", "kms:PutKeyPolicy",
+          ]))) > 0 ||
+          (length(setintersection(toset(flatten([s.Action])), toset(["secretsmanager:CreateSecret", "secretsmanager:PutSecretValue", "secretsmanager:UpdateSecret", "secretsmanager:ReplicateSecretToRegions"]))) > 0 &&
+          anytrue([for r in flatten([s.Resource]) : strcontains(r, "/integration/${pair.other}/") || r == "*" || endswith(r, "/integration/*")]))
+        )
+    ])])
+    error_message = "a recovery role allows a denied secret, replication or key-policy action"
   }
 }
 

@@ -1,0 +1,39 @@
+# HEAAA-875 SC-2 denies, run on c9bb1f6 (OpenTofu OpenTofu v1.13.9)
+$ tofu fmt -check -recursive
+ok
+$ tofu validate
+Success! The configuration is valid.
+$ tofu test
+tests/plan.tftest.hcl... pass
+  run "every_adapter_variable_reaches_the_right_process"... pass
+  run "no_emulator_settings_or_static_keys"... pass
+  run "sms_group_is_all_or_nothing"... pass
+  run "role_arns_are_the_fixed_names"... pass
+  run "buckets_are_kms_encrypted_private_and_versioned"... pass
+  run "payload_key_rotates"... pass
+  run "guardduty_protects_quarantine_with_tagging"... pass
+  run "ses_requires_tls_and_dkim"... pass
+  run "video_failure_alarm_watches_the_api_log_group"... pass
+  run "close_meeting_dead_alarm_watches_the_worker_log_group"... pass
+  run "privacy_packages_expire_after_seven_days"... pass
+  run "receipts_are_off_unless_an_endpoint_is_given"... pass
+  run "receipts_wire_the_ses_event_destination_and_both_topics_to_https_subscriptions"... pass
+  run "sms_receipts_follow_the_sms_group"... pass
+  run "receipt_endpoint_must_be_the_receipt_route"... pass
+tests/policy.tftest.hcl... pass
+  run "api_policy_is_exact"... pass
+  run "worker_policy_is_exact"... pass
+  run "app_roles_have_explicit_secret_and_key_policy_denies"... pass
+  run "execution_role_reads_only_named_secrets"... pass
+  run "payload_key_policy_separates_seal_and_open"... pass
+  run "buckets_refuse_foreign_writers_and_plain_http"... pass
+  run "guardduty_role_is_scoped_to_the_quarantine_bucket"... pass
+  run "recovery_policies_name_only_recovery_region_replicas"... pass
+  run "recovery_sms_is_granted_with_a_recovery_identity"... pass
+  run "recovery_needs_its_inputs"... pass
+  run "recovery_refuses_a_single_region_payload_key"... pass
+  run "without_recovery_region_nothing_recovery_exists"... pass
+Success! 27 passed, 0 failed.
+$ tflint
+clean
+mutation check: renaming kms:PutKeyPolicy in the deny makes app_roles_have_explicit_secret_and_key_policy_denies fail (26 passed, 1 failed)
