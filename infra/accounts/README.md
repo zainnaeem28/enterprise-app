@@ -4,14 +4,14 @@ One OpenTofu root per AWS account, one state object per root
 (`accounts/<name>/terraform.tfstate`) in the versioned, KMS-encrypted,
 cross-Region-replicated bucket created by `../bootstrap` in the `tooling` account.
 
-| Root          | Account                  | Contents in this ticket                                                          |
-| ------------- | ------------------------ | -------------------------------------------------------------------------------- |
-| `management`  | Organizations management | OUs, member accounts, three SCPs (guardrails, region restriction, control plane) |
-| `tooling`     | tooling                  | none yet (state backend is `../bootstrap`)                                       |
-| `log-archive` | log-archive              | KMS key and bucket for VPC flow logs; Object Lock audit archive for production anchors (`archive.tf`) |
+| Root          | Account                  | Contents in this ticket                                                                                                               |
+| ------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `management`  | Organizations management | OUs, member accounts, three SCPs (guardrails, region restriction, control plane)                                                      |
+| `tooling`     | tooling                  | none yet (state backend is `../bootstrap`)                                                                                            |
+| `log-archive` | log-archive              | KMS key and bucket for VPC flow logs; Object Lock audit archive for production anchors (`archive.tf`)                                 |
 | `staging`     | staging                  | 2-AZ network, data and secrets KMS keys; AWS adapters wiring (`adapters.tf`: roles, buckets, SES, GuardDuty, Cognito, anchor archive) |
-| `production`  | production               | 3-AZ network (NAT per AZ), keys, recovery-Region VPC and replica key; AWS adapters wiring (`adapters.tf`) |
-| `marketing`   | marketing                | 2-AZ network, keys (no path to production data)                                  |
+| `production`  | production               | 3-AZ network (NAT per AZ), keys, recovery-Region VPC and replica key; AWS adapters wiring (`adapters.tf`)                             |
+| `marketing`   | marketing                | 2-AZ network, keys (no path to production data)                                                                                       |
 
 Not in this ticket: ECS, RDS, ALB, CloudFront, WAF, Cognito, CloudTrail/GuardDuty/Config,
 OIDC providers and `gh-*` roles, and the `infra/approvals` root. They belong to later tickets and paths.

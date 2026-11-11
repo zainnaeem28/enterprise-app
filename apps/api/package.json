@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "pnpm --filter @ehr/kernel --filter @ehr/contracts --filter @ehr/worker run build && pnpm run build && mkdir -p \"${JUNIT_DIR:-.junit}\" && node --test --test-reporter=spec --test-reporter-destination=stdout --test-reporter=junit --test-reporter-destination=\"${JUNIT_DIR:-.junit}/api.xml\" \"dist/test/**/*.test.js\" \"dist/src/**/*.test.js\"",
+    "test": "pnpm --filter @ehr/kernel --filter @ehr/contracts --filter @ehr/worker run build && pnpm run build && mkdir -p \"${JUNIT_DIR:-.junit}\" && node --test --test-reporter=spec --test-reporter-destination=stdout --test-reporter=junit --test-reporter-destination=\"${JUNIT_DIR:-.junit}/api.xml\" $(find dist/test dist/src -name \"*.test.js\" ! -name \"*.emulator.test.js\" | sort)",
     "check:routes": "pnpm --filter @ehr/contracts run openapi:check-routes",
     "test:emulator": "tsc -p tsconfig.json && node --test --test-reporter=spec \"dist/src/platform/aws/*.emulator.test.js\""
   },

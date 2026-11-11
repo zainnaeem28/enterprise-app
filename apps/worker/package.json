@@ -7,7 +7,7 @@
     "build": "tsc -p tsconfig.json",
     "sync-task-types": "node dist/sync-task-types-cli.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "pnpm --filter @ehr/kernel --filter @ehr/contracts --filter @ehr/api run build && pnpm run build && mkdir -p \"${JUNIT_DIR:-.junit}\" && node --test --test-reporter=spec --test-reporter-destination=stdout --test-reporter=junit --test-reporter-destination=\"${JUNIT_DIR:-.junit}/worker.xml\" \"dist/**/*.test.js\"",
+    "test": "pnpm --filter @ehr/kernel --filter @ehr/contracts --filter @ehr/api run build && pnpm run build && mkdir -p \"${JUNIT_DIR:-.junit}\" && node --test --test-reporter=spec --test-reporter-destination=stdout --test-reporter=junit --test-reporter-destination=\"${JUNIT_DIR:-.junit}/worker.xml\" $(find dist -name \"*.test.js\" ! -name \"*.emulator.test.js\" | sort)",
     "test:emulator": "tsc -p tsconfig.json && node --test --test-reporter=spec \"dist/aws/*.emulator.test.js\""
   },
   "dependencies": {
