@@ -67,7 +67,7 @@ export const siteContentSeed: SiteContentSeed = {
       title: 'Accessibility statement',
       description: 'How accessible this website is and how to ask for help.',
       body: [
-        'We aim to meet WCAG 2.2 level AA. Automated checks run on every release; this statement does not claim a full manual audit.',
+        'We aim to meet WCAG 2.2 level AA. This statement does not claim a full manual audit.',
         'If you cannot use part of this website, contact the location nearest to you and tell us what you need.',
         pending,
       ].join('\n\n'),
