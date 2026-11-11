@@ -3,7 +3,9 @@
 // immutable assets/ prefix and releases/<sha>/ (build-release, DO-05). This step copies that release's entry document to
 // the live path and invalidates ONLY the entry document and release.json. Rollback is the same step with the previous
 // release's sha, run BEFORE the api/worker redeploy (9.3, DPR-08).
-//   portal-switch.mjs --bucket B --sha SHA --portal staff --distribution ID [--dry-run]
+//   portal-switch.mjs --bucket B --sha SHA --portal staff --distribution ID [--source-bucket RELEASE_STORE] [--dry-run]
+// --source-bucket: when releases/<sha>/ lives in the release store and not in the portal bucket (permission gap 5), the entry
+// document and release.json are copied from there; the destination stays live/<portal>/ in --bucket. Default: --bucket.
 import { aws } from './lib/aws.mjs';
 import { args, isMain, main } from './lib/cli.mjs';
 
@@ -26,11 +28,13 @@ if (isMain(import.meta.url))
       sha: 'required',
       portal: 'required',
       distribution: 'required',
+      'source-bucket': 'optional',
       'dry-run': 'flag',
     });
     const p = switchPlan(a);
     for (const c of p.copies) {
-      console.log(`copy s3://${a.bucket}/${c.from} -> s3://${a.bucket}/${c.to}`);
+      const src = a['source-bucket'] ?? a.bucket;
+      console.log(`copy s3://${src}/${c.from} -> s3://${a.bucket}/${c.to}`);
       if (!a['dry-run'])
         aws([
           's3api',
@@ -38,7 +42,7 @@ if (isMain(import.meta.url))
           '--bucket',
           a.bucket,
           '--copy-source',
-          `${a.bucket}/${c.from}`,
+          `${src}/${c.from}`,
           '--key',
           c.to,
           '--cache-control',

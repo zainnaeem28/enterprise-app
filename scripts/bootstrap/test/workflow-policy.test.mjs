@@ -41,7 +41,7 @@ for (const [name, text] of Object.entries(wfs)) {
   });
   test(`${name}: authored disabled, main only, no inline expression in any run script`, () => {
     assert.match(text, /refs\/heads\/main/);
-    assert.match(text, /\[ "\$ENABLED" = "true" \]/);
+    assert.match(text, /\[ "\$ENABLED" != "true" \]/); // skip-with-notice gate (HEAAA-698): not enabled is a notice and a skip, never a pass
     assert.match(text, /needs: \[enabled\]/);
     for (const body of runBodies(text))
       assert.doesNotMatch(body, /\$\{\{/, 'expressions go through env:, never into a script');

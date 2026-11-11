@@ -59,6 +59,16 @@ resource "terraform_data" "checks" {
       error_message = "A release record needs previous_manifest unless first_release is true (only the first production release may omit it, 7.4)."
     }
     precondition {
+      condition = alltrue([for k, r in var.records : local.record_kind[k] != "bootstrap" || (
+        length(coalesce(r.custodians, [])) == 2 && length(distinct([for c in coalesce(r.custodians, []) : c.identity_center_user_id])) == 2 &&
+        length(distinct([for c in coalesce(r.custodians, []) : c.role_arn])) == 2 &&
+        length(coalesce(r.enrollees, [])) == 2 && length(distinct([for e in coalesce(r.enrollees, []) : e.handle])) == 2 &&
+        length(distinct([for e in coalesce(r.enrollees, []) : e.identity_arn])) == 2 &&
+        length(coalesce(r.ticket_ref, "")) > 0 && length(coalesce(r.security_contact_verified_at, "")) > 0 && length(coalesce(r.security_contact_test_ref, "")) > 0
+      )])
+      error_message = "A bootstrap-<env> record needs two custodians (distinct user IDs and role ARNs), two enrollees (distinct handles and identity ARNs), ticket_ref, security_contact_verified_at and security_contact_test_ref (scripts/bootstrap/lib/record.mjs reads the same names)."
+    }
+    precondition {
       condition     = alltrue([for k, r in var.records : r.environment == one(distinct([for ro in local.roles : ro.record_env if ro.record == k]))])
       error_message = "A record's environment must equal the environment of the roles it enables."
     }
@@ -129,6 +139,6 @@ resource "aws_ssm_parameter" "record" {
   description = "Approved-release record '${each.key}'. Written only by the human-applied approvals root (DEVOPS-PLAN 7.4)."
   type        = "SecureString"
   key_id      = var.ssm_kms_key_arn
-  value       = contains(keys(var.records), each.key) ? jsonencode(merge(var.records[each.key], { state = "approved" })) : jsonencode({ state = "empty" })
+  value       = contains(keys(var.records), each.key) ? jsonencode({ for k, x in merge(var.records[each.key], { state = "approved" }) : k => x if x != null }) : jsonencode({ state = "empty" })
   tags        = var.tags
 }
