@@ -12,22 +12,31 @@ test('privacy job types: names, merge policy and scope', () => {
     [
       ['privacy.assemble_export', 'resolve', 'patients', true],
       ['privacy.check_legal_holds', 'resolve', 'patients', true],
+      ['privacy.execute_deletion', 'resolve', 'patients', true],
+      ['privacy.send_deletion_statement', 'resolve', 'patients', true],
       ['privacy.expire_packages', 'none', 'org', false],
+      ['privacy.retention_purge', 'none', 'org', false],
     ],
   );
-  assert.equal(PRIVACY_CRONTAB, '50 3 * * * privacy.expire_packages');
+  assert.equal(
+    PRIVACY_CRONTAB,
+    '50 3 * * * privacy.expire_packages\n10 4 * * * privacy.retention_purge',
+  );
 });
 
 test('every job that carries patient IDs declares on_merged, and the types register', () => {
   for (const j of PRIVACY_JOBS) if (j.carriesPatientIds) assert.equal(j.onMerged, 'resolve');
   const reg = new JobRegistry();
   definePrivacyJobs(reg);
-  assert.equal(reg.list().length, 3);
-  // The API tier may enqueue the two patient jobs; the daily expiry is a system job it can never enqueue.
+  assert.equal(reg.list().length, 6);
+  // The API tier may enqueue the patient jobs; the daily expiry and the retention purge are system jobs it can never enqueue.
   const byName = Object.fromEntries(reg.list().map((x) => [x.name, x.apiEnqueue]));
   assert.deepEqual(byName, {
     'privacy.assemble_export': true,
     'privacy.check_legal_holds': true,
+    'privacy.execute_deletion': true,
+    'privacy.send_deletion_statement': true,
     'privacy.expire_packages': false,
+    'privacy.retention_purge': false,
   });
 });

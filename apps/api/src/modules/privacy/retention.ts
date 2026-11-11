@@ -260,6 +260,13 @@ export function addYears(date: string, years: number): string {
   return dateOnly(new Date(Date.UTC(y + years, m - 1, d)));
 }
 
+/** The same calendar day `years` earlier; 29 February becomes 28 February (the earlier date, so a cut-off never removes a day too early). */
+export function subYears(date: string, years: number): string {
+  const [y, m, d] = date.split('-').map(Number) as [number, number, number];
+  const last = new Date(Date.UTC(y - years, m, 0)).getUTCDate();
+  return dateOnly(new Date(Date.UTC(y - years, m - 1, Math.min(d, last))));
+}
+
 export function addMonths(date: string, months: number): string {
   const [y, m, d] = date.split('-').map(Number) as [number, number, number];
   return dateOnly(new Date(Date.UTC(y, m - 1 + months, d)));
@@ -323,4 +330,32 @@ export function exportPackageExpiry(s: RetentionSettings, createdAt: Date): Date
 /** Audit and anchors are kept by the archive; this is the day from which their archive copy may lapse (read-only report). */
 export function auditRetainedUntil(s: RetentionSettings, eventDate: string): string {
   return addYears(eventDate, s.auditTrailYears);
+}
+
+/**
+ * What the worker's retention job receives (the worker does not import this package; its `RetentionPolicyPort` has the same shape, and
+ * the composition assigns this object to it, so a mismatch fails to compile).
+ */
+export interface RetentionPolicy {
+  medicalRecordRetainedUntil(basis: RetentionBasis): string;
+  hipaaDocumentationCutoff(today: string): string;
+  exportPackageCutoff(now: Date): Date;
+  auditCutoff(today: string): string;
+  readonly settings: RetentionSettings;
+  readonly years: { auditTrail: number; auditAnchor: number; hipaaDocumentation: number };
+}
+
+export function retentionPolicy(s: RetentionSettings): RetentionPolicy {
+  return {
+    medicalRecordRetainedUntil: (b) => medicalRecordRetainedUntil(s, b),
+    hipaaDocumentationCutoff: (today) => subYears(today, s.hipaaDocumentationYears),
+    exportPackageCutoff: (now) => new Date(now.getTime() - s.exportPackageDays * DAY),
+    auditCutoff: (today) => subYears(today, s.auditTrailYears),
+    settings: s,
+    years: {
+      auditTrail: s.auditTrailYears,
+      auditAnchor: s.auditAnchorYears,
+      hipaaDocumentation: s.hipaaDocumentationYears,
+    },
+  };
 }

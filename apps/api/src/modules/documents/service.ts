@@ -47,6 +47,11 @@ export interface DocumentsDeps {
   organisation: Pick<OrganisationService, 'settingOrNull'>;
   store: ObjectStorePort;
   queue: Queue;
+  /**
+   * Years an accepted document is kept when the organisation setting `document_retention_years` has no value (owner ruling C item 2:
+   * the medical record's retention setting, 10 years). Absent: fail closed as before (no date, every deletion request refused).
+   */
+  defaultRetentionYears?: number;
   now?: () => Date;
 }
 
@@ -414,8 +419,9 @@ export class DocumentsService {
 
   /**
    * `POST /documents/{id}/confirm`: a staff member confirms the classification of a clean document; it becomes the record. The
-   * retention date is set here from the `document_retention_years` setting, which has no default (D-8 and the legal period are
-   * open inputs): with no value the date stays empty and every deletion request is refused for retention (fail closed).
+   * retention date is set here from the organisation setting `document_retention_years` when it has a value, else from the retention
+   * configuration (`defaultRetentionYears`, owner ruling C item 2); with neither the date stays empty and every deletion request is
+   * refused for retention (fail closed).
    */
   async confirm(
     tx: Tx,
@@ -439,9 +445,15 @@ export class DocumentsService {
         'document_retention_years',
       );
       const now = this.now();
-      const retention =
+      const effectiveYears =
         typeof years === 'number' && Number.isInteger(years) && years >= 1
-          ? new Date(Date.UTC(now.getUTCFullYear() + years, now.getUTCMonth(), now.getUTCDate()))
+          ? years
+          : this.deps.defaultRetentionYears;
+      const retention =
+        typeof effectiveYears === 'number' && Number.isInteger(effectiveYears) && effectiveYears >= 1
+          ? new Date(
+              Date.UTC(now.getUTCFullYear() + effectiveYears, now.getUTCMonth(), now.getUTCDate()),
+            )
               .toISOString()
               .slice(0, 10)
           : null;

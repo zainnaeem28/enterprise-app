@@ -16,7 +16,12 @@ import {
   registerComplianceAlertHandlers,
 } from './modules/notifications/alerts/index.js';
 import { registerMessagingHandlers, runOnCorrectionRequested } from './modules/messaging/index.js';
-import { assembleExport } from './modules/privacy/index.js';
+import {
+  assembleExport,
+  loadRetentionSettings,
+  retentionPolicy,
+} from './modules/privacy/index.js';
+import type { RetentionSettings } from './modules/privacy/index.js';
 import { executeMerge, patientExportContributor } from './modules/patient/index.js';
 import { newRegisteredRegistries } from './register-participants.js';
 import type { PackageWriterPort } from './modules/privacy/index.js';
@@ -52,10 +57,13 @@ export interface WorkerPortsDeps {
   packageWriter: PackageWriterPort;
   /** `patient.closure(id)` in the transaction handed in. */
   closureOf: (tx: Tx, patientId: string) => Promise<string[]>;
+  /** The retention settings (owner ruling C item 2); default: the defaults overridden by the process environment. */
+  retention?: RetentionSettings;
   now?: () => Date;
 }
 
 export function buildWorkerPorts(deps: WorkerPortsDeps) {
+  const retention = deps.retention ?? loadRetentionSettings(process.env);
   registerSchedulingFlowHandlers(deps.registry);
   registerTelehealthHandlers(deps.registry);
   registerFrontdoorHandlers(deps.registry);
@@ -143,6 +151,7 @@ export function buildWorkerPorts(deps: WorkerPortsDeps) {
     },
   });
   return {
+    retention: retentionPolicy(retention),
     /** The participant registries handed to `executeMerge` and `assembleExport` (exposed for the worker-registries test). */
     registries,
     scheduling: flowPort(flow),
@@ -255,6 +264,7 @@ export function buildWorkerPorts(deps: WorkerPortsDeps) {
           downward: [patientExportContributor],
           closureOf: deps.closureOf,
           queue: deps.queue,
+          expiryDays: retention.exportPackageDays,
           ...(deps.now === undefined ? {} : { now: deps.now }),
         },
         {
