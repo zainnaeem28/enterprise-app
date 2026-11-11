@@ -55,7 +55,10 @@ for s in db-foundation kernel api worker; do
     continue
   fi
   suites+=("$s")
-  run_db_suite "$PREV_TREE" "$s" "$J" "$OUT/n-minus-1-$s.txt" || rc=1
+  # node's exit status is NOT the verdict here: the accepted pin failures make node exit non-zero by design (HEAAA-754).
+  # check-junit.mjs below decides from the JUnit report: a missing/empty report, a skip, an unpinned failure or a pin that
+  # does not match exactly all still fail. The suite-has-files case is already guarded above.
+  run_db_suite "$PREV_TREE" "$s" "$J" "$OUT/n-minus-1-$s.txt" || echo "::notice::N-1 suite $s: node exited non-zero; check-junit decides (pins applied)"
 done
 [ "${#suites[@]}" -gt 0 ] || { echo "::error::previous release $TAG has no database suite to run (empty N-1 suite)"; exit 1; }
 node "$MC_DIR/check-junit.mjs" --pins "$PINS_PRESENT" --catalog "$PREV_TREE/db/tools/catalog-lists.mjs" --report "$PIN_REPORT" "$J" "${suites[@]}" || rc=1
