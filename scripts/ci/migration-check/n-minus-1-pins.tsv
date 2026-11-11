@@ -1,9 +1,16 @@
 # N-1 expected pin failures (HEAAA-739 Q1 (d), amends HEAAA-722 D2). A previous-release test that asserts the literal size of the
 # definer catalog is RUN; check-junit.mjs accepts its failure only as exactly this assertion (strictEqual, expected = the literal,
 # actual = the candidate catalog size, first stack frame = path:line). Anything else, or the test passing, fails N-1. A pin is "not a pass".
-# No behavioural, RLS, grant-refusal or audit assertion may be the recorded pin. Columns (TAB): suite, exact test name, path:line, literal, reason.
+# No behavioural, RLS, grant-refusal or audit assertion may be the recorded pin, except the two exact-list tests below (HEAAA-914 amends Q1 (d)):
+# a "schema-growth list pin" has literal `growth:<name>,<name>...`; check-junit.mjs accepts it only as one deepStrictEqual AssertionError at path:line
+# whose actual list is the expected list plus exactly those names (purely additive, nothing else), and only for the two tests and names allowed in
+# check-junit.mjs (GROWTH_ALLOWED). The candidate's own identity/rls.dbtest asserts ENABLE+FORCE RLS on proxy_invite_code and the exact app_api UPDATE
+# columns of proxy_grant in the fresh-database stage. Remove the growth pins when the baseline tag advances past HEAAA-791 (a stale pin fails).
+# Columns (TAB): suite, exact test name, path:line, literal (or growth:names), reason.
 # Candidate tests carrying the same assertions that must pass in the fresh-database stage: T-RA-29 -> candidate "T-RA-29: catalog"; I-10 -> candidate I-10 and messaging T-9; T2 -> none (nothing follows the pin).
 # HEAAA-731: no active pins. r207 carries the 36-entry inventory (2503), so the three r206 pins above (28 entries) now pass and are removed (the harness rejects stale pins).
 db-foundation	I-10: M-5-definer passes with 36 entries (the 28 above and the eight SEC03-F11 merge-write definers of 2503, HEAAA-687); is_creator does not exist; patient_scope_owner holds only the four participant columns	db/tools/db-test.mjs:1465	36	pins the literal definer-catalog size (36) that the candidate catalog legitimately grows beyond (41: the five definers of 2601, HEAAA-789)
 db-foundation	owners, SECURITY DEFINER, search_path, EXECUTE lists and inventory	db/tests/referral-accept-scope.test.mjs:930	36	pins definerInventory.length === 36; the candidate catalog is 41
 db-foundation	T2: app_owner holds no EXECUTE on the guard, the ten refused functions are gone, all 33 tables carry the trigger	db/tools/db-test.mjs:1142	36	pins definerInventory.length === 36 as its last assertion; the candidate catalog is 41
+api	every identity table has ENABLE and FORCE row level security, a data class and no PUBLIC policy	apps/api/dist/src/modules/identity/rls.dbtest.js:96	growth:proxy_invite_code	r209 lists the identity tables exactly; the candidate adds proxy_invite_code (2620, HEAAA-791)
+api	app_api has no UPDATE of identity columns beyond the 21.2 list; app_worker none on principal or person	apps/api/dist/src/modules/identity/rls.dbtest.js:172	growth:accepted_at,ended_by,proxy_principal_id,scopes	r209 lists the app_api UPDATE columns of proxy_grant exactly; the candidate grants four more (2620-2624, HEAAA-791)

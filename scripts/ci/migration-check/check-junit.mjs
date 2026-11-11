@@ -7,6 +7,11 @@
 // the definer catalog is run, and its failure is accepted ONLY when it is exactly that assertion (strictEqual, expected =
 // the recorded literal, actual = the candidate catalog size and greater, first stack frame in the test file = the recorded
 // path:line). Any other failure of a listed test fails; so does a listed test that passes (stale entry).
+// Schema-growth list pins (HEAAA-914, amends Q1 (d)): kind `growth:<name>,<name>...` in the literal column. The failure is accepted
+// ONLY when it is one deepStrictEqual AssertionError at the recorded path:line whose actual and expected are lists of strings,
+// where actual is expected plus exactly the pin's added names (nothing removed, nothing else added, order of the rest unchanged).
+// GROWTH_ALLOWED limits growth pins to two named tests and the HEAAA-791 names; remove the pins and this table when the baseline
+// tag advances past HEAAA-791.
 import { existsSync, readFileSync, appendFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -35,8 +40,59 @@ if (opt.pins) {
   pins = readFileSync(opt.pins, 'utf8').split('\n').filter((l) => l && !l.startsWith('#')).map((l) => {
     const [suite, name, loc, literal] = l.split('\t');
     const i = loc.lastIndexOf(':');
-    return { suite, name, path: loc.slice(0, i), line: loc.slice(i + 1), literal, used: false };
+    const growth = literal.startsWith('growth:') ? literal.slice('growth:'.length).split(',') : null;
+    return { suite, name, path: loc.slice(0, i), line: loc.slice(i + 1), literal, growth, used: false };
   });
+}
+
+const GROWTH_ALLOWED = {
+  'every identity table has ENABLE and FORCE row level security, a data class and no PUBLIC policy': ['proxy_invite_code'],
+  'app_api has no UPDATE of identity columns beyond the 21.2 list; app_worker none on principal or person': [
+    'accepted_at',
+    'ended_by',
+    'proxy_principal_id',
+    'scopes',
+  ],
+};
+
+// A node inspect list of strings -> the strings, or null when it holds anything else (numbers, objects, '... more items').
+function stringList(body) {
+  const rest = body.replace(/'((?:[^'\\]|\\.)*)'/g, '').replace(/[\s,]/g, '');
+  if (rest !== '') return null;
+  return [...body.matchAll(/'((?:[^'\\]|\\.)*)'/g)].map((m) => m[1]);
+}
+
+function growthFailure(pin, body) {
+  const allowed = GROWTH_ALLOWED[pin.name];
+  const added = [...pin.growth].sort();
+  if (!allowed || JSON.stringify(added) !== JSON.stringify([...allowed].sort())) {
+    return `growth pin is not one of the allowed HEAAA-791 growth pins`;
+  }
+  const text = unesc(body);
+  const cause = text.slice(text.indexOf('cause:'));
+  if (!/cause: AssertionError/.test(cause)) return `not an AssertionError`;
+  if (!/operator: 'deepStrictEqual'/.test(cause)) return `operator is not deepStrictEqual`;
+  const lists = {};
+  for (const k of ['actual', 'expected']) {
+    const found = [...cause.matchAll(new RegExp(`\\n\\s+${k}: \\[([^\\]]*)\\],?\\n`, 'g'))];
+    if (found.length !== 1) return `${k} is not exactly one list`;
+    lists[k] = stringList(found[0][1]);
+    if (!lists[k]) return `${k} is not a list of strings`;
+  }
+  const { actual, expected } = lists;
+  const extra = actual.filter((x) => !expected.includes(x));
+  if (JSON.stringify([...extra].sort()) !== JSON.stringify(added)) {
+    return `added names [${extra}] are not exactly the pinned [${added}]`;
+  }
+  if (new Set(actual).size !== actual.length || new Set(expected).size !== expected.length) return `duplicate entries`;
+  if (JSON.stringify(actual.filter((x) => expected.includes(x))) !== JSON.stringify(expected)) {
+    return `an expected entry is missing or reordered`;
+  }
+  const frame = /\n\s+at [^\n]*?\(?(?:file:\/\/)?([^\s():]+):(\d+):\d+\)?/.exec(cause);
+  if (!frame || !frame[1].endsWith(`/${pin.path}`) || frame[2] !== pin.line) {
+    return `first frame ${frame ? `${frame[1]}:${frame[2]}` : '(none)'} is not ${pin.path}:${pin.line}`;
+  }
+  return null;
 }
 
 // The failure is the pin when it is one AssertionError, strictEqual, expected literal, actual candidate size, at path:line.
@@ -87,12 +143,14 @@ for (const n of names) {
       }
       continue;
     }
-    const why = pin ? pinFailure(pin, body) : 'not a listed pin';
+    const why = !pin ? 'not a listed pin' : pin.growth ? growthFailure(pin, body) : pinFailure(pin, body);
     if (pin && !why) {
       accepted++;
-      const msg = `N-1 PIN (not a pass) [${n}] ${name} -- expected ${pin.literal}, actual ${candidateSize} at ${pin.path}:${pin.line}`;
-      console.log(`::notice::${msg}`);
-      if (opt.report) appendFileSync(opt.report, `${n}\t${name}\t${pin.path}:${pin.line}\t${pin.literal}\t${candidateSize}\n`);
+      const found = pin.growth ? `candidate adds ${pin.growth.join(',')}` : `expected ${pin.literal}, actual ${candidateSize}`;
+      console.log(`::notice::N-1 PIN (not a pass) [${n}] ${name} -- ${found} at ${pin.path}:${pin.line}`);
+      if (opt.report) {
+        appendFileSync(opt.report, `${n}\t${name}\t${pin.path}:${pin.line}\t${pin.literal}\t${pin.growth ? pin.growth.join(',') : candidateSize}\n`);
+      }
     } else {
       failed++;
       if (pin) console.error(`::error::N-1 PIN does not match [${n}] ${name}: ${why}`);
