@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { PlaceholderMark, SkipLink } from '@ehr/ui';
+import { BrandWordmark, resolveBrandName, SkipLink } from '@ehr/ui';
 import { ReleasePrompts } from '@ehr/app-shell';
 import type { Runtime } from './runtime.js';
 import { ConnectionPage } from './ConnectionPage.js';
@@ -11,7 +11,9 @@ export function App({ runtime }: { runtime: Runtime }) {
       <SkipLink targetId="main">Skip to main content</SkipLink>
       <header className="ehr-appbar">
         <p className="ehr-appbar__name">Staff portal</p>
-        <PlaceholderMark />
+        <BrandWordmark
+          name={resolveBrandName(import.meta.env.VITE_ORGANISATION_NAME, 'Staff portal')}
+        />
       </header>
       <ReleasePrompts store={runtime.releases} />
       <main id="main" className="ehr-main" tabIndex={-1}>

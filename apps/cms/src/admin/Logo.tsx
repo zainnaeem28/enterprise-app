@@ -1,8 +1,7 @@
 import type { ReactElement } from 'react';
 import { brand } from './brand';
 
-// Login and nav branding. BRAND-BRIEF 1: no brand files, product name or palette have been supplied yet (C-16), so
-// these are the placeholder tokens in ./brand.ts. Supplying the brand later changes brand.ts only.
+// Login and nav branding, read from ./brand.ts (organisation name from configuration, neutral title when none is entered).
 export function Logo(): ReactElement {
   return (
     <div className="ehr-brand" role="img" aria-label={brand.name}>
