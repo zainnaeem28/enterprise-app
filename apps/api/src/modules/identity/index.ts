@@ -44,18 +44,28 @@ export type {
   SignInRealm,
   VerifiedIdentity,
 } from './realms.js';
-export { ProxyService, patientAccessOf, PROXY_RELATIONSHIPS } from './proxy.js';
+export {
+  ProxyService,
+  patientAccessOf,
+  hashInviteCode,
+  normaliseScopes,
+  PROXY_RELATIONSHIPS,
+  PROXY_SETTING_KEYS,
+  SEND_INVITE_JOB,
+} from './proxy.js';
 export type { ProxyGrantView, ProxyRelationship } from './proxy.js';
+export { PROXY_SCOPED_ROUTES, proxyScopeCoversRoute } from './proxy-scopes.js';
 export {
   identityExportContributor,
   identityMergeParticipant,
   registerIdentityParticipants,
   IDENTITY_MERGE_TABLES,
 } from './merge.js';
-export { PermissionGrants } from './types.js';
+export { PermissionGrants, PROXY_SCOPES } from './types.js';
 export type {
   AuthContext,
   PatientAccess,
+  ProxyScope,
   PrincipalRealm,
   RoleGrant,
   SessionAudience,
@@ -66,6 +76,10 @@ export {
   IdentityScopeError,
   IdentityValidationError,
   ForbiddenError,
+  ProxyConflictError,
+  ProxyInviteInvalidError,
+  ProxyNotAllowedError,
+  ProxyRulesNotConfiguredError,
   RateLimitedError,
   SignInFailedError,
   UnauthenticatedError,

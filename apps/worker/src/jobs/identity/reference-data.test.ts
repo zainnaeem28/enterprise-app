@@ -155,7 +155,13 @@ describe('the 27.2 catalogue and the 27.3 default mapping as data (a Proposal un
     for (const k of fd) assert.ok(lead.includes(k));
     assert.deepEqual(
       lead.filter((k) => !fd.includes(k)),
-      ['patient.attach', 'patient.merge.request', 'scheduling.roster.manage'],
+      [
+        'identity.proxy.revoke',
+        'identity.proxy.verify',
+        'patient.attach',
+        'patient.merge.request',
+        'scheduling.roster.manage',
+      ],
     );
     assert.ok(!fd.includes('patient.merge.request'));
     const admin = keys('org_admin');

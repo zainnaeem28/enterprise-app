@@ -6,9 +6,11 @@ import type { JobRegistry, KernelDb, Queue } from '@ehr/kernel';
 import { runApplyReferenceData } from './apply-reference-data.js';
 import { runAdminEvent, runAdminEventNotice, type AdminEventDeps } from './admin-events.js';
 import type { SecurityNoticePort } from './admin-events.js';
-import { IDENTITY_JOBS } from './jobs.js';
+import { IDENTITY_JOBS, IDENTITY_PROXY_WORKER_JOBS } from './jobs.js';
 import { jobUuid } from '../messaging/index.js';
 import { runPurgeSessions } from './purge-sessions.js';
+import { runProxyAgeOut, runSendProxyInvite } from './proxy-rules.js';
+import type { ProxyMailPort } from './proxy-rules.js';
 import { runRecordSignIn } from './record-sign-in.js';
 
 export {
@@ -19,6 +21,8 @@ export {
   IDENTITY_CRONTAB,
   IDENTITY_EVENTS,
   IDENTITY_JOBS,
+  IDENTITY_PROXY_WORKER_JOBS,
+  PROXY_CRONTAB,
 } from './jobs.js';
 export {
   adminEventDeadLetters,
@@ -44,9 +48,12 @@ export {
 export { PERMISSIONS, ROLES, REFERENCE_DATASET, REFERENCE_VERSION } from './reference-data.js';
 export { eventIdFor, runRecordSignIn } from './record-sign-in.js';
 export { runPurgeSessions, PURGE_AFTER_HOURS } from './purge-sessions.js';
+export { hashInviteCode, runProxyAgeOut, runSendProxyInvite } from './proxy-rules.js';
+export type { AgeOutResult, ProxyMailPort, ProxyRulesDeps, SendInviteResult } from './proxy-rules.js';
 
 export function defineIdentityJobs(registry: JobRegistry): void {
   for (const j of IDENTITY_JOBS) registry.defineJob(j);
+  for (const j of IDENTITY_PROXY_WORKER_JOBS) registry.defineJob(j);
 }
 
 export interface IdentityTaskDeps {
@@ -57,6 +64,8 @@ export interface IdentityTaskDeps {
   workspaceDomain?: string;
   /** Ports of `identity.admin_event` (the alert) and `identity.admin_event_notice` (the security-contact notice). Absent: the handler refuses, so the job retries and dead-letters. */
   adminEvents?: { alerts: AdminEventDeps['alerts']; notice: SecurityNoticePort };
+  /** The mail port of the proxy rules (invitation code, age-out notice). Absent: both handlers refuse, so the job retries and dead-letters. */
+  proxyMail?: ProxyMailPort;
 }
 
 export function createIdentityTasks(deps: IdentityTaskDeps): Record<string, Task> {
@@ -103,6 +112,23 @@ export function createIdentityTasks(deps: IdentityTaskDeps): Record<string, Task
     },
     'identity.purge_sessions': async () => {
       await runPurgeSessions({ db: deps.db, orgId: deps.orgId });
+    },
+    'identity.send_proxy_invite': async (payload, helpers) => {
+      if (deps.proxyMail === undefined)
+        throw new Error('identity.send_proxy_invite: the proxy mail port is not configured');
+      await runSendProxyInvite(
+        { db: deps.db, orgId: deps.orgId, mail: deps.proxyMail },
+        payload as Record<string, unknown>,
+        `identity.send_proxy_invite:${String(helpers.job.id)}`,
+      );
+    },
+    'identity.proxy_age_out': async (_payload, helpers) => {
+      if (deps.proxyMail === undefined)
+        throw new Error('identity.proxy_age_out: the proxy mail port is not configured');
+      await runProxyAgeOut(
+        { db: deps.db, orgId: deps.orgId, mail: deps.proxyMail },
+        `identity.proxy_age_out:${String(helpers.job.id)}`,
+      );
     },
   };
 }

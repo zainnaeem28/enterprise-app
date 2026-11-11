@@ -26,7 +26,6 @@ export interface PatientDeps {
   queue?: Queue;
   attachEnabled?: (tx: Tx) => Promise<boolean>;
   labelLimitPerHour?: number;
-  proxyRulesConfigured?: boolean;
   now?: () => Date;
 }
 
@@ -61,9 +60,6 @@ export function createPatient(deps: PatientDeps): Patient {
     proxies: deps.identity.proxies,
     limiter: deps.limiter,
     ...(deps.labelLimitPerHour === undefined ? {} : { labelLimitPerHour: deps.labelLimitPerHour }),
-    ...(deps.proxyRulesConfigured === undefined
-      ? {}
-      : { proxyRulesConfigured: deps.proxyRulesConfigured }),
   });
   return { patients, records, controllers };
 }

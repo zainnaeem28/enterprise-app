@@ -12,7 +12,6 @@ import {
 } from './merge.js';
 import { IdentityScopeError, IdentityValidationError } from './errors.js';
 import { uuidv7 } from './ids.js';
-import { ProxyService } from './proxy.js';
 import { assignRole, id, ORG, pg, seedPrincipal, setup } from './testkit.js';
 import type { Kit } from './testkit.js';
 
@@ -939,7 +938,8 @@ describe('isolation between principals (T-PRINCIPAL, T-PAT-OWN)', () => {
       `INSERT INTO identity.patient_link (principal_id, patient_id, organisation_id, kind) VALUES ($1, $2, $3, 'self')`,
       [owner.principalId, P, ORG],
     );
-    const svc = new ProxyService();
+    const svc = k.identity.proxies;
+    const meta = { requestId: null };
     const proxyScope: ScopeSettings = {
       audience: 'patient',
       realm: 'patient_pool',
@@ -974,11 +974,11 @@ describe('isolation between principals (T-PRINCIPAL, T-PAT-OWN)', () => {
       (e: unknown) => e instanceof IdentityScopeError,
     );
     // A proxy cannot revoke (neither its own nor anyone's) through the patient path.
-    assert.equal(
-      await k.db.withScope({ ...proxyScope, patientIds: [P], proxyPatientIds: [P] }, (tx) =>
-        svc.revokeByPatient(tx, grantId),
+    await assert.rejects(
+      k.db.withScope({ ...proxyScope, patientIds: [P], proxyPatientIds: [P] }, (tx) =>
+        svc.revokeByPatient(tx, meta, P, grantId),
       ),
-      false,
+      (e: unknown) => e instanceof IdentityScopeError,
     );
     // It cannot insert itself an active grant.
     await assert.rejects(
@@ -1002,9 +1002,9 @@ describe('isolation between principals (T-PRINCIPAL, T-PAT-OWN)', () => {
       (await k.db.withScope(ownerScope, (tx) => svc.listForPatient(tx, P))).map((g) => g.id),
       [grantId],
     );
-    assert.equal(await k.db.withScope(ownerScope, (tx) => svc.revokeByPatient(tx, grantId)), true);
+    assert.equal(await k.db.withScope(ownerScope, (tx) => svc.revokeByPatient(tx, meta, P, grantId)), true);
     assert.equal(
-      await k.db.withScope(ownerScope, (tx) => svc.revokeByPatient(tx, grantId)),
+      await k.db.withScope(ownerScope, (tx) => svc.revokeByPatient(tx, meta, P, grantId)),
       false,
       'already revoked: nothing to do',
     );

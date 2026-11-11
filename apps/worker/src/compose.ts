@@ -33,7 +33,11 @@ import {
   type WorkerObjectStore,
 } from './jobs/documents/index.js';
 import { createIdentityTasks } from './jobs/identity/index.js';
-import type { ComplianceAlertPort, SecurityNoticePort } from './jobs/identity/index.js';
+import type {
+  ComplianceAlertPort,
+  ProxyMailPort,
+  SecurityNoticePort,
+} from './jobs/identity/index.js';
 import { createComplianceAlertTasks } from './jobs/notifications/compliance-alerts.js';
 import {
   AdapterRegistry,
@@ -140,6 +144,8 @@ export interface ComposeOptions {
     packageStore?: WorkerPackageStore;
     /** The PHI-free notice to the security contact mailbox (B2-9); no mail channel is provisioned yet, so it defaults to refusing. */
     securityNotice?: SecurityNoticePort;
+    /** The invitation code and age-out notice mails of the proxy rules (ruling C item 3); the mail provider (C-10) is not chosen, so it defaults to refusing. */
+    proxyMail?: ProxyMailPort;
     /** Receives gauges such as `AuditAnchorLateSeconds`; defaults to a CloudWatch EMF line on stdout. */
     metrics?: MetricSink;
   };
@@ -226,6 +232,7 @@ export function composeTasks(opts: ComposeOptions & { queue: Queue }): TaskTable
       db,
       orgId,
       queue,
+      proxyMail: infra.proxyMail ?? refusingPort<ProxyMailPort>('proxy_mail'),
       adminEvents: {
         alerts:
           opts.api?.complianceAlerts ?? refusingPort<ComplianceAlertPort>('compliance_alerts'),

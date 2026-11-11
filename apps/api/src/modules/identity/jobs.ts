@@ -12,6 +12,15 @@ export const IDENTITY_JOBS: readonly JobType[] = [
     jobScope: 'org',
     jobClass: 'job',
   },
+  // Queued by the proxy invitation (patient invite or staff link): the worker makes the e-mail code, stores its hash and mails it.
+  {
+    name: 'identity.send_proxy_invite',
+    maxAttempts: 8,
+    onMerged: 'none',
+    carriesPatientIds: false,
+    jobScope: 'org',
+    jobClass: 'job',
+  },
   {
     name: 'identity.apply_reference_data',
     maxAttempts: 3,

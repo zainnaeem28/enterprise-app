@@ -19,7 +19,7 @@ export const IDENTITY_CONFLICT_RULES: readonly ConflictRule[] = [
   },
   {
     table: 'identity.proxy_grant',
-    rule: "UQ open (proxy, patient): keep the most advanced open grant (active > verified > requested; tie -> the survivor's); set the other to revoked with revoke_reason merged_duplicate; if the kept grant is the merged patient's it is then re-pointed. R: requested, verified, active. K: revoked, expired",
+    rule: "UQ open (proxy, patient) and UQ pending invitation (patient, invited address): keep the most advanced open grant (active > verified > requested; tie -> the survivor's); set the other to revoked with revoke_reason merged_duplicate; if the kept grant is the merged patient's it is then re-pointed. R: requested, verified, active. K: revoked, expired",
   },
 ];
 
@@ -70,7 +70,7 @@ async function repointProxyGrants(
 ): Promise<MergeCounts> {
   const merged = (
     await tx.query(
-      `SELECT id, proxy_principal_id, status FROM identity.proxy_grant WHERE patient_id = $1 ORDER BY id FOR UPDATE`,
+      `SELECT id, proxy_principal_id, invited_email, status FROM identity.proxy_grant WHERE patient_id = $1 ORDER BY id FOR UPDATE`,
       [mergedId],
     )
   ).rows;
@@ -79,18 +79,24 @@ async function repointProxyGrants(
   const kept = total - open.length; // revoked and expired are K: they stay on the merged ID
   let resolved = 0;
   for (const m of open) {
+    // An invitation has no proxy yet: it collides on the invited address instead (UQ pending invitation per patient and address).
     const s = (
-      await tx.query(
-        `SELECT id, status FROM identity.proxy_grant WHERE patient_id = $1 AND proxy_principal_id = $2 AND status IN ('requested', 'verified', 'active') FOR UPDATE`,
-        [survivorId, m['proxy_principal_id']],
-      )
+      m['proxy_principal_id'] === null
+        ? await tx.query(
+            `SELECT id, status FROM identity.proxy_grant WHERE patient_id = $1 AND proxy_principal_id IS NULL AND invited_email = $2 AND status IN ('requested', 'verified') FOR UPDATE`,
+            [survivorId, m['invited_email']],
+          )
+        : await tx.query(
+            `SELECT id, status FROM identity.proxy_grant WHERE patient_id = $1 AND proxy_principal_id = $2 AND status IN ('requested', 'verified', 'active') FOR UPDATE`,
+            [survivorId, m['proxy_principal_id']],
+          )
     ).rows[0];
     if (s === undefined) continue;
     // Most advanced wins; a tie goes to the survivor's grant.
     const mergedWins = (RANK[m['status'] as string] ?? 0) > (RANK[s['status'] as string] ?? 0);
     const loser = mergedWins ? (s['id'] as string) : (m['id'] as string);
     await tx.query(
-      `UPDATE identity.proxy_grant SET status = 'revoked', revoked_at = now(), revoke_reason = 'merged_duplicate' WHERE id = $1`,
+      `UPDATE identity.proxy_grant SET status = 'revoked', revoked_at = now(), revoke_reason = 'merged_duplicate', ended_by = 'merge' WHERE id = $1`,
       [loser],
     );
     if (!mergedWins) resolved += 1; // a loser on the merged ID is "resolved" and stays there as K

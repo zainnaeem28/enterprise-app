@@ -11,6 +11,15 @@ export const IDENTITY_JOBS: readonly JobType[] = [
     jobScope: 'org',
     jobClass: 'job',
   },
+  // Queued by the proxy invitation (patient invite or staff link): makes the e-mail code, stores its hash, mails it.
+  {
+    name: 'identity.send_proxy_invite',
+    maxAttempts: 8,
+    onMerged: 'none',
+    carriesPatientIds: false,
+    jobScope: 'org',
+    jobClass: 'job',
+  },
   {
     name: 'identity.apply_reference_data',
     maxAttempts: 3,
@@ -28,6 +37,22 @@ export const IDENTITY_JOBS: readonly JobType[] = [
     jobClass: 'system',
   },
 ];
+
+/** Worker-only (a daily timer, never queued by the API): guardian age-out, unaccepted invitations, the notice before access ends. */
+export const IDENTITY_PROXY_WORKER_JOBS: readonly JobType[] = [
+  {
+    name: 'identity.proxy_age_out',
+    apiEnqueue: false,
+    maxAttempts: 5,
+    onMerged: 'none',
+    carriesPatientIds: false,
+    jobScope: 'org',
+    jobClass: 'system',
+  },
+];
+
+/** graphile-worker crontab: 02:30 every day (server time). */
+export const PROXY_CRONTAB = '30 2 * * * identity.proxy_age_out';
 
 /** Admin realm event job (ARCHITECTURE 26.3 B2-9). Keep apps/api/src/modules/identity/admin/jobs.ts in step (a test compares them). */
 export const IDENTITY_ADMIN_JOBS: readonly JobType[] = [
