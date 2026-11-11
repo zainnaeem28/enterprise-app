@@ -359,8 +359,8 @@ describe('organisation module on PostgreSQL 17 (BE-03)', () => {
       // the worker writes reference data only
       await wdb.withScope(worker, (tx) =>
         tx.query(
-          `INSERT INTO organisation.jurisdiction (code, organisation_id, name) VALUES ('WA', $1, 'Washington')`,
-          [ORG],
+          `INSERT INTO organisation.jurisdiction (code, organisation_id, name) VALUES ($2, $1, 'Fixture state') ON CONFLICT DO NOTHING`,
+          [ORG, FIXTURE_STATES.licensed],
         ),
       );
       await rejectsCode(
