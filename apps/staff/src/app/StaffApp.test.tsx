@@ -325,6 +325,7 @@ describe('administrator portal is routed (INT04-F03)', () => {
     ['/admin/integrations', 'Integrations'],
     ['/admin/flags', 'Feature flags and banners'],
     ['/admin/vital-ranges', 'Vital-sign reference ranges'],
+    ['/admin/licensing', 'Clinician licensed states'],
   ])('%s renders under the admin realm bar', async (path, heading) => {
     at(path);
     const { runtime, assign } = setup(admin);

@@ -40,6 +40,27 @@ const open = (v?: Record<string, unknown>) =>
     ...(v === undefined ? {} : { visit: visit(v) as never }),
   });
 
+describe('patient access panel in the open chart (ruling C item 3)', () => {
+  it('is drawn under the chart of the open patient and receives the patient and the session permissions', async () => {
+    open();
+    mount(
+      [...DOCTOR, 'identity.proxy.verify'],
+      '/patients',
+      (r) =>
+        r.path === `/api/v1/patients/${PAT}/chart-summary` ? json(200, summary()) : undefined,
+      {
+        renderAccess: (id, perms) => (
+          <p>
+            access for {id} {perms.includes('identity.proxy.verify') ? 'can link' : 'read only'}
+          </p>
+        ),
+      },
+    );
+    const region = await screen.findByRole('region', { name: 'Patient access' });
+    expect(within(region).getByText(`access for ${PAT} can link`)).toBeVisible();
+  });
+});
+
 describe('chart summary (BR-34, UI-UX 8)', () => {
   it('shows name, date of birth, photo and the allergy block', async () => {
     open();
