@@ -155,12 +155,13 @@ export async function runRetentionPurge(
         else if (r['state'] === 'deferred') m.deferredDocumentRetention += 1;
         await tx.query(
           `INSERT INTO audit.event (event_id, organisation_id, job_id, realm, audience, action, resource_type, resource_id, patient_id, change, outcome)
-           VALUES (gen_random_uuid(), kernel.uuid1('app.org_id'), $1, 'worker', 'system', 'delete', 'privacy.deletion_record', $2::uuid, $3::uuid, $4::jsonb, 'allowed')`,
+           VALUES (gen_random_uuid(), kernel.uuid1('app.org_id'), $1, 'worker', 'system', 'update', 'privacy.deletion_record', $2::uuid, $3::uuid, $4::jsonb, 'allowed')`,
           [
             `${jobRef}:${recordId}`.slice(0, 200),
             recordId,
             patientId,
             JSON.stringify({
+              operation: 'medical_record_purge',
               medicalRecordPurge: r['state'],
               reason: r['reason'] ?? null,
               removed: r['removed'] ?? {},

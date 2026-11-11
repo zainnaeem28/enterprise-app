@@ -25,7 +25,8 @@
 -- Down-note (forward-only): to go back, drop the three functions and the two helpers, drop the policies and revoke the grants of the role,
 -- and restore the 16 triggers without the WHEN condition and documents.guard_document from 1001. The role stays (db/roles).
 
-GRANT USAGE ON SCHEMA patient, identity, clinical, documents, privacy TO privacy_retention_owner;
+GRANT USAGE ON SCHEMA kernel, patient, identity, clinical, documents, privacy TO privacy_retention_owner;
+GRANT EXECUTE ON FUNCTION kernel.uuid1(text), kernel.uuids(text), kernel.setting(text) TO privacy_retention_owner;
 GRANT CREATE ON SCHEMA privacy TO privacy_retention_owner;
 
 GRANT SELECT ON patient.patient_merge, patient.consent, patient.communication_preference, identity.patient_link, identity.principal,

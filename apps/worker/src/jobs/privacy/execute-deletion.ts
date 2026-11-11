@@ -119,7 +119,8 @@ export async function runExecuteDeletion(
          VALUES (gen_random_uuid(), kernel.uuid1('app.org_id'), $1, 'worker', 'system', $2, $3, $4::uuid, $5::uuid, $6::jsonb, 'allowed')`,
         [`${jobRef}:${requestId}`.slice(0, 200), action, resourceType, resourceId, found.patientId, JSON.stringify(change)],
       );
-    await audit('privacy.deletion_record', recordId, 'delete', {
+    await audit('privacy.deletion_record', recordId, 'update', {
+      operation: 'account_deletion',
       accountDeactivated: true,
       principalsDisabled: Number(r['principalsDisabled'] ?? 0),
       sessionsRevoked: Number(r['sessionsRevoked'] ?? 0),
