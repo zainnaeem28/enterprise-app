@@ -79,7 +79,7 @@ export function validate(f: Form, was: Form): Record<string, string> {
   else if (f.email !== '' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim()))
     e['email'] = 'Email address: enter it like name@example.com.';
   if (f.stateCode !== '' && !/^[A-Za-z]{2}$/.test(f.stateCode.trim()))
-    e['stateCode'] = 'State: use the two-letter code, for example NY.';
+    e['stateCode'] = 'State: use the two-letter code (letters only).';
   if (
     f.line1.length > 200 ||
     f.line2.length > 200 ||

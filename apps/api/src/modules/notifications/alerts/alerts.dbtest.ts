@@ -6,6 +6,7 @@
 //   ADR-022: targets resolved to principals at creation and escalation; admin-realm alerts never carry a patient ID.
 //   EHR_TEST_ADMIN_URL=postgres://postgres@127.0.0.1:5432/postgres node --test dist/src/modules/notifications/alerts/alerts.dbtest.js
 // The URL names a superuser on a throwaway server (synthetic data only). Missing configuration FAILS; nothing skips.
+import { FIXTURE_STATES } from '../../../platform/fixture-states.js';
 import assert from 'node:assert/strict';
 import { request } from 'node:http';
 import { after, before, describe, test } from 'node:test';
@@ -216,12 +217,12 @@ describe('staff alerts and the alert stream on PostgreSQL 17 (BE-07)', () => {
       withApp: false,
       fixtures: async ({ sa }) => {
         await sa.query(
-          `INSERT INTO organisation.jurisdiction (code, organisation_id, name) VALUES ('NY', $1, 'New York')`,
+          `INSERT INTO organisation.jurisdiction (code, organisation_id, name) VALUES ('${FIXTURE_STATES.licensed}', $1, 'Fixture state ${FIXTURE_STATES.licensed}')`,
           [ORG],
         );
         await sa.query(
           `INSERT INTO organisation.location (id, organisation_id, name, kind, time_zone, state_code, active)
-           VALUES ($1, $2, 'Main', 'clinic', 'America/New_York', 'NY', true)`,
+           VALUES ($1, $2, 'Main', 'clinic', 'America/New_York', '${FIXTURE_STATES.licensed}', true)`,
           [L1, ORG],
         );
       },
@@ -235,7 +236,7 @@ describe('staff alerts and the alert stream on PostgreSQL 17 (BE-07)', () => {
     for (const [n, pid] of [P1, P2, M1, M2].entries())
       await k.sa.query(
         `INSERT INTO patient.patient (id, organisation_id, mrn, given_name, family_name, date_of_birth, state_code, created_via)
-         VALUES ($1, $2, $3, 'Pat', 'Ient', '1975-01-01', 'NY', 'front_desk')`,
+         VALUES ($1, $2, $3, 'Pat', 'Ient', '1975-01-01', '${FIXTURE_STATES.licensed}', 'front_desk')`,
         [pid, ORG, `MRN-${String(9_100_000 + n)}`],
       );
     await k.sa.query(

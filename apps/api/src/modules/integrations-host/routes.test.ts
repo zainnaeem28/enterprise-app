@@ -1,6 +1,7 @@
 // BE-22 unit and HTTP tests: a real Nest application on a loopback port with the real platform layer, this module's controllers and
 // recording ports. They prove routing, headers, cookies, verbs, raw-body handling and the status mapping of the webhook route. They do
 // NOT prove persistence, RLS or the real views: those are in integrations-host.dbtest.ts, on PostgreSQL.
+import { FIXTURE_STATES } from '../../platform/fixture-states.js';
 import assert from 'node:assert/strict';
 import { request } from 'node:http';
 import { after, before, describe, test } from 'node:test';
@@ -54,7 +55,7 @@ const organisation = {
         kind: 'clinic',
         timeZone: 'America/New_York',
         address: {},
-        stateCode: 'NY',
+        stateCode: FIXTURE_STATES.licensed,
         geo: null,
         phone: null,
         internalNote: 'LEAK',

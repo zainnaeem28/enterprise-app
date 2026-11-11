@@ -145,10 +145,10 @@ describe('PP-10..PP-14 book a visit', () => {
     fireEvent.click(slots[0]!);
     expect(await screen.findByRole('alert')).toHaveTextContent(/two-letter state/);
     expect(posts(m.seen, '/api/v1/holds')).toHaveLength(0);
-    fireEvent.change(screen.getByLabelText(/State you will be in/), { target: { value: 'ny' } });
+    fireEvent.change(screen.getByLabelText(/State you will be in/), { target: { value: 'aa' } });
     fireEvent.click(screen.getAllByRole('button', { name: /10:00 AM/ })[0]!);
     await waitFor(() => expect(posts(m.seen, '/api/v1/holds')).toHaveLength(1));
-    expect(posts(m.seen, '/api/v1/holds')[0]?.body).toMatchObject({ patientState: 'NY' });
+    expect(posts(m.seen, '/api/v1/holds')[0]?.body).toMatchObject({ patientState: 'AA' });
   });
 
   it('shows no raw patient or appointment detail in the tab title', async () => {

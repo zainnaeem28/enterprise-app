@@ -41,3 +41,16 @@ export {
   registerMergeParticipant,
 } from './registry/registry.js';
 export type { ExportContributor, MergeParticipant } from './registry/registry.js';
+export {
+  AwsConfigError,
+  awsSettings,
+  createKmsClient,
+  createS3Client,
+  createSecretsManagerClient,
+  selectByEnv,
+} from './aws/config.js';
+export { KmsEnvelope, KmsEnvelopeError } from './aws/kms-envelope.js';
+export { SecretsManagerStore, SecretStoreError } from './aws/secrets-manager.js';
+export type { SecretVersion } from './aws/secrets-manager.js';
+export type { KmsEnvelopeConfig } from './aws/kms-envelope.js';
+export type { AwsSettings, Env } from './aws/config.js';

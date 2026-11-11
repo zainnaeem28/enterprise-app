@@ -32,8 +32,9 @@ export interface Presigned {
 }
 
 export interface ObjectStorePort {
-  presignPut(req: PresignPut, now: Date): Presigned;
-  presignGet(req: PresignGet, now: Date): Presigned;
+  /** May be async: the S3 adapter signs with credentials from the SDK's provider chain. */
+  presignPut(req: PresignPut, now: Date): Presigned | Promise<Presigned>;
+  presignGet(req: PresignGet, now: Date): Presigned | Promise<Presigned>;
 }
 
 /**

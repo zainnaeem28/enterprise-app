@@ -2,6 +2,7 @@
 // passive traffic), the authorization guard (permission, realm, scope, CSRF and Origin, elevation, assignment) and the
 // scope builder. TC-AZ-* and TC-ID-* automated parts.
 //   EHR_TEST_ADMIN_URL=postgres://postgres@host:5432/postgres node --test dist/src/modules/identity/guard.dbtest.js
+import { FIXTURE_STATES } from '../../platform/fixture-states.js';
 import assert from 'node:assert/strict';
 import { after, before, beforeEach, describe, test } from 'node:test';
 import {
@@ -37,14 +38,14 @@ before(async () => {
     controllers: [ProbeController],
     fixtures: async ({ sa }) => {
       await sa.query(
-        `INSERT INTO organisation.jurisdiction (code, organisation_id, name) VALUES ('NY', $1, 'New York')`,
+        `INSERT INTO organisation.jurisdiction (code, organisation_id, name) VALUES ('${FIXTURE_STATES.licensed}', $1, 'Fixture state ${FIXTURE_STATES.licensed}')`,
         [ORG],
       );
       // Patient rows the identity fixtures point at: patient.guard_open_patient (BE-08, migration 0701) refuses writes for a patient that does not exist.
       let mrn = 8000000;
       for (const pid of [P1, P2, P3, id(301), id(302), id(303), id(304), id(305), id(306)])
         await sa.query(
-          `INSERT INTO patient.patient (id, organisation_id, mrn, given_name, family_name, date_of_birth, state_code, created_via) VALUES ($1, $2, $3, 'Fixture', 'Patient', '1980-01-01', 'NY', 'front_desk')`,
+          `INSERT INTO patient.patient (id, organisation_id, mrn, given_name, family_name, date_of_birth, state_code, created_via) VALUES ($1, $2, $3, 'Fixture', 'Patient', '1980-01-01', '${FIXTURE_STATES.licensed}', 'front_desk')`,
           [pid, ORG, `MRN-${mrn++}`],
         );
       // The guard reads the patient root as its owner under row-level security, so this superuser session carries an organisation and an audience too.
@@ -57,7 +58,7 @@ before(async () => {
         [L2, 'Second'],
       ] as const)
         await sa.query(
-          `INSERT INTO organisation.location (id, organisation_id, name, kind, time_zone, state_code, active) VALUES ($1, $2, $3, 'clinic', 'America/New_York', 'NY', true)`,
+          `INSERT INTO organisation.location (id, organisation_id, name, kind, time_zone, state_code, active) VALUES ($1, $2, $3, 'clinic', 'America/New_York', '${FIXTURE_STATES.licensed}', true)`,
           [lid, ORG, name],
         );
     },

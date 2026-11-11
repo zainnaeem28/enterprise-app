@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { ParticipantRegistries, RegistryError } from '@ehr/kernel';
+import { FIXTURE_STATES } from '../../platform/fixture-states.js';
 import { TELEHEALTH_JOBS } from './jobs.js';
 import {
   TELEHEALTH_CONFLICT_RULES,
@@ -52,8 +53,22 @@ test('a session is stale two hours after the end of its slot', () => {
 });
 
 test('a state is two letters in any case; nothing else is a state', () => {
-  assert.equal(normaliseState(' ny '), 'NY');
-  for (const bad of ['', 'N', 'NYC', 'N1', '1 ', 12, null, undefined, {}, ['NY']])
+  assert.equal(
+    normaliseState(` ${FIXTURE_STATES.licensed.toLowerCase()} `),
+    FIXTURE_STATES.licensed,
+  );
+  for (const bad of [
+    '',
+    'Z',
+    `${FIXTURE_STATES.licensed}X`,
+    'Z1',
+    '1 ',
+    12,
+    null,
+    undefined,
+    {},
+    [FIXTURE_STATES.licensed],
+  ])
     assert.equal(normaliseState(bad), undefined, String(bad));
 });
 
@@ -100,6 +115,7 @@ test('the job list is pinned (the worker side pins the same one)', () => {
     [
       'telehealth.on_reservation_confirmed|handler|patients|resolve|5',
       'telehealth.create_meeting|job|patients|resolve|8',
+      'telehealth.close_meeting|job|patients|resolve|8',
       'telehealth.end_stale|system|org|none|3',
     ],
   );

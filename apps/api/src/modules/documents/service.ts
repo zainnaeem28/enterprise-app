@@ -250,7 +250,7 @@ export class DocumentsService {
          VALUES ($1::uuid, 1, kernel.uuid1('app.org_id'), $2::uuid, $3, 'quarantine', $4::bigint, $5, $5, $6::uuid)`,
         [id, patientId, key, input.sizeBytes, input.contentType, principal],
       );
-      const put = this.deps.store.presignPut(
+      const put = await this.deps.store.presignPut(
         {
           bucket: 'quarantine',
           key,
@@ -351,7 +351,7 @@ export class DocumentsService {
       r['bucket'] === 'clean' &&
       typeof r['object_key'] === 'string';
     if (!servable) throw new NotAvailableError();
-    const url = this.deps.store.presignGet(
+    const url = await this.deps.store.presignGet(
       {
         bucket: 'clean',
         key: String(r['object_key']),

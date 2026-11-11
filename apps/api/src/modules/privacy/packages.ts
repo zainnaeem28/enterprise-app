@@ -73,7 +73,11 @@ export class PackageService {
           `UPDATE privacy.export_package SET status = 'released', released_at = $2::timestamptz WHERE id = $1::uuid`,
           [p['id'], this.now().toISOString()],
         );
-      const url = this.deps.store.presignGet(p['object_key'], DOWNLOAD_URL_SECONDS, this.now());
+      const url = await this.deps.store.presignGet(
+        p['object_key'],
+        DOWNLOAD_URL_SECONDS,
+        this.now(),
+      );
       await this.deps.audit.record(tx, {
         requestId: meta.requestId,
         action: 'export',

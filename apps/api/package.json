@@ -7,17 +7,23 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "pnpm --filter @ehr/kernel --filter @ehr/contracts --filter @ehr/worker run build && pnpm run build && mkdir -p \"${JUNIT_DIR:-.junit}\" && node --test --test-reporter=spec --test-reporter-destination=stdout --test-reporter=junit --test-reporter-destination=\"${JUNIT_DIR:-.junit}/api.xml\" \"dist/test/**/*.test.js\" \"dist/src/**/*.test.js\"",
-    "check:routes": "pnpm --filter @ehr/contracts run openapi:check-routes"
+    "check:routes": "pnpm --filter @ehr/contracts run openapi:check-routes",
+    "test:emulator": "tsc -p tsconfig.json && node --test --test-reporter=spec \"dist/src/platform/aws/*.emulator.test.js\""
   },
   "dependencies": {
+    "@aws-sdk/client-chime-sdk-meetings": "3.1164.0",
+    "@aws-sdk/client-kms": "3.1164.0",
+    "@aws-sdk/client-s3": "3.1164.0",
+    "@aws-sdk/client-secrets-manager": "3.1164.0",
+    "@aws-sdk/s3-request-presigner": "3.1164.0",
     "@ehr/contracts": "workspace:*",
     "@ehr/kernel": "workspace:*",
     "@nestjs/common": "12.3.3",
     "@nestjs/core": "12.3.3",
     "@nestjs/platform-express": "12.3.3",
     "@simplewebauthn/server": "14.0.3",
+    "pg": "8.23.1",
     "reflect-metadata": "0.2.2",
-    "rxjs": "7.8.2",
-    "pg": "8.23.1"
+    "rxjs": "7.8.2"
   }
 }

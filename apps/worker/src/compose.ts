@@ -1,7 +1,7 @@
 // Composition root of the worker's task table (HEAAA-231, R8-N2): every registered job type gets a handler, built from the nine
 // `create*Tasks` factories. Ports backed by the database or by the API's services are real. Ports that need infrastructure which does
 // not exist yet (object store, malware scanner, OCR, secret store, payload-opening key, export sink, calendar channel key, e-mail/SMS/
-// push/video/Google providers: C-01, C-10, C-11, DEVOPS-PLAN) are REFUSING: the job is picked up and the handler runs, then the port
+// push/Google providers (video, malware scan and OCR have AWS adapters selected by configuration: AWS-BE-4): C-01, C-10, C-11, DEVOPS-PLAN) are REFUSING: the job is picked up and the handler runs, then the port
 // fails with `PortNotConfiguredError` (class name only in the log) and the library retries. Nothing here pretends those services work.
 import { pathToFileURL } from 'node:url';
 import { JobRegistry, KernelDb, Queue } from '@ehr/kernel';
@@ -35,6 +35,7 @@ import type { CalendarJobDeps } from './jobs/calendar-sync/index.js';
 import {
   createDocumentsTasks,
   metadataStrippingReencoder,
+  type ScanCaller,
   type WorkerObjectStore,
 } from './jobs/documents/index.js';
 import { createIdentityTasks } from './jobs/identity/index.js';
@@ -51,6 +52,7 @@ import {
   InboundHandlerRegistry,
   SecretCache,
   VendorGateway,
+  type VendorAdapter,
 } from './jobs/integration-core/index.js';
 import type {
   InboundSecretWriter,
@@ -153,9 +155,13 @@ export interface ComposeOptions {
     /** Object Lock archive of audit anchors (log-archive bucket, SEC05-F02); refusing until the bucket adapter exists. */
     anchorArchive?: AnchorArchiveStore;
     objectStore?: WorkerObjectStore;
+    /** Malware scan verdict reader (GuardDuty Malware Protection for S3, AWS-BE-4); refusing when absent, never `clean`. */
+    scanner?: ScanCaller;
     secretReader?: SecretReader;
     secretWriter?: InboundSecretWriter;
     payloadOpener?: PayloadOpener;
+    /** Calendar channel-token key (`<env>/integration/inbound/google-calendar-channel-key`, current version). */
+    channelKeys?: CalendarJobDeps['channelKeys'];
     /** Terminology release source (NLM/UMLS licence, C-09). */
     terminologySource?: TerminologySource;
     /** Privacy package store with write access (bucket and KMS key, C-01). */
@@ -167,6 +173,8 @@ export interface ComposeOptions {
     securityNotice?: SecurityNoticePort;
     /** The invitation code and age-out notice mails of the proxy rules (ruling C item 3); the mail provider (C-10) is not chosen, so it defaults to refusing. */
     proxyMail?: ProxyMailPort;
+    /** Gateway provider adapters (e-mail, SMS, push); an absent kind has no adapter, so the gateway refuses the call. */
+    channelAdapters?: readonly VendorAdapter[];
     /** Receives gauges such as `AuditAnchorLateSeconds`; defaults to a CloudWatch EMF line on stdout. */
     metrics?: MetricSink;
   };
@@ -223,6 +231,7 @@ export function composeTasks(opts: ComposeOptions & { queue: Queue }): TaskTable
 
   // Vendor access goes through the gateway; with no provider adapter registered a call fails as "no adapter" (not configured).
   const adapters = new AdapterRegistry();
+  for (const a of infra.channelAdapters ?? []) adapters.register(a);
   const secrets = new SecretCache(infra.secretReader ?? refusingPort<SecretReader>('secret_store'));
   const gateway = new VendorGateway({
     db,
@@ -240,7 +249,7 @@ export function composeTasks(opts: ComposeOptions & { queue: Queue }): TaskTable
     orgId,
     queue,
     vendor,
-    channelKeys: refusingPort('calendar_channel_key'),
+    channelKeys: infra.channelKeys ?? refusingPort('calendar_channel_key'),
     get webhookUrl(): string {
       return opts.calendarWebhookUrl ?? refuse('calendar_webhook_url');
     },
@@ -321,7 +330,7 @@ export function composeTasks(opts: ComposeOptions & { queue: Queue }): TaskTable
       survivorOf,
       gateway,
       store: infra.objectStore ?? refusingPort<WorkerObjectStore>('object_store'),
-      scan: () => Promise.reject(new PortNotConfiguredError('malware_scanner')),
+      scan: infra.scanner ?? (() => Promise.reject(new PortNotConfiguredError('malware_scanner'))),
       reencode: metadataStrippingReencoder,
     }),
     ...createIntegrationCoreTasks({

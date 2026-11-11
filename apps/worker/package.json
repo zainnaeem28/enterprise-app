@@ -7,11 +7,20 @@
     "build": "tsc -p tsconfig.json",
     "sync-task-types": "node dist/sync-task-types-cli.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "pnpm --filter @ehr/kernel --filter @ehr/contracts --filter @ehr/api run build && pnpm run build && mkdir -p \"${JUNIT_DIR:-.junit}\" && node --test --test-reporter=spec --test-reporter-destination=stdout --test-reporter=junit --test-reporter-destination=\"${JUNIT_DIR:-.junit}/worker.xml\" \"dist/**/*.test.js\""
+    "test": "pnpm --filter @ehr/kernel --filter @ehr/contracts --filter @ehr/api run build && pnpm run build && mkdir -p \"${JUNIT_DIR:-.junit}\" && node --test --test-reporter=spec --test-reporter-destination=stdout --test-reporter=junit --test-reporter-destination=\"${JUNIT_DIR:-.junit}/worker.xml\" \"dist/**/*.test.js\"",
+    "test:emulator": "tsc -p tsconfig.json && node --test --test-reporter=spec \"dist/aws/*.emulator.test.js\""
   },
   "dependencies": {
+    "@aws-sdk/client-chime-sdk-meetings": "3.1164.0",
+    "@aws-sdk/client-kms": "3.1164.0",
+    "@aws-sdk/client-pinpoint-sms-voice-v2": "3.1164.0",
+    "@aws-sdk/client-s3": "3.1164.0",
+    "@aws-sdk/client-secrets-manager": "3.1164.0",
+    "@aws-sdk/client-sesv2": "3.1164.0",
+    "@aws-sdk/client-textract": "3.1164.0",
     "@ehr/kernel": "workspace:*",
     "graphile-worker": "0.18.0",
-    "pg": "8.23.1"
+    "pg": "8.23.1",
+    "web-push": "4.0.0"
   }
 }

@@ -59,9 +59,15 @@ const noLineBreak = (v: string): boolean => !/[\r\n\u2028\u2029]/.test(v);
 
 abstract class ChannelAdapter<K extends AdapterKind> implements VendorAdapter<K> {
   abstract readonly kind: K;
-  readonly supportsIdempotencyToken = true;
   readonly timeoutMs = 10_000;
-  constructor(protected readonly provider: ProviderClient) {}
+  /** True when the vendor de-duplicates on our token (the default contract). SES, End User Messaging SMS and Web Push do not: they pass `false`. */
+  readonly supportsIdempotencyToken: boolean;
+  constructor(
+    protected readonly provider: ProviderClient,
+    opts: { supportsIdempotencyToken?: boolean } = {},
+  ) {
+    this.supportsIdempotencyToken = opts.supportsIdempotencyToken ?? true;
+  }
 
   protected abstract request(
     args: Readonly<Record<string, unknown>>,

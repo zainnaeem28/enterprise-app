@@ -1,5 +1,12 @@
 // Worker process entry. A bad variable stops the start with its NAME (never its value).
 import { ConfigError, createLogger, describeDatabase, loadConfig } from '@ehr/kernel';
+import { notifyAdapters, selectNotifyWorkerInfra } from './aws/notify-adapters.js';
+import { selectPushAdapter } from './aws/web-push.js';
+import { selectChimeVideoAdapter } from './aws/chime-video.js';
+import { selectGuardDutyScanner } from './aws/guardduty-scan.js';
+import { selectTextractAdapter } from './aws/textract-ocr.js';
+import { selectS3WorkerInfra } from './aws/s3-adapters.js';
+import { selectSecretsWorkerInfra } from './aws/secrets-kms.js';
 import { composeWorker } from './compose.js';
 import { WORKER_CRONTAB } from './job-registry.js';
 import { createPool, startWorker } from './runner.js';
@@ -18,10 +25,29 @@ async function main(): Promise<void> {
   }
   const pool = await createPool(cfg);
   const env = process.env;
+  const notify = selectNotifyWorkerInfra(env, log);
+  const push = await selectPushAdapter(env, log);
+  const video = selectChimeVideoAdapter(env, log);
+  const ocr = selectTextractAdapter(env, log);
+  const scanner = selectGuardDutyScanner(env, log);
+  const channelAdapters = [
+    ...notifyAdapters(notify.providers),
+    ...(push === undefined ? [] : [push]),
+    ...(video === undefined ? [] : [video]),
+    ...(ocr === undefined ? [] : [ocr]),
+  ];
   const { tasks, registry } = await composeWorker({
     cfg,
     pool,
     log,
+    // A half-configured S3 adapter stops the start; an absent one leaves the refusing port.
+    infra: {
+      ...selectS3WorkerInfra(env, log),
+      ...selectSecretsWorkerInfra(env, log),
+      ...(scanner === undefined ? {} : { scanner }),
+      ...(notify.securityNotice === undefined ? {} : { securityNotice: notify.securityNotice }),
+      channelAdapters,
+    },
     ...(env['EHR_PATIENT_HOST'] ? { patientHost: env['EHR_PATIENT_HOST'] } : {}),
     ...(env['EHR_CHECKIN_QR_KEY'] ? { qrKey: env['EHR_CHECKIN_QR_KEY'] } : {}),
     ...(env['EHR_CALENDAR_WEBHOOK_URL']

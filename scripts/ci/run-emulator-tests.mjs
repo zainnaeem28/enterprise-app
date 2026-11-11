@@ -1,5 +1,7 @@
-// `pnpm test:emulator`: runs every `*.emulator.test.ts` in the repository with the Node test runner (TypeScript is
-// type-stripped by Node 24, so tests use erasable syntax only and import workspace packages through their built dist/).
+// `pnpm test:emulator`: runs every `*.emulator.test.ts` in the repository with the Node test runner. A test inside a
+// package that has a tsconfig.json is run from that package's compiled output (the package is built with `tsc -p` first,
+// exactly like the package's own `test:emulator` script), because the sources use NodeNext `./x.js` imports and
+// non-erasable syntax that Node's type stripping cannot run. A test outside any tsconfig package is type-stripped directly.
 //
 // Convention for backend tickets: name a test `<anything>.emulator.test.ts` next to the code it covers. The AWS-shaped
 // endpoint and DUMMY credentials come from the environment (docs/runbooks/emulator-tests.md); a test reads
@@ -9,9 +11,17 @@
 // With no matching test the script passes cleanly (and says so). A matched file that runs zero tests, or whose tests are
 // all skipped, FAILS when --require-endpoint is given (the CI job), so a silently skipped suite cannot look green.
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, relative, resolve } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const self = fileURLToPath(import.meta.url);
@@ -84,6 +94,53 @@ mkdirSync(junitDir, { recursive: true });
 console.log(
   `test:emulator: ${found.length} file(s)\n${found.map((f) => '  ' + relative(root, f)).join('\n')}`,
 );
+// Map each source test to the file Node runs: the compiled dist/ twin when its package has a tsconfig.
+const owner = (file) => {
+  for (let d = dirname(file); d.startsWith(root); d = dirname(d)) {
+    if (existsSync(join(d, 'tsconfig.json'))) return d;
+    if (d === root) break;
+  }
+  return null;
+};
+// The AWS adapter tests gate on EHR_EMULATOR_S3_ENDPOINT / EHR_EMULATOR_SES_ENDPOINT; one LocalStack edge URL serves both,
+// so default them from AWS_ENDPOINT_URL (what the CI job sets) unless a developer set them explicitly.
+const testEnv = { ...process.env };
+if (testEnv.AWS_ENDPOINT_URL) {
+  testEnv.EHR_EMULATOR_S3_ENDPOINT ??= testEnv.AWS_ENDPOINT_URL;
+  testEnv.EHR_EMULATOR_SES_ENDPOINT ??= testEnv.AWS_ENDPOINT_URL;
+}
+const toRun = [];
+const built = new Set();
+for (const f of found) {
+  const pkg = owner(f);
+  if (!pkg) {
+    toRun.push(f);
+    continue;
+  }
+  if (!built.has(pkg)) {
+    built.add(pkg);
+    console.log(`test:emulator: tsc -p ${relative(root, pkg) || '.'}`);
+    const b = spawnSync('pnpm', ['exec', 'tsc', '-p', 'tsconfig.json'], {
+      cwd: pkg,
+      stdio: 'inherit',
+    });
+    if (b.status !== 0) {
+      console.error(`::error::test:emulator: tsc failed in ${relative(root, pkg)}`);
+      process.exit(b.status ?? 1);
+    }
+  }
+  const rel = relative(pkg, f).replace(/\.ts$/, '.js');
+  const twin = [join(pkg, 'dist', rel), join(pkg, 'dist', rel.replace(/^src\//, ''))].find(
+    existsSync,
+  );
+  if (!twin) {
+    console.error(
+      `::error::test:emulator: no compiled twin of ${relative(root, f)} under ${relative(root, pkg)}/dist`,
+    );
+    process.exit(1);
+  }
+  toRun.push(twin);
+}
 const r = spawnSync(
   process.execPath,
   [
@@ -92,9 +149,9 @@ const r = spawnSync(
     '--test-reporter-destination=stdout',
     '--test-reporter=junit',
     `--test-reporter-destination=${join(junitDir, 'emulator.xml')}`,
-    ...found,
+    ...toRun,
   ],
-  { cwd: root, stdio: 'inherit', env: process.env },
+  { cwd: root, stdio: 'inherit', env: testEnv },
 );
 if (r.status !== 0) process.exit(r.status ?? 1);
 

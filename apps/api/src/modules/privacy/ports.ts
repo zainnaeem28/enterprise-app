@@ -11,7 +11,7 @@ export interface PresignedGet {
 
 export interface PackageStorePort {
   /** A URL for one object, valid for `expiresSeconds`; the object is an encrypted package (server-side encryption at the store). */
-  presignGet(key: string, expiresSeconds: number, now: Date): PresignedGet;
+  presignGet(key: string, expiresSeconds: number, now: Date): PresignedGet | Promise<PresignedGet>;
 }
 
 /** A test and development presigner: the URL names the key and an expiry and carries an HMAC. Not evidence about a real store. */

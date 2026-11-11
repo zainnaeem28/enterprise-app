@@ -4,6 +4,7 @@
 // port in ports.ts; the video adapter is registered with integration-core's `AdapterRegistry`.
 import type { Task } from 'graphile-worker';
 import type { JobRegistry } from '@ehr/kernel';
+import { runCloseMeeting } from './close-meeting.js';
 import { runCreateMeeting } from './create-meeting.js';
 import { runEndStale } from './end-stale.js';
 import { TELEHEALTH_JOBS } from './jobs.js';
@@ -15,6 +16,8 @@ export { runOnReservationConfirmed, asPatient, meetingRunAt } from './on-reserva
 export type { ConfirmedOutcome } from './on-reservation-confirmed.js';
 export { runCreateMeeting } from './create-meeting.js';
 export type { MeetingOutcome } from './create-meeting.js';
+export { runCloseMeeting } from './close-meeting.js';
+export type { CloseOutcome } from './close-meeting.js';
 export { runEndStale } from './end-stale.js';
 export type { StaleResult } from './end-stale.js';
 export { VideoAdapter, MIN_TTL_SECONDS, MAX_TTL_SECONDS } from './video-adapter.js';
@@ -50,6 +53,9 @@ export function createTelehealthTasks(deps: TelehealthJobDeps): Record<string, T
         payload as Record<string, unknown>,
         `telehealth.create_meeting:${helpers.job.id}`,
       );
+    },
+    'telehealth.close_meeting': async (payload) => {
+      await runCloseMeeting(deps, payload as Record<string, unknown>);
     },
     'telehealth.end_stale': async (_payload, helpers) => {
       await runEndStale(deps, `telehealth.end_stale:${helpers.job.id}`);

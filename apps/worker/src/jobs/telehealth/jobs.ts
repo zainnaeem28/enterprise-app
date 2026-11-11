@@ -20,6 +20,14 @@ export const TELEHEALTH_JOBS: readonly JobType[] = [
     jobClass: 'job',
   },
   {
+    name: 'telehealth.close_meeting',
+    maxAttempts: 8,
+    onMerged: 'resolve',
+    carriesPatientIds: true,
+    jobScope: 'patients',
+    jobClass: 'job',
+  },
+  {
     name: 'telehealth.end_stale',
     maxAttempts: 3,
     onMerged: 'none',

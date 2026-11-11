@@ -568,7 +568,7 @@ test('registration: duplicate warning shows only visible fields and needs a reas
   await page.getByLabel('Given name').fill('Amira');
   await page.getByLabel('Family name').fill('Okafor');
   await page.getByLabel('Date of birth').fill('1984-03-27');
-  await page.getByLabel('State').fill('NY');
+  await page.getByLabel('State').fill('AA');
   await page.getByRole('button', { name: 'Check for an existing record' }).click();
   await expect(
     page.getByText('A record may already exist. Check before creating a new one.'),

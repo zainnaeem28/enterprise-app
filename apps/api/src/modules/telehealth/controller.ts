@@ -197,7 +197,6 @@ export function createTelehealthControllers(d: TelehealthControllerDeps): Type<u
     @Post(':id/video-session/end')
     @Route({ permission: 'telehealth.session.host', resolver: 'reservation', realm: 'google' })
     async end(@Param('id') id: string, @ReqParam() req: Req, @ResParam() res: Res): Promise<void> {
-      let close: Parameters<TelehealthService['closeAtVendor']>[0] | undefined;
       await idempotent(
         req,
         res,
@@ -205,12 +204,9 @@ export function createTelehealthControllers(d: TelehealthControllerDeps): Type<u
         [id.toLowerCase()],
         async (tx) => {
           const r = await d.telehealth.end(tx, metaOf(req), id);
-          close = r.vendorClose;
           return { status: 200, body: r.view };
         },
       );
-      // Committed: now tell the vendor, best effort (the room also times out at the vendor, and the stale-session job retries).
-      if (close !== undefined) await d.telehealth.closeAtVendor(close);
     }
   }
 

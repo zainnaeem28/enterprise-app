@@ -643,7 +643,7 @@ describe('registration and the duplicate warning (7.3)', () => {
     await user.type(await screen.findByLabelText('Given name'), 'Amira');
     await user.type(screen.getByLabelText('Family name'), 'Okafor');
     await user.type(screen.getByLabelText('Date of birth'), '1984-03-27');
-    await user.type(screen.getByLabelText('State'), 'ny');
+    await user.type(screen.getByLabelText('State'), 'aa');
   };
   const candidates = {
     matchCheckId: 'mc-1',
@@ -718,7 +718,7 @@ describe('registration and the duplicate warning (7.3)', () => {
       matchCheckId: 'mc-1',
       duplicateAcknowledged: true,
       acknowledgeReason: 'Different date of birth on the card',
-      stateCode: 'NY',
+      stateCode: 'AA',
       locationId: LOC,
     });
     expect(reg?.headers.get('Idempotency-Key')).toBeTruthy();
