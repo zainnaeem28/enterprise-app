@@ -4,6 +4,10 @@ mock_provider "aws" {
   }
 }
 
+mock_provider "aws" {
+  alias = "recovery"
+}
+
 variables {
   env             = "staging"
   kms_key_arn     = "arn:aws:kms:us-east-2:111111111111:key/11111111-1111-1111-1111-111111111111"
@@ -108,4 +112,36 @@ run "replica_requires_key" {
     recovery_region = "us-west-2"
   }
   expect_failures = [aws_secretsmanager_secret.this]
+}
+
+run "replica_in_the_recovery_region_with_its_own_key" {
+  command = plan
+
+  variables {
+    recovery_region     = "us-west-2"
+    replica_kms_key_arn = "arn:aws:kms:us-west-2:111111111111:key/22222222-2222-2222-2222-222222222222"
+  }
+  assert {
+    condition = alltrue([for k, s in aws_secretsmanager_secret.this :
+      length(s.replica) == 1 && one(s.replica).region == "us-west-2" && one(s.replica).kms_key_id == "arn:aws:kms:us-west-2:111111111111:key/22222222-2222-2222-2222-222222222222"
+    ])
+    error_message = "every secret has exactly one replica, in the recovery Region, under the recovery-Region key"
+  }
+
+  # A replica does not inherit the resource policy of its primary: the same policy is attached to it in the recovery Region.
+  assert {
+    condition = alltrue([for k, p in aws_secretsmanager_secret_policy.replica :
+      strcontains(p.secret_arn, ":secretsmanager:us-west-2:") && !strcontains(p.secret_arn, "us-east-2")
+    ]) && length(aws_secretsmanager_secret_policy.replica) == length(var.secrets)
+    error_message = "every replica has a resource policy, addressed in the recovery Region"
+  }
+}
+
+run "no_replica_policy_without_a_recovery_region" {
+  command = plan
+
+  assert {
+    condition     = length(aws_secretsmanager_secret_policy.replica) == 0
+    error_message = "no replica policy without recovery_region"
+  }
 }

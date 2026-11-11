@@ -226,3 +226,34 @@ test('observation job cannot mutate: the read-only wrapper refuses a write verb 
   assert.notEqual(r.status, 0);
   assert.match(r.stderr, /read-only mode/);
 });
+
+test('portal-switch --dry-run copies from the release store when --source-bucket is given, into the portal bucket', () => {
+  const sha = 'a'.repeat(40);
+  const base = [
+    '--bucket',
+    'portal-b',
+    '--sha',
+    sha,
+    '--portal',
+    'staff',
+    '--distribution',
+    'E1',
+    '--dry-run',
+  ];
+  const same = run('portal-switch.mjs', base);
+  assert.equal(same.status, 0, same.stderr);
+  assert.match(
+    same.stdout,
+    new RegExp(
+      `copy s3://portal-b/releases/${sha}/bundles/staff/index.html -> s3://portal-b/live/staff/index.html`,
+    ),
+  );
+  const other = run('portal-switch.mjs', [...base, '--source-bucket', 'release-store']);
+  assert.equal(other.status, 0, other.stderr);
+  assert.match(
+    other.stdout,
+    new RegExp(
+      `copy s3://release-store/releases/${sha}/bundles/staff/release.json -> s3://portal-b/live/staff/release.json`,
+    ),
+  );
+});

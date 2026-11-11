@@ -166,7 +166,7 @@ their kind. The adapters ignore the row's credentials. Roles: `<env>-ehr-api-tas
 
 ## Part 3. Go-live checklist
 
-Every item is **NOT DONE**. "Owner" is who must act; "Unblocks" is what stays blocked or unverified until then. Condition IDs are
+Items 12-15 and 17 are **decided by delegation (ruling C)**: product defaults set by the owner's delegation (`HEAAA-33` ruling comment 56261f7e-58eb-4b31-a1d3-81c5fc2240cb), not legal or clinical advice, every value a setting; † = counsel confirmation pending before go-live (items 12, 13). Deciding is not doing: nothing is deployed and the organisation still enters its operating-state values and CMS facts at go-live. Every other item is **NOT DONE** and open, including clinical safety review (D-12a, item 11), counsel confirmation of deletion and retention (items 12, 13), Google Workspace tenant (C-10, item 18), UMLS (C-09, item 19), AWS account, BAA and cost (items 1-4), and the second human (C-13, item 5). "Owner" is who must act; "Unblocks" is what stays blocked or unverified until then. Condition IDs are
 from the register in `docs/DELIVERY-PLAN.md`.
 
 | # | Item | Owner | Status | Unblocks |
@@ -182,12 +182,12 @@ from the register in `docs/DELIVERY-PLAN.md`.
 | 9 | Human assistive-technology checks (screen reader, keyboard, zoom) and real-device checks (phones, tablets) | QA, Product owner | NOT DONE | accessibility and device acceptance; automation (axe) is not a substitute |
 | 10 | Real adapters verified on staging, section "Real-service checks" below | DevOps, QA | NOT DONE | each adapter in Part 2 as "verified" |
 | 11 | Clinician safety reviewer named (D-12a, C-03) | Product owner | NOT DONE | red-flag alert and consent-gate rules (RA-R1-07, RA-R1-08); every rule text and threshold |
-| 12 | Counsel on the meaning of deletion (D-8, C-05) | Product owner, counsel | NOT DONE | deletion requests (nothing is deleted today); TC-PR-03 |
-| 13 | Retention periods for audit, log, backup, export, flow-log and anchor data (C-20) | Product owner, counsel | NOT DONE | replacing the placeholder day counts in the IaC; TC-AU-09, TC-DOC-07 |
-| 14 | Operating states and state privacy rules (D-2, C-06) | Product owner | NOT DONE | real licensing-state values; telehealth rules (TC-TH-06..08) |
-| 15 | Proxy rules (D-7, C-04) | Product owner | NOT DONE | link creation, verification, age-out, revocation (RA-R1-20b, AC-32) |
+| 12 | Counsel on the meaning of deletion (D-8, C-05) Values decided by delegation (ruling C); counsel confirmation pending † | Product owner, counsel | DECIDED by delegation (ruling C); counsel confirmation pending † | deletion requests (nothing is deleted today); TC-PR-03 |
+| 13 | Retention periods for audit, log, backup, export, flow-log and anchor data (C-20) Values decided by delegation (ruling C) as settings; counsel confirmation pending †; replacing the IaC placeholders is a configuration change | Product owner, counsel | DECIDED by delegation (ruling C); counsel confirmation pending † | replacing the placeholder day counts in the IaC; TC-AU-09, TC-DOC-07 |
+| 14 | Operating states and state privacy rules (D-2, C-06) The organisation enters the real operating-state values (clinician licensed states) at go-live | Product owner | DECIDED by delegation (ruling C) | real licensing-state values; telehealth rules (TC-TH-06..08) |
+| 15 | Proxy rules (D-7, C-04) Rules decided by delegation (ruling C) | Product owner | DECIDED by delegation (ruling C) | link creation, verification, age-out, revocation (RA-R1-20b, AC-32) |
 | 16 | On-call rota (D-29, C-18) | Product owner, operations owner | NOT DONE | alert-delivery evidence and the go-live itself; 99.9 % stays a target |
-| 17 | CMS runtime versus SaaS CMS (C-19) | Product owner | NOT DONE | FE-16 marketing CMS path; cost of the marketing account |
+| 17 | CMS runtime versus SaaS CMS (C-19) Decided: self-hosted `apps/cms`, no SaaS CMS; the organisation enters its facts (name, address, phone, clinicians) as CMS entries at go-live | Product owner | DECIDED by delegation (ruling C) | FE-16 marketing CMS path; cost of the marketing account |
 | 18 | Google Workspace test tenant (C-10) for staff identity and calendar | Product owner | NOT DONE | real Google sign-in and calendar sync checks |
 | 19 | UMLS licence (C-09) | Product owner | NOT DONE | real terminology content, TC-CL-04 |
 | 20 | Production GitHub environments, reviewers and the approved-release records (section 1.3 and 1.4); staging conditions C-14 (DPR-37..39) applied and proven | Platform admin, second human | NOT DONE | every `*_ENABLED` variable |
@@ -195,6 +195,7 @@ from the register in `docs/DELIVERY-PLAN.md`.
 | 22 | Network and edge items: ACM certificates, Cognito custom domain, WAF logging, budget e-mails (inputs of the compute, edge and loadtest modules) | DevOps | NOT DONE | public endpoints |
 | 23 | Staging proofs of DEVOPS-PLAN 7.5 and TC-SEC-11 (rotation, `secretsmanager:KmsKeyId` conditions, `RunTask` override detection, key policies without root delegation) | DevOps, Security | NOT DONE | the first `bootstrap` run (G-6 in `scripts/bootstrap/README.md`) |
 | 24 | Exact-environment G3 and OPERATIONS_RECEIPT | Product owner | NOT DONE | any production mutation |
+| 25 | Owner item: counsel confirms the site legal pages (privacy, terms, cookies, accessibility; marked † in `docs/content/SITE-COPY-REVIEW.md`), and the organisation enters its Notice of Privacy Practices (CMS `Site text`, legal `npp`) and its contact details (CMS `Organisation details`). Complete conservative default text is live; the NPP page and its links stay hidden until entered (HEAAA-838) | Product owner, counsel | default applied (autonomous) | final legal wording; the NPP page |
 
 ### Real-service checks (all NOT DONE; nothing here was observed)
 
@@ -237,11 +238,21 @@ Known gaps with no code yet, so they stay on this list rather than being configu
 - No inbound receipt route (INT-N2) and no SNS signature verifier: no SES or SMS delivery receipts are recorded until a ticket adds them
   with the SES event destination.
 - The partner identity pool has no sign-in code in R1 (partner portal is R2).
-- The alarm for dead `telehealth.close_meeting` jobs: the worker log line is not in the repository.
-- Recovery-Region role policies and VAPID secret replication (no compute exists in the recovery Region).
+- The `telehealth.close_meeting` dead-job alarm is configured on the worker's generic `job_dead` line, but no `telehealth.close_meeting` job type exists in the repository yet, so it fires only once that job is added.
+- The payload KMS key replica is `aws_kms_replica_key.payload_recovery` in `infra/accounts/production/adapters.tf` (same policy, `aws.recovery`); authored only, not applied.
+- Recovery Region (`infra/modules/aws-adapters/recovery.tf`, the `secrets` and `storage` modules, production root) is **authored only, never applied**, and
+  nothing was exercised by a task there. Every service has an outcome (`docs/runbooks/recovery-region.md`):
+  - **granted:** document upload (Region-bound quarantine bucket, promotion into the clean replica), package and export (Region-bound buckets), malware
+    scanning (GuardDuty plan on the recovery quarantine bucket), SES (identity and configuration set; add the `recovery_ses_dkim_tokens` CNAMEs and request SES
+    production access in the recovery Region), runtime integration secrets for secrets created there, and the resource policy of the secret replicas (now explicit);
+  - **degraded, runbook section 2:** the Object Lock anchor archive (anchors queue in the database and the archive job catches up after failback, the "anchor not
+    archived" alert is expected), runtime integration secrets created before the failover (not replicated: copy them while the home Region answers, otherwise the
+    owners re-enter them), and SMS when `recovery_sms_origination_identity_arn` is null (SMS refused; failed sends follow the job retry and dead-job policy, re-send from the dead-job list after failback);
+  - the recovery compute is still created during a declared failover; whether AWS applies the replica secret policy as authored, the GuardDuty tags in the recovery Region and
+    the SES DKIM verification there are confirmed in the rehearsal. Owner item: acquire and register an SMS identity in the recovery Region (a purchase) or accept the SMS degraded mode.
 - Chime offers no per-token lifetime: the "short-lived" bound is only in our own record.
 - Load scenarios (QA-07) are wired into `loadtest-run.yml` between the two cost guards through `tests/load/run-suite.sh` (perf-01..04, 06..08, rec-04, rec-07; TC-PERF-05 stays with Lighthouse). **Mechanics only, not a capacity result:** the suite was run only against the localhost fixture at tiny scale (`tests/load/evidence/suite-mechanics-HEAAA-776.txt`); the workflow was never run (no AWS account, no hosted CI) and no NFR-6..9 result exists. A case that cannot run is `NOT_RUN` and fails the job, never a pass. Remaining: the seeder does not yet emit the sessions and ids files or the API URL (variables `LOADTEST_BASE_URL`, `LOADTEST_HOSTS`, `LOADTEST_SESSIONS_S3_URI`, `LOADTEST_IDS_S3_URI`); perf-06 needs `LOADTEST_VENDOR_SANDBOX=1`; the SQL reconciliations (`check-audit`, `check-exactly-one`, `check-recovery`) need `LOADTEST_RO_DATABASE_URL_SECRET_ID`; TC-REC-04/07 disruptions are DevOps' OPS part and are not injected; perf-08 leak/queue-growth has no checker.
-- Bootstrap interface points G-1..G-5 (`scripts/bootstrap/README.md`) and the permission gaps in `scripts/deploy/README.md`.
+- Bootstrap interface points and deploy permission gaps (`scripts/bootstrap/README.md`, `scripts/deploy/README.md`): G-1 (token-secret delete), G-2 (task log read, rotation), G-4 (record field names) and deploy permission gaps 1-3 are now IaC in `infra/modules/ci-trust` (authored, `tofu test` with mock providers only, never applied; the production/staging roots must still pass the new `refs`). Remaining: G-3 and the result field names depend on the bootstrap task (not built); G-5 (audit archive task and `audit_archiver` grants) is application and database work; deploy gaps 4-5 need workflow edits (`gh run download` retention, a release-store source bucket variable for `portal-switch --source-bucket`) and a cross-account bucket policy; G-6 needs an AWS account and a second human (TC-SEC-11).
 
 ## Evidence rules
 

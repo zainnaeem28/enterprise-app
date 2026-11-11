@@ -44,13 +44,17 @@ variable "bucket_name_prefix" {
 }
 
 variable "package_expiry_days" {
-  description = "Privacy export packages are short-lived downloads. PLACEHOLDER, not an approved retention value."
+  description = "Privacy export packages are short-lived downloads: 7 days (owner ruling C item 2 †, counsel confirmation pending; infra/RETENTION.md)."
   type        = number
-  default     = 14
+  default     = 7
+  validation {
+    condition     = var.package_expiry_days >= 1
+    error_message = "package_expiry_days must be at least 1."
+  }
 }
 
 variable "export_expiry_days" {
-  description = "Audit export objects are copies; the audit archive is the record. PLACEHOLDER, not an approved retention value."
+  description = "Audit export objects are copies; the audit archive is the record. Not covered by owner ruling C item 2: 90 days is unchanged and still unconfirmed (infra/RETENTION.md)."
   type        = number
   default     = 90
 }
@@ -197,4 +201,42 @@ variable "video_failure_threshold" {
   description = "Failed video vendor calls in 5 minutes that raise the alarm. PLACEHOLDER, not a tuned value."
   type        = number
   default     = 5
+}
+
+# ---- recovery Region (no compute exists there; policies only) ----
+
+variable "recovery_region" {
+  description = "Recovery Region (for example us-west-2). When set, the three task roles may be assumed by ECS tasks of this Region and get a second inline policy naming the recovery-Region replicas. No compute is created either way. Null keeps the roles primary-Region only."
+  type        = string
+  default     = null
+}
+
+variable "recovery_data_kms_key_arn" {
+  description = "Replica of the data key in the recovery Region (aws_kms_replica_key). Required with recovery_region."
+  type        = string
+  default     = null
+}
+
+variable "recovery_secrets_kms_key_arn" {
+  description = "Key that encrypts the replicas of the secrets in the recovery Region (not a replica key: Secrets Manager takes any key of that Region). Required with recovery_region."
+  type        = string
+  default     = null
+}
+
+variable "recovery_docs_clean_bucket_arn" {
+  description = "Recovery-Region replica of the clean documents bucket (storage module output replica_bucket_arn). Required with recovery_region."
+  type        = string
+  default     = null
+}
+
+variable "recovery_quarantine_expiry_days" {
+  description = "Objects left in the recovery-Region quarantine bucket are expired after this many days (same default as the storage module)."
+  type        = number
+  default     = 7
+}
+
+variable "recovery_sms_origination_identity_arn" {
+  description = "End User Messaging phone number, pool or sender ID in the RECOVERY Region (identities are per Region; acquiring one is a purchase and a carrier registration, so it is an input). Null leaves SMS out of the recovery Region: SMS is the documented degraded mode (docs/runbooks/recovery-region.md)."
+  type        = string
+  default     = null
 }

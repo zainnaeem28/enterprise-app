@@ -1,0 +1,4 @@
+head under test: c270619ea6c6 (infra files identical in the evidence commit)
+gitleaks (git origin/dev..HEAD + tree): no findings
+trivy config + check-trivy-config.mjs: 2x AWS-0104 CRITICAL in modules/compute/main.tf, identical on unmodified origin/dev (pre-existing, not touched here)
+not run: no hosted CI (owner ruling B): app jobs (unit, build, integration-db, N-1, contract, SAST, audit, bundle, e2e): diff touches only infra/ and docs/

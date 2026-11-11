@@ -1,0 +1,18 @@
+== validate infra/modules/storage
+Success! The configuration is valid.
+== validate infra/modules/secrets
+Success! The configuration is valid.
+== validate infra/modules/aws-adapters
+Success! The configuration is valid.
+== validate infra/accounts/production
+Success! The configuration is valid.
+== validate infra/accounts/staging
+Success! The configuration is valid.
+== test infra/modules/storage
+Success! 7 passed, 0 failed.
+== test infra/modules/secrets
+Success! 8 passed, 0 failed.
+== test infra/modules/aws-adapters
+Success! 22 passed, 0 failed.
+== fmt
+ok

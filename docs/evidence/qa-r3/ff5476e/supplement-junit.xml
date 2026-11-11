@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testsuite name="RA-R1-23 doctor availability, leave and blocked time (TC-DR)" time="2.159451" disabled="0" errors="0" tests="3" failures="0" skipped="0" timestamp="2026-11-11T12:05:10.128Z" hostname="9141f04a5c82">
+		<testcase name="TC-DR-01 leave and blocked time change slot search at once; removing them restores the slots; a template edit is reflected" time="1.101484" classname="RA-R1-23 doctor availability, leave and blocked time (TC-DR)" file="/paperclip/scratch/heaaa-663/tests/e2e/journeys/supplement.test.mjs"/>
+		<testcase name="TC-DR-02 leave over a booked slot warns of the conflict (dry run) and never cancels the appointment silently" time="0.641150" classname="RA-R1-23 doctor availability, leave and blocked time (TC-DR)" file="/paperclip/scratch/heaaa-663/tests/e2e/journeys/supplement.test.mjs"/>
+		<testcase name="TC-DR-03 another doctor cannot read or change this doctor’s availability, leave or blocked time; nothing changes" time="0.414979" classname="RA-R1-23 doctor availability, leave and blocked time (TC-DR)" file="/paperclip/scratch/heaaa-663/tests/e2e/journeys/supplement.test.mjs"/>
+	</testsuite>
+	<testsuite name="RA-R1-24 doctor chart summary with name, DOB and photo (TC-CL-08)" time="1.042949" disabled="0" errors="0" tests="1" failures="0" skipped="0" timestamp="2026-11-11T12:05:12.285Z" hostname="9141f04a5c82">
+		<testcase name="TC-CL-08 chart summary shows problems, allergies, medications, vitals, history, documents, with name, date of birth and MRN on the banner; uncoded items are marked [photo: no object store]" time="1.042659" classname="RA-R1-24 doctor chart summary with name, DOB and photo (TC-CL-08)" file="/paperclip/scratch/heaaa-663/tests/e2e/journeys/supplement.test.mjs"/>
+	</testsuite>
+	<testsuite name="RA-R1-24 history and documents parts of the chart summary (TC-CL-08b)" time="0.428563" disabled="0" errors="0" tests="1" failures="0" skipped="0" timestamp="2026-11-11T12:05:13.327Z" hostname="9141f04a5c82">
+		<testcase name="TC-CL-08b the chart summary returns the encounter history and the documents list (arrays, not null)" time="0.428215" classname="RA-R1-24 history and documents parts of the chart summary (TC-CL-08b)" file="/paperclip/scratch/heaaa-663/tests/e2e/journeys/supplement.test.mjs"/>
+	</testsuite>
+	<testsuite name="RA-R1-29 manual insurance verification (TC-PC-10)" time="0.469973" disabled="0" errors="0" tests="1" failures="0" skipped="0" timestamp="2026-11-11T12:05:13.759Z" hostname="9141f04a5c82">
+		<testcase name="TC-PC-10 staff record a verification status and date; it is saved and audited; no outbound call is made [card image: no object store]" time="0.469681" classname="RA-R1-29 manual insurance verification (TC-PC-10)" file="/paperclip/scratch/heaaa-663/tests/e2e/journeys/supplement.test.mjs"/>
+	</testsuite>
+	<testsuite name="RA-R1-21 pre-visit questionnaire, consents, insurance and staff-visible status (TC-PP-06, TC-PP-07)" time="1.267055" disabled="0" errors="0" tests="2" failures="0" skipped="0" timestamp="2026-11-11T12:05:14.229Z" hostname="9141f04a5c82">
+		<testcase name="TC-PP-07 partial completion (consent only): staff see the visit incomplete and exactly which items are open" time="0.534473" classname="RA-R1-21 pre-visit questionnaire, consents, insurance and staff-visible status (TC-PP-06, TC-PP-07)" file="/paperclip/scratch/heaaa-663/tests/e2e/journeys/supplement.test.mjs"/>
+		<testcase name="TC-PP-06 questionnaire submitted, consent e-signed with its version and date, insurance record added: staff see all three complete [card image upload: blocked, no object store; send-time 72 h setting not exercised]" time="0.732261" classname="RA-R1-21 pre-visit questionnaire, consents, insurance and staff-visible status (TC-PP-06, TC-PP-07)" file="/paperclip/scratch/heaaa-663/tests/e2e/journeys/supplement.test.mjs"/>
+	</testsuite>
+	<!-- tests 8 -->
+	<!-- suites 5 -->
+	<!-- pass 8 -->
+	<!-- fail 0 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 0 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 6076.496286 -->
+</testsuites>

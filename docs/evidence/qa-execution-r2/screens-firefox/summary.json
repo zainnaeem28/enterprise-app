@@ -1,0 +1,143 @@
+{
+  "engine": "firefox",
+  "browser": "157.0",
+  "results": [
+    {
+      "id": "seed.world",
+      "ok": true,
+      "detail": "doctor STF-DR-X5939936, patient PAT-2707238, front desk STF-FD-QA-7023372, booked=true"
+    },
+    {
+      "id": "firefox:doctor.session",
+      "ok": true,
+      "detail": "status 200"
+    },
+    {
+      "id": "firefox:10-doctor-schedule",
+      "ok": true,
+      "detail": "http://localhost:4351/schedule text=376ch expect /Casey Synthetic/"
+    },
+    {
+      "id": "firefox:11-doctor-patient-list",
+      "ok": true,
+      "detail": "http://localhost:4351/patients text=428ch"
+    },
+    {
+      "id": "firefox:12-doctor-alerts",
+      "ok": true,
+      "detail": "http://localhost:4351/alerts text=272ch"
+    },
+    {
+      "id": "firefox:13-doctor-notes-to-sign",
+      "ok": true,
+      "detail": "http://localhost:4351/notes-to-sign text=348ch"
+    },
+    {
+      "id": "firefox:14-doctor-availability",
+      "ok": true,
+      "detail": "http://localhost:4351/availability text=709ch"
+    },
+    {
+      "id": "firefox:15-doctor-tasks",
+      "ok": true,
+      "detail": "http://localhost:4351/tasks text=346ch"
+    },
+    {
+      "id": "firefox:frontdesk.session",
+      "ok": true,
+      "detail": "status 200"
+    },
+    {
+      "id": "firefox:20-frontdesk-arrivals",
+      "ok": true,
+      "detail": "http://localhost:4351/arrivals text=569ch"
+    },
+    {
+      "id": "firefox:21-frontdesk-waitlist",
+      "ok": true,
+      "detail": "http://localhost:4351/waitlist text=321ch"
+    },
+    {
+      "id": "firefox:22-frontdesk-patients",
+      "ok": true,
+      "detail": "http://localhost:4351/patients text=327ch"
+    },
+    {
+      "id": "firefox:23-frontdesk-forms",
+      "ok": true,
+      "detail": "http://localhost:4351/forms text=355ch"
+    },
+    {
+      "id": "firefox:24-frontdesk-triage-queue",
+      "ok": true,
+      "detail": "http://localhost:4351/triage text=411ch"
+    },
+    {
+      "id": "firefox:patient.session",
+      "ok": true,
+      "detail": "status 200"
+    },
+    {
+      "id": "firefox:30-patient-home",
+      "ok": true,
+      "detail": "http://127.0.0.1:4350/ text=161ch"
+    },
+    {
+      "id": "firefox:31-patient-booking-start",
+      "ok": true,
+      "detail": "http://127.0.0.1:4350/book text=310ch expect /What would you like to book/"
+    },
+    {
+      "id": "firefox:32-patient-profile",
+      "ok": true,
+      "detail": "http://127.0.0.1:4350/profile text=534ch expect /Casey|profile/i"
+    },
+    {
+      "id": "firefox:33-patient-privacy",
+      "ok": true,
+      "detail": "http://127.0.0.1:4350/privacy text=589ch"
+    },
+    {
+      "id": "firefox:34-patient-messages",
+      "ok": true,
+      "detail": "http://127.0.0.1:4350/messages text=129ch"
+    },
+    {
+      "id": "firefox:35-patient-appointments",
+      "ok": true,
+      "detail": "http://127.0.0.1:4350/appointments text=211ch expect /Confirmed/"
+    },
+    {
+      "id": "firefox:36-patient-previsit",
+      "ok": true,
+      "detail": "http://127.0.0.1:4350/appointments/01a1c5ce-00bf-70bb-9c7e-d57fc9b7cb1c/previsit text=352ch"
+    },
+    {
+      "id": "firefox:40-site-home",
+      "ok": true,
+      "detail": "http://127.0.0.1:45079/ text=824ch"
+    },
+    {
+      "id": "firefox:41-site-services",
+      "ok": true,
+      "detail": "http://127.0.0.1:45079/services text=774ch expect /appointment|consult/i"
+    },
+    {
+      "id": "firefox:42-site-doctors",
+      "ok": true,
+      "detail": "http://127.0.0.1:45079/doctors text=997ch"
+    },
+    {
+      "id": "firefox:43-site-locations",
+      "ok": true,
+      "detail": "http://127.0.0.1:45079/locations text=545ch"
+    },
+    {
+      "id": "firefox:50-patient-home-360px",
+      "ok": true,
+      "detail": "http://127.0.0.1:4350/ text=161ch"
+    }
+  ],
+  "pageErrors": [],
+  "at": "2026-11-10T14:13:26.825Z"
+}

@@ -129,7 +129,8 @@ locals {
 }
 
 module "aws_adapters" {
-  source = "../../modules/aws-adapters"
+  source    = "../../modules/aws-adapters"
+  providers = { aws = aws, aws.recovery = aws.recovery }
 
   env                           = local.env
   compute_name                  = local.compute_name
@@ -174,7 +175,8 @@ module "storage" {
 }
 
 module "secrets" {
-  source = "../../modules/secrets"
+  source    = "../../modules/secrets"
+  providers = { aws = aws, aws.recovery = aws.recovery }
 
   env             = local.env
   kms_key_arn     = module.kms_secrets.key_arn

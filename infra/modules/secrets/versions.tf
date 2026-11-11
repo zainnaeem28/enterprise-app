@@ -4,6 +4,8 @@ terraform {
     aws = {
       source  = "hashicorp/aws"
       version = "~> 5.80"
+      # Policy of the recovery-Region replicas; always passed by the caller, unused without recovery_region.
+      configuration_aliases = [aws.recovery]
     }
   }
 }

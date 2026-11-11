@@ -1,0 +1,10 @@
+
+✖ 46 problems (0 errors, 46 warnings)
+
+[warn] Code style issues found in 8 files. Run Prettier with --write to fix.
+[ELIFECYCLE] Command failed with exit code 1.
+apps/api typecheck: Done
+apps/patient typecheck: Done
+apps/staff typecheck: Done
+passing fixture messages: []
+PASS: upward import rejected, downward import accepted

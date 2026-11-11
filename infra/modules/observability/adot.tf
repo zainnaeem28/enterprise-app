@@ -68,19 +68,19 @@ locals {
 }
 
 resource "aws_cloudwatch_log_group" "adot" {
-  # checkov:skip=CKV_AWS_338:Operational log, 30-90 day retention by design; application and security log retention is set in DEVOPS-PLAN 11.1 (final periods need counsel)
+  # checkov:skip=CKV_AWS_338:Log retention is var.log_retention_days (90 days, owner ruling C item 2, counsel confirmation pending); the 1-year archive stage is described in infra/RETENTION.md
   count             = var.enable_core ? 1 : 0
   name              = "/${var.name}/adot-collector"
-  retention_in_days = 30
+  retention_in_days = var.log_retention_days
   kms_key_id        = var.kms_key_arn
   tags              = var.tags
 }
 
 resource "aws_cloudwatch_log_group" "emf" {
-  # checkov:skip=CKV_AWS_338:Operational log, 30-90 day retention by design; application and security log retention is set in DEVOPS-PLAN 11.1 (final periods need counsel)
+  # checkov:skip=CKV_AWS_338:Log retention is var.log_retention_days (90 days, owner ruling C item 2, counsel confirmation pending); the 1-year archive stage is described in infra/RETENTION.md
   count             = var.enable_core ? 1 : 0
   name              = "/${var.name}/otel-emf"
-  retention_in_days = 30
+  retention_in_days = var.log_retention_days
   kms_key_id        = var.kms_key_arn
   tags              = var.tags
 }

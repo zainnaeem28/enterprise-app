@@ -28,6 +28,10 @@ mock_provider "aws" {
   }
 }
 
+mock_provider "aws" {
+  alias = "recovery"
+}
+
 variables {
   env                           = "staging"
   compute_name                  = "ehr-staging"
@@ -190,5 +194,26 @@ run "video_failure_alarm_watches_the_api_log_group" {
   assert {
     condition     = length(aws_cloudwatch_metric_alarm.video_vendor_failure.alarm_actions) == 1 && aws_cloudwatch_metric_alarm.video_vendor_failure.period == 300
     error_message = "5-minute alarm with an action"
+  }
+}
+
+run "close_meeting_dead_alarm_watches_the_worker_log_group" {
+  command = plan
+
+  assert {
+    condition     = aws_cloudwatch_log_metric_filter.close_meeting_dead.log_group_name == "/ecs/ehr-staging/worker" && length(regexall("job_dead.*telehealth\\.close_meeting", aws_cloudwatch_log_metric_filter.close_meeting_dead.pattern)) == 1
+    error_message = "metric filter on job_dead lines of telehealth.close_meeting in the worker log group"
+  }
+  assert {
+    condition     = length(aws_cloudwatch_metric_alarm.close_meeting_dead.alarm_actions) == 1 && aws_cloudwatch_metric_alarm.close_meeting_dead.threshold == 1
+    error_message = "one dead job raises the alarm, with an action"
+  }
+}
+
+run "privacy_packages_expire_after_seven_days" {
+  command = plan
+  assert {
+    condition     = one([for k, v in aws_s3_bucket_lifecycle_configuration.this : v if k == "packages"]).rule[0].expiration[0].days == 7
+    error_message = "privacy export packages expire after 7 days (ruling C item 2)"
   }
 }
