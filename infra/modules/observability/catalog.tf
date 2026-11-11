@@ -103,6 +103,12 @@ locals {
       first    = "Check the vendor status page and the retry state of the integration."
       severity = "page or ticket by vendor criticality", source = "alarm"
     }
+    secret_replica_not_in_sync = {
+      owner    = local.owners.devops
+      impact   = "A runtime integration secret would be missing or stale in the recovery Region at failover."
+      first    = "Worker log lines event=secret_replica_unhealthy; repair with replicate-secret-to-regions; runbook recovery-region 2.2."
+      severity = "ticket", source = "alarm"
+    }
     audit_anchor_late = {
       owner    = local.owners.security
       impact   = "Audit anchors are not being written; tamper evidence has a gap."

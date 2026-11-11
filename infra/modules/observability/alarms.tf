@@ -111,6 +111,12 @@ locals {
         enabled = local.core, catalog = "outbox_backlog", route = "page", ns = local.app_ns, metric = "OutboxOldestUnsentAgeSeconds"
         period  = 60, evals = 5, dp = 5, threshold = var.outbox_age_threshold_seconds
       }
+      # HEAAA-860 / HEAAA-870 D-7: the worker check publishes the count of runtime secrets whose recovery-Region replica is not
+      # in sync every 15 minutes (0 included); a stopped check is missing data and alarms.
+      "secret-replica-not-in-sync" = {
+        enabled = local.core && var.secret_replica_monitoring, catalog = "secret_replica_not_in_sync", route = "ticket", ns = local.app_ns, metric = "SecretReplicaNotInSync"
+        period  = 900, evals = 2, dp = 2, threshold = 0, missing = "breaching"
+      }
       "audit-anchor-late" = {
         enabled = local.core, catalog = "audit_anchor_late", route = "security", ns = local.app_ns, metric = "AuditAnchorLateSeconds"
         period  = 60, evals = 3, dp = 3, threshold = var.audit_anchor_late_threshold_seconds, missing = "breaching"

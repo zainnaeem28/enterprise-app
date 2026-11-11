@@ -6,7 +6,7 @@
 locals {
   oidc_domain = "https://${var.patient_auth_domain}"
 
-  common_environment = {
+  common_environment = merge({
     AWS_REGION                    = local.region
     EHR_SECRETS_PREFIX            = var.env
     EHR_SECRETS_KMS_KEY_ID        = var.secrets_kms_key_arn
@@ -17,7 +17,14 @@ locals {
     EHR_S3_PACKAGE_BUCKET         = aws_s3_bucket.this["packages"].id
     EHR_S3_PACKAGE_KMS_KEY_ID     = var.data_kms_key_arn
     EHR_CHIME_MEDIA_REGION        = var.chime_media_region
-  }
+    },
+    # Runtime integration secrets are created with a replica under the recovery-Region key (HEAAA-860). Both or neither; the
+    # recovery-Region task definitions built at failover must NOT set them (runbook recovery-region 2.2).
+    local.recovery_enabled ? {
+      EHR_SECRETS_REPLICA_REGION     = var.recovery_region
+      EHR_SECRETS_REPLICA_KMS_KEY_ID = var.recovery_secrets_kms_key_arn
+    } : {},
+  )
 
   api_environment = merge(var.extra_environment, local.common_environment, {
     EHR_PATIENT_OIDC_ISSUER                 = var.patient_oidc_issuer

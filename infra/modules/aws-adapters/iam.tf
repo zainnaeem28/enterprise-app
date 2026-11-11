@@ -91,6 +91,27 @@ data "aws_iam_policy_document" "api" {
     resources = ["${local.secret_arn_prefix}/integration/outbound/*"]
   }
 
+  # Runtime outbound secrets are created with a recovery-Region replica (HEAAA-860; AddReplicaRegions on CreateSecret needs this action).
+  # Null=false makes the condition fail when a request carries no AddReplicaRegions (ForAllValues alone passes on an absent key).
+  dynamic "statement" {
+    for_each = local.recovery_enabled ? [1] : []
+    content {
+      sid       = "ReplicateOutboundSecretsToRecoveryRegion"
+      actions   = ["secretsmanager:ReplicateSecretToRegions"]
+      resources = ["${local.secret_arn_prefix}/integration/outbound/*"]
+      condition {
+        test     = "ForAllValues:StringEquals"
+        variable = "secretsmanager:AddReplicaRegions"
+        values   = [var.recovery_region]
+      }
+      condition {
+        test     = "Null"
+        variable = "secretsmanager:AddReplicaRegions"
+        values   = ["false"]
+      }
+    }
+  }
+
   statement {
     sid       = "ReadInboundVerificationKeys"
     actions   = ["secretsmanager:GetSecretValue"]
@@ -255,6 +276,47 @@ data "aws_iam_policy_document" "worker" {
     sid       = "WriteInboundSecrets"
     actions   = ["secretsmanager:CreateSecret", "secretsmanager:PutSecretValue"]
     resources = ["${local.secret_arn_prefix}/integration/inbound/*"]
+  }
+
+  # Runtime inbound secrets are created with a recovery-Region replica (HEAAA-860; AddReplicaRegions on CreateSecret needs this action).
+  # Null=false makes the condition fail when a request carries no AddReplicaRegions (ForAllValues alone passes on an absent key).
+  dynamic "statement" {
+    for_each = local.recovery_enabled ? [1] : []
+    content {
+      sid       = "ReplicateInboundSecretsToRecoveryRegion"
+      actions   = ["secretsmanager:ReplicateSecretToRegions"]
+      resources = ["${local.secret_arn_prefix}/integration/inbound/*"]
+      condition {
+        test     = "ForAllValues:StringEquals"
+        variable = "secretsmanager:AddReplicaRegions"
+        values   = [var.recovery_region]
+      }
+      condition {
+        test     = "Null"
+        variable = "secretsmanager:AddReplicaRegions"
+        values   = ["false"]
+      }
+    }
+  }
+
+  # Replica health check (HEAAA-860, HEAAA-870 D-7): metadata only, never a value. ListSecrets supports no resource types
+  # (Service Authorization Reference, Secrets Manager, ListSecrets: "Resource types" empty), so it needs "*".
+  dynamic "statement" {
+    for_each = local.recovery_enabled ? [1] : []
+    content {
+      sid       = "DescribeIntegrationSecretReplicas"
+      actions   = ["secretsmanager:DescribeSecret"]
+      resources = ["${local.secret_arn_prefix}/integration/*"]
+    }
+  }
+
+  dynamic "statement" {
+    for_each = local.recovery_enabled ? [1] : []
+    content {
+      sid       = "ListSecretsForReplicaCheck"
+      actions   = ["secretsmanager:ListSecrets"]
+      resources = ["*"]
+    }
   }
 
   statement {

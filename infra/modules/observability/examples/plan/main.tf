@@ -42,6 +42,7 @@ module "observability" {
   waf_web_acls              = { ehr-production-alb = { scope = "REGIONAL" } }
   backup_vault_name         = "ehr-production-vault"
   recovery_region           = "us-west-2"
+  secret_replica_monitoring = true # the application is configured with a recovery-Region replica (aws-adapters env.tf)
   backup_replication_rules  = { audit = { source_bucket = "audit-archive", destination_bucket = "audit-archive-recovery", rule_id = "all" } }
   integration_vendors       = { sms = { criticality = "page" }, video = { criticality = "ticket" } }
   break_glass_role_arns     = ["arn:aws:iam::111111111111:role/bg-admin"]

@@ -334,7 +334,7 @@ run "worker_policy_is_exact" {
   assert {
     condition = alltrue([for s in jsondecode(data.aws_iam_policy_document.worker.json).Statement :
       !contains(flatten([s.Resource]), "*") || s.Effect == "Deny" || contains([
-        "AccountLevelReads", "OcrDetectText", "CreateMeeting",
+        "AccountLevelReads", "OcrDetectText", "CreateMeeting", "ListSecretsForReplicaCheck",
       ], s.Sid)
     ])
     error_message = "a wildcard resource outside the three justified statements"
@@ -643,5 +643,126 @@ run "without_recovery_region_nothing_recovery_exists" {
   assert {
     condition     = length(aws_iam_role_policy.recovery_api) + length(aws_iam_role_policy.recovery_worker) + length(aws_iam_role_policy.recovery_execution) + length(terraform_data.recovery_inputs) + length(aws_s3_bucket.recovery) + length(aws_guardduty_malware_protection_plan.recovery_quarantine) + length(aws_sesv2_email_identity.recovery) == 0
     error_message = "no recovery policy without recovery_region"
+  }
+}
+
+# HEAAA-860 (HEAAA-870 D-4b): the replica Allows sit on top of the D-4a denies and do not widen them.
+run "secret_replica_allows_are_scoped_conditioned_and_leave_the_denies_intact" {
+  command = apply
+
+  variables {
+    payload_key_multi_region       = true
+    recovery_region                = "us-west-2"
+    recovery_data_kms_key_arn      = "arn:aws:kms:us-west-2:111111111111:key/mrk-data"
+    recovery_secrets_kms_key_arn   = "arn:aws:kms:us-west-2:111111111111:key/secrets-dr"
+    recovery_docs_clean_bucket_arn = "arn:aws:s3:::ehr-staging-docs-clean-replica"
+  }
+
+  assert {
+    condition = anytrue([for s in jsondecode(data.aws_iam_policy_document.api.json).Statement :
+      s.Sid == "ReplicateOutboundSecretsToRecoveryRegion" && s.Effect == "Allow" &&
+      flatten([s.Action]) == ["secretsmanager:ReplicateSecretToRegions"] &&
+      flatten([s.Resource]) == ["arn:aws:secretsmanager:us-east-2:111111111111:secret:staging/integration/outbound/*"] &&
+      s.Condition["ForAllValues:StringEquals"]["secretsmanager:AddReplicaRegions"] == "us-west-2" &&
+      s.Condition["Null"]["secretsmanager:AddReplicaRegions"] == "false"
+    ])
+    error_message = "api may replicate outbound secrets to the recovery Region only, and only when AddReplicaRegions is sent"
+  }
+
+  assert {
+    condition = anytrue([for s in jsondecode(data.aws_iam_policy_document.worker.json).Statement :
+      s.Sid == "ReplicateInboundSecretsToRecoveryRegion" && s.Effect == "Allow" &&
+      flatten([s.Action]) == ["secretsmanager:ReplicateSecretToRegions"] &&
+      flatten([s.Resource]) == ["arn:aws:secretsmanager:us-east-2:111111111111:secret:staging/integration/inbound/*"] &&
+      s.Condition["ForAllValues:StringEquals"]["secretsmanager:AddReplicaRegions"] == "us-west-2" &&
+      s.Condition["Null"]["secretsmanager:AddReplicaRegions"] == "false"
+    ])
+    error_message = "worker may replicate inbound secrets to the recovery Region only, and only when AddReplicaRegions is sent"
+  }
+
+  assert {
+    condition = anytrue([for s in jsondecode(data.aws_iam_policy_document.worker.json).Statement :
+      s.Sid == "DescribeIntegrationSecretReplicas" && flatten([s.Action]) == ["secretsmanager:DescribeSecret"] &&
+      flatten([s.Resource]) == ["arn:aws:secretsmanager:us-east-2:111111111111:secret:staging/integration/*"]
+      ]) && anytrue([for s in jsondecode(data.aws_iam_policy_document.worker.json).Statement :
+      s.Sid == "ListSecretsForReplicaCheck" && flatten([s.Action]) == ["secretsmanager:ListSecrets"] && flatten([s.Resource]) == ["*"]
+    ])
+    error_message = "worker reads replica metadata only (DescribeSecret on the integration prefix, ListSecrets)"
+  }
+
+  # The check never gets the value: no extra GetSecretValue scope, and the api gets no Describe/List.
+  assert {
+    condition = !anytrue([for s in jsondecode(data.aws_iam_policy_document.api.json).Statement :
+      s.Effect == "Allow" && length(setintersection(toset(flatten([s.Action])), toset(["secretsmanager:DescribeSecret", "secretsmanager:ListSecrets"]))) > 0
+    ])
+    error_message = "the api has no replica-check permissions"
+  }
+
+  # D-4a denies still present and unchanged.
+  assert {
+    condition = anytrue([for s in jsondecode(data.aws_iam_policy_document.api.json).Statement :
+      s.Sid == "ApiCannotWriteInboundSecrets" && s.Effect == "Deny" &&
+      join(",", sort(flatten([s.Action]))) == "secretsmanager:CreateSecret,secretsmanager:PutSecretValue,secretsmanager:ReplicateSecretToRegions,secretsmanager:UpdateSecret" &&
+      flatten([s.Resource]) == ["arn:aws:secretsmanager:*:111111111111:secret:staging/integration/inbound/*"]
+      ]) && anytrue([for s in jsondecode(data.aws_iam_policy_document.worker.json).Statement :
+      s.Sid == "WorkerCannotWriteOutboundSecrets" && s.Effect == "Deny" &&
+      join(",", sort(flatten([s.Action]))) == "secretsmanager:CreateSecret,secretsmanager:PutSecretValue,secretsmanager:ReplicateSecretToRegions,secretsmanager:UpdateSecret" &&
+      flatten([s.Resource]) == ["arn:aws:secretsmanager:*:111111111111:secret:staging/integration/outbound/*"]
+    ])
+    error_message = "the HEAAA-875 class denies changed"
+  }
+
+  assert {
+    condition = alltrue([for doc in [data.aws_iam_policy_document.api.json, data.aws_iam_policy_document.worker.json] :
+      anytrue([for s in jsondecode(doc).Statement :
+        s.Sid == "CannotChangeSecretPolicyOrReplication" && s.Effect == "Deny" && flatten([s.Resource]) == ["*"] &&
+        join(",", sort(flatten([s.Action]))) == "secretsmanager:DeleteResourcePolicy,secretsmanager:PutResourcePolicy,secretsmanager:RemoveRegionsFromReplication,secretsmanager:StopReplicationToReplica"
+        ]) && anytrue([for s in jsondecode(doc).Statement :
+        s.Sid == "CannotChangeKeyPolicy" && s.Effect == "Deny" && flatten([s.Action]) == ["kms:PutKeyPolicy"]
+      ])
+    ])
+    error_message = "the HEAAA-875 policy and key-policy denies changed"
+  }
+
+  # No Allow in any app or recovery role names a policy/replication-change action, and replicate-to-regions stays in its class.
+  assert {
+    condition = !anytrue(flatten([
+      for doc in [data.aws_iam_policy_document.api.json, data.aws_iam_policy_document.worker.json, data.aws_iam_policy_document.recovery_api[0].json, data.aws_iam_policy_document.recovery_worker[0].json] : [
+        for s in jsondecode(doc).Statement : s.Effect == "Allow" && length(setintersection(toset(flatten([s.Action])), toset([
+          "secretsmanager:PutResourcePolicy", "secretsmanager:DeleteResourcePolicy", "secretsmanager:RemoveRegionsFromReplication",
+          "secretsmanager:StopReplicationToReplica", "kms:PutKeyPolicy", "secretsmanager:UpdateSecret", "secretsmanager:*", "kms:*", "*",
+        ]))) > 0
+      ]
+    ]))
+    error_message = "an app or recovery role allows a denied secret or key action"
+  }
+
+  assert {
+    condition     = toset(output.recovery_environment.common_unset) == toset(["EHR_SECRETS_REPLICA_REGION", "EHR_SECRETS_REPLICA_KMS_KEY_ID"])
+    error_message = "recovery-Region tasks must unset the replica variables"
+  }
+
+  assert {
+    condition = !anytrue(flatten([
+      for doc in [data.aws_iam_policy_document.recovery_api[0].json, data.aws_iam_policy_document.recovery_worker[0].json] : [
+        for s in jsondecode(doc).Statement : s.Effect == "Allow" && contains(flatten([s.Action]), "secretsmanager:ReplicateSecretToRegions")
+      ]
+    ]))
+    error_message = "replication is requested from the home Region only (no grant in the recovery-Region policies)"
+  }
+}
+
+run "without_recovery_region_no_replica_grants" {
+  command = apply
+
+  assert {
+    condition = !anytrue(flatten([
+      for doc in [data.aws_iam_policy_document.api.json, data.aws_iam_policy_document.worker.json] : [
+        for s in jsondecode(doc).Statement : s.Effect == "Allow" && length(setintersection(toset(flatten([s.Action])), toset([
+          "secretsmanager:ReplicateSecretToRegions", "secretsmanager:DescribeSecret", "secretsmanager:ListSecrets",
+        ]))) > 0
+      ]
+    ]))
+    error_message = "replica grants exist without a recovery Region"
   }
 }

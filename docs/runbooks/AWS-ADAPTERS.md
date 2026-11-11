@@ -55,7 +55,7 @@ Behaviour:
 
 | Group (adapter) | Variables | Process |
 |---|---|---|
-| Secret store: outbound `put` (api), inbound verification keys `keys` (api), calendar channel key, secret reader, inbound writer (worker) | `EHR_SECRETS_PREFIX` (required; the environment name, e.g. `prod`); `EHR_SECRETS_KMS_KEY_ID` (optional; CMK for newly created secrets, default is the account's `aws/secretsmanager` key) | api, worker |
+| Secret store: outbound `put` (api), inbound verification keys `keys` (api), calendar channel key, secret reader, inbound writer (worker) | `EHR_SECRETS_PREFIX` (required; the environment name, e.g. `prod`); `EHR_SECRETS_KMS_KEY_ID` (optional; CMK for newly created secrets, default is the account's `aws/secretsmanager` key); `EHR_SECRETS_REPLICA_REGION` and `EHR_SECRETS_REPLICA_KMS_KEY_ID` (optional, both or neither: every newly created secret gets a replica in that Region under that key ARN; the Region must differ from `AWS_REGION` and the key must be an ARN in it; unset in every non-production environment and in the recovery Region) | api, worker |
 | Payload sealer (api) / opener (worker) | `EHR_KMS_PAYLOAD_KEY_ID` (required; key id, ARN or alias); worker only: `EHR_KMS_PAYLOAD_PREVIOUS_KEY_IDS` (optional, comma separated; keys whose old blobs may still be opened) | api (seal), worker (open) |
 
 Secret names (built in code, a caller cannot choose another prefix):
@@ -91,10 +91,15 @@ IAM actions the adapters need (exact list; `<prefix>` is `EHR_SECRETS_PREFIX`, `
 | api, worker (only if `EHR_SECRETS_KMS_KEY_ID`) | `kms:GenerateDataKey`, `kms:Decrypt` (via Secrets Manager, `kms:ViaService`) | the secrets key |
 | worker | `secretsmanager:GetSecretValue` | `...:secret:<prefix>/integration/*` |
 | worker | `secretsmanager:CreateSecret`, `secretsmanager:PutSecretValue` | `...:secret:<prefix>/integration/inbound/*` |
+| api | `secretsmanager:ReplicateSecretToRegions` (only with a recovery Region; conditions `ForAllValues:StringEquals` and `Null` = false on `secretsmanager:AddReplicaRegions` = the recovery Region) | `...:secret:<prefix>/integration/outbound/*` |
+| worker | the same | `...:secret:<prefix>/integration/inbound/*` |
+| worker (only with a recovery Region; replica check, metadata only) | `secretsmanager:DescribeSecret` | `...:secret:<prefix>/integration/*` |
+| worker (same) | `secretsmanager:ListSecrets` | `*` (the action supports no resource types: AWS Service Authorization Reference, Secrets Manager, ListSecrets) |
 | worker | `kms:Decrypt` | `PK` and any previous payload key, with condition `kms:EncryptionContextKeys` = `ehr:ctx` |
 | worker | `kms:DescribeKey` | only if an alias is configured: the key behind it |
 
 The api role gets no `kms:Decrypt` on the payload key and no write on `inbound/*` (SC-2, SC-3); the worker gets no `kms:GenerateDataKey`.
+`AddReplicaRegions` on `CreateSecret` also needs `secretsmanager:ReplicateSecretToRegions` (AWS CreateSecret API reference); `secretsmanager:AddReplicaRegions` is a documented condition key (type ArrayOfString) of both actions. `ForAllValues` passes when the key is absent, so the grant also requires `Null` = false. Using the replica key needs `kms:GenerateDataKey` and `kms:Decrypt` on it: the recovery-Region inline policies of both roles already grant them through `secretsmanager.<recovery>.amazonaws.com`, and the key policy of `production-secrets-dr` delegates to IAM (account root), so no key-policy change is needed. The application never sends `PutResourcePolicy` or `ForceOverwriteReplicaSecret`. A `Failed` replication status at creation logs `secret_replication_failed` (name, Region) and does not fail the write; the detection control is the recurring check (`integration_core.check_secret_replicas`, runbook `recovery-region.md` 2.2).
 `CreateSecret` needs `secretsmanager:TagResource` only if the IaC adds tags to the created secrets; this code adds none. Secret policies and
 rotation lambdas belong to the IaC, not to this code.
 

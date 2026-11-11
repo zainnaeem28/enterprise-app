@@ -347,3 +347,39 @@ run "bare_module_with_no_inputs_plans" {
     error_message = "Optional parts are off without their inputs."
   }
 }
+
+# HEAAA-860 (HEAAA-870 D-7): the secret-replica alarm exists only when monitoring is enabled; it breaches on missing data.
+run "secret_replica_alarm_is_off_by_default" {
+  command = plan
+
+  assert {
+    condition     = !contains(keys(aws_cloudwatch_metric_alarm.simple), "secret-replica-not-in-sync")
+    error_message = "the secret-replica alarm exists without secret_replica_monitoring"
+  }
+}
+
+run "secret_replica_alarm_when_monitoring_is_enabled" {
+  command = plan
+  variables {
+    secret_replica_monitoring = true
+  }
+
+  assert {
+    condition = (
+      aws_cloudwatch_metric_alarm.simple["secret-replica-not-in-sync"].metric_name == "SecretReplicaNotInSync" &&
+      aws_cloudwatch_metric_alarm.simple["secret-replica-not-in-sync"].statistic == "Maximum" &&
+      aws_cloudwatch_metric_alarm.simple["secret-replica-not-in-sync"].period == 900 &&
+      aws_cloudwatch_metric_alarm.simple["secret-replica-not-in-sync"].evaluation_periods == 2 &&
+      aws_cloudwatch_metric_alarm.simple["secret-replica-not-in-sync"].datapoints_to_alarm == 2 &&
+      aws_cloudwatch_metric_alarm.simple["secret-replica-not-in-sync"].threshold == 0 &&
+      aws_cloudwatch_metric_alarm.simple["secret-replica-not-in-sync"].comparison_operator == "GreaterThanThreshold" &&
+      aws_cloudwatch_metric_alarm.simple["secret-replica-not-in-sync"].treat_missing_data == "breaching"
+    )
+    error_message = "secret-replica-not-in-sync must be Maximum, 900 s, 2 of 2, > 0, breaching on missing data"
+  }
+
+  assert {
+    condition     = output.alert_catalog["secret_replica_not_in_sync"].severity == "ticket" && strcontains(output.alert_catalog["secret_replica_not_in_sync"].owner, "DevOps")
+    error_message = "the catalogue entry is a DevOps ticket"
+  }
+}
