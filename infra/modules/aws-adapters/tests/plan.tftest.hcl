@@ -192,3 +192,16 @@ run "video_failure_alarm_watches_the_api_log_group" {
     error_message = "5-minute alarm with an action"
   }
 }
+
+run "close_meeting_dead_alarm_watches_the_worker_log_group" {
+  command = plan
+
+  assert {
+    condition     = aws_cloudwatch_log_metric_filter.close_meeting_dead.log_group_name == "/ecs/ehr-staging/worker" && length(regexall("job_dead.*telehealth\\.close_meeting", aws_cloudwatch_log_metric_filter.close_meeting_dead.pattern)) == 1
+    error_message = "metric filter on job_dead lines of telehealth.close_meeting in the worker log group"
+  }
+  assert {
+    condition     = length(aws_cloudwatch_metric_alarm.close_meeting_dead.alarm_actions) == 1 && aws_cloudwatch_metric_alarm.close_meeting_dead.threshold == 1
+    error_message = "one dead job raises the alarm, with an action"
+  }
+}
