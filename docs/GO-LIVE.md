@@ -245,7 +245,7 @@ Known gaps with no code yet, so they stay on this list rather than being configu
 
 ## Evidence rules
 
-- Emulator results (`pnpm test:emulator`, the `emulator` job in `ci.yml`, LocalStack 4.9.2) are **emulator evidence only**. Textract, Chime,
+- Emulator results (`pnpm test:emulator`, which builds each package and runs its compiled `dist/` tests; the `emulator` job in `ci.yml`, LocalStack 4.9.2) are **emulator evidence only**. Textract, Chime,
   End User Messaging SMS, GuardDuty Malware Protection for S3 and Cognito are not emulated; unit tests with SDK stubs cover them.
 - `tofu validate`, `tofu test` (mock providers) and policy scans show plan shape and rendered policy, not AWS behaviour.
 - A skipped workflow is never a deployment, a load test or a restore. `ci-status` does not count AWS workflows.

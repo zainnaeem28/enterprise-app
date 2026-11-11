@@ -218,6 +218,10 @@ files and its latency; Textract on real insurance cards and ID documents (accura
   pnpm test:emulator
   ```
 
+  The runner compiles each owning package (`tsc -p`) and runs the `dist/` tests; it also sets `EHR_EMULATOR_S3_ENDPOINT` and `EHR_EMULATOR_SES_ENDPOINT` from
+  `AWS_ENDPOINT_URL` when they are unset (the CI `emulator` job sets only `AWS_ENDPOINT_URL`). `pnpm test:emulator --require-endpoint` fails when no endpoint is set
+  or any test is skipped. The per-package `pnpm -r --if-present run test:emulator` scripts remain a valid way to run one package.
+
   `EHR_EMULATOR_KMS_KEY_ID` (default `alias/emulator`) names the key sent in the SSE-KMS headers. MinIO needs a KMS configured to accept
   SSE-KMS; LocalStack does not. Results are emulator evidence only: they show the requests are well formed and the S3 API contract is
   honoured by the emulator, not any behaviour of real AWS (Object Lock retention, KMS policy, IAM). Those checks belong on
