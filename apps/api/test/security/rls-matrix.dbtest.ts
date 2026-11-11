@@ -8,6 +8,7 @@
 // Sections: (1) seed, (2) the matrix, (3) direct-SQL writes across clinics, (4) TC-AZ-05, (5) TC-AZ-06, (6) TC-AZ-07.
 // Cases tagged `open` in OPEN_FINDINGS assert behaviour that a different finding (not F01) still has to fix. They run, they report, and
 // they do NOT fail the suite until the owner's fix lands; removing a tag from OPEN_FINDINGS makes the case mandatory.
+import { FIXTURE_STATES } from '../../src/platform/fixture-states.js';
 import assert from 'node:assert/strict';
 import { writeFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
@@ -387,7 +388,7 @@ before(async () => {
     );
     await sa(
       `INSERT INTO telehealth.location_confirmation (id, organisation_id, reservation_id, patient_id, principal_id, stated_state, result)
-            VALUES ($1,$2,$3,$4,$5,'NY','allowed')`,
+            VALUES ($1,$2,$3,$4,$5,'${FIXTURE_STATES.licensed}','allowed')`,
       [uid(), ORG, videoId, pid, account.principalId],
     );
   }

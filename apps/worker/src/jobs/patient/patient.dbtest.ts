@@ -8,13 +8,17 @@ import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { after, before, describe, test } from 'node:test';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { KernelDb } from '@ehr/kernel';
 import { runPurgeMatchChecks, runVerifyStaffScope, scopeDriftAlerter } from './index.js';
 
 const PG: string = 'pg';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const pg: any = (await import(PG)).default;
+// The one shared fixture module lives in the API (apps/api/src/platform/fixture-states.ts); the worker reads its built copy, as compose.dbtest.ts reads the API build.
+const { FIXTURE_STATES } = (await import(
+  pathToFileURL(fileURLToPath(new URL('../../../../api/dist/src/platform/fixture-states.js', import.meta.url))).href
+)) as { FIXTURE_STATES: { licensed: string; unlicensed: string; closed: string } };
 const adminUrl = process.env.EHR_TEST_ADMIN_URL;
 if (!adminUrl) throw new Error('EHR_TEST_ADMIN_URL is not set');
 let root = fileURLToPath(new URL('.', import.meta.url));
@@ -82,7 +86,7 @@ describe('patient on PostgreSQL 17 (BE-08, worker side)', () => {
     wpool.on('error', () => undefined);
     db = new KernelDb(wpool);
     await seed(
-      `INSERT INTO organisation.jurisdiction (code, organisation_id, name) VALUES ('NY', $1, 'New York')`,
+      `INSERT INTO organisation.jurisdiction (code, organisation_id, name) VALUES ('${FIXTURE_STATES.licensed}', $1, 'Fixture state ${FIXTURE_STATES.licensed}')`,
       [ORG],
     );
     for (const [lid, name] of [
@@ -90,7 +94,7 @@ describe('patient on PostgreSQL 17 (BE-08, worker side)', () => {
       [L2, 'Clinic 2'],
     ])
       await seed(
-        `INSERT INTO organisation.location (id, organisation_id, name, kind, time_zone, state_code, active) VALUES ($1, $2, $3, 'clinic', 'America/New_York', 'NY', true)`,
+        `INSERT INTO organisation.location (id, organisation_id, name, kind, time_zone, state_code, active) VALUES ($1, $2, $3, 'clinic', 'America/New_York', '${FIXTURE_STATES.licensed}', true)`,
         [lid, ORG, name],
       );
     for (const [pid, n] of [
@@ -98,7 +102,7 @@ describe('patient on PostgreSQL 17 (BE-08, worker side)', () => {
       [P2, '1000002'],
     ])
       await seed(
-        `INSERT INTO patient.patient (id, organisation_id, mrn, given_name, family_name, date_of_birth, state_code, created_via) VALUES ($1,$2,$3,'Worker','Test','1980-01-01','NY','front_desk')`,
+        `INSERT INTO patient.patient (id, organisation_id, mrn, given_name, family_name, date_of_birth, state_code, created_via) VALUES ($1,$2,$3,'Worker','Test','1980-01-01','${FIXTURE_STATES.licensed}','front_desk')`,
         [pid, ORG, `MRN-${n}`],
       );
     await seed(

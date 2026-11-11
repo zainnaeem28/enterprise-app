@@ -187,7 +187,7 @@ describe('organisation module on PostgreSQL 17 (BE-03)', () => {
 
     // Fixtures through the superuser (policies are tested separately below).
     await q(
-      `INSERT INTO organisation.jurisdiction (code, organisation_id, name) VALUES ('${FIXTURE_STATES.licensed}', $1, 'New York'), ('${FIXTURE_STATES.unlicensed}', $1, 'California'), ('${FIXTURE_STATES.closed}', $1, 'Texas')`,
+      `INSERT INTO organisation.jurisdiction (code, organisation_id, name) VALUES ('${FIXTURE_STATES.licensed}', $1, 'Fixture A'), ('${FIXTURE_STATES.unlicensed}', $1, 'Fixture B'), ('${FIXTURE_STATES.closed}', $1, 'Fixture C')`,
       [ORG],
     );
     await q(
@@ -1063,7 +1063,7 @@ describe('organisation module on PostgreSQL 17 (BE-03)', () => {
       ); // latest row says no
       await assert.rejects(
         db.withScope(patient, (tx) =>
-          org.licensingCheck(tx, [FIXTURE_STATES.licensed], 'New York'),
+          org.licensingCheck(tx, [FIXTURE_STATES.licensed], 'Not A State'),
         ),
         OrganisationValidationError,
       );

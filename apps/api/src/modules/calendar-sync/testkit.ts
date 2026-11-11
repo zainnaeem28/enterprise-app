@@ -4,6 +4,7 @@
 // worker's real calendar-sync jobs and integration-core gateway (apps/worker/dist), and a LOCAL STUB of the Google endpoints (events,
 // watch, token). The stub is a contract stub: it proves our requests and our handling of Google's documented answers, not Google itself
 // (C-10: real Google evidence needs the test tenant and stays BLOCKED). Synthetic data only.
+import { FIXTURE_STATES } from '../../platform/fixture-states.js';
 import { createCipheriv, createDecipheriv, createHash, randomBytes, randomUUID } from 'node:crypto';
 import { createServer } from 'node:http';
 import type { IncomingMessage, Server } from 'node:http';
@@ -555,7 +556,7 @@ export async function setupCalendar(name: string): Promise<CalendarKit> {
       await saWrite(
         k,
         `INSERT INTO patient.patient (id, organisation_id, mrn, given_name, family_name, date_of_birth, state_code, created_via)
-         VALUES ($1, $2, $3, 'Pat', 'Ient', '1975-01-01', 'NY', 'front_desk')`,
+         VALUES ($1, $2, $3, 'Pat', 'Ient', '1975-01-01', '${FIXTURE_STATES.licensed}', 'front_desk')`,
         [patientId, ORG, `MRN-${String(9_000_000 + (mrnSeq += 1))}`],
       );
       const end = new Date(start.getTime() + (o.minutes ?? 30) * 60_000);
