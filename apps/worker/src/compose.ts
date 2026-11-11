@@ -49,6 +49,7 @@ import type {
   SecretReader,
 } from './jobs/integration-core/index.js';
 import { createNotificationsTasks } from './jobs/notifications/index.js';
+import { registerReceiptHandlers } from './jobs/notifications/receipt.js';
 import {
   createPatientTasks,
   createSurvivorOf,
@@ -220,6 +221,8 @@ export function composeTasks(opts: ComposeOptions & { queue: Queue }): TaskTable
     log,
   };
   registerGooglePushHandler(inbound, calendar);
+  // Delivery receipts from the e-mail and SMS vendors (HEAAA-773 F-1): without these a stored receipt is marked `no_handler`.
+  registerReceiptHandlers(inbound, ['email', 'sms'], { survivorOf });
 
   const tasks: Record<string, Task> = {
     ...createIdentityTasks({
