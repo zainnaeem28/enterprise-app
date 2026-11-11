@@ -20,7 +20,10 @@ const M4 = [
   'notifications.escalate_alert',
   'privacy.assemble_export',
   'privacy.check_legal_holds',
+  'privacy.execute_deletion',
+  'privacy.send_deletion_statement',
   'privacy.expire_packages',
+  'privacy.retention_purge',
   'reporting.refresh_ops',
 ];
 const ORG = '00000000-0000-7000-8000-0000000000a1';
@@ -60,11 +63,12 @@ test('negative control: a table without the M4 handlers reports them unhandled',
   assert.deepEqual(unhandledJobTypes(registry, without).sort(), [...M4].sort());
 });
 
-test('the crontab holds the privacy expiry, the operations refresh and the audit anchor jobs, each with a handler (SEC05-F01)', () => {
+test('the crontab holds the privacy expiry and retention, the operations refresh and the audit anchor jobs, each with a handler (SEC05-F01)', () => {
   const { tasks } = table();
   const entries = WORKER_CRONTAB.split('\n');
   assert.deepEqual(entries, [
     '50 3 * * * privacy/expire_packages',
+    '10 4 * * * privacy/retention_purge',
     '* * * * * reporting/refresh_ops',
     '* * * * * audit/anchor',
     '* * * * * audit/archive_anchors',
@@ -77,7 +81,7 @@ test('the crontab holds the privacy expiry, the operations refresh and the audit
 test('INT03-F11: graphile-worker parseCrontab accepts WORKER_CRONTAB and every entry maps to a registered task', () => {
   const { registry, tasks } = table();
   const items = parseCrontab(WORKER_CRONTAB);
-  assert.equal(items.length, 5);
+  assert.equal(items.length, 6);
   const registered = registry.list().map((j) => j.name);
   for (const item of items) {
     const name = fromCrontabTaskId(item.task);
@@ -128,7 +132,14 @@ const API_JOB_LISTS: [string, string, readonly string[]][] = [
   [
     'privacy/jobs.js',
     'PRIVACY_JOBS',
-    ['privacy.assemble_export', 'privacy.check_legal_holds', 'privacy.expire_packages'],
+    [
+      'privacy.assemble_export',
+      'privacy.check_legal_holds',
+      'privacy.execute_deletion',
+      'privacy.send_deletion_statement',
+      'privacy.expire_packages',
+      'privacy.retention_purge',
+    ],
   ],
   ['reporting/jobs.js', 'REPORTING_JOBS', ['reporting.refresh_ops']],
   ['patient/jobs.js', 'PATIENT_JOBS', ['patient.verify_staff_scope', 'patient.purge_match_checks']],
