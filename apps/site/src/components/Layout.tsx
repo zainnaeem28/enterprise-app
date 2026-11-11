@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import { AppBar, MaintenanceBanner, SkipLink } from '@ehr/ui';
 import type { SiteBanner } from '../directory.js';
-import { SITE_NAME } from '../seo.js';
 
 const NAV = [
   { href: '/about', label: 'About' },
@@ -19,21 +18,29 @@ const FOOTER = [
   { href: '/legal/accessibility', label: 'Accessibility statement' },
 ] as const;
 
+const NPP_LINK = { href: '/legal/npp', label: 'Notice of Privacy Practices' } as const;
+
 export function Layout({
   current,
   bookHref,
   banners = [],
+  siteName,
+  hasNpp = false,
   children,
 }: {
   current: string;
   bookHref: string;
   banners?: SiteBanner[];
+  /** The organisation's name from the CMS; `null` until entered (then nothing is shown in its place). */
+  siteName: string | null;
+  /** The Notice of Privacy Practices has been entered in the CMS: show its link. */
+  hasNpp?: boolean;
   children: ReactNode;
 }) {
   return (
     <>
       <SkipLink targetId="main">Skip to main content</SkipLink>
-      <AppBar portalName="Visit us" productName={SITE_NAME}>
+      <AppBar portalName="Visit us" productName={siteName ?? ''}>
         <nav aria-label="Main" className="site-nav">
           <ul>
             {NAV.map((n) => (
@@ -59,7 +66,7 @@ export function Layout({
         <p className="site-emergency">If this is an emergency, call 911.</p>
         <nav aria-label="Footer">
           <ul>
-            {FOOTER.map((n) => (
+            {[...FOOTER, ...(hasNpp ? [NPP_LINK] : [])].map((n) => (
               <li key={n.href}>
                 <a href={n.href}>{n.label}</a>
               </li>
@@ -71,7 +78,7 @@ export function Layout({
             </li>
           </ul>
         </nav>
-        <p>© {SITE_NAME}</p>
+        {siteName !== null && <p>© {siteName}</p>}
       </footer>
     </>
   );

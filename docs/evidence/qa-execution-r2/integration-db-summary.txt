@@ -1,0 +1,7 @@
+db-foundation: 120 test(s), 0 failure(s), 0 skipped
+kernel: 23 test(s), 0 failure(s), 0 skipped
+api: 1041 test(s), 0 failure(s), 0 skipped
+worker: 122 test(s), 0 failure(s), 0 skipped
+database suites: 4 suite(s), 1306 test(s)
+::notice::no previous release tag (r[0-9]*): the upgrade path and the N-1 suite did NOT run (first release). Not a pass of those checks.
+integration-db passed

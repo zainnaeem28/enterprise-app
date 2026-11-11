@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { route } from './render.js';
 import { loadConfig } from './config.js';
-import { defaultContent } from './content.js';
+import { placeholderContent } from './content.js';
 import type { DirectoryClient } from './directory.js';
 
 const client = (banners?: DirectoryClient['banners']): DirectoryClient => ({
@@ -13,7 +13,7 @@ const client = (banners?: DirectoryClient['banners']): DirectoryClient => ({
 });
 
 describe('site banner rendering', () => {
-  const content = defaultContent;
+  const content = placeholderContent;
   const config = loadConfig(
     {
       SITE_ORIGIN: 'https://www.example.test',

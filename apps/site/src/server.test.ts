@@ -120,7 +120,7 @@ describe('pages (TC-BS-01)', () => {
   });
   it('about page has the approved sections, the emergency line and no Resources/Prescriptions links (HEAAA-275)', async () => {
     const h = await (await get('/about')).text();
-    expect(h).toContain('<h1>About ');
+    expect(h).toContain('<h1>About</h1>');
     expect(h).toContain('How booking works');
     expect(h).toContain('If this is an emergency, call 911.');
     expect(h).toContain('<a href="/about" aria-current="page">About</a>');

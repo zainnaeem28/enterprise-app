@@ -10,6 +10,7 @@
     "test": "NODE_ENV=test vitest run --reporter=default --reporter=junit --outputFile.junit=\"${JUNIT_DIR:-.junit}/cms.xml\"",
     "dev": "next dev --port 3100",
     "start": "next start --port 3100",
+    "seed": "payload run src/seed/run.ts",
     "build:next": "next build"
   },
   "dependencies": {
@@ -17,7 +18,7 @@
     "@payloadcms/next": "3.93.0",
     "@payloadcms/richtext-lexical": "3.93.0",
     "graphql": "16.15.0",
-    "jose": "6.2.14",
+    "jose": "6.2.15",
     "next": "16.4.5",
     "payload": "3.93.0",
     "react": "19.3.1",

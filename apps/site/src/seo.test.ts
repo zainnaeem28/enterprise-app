@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SITE_NAME, doctorLd, jsonLdText, locationLd, robotsTxt, sitemapXml } from './seo.js';
+import { doctorLd, jsonLdText, locationLd, organisationLd, robotsTxt, sitemapXml } from './seo.js';
 
 const D = '33333333-3333-4333-8333-333333333333';
 
@@ -10,13 +10,26 @@ describe('seo (TC-BS-05)', () => {
   });
   it('doctor structured data has name and url only', () => {
     expect(
-      doctorLd('https://www.example.org', { id: D, name: 'Dr A', serviceIds: [], locationIds: [] }),
+      doctorLd(
+        'https://www.example.org',
+        { id: D, name: 'Dr A', serviceIds: [], locationIds: [] },
+        null,
+      ),
     ).toEqual({
       '@context': 'https://schema.org',
       '@type': 'Physician',
       name: 'Dr A',
       url: `https://www.example.org/doctors/${D}`,
-      worksFor: { '@type': 'MedicalOrganization', name: SITE_NAME },
+    });
+  });
+  it('names the organisation only when the CMS has it', () => {
+    const d = { id: D, name: 'Dr A', serviceIds: [], locationIds: [] };
+    expect(doctorLd('https://www.example.org', d, 'Example Practice')).toMatchObject({
+      worksFor: { name: 'Example Practice' },
+    });
+    expect(organisationLd('https://www.example.org', null)).not.toHaveProperty('name');
+    expect(organisationLd('https://www.example.org', 'Example Practice')).toMatchObject({
+      name: 'Example Practice',
     });
   });
   it('location structured data omits what is absent', () => {
@@ -44,14 +57,5 @@ describe('seo (TC-BS-05)', () => {
     expect(robotsTxt('https://www.example.org')).toContain(
       'Sitemap: https://www.example.org/sitemap.xml',
     );
-  });
-});
-
-describe('visible brand text', () => {
-  it('has no "placeholder" or bracketed product name in the default content or site name', async () => {
-    const { defaultContent } = await import('./content.js');
-    const { SITE_NAME } = await import('./seo.js');
-    expect(JSON.stringify(defaultContent)).not.toMatch(/placeholder/i);
-    expect(SITE_NAME).not.toMatch(/placeholder|\[/i);
   });
 });

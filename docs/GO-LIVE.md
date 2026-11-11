@@ -195,6 +195,7 @@ from the register in `docs/DELIVERY-PLAN.md`.
 | 22 | Network and edge items: ACM certificates, Cognito custom domain, WAF logging, budget e-mails (inputs of the compute, edge and loadtest modules) | DevOps | NOT DONE | public endpoints |
 | 23 | Staging proofs of DEVOPS-PLAN 7.5 and TC-SEC-11 (rotation, `secretsmanager:KmsKeyId` conditions, `RunTask` override detection, key policies without root delegation) | DevOps, Security | NOT DONE | the first `bootstrap` run (G-6 in `scripts/bootstrap/README.md`) |
 | 24 | Exact-environment G3 and OPERATIONS_RECEIPT | Product owner | NOT DONE | any production mutation |
+| 25 | Owner item: counsel confirms the site legal pages (privacy, terms, cookies, accessibility; marked † in `docs/content/SITE-COPY-REVIEW.md`), and the organisation enters its Notice of Privacy Practices (CMS `Site text`, legal `npp`) and its contact details (CMS `Organisation details`). Complete conservative default text is live; the NPP page and its links stay hidden until entered (HEAAA-838) | Product owner, counsel | default applied (autonomous) | final legal wording; the NPP page |
 
 ### Real-service checks (all NOT DONE; nothing here was observed)
 

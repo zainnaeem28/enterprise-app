@@ -1,0 +1,33 @@
+PASS seed.world doctor STF-DR-X5939936, patient PAT-2707238, front desk STF-FD-QA-7023372, booked=true
+sign-in landing (returnTo / on the API origin has no page): page.goto: NS_ERROR_NET_ERROR_RESPONSE
+PASS firefox:doctor.session status 200
+RETRY goto /schedule page.goto: Navigation to "http://localhost:4351/schedule" is interrupted by another navigation to "http://localhost:4250/" url now http://localhost:4250/
+PASS firefox:10-doctor-schedule http://localhost:4351/schedule text=376ch expect /Casey Synthetic/
+PASS firefox:11-doctor-patient-list http://localhost:4351/patients text=428ch
+PASS firefox:12-doctor-alerts http://localhost:4351/alerts text=272ch
+PASS firefox:13-doctor-notes-to-sign http://localhost:4351/notes-to-sign text=348ch
+PASS firefox:14-doctor-availability http://localhost:4351/availability text=709ch
+PASS firefox:15-doctor-tasks http://localhost:4351/tasks text=346ch
+sign-in landing (returnTo / on the API origin has no page): page.goto: NS_ERROR_NET_ERROR_RESPONSE
+PASS firefox:frontdesk.session status 200
+PASS firefox:20-frontdesk-arrivals http://localhost:4351/arrivals text=569ch
+PASS firefox:21-frontdesk-waitlist http://localhost:4351/waitlist text=321ch
+PASS firefox:22-frontdesk-patients http://localhost:4351/patients text=327ch
+PASS firefox:23-frontdesk-forms http://localhost:4351/forms text=355ch
+PASS firefox:24-frontdesk-triage-queue http://localhost:4351/triage text=411ch
+sign-in landing (returnTo / on the API origin has no page): page.goto: NS_ERROR_NET_ERROR_RESPONSE
+PASS firefox:patient.session status 200
+RETRY goto / page.goto: Navigation to "http://127.0.0.1:4350/" is interrupted by another navigation to "http://127.0.0.1:4250/" url now http://127.0.0.1:4250/
+PASS firefox:30-patient-home http://127.0.0.1:4350/ text=161ch
+PASS firefox:31-patient-booking-start http://127.0.0.1:4350/book text=310ch expect /What would you like to book/
+PASS firefox:32-patient-profile http://127.0.0.1:4350/profile text=534ch expect /Casey|profile/i
+PASS firefox:33-patient-privacy http://127.0.0.1:4350/privacy text=589ch
+PASS firefox:34-patient-messages http://127.0.0.1:4350/messages text=129ch
+PASS firefox:35-patient-appointments http://127.0.0.1:4350/appointments text=211ch expect /Confirmed/
+PASS firefox:36-patient-previsit http://127.0.0.1:4350/appointments/01a1c5ce-00bf-70bb-9c7e-d57fc9b7cb1c/previsit text=352ch
+PASS firefox:40-site-home http://127.0.0.1:45079/ text=824ch
+PASS firefox:41-site-services http://127.0.0.1:45079/services text=774ch expect /appointment|consult/i
+PASS firefox:42-site-doctors http://127.0.0.1:45079/doctors text=997ch
+PASS firefox:43-site-locations http://127.0.0.1:45079/locations text=545ch
+PASS firefox:50-patient-home-360px http://127.0.0.1:4350/ text=161ch
+engine=firefox pass=27 fail=0 pageErrors=0

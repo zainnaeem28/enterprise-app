@@ -1,7 +1,6 @@
 import { EmptyState, StatusChip } from '@ehr/ui';
-import type { ContentSource, LegalPage } from '../content.js';
+import type { ContentSource, LegalPage, Organisation } from '../content.js';
 import type { Directory, Doctor, Location, NextSlot } from '../directory.js';
-import { SITE_NAME } from '../seo.js';
 import {
   BookLink,
   DirectoryUnavailableNotice,
@@ -56,7 +55,7 @@ export function AboutPage({ ctx }: { ctx: Ctx }) {
   const { content, dir } = ctx;
   return (
     <>
-      <h1>About {SITE_NAME}</h1>
+      <h1>{content.organisation.name === null ? 'About' : `About ${content.organisation.name}`}</h1>
       <p className="site-lead">{content.about.intro}</p>
       <Section title="What we offer">
         {dir === null ? (
@@ -77,6 +76,18 @@ export function AboutPage({ ctx }: { ctx: Ctx }) {
           <a href="/locations">Locations</a>
         </p>
       </Section>
+      {content.organisation.clinicians.length > 0 && (
+        <Section title="Our team">
+          <ul className="site-cards">
+            {content.organisation.clinicians.map((c) => (
+              <li key={c.name} className="site-card">
+                {c.name}
+                {c.title !== null && <>, {c.title}</>}
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
       <Section title="How booking works">
         <p>{content.about.booking}</p>
         <p>
@@ -259,18 +270,30 @@ export function LocationsPage({ ctx }: { ctx: Ctx }) {
 
 export function ContactPage({ ctx }: { ctx: Ctx }) {
   const c = ctx.content.contact;
+  const org = ctx.content.organisation;
   const { dir } = ctx;
   return (
     <>
       <h1>Contact</h1>
       <p className="site-lead">{c.intro}</p>
-      {c.phone !== null && <p>Phone: {c.phone}</p>}
-      {c.email !== null && (
+      {org.addressLines.length > 0 && (
         <p>
-          Email: <a href={`mailto:${c.email}`}>{c.email}</a>
+          Address:{' '}
+          {org.addressLines.map((l, i) => (
+            <span key={l}>
+              {i > 0 && <br />}
+              {l}
+            </span>
+          ))}
         </p>
       )}
-      {c.hours !== null && <p>Hours: {c.hours}</p>}
+      {org.phone !== null && <p>Phone: {org.phone}</p>}
+      {org.email !== null && (
+        <p>
+          Email: <a href={`mailto:${org.email}`}>{org.email}</a>
+        </p>
+      )}
+      {org.hours !== null && <p>Hours: {org.hours}</p>}
       <Section title="Our locations">
         {dir === null ? (
           <DirectoryUnavailableNotice />
@@ -289,13 +312,53 @@ export function ContactPage({ ctx }: { ctx: Ctx }) {
   );
 }
 
-export function LegalPageView({ page }: { page: LegalPage }) {
+/** `organisation` adds the organisation's own contact details, only those entered in the CMS. `nppHref` links the Notice of Privacy Practices. */
+export function LegalPageView({
+  page,
+  organisation,
+  nppHref,
+}: {
+  page: LegalPage;
+  organisation?: Organisation | undefined;
+  nppHref?: string | undefined;
+}) {
+  const org = organisation;
+  const hasContact =
+    org !== undefined && (org.addressLines.length > 0 || org.phone !== null || org.email !== null);
   return (
     <>
       <h1>{page.title}</h1>
       {page.paragraphs.map((p) => (
         <p key={p}>{p}</p>
       ))}
+      {nppHref !== undefined && (
+        <p>
+          Our <a href={nppHref}>Notice of Privacy Practices</a> explains how health information is
+          handled and what your rights are.
+        </p>
+      )}
+      {org !== undefined && hasContact && (
+        <>
+          <h2>Contact us</h2>
+          {org.name !== null && <p>{org.name}</p>}
+          {org.addressLines.length > 0 && (
+            <p>
+              {org.addressLines.map((l, i) => (
+                <span key={l}>
+                  {i > 0 && <br />}
+                  {l}
+                </span>
+              ))}
+            </p>
+          )}
+          {org.phone !== null && <p>Phone: {org.phone}</p>}
+          {org.email !== null && (
+            <p>
+              Email: <a href={`mailto:${org.email}`}>{org.email}</a>
+            </p>
+          )}
+        </>
+      )}
     </>
   );
 }
