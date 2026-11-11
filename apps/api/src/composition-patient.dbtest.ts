@@ -141,6 +141,19 @@ before(async () => {
   const composedKit = { ...k, base } as Kit;
   mine = await registerViaApi(composedKit, desk, A1, who(1));
   other = await registerViaApi(composedKit, desk, A1, who(2));
+  // The D-7 proxy rules (ruling C item 3) are settings; with none the invitation fails closed (identity.proxy_rules_not_configured).
+  for (const [key, v, sch] of [
+    ['proxy_age_of_majority', 18, 'int>=1'],
+    ['proxy_adolescent_min_age', 13, 'int>=1'],
+    ['proxy_age_out_notice_days', 30, 'int>=1'],
+    ['proxy_invite_hours', 72, 'hours'],
+    ['proxy_code_max_attempts', 3, 'int>=1'],
+  ] as const)
+    await saWrite(
+      k,
+      `INSERT INTO kernel.setting (id, organisation_id, key, value, value_schema) VALUES (gen_random_uuid(), $1, $2, $3::jsonb, $4)`,
+      [ORG, key, JSON.stringify(v), sch],
+    );
   me = await patientAccount(k, mine);
   proxy = await patientAccount(k, undefined, 'Proxy Person');
   await saWrite(
@@ -155,7 +168,7 @@ after(async () => {
 });
 
 describe('INT03-F13: the patient routes through the composition root', () => {
-  test('2: the self patient reaches profile, communication preferences (read and write) and proxies; proxy requests are refused until D-7', async () => {
+  test('2: the self patient reaches profile, communication preferences (read and write) and proxies; a proxy request needs an e-mail (D-7)', async () => {
     const profile = await asPatient(me, 'GET', `/api/v1/patients/${mine}/profile`);
     assert.equal(profile.status, 200, profile.body);
     assert.ok(profile.headers['etag'], 'ETag on the profile');
@@ -178,12 +191,17 @@ describe('INT03-F13: the patient routes through the composition root', () => {
     assert.equal(second.status, 200, second.body);
     const proxies = await asPatient(me, 'GET', `/api/v1/patients/${mine}/proxies`);
     assert.equal(proxies.status, 200, proxies.body);
-    const req = await asPatient(me, 'POST', `/api/v1/patients/${mine}/proxy-requests`, {
+    const noEmail = await asPatient(me, 'POST', `/api/v1/patients/${mine}/proxy-requests`, {
       body: { relationship: 'parent' },
       idem: true,
     });
-    assert.equal(req.status, 422, req.body);
-    assert.equal(code(req), 'identity.proxy_rules_not_configured');
+    assert.equal(noEmail.status, 422, noEmail.body);
+    assert.equal(code(noEmail), 'kernel.validation_failed');
+    const req = await asPatient(me, 'POST', `/api/v1/patients/${mine}/proxy-requests`, {
+      body: { relationship: 'parent', email: 'invited-proxy@example.test' },
+      idem: true,
+    });
+    assert.equal(req.status, 201, req.body);
   });
 
   test('3: another patient is a 404 on profile, communication preferences and contacts, and the guard audits not_visible', async () => {
