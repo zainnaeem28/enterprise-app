@@ -167,7 +167,7 @@ their kind. The adapters ignore the row's credentials. Roles: `<env>-ehr-api-tas
 ## Part 3. Go-live checklist
 
 Items 12-15 and 17 are **decided by delegation (ruling C)**: product defaults set by the owner's delegation (`HEAAA-33` ruling comment 56261f7e-58eb-4b31-a1d3-81c5fc2240cb), not legal or clinical advice, every value a setting; † = counsel confirmation pending before go-live (items 12, 13). Deciding is not doing: nothing is deployed and the organisation still enters its operating-state values and CMS facts at go-live. Every other item is **NOT DONE** and open, including clinical safety review (D-12a, item 11), counsel confirmation of deletion and retention (items 12, 13), Google Workspace tenant (C-10, item 18), UMLS (C-09, item 19), AWS account, BAA and cost (items 1-4), and the second human (C-13, item 5). "Owner" is who must act; "Unblocks" is what stays blocked or unverified until then. Condition IDs are
-from the register in `docs/DELIVERY-PLAN.md`.
+from the register in `docs/DELIVERY-PLAN.md`. Item 26 is a technical deferral decided by the Solution Architect (HEAAA-951), not an owner item and not a go-live blocker.
 
 | # | Item | Owner | Status | Unblocks |
 | --- | --- | --- | --- | --- |
@@ -196,6 +196,7 @@ from the register in `docs/DELIVERY-PLAN.md`.
 | 23 | Staging proofs of DEVOPS-PLAN 7.5 and TC-SEC-11 (rotation, `secretsmanager:KmsKeyId` conditions, `RunTask` override detection, key policies without root delegation) | DevOps, Security | NOT DONE | the first `bootstrap` run (G-6 in `scripts/bootstrap/README.md`) |
 | 24 | Exact-environment G3 and OPERATIONS_RECEIPT | Product owner | NOT DONE | any production mutation |
 | 25 | Owner item: counsel confirms the site legal pages (privacy, terms, cookies, accessibility; marked † in `docs/content/SITE-COPY-REVIEW.md`), and the organisation enters its Notice of Privacy Practices (CMS `Site text`, legal `npp`) and its contact details (CMS `Organisation details`). Complete conservative default text is live; the NPP page and its links stay hidden until entered (HEAAA-838) | Product owner, counsel | default applied (autonomous) | final legal wording; the NPP page |
+| 26 | Deferred dependency majors (HEAAA-951 `decision-log`, closed in HEAAA-854): graphql 17 (blocked: Payload 3.93.0, the latest, requires `graphql ^16.8.1`), `@redocly/openapi-core` 2 (contract-lint engine), typescript 6 (TS2882 in `packages/ui/gallery/main.tsx`), AWS provider `~> 6.71` in 19 Terraform roots (lock files and plan review). Current versions have no known advisory (GitHub Advisory Database, 2026-11-11). Not a go-live blocker; upgrade after handoff, one per change, each with full checks and, for AWS, a reviewed plan per root before any apply | DevOps, maintainers | DEFERRED (decided, HEAAA-951) | dependency currency after handoff; recheck advisories before go-live |
 
 ### Real-service checks (all NOT DONE; nothing here was observed)
 
