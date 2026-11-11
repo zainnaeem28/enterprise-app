@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { ConsentBanner } from './components/ConsentBanner.js';
 import { Layout } from './components/Layout.js';
-import { placeholderContent } from './content.js';
+import { defaultContent } from './content.js';
 import type { Directory } from './directory.js';
 import {
   AboutPage,
@@ -42,7 +42,7 @@ const dir: Directory = {
 };
 const ctx = (d: Directory | null): Ctx => ({
   patientOrigin: 'https://my.example.org',
-  content: placeholderContent,
+  content: defaultContent,
   dir: d,
 });
 const slots = new Map([
@@ -59,7 +59,7 @@ const pages: Record<string, () => React.ReactNode> = {
   doctor: () => <DoctorPage ctx={ctx(dir)} doctor={dir.doctors[0]!} slots={slots} />,
   locations: () => <LocationsPage ctx={ctx(dir)} />,
   contact: () => <ContactPage ctx={ctx(dir)} />,
-  legal: () => <LegalPageView page={placeholderContent.legal.privacy} />,
+  legal: () => <LegalPageView page={defaultContent.legal.privacy} />,
   'not found': () => <NotFoundPage />,
   'directory down': () => <DoctorsPage ctx={ctx(null)} slots={new Map()} />,
   'directory empty': () => (

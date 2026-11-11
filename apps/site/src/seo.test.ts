@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { doctorLd, jsonLdText, locationLd, robotsTxt, sitemapXml } from './seo.js';
+import { SITE_NAME, doctorLd, jsonLdText, locationLd, robotsTxt, sitemapXml } from './seo.js';
 
 const D = '33333333-3333-4333-8333-333333333333';
 
@@ -16,7 +16,7 @@ describe('seo (TC-BS-05)', () => {
       '@type': 'Physician',
       name: 'Dr A',
       url: `https://www.example.org/doctors/${D}`,
-      worksFor: { '@type': 'MedicalOrganization', name: '[Product name]' },
+      worksFor: { '@type': 'MedicalOrganization', name: SITE_NAME },
     });
   });
   it('location structured data omits what is absent', () => {
@@ -44,5 +44,14 @@ describe('seo (TC-BS-05)', () => {
     expect(robotsTxt('https://www.example.org')).toContain(
       'Sitemap: https://www.example.org/sitemap.xml',
     );
+  });
+});
+
+describe('visible brand text', () => {
+  it('has no "placeholder" or bracketed product name in the default content or site name', async () => {
+    const { defaultContent } = await import('./content.js');
+    const { SITE_NAME } = await import('./seo.js');
+    expect(JSON.stringify(defaultContent)).not.toMatch(/placeholder/i);
+    expect(SITE_NAME).not.toMatch(/placeholder|\[/i);
   });
 });

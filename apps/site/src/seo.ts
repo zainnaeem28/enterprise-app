@@ -2,7 +2,8 @@
 // only: no patient, appointment or health information exists in the data this site reads.
 import type { Directory, Doctor, Location, Service } from './directory.js';
 
-export const SITE_NAME = '[Product name]';
+// The organisation name from the environment (read by the server only); a neutral title when none is entered.
+export const SITE_NAME = (process.env['ORGANISATION_NAME'] ?? '').trim() || 'Practice website';
 
 export const jsonLdText = (data: unknown): string =>
   JSON.stringify(data)

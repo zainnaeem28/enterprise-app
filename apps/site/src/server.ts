@@ -8,7 +8,7 @@ import { dirname, extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadConfig } from './config.js';
 import type { SiteConfig } from './config.js';
-import { placeholderContent } from './content.js';
+import { defaultContent } from './content.js';
 import type { ContentSource } from './content.js';
 import { createDirectoryClient } from './directory.js';
 import type { DirectoryClient, Freshness } from './directory.js';
@@ -63,7 +63,7 @@ export interface SiteDeps {
 
 export function createSite(deps: SiteDeps): Server {
   const { config, client } = deps;
-  const content = deps.content ?? placeholderContent;
+  const content = deps.content ?? defaultContent;
   const clientRoot = resolve(config.clientDir);
 
   async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> {

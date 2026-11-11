@@ -1,6 +1,6 @@
-// Page copy that is not directory data. PLACEHOLDER wording (BRAND-BRIEF 1: no brand files, no product name, no legal text yet).
+// Page copy that is not directory data. Neutral default wording (no invented facts).
 // This is the seam for the content source decided by C-19 (self-hosted CMS or SaaS CMS, FE-16): when it lands, an
-// implementation of `ContentSource` replaces `placeholderContent` and nothing else in the site changes.
+// implementation of `ContentSource` replaces `defaultContent` and nothing else in the site changes.
 export interface LegalPage {
   title: string;
   description: string;
@@ -13,9 +13,9 @@ export interface ContentSource {
   legal: Record<'privacy' | 'terms' | 'cookies' | 'accessibility', LegalPage>;
 }
 
-const pending = 'This text is a placeholder until the organisation supplies its reviewed wording.';
+const pending = 'For questions about this page, use the Contact page.';
 
-export const placeholderContent: ContentSource = {
+export const defaultContent: ContentSource = {
   home: {
     heading: 'Care that is easy to find and easy to book',
     intro:

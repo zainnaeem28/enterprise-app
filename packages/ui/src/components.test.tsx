@@ -103,7 +103,7 @@ const cases: Record<string, Case> = {
       expect(document.activeElement).toBe(two);
     },
   },
-  PlaceholderMark: { render: () => <ui.PlaceholderMark /> },
+  BrandWordmark: { render: () => <ui.BrandWordmark name="Example Clinic" /> },
   SkipLink: { render: () => <ui.SkipLink targetId="main">Skip to content</ui.SkipLink> },
   Banner: {
     render: () => (
@@ -627,7 +627,13 @@ const cases: Record<string, Case> = {
 };
 import { useState } from 'react';
 
-const NOT_COMPONENTS = new Set(['pickCopy', 'uiStrings', 'useBusy', 'escalationText']);
+const NOT_COMPONENTS = new Set([
+  'pickCopy',
+  'uiStrings',
+  'useBusy',
+  'escalationText',
+  'resolveBrandName',
+]);
 
 describe.each(Object.entries(cases))('%s', (name, c) => {
   it('has no axe violations (structural WCAG 2.2 A/AA rules)', async () => {

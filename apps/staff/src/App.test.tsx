@@ -19,14 +19,15 @@ function runtimeWith(respond: (r: Request) => Response) {
 }
 
 describe('staff shell', () => {
-  it('marks the identity as placeholder and has a skip link and main landmark', async () => {
+  it('shows the brand name and has a skip link and main landmark', async () => {
     render(<App runtime={runtimeWith(() => new Response('{}', { status: 401 }))} />);
-    expect(screen.getByText('Placeholder identity')).toBeInTheDocument();
+    expect(screen.getAllByText('Staff portal').length).toBeGreaterThan(0);
     expect(screen.getByRole('link', { name: 'Skip to main content' })).toHaveAttribute(
       'href',
       '#main',
     );
     expect(screen.getByRole('main')).toBeInTheDocument();
+    expect(document.body.textContent ?? '').not.toMatch(/placeholder/i);
     expect(await screen.findByText(/You are not signed in/)).toBeInTheDocument();
   });
 
