@@ -98,9 +98,63 @@ The api role gets no `kms:Decrypt` on the payload key and no write on `inbound/*
 `CreateSecret` needs `secretsmanager:TagResource` only if the IaC adds tags to the created secrets; this code adds none. Secret policies and
 rotation lambdas belong to the IaC, not to this code.
 
+## Notifications: e-mail, SMS, push, security notice (AWS-BE-3)
+
+Code: `apps/worker/src/aws/notify-adapters.ts` (SES, End User Messaging SMS, security notice), `web-push.ts` (push), `receipt-events.ts`
+(event mappers). The providers sit behind the existing `EmailAdapter`/`SmsAdapter`/`PushAdapter` of `jobs/notifications`, which
+integration-core's `VendorGateway` wraps (log, retry, circuit). A vendor is swapped by registering another `ProviderClient`; the
+PHI-free template allowlist stays upstream and is untouched. The gateway still needs an enabled `integration_core.connection` row of the
+kind (`email`, `sms`, `push`); the adapter ignores its credentials (AWS uses the task role).
+
+| Group (adapter) | Variables | Process |
+|---|---|---|
+| E-mail (SES v2) | required: `EHR_SES_FROM_ADDRESS`; optional: `EHR_SES_CONFIGURATION_SET` | worker |
+| SMS (End User Messaging) | required: `EHR_SMS_ORIGINATION_IDENTITY` (phone number, pool or sender ID, name or ARN); optional: `EHR_SMS_CONFIGURATION_SET` | worker |
+| Security notice (B2-9 `security_notice` port) | required: `EHR_SECURITY_CONTACT_EMAIL`; also needs `EHR_SES_FROM_ADDRESS` (start fails naming it if absent) | worker |
+| Push (Web Push, VAPID; not AWS) | required together: `EHR_VAPID_PUBLIC_KEY`, `EHR_VAPID_PRIVATE_KEY`, `EHR_VAPID_SUBJECT` (`mailto:` or `https:`) | worker |
+
+The selection rules above apply to each row. With a row unset the gateway has no adapter for that kind and refuses the call (`no adapter`);
+the security notice stays the refusing `security_notice` port. `EHR_VAPID_PRIVATE_KEY` is a secret: inject it from Secrets Manager into the
+task environment; never commit it.
+
+Behaviour and decisions:
+
+- **Push is R1** (docs/intake/04-INTEGRATIONS-AND-DATA.md: Web Push R1; ARCHITECTURE 22: Web Push for portal users). The "defer Web Push to R2" trim lever in
+  ARCHITECTURE is an owner option only, not taken. The subscription (`to` = the browser's `PushSubscription.toJSON()` string) comes from
+  a browser, so only https endpoints on the push-service hosts (FCM, Mozilla, Apple, Windows) are contacted. A 404/410 is
+  `subscription_gone` (not retried). Open item: NFR-19 V-07 needs the owner's ruling on whether a BAA is needed for the push services.
+- **At-least-once.** SES and End User Messaging accept no idempotency token and have no lookup by our reference, so the adapters declare
+  `supportsIdempotencyToken = false` (the gateway records a pending call first) and cannot de-duplicate a retry after a timeout: a message may
+  be sent twice. Our token is sent as the tag `ehr_ref` (SES) or `Context.ehr_ref` (SMS) so a duplicate is traceable. Web Push is the same.
+- **Errors.** Throttling, 429, 5xx and network failures are retryable; any other 4xx (`MessageRejected`, `ValidationException`, ...) is not.
+  Only the SDK error name and HTTP status leave the adapter; no address, text or message ID is logged.
+- **Attachments** (at most 2, from the existing adapter contract) go as a raw MIME message; otherwise SES simple content is used.
+- **Health.** `ses:GetAccount`; `sms-voice:DescribeAccountAttributes`; push has no cheap authenticated call, so configured keys count as healthy.
+- **Receipts.** `receipt-events.ts` maps an SES event (Delivery, permanent/transient Bounce, Complaint; bare or inside an SNS
+  Notification) and an End User Messaging SMS event to the body `notifications.on_receipt` parses. **Nothing calls them**: the repository has
+  no inbound HTTP route yet (`integration-core/inbound.ts`: route not built, INT-N2) and no SNS signature verifier, and this ticket did not
+  invent either. The ticket that adds the route wires them, with the SES event destination (SNS topic) and an SNS signature check. Field names
+  follow the AWS formats and must be compared with a real event at go-live. Until then no receipt row is written for these providers.
+- **Security notice** goes straight to the configured mailbox through SES (not the gateway, the address is configuration). Content is the
+  event kind, job reference, principal IDs and, for `bootstrap_run`, the run, CI and ticket references and token expiry: no name or credential detail.
+
+Required IAM (worker task role; the API does not send):
+
+- E-mail and security notice: `ses:SendEmail` and `ses:SendRawEmail` on the verified identity (and the configuration set, when used), `ses:GetAccount`.
+- SMS: `sms-voice:SendTextMessage` on the origination identity (and the configuration set), `sms-voice:DescribeAccountAttributes`.
+- Push: none.
+
+Emulator evidence: `notify-adapters.emulator.test.ts` runs the SES provider and the security notice against LocalStack SES v2 when
+`EHR_EMULATOR_SES_ENDPOINT` is set (`pnpm test:emulator`). **Not run in this ticket's session (no container runtime available), so there is
+no emulator result to report.** End User Messaging SMS has no emulator coverage (LocalStack community does not implement it); Web Push is
+tested against the real `web-push` library offline (request building and encryption, nothing sent). Real checks for go-live
+(docs/GO-LIVE.md): SES production access and verified identity, DKIM/SPF/DMARC, bounce and complaint event destination and the real event shape, an SMS
+origination identity registered and out of the sandbox, 10DLC/toll-free registration where required, a push delivered to a real browser.
+
 ## Tests
 
-- Unit (stubbed clients, run by `pnpm test` in each app): `apps/api/src/platform/aws/s3-presigners.test.ts`,
+- Unit (stubbed clients, run by `pnpm test` in each app): `apps/worker/src/aws/notify-adapters.test.ts`, `web-push.test.ts`, `receipt-events.test.ts`,
+  `apps/api/src/platform/aws/s3-presigners.test.ts`,
   `apps/worker/src/aws/s3-adapters.test.ts`, `packages/kernel/src/aws/config.test.ts`; AWS-BE-2: `packages/kernel/src/aws/kms-envelope.test.ts`
   (round trip, wrong context, tampered bytes, wrong/untrusted key, rotation, alias, key wiping), `secrets-manager.test.ts`,
   `apps/api/src/platform/aws/secrets-kms.test.ts`, `apps/worker/src/aws/secrets-kms.test.ts`.

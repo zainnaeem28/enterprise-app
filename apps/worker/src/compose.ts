@@ -42,6 +42,7 @@ import {
   InboundHandlerRegistry,
   SecretCache,
   VendorGateway,
+  type VendorAdapter,
 } from './jobs/integration-core/index.js';
 import type {
   InboundSecretWriter,
@@ -142,6 +143,8 @@ export interface ComposeOptions {
     packageStore?: WorkerPackageStore;
     /** The PHI-free notice to the security contact mailbox (B2-9); no mail channel is provisioned yet, so it defaults to refusing. */
     securityNotice?: SecurityNoticePort;
+    /** Gateway provider adapters (e-mail, SMS, push); an absent kind has no adapter, so the gateway refuses the call. */
+    channelAdapters?: readonly VendorAdapter[];
     /** Receives gauges such as `AuditAnchorLateSeconds`; defaults to a CloudWatch EMF line on stdout. */
     metrics?: MetricSink;
   };
@@ -198,6 +201,7 @@ export function composeTasks(opts: ComposeOptions & { queue: Queue }): TaskTable
 
   // Vendor access goes through the gateway; with no provider adapter registered a call fails as "no adapter" (not configured).
   const adapters = new AdapterRegistry();
+  for (const a of infra.channelAdapters ?? []) adapters.register(a);
   const secrets = new SecretCache(infra.secretReader ?? refusingPort<SecretReader>('secret_store'));
   const gateway = new VendorGateway({
     db,
