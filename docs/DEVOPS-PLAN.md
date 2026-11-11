@@ -535,9 +535,9 @@ SCPs do not apply to the management account, so it holds **no workload, no OIDC 
 
 | Data | Protection | Frequency / retention (Recommendation) |
 | --- | --- | --- |
-| RDS PostgreSQL | Automated backups with PITR; **cross-Region automated backup replication** † ; AWS Backup copy to a vault-locked vault in `log-archive` † | PITR retention 35 days (service maximum, **Unverified** for replicated copy); daily AWS Backup copy retained 35 days; monthly retained 12 months. Longer retention for legal holds is a counsel decision. Pre-release manual snapshots kept 30 days |
+| RDS PostgreSQL | Automated backups with PITR; **cross-Region automated backup replication** † ; AWS Backup copy to a vault-locked vault in `log-archive` † | PITR retention 35 days (service maximum, **Unverified** for replicated copy); daily AWS Backup copy retained 35 days; monthly retained 12 months. Values per owner ruling C item 2 (2026-11-11) †; configured in `infra/RETENTION.md`. Longer retention for legal holds is a counsel decision. Pre-release manual snapshots kept 30 days |
 | S3 clean documents | Versioning; CRR with Replication Time Control † | Noncurrent versions 90 days; legal hold per policy |
-| Audit archive and anchors | Object Lock compliance mode, replicated with lock † | Retention = longest legal minimum (Open: NFR-13, counsel) |
+| Audit archive and anchors | Object Lock compliance mode, replicated with lock † | Audit trail and anchors 7 years (2557 days, ruling C item 2 †); HIPAA documentation 6 years, covered by the same lock; medical record 10 years after the last encounter, enforced by the application, not by a bucket rule (`infra/RETENTION.md`) |
 | IaC state | Versioned bucket, replicated † | Versions kept 1 year |
 | Images | ECR cross-Region replication † ; lifecycle keeps all images referenced by a released manifest | Released images kept 1 year |
 | Secrets, KMS | Replication / multi-Region keys † | n/a |
@@ -581,7 +581,7 @@ Declare incident → activate identity replicas → apply **workload** IaC in th
 
 ### 11.1 Telemetry
 
-OpenTelemetry (ADOT collector as a sidecar) → CloudWatch Logs, Metrics and traces. Structured JSON logs with an **allowlist of fields**; request IDs correlate API, worker and outbox. A CloudWatch Logs data-protection policy is a second line of defence against PHI patterns; it does not replace the logger allowlist (NFR-18, SEC-D-07). No analytics or error SDKs on PHI origins. Log retention (Recommendation): application logs 90 days hot, then 13 months in the log-archive account; CloudTrail and security logs retained at least 6 years (HIPAA documentation) in Object Lock. **Open:** final periods need counsel (same open item as audit retention).
+OpenTelemetry (ADOT collector as a sidecar) → CloudWatch Logs, Metrics and traces. Structured JSON logs with an **allowlist of fields**; request IDs correlate API, worker and outbox. A CloudWatch Logs data-protection policy is a second line of defence against PHI patterns; it does not replace the logger allowlist (NFR-18, SEC-D-07). No analytics or error SDKs on PHI origins. Log retention (Recommendation): application logs 90 days in CloudWatch, then archived 1 year (ruling C item 2); network flow logs 1 year; privacy export packages 7 days; CloudTrail and security logs retained at least 6 years (HIPAA documentation) in Object Lock. † Counsel confirmation of these defaults is pending; every value is a variable (`infra/RETENTION.md`). The 1-year application-log archive stage has no IaC resource yet (listed in `infra/RETENTION.md` as a gap).
 
 ### 11.2 SLIs and SLOs (from approved targets; none lowered)
 
@@ -762,7 +762,7 @@ Refuse if: the manifest digest differs from the `manifest_hash` in the approved-
 | 4 | Workspace edition and 2SV evidence (13.4) | Workspace administrator | RA-R1-01 evidence; SEC-D-04 |
 | 5 | Cognito pricing page or quote (13.3) | DevOps/Owner | Closing SAR-16 |
 | 6 | Hosting choice AWS vs Google Cloud (D-30) | Owner | Everything below the plan's AWS-specific lines |
-| 7 | Audit, log and backup retention periods | Counsel | Storage cost, vault configuration |
+| 7 | Audit, log and backup retention periods (defaults set by owner ruling C item 2 †; counsel confirmation pending) | Counsel | Storage cost, vault configuration |
 | 8 | Whether the Workspace directory leaver backstop is required (SHARED-BOUNDARIES 7.2.8) | Cybersecurity | Directory credential and role |
 | 9 | Accept admin elevation limitation during failover (10.5) | Human Architect, operations owner | Region-loss runbook |
 | 10 | Confirm `www.`/`cms.` outside NFR-1..3 (SAR-11) | PM | SLO table |

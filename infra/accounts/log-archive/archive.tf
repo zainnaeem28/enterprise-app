@@ -15,8 +15,9 @@ variable "archive_name_prefix" {
 }
 
 variable "archive_retention_days" {
-  description = "Object Lock default retention of the archive. OPEN (NFR-13, counsel): the longest legal minimum; deliberately no default. COMPLIANCE mode cannot be shortened once objects are written."
+  description = "Object Lock default retention of the archive. Audit trail and anchors 7 years = 2557 days (owner ruling C item 2; † counsel confirmation pending; infra/RETENTION.md). COMPLIANCE mode cannot be shortened once objects are written."
   type        = number
+  default     = 2557
 }
 
 variable "anchor_writer_principal_arns" {

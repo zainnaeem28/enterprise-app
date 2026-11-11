@@ -26,7 +26,7 @@ OIDC providers and `gh-*` roles, and the `infra/approvals` root. They belong to 
 - **C-21 (SCP owner).** The only principal exempt from the control-plane SCP is the
   `platform-admin-apply` Identity Center role (pattern in `platform_admin_role_arn_pattern`).
   Named people are not assumed. The SCP content, attachment and any change are human actions.
-- **Retention.** Flow-log retention (400 days) is a placeholder, not an approved value.
+- **Retention.** Flow-log retention is 1 year (365 days, `retention_days`), owner ruling C item 2 †: counsel confirmation pending. See `infra/RETENTION.md`.
 - **CIDRs** (`10.10/16` production, `10.11/16` recovery, `10.20/16` staging, `10.30/16` marketing)
   are proposals; loadtest and restore-test VPCs need their own ranges later.
 - **SCP size.** SCPs are limited to 5,120 characters. Each policy has a `precondition` on its

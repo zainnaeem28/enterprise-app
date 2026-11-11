@@ -281,3 +281,11 @@ run "receipt_endpoint_must_be_the_receipt_route" {
   }
   expect_failures = [var.receipt_endpoint_url]
 }
+
+run "privacy_packages_expire_after_seven_days" {
+  command = plan
+  assert {
+    condition     = one([for k, v in aws_s3_bucket_lifecycle_configuration.this : v if k == "packages"]).rule[0].expiration[0].days == 7
+    error_message = "privacy export packages expire after 7 days (ruling C item 2)"
+  }
+}

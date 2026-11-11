@@ -7,6 +7,8 @@ export interface SiteConfig {
   publicApiOrigin: string;
   /** The patient portal origin (`my.`) that "Book" hands off to. */
   patientOrigin: string;
+  /** Origin of the self-hosted CMS content API (server to server). `null` = not configured: the static copy with no organisation facts is used. */
+  cmsOrigin: string | null;
   /** Optional analytics script. Loaded in the browser only after the visitor accepts analytics. */
   analyticsSrc: string | null;
   /** Directory `dist/client` with the browser bundle. */
@@ -30,6 +32,7 @@ export function loadConfig(env: Record<string, string | undefined>, clientDir: s
   if (analytics !== undefined && analytics !== '') {
     origin('ANALYTICS_SRC', analytics);
   }
+  const cms = env['CMS_ORIGIN']?.trim();
   return {
     port: Number(env['PORT'] ?? 8080),
     siteOrigin: origin('SITE_ORIGIN', env['SITE_ORIGIN'] ?? 'http://localhost:8080'),
@@ -38,6 +41,7 @@ export function loadConfig(env: Record<string, string | undefined>, clientDir: s
       env['PUBLIC_API_ORIGIN'] ?? 'http://127.0.0.1:3001',
     ),
     patientOrigin: origin('PATIENT_ORIGIN', env['PATIENT_ORIGIN'] ?? 'http://localhost:5173'),
+    cmsOrigin: cms === undefined || cms === '' ? null : origin('CMS_ORIGIN', cms),
     analyticsSrc: analytics === undefined || analytics === '' ? null : analytics,
     clientDir,
   };

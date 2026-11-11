@@ -1,0 +1,143 @@
+{
+  "engine": "chromium",
+  "browser": "156.0.8078.4",
+  "results": [
+    {
+      "id": "seed.world",
+      "ok": true,
+      "detail": "doctor STF-DR-X6184058, patient PAT-1751234, front desk STF-FD-QA-6782002, booked=true"
+    },
+    {
+      "id": "chromium:doctor.session",
+      "ok": true,
+      "detail": "status 200"
+    },
+    {
+      "id": "chromium:10-doctor-schedule",
+      "ok": true,
+      "detail": "http://localhost:4351/schedule text=376ch expect /Casey Synthetic/"
+    },
+    {
+      "id": "chromium:11-doctor-patient-list",
+      "ok": true,
+      "detail": "http://localhost:4351/patients text=428ch"
+    },
+    {
+      "id": "chromium:12-doctor-alerts",
+      "ok": true,
+      "detail": "http://localhost:4351/alerts text=272ch"
+    },
+    {
+      "id": "chromium:13-doctor-notes-to-sign",
+      "ok": true,
+      "detail": "http://localhost:4351/notes-to-sign text=348ch"
+    },
+    {
+      "id": "chromium:14-doctor-availability",
+      "ok": true,
+      "detail": "http://localhost:4351/availability text=709ch"
+    },
+    {
+      "id": "chromium:15-doctor-tasks",
+      "ok": true,
+      "detail": "http://localhost:4351/tasks text=366ch"
+    },
+    {
+      "id": "chromium:frontdesk.session",
+      "ok": true,
+      "detail": "status 200"
+    },
+    {
+      "id": "chromium:20-frontdesk-arrivals",
+      "ok": true,
+      "detail": "http://localhost:4351/arrivals text=569ch"
+    },
+    {
+      "id": "chromium:21-frontdesk-waitlist",
+      "ok": true,
+      "detail": "http://localhost:4351/waitlist text=321ch"
+    },
+    {
+      "id": "chromium:22-frontdesk-patients",
+      "ok": true,
+      "detail": "http://localhost:4351/patients text=327ch"
+    },
+    {
+      "id": "chromium:23-frontdesk-forms",
+      "ok": true,
+      "detail": "http://localhost:4351/forms text=355ch"
+    },
+    {
+      "id": "chromium:24-frontdesk-triage-queue",
+      "ok": true,
+      "detail": "http://localhost:4351/triage text=411ch"
+    },
+    {
+      "id": "chromium:patient.session",
+      "ok": true,
+      "detail": "status 200"
+    },
+    {
+      "id": "chromium:30-patient-home",
+      "ok": true,
+      "detail": "http://127.0.0.1:4350/ text=161ch"
+    },
+    {
+      "id": "chromium:31-patient-booking-start",
+      "ok": true,
+      "detail": "http://127.0.0.1:4350/book text=310ch expect /What would you like to book/"
+    },
+    {
+      "id": "chromium:32-patient-profile",
+      "ok": true,
+      "detail": "http://127.0.0.1:4350/profile text=550ch expect /Casey|profile/i"
+    },
+    {
+      "id": "chromium:33-patient-privacy",
+      "ok": true,
+      "detail": "http://127.0.0.1:4350/privacy text=589ch"
+    },
+    {
+      "id": "chromium:34-patient-messages",
+      "ok": true,
+      "detail": "http://127.0.0.1:4350/messages text=129ch"
+    },
+    {
+      "id": "chromium:35-patient-appointments",
+      "ok": true,
+      "detail": "http://127.0.0.1:4350/appointments text=211ch expect /Confirmed/"
+    },
+    {
+      "id": "chromium:36-patient-previsit",
+      "ok": true,
+      "detail": "http://127.0.0.1:4350/appointments/01a1c5cc-ebf6-77ef-aeda-598e232089be/previsit text=352ch"
+    },
+    {
+      "id": "chromium:40-site-home",
+      "ok": true,
+      "detail": "http://127.0.0.1:32785/ text=824ch"
+    },
+    {
+      "id": "chromium:41-site-services",
+      "ok": true,
+      "detail": "http://127.0.0.1:32785/services text=774ch expect /appointment|consult/i"
+    },
+    {
+      "id": "chromium:42-site-doctors",
+      "ok": true,
+      "detail": "http://127.0.0.1:32785/doctors text=997ch"
+    },
+    {
+      "id": "chromium:43-site-locations",
+      "ok": true,
+      "detail": "http://127.0.0.1:32785/locations text=545ch"
+    },
+    {
+      "id": "chromium:50-patient-home-360px",
+      "ok": true,
+      "detail": "http://127.0.0.1:4350/ text=161ch"
+    }
+  ],
+  "pageErrors": [],
+  "at": "2026-11-10T14:12:10.640Z"
+}

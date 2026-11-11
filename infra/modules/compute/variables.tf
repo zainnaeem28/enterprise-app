@@ -88,9 +88,13 @@ variable "deletion_protection" {
 }
 
 variable "log_retention_days" {
-  description = "Placeholder, not an approved retention value."
+  description = "Application log group retention: 90 days, then the archive keeps 1 year (owner ruling C item 2 †, counsel confirmation pending; infra/RETENTION.md)."
   type        = number
-  default     = 400
+  default     = 90
+  validation {
+    condition     = var.log_retention_days >= 90
+    error_message = "log_retention_days must be at least 90."
+  }
 }
 
 variable "container_insights" {

@@ -19,11 +19,16 @@ variable "replica_kms_key_arn" {
 }
 
 variable "retention_days" {
-  description = "Object Lock default retention. OPEN (NFR-13, counsel): set to the longest legal minimum; there is deliberately no default. Compliance-mode retention cannot be shortened or removed once objects are written."
+  description = "Object Lock default retention in days: audit trail and anchors 7 years (2557 days, owner ruling C item 2; † counsel confirmation pending; see infra/RETENTION.md). The HIPAA documentation period (6 years) is shorter and is covered by this period. Compliance-mode retention cannot be shortened or removed once objects are written."
   type        = number
+  default     = 2557
   validation {
     condition     = var.retention_days >= 1
     error_message = "retention_days must be at least 1."
+  }
+  validation {
+    condition     = var.object_lock_mode != "COMPLIANCE" || var.retention_days >= 2557
+    error_message = "retention_days must be at least 2557 (7 years) in COMPLIANCE mode; only a throwaway GOVERNANCE environment may use less."
   }
 }
 

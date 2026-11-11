@@ -4,7 +4,7 @@
 - `<prefix>-audit-archive-replica` in the recovery Region with Object Lock also on, fed by S3 replication with RTC; lock settings replicate with the objects (ARCHITECTURE 9.4).
 - AWS Backup vaults (primary and recovery Region) with a vault lock and a policy that accepts copies only from inside the organisation and denies deletion of recovery points (DEVOPS-PLAN 10.1, SEC-D-17).
 
-`retention_days` has **no default**: the retention period is the longest legal minimum (NFR-13, open for counsel). A compliance-mode period cannot be shortened later, so the value must be decided before anything is applied. Likewise the backup vault lock becomes immutable after `vault_lock_changeable_for_days`.
+`retention_days` defaults to 2557 days (7 years: audit trail and anchors, owner ruling C item 2 †, counsel confirmation pending; HIPAA documentation 6 years is covered). In COMPLIANCE mode a value below 2557 is rejected. A compliance-mode period cannot be shortened later, so a longer counsel answer must be set before objects are written. See `infra/RETENTION.md`. Likewise the backup vault lock becomes immutable after `vault_lock_changeable_for_days`.
 
 Authored only. Nothing here has been applied.
 

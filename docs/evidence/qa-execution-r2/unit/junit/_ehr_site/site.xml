@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="59" failures="0" errors="0" time="1.019923095">
+    <testsuite name="src/a11y.test.tsx" timestamp="2026-11-10T13:38:28.496Z" hostname="314866be9867" tests="15" failures="0" errors="0" skipped="0" time="0.633507937">
+        <testcase classname="src/a11y.test.tsx" name="axe (jsdom) on every page state &gt; home" time="0.185556221">
+        </testcase>
+        <testcase classname="src/a11y.test.tsx" name="axe (jsdom) on every page state &gt; about" time="0.061699111">
+        </testcase>
+        <testcase classname="src/a11y.test.tsx" name="axe (jsdom) on every page state &gt; about, directory down" time="0.050087099">
+        </testcase>
+        <testcase classname="src/a11y.test.tsx" name="axe (jsdom) on every page state &gt; services" time="0.050846154">
+        </testcase>
+        <testcase classname="src/a11y.test.tsx" name="axe (jsdom) on every page state &gt; doctors" time="0.041778709">
+        </testcase>
+        <testcase classname="src/a11y.test.tsx" name="axe (jsdom) on every page state &gt; doctor" time="0.038367026">
+        </testcase>
+        <testcase classname="src/a11y.test.tsx" name="axe (jsdom) on every page state &gt; locations" time="0.037024457">
+        </testcase>
+        <testcase classname="src/a11y.test.tsx" name="axe (jsdom) on every page state &gt; contact" time="0.033765642">
+        </testcase>
+        <testcase classname="src/a11y.test.tsx" name="axe (jsdom) on every page state &gt; legal" time="0.029353333">
+        </testcase>
+        <testcase classname="src/a11y.test.tsx" name="axe (jsdom) on every page state &gt; not found" time="0.027789228">
+        </testcase>
+        <testcase classname="src/a11y.test.tsx" name="axe (jsdom) on every page state &gt; directory down" time="0.032795872">
+        </testcase>
+        <testcase classname="src/a11y.test.tsx" name="axe (jsdom) on every page state &gt; directory empty" time="0.026984647">
+        </testcase>
+        <testcase classname="src/a11y.test.tsx" name="axe (jsdom) on every page state &gt; cookie banner" time="0.014349056">
+        </testcase>
+        <testcase classname="src/a11y.test.tsx" name="services mode label (INT03-F22) &gt; labels the API mode &quot;video&quot; as a video visit" time="0.000791515">
+        </testcase>
+        <testcase classname="src/a11y.test.tsx" name="services mode label (INT03-F22) &gt; labels in_person as in person" time="0.000282821">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/consent.test.ts" timestamp="2026-11-10T13:38:28.499Z" hostname="314866be9867" tests="7" failures="0" errors="0" skipped="0" time="0.036973623">
+        <testcase classname="src/consent.test.ts" name="cookie consent (TC-BS-08) &gt; loads nothing and records nothing before a choice" time="0.02022876">
+        </testcase>
+        <testcase classname="src/consent.test.ts" name="cookie consent (TC-BS-08) &gt; &quot;Essential only&quot; loads nothing and is remembered" time="0.002408891">
+        </testcase>
+        <testcase classname="src/consent.test.ts" name="cookie consent (TC-BS-08) &gt; &quot;Accept all&quot; loads analytics once, and a later visit loads it again without asking" time="0.008659279">
+        </testcase>
+        <testcase classname="src/consent.test.ts" name="cookie consent (TC-BS-08) &gt; withdrawing stops events and clears the queue" time="0.002010282">
+        </testcase>
+        <testcase classname="src/consent.test.ts" name="cookie consent (TC-BS-08) &gt; with no analytics configured, &quot;all&quot; loads no script at all" time="0.000895049">
+        </testcase>
+        <testcase classname="src/consent.test.ts" name="analytics payload allow-list (TC-BS-04) &gt; keeps only event and template" time="0.00047978">
+        </testcase>
+        <testcase classname="src/consent.test.ts" name="analytics payload allow-list (TC-BS-04) &gt; drops unknown events and free-text templates" time="0.000797998">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/directory.test.ts" timestamp="2026-11-10T13:38:28.501Z" hostname="314866be9867" tests="10" failures="0" errors="0" skipped="0" time="0.035589584">
+        <testcase classname="src/directory.test.ts" name="parsers drop malformed rows &gt; service" time="0.003862038">
+        </testcase>
+        <testcase classname="src/directory.test.ts" name="parsers drop malformed rows &gt; location takes known address parts only" time="0.000537329">
+        </testcase>
+        <testcase classname="src/directory.test.ts" name="parsers drop malformed rows &gt; next slot" time="0.000522491">
+        </testcase>
+        <testcase classname="src/directory.test.ts" name="client cache and failure handling &gt; caches for the TTL, then refetches" time="0.021654726">
+        </testcase>
+        <testcase classname="src/directory.test.ts" name="client cache and failure handling &gt; serves the last answer when a refresh fails, until the stale limit" time="0.002297141">
+        </testcase>
+        <testcase classname="src/directory.test.ts" name="client cache and failure handling &gt; sends only allow-listed query parameters and never credentials" time="0.000787207">
+        </testcase>
+        <testcase classname="src/directory.test.ts" name="client cache and failure handling &gt; next slot: not found is &quot;none&quot;, failure is &quot;unknown&quot;, and a bad ID never calls the API" time="0.000684695">
+        </testcase>
+        <testcase classname="src/directory.test.ts" name="client cache and failure handling &gt; loadDirectory joins doctors with the services and locations they were returned for" time="0.00231817">
+        </testcase>
+        <testcase classname="src/directory.test.ts" name="maintenance banners &gt; keeps only id and message and drops malformed rows" time="0.000893507">
+        </testcase>
+        <testcase classname="src/directory.test.ts" name="maintenance banners &gt; returns none when the read fails" time="0.000337082">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/handoff.test.ts" timestamp="2026-11-10T13:38:28.502Z" hostname="314866be9867" tests="3" failures="0" errors="0" skipped="0" time="0.003710191">
+        <testcase classname="src/handoff.test.ts" name="bookUrl (TC-BS-02) &gt; carries the service and doctor as opaque IDs and nothing else" time="0.002089471">
+        </testcase>
+        <testcase classname="src/handoff.test.ts" name="bookUrl (TC-BS-02) &gt; drops anything that is not a UUID, so a name or free text never travels" time="0.000259468">
+        </testcase>
+        <testcase classname="src/handoff.test.ts" name="bookUrl (TC-BS-02) &gt; without a selection is the plain booking entry" time="0.000167094">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/render.banner.test.tsx" timestamp="2026-11-10T13:38:28.503Z" hostname="314866be9867" tests="1" failures="0" errors="0" skipped="0" time="0.014735891">
+        <testcase classname="src/render.banner.test.tsx" name="site banner rendering &gt; renders the message on a page and nothing when there is none" time="0.013571007">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/seo.test.ts" timestamp="2026-11-10T13:38:28.503Z" hostname="314866be9867" tests="4" failures="0" errors="0" skipped="0" time="0.004335336">
+        <testcase classname="src/seo.test.ts" name="seo (TC-BS-05) &gt; JSON-LD cannot close its script element" time="0.002191231">
+        </testcase>
+        <testcase classname="src/seo.test.ts" name="seo (TC-BS-05) &gt; doctor structured data has name and url only" time="0.000275497">
+        </testcase>
+        <testcase classname="src/seo.test.ts" name="seo (TC-BS-05) &gt; location structured data omits what is absent" time="0.000241944">
+        </testcase>
+        <testcase classname="src/seo.test.ts" name="seo (TC-BS-05) &gt; sitemap lists static pages and every doctor; robots points to it" time="0.00032982">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/server.test.ts" timestamp="2026-11-10T13:38:28.504Z" hostname="314866be9867" tests="19" failures="0" errors="0" skipped="0" time="0.291070533">
+        <testcase classname="src/server.test.ts" name="pages (TC-BS-01) &gt; services page lists the neutral service names" time="0.055393167">
+        </testcase>
+        <testcase classname="src/server.test.ts" name="pages (TC-BS-01) &gt; doctors page shows each doctor with the next available slot, and a Book link with opaque IDs" time="0.02597868">
+        </testcase>
+        <testcase classname="src/server.test.ts" name="pages (TC-BS-01) &gt; doctor page has one Book per service and structured data" time="0.008329511">
+        </testcase>
+        <testcase classname="src/server.test.ts" name="pages (TC-BS-01) &gt; locations and contact pages show the address and phone" time="0.012536665">
+        </testcase>
+        <testcase classname="src/server.test.ts" name="pages (TC-BS-01) &gt; about page has the approved sections, the emergency line and no Resources/Prescriptions links (HEAAA-275)" time="0.006971613">
+        </testcase>
+        <testcase classname="src/server.test.ts" name="pages (TC-BS-01) &gt; an unknown doctor is a 404 with noindex; a malformed id too" time="0.018119942">
+        </testcase>
+        <testcase classname="src/server.test.ts" name="pages (TC-BS-01) &gt; shows a plain note, not an error, when the slot is unknown or absent" time="0.011577204">
+        </testcase>
+        <testcase classname="src/server.test.ts" name="SEO (TC-BS-05) &gt; every page has a distinct title, description and canonical" time="0.02849987">
+        </testcase>
+        <testcase classname="src/server.test.ts" name="SEO (TC-BS-05) &gt; structured data parses as JSON on every page that has it" time="0.024732471">
+        </testcase>
+        <testcase classname="src/server.test.ts" name="SEO (TC-BS-05) &gt; sitemap and robots" time="0.003321012">
+        </testcase>
+        <testcase classname="src/server.test.ts" name="privacy and headers &gt; no analytics script or host appears in any page before consent; the CSP names it for the later load" time="0.013118978">
+        </testcase>
+        <testcase classname="src/server.test.ts" name="privacy and headers &gt; pages never read or set cookies, and one cached copy fits everyone" time="0.005815753">
+        </testcase>
+        <testcase classname="src/server.test.ts" name="privacy and headers &gt; security headers" time="0.004242661">
+        </testcase>
+        <testcase classname="src/server.test.ts" name="privacy and headers &gt; only GET and HEAD; no path escape from the asset directory" time="0.001235478">
+        </testcase>
+        <testcase classname="src/server.test.ts" name="directory down &gt; pages say so, are not cached, and a doctor URL is 503 rather than a cacheable 404" time="0.006396414">
+        </testcase>
+        <testcase classname="src/server.test.ts" name="cache headers for stale-fallback data (FE-15 C3, PB-4) &gt; fresh directory pages and sitemap carry exactly the page cache header" time="0.01652571">
+        </testcase>
+        <testcase classname="src/server.test.ts" name="cache headers for stale-fallback data (FE-15 C3, PB-4) &gt; pages and sitemap built from the stale fallback are 200 and no-store; legal pages stay cacheable" time="0.025489573">
+        </testcase>
+        <testcase classname="src/server.test.ts" name="cache headers for stale-fallback data (FE-15 C3, PB-4) &gt; past the stale limit pages are degraded and no-store; the sitemap and doctor URL are 503" time="0.005143331">
+        </testcase>
+        <testcase classname="src/server.test.ts" name="cache headers for stale-fallback data (FE-15 C3, PB-4) &gt; a fresh refresh after recovery is cacheable again" time="0.003489479">
+        </testcase>
+    </testsuite>
+</testsuites>

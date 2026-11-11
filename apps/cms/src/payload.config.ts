@@ -8,6 +8,8 @@ import { Users } from './collections/users';
 import { Pages } from './collections/pages';
 import { Banners } from './collections/banners';
 import { Faqs } from './collections/faqs';
+import { SiteContent } from './globals/site-content';
+import { Organisation } from './globals/organisation';
 import { brand } from './admin/brand';
 import { migrations } from '../migrations';
 
@@ -23,6 +25,7 @@ export default buildConfig({
   csrf: [env.publicUrl],
   editor: lexicalEditor(),
   collections: [Users, Pages, Banners, Faqs],
+  globals: [SiteContent, Organisation],
   db: postgresAdapter({
     pool: { connectionString: env.databaseUrl, max: 5 },
     migrationDir: './migrations',

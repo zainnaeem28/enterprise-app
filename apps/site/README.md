@@ -16,6 +16,6 @@ The browser bundle is only the cookie-consent island.
 `e2e/fake-api.mjs`, a labelled contract mock) · `pnpm lighthouse` (needs Chrome).
 
 Hand-off: `{PATIENT_ORIGIN}/book?serviceId=<uuid>&clinicianId=<uuid>`; non-UUID values are dropped.
-Content that is not directory data lives in `src/content.ts` behind `ContentSource` (C-19 decides its source; FE-16).
+Content that is not directory data lives behind `ContentSource` (`src/content.ts`). The live source is the self-hosted CMS in `apps/cms` (C-19; no SaaS CMS): `src/cms-content.ts` reads the published `site-content` and `organisation` globals server to server from `CMS_ORIGIN` (cached 60 s; last good answer for up to 10 minutes; pages built from a fallback are `no-store`). Organisation facts (name, address, phone, e-mail, hours, clinicians) are entered by the organisation in the CMS at go-live; until then the site omits them. The static fallback `placeholderContent` is the same reviewed copy and holds no organisation fact. With `CMS_ORIGIN` unset the static fallback is used. Copy review: `docs/content/SITE-COPY-REVIEW.md`.
 `pnpm-lock.request.patch` is the `apps/site` importer change that `pnpm install` produces (no new resolved package);
 `pnpm-lock.yaml` is outside this ticket's paths, so it is a request to the Orchestrator/DevOps.

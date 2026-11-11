@@ -1,6 +1,6 @@
 # database module
 
-RDS for PostgreSQL 17: Multi-AZ (production), private data subnets, SSE-KMS, 35-day point-in-time recovery, cross-Region automated backup replication, and an AWS Backup plan (daily 35 days, monthly 12 months) that copies into the vault-locked vaults of the log-archive account (`archive` module outputs). DEVOPS-PLAN 3.2, 5.2, 8, 10.1; ARCHITECTURE 9.3, 9.4.
+RDS for PostgreSQL 17: Multi-AZ (production), private data subnets, SSE-KMS, 35-day point-in-time recovery, cross-Region automated backup replication, and an AWS Backup plan (daily 35 days, monthly 12 months; owner ruling C item 2 †, counsel confirmation pending, `infra/RETENTION.md`) that copies into the vault-locked vaults of the log-archive account (`archive` module outputs). DEVOPS-PLAN 3.2, 5.2, 8, 10.1; ARCHITECTURE 9.3, 9.4.
 
 Authored only. Nothing here has been applied.
 
