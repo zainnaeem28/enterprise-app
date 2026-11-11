@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { createLogger, SecretsManagerStore } from '@ehr/kernel';
+import { AwsConfigError, createLogger, SecretsManagerStore } from '@ehr/kernel';
 import { GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
 import {
   CHANNEL_KEY_SECRET,
@@ -55,4 +55,38 @@ test('channel key refuses when the secret does not exist', async () => {
   await assert.rejects(
     new SecretsManagerChannelKey(new SecretsManagerStore(sm as never, 'prod')).current(),
   );
+});
+
+// --- recovery-Region replica (HEAAA-860) ---
+const KEY = 'arn:aws:kms:us-west-2:111122223333:key/11111111-2222-3333-4444-555555555555';
+const prod = { AWS_REGION: 'eu-west-2', EHR_SECRETS_PREFIX: 'prod' };
+
+test('both replica variables -> the replica check is offered; without them it is not', () => {
+  const on = selectSecretsWorkerInfra(
+    { ...prod, EHR_SECRETS_REPLICA_REGION: 'us-west-2', EHR_SECRETS_REPLICA_KMS_KEY_ID: KEY },
+    log,
+  );
+  assert.ok(on.secretWriter && on.replicaCheck);
+  assert.deepEqual(on.replicaCheck.replica, { region: 'us-west-2', kmsKeyId: KEY });
+  assert.equal(on.replicaCheck.prefix, 'prod');
+  assert.equal(selectSecretsWorkerInfra(prod, log).replicaCheck, undefined);
+});
+
+test('one replica variable, the same Region, a key in another Region, or no prefix stops the start', () => {
+  const bad = (env: Record<string, string>): void =>
+    assert.throws(() => selectSecretsWorkerInfra(env, log), AwsConfigError);
+  bad({ ...prod, EHR_SECRETS_REPLICA_REGION: 'us-west-2' });
+  bad({ ...prod, EHR_SECRETS_REPLICA_KMS_KEY_ID: KEY });
+  bad({
+    ...prod,
+    AWS_REGION: 'us-west-2',
+    EHR_SECRETS_REPLICA_REGION: 'us-west-2',
+    EHR_SECRETS_REPLICA_KMS_KEY_ID: KEY,
+  });
+  bad({ ...prod, EHR_SECRETS_REPLICA_REGION: 'us-east-1', EHR_SECRETS_REPLICA_KMS_KEY_ID: KEY });
+  bad({
+    AWS_REGION: 'eu-west-2',
+    EHR_SECRETS_REPLICA_REGION: 'us-west-2',
+    EHR_SECRETS_REPLICA_KMS_KEY_ID: KEY,
+  });
 });

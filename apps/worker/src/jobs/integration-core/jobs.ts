@@ -30,6 +30,23 @@ export const INTEGRATION_CORE_JOBS: readonly JobType[] = [
   },
 ];
 
+/** Worker-only: scheduled by the worker's own crontab (only with the recovery-Region replica configured), never enqueued by the API tier. */
+export const CHECK_SECRET_REPLICAS_JOB = 'integration_core.check_secret_replicas';
+export const INTEGRATION_CORE_WORKER_JOBS: readonly JobType[] = [
+  {
+    name: CHECK_SECRET_REPLICAS_JOB,
+    apiEnqueue: false,
+    maxAttempts: 3,
+    onMerged: 'none',
+    carriesPatientIds: false,
+    jobScope: 'org',
+    jobClass: 'system',
+  },
+];
+
+/** Every 15 minutes. Added to the worker's crontab only when the replica variables are set (job-registry.ts `workerCrontab`). */
+export const SECRET_REPLICA_CRONTAB = `*/15 * * * * ${CHECK_SECRET_REPLICAS_JOB}`;
+
 /** Events this module publishes (24). Handlers register in the notifications module. */
 export const INTEGRATION_CORE_EVENTS = [
   'integration_core.inbound_received',

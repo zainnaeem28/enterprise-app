@@ -2,10 +2,13 @@
 // role may read both secret classes and is the only writer of `inbound` secrets (SC-2); it alone may KMS-Decrypt what the API sealed (SC-3).
 // Selected by configuration like every AWS adapter: absent -> the refusing port stays, partial -> startup fails.
 import {
+  AwsConfigError,
   awsSettings,
   createKmsClient,
   createSecretsManagerClient,
   KmsEnvelope,
+  SECRETS_REPLICA_VARS,
+  secretReplicaFromEnv,
   SecretsManagerStore,
   selectByEnv,
   type Env,
@@ -16,6 +19,7 @@ import type {
   PayloadOpener,
   SecretReader,
 } from '../jobs/integration-core/secrets.js';
+import type { ReplicaCheckDeps } from '../jobs/integration-core/replica-health.js';
 import type { ChannelKeyProvider } from '../jobs/calendar-sync/ports.js';
 
 export const SECRETS_VARS = ['EHR_SECRETS_PREFIX'] as const;
@@ -61,26 +65,44 @@ export interface SecretsWorkerInfra {
   secretWriter?: InboundSecretWriter;
   channelKeys?: ChannelKeyProvider;
   payloadOpener?: PayloadOpener;
+  /** Present only with the recovery-Region replica configured: the recurring check that every runtime secret's replica is in sync. */
+  replicaCheck?: ReplicaCheckDeps;
 }
 
 export function selectSecretsWorkerInfra(env: Env, log: Logger): SecretsWorkerInfra {
   const out: SecretsWorkerInfra = {};
+  const replica = secretReplicaFromEnv(env, 'secret store (Secrets Manager)');
+  // A replica without the store it belongs to is a half-configured group, not something to ignore.
+  if (replica !== undefined && (env['EHR_SECRETS_PREFIX'] ?? '').trim() === '')
+    throw new AwsConfigError(
+      'secret store (Secrets Manager)',
+      ['EHR_SECRETS_PREFIX'],
+      [...SECRETS_REPLICA_VARS],
+    );
+  let check: ReplicaCheckDeps | undefined;
   const store = selectByEnv({
     adapter: 'secret store (Secrets Manager)',
     env,
     vars: SECRETS_VARS,
     log,
-    build: (v) =>
-      new SecretsManagerStore(
-        createSecretsManagerClient(awsSettings(env, 'secret store (Secrets Manager)')),
+    build: (v) => {
+      const sm = createSecretsManagerClient(awsSettings(env, 'secret store (Secrets Manager)'));
+      if (replica !== undefined)
+        check = { sm, prefix: v['EHR_SECRETS_PREFIX'] as string, replica, log };
+      return new SecretsManagerStore(
+        sm,
         v['EHR_SECRETS_PREFIX'] as string,
         (env['EHR_SECRETS_KMS_KEY_ID'] ?? '').trim() || undefined,
-      ),
+        replica,
+        log,
+      );
+    },
   });
   if (store !== undefined) {
     out.secretReader = new SecretsManagerReader(store);
     out.secretWriter = new SecretsManagerInboundWriter(store);
     out.channelKeys = new SecretsManagerChannelKey(store);
+    if (check !== undefined) out.replicaCheck = check;
   }
   const opener = selectByEnv({
     adapter: 'payload opener (KMS)',

@@ -7,7 +7,7 @@ import { test } from 'node:test';
 import { createLogger, JobRegistry, Queue } from '@ehr/kernel';
 import type { JobType, KernelConfig } from '@ehr/kernel';
 import { composeTasks, PortNotConfiguredError } from './compose.js';
-import { buildWorkerRegistry, WORKER_CRONTAB, WORKER_JOBS } from './job-registry.js';
+import { buildWorkerRegistry, WORKER_CRONTAB, WORKER_JOBS, workerCrontab } from './job-registry.js';
 import { parseCrontab } from 'graphile-worker';
 import { fromCrontabTaskId, unhandledJobTypes } from './runner.js';
 
@@ -210,4 +210,19 @@ test('every job type the API path may publish exists in the worker registry, wit
   assert.ok(publishable.has('patient.execute_merge'));
   assert.ok(publishable.has('notifications.escalate_alert'));
   for (const j of api) if (mine.has(j.name)) assert.deepEqual(mine.get(j.name), j, j.name);
+});
+
+test('HEAAA-860: the secret-replica check is on the crontab only with the replica configured, and the real parser accepts it', () => {
+  const { registry, tasks } = table();
+  assert.equal(workerCrontab({ secretReplica: false }), WORKER_CRONTAB);
+  const on = workerCrontab({ secretReplica: true });
+  assert.deepEqual(on.split('\n').slice(5), [
+    '*/15 * * * * integration_core/check_secret_replicas',
+  ]);
+  const items = parseCrontab(on);
+  assert.equal(items.length, 6);
+  const name = fromCrontabTaskId(items[5]!.task);
+  assert.equal(name, 'integration_core.check_secret_replicas');
+  assert.ok(registry.list().some((j) => j.name === name));
+  assert.equal(typeof tasks[name], 'function');
 });

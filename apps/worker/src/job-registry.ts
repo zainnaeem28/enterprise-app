@@ -14,7 +14,11 @@ import {
   IDENTITY_PROXY_WORKER_JOBS,
   PROXY_CRONTAB,
 } from './jobs/identity/jobs.js';
-import { INTEGRATION_CORE_JOBS } from './jobs/integration-core/jobs.js';
+import {
+  INTEGRATION_CORE_JOBS,
+  INTEGRATION_CORE_WORKER_JOBS,
+  SECRET_REPLICA_CRONTAB,
+} from './jobs/integration-core/jobs.js';
 import { MESSAGING_JOBS } from './jobs/messaging/jobs.js';
 import { ALERT_JOBS } from './jobs/notifications/alert-jobs.js';
 import {
@@ -44,6 +48,7 @@ export const WORKER_JOBS: readonly JobType[] = [
   ...CALENDAR_SYNC_JOBS,
   ...DOCUMENTS_JOBS,
   ...INTEGRATION_CORE_JOBS,
+  ...INTEGRATION_CORE_WORKER_JOBS,
   ...CLINICAL_JOBS,
   ...MESSAGING_JOBS,
   ...PRIVACY_JOBS,
@@ -54,6 +59,16 @@ export const WORKER_JOBS: readonly JobType[] = [
 export const WORKER_CRONTAB: string = toCrontabText(
   [PRIVACY_CRONTAB, REPORTING_CRONTAB, AUDIT_CRONTAB, PROXY_CRONTAB].join('\n'),
 );
+
+/**
+ * The crontab the worker runs. The secret-replica check (HEAAA-860) is added only when the recovery-Region replica is configured, so it
+ * never runs in a non-production environment or in the recovery Region after a failover.
+ */
+export function workerCrontab(opts: { secretReplica: boolean }): string {
+  return opts.secretReplica
+    ? `${WORKER_CRONTAB}\n${toCrontabText(SECRET_REPLICA_CRONTAB)}`
+    : WORKER_CRONTAB;
+}
 
 export function buildWorkerRegistry(): JobRegistry {
   const registry = new JobRegistry();

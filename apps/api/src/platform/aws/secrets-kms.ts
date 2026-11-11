@@ -2,10 +2,13 @@
 // an absent group leaves the composition's refusing port, a partial one stops the start. The crypto lives in @ehr/kernel
 // (KmsEnvelope, SecretsManagerStore) so the worker opens exactly what this tier seals.
 import {
+  AwsConfigError,
   awsSettings,
   createKmsClient,
   createSecretsManagerClient,
   KmsEnvelope,
+  SECRETS_REPLICA_VARS,
+  secretReplicaFromEnv,
   SecretsManagerStore,
   selectByEnv,
   type Env,
@@ -55,6 +58,14 @@ export interface ApiSecretPorts {
 
 export function selectApiSecretPorts(env: Env, log: Logger): ApiSecretPorts {
   const out: ApiSecretPorts = {};
+  const replica = secretReplicaFromEnv(env, 'secret store (Secrets Manager)');
+  // A replica without the store it belongs to is a half-configured group, not something to ignore.
+  if (replica !== undefined && (env['EHR_SECRETS_PREFIX'] ?? '').trim() === '')
+    throw new AwsConfigError(
+      'secret store (Secrets Manager)',
+      ['EHR_SECRETS_PREFIX'],
+      [...SECRETS_REPLICA_VARS],
+    );
   const store = selectByEnv({
     adapter: 'secret store (Secrets Manager)',
     env,
@@ -65,6 +76,8 @@ export function selectApiSecretPorts(env: Env, log: Logger): ApiSecretPorts {
         createSecretsManagerClient(awsSettings(env, 'secret store (Secrets Manager)')),
         v['EHR_SECRETS_PREFIX'] as string,
         (env['EHR_SECRETS_KMS_KEY_ID'] ?? '').trim() || undefined,
+        replica,
+        log,
       ),
   });
   if (store !== undefined) {
