@@ -124,8 +124,10 @@ resource "aws_secretsmanager_secret_rotation" "this" {
   }
 }
 
-# A replica does not inherit the resource policy of its primary (AWS documents resource policies per secret and Region), so the
-# same policy is attached to the replica explicitly. Without it the replica would be governed by identity policies alone and lose
+# Secrets Manager replicates the resource policy of a primary to its replicas along with the secret data and tags (AWS guide
+# "Replicate AWS Secrets Manager secrets across Regions"). The same policy is nevertheless attached to the replica explicitly: it is
+# harmless, makes the replica's policy visible in this plan, and restores it if it is changed or removed in the recovery Region.
+# Without a policy the replica would be governed by identity policies alone and lose
 # the reader pin, the organisation condition and the TLS condition. The replica ARN is the primary ARN with the Region replaced
 # (a replica keeps the random suffix).
 resource "aws_secretsmanager_secret_policy" "replica" {
