@@ -1,0 +1,4 @@
+commands run in this worktree; no AWS call, no PostgreSQL available (DATABASE_URL points at the Paperclip database and was not used)
+OpenSSL 3.5.7 9 Jun 2026 (Library: OpenSSL 3.5.7 9 Jun 2026)
+v24.22.2
+OpenTofu v1.13.9
