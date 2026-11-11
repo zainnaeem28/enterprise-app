@@ -146,6 +146,16 @@ override_resource {
   values = {}
 }
 
+override_resource {
+  target = aws_cloudwatch_log_metric_filter.close_meeting_dead
+  values = {}
+}
+
+override_resource {
+  target = aws_cloudwatch_metric_alarm.close_meeting_dead
+  values = {}
+}
+
 variables {
   env                           = "staging"
   compute_name                  = "ehr-staging"
