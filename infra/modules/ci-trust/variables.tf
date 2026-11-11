@@ -59,6 +59,12 @@ variable "records" {
     approvals         = list(string)
     applier           = string
     first_release     = optional(bool, false)
+    # bootstrap-<env> only (HEAAA-460 decision log 4/4.1, R1-GAP-5 G-4). Required there, omitted from every other record.
+    custodians                   = optional(list(object({ identity_center_user_id = string, role_arn = string })))
+    enrollees                    = optional(list(object({ handle = string, identity_arn = string })))
+    ticket_ref                   = optional(string)
+    security_contact_verified_at = optional(string)
+    security_contact_test_ref    = optional(string)
   }))
   default = {}
 }
@@ -137,6 +143,15 @@ variable "refs" {
     permission_boundary_policy_arn = optional(string)
     rehearsal_passrole_arns        = optional(list(string), [])
     workload_passrole              = optional(list(object({ arn = string, service = string })), [])
+    # Log-group ARNs (".../log-group:NAME:*") the dual-control runners read the task result from (G-2).
+    bootstrap_log_group_arns = optional(list(string), [])
+    audit_log_group_arns     = optional(list(string), [])
+    # Deploy roles (scripts/deploy/README.md, permission gaps 1-5). An unset value grants nothing.
+    release_config_parameter_arns = optional(list(string), []) # SSM String parameters: min_client_release, staging /deployed/*
+    db_instance_arns              = optional(list(string), []) # RDS instance the backup gate reads and snapshots
+    portal_bucket_arn             = optional(string)           # live/<portal>/ written, releases/<sha>/ read
+    portal_distribution_arns      = optional(list(string), [])
+    release_store_read_arn        = optional(string) # release store bucket; manifests/ and releases/ read-only (cross-account needs the bucket policy too)
   })
   default = {}
 }
