@@ -3,7 +3,7 @@
 // kit (BE-08): a throwaway database migrated by the real pipeline (including 1300-1302), the real Nest application with the identity
 // guard, the booking and flow controllers, published notification templates, the real queue (task types synced), seeded sessions, and
 // the worker's real job handlers wired to the flow service through `flowPort`. Synthetic data only.
-import { FIXTURE_STATES, seedFixtureJurisdictions } from '../../organisation/fixture-states.js';
+import { FIXTURE_STATES, seedFixtureJurisdictions } from '../../../platform/fixture-states.js';
 import { randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import {

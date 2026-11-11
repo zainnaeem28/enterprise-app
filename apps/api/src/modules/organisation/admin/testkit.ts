@@ -2,7 +2,7 @@
 // Harness of the BE-23 real-database tests: the BE-05 admin kit (throwaway PostgreSQL database migrated by the real pipeline, real
 // reference data, real WebAuthn-shaped admin sessions and elevation), plus the organisation admin controller mounted on the same
 // application the way the composition root mounts it. Not a test file; imported by the *.dbtest.ts files.
-import { FIXTURE_STATES } from '../../organisation/fixture-states.js';
+import { FIXTURE_STATES } from '../../../platform/fixture-states.js';
 import type { Type } from '@nestjs/common';
 import { createLogger, Queue, syncTaskTypes } from '@ehr/kernel';
 import type { ScopeSettings } from '@ehr/kernel';
@@ -176,7 +176,11 @@ export async function orgAdminSetup(
 /** Seeds the reference data the worker would (the jurisdiction list) and the settings catalogue. */
 export async function seedReference(
   k: OrgKit,
-  states: readonly string[] = [FIXTURE_STATES.unlicensed, FIXTURE_STATES.licensed, FIXTURE_STATES.closed],
+  states: readonly string[] = [
+    FIXTURE_STATES.unlicensed,
+    FIXTURE_STATES.licensed,
+    FIXTURE_STATES.closed,
+  ],
 ): Promise<void> {
   for (const s of states)
     await k.sa.query(

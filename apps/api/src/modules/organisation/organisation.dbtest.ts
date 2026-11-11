@@ -2,7 +2,7 @@
 // TC-AD-01..03, 06..10 data-level parts, the view/grant catalog tests (ARCHITECTURE 22.5.1, 21.2) and the settings.
 //   EHR_TEST_ADMIN_URL=postgres://postgres@127.0.0.1:5432/postgres node --test dist/src/modules/organisation/organisation.dbtest.js
 // The URL names a superuser on a throwaway server (synthetic data only). Missing configuration FAILS; nothing skips.
-import { FIXTURE_STATES } from '../organisation/fixture-states.js';
+import { FIXTURE_STATES } from '../../platform/fixture-states.js';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -1022,7 +1022,9 @@ describe('organisation module on PostgreSQL 17 (BE-03)', () => {
   describe('licensing check (BD-17)', () => {
     test('with no operating state it refuses every video booking; with one it distinguishes licensed from unlicensed', async () => {
       assert.equal(
-        await db.withScope(patient, (tx) => org.licensingCheck(tx, [FIXTURE_STATES.licensed], FIXTURE_STATES.licensed)),
+        await db.withScope(patient, (tx) =>
+          org.licensingCheck(tx, [FIXTURE_STATES.licensed], FIXTURE_STATES.licensed),
+        ),
         'refused_not_operating',
       );
       await db.withScope(admin, async (tx) => {
@@ -1032,23 +1034,37 @@ describe('organisation module on PostgreSQL 17 (BE-03)', () => {
         );
       });
       assert.equal(
-        await db.withScope(patient, (tx) => org.licensingCheck(tx, [FIXTURE_STATES.licensed, FIXTURE_STATES.unlicensed], FIXTURE_STATES.licensed)),
+        await db.withScope(patient, (tx) =>
+          org.licensingCheck(
+            tx,
+            [FIXTURE_STATES.licensed, FIXTURE_STATES.unlicensed],
+            FIXTURE_STATES.licensed,
+          ),
+        ),
         'allowed',
       );
       assert.equal(
-        await db.withScope(patient, (tx) => org.licensingCheck(tx, [FIXTURE_STATES.unlicensed], FIXTURE_STATES.licensed)),
+        await db.withScope(patient, (tx) =>
+          org.licensingCheck(tx, [FIXTURE_STATES.unlicensed], FIXTURE_STATES.licensed),
+        ),
         'refused_not_licensed',
       );
       assert.equal(
-        await db.withScope(patient, (tx) => org.licensingCheck(tx, [FIXTURE_STATES.unlicensed], FIXTURE_STATES.unlicensed)),
+        await db.withScope(patient, (tx) =>
+          org.licensingCheck(tx, [FIXTURE_STATES.unlicensed], FIXTURE_STATES.unlicensed),
+        ),
         'refused_not_operating',
       ); // not yet in effect
       assert.equal(
-        await db.withScope(patient, (tx) => org.licensingCheck(tx, [FIXTURE_STATES.closed], FIXTURE_STATES.closed)),
+        await db.withScope(patient, (tx) =>
+          org.licensingCheck(tx, [FIXTURE_STATES.closed], FIXTURE_STATES.closed),
+        ),
         'refused_not_operating',
       ); // latest row says no
       await assert.rejects(
-        db.withScope(patient, (tx) => org.licensingCheck(tx, [FIXTURE_STATES.licensed], 'New York')),
+        db.withScope(patient, (tx) =>
+          org.licensingCheck(tx, [FIXTURE_STATES.licensed], 'New York'),
+        ),
         OrganisationValidationError,
       );
     });

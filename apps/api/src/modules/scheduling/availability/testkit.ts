@@ -3,7 +3,7 @@
 // (including 1100-1103), the real Nest application with the identity guard, the booking core (with this module's search as its
 // availability port) and the availability controllers, seeded sessions, and a second pool with enough connections for real concurrency.
 // Synthetic data only.
-import { FIXTURE_STATES, seedFixtureJurisdictions } from '../../organisation/fixture-states.js';
+import { FIXTURE_STATES, seedFixtureJurisdictions } from '../../../platform/fixture-states.js';
 import { randomUUID } from 'node:crypto';
 import { KernelDb, Queue, syncTaskTypes } from '@ehr/kernel';
 import type { ScopeSettings, Tx } from '@ehr/kernel';

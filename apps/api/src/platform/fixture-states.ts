@@ -6,7 +6,11 @@
 const configured = (process.env['EHR_FIXTURE_STATES'] ?? 'ZA,ZB,ZC')
   .split(',')
   .map((s) => s.trim().toUpperCase());
-if (configured.length !== 3 || !configured.every((s) => /^[A-Z]{2}$/.test(s)) || new Set(configured).size !== 3)
+if (
+  configured.length !== 3 ||
+  !configured.every((s) => /^[A-Z]{2}$/.test(s)) ||
+  new Set(configured).size !== 3
+)
   throw new Error('EHR_FIXTURE_STATES must be three distinct two-letter codes');
 
 export const FIXTURE_STATES = {

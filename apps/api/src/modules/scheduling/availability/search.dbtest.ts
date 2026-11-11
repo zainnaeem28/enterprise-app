@@ -3,7 +3,7 @@
 // the Google meeting is a seeded busy block here; the real-calendar half is BE-14's), TC-BK-04 (alternatives), TC-BK-10 (daylight
 // saving), the stale-busy rule (RA-R1-04, X-03), overbookable sessions (BR-02) and an informational latency measurement (NFR-8).
 //   EHR_TEST_ADMIN_URL=postgres://postgres@host:5432/postgres node --test dist/src/modules/scheduling/availability/search.dbtest.js
-import { FIXTURE_STATES } from '../../organisation/fixture-states.js';
+import { FIXTURE_STATES } from '../../../platform/fixture-states.js';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { after, before, describe, test } from 'node:test';

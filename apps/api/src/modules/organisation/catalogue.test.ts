@@ -1,7 +1,7 @@
 // HTTP tests of the patient catalogue routes: a real Nest app with the real platform layer (guard, release check, headers) and a
 // recording database. They prove mounting, authentication, the scope used and the shape of the answer. Persistence and the real C0
 // views are not proved here (see organisation.dbtest.ts).
-import { FIXTURE_STATES } from '../organisation/fixture-states.js';
+import { FIXTURE_STATES } from '../../platform/fixture-states.js';
 import assert from 'node:assert/strict';
 import { after, before, describe, test } from 'node:test';
 import { createLogger } from '@ehr/kernel';

@@ -2,7 +2,7 @@
 // executor (BE-09): a throwaway database migrated by the real pipeline (including 0900-0903), the real Nest application with the
 // identity guard, the patient, merge and booking controllers, seeded sessions, and a second pool with enough connections for real
 // concurrency. Synthetic data only.
-import { FIXTURE_STATES, seedFixtureJurisdictions } from '../../organisation/fixture-states.js';
+import { FIXTURE_STATES, seedFixtureJurisdictions } from '../../../platform/fixture-states.js';
 import { randomUUID } from 'node:crypto';
 import { JobRegistry, KernelDb, ParticipantRegistries, Queue, syncTaskTypes } from '@ehr/kernel';
 import type { ScopeSettings, Tx } from '@ehr/kernel';
