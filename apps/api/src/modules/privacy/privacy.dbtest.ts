@@ -355,6 +355,21 @@ describe('privacy (BE-20) on PostgreSQL 17', () => {
       (list.json()['items'] as Record<string, unknown>[]).some((x) => x['id'] === requestId),
     );
 
+    // HEAAA-879 D3: owner ruling C decides D-8; approving a verified deletion request is now legal. These two database
+    // probes hold under both the r208 schema and the ruling C schema: before identity verification, compliance can neither
+    // start nor complete a deletion request. (The replica-role 23514 probe is gone: contract 2602 drops its constraint.)
+    for (const status of ['in_progress', 'fulfilled']) {
+      await assert.rejects(
+        t.as(adminScope(t.compliance, ['privacy_requests']), (tx) =>
+          tx.query(
+            `UPDATE privacy.request SET status = '${status}', decided_by_person_id = $2::uuid, decided_at = now() WHERE id = $1::uuid`,
+            [requestId, t.compliance.seeded.personId],
+          ),
+        ),
+        /illegal request step|PS001/i,
+      );
+    }
+
     // The identity can be confirmed; the status stays blocked_d8.
     const v = await t.verify(requestId);
     assert.equal(v.status, 200, v.body);
@@ -392,30 +407,6 @@ describe('privacy (BE-20) on PostgreSQL 17', () => {
       (await row(`SELECT status FROM patient.patient WHERE id = $1`, [p.patientId]))['status'],
       'active',
     );
-
-    // The database refuses a deletion request in any state but blocked_d8 or refused, even for a writer that skips the triggers.
-    await assert.rejects(
-      t.as(adminScope(t.compliance, ['privacy_requests']), (tx) =>
-        tx.query(
-          `UPDATE privacy.request SET status = 'in_progress', decided_by_person_id = $2::uuid, decided_at = now() WHERE id = $1::uuid`,
-          [requestId, t.compliance.seeded.personId],
-        ),
-      ),
-      /illegal request step|PS001/i,
-    );
-    await t.k.sa.query('BEGIN');
-    try {
-      await t.k.sa.query(`SET LOCAL session_replication_role = replica`);
-      await assert.rejects(
-        t.k.sa.query(
-          `UPDATE privacy.request SET status = 'in_progress', decided_at = now() WHERE id = $1`,
-          [requestId],
-        ),
-        (e: { code?: string; constraint?: string }) => e.code === '23514',
-      );
-    } finally {
-      await t.k.sa.query('ROLLBACK');
-    }
 
     // Compliance may refuse it, with a reason.
     assert.equal((await t.decide(requestId, 'refuse', 'short')).status, 422);

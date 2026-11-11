@@ -151,14 +151,22 @@ describe('catalog (M-1, M-2, M-3, M-5, 21.3 lists)', () => {
     const roles = await k.q<{ r: string }>(
       `SELECT DISTINCT unnest(roles) AS r FROM pg_policies WHERE schemaname = 'identity'`,
     );
-    assert.deepEqual(roles.map((x) => x.r).sort(), [
+    // HEAAA-879 D3: owner ruling C adds privacy_retention_owner (2601); the candidate's own test asserts the new list exactly.
+    const r208Roles = [
       'app_api',
       'app_worker',
       'directory_ro',
       'identity_bootstrap_owner', // the first-admin bootstrap definer (INT04-F02b, A-6)
       'identity_signin_ro', // the admin claim read (BE-05)
       'patient_scope_owner',
-    ]);
+    ];
+    const actual = roles.map((x) => x.r).sort();
+    const withRetention = [...r208Roles, 'privacy_retention_owner'].sort();
+    assert.ok(
+      JSON.stringify(actual) === JSON.stringify(r208Roles) ||
+        JSON.stringify(actual) === JSON.stringify(withRetention),
+      `unexpected identity policy roles: ${JSON.stringify(actual)}`,
+    );
   });
 
   test('the identity policies that can match audience anonymous are exactly the T-SIGNIN list and the session lookup (21.3)', async () => {
