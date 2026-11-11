@@ -100,8 +100,16 @@ export const STATIC_PATHS = [
 
 const xml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-export function sitemapXml(origin: string, dir: Directory | null): string {
-  const paths: string[] = [...STATIC_PATHS, ...(dir?.doctors.map((d) => `/doctors/${d.id}`) ?? [])];
+export function sitemapXml(
+  origin: string,
+  dir: Directory | null,
+  extraPaths: readonly string[] = [],
+): string {
+  const paths: string[] = [
+    ...STATIC_PATHS,
+    ...extraPaths,
+    ...(dir?.doctors.map((d) => `/doctors/${d.id}`) ?? []),
+  ];
   const body = paths.map((p) => `  <url><loc>${xml(url(origin, p))}</loc></url>`).join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`;
 }

@@ -18,11 +18,14 @@ const FOOTER = [
   { href: '/legal/accessibility', label: 'Accessibility statement' },
 ] as const;
 
+const NPP_LINK = { href: '/legal/npp', label: 'Notice of Privacy Practices' } as const;
+
 export function Layout({
   current,
   bookHref,
   banners = [],
   siteName,
+  hasNpp = false,
   children,
 }: {
   current: string;
@@ -30,6 +33,8 @@ export function Layout({
   banners?: SiteBanner[];
   /** The organisation's name from the CMS; `null` until entered (then nothing is shown in its place). */
   siteName: string | null;
+  /** The Notice of Privacy Practices has been entered in the CMS: show its link. */
+  hasNpp?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -61,7 +66,7 @@ export function Layout({
         <p className="site-emergency">If this is an emergency, call 911.</p>
         <nav aria-label="Footer">
           <ul>
-            {FOOTER.map((n) => (
+            {[...FOOTER, ...(hasNpp ? [NPP_LINK] : [])].map((n) => (
               <li key={n.href}>
                 <a href={n.href}>{n.label}</a>
               </li>

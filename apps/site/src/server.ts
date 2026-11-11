@@ -97,11 +97,12 @@ export function createSite(deps: SiteDeps): Server {
     if (path === '/sitemap.xml') {
       const fresh: Freshness = { stale: false };
       const dir = await directoryOrNull(client, fresh);
+      const { content, degraded } = await provider();
       return send(
         dir === null ? 503 : 200,
         'application/xml; charset=utf-8',
-        sitemapXml(config.siteOrigin, dir),
-        dir === null || fresh.stale ? 'no-store' : PAGE_CACHE,
+        sitemapXml(config.siteOrigin, dir, content.legal.npp === null ? [] : ['/legal/npp']),
+        dir === null || fresh.stale || degraded ? 'no-store' : PAGE_CACHE,
       );
     }
     if (path.startsWith('/assets/')) {

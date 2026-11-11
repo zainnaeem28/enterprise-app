@@ -47,6 +47,20 @@ function legalPage(raw: unknown, fallback: LegalPage): LegalPage {
   };
 }
 
+function nppPage(raw: unknown): LegalPage | null {
+  if (!isRec(raw)) return null;
+  const paragraphs = (typeof raw['body'] === 'string' ? raw['body'] : '')
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter((p) => p !== '');
+  if (paragraphs.length === 0) return null;
+  return {
+    title: text(raw['title'], 120) ?? 'Notice of Privacy Practices',
+    description: text(raw['description'], 300) ?? 'Our Notice of Privacy Practices.',
+    paragraphs,
+  };
+}
+
 export function parseSiteContent(
   raw: unknown,
   base: ContentSource = placeholderContent,
@@ -65,9 +79,12 @@ export function parseSiteContent(
       booking: text(g('about')['booking'], 800) ?? base.about.booking,
     },
     contact: { intro: text(g('contact')['intro'], 600) ?? base.contact.intro },
-    legal: Object.fromEntries(
-      LEGAL_KEYS.map((k) => [k, legalPage(legal[k], base.legal[k])]),
-    ) as ContentSource['legal'],
+    legal: {
+      ...(Object.fromEntries(
+        LEGAL_KEYS.map((k) => [k, legalPage(legal[k], base.legal[k])]),
+      ) as Omit<ContentSource['legal'], 'npp'>),
+      npp: nppPage(legal['npp']),
+    },
   };
 }
 

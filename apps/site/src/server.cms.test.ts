@@ -51,6 +51,45 @@ afterAll(() => {
 });
 
 describe('site with CMS-backed ContentSource', () => {
+  it('legal pages are complete: no placeholder sentence; NPP page, links and sitemap entry omitted until entered', async () => {
+    cmsState = { site: {}, org: {}, down: false };
+    for (const k of ['privacy', 'terms', 'cookies', 'accessibility']) {
+      const r = await fetch(base + `/legal/${k}`);
+      const h = await r.text();
+      expect(r.status, k).toBe(200);
+      expect(h, k).not.toMatch(/placeholder/i);
+      expect(h, k).not.toContain('Contact us');
+    }
+    expect(await (await fetch(base + '/legal/cookies')).text()).toContain('site_consent');
+    expect((await fetch(base + '/legal/npp')).status).toBe(404);
+    const home = await (await fetch(base + '/')).text();
+    expect(home).not.toContain('/legal/npp');
+    expect(await (await fetch(base + '/sitemap.xml')).text()).not.toContain('/legal/npp');
+    expect(await (await fetch(base + '/legal/privacy')).text()).not.toContain(
+      'Notice of Privacy Practices',
+    );
+  });
+
+  it('NPP entered: page served, footer, privacy link and sitemap entry appear; contact details only as entered', async () => {
+    cmsState = {
+      site: { legal: { npp: { body: 'First NPP paragraph.\n\nSecond NPP paragraph.' } } },
+      org: { name: 'Example Practice', email: 'hello@example.org' },
+      down: false,
+    };
+    const npp = await fetch(base + '/legal/npp');
+    const h = await npp.text();
+    expect(npp.status).toBe(200);
+    expect(h).toContain('<h1>Notice of Privacy Practices</h1>');
+    expect(h).toContain('Second NPP paragraph.');
+    expect(h).toContain('href="/legal/npp"');
+    const priv = await (await fetch(base + '/legal/privacy')).text();
+    expect(priv).toContain('href="/legal/npp"');
+    expect(priv).toContain('Contact us');
+    expect(priv).toContain('mailto:hello@example.org');
+    expect(priv).not.toContain('Phone:');
+    expect(await (await fetch(base + '/sitemap.xml')).text()).toContain('/legal/npp');
+  });
+
   it('organisation not entered: no name, address, phone, e-mail, hours or team, and no placeholder in their place', async () => {
     cmsState = { site: {}, org: {}, down: false };
     for (const p of ['/', '/about', '/contact', '/legal/privacy']) {

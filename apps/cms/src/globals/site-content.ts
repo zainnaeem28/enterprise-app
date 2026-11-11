@@ -8,15 +8,16 @@ const txt = (
   area = false,
 ): TextField | TextareaField =>
   area ? { name, label, type: 'textarea', maxLength } : { name, label, type: 'text', maxLength };
-const legalGroup = (name: string, label: string): Field => ({
+const legalGroup = (name: string, label: string, bodyMax = 6000, description?: string): Field => ({
   name,
   label,
   type: 'group',
+  ...(description === undefined ? {} : { admin: { description } }),
   fields: [
     txt('title', 'Title', 120),
     txt('description', 'Short description (search results)', 300, true),
     {
-      ...txt('body', 'Text', 6000, true),
+      ...txt('body', 'Text', bodyMax, true),
       admin: { description: 'Separate paragraphs with one blank line.' },
     },
   ],
@@ -56,6 +57,12 @@ export const SiteContent: GlobalConfig = {
         legalGroup('terms', 'Terms of use'),
         legalGroup('cookies', 'Cookies'),
         legalGroup('accessibility', 'Accessibility statement'),
+        legalGroup(
+          'npp',
+          'Notice of Privacy Practices (optional)',
+          40000,
+          'Enter the organisation’s Notice of Privacy Practices at go-live. While the text is empty, the page and its links are not shown on the site.',
+        ),
       ],
     },
     {

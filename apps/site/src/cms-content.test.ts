@@ -66,6 +66,15 @@ describe('parseOrganisation (no invented facts)', () => {
 });
 
 describe('parseSiteContent', () => {
+  it('npp is null while empty or invalid and parsed once entered', () => {
+    expect(parseSiteContent({}).legal.npp).toBeNull();
+    expect(parseSiteContent({ legal: { npp: { body: '  \n ' } } }).legal.npp).toBeNull();
+    expect(parseSiteContent({ legal: { npp: 'bad' } }).legal.npp).toBeNull();
+    const n = parseSiteContent({ legal: { npp: { body: 'A.\n\nB.' } } }).legal.npp;
+    expect(n?.paragraphs).toEqual(['A.', 'B.']);
+    expect(n?.title).toBe('Notice of Privacy Practices');
+  });
+
   it('uses CMS text and falls back per field', () => {
     const c = parseSiteContent({
       home: { heading: 'Edited heading', intro: '' },

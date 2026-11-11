@@ -1,5 +1,5 @@
 import { EmptyState, StatusChip } from '@ehr/ui';
-import type { ContentSource, LegalPage } from '../content.js';
+import type { ContentSource, LegalPage, Organisation } from '../content.js';
 import type { Directory, Doctor, Location, NextSlot } from '../directory.js';
 import {
   BookLink,
@@ -312,13 +312,53 @@ export function ContactPage({ ctx }: { ctx: Ctx }) {
   );
 }
 
-export function LegalPageView({ page }: { page: LegalPage }) {
+/** `organisation` adds the organisation's own contact details, only those entered in the CMS. `nppHref` links the Notice of Privacy Practices. */
+export function LegalPageView({
+  page,
+  organisation,
+  nppHref,
+}: {
+  page: LegalPage;
+  organisation?: Organisation | undefined;
+  nppHref?: string | undefined;
+}) {
+  const org = organisation;
+  const hasContact =
+    org !== undefined && (org.addressLines.length > 0 || org.phone !== null || org.email !== null);
   return (
     <>
       <h1>{page.title}</h1>
       {page.paragraphs.map((p) => (
         <p key={p}>{p}</p>
       ))}
+      {nppHref !== undefined && (
+        <p>
+          Our <a href={nppHref}>Notice of Privacy Practices</a> explains how health information is
+          handled and what your rights are.
+        </p>
+      )}
+      {org !== undefined && hasContact && (
+        <>
+          <h2>Contact us</h2>
+          {org.name !== null && <p>{org.name}</p>}
+          {org.addressLines.length > 0 && (
+            <p>
+              {org.addressLines.map((l, i) => (
+                <span key={l}>
+                  {i > 0 && <br />}
+                  {l}
+                </span>
+              ))}
+            </p>
+          )}
+          {org.phone !== null && <p>Phone: {org.phone}</p>}
+          {org.email !== null && (
+            <p>
+              Email: <a href={`mailto:${org.email}`}>{org.email}</a>
+            </p>
+          )}
+        </>
+      )}
     </>
   );
 }

@@ -55,7 +55,7 @@ export interface RenderDeps {
   contentDegraded?: boolean;
 }
 
-const LEGAL = ['privacy', 'terms', 'cookies', 'accessibility'] as const;
+const LEGAL = ['privacy', 'terms', 'cookies', 'accessibility', 'npp'] as const;
 
 async function readDirectory(
   client: DirectoryClient,
@@ -235,16 +235,28 @@ export async function route(path: string, deps: RenderDeps): Promise<Rendered> {
       ],
     };
   } else if (path.startsWith('/legal/') && (LEGAL as readonly string[]).includes(path.slice(7))) {
-    const page = content.legal[path.slice(7) as (typeof LEGAL)[number]];
-    spec = {
-      status: 200,
-      template: 'legal',
-      title: titled(page.title),
-      description: page.description,
-      path,
-      body: <LegalPageView page={page} />,
-      jsonLd: [],
-    };
+    const key = path.slice(7) as (typeof LEGAL)[number];
+    const page = content.legal[key];
+    spec =
+      page === null
+        ? notFound(path, titled)
+        : {
+            status: 200,
+            template: 'legal',
+            title: titled(page.title),
+            description: page.description,
+            path,
+            body: (
+              <LegalPageView
+                page={page}
+                organisation={
+                  key === 'privacy' || key === 'accessibility' ? content.organisation : undefined
+                }
+                nppHref={key === 'privacy' && content.legal.npp !== null ? '/legal/npp' : undefined}
+              />
+            ),
+            jsonLd: [],
+          };
   } else {
     spec = notFound(path, titled);
   }
@@ -256,7 +268,7 @@ export async function route(path: string, deps: RenderDeps): Promise<Rendered> {
       deps.contentDegraded !== true &&
       spec.status === 200 &&
       (spec.template === 'legal' || (dir !== null && !fresh.stale)),
-    html: document({ ...spec, banners }, config, name),
+    html: document({ ...spec, banners }, config, name, content.legal.npp !== null),
   };
 }
 
@@ -277,7 +289,12 @@ function notFound(path: string, titled: (t: string) => string): PageSpec {
   };
 }
 
-function document(p: PageSpec, config: SiteConfig, siteName: string | null): string {
+function document(
+  p: PageSpec,
+  config: SiteConfig,
+  siteName: string | null,
+  hasNpp: boolean,
+): string {
   const canonical = new URL(p.path, config.siteOrigin).toString();
   const bookHref = bookUrl(config.patientOrigin, {});
   const page = (
@@ -308,7 +325,13 @@ function document(p: PageSpec, config: SiteConfig, siteName: string | null): str
         ))}
       </head>
       <body data-template={p.template} data-analytics-src={config.analyticsSrc ?? ''}>
-        <Layout current={p.path} bookHref={bookHref} banners={p.banners ?? []} siteName={siteName}>
+        <Layout
+          current={p.path}
+          bookHref={bookHref}
+          banners={p.banners ?? []}
+          siteName={siteName}
+          hasNpp={hasNpp}
+        >
           {p.body}
         </Layout>
         <div id="consent-root" />
