@@ -9,18 +9,15 @@ import {
   until,
   uuid,
   ORG,
-  state,
   closeAdmin,
   asRole,
   injectFault,
-  newPatient,
   assign,
   principalId,
 } from './lib/world.mjs';
 import { adminClient, elevate } from './lib/admin.mjs';
 
 after(() => closeAdmin());
-const PAT01 = '00000000-0000-7000-8000-000000100003'; // patientId(1)
 const pid = (n) => `00000000-0000-7000-8000-${String(100000 + n * 3).padStart(12, '0')}`;
 const PROBE = `qa05.probe.${Math.random().toString(36).slice(2, 8)}`;
 const dayWindow = () => ({
@@ -332,13 +329,7 @@ describe('TC-AU', () => {
     () => {},
   );
 
-  test(
-    'TC-AU-09 retention value and archive job [OPS]',
-    {
-      skip: 'BLOCKED: audit/clinical retention period not decided at G2 (open decision); type OPS: DevOps evidence',
-    },
-    () => {},
-  );
+  // TC-AU-09: superseded by ruling-c.test.mjs (HEAAA-805, owner ruling 2026-11-11 C)
 
   test(
     'TC-AU-10 duplicate of TC-PERF-04: no result of its own',

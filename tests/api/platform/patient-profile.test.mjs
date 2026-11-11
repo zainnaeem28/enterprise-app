@@ -3,7 +3,7 @@
 // pre-visit request/questionnaire/e-sign flow is QA-04's clinical journey: those parts stay BLOCKED naming the missing piece.
 import { test, describe, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { newPatient, newStaff, sql, closeAdmin, A1 } from './lib/world.mjs';
+import { newPatient, sql, closeAdmin } from './lib/world.mjs';
 
 after(() => closeAdmin());
 const ATTACK = [
@@ -88,33 +88,10 @@ describe('TC-PP', () => {
     assert.ok(tables.rows[0].t, 'the SQL fragment dropped nothing');
   });
 
-  test('TC-PP-04 a proxy-link request is refused (not queued) while the verification rules are undecided (D-7)', async () => {
-    const p = await newPatient();
-    const r = await p.client.post(`/api/v1/patients/${p.id}/proxy-requests`, {
-      relationship: 'parent',
-    });
-    assert.ok(
-      [409, 422, 501, 503].includes(r.status) || r.json?.code?.includes('proxy'),
-      `${r.status} ${r.text.slice(0, 200)}`,
-    );
-    assert.notEqual(r.status, 201, 'no request is recorded without rules');
-  });
+  // TC-PP-04: superseded by ruling-c.test.mjs (HEAAA-805, owner ruling 2026-11-11 C)
 
   const B = (w) => `BLOCKED: ${w}`;
-  test(
-    'TC-PP-03 proxy default view shows appointments only [proxy grant flow]',
-    {
-      skip: B(
-        'needs a verified proxy grant, which cannot be created while D-7 is open; the isolation side is TC-AZ-14 (QA-02)',
-      ),
-    },
-    () => {},
-  );
-  test(
-    'TC-PP-05 age-out and revocation of a proxy [D-7 / G-07]',
-    { skip: B('rule values do not exist yet (D-7 / G-07); case written when decided') },
-    () => {},
-  );
+  // TC-PP-03, TC-PP-04, TC-PP-05: superseded by ruling-c.test.mjs (HEAAA-805, owner ruling 2026-11-11 C)
   test(
     'TC-PP-06 patient completes the pre-visit request, questionnaire and e-signs; staff see status [clinical flow]',
     {
