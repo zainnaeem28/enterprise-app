@@ -8,7 +8,7 @@ policy documents, not AWS behaviour. Real-service checks are on the go-live list
 
 | Adapter / need | Resource | Notes |
 |---|---|---|
-| Privacy packages, audit exports (S3) | two buckets, SSE-KMS with the account data key, versioned, private, TLS-only, writes only by the worker role, lifecycle expiry | expiry days are placeholders (no approved retention) |
+| Privacy packages, audit exports (S3) | two buckets, SSE-KMS with the account data key, versioned, private, TLS-only, writes only by the worker role, lifecycle expiry | privacy packages expire after 7 days (ruling C item 2 †); audit exports keep their unconfirmed 90 days (not covered by the ruling) |
 | Documents (S3) | made by `modules/storage`; this module only names them and grants the roles | the worker role is the clean-bucket writer |
 | Anchor archive (Object Lock) | bucket and bucket policy in `modules/archive` (log-archive root `archive.tf`, staging root `adapters.tf`) | this module grants the worker cross-account `PutObject/GetObject/GetObjectVersion` on `anchors/*` and prefix-limited list; no delete, retention or legal hold |
 | Sealer (KMS) | `aws_kms_key.payload`, rotation on | key policy: api `GenerateDataKey` only, worker `Decrypt`/`DescribeKey` only, explicit Deny of the other half, every use needs the `ehr:ctx` context |

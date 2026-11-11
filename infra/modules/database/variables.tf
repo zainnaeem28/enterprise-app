@@ -75,7 +75,7 @@ variable "master_username" {
 }
 
 variable "backup_retention_days" {
-  description = "Automated backup (point-in-time) retention; 35 is the service maximum (DEVOPS-PLAN 10.1)."
+  description = "Daily backup (point-in-time) retention: 35 days, the service maximum (owner ruling C item 2 †; DEVOPS-PLAN 10.1; infra/RETENTION.md)."
   type        = number
   default     = 35
   validation {
@@ -128,9 +128,13 @@ variable "backup_copy_vault_arns" {
 }
 
 variable "monthly_retention_days" {
-  description = "Monthly AWS Backup points are kept 12 months (DEVOPS-PLAN 10.1). Longer holds for legal reasons are a counsel decision."
+  description = "Monthly AWS Backup points are kept 12 months = 365 days (owner ruling C item 2 †, counsel confirmation pending; infra/RETENTION.md)."
   type        = number
   default     = 365
+  validation {
+    condition     = var.monthly_retention_days >= 365
+    error_message = "monthly_retention_days must be at least 365 (monthly backups are kept 12 months)."
+  }
 }
 
 variable "copy_vault_min_retention_days" {

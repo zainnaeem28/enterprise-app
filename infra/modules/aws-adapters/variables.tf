@@ -44,13 +44,17 @@ variable "bucket_name_prefix" {
 }
 
 variable "package_expiry_days" {
-  description = "Privacy export packages are short-lived downloads. PLACEHOLDER, not an approved retention value."
+  description = "Privacy export packages are short-lived downloads: 7 days (owner ruling C item 2 †, counsel confirmation pending; infra/RETENTION.md)."
   type        = number
-  default     = 14
+  default     = 7
+  validation {
+    condition     = var.package_expiry_days >= 1
+    error_message = "package_expiry_days must be at least 1."
+  }
 }
 
 variable "export_expiry_days" {
-  description = "Audit export objects are copies; the audit archive is the record. PLACEHOLDER, not an approved retention value."
+  description = "Audit export objects are copies; the audit archive is the record. Not covered by owner ruling C item 2: 90 days is unchanged and still unconfirmed (infra/RETENTION.md)."
   type        = number
   default     = 90
 }
