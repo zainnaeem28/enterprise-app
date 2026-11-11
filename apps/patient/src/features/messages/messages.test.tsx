@@ -39,6 +39,9 @@ const thread = (over = {}) => ({
   ...over,
 });
 
+const NOTE =
+  'Secure messaging with your care team is not part of this release. For questions, call the practice. If it is urgent, call emergency services.';
+
 describe('PP-37 messages (flag patient_messaging)', () => {
   it('matches only its own paths', () => {
     expect(matchMessagesRoute('/messages')).toEqual({ name: 'list' });
@@ -70,7 +73,7 @@ describe('PP-37 messages (flag patient_messaging)', () => {
     expect(screen.getByText('You')).toBeInTheDocument();
     expect(screen.getByText('Care team')).toBeInTheDocument();
     expect(
-      screen.getByText('To follow up on this conversation, contact your clinic.'),
+      screen.getByText(NOTE),
     ).toBeInTheDocument();
     expect(screen.queryByText(/not available yet/)).not.toBeInTheDocument();
     expect(document.title).toBe('Patient portal - Messages');
@@ -78,13 +81,21 @@ describe('PP-37 messages (flag patient_messaging)', () => {
 
   it('shows the empty state', async () => {
     mount('messages', '/messages');
-    expect(await screen.findByText('No messages yet.')).toBeInTheDocument();
+    expect(await screen.findByText(NOTE)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Write a message' })).not.toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/No messages yet/);
+  });
+
+  it('offers "Write a message" on the inbox only when recipients are known', async () => {
+    mount('messages', '/messages', {}, { recipients: [OTHER] });
+    expect(await screen.findByText('You have no messages.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Write a message' })).toBeInTheDocument();
   });
 
   it('does not offer to write a message when no recipients are known', async () => {
     mount('messages', '/messages/new');
     expect(
-      await screen.findByText('To send a message to your care team, contact your clinic.'),
+      await screen.findByText(NOTE),
     ).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Send message' })).not.toBeInTheDocument();
   });

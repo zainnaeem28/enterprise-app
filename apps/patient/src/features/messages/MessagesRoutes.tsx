@@ -158,7 +158,7 @@ function Inbox({
             mine: m.authorPrincipalId === me,
           }))}
         />
-        <p className="profile-note">To follow up on this conversation, contact your clinic.</p>
+        <p className="profile-note">Secure messaging with your care team is not part of this release. For questions, call the practice. If it is urgent, call emergency services.</p>
         <Button onClick={() => go('/messages')}>Back to messages</Button>
       </section>
     );
@@ -172,13 +172,21 @@ function Inbox({
       <Banner tone="warning" announce={false}>
         Messages are not for emergencies. If you need urgent help, call emergency services.
       </Banner>
-      <p>
-        <Button variant="primary" onClick={() => go('/messages/new')}>
-          Write a message
-        </Button>
-      </p>
+      {recipients !== undefined && recipients.length > 0 && (
+        <p>
+          <Button variant="primary" onClick={() => go('/messages/new')}>
+            Write a message
+          </Button>
+        </p>
+      )}
       {threads.length === 0 ? (
-        <EmptyState message="No messages yet." />
+        <EmptyState
+          message={
+            recipients !== undefined && recipients.length > 0
+              ? 'You have no messages.'
+              : 'Secure messaging with your care team is not part of this release. For questions, call the practice. If it is urgent, call emergency services.'
+          }
+        />
       ) : (
         <RefreshingContent refreshing={refreshing}>
           <ul className="profile-list">
@@ -266,7 +274,7 @@ function NewMessage({
       </Banner>
       {recipients === undefined || recipients.length === 0 ? (
         <>
-          <p>To send a message to your care team, contact your clinic.</p>
+          <p>Secure messaging with your care team is not part of this release. For questions, call the practice. If it is urgent, call emergency services.</p>
           <Button onClick={() => go('/messages')}>Back to messages</Button>
         </>
       ) : (
