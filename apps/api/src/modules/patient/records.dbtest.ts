@@ -794,20 +794,40 @@ describe('proxy access uses identity.proxy_grant, with no table of its own (D-7 
     );
   });
 
-  test('a proxy request is refused until the D-7 rule values exist (RA-R1-20b)', async () => {
+  test('an invitation is refused until the D-7 rule values exist, then works through the route (RA-R1-20b, TC-PP-03)', async () => {
     const { pid, acct } = await patientWithAccount(42);
-    const r = await mine(
-      acct,
-      'POST',
-      `/api/v1/patients/${pid}/proxy-requests`,
-      { relationship: 'parent' },
-      idem(),
-    );
+    const body = { email: 'invitee42@example.test', relationship: 'parent' };
+    const r = await mine(acct, 'POST', `/api/v1/patients/${pid}/proxy-requests`, body, idem());
     assert.equal(r.status, 422);
     assert.equal(code(r), 'identity.proxy_rules_not_configured');
     assert.equal(
       (await k.q(`SELECT 1 FROM identity.proxy_grant WHERE patient_id = $1`, [pid])).length,
       0,
+    );
+    for (const [key, v, sc] of [
+      ['proxy_age_of_majority', 18, 'int>=1'],
+      ['proxy_adolescent_min_age', 13, 'int>=1'],
+      ['proxy_age_out_notice_days', 30, 'int>=1'],
+      ['proxy_invite_hours', 72, 'hours'],
+      ['proxy_code_max_attempts', 5, 'int>=1'],
+    ] as const)
+      await k.sa.query(
+        `INSERT INTO kernel.setting (id, organisation_id, key, value, value_schema) VALUES (gen_random_uuid(), $1, $2, $3::jsonb, $4)`,
+        [ORG, key, JSON.stringify(v), sc],
+      );
+    const ok = await mine(acct, 'POST', `/api/v1/patients/${pid}/proxy-requests`, body, idem());
+    assert.equal(ok.status, 201);
+    const grant = ok.json() as { id: string; status: string; scopes: string[] };
+    assert.equal(grant.status, 'invited');
+    assert.deepEqual(grant.scopes, ['appointments']);
+    // the patient lists it, and withdraws it (immediately)
+    const list = await mine(acct, 'GET', `/api/v1/patients/${pid}/proxies`);
+    assert.equal(list.status, 200);
+    const del = await mine(acct, 'DELETE', `/api/v1/patients/${pid}/proxies/${grant.id}`);
+    assert.ok(del.status === 200 || del.status === 204);
+    assert.equal(
+      (await k.q(`SELECT status FROM identity.proxy_grant WHERE id = $1`, [grant.id]))[0]?.['status'],
+      'revoked',
     );
   });
 
