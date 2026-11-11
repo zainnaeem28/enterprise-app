@@ -60,7 +60,12 @@ export async function runSendDeletionStatement(
     await tx.query(
       `INSERT INTO audit.event (event_id, organisation_id, job_id, realm, audience, action, resource_type, resource_id, patient_id, change, outcome)
        VALUES (gen_random_uuid(), kernel.uuid1('app.org_id'), $1, 'worker', 'system', 'update', 'privacy.deletion_record', $2::uuid, $3::uuid, $4::jsonb, 'allowed')`,
-      [`${jobRef}:${requestId}`.slice(0, 200), rec.id, rec.patientId, JSON.stringify({ statementSent: true })],
+      [
+        `${jobRef}:${requestId}`.slice(0, 200),
+        rec.id,
+        rec.patientId,
+        JSON.stringify({ statementSent: true }),
+      ],
     );
   });
   return 'sent';

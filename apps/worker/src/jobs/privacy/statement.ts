@@ -112,7 +112,9 @@ export function renderStatementText(s: DeletionStatement): { subject: string; te
         `${plural(s.legalHold.documents, 'it', 'them')} now. We cannot say more about the hold.`,
     );
     for (const k of s.keptByHold)
-      lines.push(`- Kept because of the hold: ${DELETED_CLASS_LABELS[k.class] ?? k.class} (${k.count})`);
+      lines.push(
+        `- Kept because of the hold: ${DELETED_CLASS_LABELS[k.class] ?? k.class} (${k.count})`,
+      );
   }
   lines.push('');
   lines.push('If you have questions, contact the clinic and quote the date of this message.');

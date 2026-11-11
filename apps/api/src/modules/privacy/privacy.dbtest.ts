@@ -350,7 +350,11 @@ describe('privacy (BE-20) on PostgreSQL 17', () => {
     };
     const created = await req(p, 'deletion', 'please delete my account');
     const requestId = String(created['id']);
-    assert.equal(created['status'], 'received', 'D-8 is decided (owner ruling C): a request like any other');
+    assert.equal(
+      created['status'],
+      'received',
+      'D-8 is decided (owner ruling C): a request like any other',
+    );
     assert.equal(created['deletion'], null);
 
     // Compliance sees it.
@@ -375,9 +379,10 @@ describe('privacy (BE-20) on PostgreSQL 17', () => {
     assert.equal(
       Number(
         (
-          await row(`SELECT count(*)::int AS n FROM privacy.deletion_record WHERE request_id = $1`, [
-            requestId,
-          ])
+          await row(
+            `SELECT count(*)::int AS n FROM privacy.deletion_record WHERE request_id = $1`,
+            [requestId],
+          )
         )['n'],
       ),
       0,
@@ -401,7 +406,9 @@ describe('privacy (BE-20) on PostgreSQL 17', () => {
     assert.equal(code(await t.decide(requestId, 'retry')), 'privacy.invalid_transition');
     await assert.rejects(
       t.as(adminScope(t.compliance, ['privacy_requests']), (tx) =>
-        tx.query(`UPDATE privacy.request SET status = 'fulfilled' WHERE id = $1::uuid`, [requestId]),
+        tx.query(`UPDATE privacy.request SET status = 'fulfilled' WHERE id = $1::uuid`, [
+          requestId,
+        ]),
       ),
       /illegal request step|PS001/i,
     );
@@ -423,9 +430,9 @@ describe('privacy (BE-20) on PostgreSQL 17', () => {
     );
     assert.equal(await t.w.checkHolds(requestId), 'checked');
     let item = (
-      (
-        await t.scall(t.compliance, 'GET', '/api/v1/admin/privacy-requests?status=received')
-      ).json()['items'] as Record<string, unknown>[]
+      (await t.scall(t.compliance, 'GET', '/api/v1/admin/privacy-requests?status=received')).json()[
+        'items'
+      ] as Record<string, unknown>[]
     ).find((x) => x['id'] === requestId) as Record<string, unknown>;
     assert.equal((item['legalHold'] as Record<string, unknown>)['documents'], 0);
 
@@ -463,12 +470,16 @@ describe('privacy (BE-20) on PostgreSQL 17', () => {
     }
     assert.equal(await t.w.checkHolds(requestId), 'checked');
     item = (
-      (
-        await t.scall(t.compliance, 'GET', '/api/v1/admin/privacy-requests?status=received')
-      ).json()['items'] as Record<string, unknown>[]
+      (await t.scall(t.compliance, 'GET', '/api/v1/admin/privacy-requests?status=received')).json()[
+        'items'
+      ] as Record<string, unknown>[]
     ).find((x) => x['id'] === requestId) as Record<string, unknown>;
     assert.equal((item['legalHold'] as Record<string, unknown>)['documents'], 1);
-    assert.equal(item['status'], 'received', 'a hold decides nothing: the execution job applies it');
+    assert.equal(
+      item['status'],
+      'received',
+      'a hold decides nothing: the execution job applies it',
+    );
     // The document is untouched.
     assert.equal(
       (await row(`SELECT status FROM documents.document WHERE id = $1`, [docId]))['status'],
@@ -1208,7 +1219,8 @@ describe('privacy (BE-20) on PostgreSQL 17', () => {
       ),
     );
     assert.ok(
-      exp.getTime() > Date.now() + 6.9 * 86_400_000 && exp.getTime() < Date.now() + 7.1 * 86_400_000,
+      exp.getTime() > Date.now() + 6.9 * 86_400_000 &&
+        exp.getTime() < Date.now() + 7.1 * 86_400_000,
       'seven days after creation (owner ruling C item 2)',
     );
     // Before the time: nothing to expire.

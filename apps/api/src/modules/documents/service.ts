@@ -450,7 +450,9 @@ export class DocumentsService {
           ? years
           : this.deps.defaultRetentionYears;
       const retention =
-        typeof effectiveYears === 'number' && Number.isInteger(effectiveYears) && effectiveYears >= 1
+        typeof effectiveYears === 'number' &&
+        Number.isInteger(effectiveYears) &&
+        effectiveYears >= 1
           ? new Date(
               Date.UTC(now.getUTCFullYear() + effectiveYears, now.getUTCMonth(), now.getUTCDate()),
             )

@@ -104,7 +104,10 @@ export async function runRetentionPurge(
 
   // 1. Export packages.
   try {
-    const r = await runExpirePackages(deps, { jobRef: `${jobRef}:packages`, createdBefore: exportCutoff });
+    const r = await runExpirePackages(deps, {
+      jobRef: `${jobRef}:packages`,
+      createdBefore: exportCutoff,
+    });
     report.classes.export_packages = { expired: r.expired, failed: r.failed };
     if (r.failed > 0) report.status = 'partial';
   } catch {
@@ -138,20 +141,24 @@ export async function runRetentionPurge(
         await tx.lockPatients([patientId], 'key_share');
         if (rec['purge_state'] === 'pending') {
           // Recompute from today's data: a newer encounter moves the end (the stored date is only the first answer).
-          const end = deps.retention.medicalRecordRetainedUntil(await readRetentionBasis(tx, patientId, ids));
+          const end = deps.retention.medicalRecordRetainedUntil(
+            await readRetentionBasis(tx, patientId, ids),
+          );
           if (end >= today) {
             report.classes.medical_record.extendedByNewerEncounter += 1;
             return;
           }
         }
-        const res = (await tx.query(`SELECT privacy.purge_medical_record($1::uuid) AS r`, [recordId]))
-          .rows[0] as Row;
+        const res = (
+          await tx.query(`SELECT privacy.purge_medical_record($1::uuid) AS r`, [recordId])
+        ).rows[0] as Row;
         const r = (res['r'] ?? {}) as Record<string, unknown>;
         const m = report.classes.medical_record;
         addInto(m.removed, r['removed']);
         if (r['state'] === 'purged') m.purged += 1;
         else if (r['state'] === 'objects_pending') m.objectsPending += 1;
-        else if (r['state'] === 'deferred' && r['reason'] === 'legal_hold') m.deferredLegalHold += 1;
+        else if (r['state'] === 'deferred' && r['reason'] === 'legal_hold')
+          m.deferredLegalHold += 1;
         else if (r['state'] === 'deferred') m.deferredDocumentRetention += 1;
         await tx.query(
           `INSERT INTO audit.event (event_id, organisation_id, job_id, realm, audience, action, resource_type, resource_id, patient_id, change, outcome)
@@ -201,7 +208,11 @@ export async function runRetentionPurge(
     await tx.query(
       `INSERT INTO audit.event (event_id, organisation_id, job_id, realm, audience, action, resource_type, resource_id, patient_id, change, outcome)
        VALUES (gen_random_uuid(), kernel.uuid1('app.org_id'), $1, 'worker', 'system', 'create', 'privacy.retention_run', $2::uuid, NULL, $3::jsonb, 'allowed')`,
-      [jobRef.slice(0, 200), report.runId, JSON.stringify({ status: report.status, classes: report.classes })],
+      [
+        jobRef.slice(0, 200),
+        report.runId,
+        JSON.stringify({ status: report.status, classes: report.classes }),
+      ],
     );
   });
   return report;

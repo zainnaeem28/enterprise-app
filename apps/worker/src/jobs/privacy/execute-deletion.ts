@@ -54,7 +54,8 @@ export async function runExecuteDeletion(
     };
   });
   if (found === undefined) return 'gone';
-  if (found.kind !== 'deletion') throw new Error('privacy.execute_deletion: not a deletion request');
+  if (found.kind !== 'deletion')
+    throw new Error('privacy.execute_deletion: not a deletion request');
   if (found.status === 'fulfilled' || found.status === 'refused') return 'final';
   if (found.status !== 'in_progress')
     throw new Error('privacy.execute_deletion: the request is not approved'); // retried; the database refuses it too
@@ -110,14 +111,22 @@ export async function runExecuteDeletion(
         JSON.stringify(statement),
       ],
     );
-    await tx.query(`UPDATE privacy.request SET status = 'fulfilled' WHERE id = $1::uuid AND status = 'in_progress'`, [
-      requestId,
-    ]);
+    await tx.query(
+      `UPDATE privacy.request SET status = 'fulfilled' WHERE id = $1::uuid AND status = 'in_progress'`,
+      [requestId],
+    );
     const audit = (resourceType: string, resourceId: string, action: string, change: unknown) =>
       tx.query(
         `INSERT INTO audit.event (event_id, organisation_id, job_id, realm, audience, action, resource_type, resource_id, patient_id, change, outcome)
          VALUES (gen_random_uuid(), kernel.uuid1('app.org_id'), $1, 'worker', 'system', $2, $3, $4::uuid, $5::uuid, $6::jsonb, 'allowed')`,
-        [`${jobRef}:${requestId}`.slice(0, 200), action, resourceType, resourceId, found.patientId, JSON.stringify(change)],
+        [
+          `${jobRef}:${requestId}`.slice(0, 200),
+          action,
+          resourceType,
+          resourceId,
+          found.patientId,
+          JSON.stringify(change),
+        ],
       );
     await audit('privacy.deletion_record', recordId, 'update', {
       operation: 'account_deletion',

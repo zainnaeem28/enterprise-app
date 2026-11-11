@@ -16,11 +16,7 @@ import {
   registerComplianceAlertHandlers,
 } from './modules/notifications/alerts/index.js';
 import { registerMessagingHandlers, runOnCorrectionRequested } from './modules/messaging/index.js';
-import {
-  assembleExport,
-  loadRetentionSettings,
-  retentionPolicy,
-} from './modules/privacy/index.js';
+import { assembleExport, loadRetentionSettings, retentionPolicy } from './modules/privacy/index.js';
 import type { RetentionSettings } from './modules/privacy/index.js';
 import { executeMerge, patientExportContributor } from './modules/patient/index.js';
 import { newRegisteredRegistries } from './register-participants.js';

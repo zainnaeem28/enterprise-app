@@ -119,7 +119,10 @@ type WorkerPrivacy = {
     payload: Record<string, unknown>,
     jobRef?: string,
   ): Promise<'sent' | 'already_sent' | 'gone'>;
-  runRetentionPurge(deps: unknown, opts?: { jobRef?: string; batch?: number }): Promise<RetentionReport>;
+  runRetentionPurge(
+    deps: unknown,
+    opts?: { jobRef?: string; batch?: number },
+  ): Promise<RetentionReport>;
   createPrivacyTasks(deps: unknown): Record<string, unknown>;
   documentsLegalHolds: unknown;
   closureOf: unknown;
@@ -153,9 +156,21 @@ export interface RetentionReport {
 
 /** Records the deletion statements the worker "sends"; nothing leaves the process. */
 export class MemoryStatementSender {
-  readonly sent: { recordId: string; requestId: string; patientId: string; subject: string; text: string }[] = [];
+  readonly sent: {
+    recordId: string;
+    requestId: string;
+    patientId: string;
+    subject: string;
+    text: string;
+  }[] = [];
   fail = false;
-  send(input: { recordId: string; requestId: string; patientId: string; subject: string; text: string }): Promise<void> {
+  send(input: {
+    recordId: string;
+    requestId: string;
+    patientId: string;
+    subject: string;
+    text: string;
+  }): Promise<void> {
     if (this.fail) return Promise.reject(new Error('mail provider not configured'));
     this.sent.push(input);
     return Promise.resolve();
@@ -209,8 +224,14 @@ export interface PrivacyKit {
     checkHolds(requestId: string, over?: Record<string, unknown>): Promise<string>;
     expire(over?: Record<string, unknown>): Promise<{ expired: number; failed: number }>;
     /** `privacy.execute_deletion` (owner ruling C item 1). */
-    executeDeletion(requestId: string, over?: Record<string, unknown>): Promise<'executed' | 'gone' | 'final'>;
-    sendStatement(requestId: string, over?: Record<string, unknown>): Promise<'sent' | 'already_sent' | 'gone'>;
+    executeDeletion(
+      requestId: string,
+      over?: Record<string, unknown>,
+    ): Promise<'executed' | 'gone' | 'final'>;
+    sendStatement(
+      requestId: string,
+      over?: Record<string, unknown>,
+    ): Promise<'sent' | 'already_sent' | 'gone'>;
     /** `privacy.retention_purge` (owner ruling C item 2); `over.now` is the controllable clock. */
     retentionPurge(over?: Record<string, unknown>): Promise<RetentionReport>;
     /** The job deps the worker builds (for a test that wants the real task table). */

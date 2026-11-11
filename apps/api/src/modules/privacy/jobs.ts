@@ -65,7 +65,8 @@ export const PRIVACY_JOBS: readonly JobType[] = [
 ];
 
 /** graphile-worker crontab: the expiry daily at 03:50 (33.1), the retention purge daily at 04:10 (after documents.retention_sweep at 03:40). */
-export const PRIVACY_CRONTAB = '50 3 * * * privacy.expire_packages\n10 4 * * * privacy.retention_purge';
+export const PRIVACY_CRONTAB =
+  '50 3 * * * privacy.expire_packages\n10 4 * * * privacy.retention_purge';
 
 /** Events this module publishes (24). */
 export const PRIVACY_EVENTS = ['privacy.correction_requested', 'privacy.export_ready'] as const;

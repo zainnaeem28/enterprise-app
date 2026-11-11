@@ -114,7 +114,9 @@ export function toRequestView(r: Row): RequestView {
             purgeState: r['del_purge_state'] as DeletionView['purgeState'],
             purgedAt: isoOrNull(r['del_purged_at']),
             purgeDeferredReason:
-              r['del_deferred'] === null ? null : (String(r['del_deferred']) as 'legal_hold' | 'document_retention'),
+              r['del_deferred'] === null
+                ? null
+                : (String(r['del_deferred']) as 'legal_hold' | 'document_retention'),
             statement: (r['del_statement'] ?? {}) as Record<string, unknown>,
           },
     createdAt: iso(r['created_at']),
@@ -477,7 +479,8 @@ export class RequestService {
         );
       } else if (decision === 'approve') {
         // A legacy blocked_d8 deletion request (recorded before the ruling) is approvable once its identity is verified.
-        const verified = status === 'identity_verified' || (status === 'blocked_d8' && r['verified_at'] !== null);
+        const verified =
+          status === 'identity_verified' || (status === 'blocked_d8' && r['verified_at'] !== null);
         if (!verified) throw new InvalidTransitionError();
         await tx.query(
           `UPDATE privacy.request SET status = 'in_progress', decided_by_person_id = $2::uuid, decided_at = $3::timestamptz, decision_reason = $4 WHERE id = $1::uuid`,

@@ -13,7 +13,7 @@ import { runExpirePackages } from './expire-packages.js';
 import { runRetentionPurge } from './retention-purge.js';
 import { runSendDeletionStatement } from './send-deletion-statement.js';
 import { PRIVACY_JOBS } from './jobs.js';
-import type { PrivacyJobDeps, RetentionJobDeps } from './ports.js';
+import type { RetentionJobDeps } from './ports.js';
 
 export { PRIVACY_CRONTAB, PRIVACY_JOBS } from './jobs.js';
 export { runCheckLegalHolds } from './check-legal-holds.js';

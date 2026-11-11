@@ -377,7 +377,8 @@ export function composeTasks(opts: ComposeOptions & { queue: Queue }): TaskTable
       queue,
       retention: opts.api?.retention ?? refusingRetention,
       statements:
-        infra.deletionStatements ?? refusingPort<DeletionStatementSender>('deletion_statement_sender'),
+        infra.deletionStatements ??
+        refusingPort<DeletionStatementSender>('deletion_statement_sender'),
       assemble:
         opts.api?.assembleExport ??
         (() => Promise.reject(new PortNotConfiguredError('privacy_assemble_export'))),

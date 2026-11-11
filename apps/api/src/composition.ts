@@ -604,7 +604,8 @@ export function buildComposition(deps: {
     store: deps.objectStore ?? refusingObjectStore,
     queue,
     // An accepted document is kept as long as the medical record (owner ruling C item 2) unless the organisation setting says otherwise.
-    defaultRetentionYears: (deps.retention ?? RETENTION_DEFAULTS).medicalRecordYearsAfterLastEncounter,
+    defaultRetentionYears: (deps.retention ?? RETENTION_DEFAULTS)
+      .medicalRecordYearsAfterLastEncounter,
     ...(deps.now === undefined ? {} : { now: deps.now }),
   });
   for (const [name, fn] of Object.entries(documentsResolvers()))

@@ -35,7 +35,8 @@ export async function readRetentionBasis(
     )
   ).rows[0] as Row | undefined;
   const registered = reg?.['d'];
-  if (typeof registered !== 'string') throw new Error('privacy retention: the patient is not visible');
+  if (typeof registered !== 'string')
+    throw new Error('privacy retention: the patient is not visible');
   return {
     lastEncounterDate: typeof enc?.['d'] === 'string' ? enc['d'] : null,
     registeredDate: registered,
