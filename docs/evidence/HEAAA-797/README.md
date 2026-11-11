@@ -13,3 +13,9 @@ Mapping:
 - Admin licensed-states editor: `apps/staff/src/features/admin-config/licensing.test.tsx`
 
 Limitation: the API does not tell a proxy their own grant id (no route exposes `listMine`; the session carries no `grantId`), so the "Leave" button shows only when the session supplies `grantId`. Needs a backend change.
+
+## Review round 1 corrections (FE-797-F1, F3)
+
+- F1: axe-core (wcag2a/aa, 2.1, 2.2 AA, best-practice; jsdom, so colour-contrast and target-size are not covered) now runs in the component tests for the family page (list, scope editor, invitation, age-out notice, remove and leave dialogs), the accept-code screen (refusal and success), the post-deletion statement, and the staff GuardianPanel (list, validation errors, server refusal, revoke dialog). All pass with no violations. Helper: `src/axe-helper.ts` in each app.
+- F3: the flaky test is `PP-10..PP-14 book a visit > walks service, doctor and place, time, confirm and booked...` (patient `booking/flow.test.tsx`, existing on dev): it read `document.title` synchronously after the async confirm. Reproduced once in 6 runs under CPU load; now awaited with `waitFor`; 0 failures in 6 loaded reruns afterwards.
+- F2 (no `grantId` for a proxy) is unchanged here: it needs a backend/contract change, routed to the Orchestrator.

@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import { ReleaseStore, createApiClient } from '@ehr/app-shell';
 import type { Runtime } from '../../runtime.js';
 import { GuardianPanel } from './GuardianPanel.js';
+import { violations } from '../../axe-helper.js';
 
 afterEach(cleanup);
 
@@ -107,6 +108,7 @@ describe('staff guardian link and revoke (ruling C item 3)', () => {
       screen.getByText(/Granted: Appointments, Messages\. In force today: Appointments\./),
     ).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Revoke' })).toBeNull();
+    expect(await violations()).toEqual([]);
   });
 
   it('refuses to send without the e-mail, the document and the confirmation', async () => {
@@ -116,6 +118,7 @@ describe('staff guardian link and revoke (ruling C item 3)', () => {
     expect(await screen.findByText(/enter it like name@example\.com/)).toBeInTheDocument();
     expect(screen.getByText(/choose the document you checked/)).toBeInTheDocument();
     expect(screen.getByText(/Confirm that you checked the document/)).toBeInTheDocument();
+    expect(await violations()).toEqual([]);
     expect(m.seen.filter((s) => s.method === 'POST')).toHaveLength(0);
   });
 
@@ -188,6 +191,7 @@ describe('staff guardian link and revoke (ruling C item 3)', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('req-7')).toBeInTheDocument();
     expect(document.body.textContent).not.toContain('g@example.com');
+    expect(await violations()).toEqual([]);
   });
 
   it('revokes only after the confirm dialog and says it ended at once', async () => {
@@ -198,6 +202,7 @@ describe('staff guardian link and revoke (ruling C item 3)', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Revoke' }));
     expect(m.seen.some((s) => s.path.endsWith('/revoke'))).toBe(false);
     const dialog = await screen.findByRole('alertdialog');
+    expect(await violations()).toEqual([]);
     fireEvent.click(within(dialog).getByRole('button', { name: 'Revoke now' }));
     expect(await screen.findByText(/Access was revoked/)).toBeInTheDocument();
     expect(m.seen.filter((s) => s.path.endsWith('/revoke'))).toHaveLength(1);

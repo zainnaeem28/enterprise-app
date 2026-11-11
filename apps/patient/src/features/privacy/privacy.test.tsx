@@ -2,6 +2,7 @@ import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/re
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { json } from '../../app/test-helpers.js';
 import { mount, OTHER, REQUEST, requestBody, sent } from '../profile/testkit.js';
+import { violations } from '../../axe-helper.js';
 
 afterEach(cleanup);
 const click = (name: string | RegExp) => fireEvent.click(screen.getByRole('button', { name }));
@@ -113,6 +114,7 @@ describe('PP-24 my privacy', () => {
     expect(within(box).getByText(/1 document is under a legal hold/)).toBeInTheDocument();
     expect(within(box).getByText(/on hold because a legal hold applies/)).toBeInTheDocument();
     expect(within(box).getAllByText(/kept for 6 years/)).toHaveLength(2);
+    expect(await violations()).toEqual([]);
   });
 
   it('a double click sends one request', async () => {

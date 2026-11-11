@@ -5,6 +5,7 @@ import { ME, OTHER, GRANT, etag, mount, prefsBody, profileBody, sent } from './t
 import { patchOf, validate } from './pages/ProfilePage.js';
 import { ageOutNotice } from './pages/FamilyPage.js';
 import { bodyOf } from './pages/NotificationsPage.js';
+import { violations } from '../../axe-helper.js';
 
 afterEach(cleanup);
 const click = (name: string | RegExp) => fireEvent.click(screen.getByRole('button', { name }));
@@ -231,6 +232,7 @@ describe('PP-06..PP-09 family and proxy access', () => {
       ),
     ).toBeInTheDocument();
     expect(await screen.findByText('Waiting for the clinic to check')).toBeInTheDocument();
+    expect(await violations()).toEqual([]);
   });
 
   it('removes access only after the confirm dialog, and says so', async () => {
@@ -242,6 +244,7 @@ describe('PP-06..PP-09 family and proxy access', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Remove access' }));
     expect(sent(m.seen, 'DELETE', `/api/v1/patients/${ME}/proxies/${GRANT}`)).toHaveLength(0);
     const dialog = await screen.findByRole('alertdialog');
+    expect(await violations()).toEqual([]);
     fireEvent.click(within(dialog).getByRole('button', { name: 'Remove access' }));
     expect(await screen.findByText(/Access was removed/)).toBeInTheDocument();
     expect(sent(m.seen, 'DELETE', `/api/v1/patients/${ME}/proxies/${GRANT}`)).toHaveLength(1);
@@ -284,6 +287,7 @@ describe('PP-06..PP-09 family and proxy access', () => {
     const box = await screen.findByRole('checkbox', { name: 'Messages' });
     expect(screen.getByRole('checkbox', { name: 'Appointments' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Save what they can see' })).toBeDisabled();
+    expect(await violations()).toEqual([]);
     fireEvent.click(box);
     click('Save what they can see');
     expect(await screen.findByText(/Saved\. What they can see has changed/)).toBeInTheDocument();
@@ -313,6 +317,7 @@ describe('PP-06..PP-09 family and proxy access', () => {
     expect(await screen.findByText('Invitation sent')).toBeInTheDocument();
     expect(screen.getByText('Sent to p***@example.com.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Cancel invitation' })).toBeInTheDocument();
+    expect(await violations()).toEqual([]);
   });
 
   it('ruling C 3: the age-out notice appears only within 30 days of the grant end date', async () => {
@@ -335,6 +340,7 @@ describe('PP-06..PP-09 family and proxy access', () => {
       await screen.findByText(`This access ends on ${iso(soon)} (in 10 days).`),
     ).toBeInTheDocument();
     expect(screen.queryByText(new RegExp(iso(far)))).toBeNull();
+    expect(await violations()).toEqual([]);
   });
 
   it('ruling C 3: a proxy leaves only after the confirm dialog', async () => {
@@ -358,6 +364,7 @@ describe('PP-06..PP-09 family and proxy access', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Leave' }));
     expect(sent(m.seen, 'POST', `/api/v1/proxy-grants/${GRANT}/leave`)).toHaveLength(0);
     const dialog = await screen.findByRole('alertdialog');
+    expect(await violations()).toEqual([]);
     fireEvent.click(within(dialog).getByRole('button', { name: 'Leave' }));
     expect(await screen.findByText(/You left\./)).toBeInTheDocument();
     expect(sent(m.seen, 'POST', `/api/v1/proxy-grants/${GRANT}/leave`)).toHaveLength(1);
@@ -379,9 +386,11 @@ describe('PP-06..PP-09 family and proxy access', () => {
     fireEvent.change(screen.getByLabelText('Code from the email'), { target: { value: '123456' } });
     click('Confirm');
     expect(await screen.findByText('That code was not accepted')).toBeInTheDocument();
+    expect(await violations()).toEqual([]);
     expect(document.body.textContent).not.toContain('123456');
     click('Confirm');
     expect(await screen.findByRole('heading', { name: 'You are linked' })).toBeInTheDocument();
+    expect(await violations()).toEqual([]);
     expect(sent(m.seen, 'POST', path)[1]?.body).toEqual({ code: '123456' });
   });
 

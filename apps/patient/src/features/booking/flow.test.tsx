@@ -81,7 +81,7 @@ describe('PP-10..PP-14 book a visit', () => {
     expect(confirmKey).not.toBe(holdKey);
     expect(c?.headers.get('X-CSRF-Token')).toBe('csrf-test');
     expect(h?.headers.get('X-CSRF-Token')).toBe('csrf-test');
-    expect(document.title).toBe('Patient portal - Booked');
+    await waitFor(() => expect(document.title).toBe('Patient portal - Booked'));
   });
 
   it('a double click on Confirm sends one request', async () => {
