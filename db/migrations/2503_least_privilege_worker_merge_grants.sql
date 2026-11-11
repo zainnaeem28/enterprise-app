@@ -5,6 +5,9 @@
 -- patient_id (and status, reason, to_date, end_reason, candidate_patient_id, resolved_reason) and DELETE on communication_preference
 -- for its own patients, so a non-merge job could withdraw a signed consent and commit (P7). After it app_worker holds SELECT only on
 -- these tables and a write happens only inside one of the functions below, which refuse unless the call is the executing merge.
+-- This file is the EXPAND half only (HEAAA-722 D1, N-1 safe): it adds roles' rights, policies and functions and removes nothing. The
+-- app_worker write grants of 0802/0902 and their worker policies stay until the contract migration 2504 (REVOKE / DROP POLICY), which
+-- runs after the code that calls the functions is on every instance.
 --
 -- patient.merge_job_check(request) is the one gate: audience system, job_scope patients, the request exists in the caller's
 -- organisation, status = executing, and both survivor_id and merged_id are in app.job_patient_ids (what begin_merge checks, plus the
@@ -13,8 +16,8 @@
 -- policies repeat the audience/scope/job-ID conditions as defence in depth. The row locks the participants took with FOR UPDATE
 -- (a right app_worker no longer has) are taken inside the functions. No job-class setting is introduced (21.7).
 --
--- Down-note (forward-only): to go back, restore the grants and policies of 0802 lines 60-114 and 0902 lines 73-76 and 91, and drop
--- the seven merge_repoint_* functions and merge_job_check. The TypeScript participants of this change must be reverted with them.
+-- Down-note (forward-only): to go back, drop the seven merge_repoint_* functions, merge_job_check and the owner policies and grants added
+-- here. The TypeScript participants of this change must be reverted with them (the 0802/0902 worker grants are untouched).
 --
 -- Custom SQLSTATEs: 42501 for a caller or a request that is not the executing merge for these patients, PM012 (as in begin_merge)
 -- for a request that exists but is not executing.
@@ -344,20 +347,3 @@ ALTER FUNCTION patient.merge_repoint_duplicate_flag(uuid) OWNER TO patient_scope
 ALTER FUNCTION scheduling.merge_repoint_slot_reservation(uuid) OWNER TO scheduling_booking_owner;
 REVOKE CREATE ON SCHEMA patient FROM patient_scope_owner;
 REVOKE CREATE ON SCHEMA scheduling FROM scheduling_booking_owner;
-
--- Take the writes away from app_worker (SELECT policies stay: the executor counts) -------------------------------------------
-DROP POLICY contact_system_merge_update ON patient.patient_contact;
-DROP POLICY coverage_system_merge_update ON patient.insurance_coverage;
-DROP POLICY consent_system_merge_update ON patient.consent;
-DROP POLICY preference_system_merge_update ON patient.communication_preference;
-DROP POLICY preference_system_merge_delete ON patient.communication_preference;
-DROP POLICY careteam_system_merge_update ON patient.care_team_member;
-DROP POLICY flag_system_merge_update ON patient.duplicate_flag;
-DROP POLICY reservation_system_merge_update ON scheduling.slot_reservation;
-
-REVOKE UPDATE (patient_id) ON patient.patient_contact, patient.insurance_coverage, patient.communication_preference FROM app_worker;
-REVOKE UPDATE (patient_id, status, reason) ON patient.consent FROM app_worker;
-REVOKE DELETE ON patient.communication_preference FROM app_worker;
-REVOKE UPDATE (patient_id, to_date, end_reason) ON patient.care_team_member FROM app_worker;
-REVOKE UPDATE (patient_id, candidate_patient_id, status, resolved_reason) ON patient.duplicate_flag FROM app_worker;
-REVOKE UPDATE (patient_id) ON scheduling.slot_reservation FROM app_worker;

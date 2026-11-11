@@ -1,6 +1,7 @@
-// Real-database tests for SEC03-F11 (HEAAA-687; docs/security/SEC03-F11-worker-merge-grants-hardening-spec.md section 5): app_worker holds no
-// write on the merge participant tables; the re-pointing runs only inside the patient_scope_owner / scheduling_booking_owner functions of
-// migration 2503, which refuse unless the call is the executing merge for the job's two patients.
+// Real-database tests for SEC03-F11 (HEAAA-687; docs/security/SEC03-F11-worker-merge-grants-hardening-spec.md section 5): the re-pointing
+// runs in the patient_scope_owner / scheduling_booking_owner functions of migration 2503, which refuse unless the call is the executing
+// merge for the job's two patients. The tests that need app_worker to have lost its table grants (section 5 items 1 and 2, AC-3) belong to
+// the contract migration 2504 (HEAAA-722 D1) and are not in this file.
 //   EHR_TEST_ADMIN_URL=postgres://postgres@host:5432/postgres node --test dist/src/modules/patient/merge/worker-grants.dbtest.js
 // The URL names a superuser on a throwaway server (synthetic data only). Missing configuration FAILS; nothing skips.
 import assert from 'node:assert/strict';
@@ -112,118 +113,7 @@ async function seed(p: string): Promise<void> {
   await confirmedBooking(m.k, p, A2);
 }
 
-// Every direct write the 0802/0902 grants allowed, on rows of the job's own patient. Placeholder $1 = the patient, $2 = another.
-const DIRECT_WRITES: [string, string][] = [
-  [
-    'contact patient_id',
-    'UPDATE patient.patient_contact SET patient_id = $2 WHERE patient_id = $1',
-  ],
-  [
-    'coverage patient_id',
-    'UPDATE patient.insurance_coverage SET patient_id = $2 WHERE patient_id = $1',
-  ],
-  [
-    'consent withdraw (P7)',
-    `UPDATE patient.consent SET status = 'withdrawn', reason = 'x' WHERE patient_id = $1`,
-  ],
-  ['consent supersede', `UPDATE patient.consent SET status = 'superseded' WHERE patient_id = $1`],
-  ['consent patient_id', 'UPDATE patient.consent SET patient_id = $2 WHERE patient_id = $1'],
-  [
-    'preference patient_id',
-    'UPDATE patient.communication_preference SET patient_id = $2 WHERE patient_id = $1',
-  ],
-  ['preference delete', 'DELETE FROM patient.communication_preference WHERE patient_id = $1'],
-  [
-    'care team end',
-    `UPDATE patient.care_team_member SET to_date = current_date, end_reason = 'x' WHERE patient_id = $1`,
-  ],
-  [
-    'care team patient_id',
-    'UPDATE patient.care_team_member SET patient_id = $2 WHERE patient_id = $1',
-  ],
-  [
-    'flag resolve',
-    `UPDATE patient.duplicate_flag SET status = 'resolved', resolved_reason = 'x' WHERE patient_id = $1`,
-  ],
-  [
-    'flag candidate',
-    'UPDATE patient.duplicate_flag SET candidate_patient_id = $2 WHERE patient_id = $1',
-  ],
-  ['flag patient_id', 'UPDATE patient.duplicate_flag SET patient_id = $2 WHERE patient_id = $1'],
-  [
-    'slot_reservation patient_id',
-    'UPDATE scheduling.slot_reservation SET patient_id = $2 WHERE patient_id = $1',
-  ],
-  ['row lock (FOR UPDATE)', 'SELECT id FROM patient.consent WHERE patient_id = $1 FOR UPDATE'],
-];
-
 describe('SEC03-F11 worker merge grants', () => {
-  test('1. P7 regression: a patients-scope job that is not the executing merge cannot withdraw a signed consent', async () => {
-    const s = await patient();
-    await seed(s);
-    const res = await inJob([s], (tx) =>
-      attempt(
-        tx,
-        `UPDATE patient.consent SET status = 'withdrawn', reason = 'x', withdrawn_at = now() WHERE patient_id = $1`,
-        [s],
-      ),
-    );
-    assert.equal(res, '42501');
-    const plain = await inJob([s], (tx) =>
-      attempt(
-        tx,
-        `UPDATE patient.consent SET status = 'withdrawn', reason = 'x' WHERE patient_id = $1`,
-        [s],
-      ),
-    );
-    assert.equal(plain, '42501');
-    assert.equal(
-      (
-        await q<{ status: string }>(`SELECT status FROM patient.consent WHERE patient_id = $1`, [s])
-      )[0]?.status,
-      'signed',
-    );
-  });
-
-  test('2. every section 1 write on the job’s own patient rows is refused: outside a merge, and inside an executing one', async () => {
-    const s = await patient();
-    const d = await patient();
-    await seed(s);
-    await seed(d);
-    const other = await patient();
-    const outside = await inJob([s, d], async (tx) => {
-      const out: Record<string, string> = {};
-      for (const [name, sql] of DIRECT_WRITES)
-        out[name] = await attempt(tx, sql, sql.includes('$2') ? [s, other] : [s]);
-      return out;
-    });
-    for (const [name] of DIRECT_WRITES)
-      assert.equal(outside[name], '42501', `outside a merge: ${name}`);
-
-    const rid = await approved(s, d);
-    const inside = await inJob([s, d], async (tx) => {
-      await tx.lockPatients([s, d], 'no_key_update');
-      await tx.callScopeOwner('patient.begin_merge', [rid], [s, d]);
-      const out: Record<string, string> = {};
-      for (const [name, sql] of DIRECT_WRITES)
-        out[name] = await attempt(tx, sql, sql.includes('$2') ? [d, s] : [d]);
-      return out;
-    });
-    for (const [name] of DIRECT_WRITES)
-      assert.equal(inside[name], '42501', `inside the executing merge: ${name}`);
-    assert.equal(
-      Number(
-        (
-          await q<{ n: string }>(
-            `SELECT count(*) AS n FROM patient.consent WHERE patient_id = $1 AND status = 'signed'`,
-            [d],
-          )
-        )[0]?.n,
-      ),
-      1,
-    );
-  });
-
   test('3. wrong-patient call: the executing merge A->B, a function called with a request naming other patients, is refused (42501)', async () => {
     const [a, b, x, y] = [await patient(), await patient(), await patient(), await patient()];
     await seed(b);
@@ -301,36 +191,7 @@ describe('SEC03-F11 worker merge grants', () => {
     }
   });
 
-  test('5. catalog: app_worker holds no UPDATE/DELETE on the section 1 tables; the functions are definers with a fixed search_path, owned by NOLOGIN roles, executable by app_worker only', async () => {
-    const tables = [
-      'patient.patient_contact',
-      'patient.insurance_coverage',
-      'patient.consent',
-      'patient.communication_preference',
-      'patient.care_team_member',
-      'patient.duplicate_flag',
-      'scheduling.slot_reservation',
-    ];
-    const cols = await q(
-      `SELECT table_schema || '.' || table_name AS t, column_name, privilege_type FROM information_schema.column_privileges
-        WHERE grantee = 'app_worker' AND privilege_type IN ('UPDATE', 'DELETE', 'INSERT') AND table_schema || '.' || table_name = ANY($1)
-          AND NOT (table_name = 'slot_reservation' AND privilege_type = 'INSERT')`,
-      [tables],
-    );
-    assert.deepEqual(cols, [], 'no column privilege');
-    const tab = await q(
-      `SELECT table_schema || '.' || table_name AS t, privilege_type FROM information_schema.table_privileges
-        WHERE grantee = 'app_worker' AND privilege_type IN ('UPDATE', 'DELETE', 'TRUNCATE') AND table_schema || '.' || table_name = ANY($1)`,
-      [tables],
-    );
-    assert.deepEqual(tab, [], 'no table privilege');
-    const pol = await q(
-      `SELECT schemaname || '.' || tablename AS t, policyname FROM pg_policies
-        WHERE 'app_worker' = ANY (roles) AND cmd IN ('UPDATE', 'DELETE', 'ALL') AND schemaname || '.' || tablename = ANY($1)`,
-      [tables],
-    );
-    assert.deepEqual(pol, [], 'no app_worker write policy');
-
+  test('5. catalog: the functions are definers with a fixed search_path, owned by NOLOGIN roles, executable by app_worker only', async () => {
     const fns = await q<{
       f: string;
       secdef: boolean;
