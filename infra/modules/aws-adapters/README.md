@@ -16,7 +16,7 @@ policy documents, not AWS behaviour. Real-service checks are on the go-live list
 | E-mail | SES v2 domain identity (2048-bit DKIM), configuration set (TLS required, suppression list) | DNS records, production access: go-live |
 | SMS | End User Messaging configuration set | the origination identity is an input (a purchase plus carrier registration); null keeps SMS unconfigured and the app refuses it |
 | Malware scan | GuardDuty Malware Protection plan on the quarantine bucket, prefix `q/`, tagging on, scoped service role | tag name and values unverified until a real scan |
-| Video | IAM only (no resource exists for Chime meetings); api `chime:CreateAttendee`, worker create/get/delete; failed-call metric filter and alarm | DL-1 C3 (video part) and C4. The alarm for dead `telehealth.close_meeting` jobs is not here: the worker's log line for it is not in the repository |
+| Video | IAM only (no resource exists for Chime meetings); api `chime:CreateAttendee`, worker create/get/delete; failed-call metric filter and alarm | DL-1 C3 (video part) and C4. The dead `telehealth.close_meeting` job alarm (worker `job_dead` line, HEAAA-779) is in `alarms.tf` |
 | OCR | worker `textract:DetectDocumentText` | |
 | Patient identity | `modules/identity` (Cognito) is instantiated in the roots; this module passes its issuer and client id to the api as `EHR_PATIENT_OIDC_*` | partner pool has no sign-in code in R1 |
 | Roles | `<env>-ehr-api-task`, `<env>-ehr-worker-task`, `<env>-ehr-task-execution`, `<env>-ehr-guardduty-s3-scan` | role ARNs are built from fixed names, so storage, archive and KMS can name them without a dependency cycle |

@@ -237,14 +237,14 @@ Known gaps with no code yet, so they stay on this list rather than being configu
 - No inbound receipt route (INT-N2) and no SNS signature verifier: no SES or SMS delivery receipts are recorded until a ticket adds them
   with the SES event destination.
 - The partner identity pool has no sign-in code in R1 (partner portal is R2).
-- The alarm for dead `telehealth.close_meeting` jobs: the worker log line is not in the repository.
+- The `telehealth.close_meeting` dead-job alarm is configured on the worker's generic `job_dead` line, but no `telehealth.close_meeting` job type exists in the repository yet, so it fires only once that job is added.
 - The payload KMS key replica is `aws_kms_replica_key.payload_recovery` in `infra/accounts/production/adapters.tf` (same policy, `aws.recovery`); authored only, not applied.
 - Recovery-Region role policies and the VAPID secret replica are now IaC (`infra/modules/aws-adapters/recovery.tf`, production root) but **authored only,
   never applied**. Remaining: nothing was exercised by a task in the recovery Region; upload, package/export, runtime integration secrets, SES/SMS,
   the anchor archive and malware scanning are not granted there (no replica or Region-bound); whether the secret replica needs its own resource
   policy is unverified; the recovery runbook still creates the compute during a declared failover.
 - Chime offers no per-token lifetime: the "short-lived" bound is only in our own record.
-- Load scenarios (QA-07) are a placeholder step in `loadtest-run.yml`.
+- Load scenarios (QA-07) are wired into `loadtest-run.yml` between the two cost guards through `tests/load/run-suite.sh` (perf-01..04, 06..08, rec-04, rec-07; TC-PERF-05 stays with Lighthouse). **Mechanics only, not a capacity result:** the suite was run only against the localhost fixture at tiny scale (`tests/load/evidence/suite-mechanics-HEAAA-776.txt`); the workflow was never run (no AWS account, no hosted CI) and no NFR-6..9 result exists. A case that cannot run is `NOT_RUN` and fails the job, never a pass. Remaining: the seeder does not yet emit the sessions and ids files or the API URL (variables `LOADTEST_BASE_URL`, `LOADTEST_HOSTS`, `LOADTEST_SESSIONS_S3_URI`, `LOADTEST_IDS_S3_URI`); perf-06 needs `LOADTEST_VENDOR_SANDBOX=1`; the SQL reconciliations (`check-audit`, `check-exactly-one`, `check-recovery`) need `LOADTEST_RO_DATABASE_URL_SECRET_ID`; TC-REC-04/07 disruptions are DevOps' OPS part and are not injected; perf-08 leak/queue-growth has no checker.
 - Bootstrap interface points G-1..G-5 (`scripts/bootstrap/README.md`) and the permission gaps in `scripts/deploy/README.md`.
 
 ## Evidence rules

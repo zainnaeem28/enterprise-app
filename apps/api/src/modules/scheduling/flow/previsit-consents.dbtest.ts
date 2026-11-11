@@ -394,8 +394,28 @@ describe('GET /appointments/{id}/previsit: requiredConsents (HEAAA-296 D1)', () 
         `owner: guard_consent pins ${col}`,
       );
 
-    // HEAAA-722 D6: the positive direct app_worker UPDATE of patient.consent.patient_id is not probed here (the worker's
-    // grants differ across releases); the merge re-point is covered by the merge participant tests.
+    // SEC03-F11 (migration 2503): app_worker holds no UPDATE on patient.consent any more (the merge re-point runs in
+    // patient.merge_repoint_consent, covered by worker-grants.dbtest)
+    const other = await t.bare(641);
+    await rejectsCode(
+      t.asWorker(
+        {
+          audience: 'system',
+          realm: 'worker',
+          orgId: ORG,
+          jobScope: 'patients',
+          jobPatientIds: [p.patientId, other.patientId],
+        },
+        (tx) =>
+          tx.query(`UPDATE patient.consent SET patient_id = $2 WHERE id = $1`, [
+            shown?.id,
+            other.patientId,
+          ]),
+      ),
+      '42501',
+      'app_worker: no UPDATE grant after 2503',
+    );
+    assert.equal(await consentRows(other.patientId), 0);
 
     // retiring the language of a pending row: the item is missing, the POST withdraws it (one audit row) and opens a new one
     await template('a2c-b', 1, 'en');
