@@ -23,6 +23,9 @@ mock_provider "aws" {
   mock_resource "aws_sesv2_email_identity" {
     defaults = { arn = "arn:aws:ses:us-east-2:111111111111:identity/example.org" }
   }
+  mock_resource "aws_sns_topic" {
+    defaults = { arn = "arn:aws:sns:us-east-2:111111111111:mock-topic" }
+  }
   mock_resource "aws_pinpointsmsvoicev2_configuration_set" {
     defaults = { arn = "arn:aws:sms-voice:us-east-2:111111111111:configuration-set/staging-ehr-sms" }
   }
@@ -204,4 +207,77 @@ run "close_meeting_dead_alarm_watches_the_worker_log_group" {
     condition     = length(aws_cloudwatch_metric_alarm.close_meeting_dead.alarm_actions) == 1 && aws_cloudwatch_metric_alarm.close_meeting_dead.threshold == 1
     error_message = "one dead job raises the alarm, with an action"
   }
+}
+
+run "receipts_are_off_unless_an_endpoint_is_given" {
+  command = plan
+
+  assert {
+    condition     = length(output.receipt_topic_arns) == 0 && !contains(keys(output.api_environment), "EHR_SNS_RECEIPT_TOPICS")
+    error_message = "no SNS topic, event destination or api receipt variable without receipt_endpoint_url"
+  }
+}
+
+run "receipts_wire_the_ses_event_destination_and_both_topics_to_https_subscriptions" {
+  command = plan
+  variables {
+    receipt_endpoint_url = "https://integrations.example.org/webhooks/sns/receipts"
+  }
+
+  assert {
+    condition     = length(aws_sns_topic.receipts) == 2 && contains(keys(aws_sns_topic.receipts), "email") && contains(keys(aws_sns_topic.receipts), "sms")
+    error_message = "one topic for SES and one for SMS events"
+  }
+
+  assert {
+    condition = alltrue([for s in values(aws_sns_topic_subscription.receipts) :
+      s.protocol == "https" && s.endpoint == "https://integrations.example.org/webhooks/sns/receipts" && s.raw_message_delivery == false && s.endpoint_auto_confirms == false
+    ])
+    error_message = "HTTPS subscription to the receipt route, signed envelope kept, confirmed by the API"
+  }
+
+  assert {
+    condition = (
+      aws_sesv2_configuration_set_event_destination.receipts[0].event_destination[0].enabled &&
+      alltrue([for t in ["DELIVERY", "BOUNCE", "COMPLAINT"] : contains(aws_sesv2_configuration_set_event_destination.receipts[0].event_destination[0].matching_event_types, t)]) &&
+      length(aws_sesv2_configuration_set_event_destination.receipts[0].event_destination[0].matching_event_types) == 3
+    )
+    error_message = "SES event destination carries delivery, bounce and complaint"
+  }
+
+  assert {
+    condition     = alltrue([for t in values(aws_sns_topic.receipts) : t.kms_master_key_id != null])
+    error_message = "receipt topics are encrypted"
+  }
+
+  assert {
+    condition     = can(regex("^arn:aws:sns:[a-z0-9-]+:[0-9]{12}:[A-Za-z0-9_-]+=email,", output.api_environment["EHR_SNS_RECEIPT_TOPICS"])) || can(regex("=sms$", output.api_environment["EHR_SNS_RECEIPT_TOPICS"])) || can(regex("=email", output.api_environment["EHR_SNS_RECEIPT_TOPICS"]))
+    error_message = "the api gets the topic ARN -> channel list"
+  }
+
+  assert {
+    condition     = !contains(keys(output.worker_environment), "EHR_SNS_RECEIPT_TOPICS")
+    error_message = "the worker does not receive the route configuration"
+  }
+}
+
+run "sms_receipts_follow_the_sms_group" {
+  command = plan
+  variables {
+    receipt_endpoint_url         = "https://integrations.example.org/webhooks/sns/receipts"
+    sms_origination_identity_arn = null
+  }
+
+  assert {
+    condition     = length(aws_sns_topic.receipts) == 1 && contains(keys(aws_sns_topic.receipts), "email")
+    error_message = "no SMS topic when SMS is not configured"
+  }
+}
+
+run "receipt_endpoint_must_be_the_receipt_route" {
+  command = plan
+  variables {
+    receipt_endpoint_url = "http://integrations.example.org/webhooks/sns/receipts"
+  }
+  expect_failures = [var.receipt_endpoint_url]
 }

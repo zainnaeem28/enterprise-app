@@ -1,5 +1,6 @@
 // The routes of the `integrations.` host that this module owns (ARCHITECTURE 29.5, SHARED-BOUNDARIES 5.1):
 //   GET  /public/v1/services | /locations | /clinicians | /banners   no authentication, audience `public`, C0 only, `max-age=60`
+//   POST /webhooks/sns/receipts   Amazon SNS delivery receipts (SES and SMS event destinations), verified by sns-verify.ts
 //   POST /webhooks/video/{vendor}, /webhooks/messaging/{vendor}   vendor signature + replay window, recorded by integration-core
 // (`POST /webhooks/google/calendar` stays with calendar-sync; `GET /public/v1/clinicians/{id}/next-available` needs the definer
 // function `scheduling.next_available`, which does not exist yet, and belongs to scheduling.)
@@ -22,13 +23,15 @@ import type { Req, Res } from '../../platform/http.js';
 import { PUBLIC } from '../../platform/permissions.js';
 import { Route } from '../../platform/route.js';
 import { NoCookiesGuard } from './no-cookies.js';
-import type { WebhookReceiverPort } from './ports.js';
+import type { SnsReceiptPort, WebhookReceiverPort } from './ports.js';
 import type { PublicDirectoryService } from './public-directory.js';
 import { rawBodyOf } from './raw-body.js';
 
 export interface IntegrationsHostDeps {
   directory: PublicDirectoryService;
   receiver: WebhookReceiverPort;
+  /** Delivery receipts from SNS (`POST /webhooks/sns/receipts`, INT-N2). Absent: the route answers 404 (nothing is configured to verify against). */
+  snsReceipts?: SnsReceiptPort;
   /** A failed verification is counted, not recorded (29.5). Receives only source and reason. */
   onWebhookRefused?: (info: { source: string; status: number }) => void;
 }
@@ -138,5 +141,22 @@ export function createIntegrationsHostControllers(d: IntegrationsHostDeps): Type
     }
   }
 
-  return [PublicDirectoryController, WebhookController];
+  @Controller('webhooks/sns')
+  @UseGuards(NoCookiesGuard)
+  class SnsWebhookController {
+    @Post('receipts')
+    @Route({ ...PUBLIC_ROUTE, routeClass: 'write' })
+    async receipts(@ReqParam() req: Req, @ResParam() res: Res): Promise<void> {
+      if (d.snsReceipts === undefined) throw refusal(404);
+      const r = await d.snsReceipts.receive(await rawBodyOf(req));
+      if (r.status !== 200) {
+        d.onWebhookRefused?.({ source: 'sns', status: r.status });
+        throw refusal(r.status);
+      }
+      res.setHeader('Cache-Control', 'no-store');
+      res.status(200).json({});
+    }
+  }
+
+  return [PublicDirectoryController, WebhookController, SnsWebhookController];
 }

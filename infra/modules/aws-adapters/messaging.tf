@@ -1,7 +1,7 @@
 # E-mail (SES), SMS (End User Messaging) and malware scan (GuardDuty Malware Protection for S3) configuration.
 # Not created here: SMS phone numbers / pools / sender IDs (a purchase plus carrier registration), the SES
-# production-access request, DNS records for DKIM / SPF / DMARC, the SNS topic and event destination for
-# bounces and complaints (the receipt route does not exist yet, AWS-ADAPTERS.md "Receipts"). Those are go-live items.
+# production-access request, DNS records for DKIM / SPF / DMARC. Those are go-live items. The delivery-receipt
+# topics, SES event destination and subscriptions are in receipts.tf (AWS-ADAPTERS.md "Receipts").
 
 resource "aws_sesv2_email_identity" "domain" {
   email_identity         = var.ses_domain

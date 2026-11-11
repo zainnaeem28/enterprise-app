@@ -224,3 +224,13 @@ variable "recovery_docs_clean_bucket_arn" {
   type        = string
   default     = null
 }
+
+variable "receipt_endpoint_url" {
+  description = "HTTPS URL of the API's delivery-receipt route, https://<integrations host>/webhooks/sns/receipts. Null: no SNS topic, event destination or subscription is created and the API's receipt route stays unconfigured."
+  type        = string
+  default     = null
+  validation {
+    condition     = var.receipt_endpoint_url == null ? true : can(regex("^https://[a-z0-9.-]+/webhooks/sns/receipts$", var.receipt_endpoint_url))
+    error_message = "receipt_endpoint_url must be https://<host>/webhooks/sns/receipts."
+  }
+}
