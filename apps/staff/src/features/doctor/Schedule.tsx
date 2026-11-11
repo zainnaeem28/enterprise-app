@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
   Banner,
+  Icon,
   EmptyState,
   LoadingState,
   PermissionNote,
@@ -80,6 +81,35 @@ export function Schedule({ locationIds }: { locationIds: readonly string[] }) {
               <p>{d.chartLoadFailed}</p>
             </Banner>
           )}
+          <div className="ehr-schedule-summary" aria-label="Schedule overview">
+            <div>
+              <span className="ehr-feature-icon">
+                <Icon name="calendar" />
+              </span>
+              <span>
+                <strong>{mine.length}</strong>
+                <small>Visits today</small>
+              </span>
+            </div>
+            <div>
+              <span className="ehr-feature-icon">
+                <Icon name="people" />
+              </span>
+              <span>
+                <strong>{mine.filter((visit) => visit.mode === 'in_person').length}</strong>
+                <small>In-person visits</small>
+              </span>
+            </div>
+            <div>
+              <span className="ehr-feature-icon">
+                <Icon name="message" />
+              </span>
+              <span>
+                <strong>{mine.filter((visit) => visit.mode === 'video').length}</strong>
+                <small>Video visits</small>
+              </span>
+            </div>
+          </div>
           {mine.length === 0 ? (
             <EmptyState message={d.scheduleEmpty} />
           ) : (

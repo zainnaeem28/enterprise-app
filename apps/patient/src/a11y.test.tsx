@@ -39,7 +39,7 @@ describe('axe on the patient pages (jsdom)', () => {
   it('landing', async () => {
     window.history.replaceState(null, '', '/account');
     const { container } = render(<App runtime={runtimeWith(signedIn).runtime} />);
-    await screen.findByRole('heading', { name: 'You are signed in' });
+    await screen.findByRole('heading', { name: 'Welcome back.' });
     expect(await violations(container)).toEqual([]);
   });
   it.each([

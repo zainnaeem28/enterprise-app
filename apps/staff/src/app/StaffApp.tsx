@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect, useMemo } from 'react';
-import { LoadingState, Banner, SkipLink } from '@ehr/ui';
+import { LoadingState, Banner, SkipLink, BrandMark, Icon } from '@ehr/ui';
 import {
   NotFoundPage,
   RealmBar,
@@ -39,6 +39,7 @@ import {
 } from '../features/admin-auth/index.js';
 import { workspace } from '../features/doctor/workspace.js';
 import { useLocation } from './router.js';
+import './portal.css';
 
 // Each portal is its own chunk, fetched on first visit to one of its screens, so the shell stays under the bundle budget.
 const DoctorPortal = lazy(() =>
@@ -101,16 +102,34 @@ function HelpPage() {
 
 function PublicShell({ children }: { children: React.ReactNode }) {
   return (
-    <>
+    <div className="staff-public">
       <SkipLink targetId="main">Skip to main content</SkipLink>
       <header className="ehr-appbar">
-        <p className="ehr-appbar__name">{PRODUCT} staff portal</p>
+        <BrandMark />
+        <div>
+          <p className="ehr-appbar__name">{PRODUCT}</p>
+          <p className="ehr-appbar__portal">Staff workspace</p>
+        </div>
       </header>
       <main id="main" className="ehr-main" tabIndex={-1}>
+        <aside className="staff-public__intro">
+          <span className="ehr-feature-icon">
+            <Icon name="heart" size={30} />
+          </span>
+          <p className="ehr-eyebrow">Your care team, connected</p>
+          <h2>
+            More time for
+            <br />
+            what matters.
+          </h2>
+          <p>
+            A shared workspace for your appointments, patient records, and the people you care for.
+          </p>
+        </aside>
         {children}
       </main>
       <HelpFooter />
-    </>
+    </div>
   );
 }
 
@@ -239,40 +258,52 @@ function Gate({
   if (realm === 'admin')
     return (
       <ElevationProvider elevation={elevation}>
-        <SkipLink targetId="main">Skip to main content</SkipLink>
-        <AdminRealmBar
-          runtime={runtime}
-          elevation={elevationStore}
-          productName={PRODUCT}
-          displayName={session.displayName}
-        />
-        <ReleasePrompts store={runtime.releases} />
-        <MaintenanceBanners api={runtime.api} />
-        <SessionPrompts store={runtime.session} onSignIn={() => assign(signInUrl(path))} />
-        <NavBar
-          items={ADMIN_AREAS}
-          current={isAdminConfigPath(path) ? ADMIN_AREAS[1]!.path : ADMIN_AREAS[0]!.path}
-          onNavigate={(p) => navigate(p)}
-        />
-        <main id="main" className="ehr-main" tabIndex={-1}>
-          <Suspense fallback={<LoadingState label={s.loadingSession} />}>
-            {path === ADMIN_LANDING || path === '/' ? (
-              <Home first={ADMIN_HOME} navigate={navigate} />
-            ) : isAdminCompliancePath(path) ? (
-              <AdminCompliancePortal runtime={runtime} path={path} navigate={(p) => navigate(p)} />
-            ) : isAdminConfigPath(path) ? (
-              <AdminConfigPortal runtime={runtime} path={path} navigate={(p) => navigate(p)} />
-            ) : (
-              <NotFoundPage homeHref={ADMIN_HOME} />
-            )}
-          </Suspense>
-        </main>
-        <HelpFooter />
+        <div className="staff-workspace" data-workspace="admin">
+          <SkipLink targetId="main">Skip to main content</SkipLink>
+          <AdminRealmBar
+            runtime={runtime}
+            elevation={elevationStore}
+            productName={PRODUCT}
+            displayName={session.displayName}
+          />
+          <ReleasePrompts store={runtime.releases} />
+          <MaintenanceBanners api={runtime.api} />
+          <SessionPrompts store={runtime.session} onSignIn={() => assign(signInUrl(path))} />
+          <NavBar
+            items={ADMIN_AREAS}
+            current={isAdminConfigPath(path) ? ADMIN_AREAS[1]!.path : ADMIN_AREAS[0]!.path}
+            onNavigate={(p) => navigate(p)}
+          />
+          <main id="main" className="ehr-main" tabIndex={-1}>
+            <div className="ehr-page-context">
+              <p>
+                Workspace <span>/ Administration</span>
+              </p>
+              <p>Manage your practice</p>
+            </div>
+            <Suspense fallback={<LoadingState label={s.loadingSession} />}>
+              {path === ADMIN_LANDING || path === '/' ? (
+                <Home first={ADMIN_HOME} navigate={navigate} />
+              ) : isAdminCompliancePath(path) ? (
+                <AdminCompliancePortal
+                  runtime={runtime}
+                  path={path}
+                  navigate={(p) => navigate(p)}
+                />
+              ) : isAdminConfigPath(path) ? (
+                <AdminConfigPortal runtime={runtime} path={path} navigate={(p) => navigate(p)} />
+              ) : (
+                <NotFoundPage homeHref={ADMIN_HOME} />
+              )}
+            </Suspense>
+          </main>
+          <HelpFooter />
+        </div>
       </ElevationProvider>
     );
 
   return (
-    <>
+    <div className="staff-workspace" data-workspace="staff">
       <SkipLink targetId="main">Skip to main content</SkipLink>
       <RealmBar
         realm={realm}
@@ -285,6 +316,18 @@ function Gate({
       <SessionPrompts store={runtime.session} onSignIn={() => assign(signInUrl(path))} />
       <NavBar items={items} current={path} onNavigate={(p) => navigate(p)} />
       <main id="main" className="ehr-main" tabIndex={-1}>
+        <div className="ehr-page-context">
+          <p>
+            Workspace <span>/ {current?.label ?? 'Overview'}</span>
+          </p>
+          <p>
+            {new Intl.DateTimeFormat('en', {
+              weekday: 'long',
+              month: 'long',
+              day: 'numeric',
+            }).format(new Date())}
+          </p>
+        </div>
         <Suspense fallback={<LoadingState label={s.loadingSession} />}>
           {realm !== 'staff' ? (
             <Banner tone="info">
@@ -327,7 +370,7 @@ function Gate({
         </Suspense>
       </main>
       <HelpFooter />
-    </>
+    </div>
   );
 }
 

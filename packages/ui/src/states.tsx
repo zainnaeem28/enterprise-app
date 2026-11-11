@@ -1,3 +1,4 @@
+import { Icon } from './icon.js';
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { AlertDialog } from './alert-dialog.js';
@@ -83,6 +84,9 @@ export function EmptyState({
   const s = pick(copy);
   return (
     <div className="ehr-state ehr-state--empty">
+      <span className="ehr-state__icon">
+        <Icon name="calendar" size={28} />
+      </span>
       <p className="ehr-state__text">{filtered ? s.emptyFiltered : message}</p>
       {filtered && onClearFilters !== undefined ? (
         <Button onClick={onClearFilters}>{s.clearFilters}</Button>

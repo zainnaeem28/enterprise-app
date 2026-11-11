@@ -1,7 +1,7 @@
 export const brand = {
-  // PLACEHOLDER until the organisation supplies its name, logo and palette (BRAND-BRIEF 1, C-16).
+  // CMS identity stays configurable independently of organisation content.
   name: 'Practice CMS',
   initial: 'P',
-  primary: '#1f5a7a',
+  primary: '#08746b',
   onPrimary: '#ffffff',
 } as const;

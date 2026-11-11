@@ -1,3 +1,4 @@
+import { BrandMark, Icon } from '@ehr/ui';
 import type { MouseEvent } from 'react';
 import { PHONE_VISIBLE } from './navigation.js';
 import type { NavItem } from './navigation.js';
@@ -25,6 +26,27 @@ function Link({
       onClick={go}
       {...(current === item.path ? { 'aria-current': 'page' as const } : {})}
     >
+      <Icon
+        name={
+          (
+            {
+              alerts: 'bell',
+              schedule: 'calendar',
+              patients: 'people',
+              tasks: 'message',
+              notes: 'notes',
+              availability: 'clock',
+              arrivals: 'people',
+              triage: 'heart',
+              forms: 'notes',
+              'follow-ups': 'calendar',
+              waitlist: 'clock',
+              compliance: 'shield',
+              configuration: 'settings',
+            } as Record<string, string>
+          )[item.id] ?? 'notes'
+        }
+      />
       {item.label}
     </a>
   );
@@ -48,6 +70,14 @@ export function NavBar({
   const rest = items.slice(PHONE_VISIBLE);
   return (
     <nav aria-label={s.primaryNav} className="ehr-nav">
+      <div className="ehr-nav__brand">
+        <BrandMark />
+        <div>
+          <strong>Clinic</strong>
+          <small>Care workspace</small>
+        </div>
+      </div>
+      <p className="ehr-nav__section">Your workspace</p>
       <ul className="ehr-nav__list ehr-nav__list--wide">
         {items.map((i) => (
           <li key={i.id}>
@@ -76,6 +106,12 @@ export function NavBar({
           </li>
         )}
       </ul>
+      <div className="ehr-nav__footer">
+        <a href="/help">
+          <Icon name="help" /> Help & support
+        </a>
+        <p>Thoughtful care. Every day.</p>
+      </div>
     </nav>
   );
 }

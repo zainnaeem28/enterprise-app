@@ -51,3 +51,118 @@
   color: #5c0f0f;
   font-weight: 600;
 }
+
+/* Match the patient and staff surfaces while preserving Payload's native admin interactions. */
+:root {
+  --theme-bg: #f5f8f9;
+  --theme-text: #172e35;
+  --theme-input-bg: #ffffff;
+  --theme-elevation-0: #ffffff;
+  --theme-elevation-50: #f5f8f9;
+  --theme-elevation-100: #edf3f3;
+  --theme-elevation-150: #dce5e7;
+  --theme-elevation-200: #c6d5d8;
+  --theme-elevation-500: #52666e;
+  --theme-elevation-800: #24454d;
+  --theme-elevation-1000: #172e35;
+  --style-radius-s: 8px;
+  --style-radius-m: 12px;
+  --font-body: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+[data-theme='dark'] {
+  --theme-bg: #10262b;
+  --theme-text: #e4eff0;
+  --theme-input-bg: #17383e;
+  --theme-elevation-0: #10262b;
+  --theme-elevation-50: #17383e;
+  --theme-elevation-100: #20434a;
+  --theme-elevation-150: #2e5058;
+  --theme-elevation-200: #47666e;
+  --theme-elevation-500: #adc4c7;
+  --theme-elevation-800: #dce5e7;
+  --theme-elevation-1000: #f5f8f9;
+}
+body {
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.012em;
+}
+.ehr-brand__mark {
+  background: #08746b;
+  border-radius: 12px;
+  width: 44px;
+  height: 44px;
+}
+.ehr-brand__name {
+  font-weight: 750;
+  letter-spacing: -0.045em;
+  font-size: 24px;
+}
+.ehr-brand__mark--icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+}
+.ehr-signin {
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: 20px;
+  padding: 32px;
+  background: var(--theme-elevation-0);
+  box-shadow: 0 12px 48px rgb(18 48 54 / 6%);
+}
+.ehr-signin__title {
+  font-size: 28px;
+  letter-spacing: -0.04em;
+  line-height: 1.2;
+  margin-top: 0;
+}
+.ehr-signin__help {
+  color: var(--theme-elevation-500);
+  line-height: 1.7;
+  font-size: 14px;
+}
+.ehr-signin__button {
+  display: block;
+  text-align: center;
+  background: #08746b;
+  border-radius: 10px;
+  padding: 14px 20px;
+  margin-top: 24px;
+}
+.ehr-signin__button:hover {
+  background: #075f58;
+}
+.nav {
+  border-right: 1px solid var(--theme-elevation-150);
+}
+.nav__link {
+  border-radius: 8px;
+  margin-block: 3px;
+}
+.nav__link:hover {
+  background: var(--theme-elevation-100);
+}
+.card {
+  border-radius: 14px;
+  border-color: var(--theme-elevation-150);
+  box-shadow: 0 3px 16px rgb(18 48 54 / 3%);
+}
+.btn {
+  border-radius: 9px;
+}
+.field-type input,
+.field-type textarea {
+  border-radius: 9px;
+}
+.table {
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: 12px;
+  overflow: hidden;
+}
+@media (max-width: 600px) {
+  .ehr-signin {
+    padding: 24px;
+  }
+  .ehr-signin__title {
+    font-size: 24px;
+  }
+}
