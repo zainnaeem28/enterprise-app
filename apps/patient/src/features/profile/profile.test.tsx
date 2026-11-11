@@ -270,21 +270,56 @@ describe('PP-06..PP-09 family and proxy access', () => {
       [`POST /api/v1/patients/${ME}/proxy-requests`]: () =>
         json(422, { status: 422, code: 'identity.proxy_rules_not_configured', requestId: 'r3' }),
     });
-    fireEvent.change(await screen.findByLabelText('Their name'), { target: { value: 'Pat P' } });
+    fireEvent.change(await screen.findByLabelText('Their email address'), {
+      target: { value: 'pat@example.com' },
+    });
     click('Send request');
     expect(await screen.findByText('Linking family members is not open yet')).toBeInTheDocument();
     expect(screen.queryByText('Request sent')).not.toBeInTheDocument();
     const req = sent(m.seen, 'POST', `/api/v1/patients/${ME}/proxy-requests`)[0];
     expect(req?.headers.get('idempotency-key')).toMatch(/^[0-9a-f-]{36}$/);
-    expect(req?.body).toEqual({ relationship: 'parent', patientDisplayName: 'Pat P' });
+    expect(req?.body).toEqual({ relationship: 'parent', email: 'pat@example.com' });
   });
 
   it('PP-07: a created request is shown as sent', async () => {
     mount('profile', '/family/add', {
       [`POST /api/v1/patients/${ME}/proxy-requests`]: () => json(201, {}),
     });
-    fireEvent.change(await screen.findByLabelText('Their name'), { target: { value: 'Pat P' } });
+    fireEvent.change(await screen.findByLabelText('Their email address'), {
+      target: { value: 'pat@example.com' },
+    });
     click('Send request');
     expect(await screen.findByRole('heading', { name: 'Request sent' })).toBeInTheDocument();
+  });
+
+  it('PP-07: email is required and checked before anything is sent', async () => {
+    const m = mount('profile', '/family/add', {});
+    await screen.findByLabelText('Their email address');
+    click('Send request');
+    expect((await screen.findAllByText(/Their email address: enter it\./)).length).toBeGreaterThan(
+      0,
+    );
+    fireEvent.change(screen.getByLabelText('Their email address'), { target: { value: 'nope' } });
+    click('Send request');
+    expect((await screen.findAllByText(/like name@example\.com/)).length).toBeGreaterThan(0);
+    expect(sent(m.seen, 'POST', `/api/v1/patients/${ME}/proxy-requests`)).toHaveLength(0);
+  });
+
+  it('PP-07: a 422 on the email is shown on the field', async () => {
+    mount('profile', '/family/add', {
+      [`POST /api/v1/patients/${ME}/proxy-requests`]: () =>
+        json(422, {
+          status: 422,
+          code: 'kernel.validation_failed',
+          requestId: 'r4',
+          errors: [{ path: '/email', code: 'invalid' }],
+        }),
+    });
+    fireEvent.change(await screen.findByLabelText('Their email address'), {
+      target: { value: 'pat@example.com' },
+    });
+    click('Send request');
+    expect((await screen.findAllByText(/this was not accepted/)).length).toBeGreaterThan(0);
+    expect(screen.queryByText('Request sent')).not.toBeInTheDocument();
   });
 });

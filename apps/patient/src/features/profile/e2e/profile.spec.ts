@@ -293,7 +293,7 @@ test.describe('PP-06..PP-09 family and proxies', () => {
   test('PP-07 while D-7 is not configured: not open yet, never "sent"', async ({ page }, info) => {
     await mockApi(page);
     await page.goto('/family/add');
-    await page.getByLabel('Their name').fill('Pat P');
+    await page.getByLabel('Their email address').fill('pat@example.com');
     await axe(page);
     await shot(page, 'pp07-add', info.project.name);
     await page.getByRole('button', { name: 'Send request' }).click();
