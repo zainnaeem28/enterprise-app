@@ -98,8 +98,8 @@ locals {
       { sid = "GateCheckReads", actions = ["logs:StartQuery", "logs:GetQueryResults", "logs:FilterLogEvents", "logs:GetLogEvents", "cloudwatch:GetMetricData", "cloudwatch:GetMetricStatistics", "backup:DescribeRestoreJob", "backup:ListRecoveryPointsByBackupVault"], resources = ["*"] },
     ])
 
-    "gh-deploy-staging"    = lookup(local.deploy_statements, "gh-deploy-staging", [])
-    "gh-deploy-production" = lookup(local.deploy_statements, "gh-deploy-production", [])
+    "gh-deploy-staging"    = concat(lookup(local.deploy_statements, "gh-deploy-staging", []), local.portal_statements)
+    "gh-deploy-production" = concat(lookup(local.deploy_statements, "gh-deploy-production", []), local.portal_statements)
 
     "gh-observe-production" = [
       { sid = "ObserveReadOnly", actions = ["cloudwatch:GetMetricData", "cloudwatch:GetMetricStatistics", "cloudwatch:ListMetrics", "cloudwatch:DescribeAlarms", "cloudwatch:DescribeAlarmHistory", "ecs:Describe*", "ecs:List*", "elasticloadbalancing:Describe*", "rds:DescribeDBInstances", "logs:DescribeLogGroups"], resources = ["*"] },
@@ -114,6 +114,10 @@ locals {
       { sid = "PassOnlyRolesNamedInTheRecoverRecord", actions = ["iam:PassRole"], resources = var.refs.recover_passrole_arns, conditions = local.passed_to_ecs },
       { sid = "RecordRead", actions = ["ssm:GetParameter"], resources = [local.records_arn["gh-recover-production"]] },
       { sid = "RecordKeyDecrypt", actions = ["kms:Decrypt"], resources = [var.ssm_kms_key_arn] },
+      # Portal revert is the same switch with the previous sha (scripts/deploy/portal-switch.mjs).
+      { sid = "PortalLivePointerWrite", actions = ["s3:PutObject"], resources = [for a in compact([var.refs.portal_bucket_arn]) : "${a}/live/*"] },
+      { sid = "PortalReleaseSourceRead", actions = ["s3:GetObject"], resources = flatten([for a in compact([var.refs.portal_bucket_arn, var.refs.release_store_read_arn]) : ["${a}/releases/*"]]) },
+      { sid = "PortalInvalidate", actions = ["cloudfront:CreateInvalidation", "cloudfront:GetInvalidation"], resources = var.refs.portal_distribution_arns },
     ]
 
     "gh-tf-staging"    = concat(local.tf_statements, local.tf_passrole_conditioned, local.record_read["gh-tf-staging"])
@@ -148,6 +152,7 @@ locals {
       { sid = "RunPinnedArchiveTaskOnly", actions = ["ecs:RunTask"], resources = compact([var.refs.audit_task_definition_arn]), conditions = local.ecs_cluster_cond },
       { sid = "DescribeTask", actions = ["ecs:DescribeTasks", "ecs:ListTasks"], resources = ["*"] },
       { sid = "PassArchiveRolesOnly", actions = ["iam:PassRole"], resources = var.refs.audit_passrole_arns, conditions = local.passed_to_ecs },
+      { sid = "ReadArchiveTaskLog", actions = ["logs:GetLogEvents"], resources = var.refs.audit_log_group_arns },
       { sid = "RecordRead", actions = ["ssm:GetParameter"], resources = [local.records_arn["gh-audit-archive"]] },
       { sid = "RecordKeyDecrypt", actions = ["kms:Decrypt"], resources = [var.ssm_kms_key_arn] },
     ]
@@ -160,6 +165,13 @@ locals {
     { sid = "PassBootstrapRolesOnly", actions = ["iam:PassRole"], resources = var.refs.bootstrap_passrole_arns, conditions = local.passed_to_ecs },
     { sid = "RecordRead", actions = ["ssm:GetParameter"], resources = ["arn:aws:ssm:${var.region}:${var.account_id}:parameter/approved/bootstrap-${e}"] },
     { sid = "RecordKeyDecrypt", actions = ["kms:Decrypt"], resources = [var.ssm_kms_key_arn] },
+    # G-1: cleanup.mjs describes and force-deletes the two token secrets (decision log 4 step 6). Deleting reads nothing:
+    # NoSecretValueReads still denies GetSecretValue. A recovery window is refused by the condition.
+    { sid = "DescribeTokenSecrets", actions = ["secretsmanager:DescribeSecret"], resources = ["arn:aws:secretsmanager:${var.region}:${var.account_id}:secret:bootstrap/${e}/token/*"] },
+    { sid = "ForceDeleteTokenSecrets", actions = ["secretsmanager:DeleteSecret"], resources = ["arn:aws:secretsmanager:${var.region}:${var.account_id}:secret:bootstrap/${e}/token/*"], conditions = { Bool = { "secretsmanager:ForceDeleteWithoutRecovery" = "true" } } },
+    # G-2: rotation as the final workflow step (decision log 4.1 item 1) and the task result from its log stream.
+    { sid = "RotateBootstrapCredential", actions = ["secretsmanager:RotateSecret"], resources = ["arn:aws:secretsmanager:${var.region}:${var.account_id}:secret:${e}/db/app-bootstrap-*"] },
+    { sid = "ReadBootstrapTaskLog", actions = ["logs:GetLogEvents"], resources = var.refs.bootstrap_log_group_arns },
   ] }
   allow_marketing = { for e in var.marketing_envs : "gh-deploy-marketing-${e}" => [
     { sid = "PublishSite", actions = ["s3:PutObject", "s3:DeleteObject", "s3:ListBucket", "s3:GetObject"], resources = flatten([for a in compact([lookup(var.refs.marketing_bucket_arns, e, null)]) : [a, "${a}/*"]]) },
@@ -181,6 +193,14 @@ locals {
     { sid = "RecordKeyDecrypt", actions = ["kms:Decrypt"], resources = [var.ssm_kms_key_arn] },
   ] }
 
+  # Portal switch and revert (live/<portal>/ written, releases/<sha>/ read) and the release store read (permission gaps 3-5).
+  portal_statements = [
+    { sid = "PortalLivePointerWrite", actions = ["s3:PutObject"], resources = [for a in compact([var.refs.portal_bucket_arn]) : "${a}/live/*"] },
+    { sid = "PortalReleaseSourceRead", actions = ["s3:GetObject"], resources = flatten([for a in compact([var.refs.portal_bucket_arn, var.refs.release_store_read_arn]) : ["${a}/releases/*"]]) },
+    { sid = "ReleaseManifestRead", actions = ["s3:GetObject"], resources = [for a in compact([var.refs.release_store_read_arn]) : "${a}/manifests/*"] },
+    { sid = "PortalInvalidate", actions = ["cloudfront:CreateInvalidation", "cloudfront:GetInvalidation"], resources = var.refs.portal_distribution_arns },
+  ]
+
   # Deploy roles. `migrate` grants RunTask on the pinned migration definition only;
   # `rollout` grants UpdateService on named services; `smoke` needs only reads.
   deploy_statements = { for n in ["gh-deploy-staging", "gh-deploy-production"] : n => [
@@ -189,6 +209,11 @@ locals {
     { sid = "DescribeForSmokeAndMigration", actions = ["ecs:Describe*", "ecs:List*", "elasticloadbalancing:Describe*", "logs:DescribeLogGroups"], resources = ["*"] },
     { sid = "MigrationLogs", actions = ["logs:FilterLogEvents", "logs:GetLogEvents"], resources = var.refs.log_group_arns },
     { sid = "PassMigrationRolesOnly", actions = ["iam:PassRole"], resources = var.refs.migration_passrole_arns, conditions = local.passed_to_ecs },
+    # Gaps 1-2: String parameters need no KMS grant. Never /approved/* (denied) and only the ARNs named in refs.
+    { sid = "ReleaseConfigParameters", actions = ["ssm:GetParameter", "ssm:PutParameter"], resources = var.refs.release_config_parameter_arns },
+    { sid = "BackupGateReads", actions = ["rds:DescribeDBInstances"], resources = var.refs.db_instance_arns },
+    { sid = "BackupGateDescribeSnapshots", actions = ["rds:DescribeDBSnapshots"], resources = ["arn:aws:rds:${var.region}:${var.account_id}:snapshot:release-*-pre-migration"], on = length(var.refs.db_instance_arns) > 0 },
+    { sid = "PreMigrationSnapshot", actions = ["rds:CreateDBSnapshot"], resources = concat(var.refs.db_instance_arns, ["arn:aws:rds:${var.region}:${var.account_id}:snapshot:release-*-pre-migration"]), on = length(var.refs.db_instance_arns) > 0 && (contains(local.granted[n], "*") || contains(local.granted[n], "migrate")) },
     { sid = "NoExecWhenEnabledOnRunOrUpdate", effect = "Deny", actions = ["ecs:RunTask", "ecs:UpdateService"], resources = ["*"], conditions = { Bool = { "ecs:enable-execute-command" = "true" } } },
     { sid = "RecordRead", actions = ["ssm:GetParameter"], resources = [local.records_arn[n]] },
     { sid = "RecordKeyDecrypt", actions = ["kms:Decrypt"], resources = [var.ssm_kms_key_arn] },

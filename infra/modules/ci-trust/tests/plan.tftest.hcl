@@ -279,3 +279,128 @@ run "infra_roles_cannot_edit_signing_restore_secrets_keys_or_secret_policies" {
     error_message = "infra roles must be denied key-policy edits on signing, restore and secrets keys and may not put or delete secret resource policies"
   }
 }
+
+# --- R1-GAP-5: bootstrap interface points G-1, G-2, G-4 and deploy permission gaps 1-5 ---------------------------------
+
+run "bootstrap_and_deploy_gaps_are_not_granted_while_refs_are_unset" {
+  command = plan
+
+  assert {
+    condition = alltrue([for n in ["gh-deploy-staging", "gh-deploy-production", "gh-recover-production"] : !anytrue([
+      for st in jsondecode(output.role_policies[n]).Statement : st.Effect == "Allow" && anytrue([for a in st.Action : anytrue([for p in ["s3:", "cloudfront:", "rds:CreateDBSnapshot", "ssm:PutParameter"] : startswith(a, p)])])
+    ])])
+    error_message = "unset portal, database and parameter refs must grant nothing"
+  }
+}
+
+run "bootstrap_role_cleans_up_rotates_and_reads_its_task_log_but_never_a_secret_value" {
+  command = plan
+
+  variables {
+    refs = {
+      bootstrap_log_group_arns = ["arn:aws:logs:us-east-2:111111111111:log-group:/ecs/bootstrap:*"]
+      audit_log_group_arns     = ["arn:aws:logs:us-east-2:111111111111:log-group:/ecs/audit-archive:*"]
+    }
+    records = {
+      bootstrap-production = {
+        environment       = "production"
+        permitted_actions = ["bootstrap"]
+        g3_reference      = "G3-example"
+        not_before        = "2030-01-01T00:00:00Z"
+        expires           = "2030-01-01T06:00:00Z"
+        approvals         = ["approver-a", "approver-b"]
+        applier           = "platform-admin-c"
+        custodians = [
+          { identity_center_user_id = "u-1", role_arn = "arn:aws:iam::111111111111:role/custodian-1" },
+          { identity_center_user_id = "u-2", role_arn = "arn:aws:iam::111111111111:role/custodian-2" },
+        ]
+        enrollees = [
+          { handle = "e1", identity_arn = "arn:aws:iam::111111111111:role/enrollee-1" },
+          { handle = "e2", identity_arn = "arn:aws:iam::111111111111:role/enrollee-2" },
+        ]
+        ticket_ref                   = "TICKET-1"
+        security_contact_verified_at = "2029-12-31T20:00:00Z"
+        security_contact_test_ref    = "TEST-1"
+      }
+    }
+  }
+
+  # G-4: the record keeps the exact field names scripts/bootstrap/lib/record.mjs reads and drops the unset optional fields.
+  assert {
+    condition     = jsondecode(aws_ssm_parameter.record["bootstrap-production"].value).custodians[1].identity_center_user_id == "u-2" && jsondecode(aws_ssm_parameter.record["bootstrap-production"].value).security_contact_test_ref == "TEST-1"
+    error_message = "the bootstrap record must carry custodians, enrollees, ticket_ref and the security-contact fields"
+  }
+  assert {
+    condition     = !contains(keys(jsondecode(aws_ssm_parameter.record["release"].value)), "custodians")
+    error_message = "other records must not gain null bootstrap fields"
+  }
+  # G-1
+  assert {
+    condition = length([for st in jsondecode(output.role_policies["gh-bootstrap-production"]).Statement : st if st.Sid == "ForceDeleteTokenSecrets" &&
+      st.Action == ["secretsmanager:DeleteSecret"] && st.Resource == ["arn:aws:secretsmanager:us-east-2:111111111111:secret:bootstrap/production/token/*"] &&
+    st.Condition.Bool["secretsmanager:ForceDeleteWithoutRecovery"] == "true"]) == 1
+    error_message = "gh-bootstrap-<env> may delete only bootstrap/<env>/token/* and only without a recovery window"
+  }
+  # G-2
+  assert {
+    condition = length([for st in jsondecode(output.role_policies["gh-bootstrap-production"]).Statement : st if st.Sid == "RotateBootstrapCredential" &&
+    st.Resource == ["arn:aws:secretsmanager:us-east-2:111111111111:secret:production/db/app-bootstrap-*"]]) == 1
+    error_message = "rotation is granted on <env>/db/app-bootstrap only"
+  }
+  assert {
+    condition     = contains(flatten([for st in jsondecode(output.role_policies["gh-bootstrap-production"]).Statement : st.Effect == "Allow" && st.Sid == "ReadBootstrapTaskLog" ? st.Resource : []]), "arn:aws:logs:us-east-2:111111111111:log-group:/ecs/bootstrap:*") && contains(flatten([for st in jsondecode(output.role_policies["gh-audit-archive"]).Statement : st.Sid == "ReadArchiveTaskLog" ? st.Resource : []]), "arn:aws:logs:us-east-2:111111111111:log-group:/ecs/audit-archive:*")
+    error_message = "both dual-control runners read their task result from the named log group"
+  }
+  assert {
+    condition     = length([for st in jsondecode(output.role_policies["gh-bootstrap-production"]).Statement : st if st.Effect == "Deny" && contains(st.Action, "secretsmanager:GetSecretValue")]) == 1
+    error_message = "GetSecretValue stays denied"
+  }
+}
+
+run "bootstrap_record_without_custodians_is_rejected" {
+  command = plan
+
+  variables {
+    records = {
+      bootstrap-production = {
+        environment       = "production"
+        permitted_actions = ["bootstrap"]
+        g3_reference      = "G3-example"
+        not_before        = "2030-01-01T00:00:00Z"
+        expires           = "2030-01-01T06:00:00Z"
+        approvals         = ["approver-a", "approver-b"]
+        applier           = "platform-admin-c"
+      }
+    }
+  }
+  expect_failures = [terraform_data.checks]
+}
+
+run "deploy_roles_get_the_parameter_database_portal_and_release_store_grants_only_when_named" {
+  command = plan
+
+  variables {
+    refs = {
+      release_config_parameter_arns = ["arn:aws:ssm:us-east-2:111111111111:parameter/production/config/min_client_release"]
+      db_instance_arns              = ["arn:aws:rds:us-east-2:111111111111:db:prod"]
+      portal_bucket_arn             = "arn:aws:s3:::example-portal"
+      portal_distribution_arns      = ["arn:aws:cloudfront::111111111111:distribution/EXAMPLE"]
+      release_store_read_arn        = "arn:aws:s3:::example-release-store"
+    }
+  }
+
+  assert {
+    condition = alltrue([for n in ["gh-deploy-staging", "gh-deploy-production"] : (
+      length([for st in jsondecode(output.role_policies[n]).Statement : st if st.Sid == "ReleaseConfigParameters" && st.Resource == ["arn:aws:ssm:us-east-2:111111111111:parameter/production/config/min_client_release"] && contains(st.Action, "ssm:PutParameter")]) == 1 &&
+      length([for st in jsondecode(output.role_policies[n]).Statement : st if st.Sid == "PortalLivePointerWrite" && st.Resource == ["arn:aws:s3:::example-portal/live/*"] && st.Action == ["s3:PutObject"]]) == 1 &&
+      length([for st in jsondecode(output.role_policies[n]).Statement : st if st.Sid == "PortalReleaseSourceRead" && st.Resource == ["arn:aws:s3:::example-portal/releases/*", "arn:aws:s3:::example-release-store/releases/*"]]) == 1 &&
+      length([for st in jsondecode(output.role_policies[n]).Statement : st if st.Sid == "ReleaseManifestRead" && st.Resource == ["arn:aws:s3:::example-release-store/manifests/*"]]) == 1 &&
+      length([for st in jsondecode(output.role_policies[n]).Statement : st if st.Sid == "PortalInvalidate" && st.Resource == ["arn:aws:cloudfront::111111111111:distribution/EXAMPLE"]]) == 1
+    )])
+    error_message = "deploy roles must write only live/ in the portal bucket, read only releases/ and manifests/, invalidate only the named distribution"
+  }
+  assert {
+    condition     = length([for st in jsondecode(output.role_policies["gh-recover-production"]).Statement : st if st.Sid == "PortalLivePointerWrite"]) == 1 && length([for st in jsondecode(output.role_policies["gh-recover-production"]).Statement : st if st.Sid == "PortalInvalidate"]) == 1
+    error_message = "the recover role can revert the portal pointer"
+  }
+}

@@ -244,7 +244,7 @@ Known gaps with no code yet, so they stay on this list rather than being configu
   policy is unverified; the recovery runbook still creates the compute during a declared failover.
 - Chime offers no per-token lifetime: the "short-lived" bound is only in our own record.
 - Load scenarios (QA-07) are a placeholder step in `loadtest-run.yml`.
-- Bootstrap interface points G-1..G-5 (`scripts/bootstrap/README.md`) and the permission gaps in `scripts/deploy/README.md`.
+- Bootstrap interface points and deploy permission gaps (`scripts/bootstrap/README.md`, `scripts/deploy/README.md`): G-1 (token-secret delete), G-2 (task log read, rotation), G-4 (record field names) and deploy permission gaps 1-3 are now IaC in `infra/modules/ci-trust` (authored, `tofu test` with mock providers only, never applied; the production/staging roots must still pass the new `refs`). Remaining: G-3 and the result field names depend on the bootstrap task (not built); G-5 (audit archive task and `audit_archiver` grants) is application and database work; deploy gaps 4-5 need workflow edits (`gh run download` retention, a release-store source bucket variable for `portal-switch --source-bucket`) and a cross-account bucket policy; G-6 needs an AWS account and a second human (TC-SEC-11).
 
 ## Evidence rules
 
