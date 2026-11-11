@@ -158,9 +158,7 @@ function Inbox({
             mine: m.authorPrincipalId === me,
           }))}
         />
-        <p className="profile-note">
-          Replies in this conversation are not available yet. You can start a new message.
-        </p>
+        <p className="profile-note">To follow up on this conversation, contact your clinic.</p>
         <Button onClick={() => go('/messages')}>Back to messages</Button>
       </section>
     );
@@ -268,7 +266,7 @@ function NewMessage({
       </Banner>
       {recipients === undefined || recipients.length === 0 ? (
         <>
-          <p>Writing a new message is not available yet.</p>
+          <p>To send a message to your care team, contact your clinic.</p>
           <Button onClick={() => go('/messages')}>Back to messages</Button>
         </>
       ) : (
