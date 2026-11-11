@@ -5,7 +5,8 @@
 import { MEETING_LEAD_MINUTES } from './jobs.js';
 import { isUuid } from './ids.js';
 import { nowOf } from './ports.js';
-import type { TelehealthJobDeps } from './ports.js';
+import type { TelehealthJobDeps, TelehealthMeta } from './ports.js';
+import type { Tx } from '@ehr/kernel';
 import { patientsScope } from './scope.js';
 
 export type ConfirmedOutcome = 'scheduled' | 'skipped' | 'gone';
@@ -28,6 +29,29 @@ export function meetingRunAt(startsAt: Date, now: Date): Date {
   return new Date(Math.max(now.getTime(), startsAt.getTime() - MEETING_LEAD_MINUTES * 60_000));
 }
 
+/**
+ * The confirmed path for one reservation, inside the caller's patients-scope transaction: make the session row and schedule
+ * `telehealth.create_meeting` (shared by `on_reservation_confirmed` and the rescheduled handler for the new reservation).
+ */
+export async function scheduleMeeting(
+  deps: TelehealthJobDeps,
+  tx: Tx,
+  meta: TelehealthMeta,
+  rid: string,
+  pid: string,
+): Promise<ConfirmedOutcome> {
+  const r = await deps.telehealth.ensureSession(tx, meta, rid);
+  if (r.outcome === 'gone') return 'gone';
+  if (r.outcome === 'skipped') return 'skipped';
+  await deps.queue.enqueue(
+    tx,
+    'telehealth.create_meeting',
+    { reservationId: rid, patientId: pid },
+    { runAt: meetingRunAt(new Date(r.startsAt), nowOf(deps)), jobKey: `create_meeting_${rid}` },
+  );
+  return 'scheduled';
+}
+
 export async function runOnReservationConfirmed(
   deps: TelehealthJobDeps,
   payload: Record<string, unknown>,
@@ -41,21 +65,8 @@ export async function runOnReservationConfirmed(
     );
   const rid = reservationId.toLowerCase();
   return asPatient(deps, patientId.toLowerCase(), (pid) =>
-    deps.db.withScope(patientsScope(deps.orgId, [pid]), async (tx) => {
-      const r = await deps.telehealth.ensureSession(
-        tx,
-        { requestId: null, jobId: jobRef.slice(0, 200) },
-        rid,
-      );
-      if (r.outcome === 'gone') return 'gone' as const;
-      if (r.outcome === 'skipped') return 'skipped' as const;
-      await deps.queue.enqueue(
-        tx,
-        'telehealth.create_meeting',
-        { reservationId: rid, patientId: pid },
-        { runAt: meetingRunAt(new Date(r.startsAt), nowOf(deps)), jobKey: `create_meeting_${rid}` },
-      );
-      return 'scheduled' as const;
-    }),
+    deps.db.withScope(patientsScope(deps.orgId, [pid]), (tx) =>
+      scheduleMeeting(deps, tx, { requestId: null, jobId: jobRef.slice(0, 200) }, rid, pid),
+    ),
   );
 }

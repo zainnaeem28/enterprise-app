@@ -47,7 +47,15 @@ interface WorkerTelehealth {
   runCloseMeeting(
     deps: TelehealthKit['jobs'],
     payload: Record<string, unknown>,
+    jobRef?: string,
   ): Promise<'closed' | 'nothing'>;
+  runOnVisitOver(
+    deps: TelehealthKit['jobs'],
+    payload: Record<string, unknown>,
+    name: string,
+    reason: 'cancelled' | 'no_show' | 'rescheduled',
+    jobRef?: string,
+  ): Promise<'ended' | 'nothing' | 'gone'>;
   createTelehealthTasks(deps: TelehealthKit['jobs']): Record<string, unknown>;
 }
 
