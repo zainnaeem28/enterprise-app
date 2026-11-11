@@ -45,9 +45,12 @@ resource "aws_iam_role" "execution" {
 }
 
 locals {
-  s3_via         = ["s3.${local.region}.amazonaws.com"]
-  secrets_via    = ["secretsmanager.${local.region}.amazonaws.com"]
-  chime_meetings = "arn:${local.partition}:chime:${var.chime_media_region}:${local.account_id}:meeting/*"
+  s3_via      = ["s3.${local.region}.amazonaws.com"]
+  secrets_via = ["secretsmanager.${local.region}.amazonaws.com"]
+  # Replica promotion is an operator action (recovery-region runbook 2.2), never an app-role action.
+  secret_write_actions  = ["secretsmanager:CreateSecret", "secretsmanager:PutSecretValue", "secretsmanager:UpdateSecret", "secretsmanager:ReplicateSecretToRegions"]
+  secret_policy_actions = ["secretsmanager:PutResourcePolicy", "secretsmanager:DeleteResourcePolicy", "secretsmanager:RemoveRegionsFromReplication", "secretsmanager:StopReplicationToReplica"]
+  chime_meetings        = "arn:${local.partition}:chime:${var.chime_media_region}:${local.account_id}:meeting/*"
 }
 
 # ---- api ----
@@ -125,6 +128,28 @@ data "aws_iam_policy_document" "api" {
     sid       = "CreateAttendeeOnly"
     actions   = ["chime:CreateAttendee"]
     resources = [local.chime_meetings]
+  }
+
+  # SC-2: explicit deny, all Regions, so a later grant (HEAAA-860) cannot reach the other class.
+  statement {
+    sid       = "ApiCannotWriteInboundSecrets"
+    effect    = "Deny"
+    actions   = local.secret_write_actions
+    resources = ["${local.secret_arn_any_region}/integration/inbound/*"]
+  }
+
+  statement {
+    sid       = "CannotChangeSecretPolicyOrReplication"
+    effect    = "Deny"
+    actions   = local.secret_policy_actions
+    resources = ["*"]
+  }
+
+  statement {
+    sid       = "CannotChangeKeyPolicy"
+    effect    = "Deny"
+    actions   = ["kms:PutKeyPolicy"]
+    resources = ["*"]
   }
 }
 
@@ -320,6 +345,28 @@ data "aws_iam_policy_document" "worker" {
     sid       = "EndMeetings"
     actions   = ["chime:DeleteMeeting", "chime:GetMeeting"]
     resources = [local.chime_meetings]
+  }
+
+  # SC-2: explicit deny, all Regions, so a later grant (HEAAA-860) cannot reach the other class.
+  statement {
+    sid       = "WorkerCannotWriteOutboundSecrets"
+    effect    = "Deny"
+    actions   = local.secret_write_actions
+    resources = ["${local.secret_arn_any_region}/integration/outbound/*"]
+  }
+
+  statement {
+    sid       = "CannotChangeSecretPolicyOrReplication"
+    effect    = "Deny"
+    actions   = local.secret_policy_actions
+    resources = ["*"]
+  }
+
+  statement {
+    sid       = "CannotChangeKeyPolicy"
+    effect    = "Deny"
+    actions   = ["kms:PutKeyPolicy"]
+    resources = ["*"]
   }
 }
 

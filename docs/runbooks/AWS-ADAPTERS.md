@@ -52,3 +52,15 @@ aws pinpoint-sms-voice-v2 create-event-destination \
 - The SES/SMS event field names and event types are taken from the vendors' documentation, never seen in a real delivery. The SNS signing rules are implemented from the SNS documentation and tested only against signatures generated in the test suite.
 - After the first apply each subscription is `PendingConfirmation` until the running API answers its `SubscriptionConfirmation`.
 - The SNS topic key policy lets `ses.amazonaws.com` and `sms-voice.amazonaws.com` use the key for this account only; whether those services need more is untested.
+
+## IAM: explicit denies on the app roles
+
+The `api` and `worker` task roles carry explicit Deny statements (SC-2), in addition to having no matching Allow. The module README ("Explicit denies on the app roles") has the full table.
+
+| Role | Denied (all Regions unless noted) |
+| --- | --- |
+| `api` | `CreateSecret`, `PutSecretValue`, `UpdateSecret`, `ReplicateSecretToRegions` on `<env>/integration/inbound/*` (Sid `ApiCannotWriteInboundSecrets`) |
+| `worker` | the same four on `<env>/integration/outbound/*` (Sid `WorkerCannotWriteOutboundSecrets`) |
+| both | `PutResourcePolicy`, `DeleteResourcePolicy`, `RemoveRegionsFromReplication`, `StopReplicationToReplica` on `*` (Sid `CannotChangeSecretPolicyOrReplication`); `kms:PutKeyPolicy` on `*` (Sid `CannotChangeKeyPolicy`) |
+
+Replica promotion (`recovery-region.md` 2.2) is run by an operator identity, never by an app role.

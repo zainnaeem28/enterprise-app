@@ -28,9 +28,11 @@ locals {
   anchor_bucket_arn   = "arn:${local.partition}:s3:::${var.anchor_archive_bucket_name}"
 
   secret_arn_prefix = "arn:${local.partition}:secretsmanager:${local.region}:${local.account_id}:secret:${var.env}"
-  ses_identity_arn  = "arn:${local.partition}:ses:${local.region}:${local.account_id}:identity/${var.ses_domain}"
-  ses_config_arn    = "arn:${local.partition}:ses:${local.region}:${local.account_id}:configuration-set/${aws_sesv2_configuration_set.this.configuration_set_name}"
-  sms_config_arn    = aws_pinpointsmsvoicev2_configuration_set.this.arn
+  # Region wildcard: one deny covers the home and the recovery Region (SC-2, HEAAA-870 D-4a).
+  secret_arn_any_region = "arn:${local.partition}:secretsmanager:*:${local.account_id}:secret:${var.env}"
+  ses_identity_arn      = "arn:${local.partition}:ses:${local.region}:${local.account_id}:identity/${var.ses_domain}"
+  ses_config_arn        = "arn:${local.partition}:ses:${local.region}:${local.account_id}:configuration-set/${aws_sesv2_configuration_set.this.configuration_set_name}"
+  sms_config_arn        = aws_pinpointsmsvoicev2_configuration_set.this.arn
 
   sms_enabled = var.sms_origination_identity_arn != null
 }
