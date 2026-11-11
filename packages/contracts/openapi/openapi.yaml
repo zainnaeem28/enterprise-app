@@ -446,6 +446,18 @@ paths:
     $ref: ./identity.yaml#/paths/~1api~1v1~1patients~1{patientId}~1proxies
   /api/v1/patients/{patientId}/proxies/{grantId}:
     $ref: ./identity.yaml#/paths/~1api~1v1~1patients~1{patientId}~1proxies~1{grantId}
+  /api/v1/patients/{patientId}/proxies/{grantId}/scopes:
+    $ref: ./identity.yaml#/paths/~1api~1v1~1patients~1{patientId}~1proxies~1{grantId}~1scopes
+  /api/v1/patients/{patientId}/proxies/{grantId}/revoke:
+    $ref: ./identity.yaml#/paths/~1api~1v1~1patients~1{patientId}~1proxies~1{grantId}~1revoke
+  /api/v1/patients/{patientId}/proxy-grants:
+    $ref: ./identity.yaml#/paths/~1api~1v1~1patients~1{patientId}~1proxy-grants
+  /api/v1/patients/{patientId}/guardian-links:
+    $ref: ./identity.yaml#/paths/~1api~1v1~1patients~1{patientId}~1guardian-links
+  /api/v1/proxy-invites/{grantId}/accept:
+    $ref: ./identity.yaml#/paths/~1api~1v1~1proxy-invites~1{grantId}~1accept
+  /api/v1/proxy-grants/{grantId}/leave:
+    $ref: ./identity.yaml#/paths/~1api~1v1~1proxy-grants~1{grantId}~1leave
   /api/v1/patients/{patientId}/proxy-requests:
     $ref: ./identity.yaml#/paths/~1api~1v1~1patients~1{patientId}~1proxy-requests
   /api/v1/patients/{patientId}/questionnaire-responses:

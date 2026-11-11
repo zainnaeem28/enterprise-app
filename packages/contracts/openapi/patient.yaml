@@ -18,7 +18,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/consents
-          catalogueRow: 29.4#145
+          catalogueRow: 29.4#151
       security:
         - sessionCookie: []
       parameters:
@@ -105,7 +105,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/patient-labels
-          catalogueRow: 29.4#146
+          catalogueRow: 29.4#152
       security:
         - sessionCookie: []
       parameters:
@@ -291,7 +291,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/duplicate-flags
-          catalogueRow: 29.3#64
+          catalogueRow: 29.3#67
       security:
         - sessionCookie: []
       parameters:
@@ -380,7 +380,7 @@ paths:
           idempotencyKey: false
           ifMatch: true
           pathAs: /api/v1/insurance-coverages/{id}/eligibility
-          catalogueRow: 29.3#58
+          catalogueRow: 29.3#61
       security:
         - sessionCookie: []
       parameters:
@@ -486,7 +486,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/patient-merges
-          catalogueRow: 29.3#61
+          catalogueRow: 29.3#64
       security:
         - sessionCookie: []
       parameters:
@@ -580,7 +580,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/patient-merges/{id}
-          catalogueRow: 29.3#63
+          catalogueRow: 29.3#66
       security:
         - sessionCookie: []
       parameters:
@@ -662,7 +662,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/patient-merges/{id}/approve
-          catalogueRow: 29.3#62
+          catalogueRow: 29.3#65
       security:
         - sessionCookie: []
       parameters:
@@ -750,7 +750,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/patient-merges/{id}/reject
-          catalogueRow: 29.3#62
+          catalogueRow: 29.3#65
       security:
         - sessionCookie: []
       parameters:
@@ -838,7 +838,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/patients
-          catalogueRow: 29.3#53
+          catalogueRow: 29.3#56
       security:
         - sessionCookie: []
       parameters:
@@ -936,7 +936,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/patients/{patientId}
-          catalogueRow: 29.3#55
+          catalogueRow: 29.3#58
       x-banner: true
       security:
         - sessionCookie: []
@@ -1020,7 +1020,7 @@ paths:
           idempotencyKey: false
           ifMatch: true
           pathAs: /api/v1/patients/{patientId}
-          catalogueRow: 29.3#57
+          catalogueRow: 29.3#60
       security:
         - sessionCookie: []
       parameters:
@@ -1227,7 +1227,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/patients/{patientId}/attach
-          catalogueRow: 29.3#54
+          catalogueRow: 29.3#57
       security:
         - sessionCookie: []
       parameters:
@@ -1326,7 +1326,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/patients/{patientId}/banner
-          catalogueRow: 29.3#56
+          catalogueRow: 29.3#59
       security:
         - sessionCookie: []
       parameters:
@@ -1408,7 +1408,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/patients/{patientId}/care-team
-          catalogueRow: 29.3#60
+          catalogueRow: 29.3#63
       security:
         - sessionCookie: []
       parameters:
@@ -1491,7 +1491,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/patients/{patientId}/care-team
-          catalogueRow: 29.3#60
+          catalogueRow: 29.3#63
       security:
         - sessionCookie: []
       parameters:
@@ -1589,7 +1589,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/patients/{patientId}/care-team/{memberId}
-          catalogueRow: 29.3#60
+          catalogueRow: 29.3#63
       security:
         - sessionCookie: []
       parameters:
@@ -1872,7 +1872,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/patients/{patientId}/consents
-          catalogueRow: 29.3#59
+          catalogueRow: 29.3#62
       security:
         - sessionCookie: []
       parameters:
@@ -2827,7 +2827,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/patients/lookup
-          catalogueRow: 29.3#111
+          catalogueRow: 29.3#114
       security:
         - sessionCookie: []
       parameters:
@@ -2914,7 +2914,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/patients/match
-          catalogueRow: 29.3#52
+          catalogueRow: 29.3#55
       security:
         - sessionCookie: []
       parameters:
@@ -3001,7 +3001,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/patients/search
-          catalogueRow: 29.3#51
+          catalogueRow: 29.3#54
       security:
         - sessionCookie: []
       parameters:

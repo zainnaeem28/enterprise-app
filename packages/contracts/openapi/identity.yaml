@@ -497,7 +497,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/enrolment-tokens
-          catalogueRow: 29.4#122
+          catalogueRow: 29.4#128
       security:
         - sessionCookie: []
       parameters:
@@ -584,7 +584,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/enrolment-tokens/{id}/approve
-          catalogueRow: 29.4#122
+          catalogueRow: 29.4#128
       security:
         - sessionCookie: []
       parameters:
@@ -666,7 +666,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/person-links
-          catalogueRow: 29.4#123
+          catalogueRow: 29.4#129
       security:
         - sessionCookie: []
       parameters:
@@ -753,7 +753,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/person-links/{id}/approve
-          catalogueRow: 29.4#123
+          catalogueRow: 29.4#129
       security:
         - sessionCookie: []
       parameters:
@@ -834,7 +834,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/principals
-          catalogueRow: 29.4#116
+          catalogueRow: 29.4#122
       security:
         - sessionCookie: []
       parameters:
@@ -921,7 +921,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/principals
-          catalogueRow: 29.4#117
+          catalogueRow: 29.4#123
       security:
         - sessionCookie: []
       parameters:
@@ -1008,7 +1008,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/principals/{id}/kill-switch
-          catalogueRow: 29.4#121
+          catalogueRow: 29.4#127
       security:
         - sessionCookie: []
       parameters:
@@ -1097,7 +1097,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/role-change-requests
-          catalogueRow: 29.4#119
+          catalogueRow: 29.4#125
       security:
         - sessionCookie: []
       parameters:
@@ -1190,7 +1190,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/role-change-requests/{id}/approve
-          catalogueRow: 29.4#120
+          catalogueRow: 29.4#126
       security:
         - sessionCookie: []
       parameters:
@@ -1274,7 +1274,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/role-change-requests/{id}/cancel
-          catalogueRow: 29.4#120
+          catalogueRow: 29.4#126
       security:
         - sessionCookie: []
       parameters:
@@ -1359,7 +1359,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/role-change-requests/{id}/reject
-          catalogueRow: 29.4#120
+          catalogueRow: 29.4#126
       security:
         - sessionCookie: []
       parameters:
@@ -1443,7 +1443,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/roles
-          catalogueRow: 29.4#118
+          catalogueRow: 29.4#124
       security:
         - sessionCookie: []
       parameters:
@@ -1519,7 +1519,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/staff-profiles/{principalId}
-          catalogueRow: 29.4#124
+          catalogueRow: 29.4#130
       security:
         - sessionCookie: []
       parameters:
@@ -1600,7 +1600,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/staff-profiles/{principalId}
-          catalogueRow: 29.4#124
+          catalogueRow: 29.4#130
       security:
         - sessionCookie: []
       parameters:
@@ -1692,7 +1692,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/staff-support
-          catalogueRow: 29.4#125
+          catalogueRow: 29.4#131
       security:
         - sessionCookie: []
       parameters:
@@ -1768,7 +1768,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/staff-support
-          catalogueRow: 29.4#125
+          catalogueRow: 29.4#131
       security:
         - sessionCookie: []
       parameters:
@@ -1855,7 +1855,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/staff-support/{id}
-          catalogueRow: 29.4#125
+          catalogueRow: 29.4#131
       security:
         - sessionCookie: []
       parameters:
@@ -2632,10 +2632,10 @@ paths:
       tags:
         - identity
       summary: POST /api/v1/patients/{patientId}/proxy-requests
-      description: 'my.: **Blocked on D-7** for verification rules: creates `requested`; verification is a staff step. `422 identity.proxy_rules_not_configured` until D-7 values exist'
+      description: 'my.: Ruling C item 3. The adult patient invites a proxy by e-mail; creates an invited grant and the worker mails the code. 422 identity.proxy_rules_not_configured only when a rule value is missing from the settings'
       x-access:
         my:
-          permission: patient
+          permission: patient (own only, not proxy)
           resolver: path
           realm: patient
           idempotencyKey: true
@@ -2658,7 +2658,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: common.yaml#/components/schemas/OpaqueObject
+              $ref: '#/components/schemas/ProxyInviteRequest'
       x-error-codes:
         '400':
           - kernel.client_release_unsupported
@@ -2672,10 +2672,12 @@ paths:
           - kernel.not_found
         '409':
           - kernel.idempotency_conflict
+          - identity.proxy_conflict
           - patient.merged
         '413':
           - kernel.payload_too_large
         '422':
+          - identity.proxy_not_allowed
           - identity.proxy_rules_not_configured
         '429':
           - kernel.rate_limited
@@ -2698,7 +2700,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: common.yaml#/components/schemas/OpaqueObject
+                $ref: '#/components/schemas/ProxyGrant'
         '400':
           $ref: common.yaml#/components/responses/Error400
           description: 'Codes: kernel.client_release_unsupported, kernel.idempotency_key_required, kernel.validation_failed.'
@@ -2713,13 +2715,566 @@ paths:
           description: 'Codes: kernel.not_found.'
         '409':
           $ref: common.yaml#/components/responses/Error409
-          description: 'Codes: kernel.idempotency_conflict, patient.merged.'
+          description: 'Codes: kernel.idempotency_conflict, identity.proxy_conflict, patient.merged.'
         '413':
           $ref: common.yaml#/components/responses/Error413
           description: 'Codes: kernel.payload_too_large.'
         '422':
           $ref: common.yaml#/components/responses/Error422
-          description: 'Codes: identity.proxy_rules_not_configured.'
+          description: 'Codes: identity.proxy_not_allowed, identity.proxy_rules_not_configured.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/patients/{patientId}/proxies/{grantId}/scopes:
+    put:
+      operationId: putPatientsByPatientIdProxiesByGrantIdScopes
+      tags:
+        - identity
+      summary: PUT /api/v1/patients/{patientId}/proxies/{grantId}/scopes
+      description: 'my.: Ruling C item 3. The patient sets what a proxy of theirs may see: appointments always, messages and documents when granted. Not for a guardian grant (staff-managed)'
+      x-access:
+        my:
+          permission: patient (own only, not proxy)
+          resolver: path
+          realm: patient
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/patients/{patientId}/proxies/{grantId}/scopes
+          catalogueRow: 29.2#51
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: grantId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProxyScopesRequest'
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '413':
+          - kernel.payload_too_large
+        '422':
+          - identity.proxy_not_allowed
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProxyGrant'
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '413':
+          $ref: common.yaml#/components/responses/Error413
+          description: 'Codes: kernel.payload_too_large.'
+        '422':
+          $ref: common.yaml#/components/responses/Error422
+          description: 'Codes: identity.proxy_not_allowed.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/proxy-invites/{grantId}/accept:
+    post:
+      operationId: postProxyInvitesByGrantIdAccept
+      tags:
+        - identity
+      summary: POST /api/v1/proxy-invites/{grantId}/accept
+      description: 'my.: Ruling C item 3. The signed-in account whose own address was invited accepts with the e-mail code. One 422 answer for a wrong, expired, locked, used or foreign code'
+      x-access:
+        my:
+          permission: patient
+          resolver: session
+          realm: patient
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/proxy-invites/{grantId}/accept
+          catalogueRow: 29.2#52
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: grantId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProxyAcceptRequest'
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+          - identity.proxy_conflict
+        '413':
+          - kernel.payload_too_large
+        '422':
+          - identity.proxy_invite_invalid
+          - identity.proxy_rules_not_configured
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProxyGrant'
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged, identity.proxy_conflict.'
+        '413':
+          $ref: common.yaml#/components/responses/Error413
+          description: 'Codes: kernel.payload_too_large.'
+        '422':
+          $ref: common.yaml#/components/responses/Error422
+          description: 'Codes: identity.proxy_invite_invalid, identity.proxy_rules_not_configured.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/proxy-grants/{grantId}/leave:
+    post:
+      operationId: postProxyGrantsByGrantIdLeave
+      tags:
+        - identity
+      summary: POST /api/v1/proxy-grants/{grantId}/leave
+      description: 'my.: Ruling C item 3. A proxy ends their own access to the patient, effective at once'
+      x-access:
+        my:
+          permission: proxy
+          resolver: session
+          realm: patient
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/proxy-grants/{grantId}/leave
+          catalogueRow: 29.2#53
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: grantId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '204':
+          description: Success (204)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/patients/{patientId}/proxy-grants:
+    get:
+      operationId: getPatientsByPatientIdProxyGrants
+      tags:
+        - identity
+      summary: GET /api/v1/patients/{patientId}/proxy-grants
+      description: 'staff.: Ruling C item 3. Proxies and open invitations of a patient at one of the caller locations, with scopes and effective scopes'
+      x-access:
+        staff:
+          permission: identity.proxy.verify
+          resolver: path
+          realm: google
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/patients/{patientId}/proxy-grants
+          catalogueRow: 29.3#119
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '200':
+          description: Success (200)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProxyGrantList'
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/patients/{patientId}/guardian-links:
+    post:
+      operationId: postPatientsByPatientIdGuardianLinks
+      tags:
+        - identity
+      summary: POST /api/v1/patients/{patientId}/guardian-links
+      description: 'staff.: Ruling C item 3. Staff link a parent or guardian of a minor after checking the relationship document. Creates a verified invitation; the guardian accepts with the e-mail code'
+      x-access:
+        staff:
+          permission: identity.proxy.verify
+          resolver: path
+          realm: google
+          idempotencyKey: true
+          ifMatch: false
+          pathAs: /api/v1/patients/{patientId}/guardian-links
+          catalogueRow: 29.3#120
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+        - $ref: common.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GuardianLinkRequest'
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.idempotency_key_required
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - kernel.idempotency_conflict
+          - patient.merged
+          - identity.proxy_conflict
+        '413':
+          - kernel.payload_too_large
+        '422':
+          - identity.proxy_not_allowed
+          - identity.proxy_rules_not_configured
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '201':
+          description: Success (201)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+            Idempotent-Replay:
+              $ref: common.yaml#/components/headers/IdempotentReplay
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProxyGrant'
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.idempotency_key_required, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: kernel.idempotency_conflict, patient.merged, identity.proxy_conflict.'
+        '413':
+          $ref: common.yaml#/components/responses/Error413
+          description: 'Codes: kernel.payload_too_large.'
+        '422':
+          $ref: common.yaml#/components/responses/Error422
+          description: 'Codes: identity.proxy_not_allowed, identity.proxy_rules_not_configured.'
+        '429':
+          $ref: common.yaml#/components/responses/Error429
+          description: 'Codes: kernel.rate_limited.'
+        '503':
+          $ref: common.yaml#/components/responses/Error503
+          description: 'Codes: kernel.unavailable.'
+        '504':
+          $ref: common.yaml#/components/responses/Error504
+          description: 'Codes: kernel.timeout.'
+  /api/v1/patients/{patientId}/proxies/{grantId}/revoke:
+    post:
+      operationId: postPatientsByPatientIdProxiesByGrantIdRevoke
+      tags:
+        - identity
+      summary: POST /api/v1/patients/{patientId}/proxies/{grantId}/revoke
+      description: 'staff.: Ruling C item 3. Staff revoke a grant or invitation at any time, effective at once'
+      x-access:
+        staff:
+          permission: identity.proxy.revoke
+          resolver: path
+          realm: google
+          idempotencyKey: false
+          ifMatch: false
+          pathAs: /api/v1/patients/{patientId}/proxies/{grantId}/revoke
+          catalogueRow: 29.3#121
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: grantId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/ClientRelease
+      x-error-codes:
+        '400':
+          - kernel.client_release_unsupported
+          - kernel.validation_failed
+        '401':
+          - auth.unauthenticated
+        '403':
+          - auth.forbidden
+        '404':
+          - kernel.not_found
+        '409':
+          - patient.merged
+        '429':
+          - kernel.rate_limited
+        '503':
+          - kernel.unavailable
+        '504':
+          - kernel.timeout
+      responses:
+        '204':
+          description: Success (204)
+          headers:
+            X-Request-Id:
+              $ref: common.yaml#/components/headers/XRequestId
+            Cache-Control:
+              $ref: common.yaml#/components/headers/CacheNoStore
+            X-Session-Idle-Expires-At:
+              $ref: common.yaml#/components/headers/XSessionIdleExpiresAt
+        '400':
+          $ref: common.yaml#/components/responses/Error400
+          description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
+        '401':
+          $ref: common.yaml#/components/responses/Error401
+          description: 'Codes: auth.unauthenticated.'
+        '403':
+          $ref: common.yaml#/components/responses/Error403
+          description: 'Codes: auth.forbidden.'
+        '404':
+          $ref: common.yaml#/components/responses/Error404
+          description: 'Codes: kernel.not_found.'
+        '409':
+          $ref: common.yaml#/components/responses/Error409
+          description: 'Codes: patient.merged.'
         '429':
           $ref: common.yaml#/components/responses/Error429
           description: 'Codes: kernel.rate_limited.'
@@ -2768,11 +3323,147 @@ components:
         items:
           type: array
           items:
-            $ref: common.yaml#/components/schemas/OpaqueObject
+            $ref: '#/components/schemas/ProxyGrant'
         nextCursor:
           oneOf:
             - type: string
             - type: 'null'
+    ProxyGrantList:
+      type: object
+      required:
+        - items
+        - nextCursor
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProxyGrant'
+        nextCursor:
+          oneOf:
+            - type: string
+            - type: 'null'
+    ProxyScope:
+      type: string
+      enum:
+        - appointments
+        - messages
+        - documents
+    ProxyGrant:
+      type: object
+      description: 'A proxy grant or open invitation. scopes = granted; effectiveScopes = in force today (after the age rules and validity). inviteeHint is the masked address of an open invitation.'
+      required:
+        - id
+        - patientId
+        - relationship
+        - scope
+        - scopes
+        - effectiveScopes
+        - guardian
+        - patientDisplayName
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        patientId:
+          type: string
+          format: uuid
+        relationship:
+          type: string
+          enum:
+            - parent
+            - guardian
+            - carer
+            - other
+        scope:
+          type: string
+          enum:
+            - appointments
+        scopes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProxyScope'
+        effectiveScopes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProxyScope'
+        guardian:
+          type: boolean
+        patientDisplayName:
+          type: string
+        status:
+          type: string
+          enum:
+            - invited
+            - requested
+            - verified
+            - active
+            - revoked
+            - expired
+        inviteeHint:
+          type: string
+        validUntil:
+          type: string
+          format: date
+    ProxyInviteRequest:
+      type: object
+      required:
+        - email
+        - relationship
+      properties:
+        email:
+          type: string
+          maxLength: 254
+        relationship:
+          type: string
+          enum:
+            - parent
+            - guardian
+            - carer
+            - other
+        scopes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProxyScope'
+    ProxyScopesRequest:
+      type: object
+      required:
+        - scopes
+      properties:
+        scopes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProxyScope'
+    ProxyAcceptRequest:
+      type: object
+      required:
+        - code
+      properties:
+        code:
+          type: string
+          pattern: '^[0-9]{6,10}$'
+    GuardianLinkRequest:
+      type: object
+      required:
+        - email
+        - relationship
+        - documentId
+      properties:
+        email:
+          type: string
+          maxLength: 254
+        relationship:
+          type: string
+          enum:
+            - parent
+            - guardian
+        documentId:
+          type: string
+          format: uuid
+        scopes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProxyScope'
     IdentityErrorCode:
       type: string
       enum:
@@ -2786,6 +3477,9 @@ components:
         - identity.role_realm_mismatch
         - identity.privileged_role_in_staff_realm
         - identity.proxy_rules_not_configured
+        - identity.proxy_invite_invalid
+        - identity.proxy_not_allowed
+        - identity.proxy_conflict
       x-registry:
         - code: identity.elevation_required
           http: '403'
@@ -2815,6 +3509,15 @@ components:
           http: 403/409/422
           retryable: no
         - code: identity.proxy_rules_not_configured
+          http: 403/409/422
+          retryable: no
+        - code: identity.proxy_invite_invalid
+          http: 403/409/422
+          retryable: no
+        - code: identity.proxy_not_allowed
+          http: 403/409/422
+          retryable: no
+        - code: identity.proxy_conflict
           http: 403/409/422
           retryable: no
       description: Section 30 error codes with the identity prefix.
@@ -2969,10 +3672,19 @@ components:
                   - proxy
               scope:
                 type: string
+              scopes:
+                type: array
+                items:
+                  type: string
+                  enum:
+                    - appointments
+                    - messages
+                    - documents
             required:
               - patientId
               - relation
               - scope
+              - scopes
       required:
         - principalId
         - realm

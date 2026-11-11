@@ -202,7 +202,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/tasks
-          catalogueRow: 29.3#105
+          catalogueRow: 29.3#108
       security:
         - sessionCookie: []
       parameters:
@@ -279,7 +279,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/tasks
-          catalogueRow: 29.3#105
+          catalogueRow: 29.3#108
       security:
         - sessionCookie: []
       parameters:
@@ -371,7 +371,7 @@ paths:
           idempotencyKey: false
           ifMatch: true
           pathAs: /api/v1/tasks/{id}
-          catalogueRow: 29.3#105
+          catalogueRow: 29.3#108
       security:
         - sessionCookie: []
       parameters:
@@ -477,7 +477,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/threads
-          catalogueRow: 29.3#104
+          catalogueRow: 29.3#107
       security:
         - sessionCookie: []
       parameters:
@@ -554,7 +554,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/threads
-          catalogueRow: 29.3#104
+          catalogueRow: 29.3#107
       security:
         - sessionCookie: []
       parameters:
@@ -646,7 +646,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/threads/{id}/messages
-          catalogueRow: 29.3#104
+          catalogueRow: 29.3#107
       security:
         - sessionCookie: []
       parameters:
@@ -739,7 +739,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/threads/{id}/messages
-          catalogueRow: 29.3#104
+          catalogueRow: 29.3#107
       x-feature-flag: patient_messaging
       security:
         - sessionCookie: []

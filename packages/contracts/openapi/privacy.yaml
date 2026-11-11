@@ -18,7 +18,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/incidents
-          catalogueRow: 29.4#144
+          catalogueRow: 29.4#150
       security:
         - sessionCookie: []
       parameters:
@@ -94,7 +94,7 @@ paths:
           idempotencyKey: false
           ifMatch: true
           pathAs: /api/v1/admin/incidents
-          catalogueRow: 29.4#144
+          catalogueRow: 29.4#150
       x-catalogue-gap: The catalogue lists PATCH on the collection and names no identifier of the incident
       security:
         - sessionCookie: []
@@ -193,7 +193,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/incidents
-          catalogueRow: 29.4#144
+          catalogueRow: 29.4#150
       security:
         - sessionCookie: []
       parameters:
@@ -279,7 +279,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/privacy-requests
-          catalogueRow: 29.4#143
+          catalogueRow: 29.4#149
       security:
         - sessionCookie: []
       parameters:
@@ -356,7 +356,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/privacy-requests/{id}/decide
-          catalogueRow: 29.4#143
+          catalogueRow: 29.4#149
       security:
         - sessionCookie: []
       parameters:
@@ -448,7 +448,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/privacy-requests/{id}/verify-identity
-          catalogueRow: 29.4#143
+          catalogueRow: 29.4#149
       security:
         - sessionCookie: []
       parameters:
@@ -541,7 +541,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/patients/{patientId}/privacy-requests
-          catalogueRow: 29.3#110
+          catalogueRow: 29.3#113
       security:
         - sessionCookie: []
       parameters:

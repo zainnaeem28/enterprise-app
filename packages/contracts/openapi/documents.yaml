@@ -19,7 +19,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/deletion-requests/{id}/decide
-          catalogueRow: 29.3#103
+          catalogueRow: 29.3#106
       security:
         - sessionCookie: []
       parameters:
@@ -127,7 +127,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/document-uploads/{documentId}/complete
-          catalogueRow: 29.3#98
+          catalogueRow: 29.3#101
       security:
         - sessionCookie: []
       parameters:
@@ -224,7 +224,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/documents/{id}/download-url
-          catalogueRow: 29.3#100
+          catalogueRow: 29.3#103
       security:
         - sessionCookie: []
       parameters:
@@ -307,7 +307,7 @@ paths:
           idempotencyKey: false
           ifMatch: true
           pathAs: /api/v1/documents/{id}/classification
-          catalogueRow: 29.3#101
+          catalogueRow: 29.3#104
       security:
         - sessionCookie: []
       parameters:
@@ -413,7 +413,7 @@ paths:
           idempotencyKey: false
           ifMatch: true
           pathAs: /api/v1/documents/{id}/confirm
-          catalogueRow: 29.3#101
+          catalogueRow: 29.3#104
       security:
         - sessionCookie: []
       parameters:
@@ -508,7 +508,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/documents/{id}/deletion-requests
-          catalogueRow: 29.3#103
+          catalogueRow: 29.3#106
       security:
         - sessionCookie: []
       parameters:
@@ -606,7 +606,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/documents/{id}/legal-holds
-          catalogueRow: 29.3#102
+          catalogueRow: 29.3#105
       security:
         - sessionCookie: []
       parameters:
@@ -714,7 +714,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/patients/{patientId}/document-uploads
-          catalogueRow: 29.3#98
+          catalogueRow: 29.3#101
       security:
         - sessionCookie: []
       parameters:
@@ -828,7 +828,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/patients/{patientId}/documents
-          catalogueRow: 29.3#99
+          catalogueRow: 29.3#102
       x-banner: true
       security:
         - sessionCookie: []
