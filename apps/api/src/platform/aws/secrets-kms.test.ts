@@ -33,3 +33,67 @@ test('an invalid prefix stops the start', () => {
     selectApiSecretPorts({ AWS_REGION: 'eu-west-2', EHR_SECRETS_PREFIX: 'a/b' }, log),
   );
 });
+
+// --- recovery-Region replica (HEAAA-860) ---
+const KEY = 'arn:aws:kms:us-west-2:111122223333:key/11111111-2222-3333-4444-555555555555';
+const prod = { AWS_REGION: 'eu-west-2', EHR_SECRETS_PREFIX: 'prod' };
+
+test('both replica variables -> the store is built', () => {
+  const r = selectApiSecretPorts(
+    { ...prod, EHR_SECRETS_REPLICA_REGION: 'us-west-2', EHR_SECRETS_REPLICA_KMS_KEY_ID: KEY },
+    log,
+  );
+  assert.ok(r.secretStore);
+});
+
+test('one replica variable alone stops the start, naming the missing one', () => {
+  assert.throws(
+    () => selectApiSecretPorts({ ...prod, EHR_SECRETS_REPLICA_REGION: 'us-west-2' }, log),
+    (e: unknown) =>
+      e instanceof AwsConfigError && /EHR_SECRETS_REPLICA_KMS_KEY_ID/.test((e as Error).message),
+  );
+  assert.throws(
+    () => selectApiSecretPorts({ ...prod, EHR_SECRETS_REPLICA_KMS_KEY_ID: KEY }, log),
+    (e: unknown) =>
+      e instanceof AwsConfigError && /EHR_SECRETS_REPLICA_REGION/.test((e as Error).message),
+  );
+});
+
+test('the replica Region equal to AWS_REGION, or a key ARN in another Region, is refused', () => {
+  assert.throws(
+    () =>
+      selectApiSecretPorts(
+        {
+          ...prod,
+          AWS_REGION: 'us-west-2',
+          EHR_SECRETS_REPLICA_REGION: 'us-west-2',
+          EHR_SECRETS_REPLICA_KMS_KEY_ID: KEY,
+        },
+        log,
+      ),
+    AwsConfigError,
+  );
+  assert.throws(
+    () =>
+      selectApiSecretPorts(
+        { ...prod, EHR_SECRETS_REPLICA_REGION: 'us-east-1', EHR_SECRETS_REPLICA_KMS_KEY_ID: KEY },
+        log,
+      ),
+    AwsConfigError,
+  );
+});
+
+test('replica variables without the secrets prefix stop the start', () => {
+  assert.throws(
+    () =>
+      selectApiSecretPorts(
+        {
+          AWS_REGION: 'eu-west-2',
+          EHR_SECRETS_REPLICA_REGION: 'us-west-2',
+          EHR_SECRETS_REPLICA_KMS_KEY_ID: KEY,
+        },
+        log,
+      ),
+    (e: unknown) => e instanceof AwsConfigError && /EHR_SECRETS_PREFIX/.test((e as Error).message),
+  );
+});

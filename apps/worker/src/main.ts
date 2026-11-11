@@ -8,7 +8,7 @@ import { selectTextractAdapter } from './aws/textract-ocr.js';
 import { selectS3WorkerInfra } from './aws/s3-adapters.js';
 import { selectSecretsWorkerInfra } from './aws/secrets-kms.js';
 import { composeWorker } from './compose.js';
-import { WORKER_CRONTAB } from './job-registry.js';
+import { workerCrontab } from './job-registry.js';
 import { createPool, startWorker } from './runner.js';
 
 async function main(): Promise<void> {
@@ -36,6 +36,7 @@ async function main(): Promise<void> {
     ...(video === undefined ? [] : [video]),
     ...(ocr === undefined ? [] : [ocr]),
   ];
+  const secrets = selectSecretsWorkerInfra(env, log);
   const { tasks, registry } = await composeWorker({
     cfg,
     pool,
@@ -43,7 +44,7 @@ async function main(): Promise<void> {
     // A half-configured S3 adapter stops the start; an absent one leaves the refusing port.
     infra: {
       ...selectS3WorkerInfra(env, log),
-      ...selectSecretsWorkerInfra(env, log),
+      ...secrets,
       ...(scanner === undefined ? {} : { scanner }),
       ...(notify.securityNotice === undefined ? {} : { securityNotice: notify.securityNotice }),
       channelAdapters,
@@ -54,7 +55,14 @@ async function main(): Promise<void> {
       ? { calendarWebhookUrl: env['EHR_CALENDAR_WEBHOOK_URL'] }
       : {}),
   });
-  const worker = await startWorker({ cfg, pool, log, registry, tasks, crontab: WORKER_CRONTAB });
+  const worker = await startWorker({
+    cfg,
+    pool,
+    log,
+    registry,
+    tasks,
+    crontab: workerCrontab({ secretReplica: secrets.replicaCheck !== undefined }),
+  });
   log.info('worker booted', { database: describeDatabase(cfg) });
   const stop = (): void => {
     void worker.stop().then(

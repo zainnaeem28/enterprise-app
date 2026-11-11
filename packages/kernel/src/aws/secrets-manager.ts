@@ -8,6 +8,7 @@ import {
   PutSecretValueCommand,
   type SecretsManagerClient,
 } from '@aws-sdk/client-secrets-manager';
+import type { Logger } from '../logging/logger.js';
 
 const PART = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/;
 const PREFIX = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$/;
@@ -31,12 +32,22 @@ export interface SecretVersion {
   versionId: string;
 }
 
+/** The recovery-Region replica a new secret is created with (HEAAA-860, HEAAA-850 D-2). Absent: no replica, exactly as before. */
+export interface SecretReplica {
+  region: string;
+  /** The recovery-Region key (`production-secrets-dr`) that encrypts the replica. */
+  kmsKeyId: string;
+}
+
 export class SecretsManagerStore {
   constructor(
     private readonly sm: Pick<SecretsManagerClient, 'send'>,
     /** The environment name, the first path segment (`<env>/integration/...`). */
     readonly prefix: string,
     private readonly kmsKeyId?: string,
+    /** Replicate each newly created secret to this Region. Later versions reach it through replication; no policy is ever sent. */
+    private readonly replica?: SecretReplica,
+    private readonly log?: Logger,
   ) {
     if (!PREFIX.test(prefix)) throw new Error('secrets prefix must be a plain name');
   }
@@ -86,8 +97,22 @@ export class SecretsManagerStore {
           SecretString: value,
           ClientRequestToken: token,
           ...(this.kmsKeyId === undefined ? {} : { KmsKeyId: this.kmsKeyId }),
+          ...(this.replica === undefined
+            ? {}
+            : {
+                AddReplicaRegions: [
+                  { Region: this.replica.region, KmsKeyId: this.replica.kmsKeyId },
+                ],
+              }),
         }),
       );
+      // Replication is asynchronous, so this rarely sees `Failed`; the recurring replica check is the detection control. The write stands.
+      if (r.ReplicationStatus?.some((x) => x.Status === 'Failed') === true)
+        this.log?.warn('secret replication failed', {
+          event: 'secret_replication_failed',
+          name: secretName,
+          region: this.replica?.region,
+        });
       return this.versioned(secretName, r.ARN, r.VersionId);
     } catch (e) {
       if (nameOf(e) !== 'ResourceExistsException') throw this.fail(secretName, e);

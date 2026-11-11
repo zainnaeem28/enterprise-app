@@ -47,10 +47,12 @@ export {
   createKmsClient,
   createS3Client,
   createSecretsManagerClient,
+  SECRETS_REPLICA_VARS,
+  secretReplicaFromEnv,
   selectByEnv,
 } from './aws/config.js';
 export { KmsEnvelope, KmsEnvelopeError } from './aws/kms-envelope.js';
 export { SecretsManagerStore, SecretStoreError } from './aws/secrets-manager.js';
-export type { SecretVersion } from './aws/secrets-manager.js';
+export type { SecretReplica, SecretVersion } from './aws/secrets-manager.js';
 export type { KmsEnvelopeConfig } from './aws/kms-envelope.js';
 export type { AwsSettings, Env } from './aws/config.js';

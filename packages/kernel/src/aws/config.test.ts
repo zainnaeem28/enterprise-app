@@ -48,3 +48,48 @@ test('awsSettings: region required; endpoint implies path style', () => {
   assert.equal(s.forcePathStyle, true);
   assert.throws(() => awsSettings({ AWS_REGION: 'r', EHR_AWS_ENDPOINT_URL: 'x' }, 'a'));
 });
+
+// --- secretReplicaFromEnv (HEAAA-860) ---
+const KEY = 'arn:aws:kms:us-west-2:111122223333:key/11111111-2222-3333-4444-555555555555';
+const base = { AWS_REGION: 'eu-west-2' };
+const replicaEnv = {
+  ...base,
+  EHR_SECRETS_REPLICA_REGION: 'us-west-2',
+  EHR_SECRETS_REPLICA_KMS_KEY_ID: KEY,
+};
+
+test('replica variables: neither -> undefined; both -> parsed', async () => {
+  const { secretReplicaFromEnv } = await import('./config.js');
+  assert.equal(secretReplicaFromEnv(base, 'x'), undefined);
+  assert.deepEqual(secretReplicaFromEnv(replicaEnv, 'x'), { region: 'us-west-2', kmsKeyId: KEY });
+});
+
+test('replica variables: one alone stops the start naming the missing variable; same Region and key in another Region are refused', async () => {
+  const { secretReplicaFromEnv, AwsConfigError } = await import('./config.js');
+  assert.throws(
+    () => secretReplicaFromEnv({ ...base, EHR_SECRETS_REPLICA_REGION: 'us-west-2' }, 'x'),
+    (e: unknown) =>
+      e instanceof AwsConfigError && /EHR_SECRETS_REPLICA_KMS_KEY_ID/.test((e as Error).message),
+  );
+  assert.throws(
+    () => secretReplicaFromEnv({ ...base, EHR_SECRETS_REPLICA_KMS_KEY_ID: KEY }, 'x'),
+    (e: unknown) =>
+      e instanceof AwsConfigError && /EHR_SECRETS_REPLICA_REGION/.test((e as Error).message),
+  );
+  assert.throws(
+    () => secretReplicaFromEnv({ ...replicaEnv, AWS_REGION: 'us-west-2' }, 'x'),
+    AwsConfigError,
+  );
+  assert.throws(
+    () => secretReplicaFromEnv({ ...replicaEnv, EHR_SECRETS_REPLICA_REGION: 'us-east-1' }, 'x'),
+    AwsConfigError,
+  );
+  assert.throws(
+    () => secretReplicaFromEnv({ ...replicaEnv, EHR_SECRETS_REPLICA_KMS_KEY_ID: 'alias/x' }, 'x'),
+    AwsConfigError,
+  );
+  assert.throws(
+    () => secretReplicaFromEnv({ ...replicaEnv, EHR_SECRETS_REPLICA_REGION: 'nowhere' }, 'x'),
+    AwsConfigError,
+  );
+});

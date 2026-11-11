@@ -5,6 +5,7 @@ import {
   GetSecretValueCommand,
   PutSecretValueCommand,
 } from '@aws-sdk/client-secrets-manager';
+import { createLogger } from '../logging/logger.js';
 import { SecretsManagerStore, SecretStoreError } from './secrets-manager.js';
 
 type Sent = { kind: string; input: Record<string, unknown> };
@@ -127,4 +128,123 @@ test('empty and oversized values are refused before any request', async () => {
   await assert.rejects(st.put(st.inboundName('s'), '', 't'), SecretStoreError);
   await assert.rejects(st.put(st.inboundName('s'), 'x'.repeat(70_000), 't'), SecretStoreError);
   assert.equal(sm.sent.length, 0);
+});
+
+// --- recovery-Region replica (HEAAA-860, HEAAA-870 D-2) ---
+const REPLICA = {
+  region: 'us-west-2',
+  kmsKeyId: 'arn:aws:kms:us-west-2:111122223333:key/11111111-2222-3333-4444-555555555555',
+};
+
+test('with a replica, the first-use CreateSecret carries AddReplicaRegions exactly; the primary key and token are unchanged; no force-overwrite', async () => {
+  const sm = new FakeSm();
+  const st = new SecretsManagerStore(sm, 'p', 'alias/secrets', REPLICA);
+  await st.put(st.outboundName(conn, 'api_key'), 'v', 'tok');
+  const create = sm.sent.find((s) => s.kind === 'CreateSecretCommand');
+  assert.deepEqual(create?.input['AddReplicaRegions'], [
+    { Region: 'us-west-2', KmsKeyId: REPLICA.kmsKeyId },
+  ]);
+  assert.equal(create?.input['KmsKeyId'], 'alias/secrets');
+  assert.equal('ForceOverwriteReplicaSecret' in (create?.input ?? {}), false);
+  assert.match(create?.input['ClientRequestToken'] as string, /^[0-9a-f]{64}$/);
+});
+
+test('PutSecretValue never carries replica fields, and the creation-race path still works', async () => {
+  const sm = new FakeSm();
+  const st = new SecretsManagerStore(sm, 'p', undefined, REPLICA);
+  const n = st.inboundName('stripe');
+  await st.put(n, 'one', 'a');
+  await st.put(n, 'two', 'b');
+  for (const s of sm.sent.filter((x) => x.kind === 'PutSecretValueCommand'))
+    assert.deepEqual(Object.keys(s.input).sort(), [
+      'ClientRequestToken',
+      'SecretId',
+      'SecretString',
+    ]);
+  // Lost race: the secret appears between the first put and the create.
+  const racing = new FakeSm();
+  const orig = racing.send.bind(racing);
+  let first = true;
+  racing.send = (cmd: unknown) => {
+    if (first && cmd instanceof PutSecretValueCommand) {
+      first = false;
+      racing.secrets.set('p/integration/inbound/race', { versions: [] });
+      return Promise.reject(Object.assign(new Error('x'), { name: 'ResourceNotFoundException' }));
+    }
+    return orig(cmd);
+  };
+  const r = new SecretsManagerStore(racing, 'p', undefined, REPLICA);
+  const v = await r.put(r.inboundName('race'), 'x', 't');
+  assert.ok(v.versionId);
+});
+
+test('without a replica the CreateSecret input is exactly what it was', async () => {
+  const sm = new FakeSm();
+  const st = new SecretsManagerStore(sm, 'p', 'alias/secrets');
+  await st.put(st.inboundName('s'), 'v', 't');
+  const create = sm.sent.find((s) => s.kind === 'CreateSecretCommand');
+  assert.deepEqual(Object.keys(create?.input ?? {}).sort(), [
+    'ClientRequestToken',
+    'KmsKeyId',
+    'Name',
+    'SecretString',
+  ]);
+});
+
+test('no policy or replication command is ever sent', async () => {
+  const sm = new FakeSm();
+  const st = new SecretsManagerStore(sm, 'p', undefined, REPLICA);
+  await st.put(st.inboundName('s'), 'v', 't');
+  await st.put(st.inboundName('s'), 'w', 'u');
+  const kinds = new Set(sm.sent.map((s) => s.kind));
+  assert.deepEqual([...kinds].sort(), ['CreateSecretCommand', 'PutSecretValueCommand']);
+});
+
+test('a Failed replica logs one warning with the name and Region, no value or vendor message, and the write stands', async () => {
+  const sm = new FakeSm();
+  const orig = sm.send.bind(sm);
+  sm.send = async (cmd: unknown) => {
+    const r = await orig(cmd);
+    if (cmd instanceof CreateSecretCommand)
+      return {
+        ...r,
+        ReplicationStatus: [
+          { Region: 'us-west-2', Status: 'Failed', StatusMessage: 'key hunter2 denied' },
+        ],
+      };
+    return r;
+  };
+  const lines: string[] = [];
+  const log = createLogger({ sink: (l) => lines.push(l) });
+  const st = new SecretsManagerStore(sm, 'p', undefined, REPLICA, log);
+  const n = st.inboundName('s');
+  const v = await st.put(n, 'hunter2', 't');
+  assert.ok(v.versionId);
+  assert.equal(lines.length, 1);
+  const rec = JSON.parse(lines[0] as string) as Record<string, unknown>;
+  assert.equal(rec['event'], 'secret_replication_failed');
+  assert.equal(rec['name'], n);
+  assert.equal(rec['region'], 'us-west-2');
+  assert.equal(lines[0]?.includes('hunter2'), false);
+});
+
+test('an InProgress replica logs nothing', async () => {
+  const sm = new FakeSm();
+  const orig = sm.send.bind(sm);
+  sm.send = async (cmd: unknown) => {
+    const r = await orig(cmd);
+    return cmd instanceof CreateSecretCommand
+      ? { ...r, ReplicationStatus: [{ Region: 'us-west-2', Status: 'InProgress' }] }
+      : r;
+  };
+  const lines: string[] = [];
+  const st = new SecretsManagerStore(
+    sm,
+    'p',
+    undefined,
+    REPLICA,
+    createLogger({ sink: (l) => lines.push(l) }),
+  );
+  await st.put(st.inboundName('s'), 'v', 't');
+  assert.deepEqual(lines, []);
 });

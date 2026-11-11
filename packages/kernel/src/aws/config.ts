@@ -96,3 +96,50 @@ export function selectByEnv<T>(opts: {
   opts.log.info('configured', { adapter: opts.adapter });
   return opts.build(values);
 }
+
+export const SECRETS_REPLICA_VARS = [
+  'EHR_SECRETS_REPLICA_REGION',
+  'EHR_SECRETS_REPLICA_KMS_KEY_ID',
+] as const;
+
+/**
+ * The recovery-Region replica for runtime integration secrets (HEAAA-860). Both variables or neither: one alone stops the start. The
+ * Region must differ from `AWS_REGION`, and the key must be an ARN in the replica Region. Unset (every non-production environment, and
+ * tasks run in the recovery Region after a failover) -> `undefined`, the behaviour without a replica. Names variables, never values.
+ */
+export function secretReplicaFromEnv(
+  env: Env,
+  adapter: string,
+): { region: string; kmsKeyId: string } | undefined {
+  const present = SECRETS_REPLICA_VARS.filter((v) => set(env, v));
+  if (present.length === 0) return undefined;
+  if (present.length !== SECRETS_REPLICA_VARS.length)
+    throw new AwsConfigError(
+      adapter,
+      SECRETS_REPLICA_VARS.filter((v) => !present.includes(v)),
+      present,
+    );
+  const region = (env['EHR_SECRETS_REPLICA_REGION'] as string).trim();
+  const kmsKeyId = (env['EHR_SECRETS_REPLICA_KMS_KEY_ID'] as string).trim();
+  if (!/^[a-z]{2}(-[a-z]+)+-\d$/.test(region))
+    throw new AwsConfigError(
+      `${adapter} (EHR_SECRETS_REPLICA_REGION is not a Region name)`,
+      [],
+      [],
+    );
+  if (region === (env['AWS_REGION'] ?? '').trim())
+    throw new AwsConfigError(
+      `${adapter} (EHR_SECRETS_REPLICA_REGION must differ from AWS_REGION)`,
+      [],
+      [],
+    );
+  // arn:<partition>:kms:<region>:<account>:key/<id>
+  const m = /^arn:[a-z-]+:kms:([a-z0-9-]+):\d{12}:key\/[A-Za-z0-9-]+$/.exec(kmsKeyId);
+  if (m === null || m[1] !== region)
+    throw new AwsConfigError(
+      `${adapter} (EHR_SECRETS_REPLICA_KMS_KEY_ID must be a key ARN in EHR_SECRETS_REPLICA_REGION)`,
+      [],
+      [],
+    );
+  return { region, kmsKeyId };
+}

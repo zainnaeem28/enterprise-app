@@ -38,6 +38,8 @@ const SAFE_KEYS = new Set([
   'outcome',
   'errorClass',
   'correlationId',
+  // replica lines (HEAAA-860): a Region name is not patient data
+  'region',
 ]);
 
 const PATTERNS: [RegExp, string][] = [

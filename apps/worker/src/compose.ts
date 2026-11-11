@@ -43,6 +43,7 @@ import {
   InboundHandlerRegistry,
   SecretCache,
   VendorGateway,
+  type ReplicaCheckDeps,
   type VendorAdapter,
 } from './jobs/integration-core/index.js';
 import type {
@@ -149,6 +150,8 @@ export interface ComposeOptions {
     securityNotice?: SecurityNoticePort;
     /** Gateway provider adapters (e-mail, SMS, push); an absent kind has no adapter, so the gateway refuses the call. */
     channelAdapters?: readonly VendorAdapter[];
+    /** Recovery-Region replica check for runtime integration secrets; set only with the replica variables (HEAAA-860). */
+    replicaCheck?: ReplicaCheckDeps;
     /** Receives gauges such as `AuditAnchorLateSeconds`; defaults to a CloudWatch EMF line on stdout. */
     metrics?: MetricSink;
   };
@@ -324,6 +327,8 @@ export function composeTasks(opts: ComposeOptions & { queue: Queue }): TaskTable
         opener,
         writer: infra.secretWriter ?? refusingPort<InboundSecretWriter>('secret_writer'),
       },
+      ...(infra.replicaCheck === undefined ? {} : { replicaCheck: infra.replicaCheck }),
+      metrics: infra.metrics ?? emfMetricSink(),
     }),
     ...createClinicalTasks({
       db,
