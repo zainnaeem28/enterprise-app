@@ -19,7 +19,12 @@ import {
   createPrivacyTasks,
   documentsLegalHolds,
 } from './jobs/privacy/index.js';
-import type { PackageWriter, WorkerPackageStore } from './jobs/privacy/index.js';
+import type {
+  DeletionStatementSender,
+  PackageWriter,
+  RetentionPolicyPort,
+  WorkerPackageStore,
+} from './jobs/privacy/index.js';
 import { createReportingTasks } from './jobs/reporting/index.js';
 import type { ReportingWorkerPort } from './jobs/reporting/index.js';
 import { createAuditTasks, emfMetricSink } from './jobs/audit/index.js';
@@ -98,6 +103,17 @@ const refusingAnchorArchive: AnchorArchiveStore = {
   getVersion: () => Promise.reject(new PortNotConfiguredError('audit_anchor_archive.getVersion')),
 };
 
+/** The retention policy when the API ports are not loaded: every call refuses (a purge never runs on guessed settings). */
+const refusingRetention: RetentionPolicyPort = {
+  medicalRecordRetainedUntil: () => refuse('privacy_retention'),
+  hipaaDocumentationCutoff: () => refuse('privacy_retention'),
+  exportPackageCutoff: () => refuse('privacy_retention'),
+  auditCutoff: () => refuse('privacy_retention'),
+  get years(): never {
+    return refuse('privacy_retention');
+  },
+};
+
 /** The service-backed ports, built by the API's composition (`apps/api/src/worker-ports.ts`). */
 export interface ApiPorts {
   scheduling: SchedulingFlowPort;
@@ -113,6 +129,8 @@ export interface ApiPorts {
     payload: Record<string, unknown>,
     ctx: { jobId: string; attempt: number; maxAttempts: number },
   ): Promise<unknown>;
+  /** The retention settings and date rules of the API's one config module (owner ruling C item 2). */
+  retention: RetentionPolicyPort;
   /** `privacy.assemble_export`: the API's `assembleExport` with the worker's package writer. */
   assembleExport(
     payload: Record<string, unknown>,
@@ -143,6 +161,8 @@ export interface ComposeOptions {
     /** Privacy package store with write access (bucket and KMS key, C-01). */
     packageWriter?: PackageWriter;
     packageStore?: WorkerPackageStore;
+    /** Sends the account-deletion statement (e-mail provider, C-11); refusing until one is configured. */
+    deletionStatements?: DeletionStatementSender;
     /** The PHI-free notice to the security contact mailbox (B2-9); no mail channel is provisioned yet, so it defaults to refusing. */
     securityNotice?: SecurityNoticePort;
     /** The invitation code and age-out notice mails of the proxy rules (ruling C item 3); the mail provider (C-10) is not chosen, so it defaults to refusing. */
@@ -361,6 +381,11 @@ export function composeTasks(opts: ComposeOptions & { queue: Queue }): TaskTable
           : refusingPort<WorkerPackageStore>('package_store')),
       holds: documentsLegalHolds,
       closureOf,
+      queue,
+      retention: opts.api?.retention ?? refusingRetention,
+      statements:
+        infra.deletionStatements ??
+        refusingPort<DeletionStatementSender>('deletion_statement_sender'),
       assemble:
         opts.api?.assembleExport ??
         (() => Promise.reject(new PortNotConfiguredError('privacy_assemble_export'))),

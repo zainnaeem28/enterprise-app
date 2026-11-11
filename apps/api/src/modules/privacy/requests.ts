@@ -2,14 +2,17 @@
 // caller's scoped transaction, so row-level security is the second line after the guard and the triggers of migration 1901 the third.
 // Order of locks (25.2): the patient root first (`lockPatients`), then the request row.
 //
-// What this module does NOT do (D-8): delete anything. A deletion request is stored `blocked_d8`, can be verified and refused, and
-// is never approved; the table's CHECK forbids a deletion request in any other state. The legal-hold check that compliance sees on
-// it is a system job's result (`privacy.check_legal_holds`), because a patient session cannot read holds.
+// Deletion (owner ruling 2026-11-11 C, item 1; D-8 is decided): a deletion request is recorded `received`, its identity is verified by
+// compliance and compliance approves it like any other request. Approval only queues `privacy.execute_deletion`: this module deletes
+// nothing itself. The worker job (apps/worker/src/jobs/privacy) checks legal holds and retention, deactivates the account, deletes what
+// is outside the medical record, stores the statement on `privacy.deletion_record` and completes the request; the medical record is
+// purged by the retention job when its retention ends. The legal-hold count that compliance sees on a request is a system job's result
+// (`privacy.check_legal_holds`), because a patient session cannot read holds. A legacy `blocked_d8` row (recorded before the ruling)
+// is treated like a received one once its identity is verified.
 import type { Queue, Tx } from '@ehr/kernel';
 import type { AuditService } from '../audit/index.js';
 import type { OrganisationService } from '../organisation/index.js';
 import {
-  BlockedOnDecisionError,
   InvalidTransitionError,
   PrivacyNotFoundError,
   PrivacyScopeError,
@@ -17,8 +20,10 @@ import {
   translateDbError,
 } from './errors.js';
 import { isUuid, uuidv7 } from './ids.js';
+import { RETENTION_DEFAULTS } from './retention.js';
 import { REQUEST_KINDS } from './types.js';
 import type {
+  DeletionView,
   PackageStatus,
   PackageView,
   RequestKind,
@@ -36,11 +41,12 @@ export interface RequestDeps {
   now?: () => Date;
 }
 
-/** Planning values until the G2 settings exist (the catalogue is another ticket's): 30 days to answer, 14 days to download. */
+/** 30 days to answer (a planning value until G2). The export package's life is a retention setting now (owner ruling C item 2): 7 days. */
 export const DEFAULT_DUE_DAYS = 30;
-export const DEFAULT_EXPORT_EXPIRY_DAYS = 14;
+export const DEFAULT_EXPORT_EXPIRY_DAYS = RETENTION_DEFAULTS.exportPackageDays;
 export const ASSEMBLE_EXPORT_JOB = 'privacy.assemble_export';
 export const CHECK_HOLDS_JOB = 'privacy.check_legal_holds';
+export const EXECUTE_DELETION_JOB = 'privacy.execute_deletion';
 export const CORRECTION_EVENT = 'privacy.correction_requested';
 
 const MAX_DETAIL = 5120;
@@ -55,9 +61,14 @@ const VIEW_SQL = `
   SELECT r.id, r.patient_id, r.kind, r.channel, r.status, r.detail, r.verification_method, r.verified_at, r.decided_at,
          r.decision_reason, r.due_at, r.legal_hold_documents, r.legal_hold_checked_at, r.created_at, r.row_version,
          to_char(r.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS created_text,
-         p.id AS pkg_id, p.status AS pkg_status, p.part_counts, p.size_bytes, p.expires_at, p.released_at, p.failure_code
+         p.id AS pkg_id, p.status AS pkg_status, p.part_counts, p.size_bytes, p.expires_at, p.released_at, p.failure_code,
+         dr.id AS del_id, dr.executed_at AS del_executed_at, dr.retained_until AS del_retained_until, dr.held_documents AS del_held,
+         dr.statement_sent_at AS del_sent_at, dr.purge_state AS del_purge_state, dr.purged_at AS del_purged_at,
+         dr.purge_deferred_reason AS del_deferred, dr.statement AS del_statement,
+         to_char(dr.retained_until, 'YYYY-MM-DD') AS del_retained_text
     FROM privacy.request r
-    LEFT JOIN LATERAL (SELECT x.* FROM privacy.export_package x WHERE x.request_id = r.id ORDER BY x.created_at DESC, x.id DESC LIMIT 1) p ON true`;
+    LEFT JOIN LATERAL (SELECT x.* FROM privacy.export_package x WHERE x.request_id = r.id ORDER BY x.created_at DESC, x.id DESC LIMIT 1) p ON true
+    LEFT JOIN privacy.deletion_record dr ON dr.request_id = r.id`;
 
 export function toRequestView(r: Row): RequestView {
   const pkg: PackageView | null =
@@ -92,6 +103,22 @@ export function toRequestView(r: Row): RequestView {
             checkedAt: iso(r['legal_hold_checked_at']),
           },
     package: pkg,
+    deletion:
+      r['del_id'] === null || r['del_id'] === undefined
+        ? null
+        : {
+            executedAt: iso(r['del_executed_at']),
+            retainedUntil: String(r['del_retained_text']),
+            heldDocuments: Number(r['del_held']),
+            statementSentAt: isoOrNull(r['del_sent_at']),
+            purgeState: r['del_purge_state'] as DeletionView['purgeState'],
+            purgedAt: isoOrNull(r['del_purged_at']),
+            purgeDeferredReason:
+              r['del_deferred'] === null
+                ? null
+                : (String(r['del_deferred']) as 'legal_hold' | 'document_retention'),
+            statement: (r['del_statement'] ?? {}) as Record<string, unknown>,
+          },
     createdAt: iso(r['created_at']),
     version: Number(r['row_version']),
   };
@@ -168,7 +195,7 @@ export class RequestService {
     const days = await this.setting(tx, 'privacy_request_due_days', DEFAULT_DUE_DAYS);
     const id = uuidv7();
     const due = new Date(this.now().getTime() + days * 86_400_000);
-    const status: RequestStatus = v.kind === 'deletion' ? 'blocked_d8' : 'received';
+    const status: RequestStatus = 'received';
     try {
       await tx.lockPatients([patientId], 'key_share');
       await tx.query(
@@ -211,6 +238,7 @@ export class RequestService {
       dueAt: due.toISOString(),
       legalHold: null,
       package: null,
+      deletion: null,
       createdAt: this.now().toISOString(),
       version: 1,
     };
@@ -400,10 +428,11 @@ export class RequestService {
   /**
    * `POST /admin/privacy-requests/{id}/decide`: `{decision, reason?}`.
    *   approve  identity_verified -> in_progress. export/access: the package row and the assembly job (6.7 step 2); correction: the
-   *            `privacy.correction_requested` event that `messaging` turns into a task (6.7 step 4). deletion: 409
-   *            privacy.blocked_on_decision (D-8): nothing is approved, nothing deleted.
+   *            `privacy.correction_requested` event that `messaging` turns into a task (6.7 step 4); deletion: the job
+   *            `privacy.execute_deletion` (owner ruling C item 1), which completes the request.
    *   refuse   any live request -> refused; the reason (10..2000 characters) is recorded.
-   *   retry    an approved export/access request whose latest package failed: a new package and a new assembly job.
+   *   retry    an approved export/access request whose latest package failed: a new package and a new assembly job; a deletion
+   *            request still in progress with no deletion record: the execution job again.
    *   fulfil   a correction request in_progress -> fulfilled (export and access requests are completed by the assembly job).
    */
   async decide(
@@ -449,8 +478,10 @@ export class RequestService {
           [id],
         );
       } else if (decision === 'approve') {
-        if (kind === 'deletion') throw new BlockedOnDecisionError();
-        if (status !== 'identity_verified') throw new InvalidTransitionError();
+        // A legacy blocked_d8 deletion request (recorded before the ruling) is approvable once its identity is verified.
+        const verified =
+          status === 'identity_verified' || (status === 'blocked_d8' && r['verified_at'] !== null);
+        if (!verified) throw new InvalidTransitionError();
         await tx.query(
           `UPDATE privacy.request SET status = 'in_progress', decided_by_person_id = $2::uuid, decided_at = $3::timestamptz, decision_reason = $4 WHERE id = $1::uuid`,
           [id, person, now, reason],
@@ -458,9 +489,31 @@ export class RequestService {
         change = { status: 'in_progress' };
         if (kind === 'correction') {
           await this.deps.queue.publish(tx, CORRECTION_EVENT, { requestId: id, patientId });
+        } else if (kind === 'deletion') {
+          // The worker checks holds and retention, deactivates the account, deletes what is outside the medical record and completes
+          // the request. Nothing is deleted in this transaction.
+          await this.deps.queue.enqueue(
+            tx,
+            EXECUTE_DELETION_JOB,
+            { requestId: id, patientId },
+            { jobKey: `execute_deletion_${id}` },
+          );
         } else {
           await this.newPackage(tx, meta, { id, patient_id: patientId });
         }
+      } else if (decision === 'retry' && kind === 'deletion') {
+        // The execution job gave up (or was lost): queue it again. Only while no deletion record exists.
+        const done = (
+          await tx.query(`SELECT 1 FROM privacy.deletion_record WHERE request_id = $1::uuid`, [id])
+        ).rows.length;
+        if (status !== 'in_progress' || done > 0) throw new InvalidTransitionError();
+        await this.deps.queue.enqueue(
+          tx,
+          EXECUTE_DELETION_JOB,
+          { requestId: id, patientId },
+          { jobKey: `execute_deletion_${id}` },
+        );
+        change = { status: 'in_progress', retried: true };
       } else if (decision === 'retry') {
         if (status !== 'in_progress' || !['export', 'access'].includes(kind))
           throw new InvalidTransitionError();

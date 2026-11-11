@@ -1,7 +1,7 @@
 // Real-database tests for BE-20 (privacy) on PostgreSQL 17 with the real roles, migrations 1900-1902, the real Nest application and
 // identity guard, the real audit service and queue, and the worker's real privacy jobs over an in-memory package store:
 //   TC-PR-02 (export request, identity check, compliance sees it, chunked assembly, each part audited, delivery through the portal),
-//   TC-PR-03 (deletion request recorded and routed; nothing deleted; D-8), TC-PR-04 (another patient's export is refused),
+//   TC-PR-03 (deletion request recorded and routed, nothing deleted before approval; the execution is deletion.dbtest.ts), TC-PR-04 (another patient's export is refused),
 //   TC-PR-05 (processing before the identity check is refused; refusal with reason), the contributor coverage rule, the merge
 //   participant, the incident register, RLS and the compliance slice, and the rules no route can bypass.
 // TC-PR-01 (notification preferences) is the patient module's and TC-NT-08's. docs/TEST-CASES.md defines TC-PR-01..05 only; there is no
@@ -93,7 +93,14 @@ describe('privacy (BE-20) on PostgreSQL 17', () => {
   test('job types: the API and worker sides declare the same list; every job that carries patient IDs declares on_merged', () => {
     assert.deepEqual(
       PRIVACY_JOBS.map((j) => j.name),
-      ['privacy.assemble_export', 'privacy.check_legal_holds', 'privacy.expire_packages'],
+      [
+        'privacy.assemble_export',
+        'privacy.check_legal_holds',
+        'privacy.execute_deletion',
+        'privacy.send_deletion_statement',
+        'privacy.expire_packages',
+        'privacy.retention_purge',
+      ],
     );
     for (const j of PRIVACY_JOBS)
       if (j.carriesPatientIds) assert.equal(j.onMerged, 'resolve', j.name);
@@ -334,8 +341,8 @@ describe('privacy (BE-20) on PostgreSQL 17', () => {
     assert.equal((await t.assemble(a.packageId)).status, 'ready');
   });
 
-  // ---- TC-PR-03 -----------------------------------------------------------------------------------------------------------
-  test('TC-PR-03: a deletion request is recorded and routed to compliance; D-8 blocks it; no data is deleted', async () => {
+  // ---- TC-PR-03 (the request half; the execution is in deletion.dbtest.ts) ---------------------------------------------------
+  test('TC-PR-03: a deletion request is recorded and routed to compliance; nothing is deleted before approval; the database refuses a shortcut', async () => {
     const p = await mk();
     const before = {
       patients: Number((await row(`SELECT count(*)::int AS n FROM patient.patient`))['n']),
@@ -343,43 +350,43 @@ describe('privacy (BE-20) on PostgreSQL 17', () => {
     };
     const created = await req(p, 'deletion', 'please delete my account');
     const requestId = String(created['id']);
-    assert.equal(created['status'], 'blocked_d8', 'stored as blocked_d8 until D-8 is decided');
+    assert.equal(
+      created['status'],
+      'received',
+      'D-8 is decided (owner ruling C): a request like any other',
+    );
+    assert.equal(created['deletion'], null);
 
     // Compliance sees it.
     const list = await t.scall(
       t.compliance,
       'GET',
-      '/api/v1/admin/privacy-requests?status=blocked_d8',
+      '/api/v1/admin/privacy-requests?status=received',
     );
     assert.ok(
       (list.json()['items'] as Record<string, unknown>[]).some((x) => x['id'] === requestId),
     );
 
-    // The identity can be confirmed; the status stays blocked_d8.
+    // Not approvable before the identity check; then the identity is confirmed and the request is identity_verified.
+    assert.equal(code(await t.decide(requestId, 'approve')), 'privacy.invalid_transition');
     const v = await t.verify(requestId);
     assert.equal(v.status, 200, v.body);
-    assert.equal(v.json()['status'], 'blocked_d8');
+    assert.equal(v.json()['status'], 'identity_verified');
     assert.ok(v.json()['verifiedAt'] !== null);
 
-    // It cannot be approved, with or without verification: 409 privacy.blocked_on_decision.
-    const ap = await t.decide(requestId, 'approve');
-    assert.equal(ap.status, 409);
-    assert.equal(code(ap), 'privacy.blocked_on_decision');
-    assert.equal(code(await t.decide(requestId, 'retry')), 'privacy.invalid_transition');
-    assert.equal(code(await t.decide(requestId, 'fulfil')), 'privacy.invalid_transition');
-
-    // Nothing was deleted, started or queued: no package, no assembly job; the patient and their record are all still there.
+    // Nothing was deleted, started or queued yet: no execution job, no deletion record; the patient and their record are all still there.
+    assert.equal(await jobs('privacy.execute_deletion', 'requestId', requestId), 0);
     assert.equal(
       Number(
         (
-          await row(`SELECT count(*)::int AS n FROM privacy.export_package WHERE request_id = $1`, [
-            requestId,
-          ])
+          await row(
+            `SELECT count(*)::int AS n FROM privacy.deletion_record WHERE request_id = $1`,
+            [requestId],
+          )
         )['n'],
       ),
       0,
     );
-    assert.equal(await jobs('privacy.assemble_export', 'requestId', requestId), 0);
     assert.equal(
       Number((await row(`SELECT count(*)::int AS n FROM patient.patient`))['n']),
       before.patients,
@@ -393,29 +400,18 @@ describe('privacy (BE-20) on PostgreSQL 17', () => {
       'active',
     );
 
-    // The database refuses a deletion request in any state but blocked_d8 or refused, even for a writer that skips the triggers.
+    // No shortcut: compliance cannot complete a deletion request (only the worker, after its deletion record exists) and "fulfil"/"retry"
+    // are not steps of an unapproved request.
+    assert.equal(code(await t.decide(requestId, 'fulfil')), 'privacy.invalid_transition');
+    assert.equal(code(await t.decide(requestId, 'retry')), 'privacy.invalid_transition');
     await assert.rejects(
       t.as(adminScope(t.compliance, ['privacy_requests']), (tx) =>
-        tx.query(
-          `UPDATE privacy.request SET status = 'in_progress', decided_by_person_id = $2::uuid, decided_at = now() WHERE id = $1::uuid`,
-          [requestId, t.compliance.seeded.personId],
-        ),
+        tx.query(`UPDATE privacy.request SET status = 'fulfilled' WHERE id = $1::uuid`, [
+          requestId,
+        ]),
       ),
       /illegal request step|PS001/i,
     );
-    await t.k.sa.query('BEGIN');
-    try {
-      await t.k.sa.query(`SET LOCAL session_replication_role = replica`);
-      await assert.rejects(
-        t.k.sa.query(
-          `UPDATE privacy.request SET status = 'in_progress', decided_at = now() WHERE id = $1`,
-          [requestId],
-        ),
-        (e: { code?: string; constraint?: string }) => e.code === '23514',
-      );
-    } finally {
-      await t.k.sa.query('ROLLBACK');
-    }
 
     // Compliance may refuse it, with a reason.
     assert.equal((await t.decide(requestId, 'refuse', 'short')).status, 422);
@@ -434,9 +430,9 @@ describe('privacy (BE-20) on PostgreSQL 17', () => {
     );
     assert.equal(await t.w.checkHolds(requestId), 'checked');
     let item = (
-      (
-        await t.scall(t.compliance, 'GET', '/api/v1/admin/privacy-requests?status=blocked_d8')
-      ).json()['items'] as Record<string, unknown>[]
+      (await t.scall(t.compliance, 'GET', '/api/v1/admin/privacy-requests?status=received')).json()[
+        'items'
+      ] as Record<string, unknown>[]
     ).find((x) => x['id'] === requestId) as Record<string, unknown>;
     assert.equal((item['legalHold'] as Record<string, unknown>)['documents'], 0);
 
@@ -474,12 +470,16 @@ describe('privacy (BE-20) on PostgreSQL 17', () => {
     }
     assert.equal(await t.w.checkHolds(requestId), 'checked');
     item = (
-      (
-        await t.scall(t.compliance, 'GET', '/api/v1/admin/privacy-requests?status=blocked_d8')
-      ).json()['items'] as Record<string, unknown>[]
+      (await t.scall(t.compliance, 'GET', '/api/v1/admin/privacy-requests?status=received')).json()[
+        'items'
+      ] as Record<string, unknown>[]
     ).find((x) => x['id'] === requestId) as Record<string, unknown>;
     assert.equal((item['legalHold'] as Record<string, unknown>)['documents'], 1);
-    assert.equal(item['status'], 'blocked_d8', 'a hold decides nothing: D-8 does');
+    assert.equal(
+      item['status'],
+      'received',
+      'a hold decides nothing: the execution job applies it',
+    );
     // The document is untouched.
     assert.equal(
       (await row(`SELECT status FROM documents.document WHERE id = $1`, [docId]))['status'],
@@ -910,7 +910,7 @@ describe('privacy (BE-20) on PostgreSQL 17', () => {
     await t.as(t.deskScope(), async (tx) => {
       assert.equal(await count(tx, `SELECT count(*)::int AS n FROM privacy.request`), 0);
     });
-    // A staff member at another location cannot create for this patient; a patient-realm session cannot use the route; a deletion goes blocked_d8.
+    // A staff member at another location cannot create for this patient; a patient-realm session cannot use the route; a deletion is recorded like any other kind.
     assert.equal(
       (
         await t.scall(t.deskB, 'POST', `/api/v1/patients/${p.patientId}/privacy-requests`, {
@@ -930,7 +930,7 @@ describe('privacy (BE-20) on PostgreSQL 17', () => {
     const del = await t.scall(t.desk, 'POST', `/api/v1/patients/${p.patientId}/privacy-requests`, {
       kind: 'deletion',
     });
-    assert.equal(del.json()['status'], 'blocked_d8');
+    assert.equal(del.json()['status'], 'received');
     assert.equal(
       (
         await t.scall(t.desk, 'POST', `/api/v1/patients/${p.patientId}/privacy-requests`, {
@@ -1218,7 +1218,11 @@ describe('privacy (BE-20) on PostgreSQL 17', () => {
         )['expires_at'],
       ),
     );
-    assert.ok(exp.getTime() > Date.now() + 13 * 86_400_000, 'about fourteen days (planning value)');
+    assert.ok(
+      exp.getTime() > Date.now() + 6.9 * 86_400_000 &&
+        exp.getTime() < Date.now() + 7.1 * 86_400_000,
+      'seven days after creation (owner ruling C item 2)',
+    );
     // Before the time: nothing to expire.
     assert.deepEqual(await t.w.expire(), { expired: 0, failed: 0 });
     assert.ok(t.store.has(done.key));

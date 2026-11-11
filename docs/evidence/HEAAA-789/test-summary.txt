@@ -1,0 +1,22 @@
+HEAAA-789 / HEAAA-885 (HEAAA-790 F1): rebased on origin/dev c87dc62 (contains rehearsal baseline r209, tag -> b7683913).
+No hosted CI (owner ruling B): run on the server, throwaway PostgreSQL 17.11 (UTF8, trust auth), fresh database.
+Command: EHR_TEST_ADMIN_URL=postgres://postgres@127.0.0.1:<port>/postgres bash scripts/ci/migration-check/integration-db.sh
+(includes scripts/ci/migration-check/n-minus-1.sh)
+
+candidate suites, migrations from empty:
+db-foundation: 120 test(s), 0 failure(s), 0 skipped
+kernel: 23 test(s), 0 failure(s), 0 skipped
+api: 1106 test(s), 0 failure(s), 0 skipped
+worker: 123 test(s), 0 failure(s), 0 skipped
+
+upgrade path r209 then candidate: applied
+N-1, r209's own suites against the candidate schema:
+db-foundation: 120 test(s), 0 failure(s), 0 skipped, 3 accepted pin failure(s) (catalog size 36 vs 41; HEAAA-739 pins, not a pass)
+kernel: 23 test(s), 0 failure(s), 0 skipped
+api: 1082 test(s), 0 failure(s), 0 skipped
+worker: 122 test(s), 0 failure(s), 0 skipped
+N-1 passed against r209 (0 unpinned failures)
+integration-db passed
+
+Rebase notes: 2 textual conflicts in privacy.dbtest.ts (TC-PR-03) resolved to the candidate's own ruling C assertions; 1 in identity/rls.dbtest.ts resolved to r209's tolerant role list. No pin added, no test weakened.
+not run: no hosted CI (owner ruling B): container scan, SAST, dependency audit, bundle budget, a11y/e2e, Schemathesis contract

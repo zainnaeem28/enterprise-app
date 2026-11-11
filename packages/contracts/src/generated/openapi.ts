@@ -3863,7 +3863,7 @@ export interface paths {
     put?: never;
     /**
      * POST /api/v1/privacy-requests
-     * @description my.: Kinds `access`, `export`, `correction`, `deletion` (the last is stored as `blocked_d8` until D-8)
+     * @description my.: Kinds `access`, `export`, `correction`, `deletion` (a deletion request is recorded `received`, verified and approved by compliance, then executed by the worker; see PrivacyRequest.deletion)
      */
     post: operations['postPrivacyRequests'];
     delete?: never;
@@ -4641,8 +4641,116 @@ export interface components {
     PostAdminPrincipalsByIdKillSwitchRequest: {
       reason: string;
     };
+    /** @enum {string} */
+    PrivacyRequestKind: 'access' | 'export' | 'correction' | 'deletion';
+    /**
+     * @description `blocked_d8` is a legacy status of deletion requests recorded before owner ruling C (2026-11-11); such a request is approvable once its identity is verified.
+     * @enum {string}
+     */
+    PrivacyRequestStatus:
+      'received' | 'identity_verified' | 'in_progress' | 'fulfilled' | 'refused' | 'blocked_d8';
+    /** @description Result of the system legal-hold check run when a deletion request is created (a patient session cannot read holds). Null on the request until the check has run. Documents under a hold are never deleted. */
+    PrivacyLegalHoldCheck: {
+      documents: number;
+      /** Format: date-time */
+      checkedAt: string;
+    };
+    /** @description Export package metadata only (parts and sizes, never content). */
+    PrivacyPackage: {
+      /** Format: uuid */
+      id: string;
+      status: string;
+      partCounts: components['schemas']['OpaqueObject'];
+      sizeBytes: number | null;
+      expiresAt: string | null;
+      releasedAt: string | null;
+      failureCode: string | null;
+    };
+    PrivacyClassCount: {
+      /** @description Data class code (for example `notification_preferences`, `encounters`, `accepted_documents`). */
+      class: string;
+      count: number;
+    };
+    /** @description The statement to the patient after an account deletion: class names, counts, dates and reasons as codes; never PHI. Also mailed as plain English text by privacy.send_deletion_statement. */
+    PrivacyDeletionStatement: {
+      /** @enum {integer} */
+      version: 1;
+      /** Format: date-time */
+      executedAt: string;
+      /** @enum {boolean} */
+      accountDeactivated: true;
+      deleted: components['schemas']['PrivacyClassCount'][];
+      /** @description Medical-record classes kept until `keptUntil`, then purged by the retention job. */
+      kept: components['schemas']['PrivacyClassCount'][];
+      /** @enum {string} */
+      keptReason: 'medical_record_retention';
+      /**
+       * Format: date
+       * @description Last day the medical record is kept.
+       */
+      keptUntil: string;
+      legalHold: {
+        /** @description Documents (all states) under a legal hold; never deleted. The reason is not given. */
+        documents: number;
+      };
+      /** @description Uploads that would have been deleted but are under a legal hold. */
+      keptByHold: components['schemas']['PrivacyClassCount'][];
+      auditTrail: {
+        /** @enum {boolean} */
+        kept: true;
+        years: number;
+      };
+      documentation: {
+        /** @enum {boolean} */
+        kept: true;
+        years: number;
+      };
+    };
+    /** @description Set once a deletion request has been executed (the account is deactivated and non-record data deleted). The medical record is purged later; purgeState and purgeDeferredReason show where that stands. */
+    PrivacyDeletion: {
+      /** Format: date-time */
+      executedAt: string;
+      /**
+       * Format: date
+       * @description Last day the medical record is kept; it may be purged after it.
+       */
+      retainedUntil: string;
+      /** @description Documents under a legal hold when the deletion ran; never deleted. */
+      heldDocuments: number;
+      statementSentAt: string | null;
+      /** @enum {string} */
+      purgeState: 'pending' | 'objects_pending' | 'purged';
+      purgedAt: string | null;
+      /** @description Why the purge is held back at its due date, if it is. */
+      purgeDeferredReason: ('legal_hold' | 'document_retention') | null;
+      statement: components['schemas']['PrivacyDeletionStatement'];
+    };
+    /** @description A privacy request. For kind `deletion`: created `received`; `legalHold` is filled by the system check; compliance verifies identity then approves; the worker executes and the request becomes `fulfilled` with `deletion` set (legal-hold and retention outcomes appear as `legalHold`, `deletion.heldDocuments` and `deletion.purgeDeferredReason`, not as errors). */
+    PrivacyRequest: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      patientId: string;
+      kind: components['schemas']['PrivacyRequestKind'];
+      /** @enum {string} */
+      channel: 'portal' | 'staff';
+      status: components['schemas']['PrivacyRequestStatus'];
+      detail: string | null;
+      verificationMethod: string | null;
+      verifiedAt: string | null;
+      decidedAt: string | null;
+      decisionReason: string | null;
+      /** Format: date-time */
+      dueAt: string;
+      legalHold: components['schemas']['PrivacyLegalHoldCheck'] | null;
+      package: components['schemas']['PrivacyPackage'] | null;
+      deletion: components['schemas']['PrivacyDeletion'] | null;
+      /** Format: date-time */
+      createdAt: string;
+      version: number;
+    };
     GetAdminPrivacyRequestsResponse: {
-      items: components['schemas']['OpaqueObject'][];
+      items: components['schemas']['PrivacyRequest'][];
       nextCursor: string | null;
     };
     GetAdminQuestionnaireTemplatesResponse: {
@@ -5409,12 +5517,14 @@ export interface components {
       patientId: string;
     };
     GetPrivacyRequestsResponse: {
-      items: components['schemas']['OpaqueObject'][];
+      items: components['schemas']['PrivacyRequest'][];
       nextCursor: string | null;
     };
     PostPrivacyRequestsRequest: {
       /** @enum {string} */
       kind: 'access' | 'export' | 'correction' | 'deletion';
+      /** @description Optional free text. */
+      detail?: string;
     } & {
       [key: string]: unknown;
     };
@@ -9114,7 +9224,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['OpaqueObject'];
+          'application/json': components['schemas']['PrivacyRequest'];
         };
       };
       /** @description Codes: kernel.client_release_unsupported, kernel.validation_failed. */
@@ -9164,7 +9274,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['OpaqueObject'];
+          'application/json': components['schemas']['PrivacyRequest'];
         };
       };
       /** @description Codes: kernel.client_release_unsupported, kernel.validation_failed. */
@@ -15914,7 +16024,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['OpaqueObject'];
+          'application/json': components['schemas']['PrivacyRequest'];
         };
       };
       /** @description Codes: kernel.client_release_unsupported, kernel.idempotency_key_required, kernel.validation_failed. */
@@ -17158,7 +17268,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['OpaqueObject'];
+          'application/json': components['schemas']['PrivacyRequest'];
         };
       };
       /** @description Codes: kernel.client_release_unsupported, kernel.validation_failed. */

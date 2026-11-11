@@ -7,6 +7,7 @@ import { provisionR1Templates } from './modules/notifications/index.js';
 import { loadAdminEnv } from './admin-env.js';
 import { loadReceiptEnv } from './receipt-env.js';
 import { loadIdentityEnv } from './identity-env.js';
+import { loadRetentionSettings } from './modules/privacy/index.js';
 import { createApp } from './platform/app.js';
 import { loadPlatformConfig } from './platform/config.js';
 import { Lifecycle } from './platform/health.js';
@@ -16,7 +17,7 @@ import { StreamRegistry } from './platform/stream.js';
 
 async function main(): Promise<void> {
   const logger = createLogger({ sink: (l) => process.stdout.write(`${l}\n`), level: 'info' });
-  let kernelCfg, platformCfg, identityEnv, adminEnv, receiptEnv;
+  let kernelCfg, platformCfg, identityEnv, adminEnv, receiptEnv, retention;
   try {
     kernelCfg = loadConfig({ ...process.env, EHR_DEPLOYABLE: 'api' });
     platformCfg = loadPlatformConfig(process.env);
@@ -24,6 +25,8 @@ async function main(): Promise<void> {
     // Fail closed (SEC02-F01): no attestation roots, AAGUIDs or decoy key means no start, never a test value.
     adminEnv = loadAdminEnv(process.env, identityEnv);
     receiptEnv = loadReceiptEnv(process.env);
+    // Retention settings (owner ruling C item 2): defaults overridden by EHR_RETENTION_*; a bad value stops start-up by name.
+    retention = loadRetentionSettings(process.env);
   } catch (e) {
     if (e instanceof ConfigError) {
       for (const p of e.problems) logger.error(`invalid configuration: ${p}`);
@@ -56,6 +59,7 @@ async function main(): Promise<void> {
     identity: identityEnv,
     admin: adminEnv,
     ...(receiptEnv === undefined ? {} : { receiptPorts: receiptEnv }),
+    retention,
     listen: () =>
       new pg.Client({ connectionString: kernelCfg.databaseUrl, application_name: 'api-listen' }),
   });

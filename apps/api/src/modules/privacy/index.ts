@@ -18,10 +18,35 @@ export {
   CORRECTION_EVENT,
   DEFAULT_DUE_DAYS,
   DEFAULT_EXPORT_EXPIRY_DAYS,
+  EXECUTE_DELETION_JOB,
   RequestService,
   toRequestView,
 } from './requests.js';
 export type { Decision, RequestDeps } from './requests.js';
+export {
+  RETENTION_DEFAULTS,
+  RETENTION_KEYS,
+  addDays,
+  addMonths,
+  addYears,
+  ageOn,
+  auditRetainedUntil,
+  exportPackageExpiry,
+  exportRetentionSettings,
+  hipaaDocumentationRetainedUntil,
+  loadRetentionSettings,
+  medicalRecordRetainedUntil,
+  retentionPolicy,
+  subYears,
+} from './retention.js';
+export type {
+  RetentionBasis,
+  RetentionConsumer,
+  RetentionKey,
+  RetentionPolicy,
+  RetentionSettings,
+  RetentionUnit,
+} from './retention.js';
 export { IncidentService } from './incidents.js';
 export type { IncidentDeps } from './incidents.js';
 export { DOWNLOAD_URL_SECONDS, PackageService } from './packages.js';
@@ -53,6 +78,7 @@ export {
   translateDbError,
 } from './errors.js';
 export type {
+  DeletionView,
   DownloadUrl,
   IncidentStatus,
   IncidentView,

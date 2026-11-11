@@ -20,7 +20,31 @@ export const PRIVACY_JOBS: readonly JobType[] = [
     jobClass: 'job',
   },
   {
+    name: 'privacy.execute_deletion',
+    maxAttempts: 5,
+    onMerged: 'resolve',
+    carriesPatientIds: true,
+    jobScope: 'patients',
+    jobClass: 'job',
+  },
+  {
+    name: 'privacy.send_deletion_statement',
+    maxAttempts: 10,
+    onMerged: 'resolve',
+    carriesPatientIds: true,
+    jobScope: 'patients',
+    jobClass: 'job',
+  },
+  {
     name: 'privacy.expire_packages',
+    maxAttempts: 3,
+    onMerged: 'none',
+    carriesPatientIds: false,
+    jobScope: 'org',
+    jobClass: 'system',
+  },
+  {
+    name: 'privacy.retention_purge',
     maxAttempts: 3,
     onMerged: 'none',
     carriesPatientIds: false,
@@ -29,5 +53,6 @@ export const PRIVACY_JOBS: readonly JobType[] = [
   },
 ];
 
-/** graphile-worker crontab: the expiry daily at 03:50 (33.1). */
-export const PRIVACY_CRONTAB = '50 3 * * * privacy.expire_packages';
+/** graphile-worker crontab: the expiry daily at 03:50 (33.1), the retention purge daily at 04:10 (after documents.retention_sweep at 03:40). */
+export const PRIVACY_CRONTAB =
+  '50 3 * * * privacy.expire_packages\n10 4 * * * privacy.retention_purge';

@@ -28,6 +28,20 @@ export interface PackageView {
   failureCode: string | null;
 }
 
+export interface DeletionView {
+  executedAt: string;
+  /** The last day the medical record is kept (`YYYY-MM-DD`); it may be purged after it. */
+  retainedUntil: string;
+  /** Documents under a legal hold when the deletion ran: never deleted. */
+  heldDocuments: number;
+  statementSentAt: string | null;
+  purgeState: 'pending' | 'objects_pending' | 'purged';
+  purgedAt: string | null;
+  purgeDeferredReason: 'legal_hold' | 'document_retention' | null;
+  /** The statement to the patient (class names, counts, dates and reasons as codes; no PHI). */
+  statement: Record<string, unknown>;
+}
+
 export interface RequestView {
   id: string;
   patientId: string;
@@ -43,6 +57,8 @@ export interface RequestView {
   /** The legal-hold check on a deletion request: documents under a hold when the system last looked. */
   legalHold: { documents: number; checkedAt: string } | null;
   package: PackageView | null;
+  /** Set once a deletion request has been executed. */
+  deletion: DeletionView | null;
   createdAt: string;
   version: number;
 }

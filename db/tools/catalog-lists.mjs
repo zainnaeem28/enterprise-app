@@ -19,6 +19,8 @@ export const noLoginRoles = [
   'directory_ro',
   // INT04-F02b (HEAAA-466): owns identity.bootstrap_admins only.
   'identity_bootstrap_owner',
+  // HEAAA-789 (C-BE-DEL, migration 2601): owns the account-deletion and retention-purge definer functions of the privacy module.
+  'privacy_retention_owner',
 ];
 export const functionOwnerRoles = [
   'scheduling_booking_owner',
@@ -26,6 +28,7 @@ export const functionOwnerRoles = [
   'patient_match_owner',
   'integration_receiver_owner',
   'identity_bootstrap_owner',
+  'privacy_retention_owner',
 ];
 /** Roles that may be the target of a policy (M-2, M-3). */
 export const policyRoles = [
@@ -55,6 +58,7 @@ export const expectedMemberships = {
     'directory_ro',
     'queue_owner',
     'identity_bootstrap_owner',
+    'privacy_retention_owner',
   ],
   app_api: ['identity_signin_ro'],
 };
@@ -144,6 +148,13 @@ export const definerInventory = [
   // referral accept/decline, bound to a sent internal referral with a pending inbox row (R-REF-2). Owner patient_scope_owner.
   'patient.lock_referral_patient',
   'patient.ensure_referral_care_relationship',
+  // HEAAA-789 (C-BE-DEL, migration 2601): account deletion and retention purge, owner privacy_retention_owner. Inventory entries need the
+  // Solution Architect's sign-off (HEAAA-789 decision log D2). EXECUTE to app_worker for the three entry points; the two helpers are owner-only.
+  'privacy.patient_closure',
+  'privacy.deletion_job_check',
+  'privacy.delete_nonrecord_data',
+  'privacy.purge_medical_record',
+  'privacy.purge_hipaa_documentation',
 ];
 
 /**
@@ -380,3 +391,69 @@ export const bootstrapOwner = {
     'audit.event.event_insert_bootstrap',
   ],
 };
+
+/**
+ * HEAAA-881 (decision HEAAA-880 D-880-5): every table that carries a patient id is either purged by privacy.purge_medical_record when the
+ * medical-record retention ends (patientPurgeTables) or listed here with the reason it is not (patientPurgeExempt). A new patient-linked
+ * table fails check M-6-patient-purge until its owner decides which. Whole schemas are exempt through patientPurgeExemptSchemas.
+ */
+export const patientPurgeTables = [
+  'clinical.allergy',
+  'clinical.consent_exception',
+  'clinical.encounter',
+  'clinical.follow_up',
+  'clinical.medication_statement',
+  'clinical.note',
+  'clinical.note_addendum',
+  'clinical.note_cosign',
+  'clinical.problem',
+  'clinical.questionnaire_response',
+  'clinical.referral',
+  'clinical.referral_inbox',
+  'clinical.triage_assessment',
+  'clinical.vital_sign',
+  'documents.deletion_request',
+  'documents.document',
+  'documents.document_version',
+  'documents.legal_hold',
+  'identity.patient_link',
+  'identity.proxy_grant',
+  'messaging.message',
+  'messaging.task',
+  'messaging.thread',
+  'messaging.thread_participant',
+  'notifications.delivery_receipt',
+  'notifications.in_app_read',
+  'notifications.notification',
+  'notifications.staff_alert',
+  'notifications.staff_alert_event',
+  'patient.care_relationship',
+  'patient.care_team_member',
+  'patient.communication_preference',
+  'patient.consent',
+  'patient.duplicate_flag',
+  'patient.insurance_coverage',
+  'patient.match_check',
+  'patient.merge_request',
+  'patient.merge_residue',
+  'patient.patient_contact',
+  'patient.patient_merge',
+  'patient.staff_scope',
+  'scheduling.check_in',
+  'scheduling.no_show_flag',
+  'scheduling.queue_entry',
+  'scheduling.slot_occupancy',
+  'scheduling.slot_reservation',
+  'scheduling.waitlist_entry',
+  'scheduling.waitlist_offer',
+  'telehealth.join_token',
+  'telehealth.location_confirmation',
+  'telehealth.participant',
+  'telehealth.video_session',
+];
+export const patientPurgeExempt = {
+  // The tombstone: de-identified by the purge, deleted by purge_hipaa_documentation once no privacy.* row refers to it (D-880-3).
+  'patient.patient': 'tombstone',
+};
+/** Schemas whose patient-linked rows follow their own period: audit (archive, 7 years) and privacy documentation (6 years). */
+export const patientPurgeExemptSchemas = ['audit', 'privacy'];

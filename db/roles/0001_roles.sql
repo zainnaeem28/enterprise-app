@@ -14,7 +14,8 @@ DECLARE
   login_roles  text[] := ARRAY['app_owner', 'app_api', 'app_worker', 'reporting_ro', 'audit_archiver', 'app_bootstrap'];
   nologin_roles text[] := ARRAY[
     'scheduling_booking_owner', 'patient_scope_owner', 'patient_match_owner',
-    'integration_receiver_owner', 'queue_owner', 'identity_signin_ro', 'directory_ro', 'identity_bootstrap_owner'
+    'integration_receiver_owner', 'queue_owner', 'identity_signin_ro', 'directory_ro', 'identity_bootstrap_owner',
+    'privacy_retention_owner'
   ];
   r text;
 BEGIN
@@ -43,7 +44,7 @@ REVOKE ALL ON SCHEMA public FROM PUBLIC;
 -- 21.2 point 1 and draft 8.1 (TDR-15): app_owner may SET ROLE to each owner role, so a
 -- non-superuser migration can transfer ownership, and inherits none of their rights.
 GRANT scheduling_booking_owner, patient_scope_owner, patient_match_owner, integration_receiver_owner, directory_ro, queue_owner,
-  identity_bootstrap_owner
+  identity_bootstrap_owner, privacy_retention_owner
   TO app_owner WITH ADMIN FALSE, INHERIT FALSE, SET TRUE;
 
 -- 21.2 identity_signin_ro: app_api may switch to it (SET LOCAL ROLE) and gains none of its rights otherwise.

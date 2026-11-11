@@ -57,8 +57,8 @@ import {
   DocumentsService,
 } from './modules/documents/index.js';
 import type { ObjectStorePort } from './modules/documents/index.js';
-import { createPrivacy, PRIVACY_JOBS } from './modules/privacy/index.js';
-import type { PackageStorePort } from './modules/privacy/index.js';
+import { createPrivacy, PRIVACY_JOBS, RETENTION_DEFAULTS } from './modules/privacy/index.js';
+import type { PackageStorePort, RetentionSettings } from './modules/privacy/index.js';
 import {
   createIntegrationsHostControllers,
   httpsConfirmSubscription,
@@ -281,6 +281,8 @@ export function buildComposition(deps: {
   db: KernelDb;
   logger: Logger;
   identity: IdentityEnv;
+  /** Retention settings (owner ruling C item 2); `main.ts` loads them from the environment, tests get the defaults. */
+  retention?: RetentionSettings;
   /** Presigner of the privacy package store; defaults to the refusing one. */
   packageStore?: PackageStorePort;
   /** Presigner of the documents store; defaults to the refusing one. */
@@ -601,6 +603,9 @@ export function buildComposition(deps: {
     organisation,
     store: deps.objectStore ?? refusingObjectStore,
     queue,
+    // An accepted document is kept as long as the medical record (owner ruling C item 2) unless the organisation setting says otherwise.
+    defaultRetentionYears: (deps.retention ?? RETENTION_DEFAULTS)
+      .medicalRecordYearsAfterLastEncounter,
     ...(deps.now === undefined ? {} : { now: deps.now }),
   });
   for (const [name, fn] of Object.entries(documentsResolvers()))

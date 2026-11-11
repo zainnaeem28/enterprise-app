@@ -406,7 +406,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: common.yaml#/components/schemas/OpaqueObject
+                $ref: '#/components/schemas/PrivacyRequest'
         '400':
           $ref: common.yaml#/components/responses/Error400
           description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
@@ -498,7 +498,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: common.yaml#/components/schemas/OpaqueObject
+                $ref: '#/components/schemas/PrivacyRequest'
         '400':
           $ref: common.yaml#/components/responses/Error400
           description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
@@ -596,7 +596,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: common.yaml#/components/schemas/OpaqueObject
+                $ref: '#/components/schemas/PrivacyRequest'
         '400':
           $ref: common.yaml#/components/responses/Error400
           description: 'Codes: kernel.client_release_unsupported, kernel.idempotency_key_required, kernel.validation_failed.'
@@ -707,7 +707,7 @@ paths:
       tags:
         - privacy
       summary: POST /api/v1/privacy-requests
-      description: 'my.: Kinds `access`, `export`, `correction`, `deletion` (the last is stored as `blocked_d8` until D-8)'
+      description: 'my.: Kinds `access`, `export`, `correction`, `deletion` (a deletion request is recorded `received`, verified and approved by compliance, then executed by the worker; see PrivacyRequest.deletion)'
       x-access:
         my:
           permission: patient
@@ -850,7 +850,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: common.yaml#/components/schemas/OpaqueObject
+                $ref: '#/components/schemas/PrivacyRequest'
         '400':
           $ref: common.yaml#/components/responses/Error400
           description: 'Codes: kernel.client_release_unsupported, kernel.validation_failed.'
@@ -983,7 +983,7 @@ components:
         items:
           type: array
           items:
-            $ref: common.yaml#/components/schemas/OpaqueObject
+            $ref: '#/components/schemas/PrivacyRequest'
         nextCursor:
           oneOf:
             - type: string
@@ -997,11 +997,300 @@ components:
         items:
           type: array
           items:
-            $ref: common.yaml#/components/schemas/OpaqueObject
+            $ref: '#/components/schemas/PrivacyRequest'
         nextCursor:
           oneOf:
             - type: string
             - type: 'null'
+    PrivacyRequestStatus:
+      type: string
+      enum:
+        - received
+        - identity_verified
+        - in_progress
+        - fulfilled
+        - refused
+        - blocked_d8
+      description: '`blocked_d8` is a legacy status of deletion requests recorded before owner ruling C (2026-11-11); such a request is approvable once its identity is verified.'
+    PrivacyRequestKind:
+      type: string
+      enum:
+        - access
+        - export
+        - correction
+        - deletion
+    PrivacyLegalHoldCheck:
+      type: object
+      description: 'Result of the system legal-hold check run when a deletion request is created (a patient session cannot read holds). Null on the request until the check has run. Documents under a hold are never deleted.'
+      required:
+        - documents
+        - checkedAt
+      properties:
+        documents:
+          type: integer
+          minimum: 0
+        checkedAt:
+          type: string
+          format: date-time
+    PrivacyClassCount:
+      type: object
+      required:
+        - class
+        - count
+      properties:
+        class:
+          type: string
+          description: Data class code (for example `notification_preferences`, `encounters`, `accepted_documents`).
+        count:
+          type: integer
+          minimum: 0
+    PrivacyDeletionStatement:
+      type: object
+      description: 'The statement to the patient after an account deletion: class names, counts, dates and reasons as codes; never PHI. Also mailed as plain English text by privacy.send_deletion_statement.'
+      required:
+        - version
+        - executedAt
+        - accountDeactivated
+        - deleted
+        - kept
+        - keptReason
+        - keptUntil
+        - legalHold
+        - keptByHold
+        - auditTrail
+        - documentation
+      properties:
+        version:
+          type: integer
+          enum:
+            - 1
+        executedAt:
+          type: string
+          format: date-time
+        accountDeactivated:
+          type: boolean
+          enum:
+            - true
+        deleted:
+          type: array
+          items:
+            $ref: '#/components/schemas/PrivacyClassCount'
+        kept:
+          type: array
+          description: Medical-record classes kept until `keptUntil`, then purged by the retention job.
+          items:
+            $ref: '#/components/schemas/PrivacyClassCount'
+        keptReason:
+          type: string
+          enum:
+            - medical_record_retention
+        keptUntil:
+          type: string
+          format: date
+          description: Last day the medical record is kept.
+        legalHold:
+          type: object
+          required:
+            - documents
+          properties:
+            documents:
+              type: integer
+              minimum: 0
+              description: Documents (all states) under a legal hold; never deleted. The reason is not given.
+        keptByHold:
+          type: array
+          description: Uploads that would have been deleted but are under a legal hold.
+          items:
+            $ref: '#/components/schemas/PrivacyClassCount'
+        auditTrail:
+          type: object
+          required:
+            - kept
+            - years
+          properties:
+            kept:
+              type: boolean
+              enum:
+                - true
+            years:
+              type: integer
+        documentation:
+          type: object
+          required:
+            - kept
+            - years
+          properties:
+            kept:
+              type: boolean
+              enum:
+                - true
+            years:
+              type: integer
+    PrivacyDeletion:
+      type: object
+      description: 'Set once a deletion request has been executed (the account is deactivated and non-record data deleted). The medical record is purged later; purgeState and purgeDeferredReason show where that stands.'
+      required:
+        - executedAt
+        - retainedUntil
+        - heldDocuments
+        - statementSentAt
+        - purgeState
+        - purgedAt
+        - purgeDeferredReason
+        - statement
+      properties:
+        executedAt:
+          type: string
+          format: date-time
+        retainedUntil:
+          type: string
+          format: date
+          description: Last day the medical record is kept; it may be purged after it.
+        heldDocuments:
+          type: integer
+          minimum: 0
+          description: Documents under a legal hold when the deletion ran; never deleted.
+        statementSentAt:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+        purgeState:
+          type: string
+          enum:
+            - pending
+            - objects_pending
+            - purged
+        purgedAt:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+        purgeDeferredReason:
+          oneOf:
+            - type: string
+              enum:
+                - legal_hold
+                - document_retention
+            - type: 'null'
+          description: Why the purge is held back at its due date, if it is.
+        statement:
+          $ref: '#/components/schemas/PrivacyDeletionStatement'
+    PrivacyPackage:
+      type: object
+      description: Export package metadata only (parts and sizes, never content).
+      required:
+        - id
+        - status
+        - partCounts
+        - sizeBytes
+        - expiresAt
+        - releasedAt
+        - failureCode
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+        partCounts:
+          $ref: common.yaml#/components/schemas/OpaqueObject
+        sizeBytes:
+          oneOf:
+            - type: integer
+            - type: 'null'
+        expiresAt:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+        releasedAt:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+        failureCode:
+          oneOf:
+            - type: string
+            - type: 'null'
+    PrivacyRequest:
+      type: object
+      description: 'A privacy request. For kind `deletion`: created `received`; `legalHold` is filled by the system check; compliance verifies identity then approves; the worker executes and the request becomes `fulfilled` with `deletion` set (legal-hold and retention outcomes appear as `legalHold`, `deletion.heldDocuments` and `deletion.purgeDeferredReason`, not as errors).'
+      required:
+        - id
+        - patientId
+        - kind
+        - channel
+        - status
+        - detail
+        - verificationMethod
+        - verifiedAt
+        - decidedAt
+        - decisionReason
+        - dueAt
+        - legalHold
+        - package
+        - deletion
+        - createdAt
+        - version
+      properties:
+        id:
+          type: string
+          format: uuid
+        patientId:
+          type: string
+          format: uuid
+        kind:
+          $ref: '#/components/schemas/PrivacyRequestKind'
+        channel:
+          type: string
+          enum:
+            - portal
+            - staff
+        status:
+          $ref: '#/components/schemas/PrivacyRequestStatus'
+        detail:
+          oneOf:
+            - type: string
+            - type: 'null'
+        verificationMethod:
+          oneOf:
+            - type: string
+            - type: 'null'
+        verifiedAt:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+        decidedAt:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+        decisionReason:
+          oneOf:
+            - type: string
+            - type: 'null'
+        dueAt:
+          type: string
+          format: date-time
+        legalHold:
+          oneOf:
+            - $ref: '#/components/schemas/PrivacyLegalHoldCheck'
+            - type: 'null'
+        package:
+          oneOf:
+            - $ref: '#/components/schemas/PrivacyPackage'
+            - type: 'null'
+        deletion:
+          oneOf:
+            - $ref: '#/components/schemas/PrivacyDeletion'
+            - type: 'null'
+        createdAt:
+          type: string
+          format: date-time
+        version:
+          type: integer
     PostPrivacyRequestsRequest:
       type: object
       properties:
@@ -1012,6 +1301,9 @@ components:
             - export
             - correction
             - deletion
+        detail:
+          type: string
+          description: Optional free text.
       required:
         - kind
       additionalProperties: true

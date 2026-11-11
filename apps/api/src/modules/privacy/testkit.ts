@@ -44,6 +44,8 @@ import {
 } from '../patient/testkit.js';
 import type { Kit, Resp, SeededSession } from '../patient/testkit.js';
 import { assembleExport } from './assemble.js';
+import { RETENTION_DEFAULTS, retentionPolicy } from './retention.js';
+import type { RetentionPolicy, RetentionSettings } from './retention.js';
 import type { AssembleDeps, AssembleInput, AssembleResult } from './assemble.js';
 import { PRIVACY_JOBS } from './jobs.js';
 import { SignedPackageUrls } from './ports.js';
@@ -107,10 +109,73 @@ type WorkerPrivacy = {
     deps: unknown,
     opts?: { batch?: number; jobRef?: string },
   ): Promise<{ expired: number; failed: number }>;
+  runExecuteDeletion(
+    deps: unknown,
+    payload: Record<string, unknown>,
+    jobRef?: string,
+  ): Promise<'executed' | 'gone' | 'final'>;
+  runSendDeletionStatement(
+    deps: unknown,
+    payload: Record<string, unknown>,
+    jobRef?: string,
+  ): Promise<'sent' | 'already_sent' | 'gone'>;
+  runRetentionPurge(
+    deps: unknown,
+    opts?: { jobRef?: string; batch?: number },
+  ): Promise<RetentionReport>;
+  createPrivacyTasks(deps: unknown): Record<string, unknown>;
   documentsLegalHolds: unknown;
   closureOf: unknown;
   PRIVACY_JOBS: readonly { name: string }[];
+  PRIVACY_CRONTAB: string;
 };
+
+/** The shape of the worker's retention report (apps/worker/src/jobs/privacy/retention-purge.ts), as the tests read it. */
+export interface RetentionReport {
+  runId: string;
+  startedAt: string;
+  finishedAt: string;
+  status: 'completed' | 'partial';
+  cutoffs: Record<string, string>;
+  classes: {
+    export_packages: { expired: number; failed: number };
+    medical_record: {
+      purged: number;
+      objectsPending: number;
+      deferredLegalHold: number;
+      deferredDocumentRetention: number;
+      extendedByNewerEncounter: number;
+      failed: number;
+      removed: Record<string, number>;
+    };
+    hipaa_documentation: { removed: Record<string, number>; failed: number };
+    audit_trail: { removedByThisJob: number; reason: string; years: number };
+    audit_anchors: { removedByThisJob: number; reason: string; years: number };
+  };
+}
+
+/** Records the deletion statements the worker "sends"; nothing leaves the process. */
+export class MemoryStatementSender {
+  readonly sent: {
+    recordId: string;
+    requestId: string;
+    patientId: string;
+    subject: string;
+    text: string;
+  }[] = [];
+  fail = false;
+  send(input: {
+    recordId: string;
+    requestId: string;
+    patientId: string;
+    subject: string;
+    text: string;
+  }): Promise<void> {
+    if (this.fail) return Promise.reject(new Error('mail provider not configured'));
+    this.sent.push(input);
+    return Promise.resolve();
+  }
+}
 
 export interface PrivacyKit {
   k: Kit;
@@ -158,7 +223,26 @@ export interface PrivacyKit {
   w: {
     checkHolds(requestId: string, over?: Record<string, unknown>): Promise<string>;
     expire(over?: Record<string, unknown>): Promise<{ expired: number; failed: number }>;
+    /** `privacy.execute_deletion` (owner ruling C item 1). */
+    executeDeletion(
+      requestId: string,
+      over?: Record<string, unknown>,
+    ): Promise<'executed' | 'gone' | 'final'>;
+    sendStatement(
+      requestId: string,
+      over?: Record<string, unknown>,
+    ): Promise<'sent' | 'already_sent' | 'gone'>;
+    /** `privacy.retention_purge` (owner ruling C item 2); `over.now` is the controllable clock. */
+    retentionPurge(over?: Record<string, unknown>): Promise<RetentionReport>;
+    /** The job deps the worker builds (for a test that wants the real task table). */
+    deps(over?: Record<string, unknown>): Record<string, unknown>;
   };
+  /** The statements the worker's sender port was given. */
+  statements: MemoryStatementSender;
+  /** The retention policy the worker jobs use (the API's one config module); replaced by `setRetention`. */
+  setRetention(s?: Partial<RetentionSettings>): RetentionPolicy;
+  /** Runs SQL as the superuser with the user triggers off (`session_replication_role = replica`): seeds rows no route can create. */
+  seed<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<T[]>;
   /** A patient request through the API, verified and approved by compliance: returns the IDs. */
   approvedExport(
     p: PatientKit,
@@ -323,6 +407,23 @@ export async function setupPrivacy(name: string): Promise<PrivacyKit> {
 
   let seq = 0;
   const downward = [patientFixture];
+  const statements = new MemoryStatementSender();
+  let policy: RetentionPolicy = retentionPolicy(RETENTION_DEFAULTS);
+  const wq = new Queue(k.registry, 'worker');
+  const silent = { info: () => undefined, warn: () => undefined, error: () => undefined };
+  const jobDeps = (over: Record<string, unknown> = {}): Record<string, unknown> => ({
+    db: worker,
+    orgId: ORG,
+    store,
+    holds: wpriv.documentsLegalHolds,
+    closureOf: wpriv.closureOf,
+    log: silent,
+    queue: wq,
+    retention: policy,
+    statements,
+    ...(clock.at === undefined ? {} : { now: () => clock.at as Date }),
+    ...over,
+  });
   const kit: PrivacyKit = {
     k,
     privacy: holder.privacy as Privacy,
@@ -376,7 +477,30 @@ export async function setupPrivacy(name: string): Promise<PrivacyKit> {
         { packageId, jobId: `test:${++seq}`, attempt: 1, maxAttempts: 1, ...input },
       );
     },
+    statements,
+    setRetention(over = {}) {
+      policy = retentionPolicy({ ...RETENTION_DEFAULTS, ...over });
+      return policy;
+    },
+    async seed(sql, params = []) {
+      await k.sa.query('BEGIN');
+      try {
+        await k.sa.query('SET LOCAL session_replication_role = replica');
+        const r = await k.sa.query(sql, params);
+        await k.sa.query('COMMIT');
+        return r.rows as never;
+      } catch (e) {
+        await k.sa.query('ROLLBACK');
+        throw e;
+      }
+    },
     w: {
+      deps: jobDeps,
+      executeDeletion: (requestId, over = {}) =>
+        wpriv.runExecuteDeletion(jobDeps(over), { requestId }),
+      sendStatement: (requestId, over = {}) =>
+        wpriv.runSendDeletionStatement(jobDeps(over), { requestId }),
+      retentionPurge: (over = {}) => wpriv.runRetentionPurge(jobDeps(over)),
       checkHolds: (requestId, over = {}) =>
         wpriv.runCheckLegalHolds(
           {
