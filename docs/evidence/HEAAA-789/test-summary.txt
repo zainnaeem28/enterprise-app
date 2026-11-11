@@ -1,15 +1,14 @@
-head bbcc637122a5aa59d409617e79c80678bbec2149
-kernel: 23 test(s), 0 failure(s), 0 skipped
-db-foundation: 120 test(s), 0 failure(s), 0 skipped, 3 accepted pin failure(s)
-kernel: 23 test(s), 0 failure(s), 0 skipped
-api: 1082 test(s), 2 failure(s), 0 skipped
-::error::suite api has 2 failing test(s)
-worker: 122 test(s), 0 failure(s), 0 skipped
-::error::N-1: the previous release (r208) does not pass against the candidate schema
-::error::integration-db FAILED
-
-candidate suites (fresh db, from /tmp/h789/idb2.log):
+evidence for HEAAA-789 (rebased on origin/dev bd7e4c7); no hosted CI (owner ruling B), run on the server against a throwaway PostgreSQL 17
+candidate suites, fresh database (integration-db.sh):
 db-foundation: 120 test(s), 0 failure(s), 0 skipped
 kernel: 23 test(s), 0 failure(s), 0 skipped
 api: 1101 test(s), 0 failure(s), 0 skipped
 worker: 122 test(s), 0 failure(s), 0 skipped
+N-1 against r208:
+db-foundation: 120 test(s), 0 failure(s), 0 skipped, 3 accepted pin failure(s)
+api: 1082 test(s), 2 failure(s), 0 skipped
+::error::suite api has 2 failing test(s)
+::error::N-1: the previous release (r208) does not pass against the candidate schema
+::error::integration-db FAILED
+not run: no hosted CI (owner ruling B): container scan, SAST, dependency audit, bundle budget, a11y/e2e, Schemathesis contract
+gitleaks over origin/dev..HEAD: no leaks found
