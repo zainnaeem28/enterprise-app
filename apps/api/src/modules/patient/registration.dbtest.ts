@@ -122,7 +122,13 @@ describe('registration at the front desk (25.3)', () => {
     let r = await post(
       deskA1,
       '/api/v1/patients',
-      { ...who, givenName: 'Changed', stateCode: FIXTURE_STATES.licensed, locationId: A1, matchCheckId: checkId },
+      {
+        ...who,
+        givenName: 'Changed',
+        stateCode: FIXTURE_STATES.licensed,
+        locationId: A1,
+        matchCheckId: checkId,
+      },
       idem(),
     );
     assert.equal(r.status, 422);
@@ -166,7 +172,12 @@ describe('registration at the front desk (25.3)', () => {
     r = await post(
       deskA1,
       '/api/v1/patients',
-      { ...person(4), stateCode: FIXTURE_STATES.licensed, locationId: A1, matchCheckId: m2.json()['matchCheckId'] },
+      {
+        ...person(4),
+        stateCode: FIXTURE_STATES.licensed,
+        locationId: A1,
+        matchCheckId: m2.json()['matchCheckId'],
+      },
       idem(),
     );
     assert.equal(r.status, 422);
@@ -179,7 +190,12 @@ describe('registration at the front desk (25.3)', () => {
     const r = await post(
       deskA1,
       '/api/v1/patients',
-      { ...person(5), stateCode: FIXTURE_STATES.licensed, locationId: B1, matchCheckId: randomUUID() },
+      {
+        ...person(5),
+        stateCode: FIXTURE_STATES.licensed,
+        locationId: B1,
+        matchCheckId: randomUUID(),
+      },
       idem(),
     );
     assert.equal(r.status, 403);

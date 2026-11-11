@@ -37,7 +37,9 @@ const PG: string = 'pg';
 const pg: any = (await import(PG)).default;
 // The one shared fixture module lives in the API (apps/api/src/platform/fixture-states.ts); the worker reads its built copy, as compose.dbtest.ts reads the API build.
 const { FIXTURE_STATES } = (await import(
-  pathToFileURL(fileURLToPath(new URL('../../../../api/dist/src/platform/fixture-states.js', import.meta.url))).href
+  pathToFileURL(
+    fileURLToPath(new URL('../../../../api/dist/src/platform/fixture-states.js', import.meta.url)),
+  ).href
 )) as { FIXTURE_STATES: { licensed: string; unlicensed: string; closed: string } };
 const adminUrl = process.env.EHR_TEST_ADMIN_URL;
 if (!adminUrl) throw new Error('EHR_TEST_ADMIN_URL is not set');

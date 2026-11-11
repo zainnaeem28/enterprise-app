@@ -53,8 +53,22 @@ test('a session is stale two hours after the end of its slot', () => {
 });
 
 test('a state is two letters in any case; nothing else is a state', () => {
-  assert.equal(normaliseState(` ${FIXTURE_STATES.licensed.toLowerCase()} `), FIXTURE_STATES.licensed);
-  for (const bad of ['', 'Z', `${FIXTURE_STATES.licensed}X`, 'Z1', '1 ', 12, null, undefined, {}, [FIXTURE_STATES.licensed]])
+  assert.equal(
+    normaliseState(` ${FIXTURE_STATES.licensed.toLowerCase()} `),
+    FIXTURE_STATES.licensed,
+  );
+  for (const bad of [
+    '',
+    'Z',
+    `${FIXTURE_STATES.licensed}X`,
+    'Z1',
+    '1 ',
+    12,
+    null,
+    undefined,
+    {},
+    [FIXTURE_STATES.licensed],
+  ])
     assert.equal(normaliseState(bad), undefined, String(bad));
 });
 
