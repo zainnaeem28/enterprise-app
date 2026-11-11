@@ -1,0 +1,30 @@
+✔ an invalid payload throws (4.241114ms)
+✔ an ended session with a room is closed at the vendor once and the close is audited (1.249827ms)
+✔ a session that is not ended, or has no room, gives nothing and no vendor call (0.314691ms)
+✔ a room the vendor no longer has counts as closed (0.337003ms)
+✔ merged patient: the room is found under the survivor and the audit transaction opens under the survivor, not the payload patient (1.770555ms)
+✔ an audit that finds no row in scope throws so the queue retries (0.245892ms)
+✔ vendor errors retry, and the last failed attempt is the job_dead line the alarm filters on (2.104512ms)
+✔ cancelled and no-show: a live session with a room ends and exactly one close job is queued (IDs only) (2.367936ms)
+✔ no room, already ended, or no session: nothing is queued (0.286027ms)
+✔ invalid payloads throw; rescheduled needs a valid newReservationId (0.412015ms)
+✔ rescheduled: the old session ends and the new reservation gets its session and create_meeting at max(now, start - 15 min) (0.677342ms)
+✔ rescheduled: an in-person or no-longer-confirmed new reservation schedules nothing, the old session still ends (0.472507ms)
+✔ merged patient: the reservation is gone for the payload patient, the handler runs for the survivor and does both steps (0.456837ms)
+✔ the registered tasks run the handlers with the job reference in the audit meta (0.904268ms)
+✔ on_reservation_confirmed still schedules create_meeting through the shared helper (0.230954ms)
+✔ create_meeting: recording is off, and asking for it is refused before the vendor is touched (4.218251ms)
+✔ create_meeting: the same idempotency token answers with the same room (0.195137ms)
+✔ find: a vendor without a token is asked for the room by our external ID (0.306836ms)
+✔ join_token: unique per call, bounded life, the token only in data, a participant reference that is an opaque UUID (1.515997ms)
+✔ a vendor outage is a retryable failure that carries a class and a status and no vendor text (1.963458ms)
+✔ end_meeting and lookup_meeting (0.328217ms)
+✔ the job list is pinned (the API side pins the same one) (0.30349ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 431.879187

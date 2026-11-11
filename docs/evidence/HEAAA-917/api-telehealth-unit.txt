@@ -1,0 +1,19 @@
+✔ route inventory (38.2 item 9): every route declares a known permission and the booking core resolver (4.668106ms)
+✔ the host routes are google-realm only; the patient routes declare no realm of their own (the capability decides it) (2.580376ms)
+✔ the status poll of the patient and the host waiting-room poll are passive (26.2, README D1) (0.279976ms)
+✔ TC-TH-05: the join window opens 10 minutes before the start and closes at the end of the slot (1.105516ms)
+✔ the room is made 15 minutes before the start, or at once when that time has passed (0.140664ms)
+✔ a session is stale two hours after the end of its slot (0.129453ms)
+✔ a state is two letters in any case; nothing else is a state (0.16478ms)
+✔ a device check is camera, mic and bandwidth, each pass or fail, and nothing else (0.727777ms)
+✔ a refusal carries a code and the start time only (0.603593ms)
+✔ the job list is pinned (the worker side pins the same one) (0.253806ms)
+✔ the merge participant registers once, names its four tables and every table is a telehealth one (0.445787ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 357.416286
