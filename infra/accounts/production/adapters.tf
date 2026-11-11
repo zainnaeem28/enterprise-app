@@ -118,33 +118,37 @@ locals {
 module "aws_adapters" {
   source = "../../modules/aws-adapters"
 
-  env                           = local.env
-  compute_name                  = local.compute_name
-  data_kms_key_arn              = module.kms_data.key_arn
-  secrets_kms_key_arn           = module.kms_secrets.key_arn
-  payload_key_multi_region      = true
-  payload_previous_key_arns     = var.payload_previous_key_arns
-  docs_quarantine_bucket_name   = "${var.bucket_name_prefix}-docs-quarantine"
-  docs_clean_bucket_name        = "${var.bucket_name_prefix}-docs-clean"
-  bucket_name_prefix            = var.bucket_name_prefix
-  access_log_bucket             = var.access_log_bucket_name
-  anchor_archive_bucket_name    = var.anchor_archive_bucket_name
-  anchor_archive_kms_key_arn    = var.anchor_archive_kms_key_arn
-  ses_domain                    = var.ses_domain
-  ses_from_address              = var.ses_from_address
-  security_contact_email        = var.security_contact_email
-  sms_origination_identity_arn  = var.sms_origination_identity_arn
-  vapid_public_key              = var.vapid_public_key
-  vapid_subject                 = var.vapid_subject
-  vapid_private_key_secret_name = "${local.env}/${local.vapid_secret}"
-  patient_oidc_issuer           = module.identity.patient_issuer
-  patient_oidc_client_id        = module.identity.patient_client_id
-  patient_auth_domain           = var.patient_auth_domain
-  patient_oidc_redirect_uri     = var.patient_callback_urls[0]
-  ecr_repository_arns           = var.ecr_repository_arns
-  execution_secret_names        = concat(["${local.env}/${local.vapid_secret}"], var.extra_execution_secret_names)
-  alarm_topic_arns              = var.alarm_topic_arns
-  tags                          = local.tags
+  env                            = local.env
+  compute_name                   = local.compute_name
+  data_kms_key_arn               = module.kms_data.key_arn
+  secrets_kms_key_arn            = module.kms_secrets.key_arn
+  payload_key_multi_region       = true
+  recovery_region                = var.recovery_region
+  recovery_data_kms_key_arn      = aws_kms_replica_key.data_recovery.arn
+  recovery_secrets_kms_key_arn   = module.kms_secrets_recovery.key_arn
+  recovery_docs_clean_bucket_arn = module.storage.replica_bucket_arn
+  payload_previous_key_arns      = var.payload_previous_key_arns
+  docs_quarantine_bucket_name    = "${var.bucket_name_prefix}-docs-quarantine"
+  docs_clean_bucket_name         = "${var.bucket_name_prefix}-docs-clean"
+  bucket_name_prefix             = var.bucket_name_prefix
+  access_log_bucket              = var.access_log_bucket_name
+  anchor_archive_bucket_name     = var.anchor_archive_bucket_name
+  anchor_archive_kms_key_arn     = var.anchor_archive_kms_key_arn
+  ses_domain                     = var.ses_domain
+  ses_from_address               = var.ses_from_address
+  security_contact_email         = var.security_contact_email
+  sms_origination_identity_arn   = var.sms_origination_identity_arn
+  vapid_public_key               = var.vapid_public_key
+  vapid_subject                  = var.vapid_subject
+  vapid_private_key_secret_name  = "${local.env}/${local.vapid_secret}"
+  patient_oidc_issuer            = module.identity.patient_issuer
+  patient_oidc_client_id         = module.identity.patient_client_id
+  patient_auth_domain            = var.patient_auth_domain
+  patient_oidc_redirect_uri      = var.patient_callback_urls[0]
+  ecr_repository_arns            = var.ecr_repository_arns
+  execution_secret_names         = concat(["${local.env}/${local.vapid_secret}"], var.extra_execution_secret_names)
+  alarm_topic_arns               = var.alarm_topic_arns
+  tags                           = local.tags
 }
 
 module "storage" {
@@ -166,6 +170,11 @@ module "secrets" {
   env             = local.env
   kms_key_arn     = module.kms_secrets.key_arn
   organization_id = var.organization_id
+
+  # The VAPID private key is replicated so the worker can inject it after a failover. The value stays operator-entered:
+  # replication copies it, nothing here reads or sets it.
+  recovery_region     = var.recovery_region
+  replica_kms_key_arn = module.kms_secrets_recovery.key_arn
   secrets = {
     (local.vapid_secret) = {
       description = "Web Push VAPID private key (value entered by an operator; the worker reads it as EHR_VAPID_PRIVATE_KEY)"
@@ -206,7 +215,7 @@ variable "anchor_archive_kms_key_arn" {
 }
 
 # Sealed payloads must stay openable after a failover to the recovery Region (replica of the multi-Region payload key,
-# same key policy). Role policies for the recovery Region are written with the recovery runbook: no compute exists there.
+# same key policy). The role policies for the recovery Region are in modules/aws-adapters/recovery.tf; no compute exists there.
 resource "aws_kms_replica_key" "payload_recovery" {
   provider        = aws.recovery
   description     = "production sealed payloads (recovery Region replica)"

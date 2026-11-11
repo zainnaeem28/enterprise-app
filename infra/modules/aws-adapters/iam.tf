@@ -26,21 +26,21 @@ data "aws_iam_policy_document" "ecs_tasks_assume" {
 resource "aws_iam_role" "api" {
   name               = local.api_role_name
   description        = "${var.env} api task: presigns uploads/downloads, seals payloads, writes outbound secrets, creates Chime attendees"
-  assume_role_policy = data.aws_iam_policy_document.ecs_tasks_assume.json
+  assume_role_policy = local.recovery_enabled ? data.aws_iam_policy_document.ecs_tasks_assume_with_recovery.json : data.aws_iam_policy_document.ecs_tasks_assume.json
   tags               = local.tags
 }
 
 resource "aws_iam_role" "worker" {
   name               = local.worker_role_name
   description        = "${var.env} worker task: scan promotion, OCR, packages, exports, anchors, opens payloads, sends mail/SMS, ends meetings"
-  assume_role_policy = data.aws_iam_policy_document.ecs_tasks_assume.json
+  assume_role_policy = local.recovery_enabled ? data.aws_iam_policy_document.ecs_tasks_assume_with_recovery.json : data.aws_iam_policy_document.ecs_tasks_assume.json
   tags               = local.tags
 }
 
 resource "aws_iam_role" "execution" {
   name               = local.execution_role_name
   description        = "${var.env} task execution: pull images, write logs, inject named secrets"
-  assume_role_policy = data.aws_iam_policy_document.ecs_tasks_assume.json
+  assume_role_policy = local.recovery_enabled ? data.aws_iam_policy_document.ecs_tasks_assume_with_recovery.json : data.aws_iam_policy_document.ecs_tasks_assume.json
   tags               = local.tags
 }
 
