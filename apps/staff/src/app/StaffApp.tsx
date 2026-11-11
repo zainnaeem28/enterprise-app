@@ -61,6 +61,9 @@ const AdminCompliancePortal = lazy(() =>
     default: m.AdminCompliancePortal,
   })),
 );
+const GuardianPanel = lazy(() =>
+  import('../features/guardians/index.js').then((m) => ({ default: m.GuardianPanel })),
+);
 const AdminConfigPortal = lazy(() =>
   import('../features/admin-config/index.js').then((m) => ({ default: m.AdminConfigPortal })),
 );
@@ -317,6 +320,9 @@ function Gate({
               navigate={(p) => navigate(p)}
               renderDocuments={(patientId, permissions) => (
                 <DocumentsPage runtime={runtime} patientId={patientId} permissions={permissions} />
+              )}
+              renderAccess={(patientId, permissions) => (
+                <GuardianPanel runtime={runtime} patientId={patientId} permissions={permissions} />
               )}
             />
           ) : current !== undefined ? (

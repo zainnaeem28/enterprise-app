@@ -2,6 +2,7 @@ import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/re
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { json } from '../../app/test-helpers.js';
 import { mount, OTHER, REQUEST, requestBody, sent } from '../profile/testkit.js';
+import { violations } from '../../axe-helper.js';
 
 afterEach(cleanup);
 const click = (name: string | RegExp) => fireEvent.click(screen.getByRole('button', { name }));
@@ -30,7 +31,7 @@ describe('PP-24 my privacy', () => {
     expect(post[0]?.headers.get('idempotency-key')).toMatch(/^[0-9a-f-]{36}$/);
   });
 
-  it('records a deletion request without promising deletion, in the page, the dialog and the status', async () => {
+  it('records a deletion request without claiming anything is deleted yet', async () => {
     let created = false;
     const m = mount('privacy', '/privacy', {
       [LIST]: () =>
@@ -44,26 +45,76 @@ describe('PP-24 my privacy', () => {
       },
     });
     await screen.findByText('You have not made any privacy requests.');
-    expect(screen.getByText(/This does not delete anything today/)).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /closes your account and deletes the data the law does not require us to keep/,
+      ),
+    ).toBeInTheDocument();
     click('Request account deletion');
     const dialog = await screen.findByRole('alertdialog');
-    expect(within(dialog).getByText(/It does not delete anything now/)).toBeInTheDocument();
+    expect(
+      within(dialog).getByText(/your account is closed and cannot be used to sign in/),
+    ).toBeInTheDocument();
     fireEvent.change(within(dialog).getByLabelText(/Anything you want the privacy team to know/), {
       target: { value: 'please' },
     });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Record my deletion request' }));
     expect(await screen.findByText('Your deletion request was recorded')).toBeInTheDocument();
     expect(
-      screen.getByText(/Nothing has been deleted\. The privacy team will look/),
+      screen.getByText(/Nothing has been deleted yet\. The privacy team will check/),
     ).toBeInTheDocument();
     expect(await screen.findByText('Recorded, waiting for a decision')).toBeInTheDocument();
     expect(sent(m.seen, 'POST', '/api/v1/privacy-requests')[0]?.body).toEqual({
       kind: 'deletion',
       detail: 'please',
     });
-    // No wording anywhere promises that data will be removed.
-    const text = (document.body.textContent ?? '').replace(/nothing has been deleted/gi, '');
-    expect(text).not.toMatch(/will be deleted|has been deleted|we will delete|account is deleted/i);
+  });
+
+  it('shows the post-deletion statement: deleted, kept, why and until when, from the statement only', async () => {
+    const statement = {
+      version: 1,
+      executedAt: '2031-07-01T10:00:00.000Z',
+      accountDeactivated: true,
+      deleted: [{ class: 'notification_preferences', count: 2 }],
+      kept: [{ class: 'encounters', count: 5 }],
+      keptReason: 'medical_record_retention',
+      keptUntil: '2038-07-01',
+      legalHold: { documents: 1 },
+      keptByHold: [{ class: 'accepted_documents', count: 1 }],
+      auditTrail: { kept: true, years: 6 },
+      documentation: { kept: true, years: 6 },
+    };
+    mount('privacy', '/privacy', {
+      [LIST]: () =>
+        json(200, {
+          items: [
+            requestBody({
+              kind: 'deletion',
+              status: 'fulfilled',
+              deletion: {
+                executedAt: statement.executedAt,
+                retainedUntil: '2038-07-01',
+                heldDocuments: 1,
+                purgeState: 'pending',
+                purgeDeferredReason: 'legal_hold',
+                statement,
+              },
+            }),
+          ],
+          nextCursor: null,
+        }),
+    });
+    const box = await screen.findByRole('group', { name: 'Statement after account deletion' });
+    expect(screen.getByText('Account closed')).toBeInTheDocument();
+    expect(within(box).getByText('Notification preferences: 2')).toBeInTheDocument();
+    expect(within(box).getByText('Visit records: 5')).toBeInTheDocument();
+    expect(
+      within(box).getByText(/kept until Jul 1, 2038 because the law requires medical records/),
+    ).toBeInTheDocument();
+    expect(within(box).getByText(/1 document is under a legal hold/)).toBeInTheDocument();
+    expect(within(box).getByText(/on hold because a legal hold applies/)).toBeInTheDocument();
+    expect(within(box).getAllByText(/kept for 6 years/)).toHaveLength(2);
+    expect(await violations()).toEqual([]);
   });
 
   it('a double click sends one request', async () => {

@@ -25,6 +25,8 @@ export interface Person {
   relation: 'self' | 'proxy';
   /** A proxy's linked patient: given name and initial when the session carries it; `undefined` otherwise. */
   displayName: string | undefined;
+  /** The proxy's own grant, when the session carries it. Needed to leave; `undefined` when the server does not send it. */
+  grantId: string | undefined;
 }
 
 export interface Account {
@@ -56,6 +58,7 @@ export function useAccount(runtime: PatientRuntime, attempt = 0) {
               patientId: p['patientId'] as string,
               relation: p['relation'] === 'proxy' ? 'proxy' : 'self',
               displayName: str(p['displayName']),
+              grantId: str(p['grantId']),
             }));
           return { people, principalId: str(asRecord(d)['principalId']) };
         },

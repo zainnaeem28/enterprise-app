@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { ShellRuntime } from '@ehr/app-shell';
 import { Clinics } from './Clinics.js';
 import { FlagsBanners } from './FlagsBanners.js';
+import { LicensedStates } from './LicensedStates.js';
 import { Integrations } from './Integrations.js';
 import { Policies } from './Policies.js';
 import { Services } from './Services.js';
@@ -57,6 +58,7 @@ export function AdminConfigPortal({
         {path === '/admin/integrations' && <Integrations />}
         {path === '/admin/flags' && <FlagsBanners />}
         {path === '/admin/vital-ranges' && <VitalRanges />}
+        {path === '/admin/licensing' && <LicensedStates />}
       </div>
     </ConfigContext.Provider>
   );

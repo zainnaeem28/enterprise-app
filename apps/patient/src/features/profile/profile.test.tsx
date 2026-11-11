@@ -3,7 +3,9 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { json } from '../../app/test-helpers.js';
 import { ME, OTHER, GRANT, etag, mount, prefsBody, profileBody, sent } from './testkit.js';
 import { patchOf, validate } from './pages/ProfilePage.js';
+import { ageOutNotice } from './pages/FamilyPage.js';
 import { bodyOf } from './pages/NotificationsPage.js';
+import { violations } from '../../axe-helper.js';
 
 afterEach(cleanup);
 const click = (name: string | RegExp) => fireEvent.click(screen.getByRole('button', { name }));
@@ -219,17 +221,18 @@ describe('PP-06..PP-09 family and proxy access', () => {
     status,
   });
 
-  it('states that a linked person sees appointments only and shows each status as text', async () => {
+  it('states what a linked person can see and shows each status as text', async () => {
     mount('profile', '/family', {
       [`GET /api/v1/patients/${ME}/proxies`]: () =>
         json(200, { items: [grant('requested')], nextCursor: null }),
     });
     expect(
       await screen.findByText(
-        /can see your appointments only\. They cannot see your health records/,
+        /You choose whether they can also see your messages and your documents/,
       ),
     ).toBeInTheDocument();
     expect(await screen.findByText('Waiting for the clinic to check')).toBeInTheDocument();
+    expect(await violations()).toEqual([]);
   });
 
   it('removes access only after the confirm dialog, and says so', async () => {
@@ -241,12 +244,13 @@ describe('PP-06..PP-09 family and proxy access', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Remove access' }));
     expect(sent(m.seen, 'DELETE', `/api/v1/patients/${ME}/proxies/${GRANT}`)).toHaveLength(0);
     const dialog = await screen.findByRole('alertdialog');
+    expect(await violations()).toEqual([]);
     fireEvent.click(within(dialog).getByRole('button', { name: 'Remove access' }));
     expect(await screen.findByText(/Access was removed/)).toBeInTheDocument();
     expect(sent(m.seen, 'DELETE', `/api/v1/patients/${ME}/proxies/${GRANT}`)).toHaveLength(1);
   });
 
-  it('lists the people the account acts for as appointments only, and switches', async () => {
+  it('lists the people the account acts for, and switches', async () => {
     mount(
       'profile',
       '/family',
@@ -259,10 +263,135 @@ describe('PP-06..PP-09 family and proxy access', () => {
       },
     );
     expect(await screen.findByRole('heading', { name: 'People you act for' })).toBeInTheDocument();
-    expect(screen.getAllByText('Appointments only').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Appointments').length).toBeGreaterThan(0);
     click('Book for this person');
     expect(await screen.findByText('Booking for this person')).toBeInTheDocument();
     expect((screen.getByLabelText('Booking for') as HTMLSelectElement).value).toBe(OTHER);
+  });
+
+  const full = (over: Record<string, unknown>) => ({
+    ...grant('active'),
+    scopes: ['appointments'],
+    effectiveScopes: ['appointments'],
+    guardian: false,
+    ...over,
+  });
+  const GRANTS = `/api/v1/patients/${ME}/proxies`;
+
+  it('ruling C 3: the patient grants messages per scope, appointments stay on, and the list reloads', async () => {
+    const m = mount('profile', '/family', {
+      [`GET ${GRANTS}`]: () => json(200, { items: [full({})], nextCursor: null }),
+      [`PUT ${GRANTS}/${GRANT}/scopes`]: () =>
+        json(200, full({ scopes: ['appointments', 'messages'] })),
+    });
+    const box = await screen.findByRole('checkbox', { name: 'Messages' });
+    expect(screen.getByRole('checkbox', { name: 'Appointments' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Save what they can see' })).toBeDisabled();
+    expect(await violations()).toEqual([]);
+    fireEvent.click(box);
+    click('Save what they can see');
+    expect(await screen.findByText(/Saved\. What they can see has changed/)).toBeInTheDocument();
+    expect(sent(m.seen, 'PUT', `${GRANTS}/${GRANT}/scopes`)[0]?.body).toEqual({
+      scopes: ['appointments', 'messages'],
+    });
+  });
+
+  it('ruling C 3: a guardian link cannot be edited by the patient', async () => {
+    const m = mount('profile', '/family', {
+      [`GET ${GRANTS}`]: () => json(200, { items: [full({ guardian: true })], nextCursor: null }),
+    });
+    expect(await screen.findByText(/The clinic manages this link/)).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Messages' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Save what they can see' })).toBeNull();
+    expect(sent(m.seen, 'PUT', `${GRANTS}/${GRANT}/scopes`)).toHaveLength(0);
+  });
+
+  it('ruling C 3: an open invitation shows the masked address and can be cancelled', async () => {
+    mount('profile', '/family', {
+      [`GET ${GRANTS}`]: () =>
+        json(200, {
+          items: [full({ status: 'invited', inviteeHint: 'p***@example.com' })],
+          nextCursor: null,
+        }),
+    });
+    expect(await screen.findByText('Invitation sent')).toBeInTheDocument();
+    expect(screen.getByText('Sent to p***@example.com.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cancel invitation' })).toBeInTheDocument();
+    expect(await violations()).toEqual([]);
+  });
+
+  it('ruling C 3: the age-out notice appears only within 30 days of the grant end date', async () => {
+    const soon = new Date(Date.now() + 10 * 86_400_000);
+    const far = new Date(Date.now() + 90 * 86_400_000);
+    const iso = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    expect(ageOutNotice({ validUntil: iso(far), status: 'active' } as never)).toBeUndefined();
+    mount('profile', '/family', {
+      [`GET ${GRANTS}`]: () =>
+        json(200, {
+          items: [
+            full({ validUntil: iso(soon) }),
+            full({ id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', validUntil: iso(far) }),
+          ],
+          nextCursor: null,
+        }),
+    });
+    expect(
+      await screen.findByText(`This access ends on ${iso(soon)} (in 10 days).`),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(new RegExp(iso(far)))).toBeNull();
+    expect(await violations()).toEqual([]);
+  });
+
+  it('ruling C 3: a proxy leaves only after the confirm dialog', async () => {
+    const m = mount(
+      'profile',
+      '/family',
+      { [`POST /api/v1/proxy-grants/${GRANT}/leave`]: () => new Response(null, { status: 204 }) },
+      {
+        patients: [
+          { patientId: ME, relation: 'self', scope: 'full' },
+          {
+            patientId: OTHER,
+            relation: 'proxy',
+            scope: 'appointments',
+            displayName: 'Jo K',
+            grantId: GRANT,
+          },
+        ],
+      },
+    );
+    fireEvent.click(await screen.findByRole('button', { name: 'Leave' }));
+    expect(sent(m.seen, 'POST', `/api/v1/proxy-grants/${GRANT}/leave`)).toHaveLength(0);
+    const dialog = await screen.findByRole('alertdialog');
+    expect(await violations()).toEqual([]);
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Leave' }));
+    expect(await screen.findByText(/You left\./)).toBeInTheDocument();
+    expect(sent(m.seen, 'POST', `/api/v1/proxy-grants/${GRANT}/leave`)).toHaveLength(1);
+  });
+
+  it('ruling C 3: the verification screen sends the code and gives one answer for any refusal', async () => {
+    const path = `/api/v1/proxy-invites/${GRANT}/accept`;
+    let n = 0;
+    const m = mount('profile', `/family/accept/${GRANT}`, {
+      [`POST ${path}`]: () =>
+        ++n === 1
+          ? json(422, { status: 422, code: 'identity.proxy_code_invalid', requestId: 'r9' })
+          : json(200, full({})),
+    });
+    await screen.findByRole('button', { name: 'Confirm' });
+    click('Confirm');
+    expect((await screen.findAllByText(/enter the code from the email/)).length).toBeGreaterThan(0);
+    expect(sent(m.seen, 'POST', path)).toHaveLength(0);
+    fireEvent.change(screen.getByLabelText('Code from the email'), { target: { value: '123456' } });
+    click('Confirm');
+    expect(await screen.findByText('That code was not accepted')).toBeInTheDocument();
+    expect(await violations()).toEqual([]);
+    expect(document.body.textContent).not.toContain('123456');
+    click('Confirm');
+    expect(await screen.findByRole('heading', { name: 'You are linked' })).toBeInTheDocument();
+    expect(await violations()).toEqual([]);
+    expect(sent(m.seen, 'POST', path)[1]?.body).toEqual({ code: '123456' });
   });
 
   it('PP-07: D-7 not configured reads as not open yet and never as sent', async () => {

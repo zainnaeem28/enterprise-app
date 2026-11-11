@@ -81,7 +81,7 @@ describe('PP-10..PP-14 book a visit', () => {
     expect(confirmKey).not.toBe(holdKey);
     expect(c?.headers.get('X-CSRF-Token')).toBe('csrf-test');
     expect(h?.headers.get('X-CSRF-Token')).toBe('csrf-test');
-    expect(document.title).toBe('Patient portal - Booked');
+    await waitFor(() => expect(document.title).toBe('Patient portal - Booked'));
   });
 
   it('a double click on Confirm sends one request', async () => {
@@ -236,6 +236,25 @@ describe('slot taken and hold expiry (X-01, X-02)', () => {
       serviceId: SERVICE,
       locationId: PLACE,
     });
+  });
+});
+
+describe('telehealth licensing refusal at booking (ruling C 4)', () => {
+  it('says plainly that a video visit is not offered for that state, with the request reference only', async () => {
+    await toTimeStep({
+      'POST /api/v1/holds': () => hold(),
+      ['POST /api/v1/appointments/' + RESERVATION + '/confirm']: () =>
+        json(422, { status: 422, code: 'scheduling.licensing_refused', requestId: 'req-lic' }),
+    });
+    await pickFirstSlot();
+    await screen.findByRole('timer');
+    click('Continue');
+    await screen.findByRole('heading', { name: 'Check and confirm' });
+    click('Confirm appointment');
+    expect(
+      await screen.findByText(/We cannot offer a video visit for the state you chose/),
+    ).toBeInTheDocument();
+    expect(screen.getByText('req-lic')).toBeInTheDocument();
   });
 });
 

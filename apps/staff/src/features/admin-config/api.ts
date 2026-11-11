@@ -69,6 +69,15 @@ export function createConfigApi(api: Api) {
       call(method, path, { body, ...(version === undefined ? {} : { version }) }),
     publish: (kind: 'consent' | 'questionnaire', id: string, body: Record<string, unknown>) =>
       call('POST', `${kind}-templates/{id}/publish`, { pathParams: { id }, body }),
+    /** Ruling C item 4: the clinician's recorded licensed states (`licensedStates` only; nothing is assumed when none are recorded). */
+    licensedStates: (principalId: string) =>
+      call('GET', 'staff-profiles/{principalId}', { pathParams: { principalId } }),
+    /** Makes the clinician's licensed states exactly this set. Booking and join checks read it on the next call. */
+    setLicensedStates: (principalId: string, licensedStates: string[]) =>
+      call('PUT', 'staff-profiles/{principalId}', {
+        pathParams: { principalId },
+        body: { licensedStates },
+      }),
     testIntegration: (id: string) => call('POST', 'integrations/{id}/test', { pathParams: { id } }),
     putSecret: (id: string, name: string, value: string) =>
       call('PUT', 'integrations/{id}/secrets/{name}', {

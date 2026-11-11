@@ -38,10 +38,22 @@ export function statusOf(r: PrivacyRequest): { tone: Tone; label: string; next: 
         label: 'Closed',
         next: r.decisionReason ?? 'The privacy team closed this request. Nothing was deleted.',
       };
+    if (s === 'fulfilled')
+      return {
+        tone: 'success',
+        label: 'Account closed',
+        next: 'Your account is closed. What was deleted and what is kept is listed below.',
+      };
+    if (s === 'identity_verified' || s === 'in_progress')
+      return {
+        tone: 'warning',
+        label: 'Being carried out',
+        next: 'The privacy team has checked who you are. Your account will be closed when this is done.',
+      };
     return {
       tone: 'info',
       label: 'Recorded, waiting for a decision',
-      next: 'The privacy team has it. Nothing has been deleted.',
+      next: 'The privacy team has it. Nothing has been deleted yet.',
     };
   }
   switch (s) {
@@ -86,6 +98,73 @@ export function statusOf(r: PrivacyRequest): { tone: Tone; label: string; next: 
     default:
       return { tone: 'info', label: 'Recorded', next: 'The privacy team has it.' };
   }
+}
+
+/** Plain words for a data class code. An unknown code is shown as its code with spaces, never guessed at. */
+const CLASS_LABEL: Record<string, string> = {
+  notification_preferences: 'Notification preferences',
+  encounters: 'Visit records',
+  accepted_documents: 'Documents accepted into your record',
+};
+export const classLabel = (c: string): string =>
+  CLASS_LABEL[c] ?? `${c.replace(/_/g, ' ').replace(/^./, (x) => x.toUpperCase())}`;
+
+const REASON: Record<string, string> = {
+  medical_record_retention: 'the law requires medical records to be kept for a set time',
+  legal_hold: 'a legal hold applies',
+  document_retention: 'a document retention period has not ended yet',
+};
+
+function ClassList({ items }: { items: { class: string; count: number }[] }) {
+  return items.length === 0 ? (
+    <p>None.</p>
+  ) : (
+    <ul>
+      {items.map((c) => (
+        <li key={c.class}>
+          {classLabel(c.class)}: {c.count}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** What was deleted, what is kept, why and until when. Every line comes from the statement; nothing is added. */
+export function DeletionStatementView({ d }: { d: NonNullable<PrivacyRequest['deletion']> }) {
+  const reason = REASON[d.keptReason] ?? 'a retention rule applies';
+  return (
+    <div className="profile-statement" role="group" aria-label="Statement after account deletion">
+      <h3>What happened to your data</h3>
+      <p>Your account was closed on {day(d.executedAt)}.</p>
+      <h4>Deleted</h4>
+      <ClassList items={d.deleted} />
+      <h4>Kept</h4>
+      <p>
+        Your medical record is kept until {day(d.keptUntil)} because {reason}. After that day it may
+        be permanently deleted.
+      </p>
+      <ClassList items={d.kept} />
+      {d.heldDocuments > 0 && (
+        <p>
+          {d.heldDocuments} {d.heldDocuments === 1 ? 'document is' : 'documents are'} under a legal
+          hold and {d.heldDocuments === 1 ? 'was' : 'were'} not deleted.
+        </p>
+      )}
+      {d.keptByHold.length > 0 && <ClassList items={d.keptByHold} />}
+      {d.purgeDeferredReason !== undefined && (
+        <p>
+          Permanent deletion of the record is on hold because{' '}
+          {REASON[d.purgeDeferredReason] ?? 'a retention rule applies'}.
+        </p>
+      )}
+      {d.auditYears !== undefined && (
+        <p>A record of who looked at your data is kept for {d.auditYears} years.</p>
+      )}
+      {d.documentationYears !== undefined && (
+        <p>Records of consent and privacy requests are kept for {d.documentationYears} years.</p>
+      )}
+    </div>
+  );
 }
 
 const day = (iso: string) =>
@@ -182,7 +261,8 @@ export function PrivacyPage({
       )}
       {result === 'deletion' && (
         <Banner tone="info" title="Your deletion request was recorded">
-          Nothing has been deleted. The privacy team will look at your request and contact you.
+          Nothing has been deleted yet. The privacy team will check who you are first and contact
+          you.
         </Banner>
       )}
       {actionFailure !== undefined && (
@@ -203,9 +283,10 @@ export function PrivacyPage({
 
       <h2>Delete my account</h2>
       <p>
-        You can ask for your account to be deleted. We record your request and send it to the
-        privacy team. This does not delete anything today: health records are kept for as long as
-        the law requires, and the clinic will tell you what can be removed.
+        You can ask for your account to be deleted. The privacy team checks who you are, then closes
+        your account and deletes the data the law does not require us to keep. Your medical record
+        is kept for as long as the law requires and then deleted. When it is done we show you what
+        was deleted, what is kept, why and until when.
       </p>
       <p>
         <Button disabled={busy} onClick={() => setAsking('deletion')}>
@@ -238,6 +319,7 @@ export function PrivacyPage({
                     <StatusChip tone={st.tone}>{st.label}</StatusChip>
                   </p>
                   <p className="profile-note">{st.next}</p>
+                  {r.deletion !== undefined && <DeletionStatementView d={r.deletion} />}
                   {ready && <Button onClick={() => void download(r.id)}>Download my data</Button>}
                 </li>
               );
@@ -290,8 +372,9 @@ export function PrivacyPage({
           }
         >
           <p>
-            This records your request and sends it to the privacy team. It does not delete anything
-            now. Health records are kept as the law requires.
+            This records your request and sends it to the privacy team. Once they have checked who
+            you are, your account is closed and cannot be used to sign in. Your medical record is
+            kept for as long as the law requires.
           </p>
           <TextAreaField
             label="Anything you want the privacy team to know (optional)"

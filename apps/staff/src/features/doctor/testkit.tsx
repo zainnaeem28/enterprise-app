@@ -221,7 +221,12 @@ export function mount(
   perms: string[],
   path: DoctorPath,
   handler: Handler,
-  opts: { video?: VideoAdapter; stream?: FakeStream; roles?: string[] } = {},
+  opts: {
+    video?: VideoAdapter;
+    stream?: FakeStream;
+    roles?: string[];
+    renderAccess?: (patientId: string, permissions: readonly string[]) => React.ReactNode;
+  } = {},
 ) {
   const seen: Seen[] = [];
   const stream = opts.stream ?? new FakeStream();
@@ -264,6 +269,7 @@ export function mount(
       navigate={(p) => navigated.push(p)}
       stream={() => stream}
       {...(opts.video === undefined ? {} : { video: opts.video })}
+      {...(opts.renderAccess === undefined ? {} : { renderAccess: opts.renderAccess })}
     />,
   );
   return { seen, navigated, stream, view };
