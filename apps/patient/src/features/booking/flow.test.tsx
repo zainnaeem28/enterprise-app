@@ -239,6 +239,25 @@ describe('slot taken and hold expiry (X-01, X-02)', () => {
   });
 });
 
+describe('telehealth licensing refusal at booking (ruling C 4)', () => {
+  it('says plainly that a video visit is not offered for that state, with the request reference only', async () => {
+    await toTimeStep({
+      'POST /api/v1/holds': () => hold(),
+      ['POST /api/v1/appointments/' + RESERVATION + '/confirm']: () =>
+        json(422, { status: 422, code: 'scheduling.licensing_refused', requestId: 'req-lic' }),
+    });
+    await pickFirstSlot();
+    await screen.findByRole('timer');
+    click('Continue');
+    await screen.findByRole('heading', { name: 'Check and confirm' });
+    click('Confirm appointment');
+    expect(
+      await screen.findByText(/We cannot offer a video visit for the state you chose/),
+    ).toBeInTheDocument();
+    expect(screen.getByText('req-lic')).toBeInTheDocument();
+  });
+});
+
 describe('hold countdown follows UI-UX 7.2', () => {
   it('counts down to the server expiresAt and announces only at 5, 2 and 1 minutes', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });

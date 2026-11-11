@@ -33,6 +33,7 @@ export function DoctorPortal({
   video,
   stream = defaultStream,
   renderDocuments,
+  renderAccess,
 }: {
   runtime: Pick<ShellRuntime, 'api'>;
   path: DoctorPath;
@@ -43,6 +44,8 @@ export function DoctorPortal({
   stream?: StreamFactory;
   /** Patient documents panel for the open chart, supplied by the app (documents feature). */
   renderDocuments?: (patientId: string, permissions: readonly string[]) => React.ReactNode;
+  /** Proxies and guardian links for the open chart (guardians feature). */
+  renderAccess?: (patientId: string, permissions: readonly string[]) => React.ReactNode;
 }) {
   const sessionLoad = useDoctorSession(runtime);
   const api = useMemo(() => createDoctorApi(runtime.api), [runtime.api]);
@@ -87,6 +90,9 @@ export function DoctorPortal({
           {...(renderDocuments === undefined
             ? {}
             : { documents: (id: string) => renderDocuments(id, ready.permissions) })}
+          {...(renderAccess === undefined
+            ? {}
+            : { access: (id: string) => renderAccess(id, ready.permissions) })}
         />
       )}
       {path === '/alerts' &&
@@ -100,7 +106,13 @@ export function DoctorPortal({
   );
 }
 
-function Patients({ documents }: { documents?: (patientId: string) => React.ReactNode }) {
+function Patients({
+  documents,
+  access,
+}: {
+  documents?: (patientId: string) => React.ReactNode;
+  access?: (patientId: string) => React.ReactNode;
+}) {
   const open = useOpen();
   const known = useKnownNotes();
   const [banner, setBanner] = useState<BannerData | null>(null);
@@ -134,6 +146,9 @@ function Patients({ documents }: { documents?: (patientId: string) => React.Reac
       <Chart key={key} patientId={open.patientId} onBanner={setBanner} hideBanner />
       {documents !== undefined && (
         <section aria-label="Patient documents">{documents(open.patientId)}</section>
+      )}
+      {access !== undefined && (
+        <section aria-label="Patient access">{access(open.patientId)}</section>
       )}
       {patient !== null &&
         (open.visit?.mode === 'video' ? (
