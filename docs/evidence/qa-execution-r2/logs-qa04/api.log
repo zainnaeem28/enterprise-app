@@ -1,0 +1,2 @@
+{"provisioned":8,"present":0,"level":"info","time":"2026-11-10T13:44:10.999Z","msg":"notification templates provisioned"}
+{"port":4250,"database":"[redacted]","level":"info","time":"2026-11-10T13:44:11.135Z","msg":"api listening"}

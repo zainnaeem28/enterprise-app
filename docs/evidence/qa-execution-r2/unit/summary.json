@@ -1,0 +1,18 @@
+{
+  "reports": [
+    "boundary.xml",
+    "_ehr_api/api.xml",
+    "_ehr_app-shell/app-shell.xml",
+    "_ehr_cms/cms.xml",
+    "_ehr_kernel/kernel.xml",
+    "_ehr_patient/patient.xml",
+    "_ehr_site/site.xml",
+    "_ehr_staff/staff.xml",
+    "_ehr_ui/ui.xml",
+    "_ehr_worker/worker.xml"
+  ],
+  "tests": 1450,
+  "skipped": 0,
+  "failed": 0,
+  "failures": []
+}

@@ -33,13 +33,13 @@ route here. Migrations `1700`-`1702`. ARCHITECTURE 22.11, 25.5, 29.3; PRD RA-R1-
 
 ## Limitations and requests to other owners (not changed here: outside the allowed paths)
 
-1. **Referral accept cannot succeed on the combined base (blocking for INT).** `patient.lock_patients` and
-   `patient.ensure_care_relationship` (BE-08, `0703`) call `patient.caller_sees()`, which is false for the receiving location (it has
-   no care relationship yet). Accept ends in PM008 and returns 404. The real-path test is marked `todo`; the other referral tests put
-   a `staff_scope` row in place to prove this side. BE-08/INT-02 must add the referral case to `caller_sees` (or the two functions).
-2. **`notifications.staff_scope_allows_patient` is still the fail-closed stub** (BE-07 `1201`), so a staff red-flag alert insert is
-   refused by RLS on the combined base. The test harness installs the intended body (`patient.staff_scope` check) in its throwaway
-   database only. BE-08/INT-02 replace it with `CREATE OR REPLACE`.
+1. **Referral accept (resolved).** Migration `2300_patient_referral_accept_scope.sql` (INT03-F08d, ruling HEAAA-325) gives the receiving
+   location a referral-bound root lock and care-relationship create without changing `caller_sees`. The real-path test
+   `the accept path works for the receiving location with no pre-existing scope there` (`frontdoor-flows.dbtest.ts`) passes with no
+   `staff_scope` stand-in and is no longer `todo`.
+2. **`notifications.staff_scope_allows_patient` (resolved).** Migration `2406_notifications_staff_scope_allows_patient.sql` (SEC05-F04,
+   INT04-F10 D-5) replaced the fail-closed stub of `1201` with the T-STAFF predicate (`patient.staff_scope` at the caller's locations
+   or the break-the-glass list), so staff red-flag alert inserts pass RLS on the combined base.
 3. The re-target of an unacknowledged red flag (`TriageService.retargetUnacknowledged`) runs in a patients-scope job, which cannot read
    `identity.principal`; there the roster alone decides (an inactive on-call doctor stays a target; targets are only ever added).
 4. The worker handler for `notifications.alert_unacknowledged` -> `clinical.on_alert_unacknowledged` lives in `apps/worker` (outside

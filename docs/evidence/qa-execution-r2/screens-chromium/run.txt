@@ -1,0 +1,28 @@
+PASS seed.world doctor STF-DR-X6184058, patient PAT-1751234, front desk STF-FD-QA-6782002, booked=true
+PASS chromium:doctor.session status 200
+PASS chromium:10-doctor-schedule http://localhost:4351/schedule text=376ch expect /Casey Synthetic/
+PASS chromium:11-doctor-patient-list http://localhost:4351/patients text=428ch
+PASS chromium:12-doctor-alerts http://localhost:4351/alerts text=272ch
+PASS chromium:13-doctor-notes-to-sign http://localhost:4351/notes-to-sign text=348ch
+PASS chromium:14-doctor-availability http://localhost:4351/availability text=709ch
+PASS chromium:15-doctor-tasks http://localhost:4351/tasks text=366ch
+PASS chromium:frontdesk.session status 200
+PASS chromium:20-frontdesk-arrivals http://localhost:4351/arrivals text=569ch
+PASS chromium:21-frontdesk-waitlist http://localhost:4351/waitlist text=321ch
+PASS chromium:22-frontdesk-patients http://localhost:4351/patients text=327ch
+PASS chromium:23-frontdesk-forms http://localhost:4351/forms text=355ch
+PASS chromium:24-frontdesk-triage-queue http://localhost:4351/triage text=411ch
+PASS chromium:patient.session status 200
+PASS chromium:30-patient-home http://127.0.0.1:4350/ text=161ch
+PASS chromium:31-patient-booking-start http://127.0.0.1:4350/book text=310ch expect /What would you like to book/
+PASS chromium:32-patient-profile http://127.0.0.1:4350/profile text=550ch expect /Casey|profile/i
+PASS chromium:33-patient-privacy http://127.0.0.1:4350/privacy text=589ch
+PASS chromium:34-patient-messages http://127.0.0.1:4350/messages text=129ch
+PASS chromium:35-patient-appointments http://127.0.0.1:4350/appointments text=211ch expect /Confirmed/
+PASS chromium:36-patient-previsit http://127.0.0.1:4350/appointments/01a1c5cc-ebf6-77ef-aeda-598e232089be/previsit text=352ch
+PASS chromium:40-site-home http://127.0.0.1:32785/ text=824ch
+PASS chromium:41-site-services http://127.0.0.1:32785/services text=774ch expect /appointment|consult/i
+PASS chromium:42-site-doctors http://127.0.0.1:32785/doctors text=997ch
+PASS chromium:43-site-locations http://127.0.0.1:32785/locations text=545ch
+PASS chromium:50-patient-home-360px http://127.0.0.1:4350/ text=161ch
+engine=chromium pass=27 fail=0 pageErrors=0
