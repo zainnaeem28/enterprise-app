@@ -46,15 +46,23 @@ jobs:
     timeout-minutes: 5
     permissions: {}
     outputs:
+      enabled: ${{ steps.gate.outputs.enabled }}
       matrix: ${{ steps.matrix.outputs.matrix }}
     steps:
-      - name: Refuse unless deliberately enabled, from main
+      - name: Gate - from main; skip (with a notice) unless deliberately enabled
+        id: gate
         env:
           ENABLED: ${{ vars.RESTORE_TEST_ENABLED }}
           REF: ${{ github.ref }}
         run: |
           [ "$REF" = "refs/heads/main" ] || { echo "::error::the restore test runs from refs/heads/main only (got $REF)"; exit 1; }
-          [ "$ENABLED" = "true" ] || { echo "::error::restore-test is authored but not enabled (repository variable RESTORE_TEST_ENABLED is not 'true'). A person enables it after the boundary and the restore-test record are applied (C-01)."; exit 1; }
+          if [ "$ENABLED" != "true" ]; then
+            echo "::notice::not configured: RESTORE_TEST_ENABLED (repository variable is not 'true'); no restore test ran. This run is a skip, not a success of the real operation."
+            printf '### Not configured: RESTORE_TEST_ENABLED\n%s\n' "no restore test ran. Nothing ran against any cloud account." >>"$GITHUB_STEP_SUMMARY"
+            echo "enabled=false" >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "enabled=true" >>"$GITHUB_OUTPUT"
       - name: Which restores
         id: matrix
         env:
@@ -70,6 +78,7 @@ jobs:
   restore:
     name: restore ${{ matrix.mode }}, check in the restore VPC, tear down
     needs: [enabled]
+    if: ${{ needs.enabled.outputs.enabled == 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 240
     environment: restore-test
@@ -159,8 +168,8 @@ jobs:
 
   history:
     name: two consecutive failures stop releases
-    needs: [restore]
-    if: ${{ always() && github.event_name == 'schedule' }}
+    needs: [enabled, restore]
+    if: ${{ always() && github.event_name == 'schedule' && needs.enabled.outputs.enabled == 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:

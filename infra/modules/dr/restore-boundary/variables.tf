@@ -64,7 +64,7 @@ variable "task_memory" {
 }
 
 variable "log_retention_days" {
-  description = "Retention of the task log group. The logs hold counts and codes only."
+  description = "Retention of the task log group: 90 days like application logs (owner ruling C item 2 †; infra/RETENTION.md). The logs hold counts and codes only."
   type        = number
   default     = 90
 }

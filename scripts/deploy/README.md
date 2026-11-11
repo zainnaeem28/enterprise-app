@@ -30,13 +30,15 @@ Production: concurrency group `production-release`, `cancel-in-progress: false`;
 
 DPR-37 (staging Terraform apply role `gh-tf-staging`), DPR-38 (named creator of the loadtest/bootstrap/ENV-DR stacks: `gh-rehearsal-staging`) and DPR-39 (migration task definition pinned by ARN, gate-check read actions and the `gh-nightly-staging` row) are authored in `infra/modules/ci-trust` (DO-04). They are _authored_, not applied or proven; the staging proofs of 7.5 must pass before any `DEPLOY_*_ENABLED` is set. The plan text correction is routed to the Solution Architect Reviewer (not this ticket).
 
-## Permissions this workflow needs that DO-04's roles do not grant today (follow-up to DO-04 via the Orchestrator; not edited here)
+## Permissions this workflow needs (R1-GAP-5, HEAAA-785)
 
-1. `gh-deploy-staging` / `gh-deploy-production`: `ssm:GetParameter` and `ssm:PutParameter` on the integer parameters (`min_client_release`, staging `/deployed/*`) and the matching `kms` use.
-2. `gh-deploy-production`: `rds:DescribeDBInstances`, `rds:DescribeDBSnapshots`, `rds:CreateDBSnapshot` on the named database (8.2 steps 2-3).
-3. `gh-deploy-*` and `gh-recover-production`: `s3:CopyObject`-class access to the portal bucket (`live/<portal>/…`, read of `releases/<sha>/…`) and `cloudfront:CreateInvalidation` (portal switch/revert; marketing already has its equivalent).
-4. The release manifests are fetched from the GitHub artifact of the named `build-release` run (`actions: read`) because the deploy roles cannot read the release store. Artifact retention is 30 days, so a rollback target older than that cannot be fetched this way; either the retention is raised or a read on `manifests/` is granted.
-5. Nothing yet copies `releases/<sha>/…` from the release store into the production portal bucket; `portal-switch` fails (missing source key) rather than skipping.
+Authored in `infra/modules/ci-trust` (`policies.tf`, new `refs` fields in `variables.tf`); proved only by `tofu validate` and `tofu test` with mock providers (rendered policy, not AWS behaviour). Every grant is dropped while its ref is unset, so nothing is granted until the production/staging roots pass the ARNs. The roots (`production_refs`, `staging` refs) must be given: `release_config_parameter_arns`, `db_instance_arns`, `portal_bucket_arn`, `portal_distribution_arns`, `release_store_read_arn`.
+
+1. **Closed (IaC).** `gh-deploy-staging` / `gh-deploy-production`: `ssm:GetParameter` and `ssm:PutParameter` on `refs.release_config_parameter_arns` only (never `/approved/*`, which stays an explicit deny). The parameters are `String`, so no KMS grant is needed.
+2. **Closed (IaC).** `gh-deploy-production`: `rds:DescribeDBInstances` on `refs.db_instance_arns`; `rds:DescribeDBSnapshots` on `snapshot:release-*-pre-migration`; `rds:CreateDBSnapshot` only when the record permits `migrate`.
+3. **Closed (IaC).** `gh-deploy-*` and `gh-recover-production`: `s3:PutObject` on `<portal bucket>/live/*`, `s3:GetObject` on `releases/*` (portal bucket and release store), `cloudfront:CreateInvalidation` on `refs.portal_distribution_arns`.
+4. **Partly closed.** `s3:GetObject` on `<release store>/manifests/*` is granted when `refs.release_store_read_arn` is set, so a rollback target older than 30 days could be read. **Remaining:** the workflows still use `gh run download` (workflow files are outside this ticket's paths), and the release store lives in another account, so its bucket policy must also allow the role (not in these paths). Until both are done, artifact retention (a repository setting) still limits the rollback target.
+5. **Partly closed.** `portal-switch.mjs` takes `--source-bucket` and copies `releases/<sha>/…` from the release store into `live/<portal>/…` of the portal bucket (dry-run test in `test/cli.test.mjs`). **Remaining:** `deploy-production.yml` and `deploy-staging.yml` do not pass `--source-bucket` or a variable for it yet (workflow files are outside this ticket's paths: a follow-up that adds `DEPLOY_RELEASE_STORE_BUCKET`), so `portal-switch` still fails on a missing source key until then.
 
 ## Limits
 

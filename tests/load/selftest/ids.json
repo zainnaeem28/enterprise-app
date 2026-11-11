@@ -1,6 +1,53 @@
-{"serviceId":"00000000-0000-4000-8000-0000000000d1","locationIds":["00000000-0000-4000-8000-0000000000b1"],"clinicianIds":["00000000-0000-4000-8000-0000000000a1"],
- "windowFrom":"2030-01-01T00:00:00Z","windowTo":"2030-01-15T00:00:00Z",
- "slots":[{"startsAt":"2030-01-02T09:00:00Z","endsAt":"2030-01-02T09:30:00Z","clinicianId":"00000000-0000-4000-8000-0000000000a1","locationId":"00000000-0000-4000-8000-0000000000b1","mode":"in_person"}],
- "encounters":["00000000-0000-4000-8000-0000000000e1"],"patientIds":["00000000-0000-4000-8000-0000000000c2"],
- "phiReadPaths":["/api/v1/alerts/open-ids"],"chartViewPath":"/api/v1/alerts/open-ids","videoReservations":["00000000-0000-4000-8000-0000000000f1"],
- "raceSlots":[],"noteRequest":{"templateId":"soap","body":"__MARKER__"}}
+{
+  "serviceId": "00000000-0000-4000-8000-0000000000d1",
+  "locationIds": [
+    "00000000-0000-4000-8000-0000000000b1"
+  ],
+  "clinicianIds": [
+    "00000000-0000-4000-8000-0000000000a1"
+  ],
+  "windowFrom": "2030-01-01T00:00:00Z",
+  "windowTo": "2030-01-15T00:00:00Z",
+  "slots": [
+    {
+      "startsAt": "2030-01-02T09:00:00Z",
+      "endsAt": "2030-01-02T09:30:00Z",
+      "clinicianId": "00000000-0000-4000-8000-0000000000a1",
+      "locationId": "00000000-0000-4000-8000-0000000000b1",
+      "mode": "in_person"
+    }
+  ],
+  "encounters": [
+    "00000000-0000-4000-8000-0000000000e1"
+  ],
+  "patientIds": [
+    "00000000-0000-4000-8000-0000000000c2"
+  ],
+  "phiReadPaths": [
+    "/api/v1/alerts/open-ids"
+  ],
+  "chartViewPath": "/api/v1/alerts/open-ids",
+  "videoReservations": [
+    "00000000-0000-4000-8000-0000000000f1"
+  ],
+  "raceSlots": [
+    {
+      "startsAt": "2031-01-01T09:00:00Z",
+      "endsAt": "2031-01-01T09:30:00Z",
+      "clinicianId": "00000000-0000-4000-8000-0000000000a1",
+      "locationId": "00000000-0000-4000-8000-0000000000b1",
+      "mode": "in_person"
+    },
+    {
+      "startsAt": "2031-01-02T09:00:00Z",
+      "endsAt": "2031-01-02T09:30:00Z",
+      "clinicianId": "00000000-0000-4000-8000-0000000000a1",
+      "locationId": "00000000-0000-4000-8000-0000000000b1",
+      "mode": "in_person"
+    }
+  ],
+  "noteRequest": {
+    "templateId": "soap",
+    "body": "__MARKER__"
+  }
+}

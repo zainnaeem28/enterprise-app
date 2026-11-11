@@ -109,3 +109,18 @@ run "replica_requires_key" {
   }
   expect_failures = [aws_secretsmanager_secret.this]
 }
+
+run "replica_in_the_recovery_region_with_its_own_key" {
+  command = plan
+
+  variables {
+    recovery_region     = "us-west-2"
+    replica_kms_key_arn = "arn:aws:kms:us-west-2:111111111111:key/22222222-2222-2222-2222-222222222222"
+  }
+  assert {
+    condition = alltrue([for k, s in aws_secretsmanager_secret.this :
+      length(s.replica) == 1 && one(s.replica).region == "us-west-2" && one(s.replica).kms_key_id == "arn:aws:kms:us-west-2:111111111111:key/22222222-2222-2222-2222-222222222222"
+    ])
+    error_message = "every secret has exactly one replica, in the recovery Region, under the recovery-Region key"
+  }
+}

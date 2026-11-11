@@ -25,7 +25,7 @@ variables {
   organization_id       = "o-abc123def4"
   kms_key_arn           = "arn:aws:kms:us-east-1:333333333333:key/aaaa"
   replica_kms_key_arn   = "arn:aws:kms:us-west-2:333333333333:key/bbbb"
-  retention_days        = 2190
+  retention_days        = 2557
   writer_principal_arns = ["arn:aws:iam::111111111111:role/audit-archiver"]
 
   anchor_writer_principal_arns = ["arn:aws:iam::111111111111:role/worker"]
@@ -43,7 +43,7 @@ run "object_lock_compliance_on_archive_and_replica" {
     error_message = "compliance mode on both"
   }
   assert {
-    condition     = one(aws_s3_bucket_object_lock_configuration.archive.rule).default_retention[0].days == 2190
+    condition     = one(aws_s3_bucket_object_lock_configuration.archive.rule).default_retention[0].days == 2557
     error_message = "retention comes from the variable"
   }
   assert {
@@ -64,7 +64,23 @@ run "backup_vaults_locked" {
   }
 }
 
-run "retention_has_no_default" {
+run "compliance_retention_below_seven_years_rejected" {
+  command = plan
+  variables {
+    retention_days = 2190
+  }
+  expect_failures = [var.retention_days]
+}
+
+run "governance_throwaway_may_use_short_retention" {
+  command = plan
+  variables {
+    retention_days   = 1
+    object_lock_mode = "GOVERNANCE"
+  }
+}
+
+run "retention_zero_rejected" {
   command = plan
   variables {
     retention_days = 0

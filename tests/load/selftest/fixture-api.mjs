@@ -24,16 +24,21 @@ http
         if (u === '/api/v1/availability/search')
           return res.end('{"slots":[],"availabilityStale":false}');
         if (u === '/api/v1/holds') {
-          const k = JSON.stringify(JSON.parse(body || '{}').startsAt);
-          if (seen.has(k) && req.headers['x-race']) {
-            res.statusCode = 409;
-            return res.end('{"alternatives":[]}');
+          const k = JSON.parse(body || '{}').startsAt;
+          // Race slots (year 2031 in selftest/ids.json): exactly one hold wins, the rest get 409 with alternatives.
+          if (String(k).startsWith('2031-')) {
+            if (seen.has(k)) {
+              res.statusCode = 409;
+              return res.end('{"alternatives":[]}');
+            }
+            seen.add(k);
           }
           res.statusCode = 201;
           return res.end(
             '{"reservationId":"00000000-0000-4000-8000-000000000001","expiresAt":"2030-01-01T00:00:00Z"}',
           );
         }
+        if (u.endsWith('/video-session/join')) return res.end('{"attendeeToken":"fixture-token"}');
         if (u.endsWith('/confirm')) return res.end('{}');
         if (u.endsWith('/notes')) {
           res.statusCode = 201;

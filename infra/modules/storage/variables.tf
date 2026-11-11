@@ -43,7 +43,7 @@ variable "quarantine_expiry_days" {
 }
 
 variable "noncurrent_version_days" {
-  description = "Noncurrent versions of clean documents are kept this long (DEVOPS-PLAN 10.1: 90 days; legal hold per policy)."
+  description = "Noncurrent versions of clean documents are kept this long (DEVOPS-PLAN 10.1: 90 days; legal hold per policy). The medical record itself is kept 10 years after the last encounter by the application, not by this bucket rule (infra/RETENTION.md)."
   type        = number
   default     = 90
 }

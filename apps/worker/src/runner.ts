@@ -75,6 +75,10 @@ export function wrapTask(name: string, task: Task, log: Logger): Task {
         errorName: err instanceof Error ? err.name : typeof err,
         sqlstate: (err as { code?: unknown } | null)?.code,
       });
+      // The library gives up after `max_attempts`; that failure is the job's last, so it is dead. One line per dead job,
+      // id and type only (no payload, no error text): the alarm for `telehealth.close_meeting` filters on `event`.
+      if (helpers.job.attempts >= helpers.job.max_attempts)
+        l.error('job dead', { event: 'job_dead', maxAttempts: helpers.job.max_attempts });
       throw err; // the library schedules the retry with back-off (maxAttempts of the job type)
     }
   };

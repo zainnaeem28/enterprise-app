@@ -8,7 +8,11 @@ variable "flow_log_bucket_name" {
 }
 
 variable "retention_days" {
-  description = "Flow-log retention. ASSUMPTION: 400 days pending the retention decision in the compliance requirements; do not treat as approved."
+  description = "Network flow-log retention: 1 year (owner ruling C item 2; † counsel confirmation pending; infra/RETENTION.md)."
   type        = number
-  default     = 400
+  default     = 365
+  validation {
+    condition     = var.retention_days >= 365
+    error_message = "retention_days must be at least 365 (flow logs are kept 1 year)."
+  }
 }

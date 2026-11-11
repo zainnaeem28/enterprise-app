@@ -3,3 +3,9 @@ dist/
 *.tsbuildinfo
 .junit/
 reports/
+
+# OpenTofu/Terraform: provider caches and state, at any depth (keep .terraform.lock.hcl tracked)
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl.tmp
