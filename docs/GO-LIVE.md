@@ -238,6 +238,7 @@ Known gaps with no code yet, so they stay on this list rather than being configu
   with the SES event destination.
 - The partner identity pool has no sign-in code in R1 (partner portal is R2).
 - The alarm for dead `telehealth.close_meeting` jobs: the worker log line is not in the repository.
+- The payload KMS key replica is `aws_kms_replica_key.payload_recovery` in `infra/accounts/production/adapters.tf` (same policy, `aws.recovery`); authored only, not applied.
 - Recovery-Region role policies and the VAPID secret replica are now IaC (`infra/modules/aws-adapters/recovery.tf`, production root) but **authored only,
   never applied**. Remaining: nothing was exercised by a task in the recovery Region; upload, package/export, runtime integration secrets, SES/SMS,
   the anchor archive and malware scanning are not granted there (no replica or Region-bound); whether the secret replica needs its own resource

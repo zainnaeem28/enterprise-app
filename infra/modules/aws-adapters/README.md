@@ -30,6 +30,8 @@ names a bucket prefix, key, secret path, identity or meeting ARN. Secret ARNs fo
 
 ## Recovery Region (R1-GAP-4, authored only)
 
+The payload key replica itself (`aws_kms_replica_key.payload_recovery`, provider `aws.recovery`, primary key's policy via `payload_key_policy_json`) is declared in the production root, `infra/accounts/production/adapters.tf`, not in this module. Authored only, not applied.
+
 `recovery.tf`, active when `recovery_region` is set (production root only). IAM roles are global, and the payload key replica carries the
 primary key policy that names these roles, so the primary roles double as the recovery roles: the trust policy also admits ECS tasks of the
 recovery Region (same account), and a second inline policy `recovery-region` per role names the replicas only (documents replica bucket
