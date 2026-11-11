@@ -88,6 +88,8 @@ jobs:
       CI_TOOLS_DIR: ${{ github.workspace }}/.ci-tools
     steps:
       - name: Validate inputs
+        env:
+          LOADTEST_AWS_ROLE_ARN: ${{ vars.LOADTEST_AWS_ROLE_ARN }}
         run: |
           set -euo pipefail
           [[ "$RUN_ID" =~ ^[a-z0-9][a-z0-9-]{2,23}$ ]] || { echo "bad run_id" >&2; exit 1; }
@@ -95,7 +97,7 @@ jobs:
           [[ "$TTL_HOURS" =~ ^([1-9]|1[0-9]|2[0-4])$ ]] || { echo "ttl_hours must be 1-24" >&2; exit 1; }
           [[ "$CEILING" =~ ^[0-9]+(\.[0-9]+)?$ ]] && awk -v c="$CEILING" 'BEGIN{exit !(c>0)}' \
             || { echo "run_cost_ceiling_usd must be a positive number" >&2; exit 1; }
-          [ -n "${{ vars.LOADTEST_AWS_ROLE_ARN }}" ] || { echo "environment variable LOADTEST_AWS_ROLE_ARN not set" >&2; exit 1; }
+          [ -n "$LOADTEST_AWS_ROLE_ARN" ] || { echo "environment variable LOADTEST_AWS_ROLE_ARN not set" >&2; exit 1; }
           echo "EXPIRES_AT=$(date -u -d "+${TTL_HOURS} hours" +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
           echo "START_DATE=$(date -u +%F)" >> "$GITHUB_ENV"
 
@@ -112,7 +114,9 @@ jobs:
           echo "$CI_TOOLS_DIR/bin" >>"$GITHUB_PATH"
 
       - name: Assume the load-test role (OIDC)
-        run: scripts/deploy/aws-login.sh "${{ vars.LOADTEST_AWS_ROLE_ARN }}" "loadtest-${RUN_ID}" 14400
+        env:
+          LOADTEST_AWS_ROLE_ARN: ${{ vars.LOADTEST_AWS_ROLE_ARN }}
+        run: scripts/deploy/aws-login.sh "$LOADTEST_AWS_ROLE_ARN" "loadtest-${RUN_ID}" 14400
 
       - name: Install pinned k6
         run: tests/load/harness/install-k6.sh "$RUNNER_TEMP/k6"
@@ -123,11 +127,16 @@ jobs:
         run: tests/load/harness/guard-cost.sh "$RUN_ID" "$CEILING" "$START_DATE"
 
       - name: Fetch non-secret variables and production profile
+        env:
+          LOADTEST_TFVARS_S3_URI: ${{ vars.LOADTEST_TFVARS_S3_URI }}
+          LOADTEST_PROD_PROFILE_S3_URI: ${{ vars.LOADTEST_PROD_PROFILE_S3_URI }}
+          LOADTEST_STATE_BUCKET: ${{ vars.LOADTEST_STATE_BUCKET }}
+          GITHUB_ACTOR_NAME: ${{ github.actor }}
         run: |
           set -euo pipefail
-          aws s3 cp "${{ vars.LOADTEST_TFVARS_S3_URI }}" "$RUNNER_TEMP/common.tfvars.json"
-          aws s3 cp "${{ vars.LOADTEST_PROD_PROFILE_S3_URI }}" "$RUNNER_TEMP/prod-profile.json"
-          jq -n --arg r "$RUN_ID" --arg e "$EXPIRES_AT" --arg o "github:${{ github.actor }}" --argjson c "$CEILING" \
+          aws s3 cp "$LOADTEST_TFVARS_S3_URI" "$RUNNER_TEMP/common.tfvars.json"
+          aws s3 cp "$LOADTEST_PROD_PROFILE_S3_URI" "$RUNNER_TEMP/prod-profile.json"
+          jq -n --arg r "$RUN_ID" --arg e "$EXPIRES_AT" --arg o "github:$GITHUB_ACTOR_NAME" --argjson c "$CEILING" \
             '{run_id:$r, expires_at:$e, owner:$o, run_cost_ceiling_usd:$c}' > "$RUNNER_TEMP/run.tfvars.json"
           secret=$(openssl rand -hex 32); echo "::add-mask::$secret"
           echo "TF_VAR_origin_verify_secret=$secret" >> "$GITHUB_ENV"
@@ -135,7 +144,7 @@ jobs:
           cat > "$ROOT/backend_override.tf" <<TF
           terraform {
             backend "s3" {
-              bucket       = "${{ vars.LOADTEST_STATE_BUCKET }}"
+              bucket       = "${LOADTEST_STATE_BUCKET}"
               key          = "loadtest/${RUN_ID}/terraform.tfstate"
               region       = "us-east-2"
               use_lockfile = true
@@ -191,10 +200,9 @@ jobs:
       # prints one verdict table). TC-PERF-05 is Lighthouse, not here. Inputs the seeder does not yet emit (sessions, ids, API URL) come
       # from the variables below; if any is missing the step FAILS (nothing measured). A case that cannot run (no vendor sandbox, no
       # read-only DB URL) is NOT_RUN and also fails the run: it is never a pass. No disruption (TC-REC OPS part) is injected here.
-      # continue-on-error so the cost guard below still runs; "Scenario verdict" then fails the job.
+      # A failing step fails the job; the report upload, cost guard and teardown below run under if: always().
       - name: Run load scenarios
         id: scenarios
-        continue-on-error: true
         env:
           ENV_NAME: loadtest
           BASE_URL: ${{ vars.LOADTEST_BASE_URL }}
@@ -230,13 +238,8 @@ jobs:
           retention-days: 30
 
       - name: Cost guard (after tests)
+        if: always() && steps.scenarios.conclusion != 'skipped'
         run: tests/load/harness/guard-cost.sh "$RUN_ID" "$CEILING" "$START_DATE"
-
-      - name: Scenario verdict
-        if: always() && steps.scenarios.outcome == 'failure'
-        run: |
-          echo "::error title=load scenarios not green::At least one scenario failed or was NOT_RUN (see the verdict table). Not a pass."
-          exit 1
 
       # Always runs once the job is past input checks and init was attempted, including after
       # failure, cancellation by timeout, and a failed apply (partial resources).

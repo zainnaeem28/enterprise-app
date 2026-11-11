@@ -81,7 +81,9 @@ jobs:
           echo "$CI_TOOLS_DIR/bin" >>"$GITHUB_PATH"
 
       - name: Assume the reaper role (OIDC)
-        run: scripts/deploy/aws-login.sh "${{ vars.LOADTEST_REAPER_AWS_ROLE_ARN }}" "loadtest-reaper" 3600
+        env:
+          LOADTEST_REAPER_AWS_ROLE_ARN: ${{ vars.LOADTEST_REAPER_AWS_ROLE_ARN }}
+        run: scripts/deploy/aws-login.sh "$LOADTEST_REAPER_AWS_ROLE_ARN" "loadtest-reaper" 3600
 
       - name: Find expired resources
         id: find
