@@ -1,0 +1,4 @@
+HEAAA-833 evidence (candidate b59cd0f): composeWorker registers email/sms receipt handlers.
+dbtest apps/worker/src/compose-receipt.dbtest.ts: 1/1 pass (embedded PostgreSQL 17)
+worker tsc --noEmit clean; node --test dist/**/*.test.js 141/141 pass; eslint clean.
+Limitation: production PayloadOpener/PayloadSealer (KMS, C-01) not in repo; test uses test-only AES-GCM opener.
