@@ -93,28 +93,7 @@ describe('TC-PR', () => {
     () => {},
   );
 
-  test('TC-PR-03 deletion request is recorded and visible to compliance; nothing is deleted (D-8 open)', async () => {
-    const c = await compliance();
-    const p = await newPatient();
-    const r = await p.client.post('/api/v1/privacy-requests', { kind: 'deletion' });
-    assert.equal(r.status, 201);
-    assert.equal(r.json.status, 'blocked_d8', 'recorded and blocked on D-8');
-    const list = await c.get(`/api/v1/admin/privacy-requests?status=blocked_d8`);
-    assert.ok(
-      list.json.items.some((x) => x.id === r.json.id),
-      'compliance sees it',
-    );
-    const approve = await c.post(`/api/v1/admin/privacy-requests/${r.json.id}/decide`, {
-      decision: 'approve',
-    });
-    assert.ok(
-      approve.status >= 400,
-      `a deletion cannot be approved while D-8 is open (${approve.status})`,
-    );
-    const still = await sql(`SELECT status FROM patient.patient WHERE id=$1`, [p.id]);
-    assert.equal(still.rows[0].status, 'active', 'no patient data was deleted');
-    // what deletion MEANS is BLOCKED on D-8.
-  });
+  // TC-PR-03: superseded by ruling-c.test.mjs (HEAAA-805, owner ruling 2026-11-11 C)
 
   test("TC-PR-04 another patient's request and export cannot be read or downloaded", async () => {
     const a = await newPatient();

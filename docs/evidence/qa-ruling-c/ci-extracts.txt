@@ -1,0 +1,75 @@
+# extracts (no raw logs: generated logs contain test-fixture strings that gitleaks flags)
+## unit
+boundary.xml: 1 tests, 0 skipped, 0 failed
+_ehr_api/api.xml: 363 tests, 1 skipped, 0 failed
+_ehr_app-shell/app-shell.xml: 89 tests, 0 skipped, 0 failed
+_ehr_cms/cms.xml: 92 tests, 0 skipped, 0 failed
+_ehr_kernel/kernel.xml: 164 tests, 2 skipped, 0 failed
+_ehr_patient/patient.xml: 211 tests, 0 skipped, 0 failed
+_ehr_site/site.xml: 76 tests, 0 skipped, 0 failed
+_ehr_staff/staff.xml: 298 tests, 0 skipped, 0 failed
+_ehr_ui/ui.xml: 175 tests, 0 skipped, 0 failed
+_ehr_worker/worker.xml: 194 tests, 3 skipped, 0 failed
+::error::6 skipped test(s): skipped tests count as failure
+## integration-db
+::error::N-1: the previous release (r209) does not pass against the candidate schema
+::error::integration-db FAILED
+::error::suite api FAILED
+::error::suite api has 1 failing test(s)
+api: 1082 test(s), 1 failure(s), 0 skipped, 2 accepted pin failure(s)
+api: 1138 test(s), 1 failure(s), 0 skipped
+database suites: 4 suite(s), 1347 test(s)
+database suites: 4 suite(s), 1404 test(s)
+db-foundation: 120 test(s), 0 failure(s), 0 skipped
+db-foundation: 120 test(s), 0 failure(s), 0 skipped, 3 accepted pin failure(s)
+kernel: 23 test(s), 0 failure(s), 0 skipped
+worker: 122 test(s), 0 failure(s), 0 skipped
+worker: 123 test(s), 0 failure(s), 0 skipped
+✖ A-4 messaging definers (migrations 2203/2204): T-1..T-10 of Cybersecurity, I-10, I-11 (2907.140517ms)
+✖ I-10: M-5-definer passes with 36 entries (the 28 above and the eight SEC03-F11 merge-write definers of 2503, HEAAA-687); is_creator does not exist; patient_scope_owner holds only the four participant columns (288.929
+✖ T-RA-29: catalog (513.946695ms)
+✖ T2: app_owner holds no EXECUTE on the guard, the ten refused functions are gone, all 33 tables carry the trigger (56.59444ms)
+✖ app_api has no UPDATE of identity columns beyond the 21.2 list; app_worker none on principal or person (7.186185ms)
+✖ catalog (M-1, M-2, M-3, M-5, 21.3 lists) (1949.304004ms)
+✖ consent and questionnaire templates: drafts, publish, red-flag sign-off (345.624099ms)
+✖ consent and questionnaire templates: drafts, publish, red-flag sign-off (428.929009ms)
+✖ consent text: required, closed body, code-point limits, legacy textless draft cannot publish (101.400429ms)
+✖ consent text: required, closed body, code-point limits, legacy textless draft cannot publish (127.815814ms)
+✖ every identity table has ENABLE and FORCE row level security, a data class and no PUBLIC policy (3.220155ms)
+✖ failing tests:
+✖ owners, SECURITY DEFINER, search_path, EXECUTE lists and inventory (2.568799ms)
+✖ the single merge write guard (T1-T4 of HEAAA-190, extended by HEAAA-310) (1154.157696ms)
+## secrets (git range origin/dev..HEAD)
+gitleaks dir (working tree)
+10:19PM INF scanned ~73850182 bytes (73.85 MB) in 2.84s
+10:19PM WRN leaks found: 154
+## deps
+non-blocking: deepmerge@4.3.1 GHSA-gcqx-w48m-w2h4 (deepmerge mergeObject() allows prototype poisoning of returned objects): severity 5.3, no fix
+osv: 1 package(s) with findings, 1 vulnerability, none blocking
+## sast
+::error::semgrep error: Internal matching error Internal matching error when running semgrep.rules.yaml.github-actions.security.gha-curl-pipe-shell.gha-curl-pipe-shell on .github/workflows/loadtest-re
+::error::semgrep error: PartialParsing,[object Object] Syntax error at line .github/workflows/loadtest-reaper.yml:84:
+::error::semgrep error: PartialParsing,[object Object] Syntax error at line .github/workflows/loadtest-run.yml:97:
+::error::semgrep error: PartialParsing,[object Object] Syntax error at line .github/workflows/loadtest-run.yml:115:
+## bundle-gzip
+useLoad-DEt8NMQ2.js: 387 bytes gzip (lazy)
+initial JS gzip: 97566 / 122880
+largest lazy chunk gzip: preconsult-DF0FRywl.js 15278 / 30720
+total JS gzip: 180504 / 196608
+## a11y-smoke
+  ✘  1 [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:57:9 › desktop 1280 › sign-in page (signed-out visitor redirected from /) (5.2s)
+  ✘  2 [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:68:9 › desktop 1280 › server error state (5.1s)
+  ✓  3 [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:83:9 › desktop 1280 › blocking release dialog (526ms)
+  ✓  4 [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:96:9 › desktop 1280 › non-blocking release bar (signed in) (449ms)
+  ✘  5 [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:57:9 › phone 360 › sign-in page (signed-out visitor redirected from /) (5.2s)
+  ✘  6 [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:68:9 › phone 360 › server error state (5.1s)
+  ✓  7 [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:83:9 › phone 360 › blocking release dialog (551ms)
+  ✓  8 [a11y] › ../../tests/e2e/smoke/a11y.spec.ts:96:9 › phone 360 › non-blocking release bar (signed in) (429ms)
+## format
+[warn] apps/api/src/modules/telehealth/README.md
+[warn] apps/cms/migrations/20261111_190000_site_content_npp.json
+[warn] infra/accounts/README.md
+[warn] infra/modules/aws-adapters/README.md
+[warn] infra/RETENTION.md
+[warn] scripts/ci/migration-check/README.md
+[warn] Code style issues found in 6 files. Run Prettier with --write to fix.

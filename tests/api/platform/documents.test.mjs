@@ -4,18 +4,7 @@
 // (fixtureDocument), which does NOT exercise the upload path; the evidence says so.
 import { test, describe, after } from 'node:test';
 import assert from 'node:assert/strict';
-import {
-  newPatient,
-  newStaff,
-  login,
-  sql,
-  fixtureDocument,
-  closeAdmin,
-  until,
-  A1,
-  setSetting,
-  principalId,
-} from './lib/world.mjs';
+import { newPatient, newStaff, sql, fixtureDocument, closeAdmin, until, A1 } from './lib/world.mjs';
 
 after(() => closeAdmin());
 const STORE =
@@ -142,41 +131,5 @@ describe('TC-DOC', () => {
     assert.ok(logged, 'the refused attempt is audited as denied');
   });
 
-  test('TC-DOC-07 deletion allowed only after the retention period and with no hold (D1 old, D2 young, D3 old+hold)', async () => {
-    const p = await newPatient();
-    const mro = await newStaff([['medical_records', A1]], { name: 'STF-MRO' });
-    const fd = await newStaff([['front_desk', A1]], { name: 'STF-FD' });
-    const D1 = await fixtureDocument({ patientId: p.id, retentionUntil: '2000-01-01' });
-    const D2 = await fixtureDocument({ patientId: p.id, retentionUntil: '2999-01-01' });
-    const D3 = await fixtureDocument({ patientId: p.id, retentionUntil: '2000-01-01' });
-    const h = await mro.client.post(`/api/v1/documents/${D3}/legal-holds`, {
-      action: 'placed',
-      reason: 'QA-05 hold on the old document',
-    });
-    assert.equal(h.status, 201);
-    const r2 = await fd.client.post(`/api/v1/documents/${D2}/deletion-requests`, {});
-    assert.equal(r2.status, 409);
-    assert.equal(r2.json?.code, 'documents.retention', 'D2: retention period still open');
-    const r1 = await fd.client.post(`/api/v1/documents/${D1}/deletion-requests`, {});
-    assert.equal(r1.status, 201, `D1 request recorded ${r1.status} ${r1.text.slice(0, 200)}`);
-    assert.equal(r1.json.outcome, 'pending');
-    const dec = await mro.client.post(`/api/v1/deletion-requests/${r1.json.id}/decide`, {});
-    assert.equal(dec.status, 200, `decide ${dec.status} ${dec.text.slice(0, 200)}`);
-    assert.equal(dec.json.outcome, 'deleted');
-    const r3 = await fd.client.post(`/api/v1/documents/${D3}/deletion-requests`, {});
-    assert.equal(r3.status, 409);
-    assert.equal(
-      r3.json?.code,
-      'documents.legal_hold',
-      'D3: the hold wins over an ended retention period',
-    );
-    const st = await sql(`SELECT id, status FROM documents.document WHERE id = ANY($1)`, [
-      [D1, D2, D3],
-    ]);
-    const by = Object.fromEntries(st.rows.map((x) => [x.id, x.status]));
-    assert.deepEqual([by[D1], by[D2], by[D3]], ['deleted', 'confirmed', 'confirmed']);
-    // Limitation: the retention period is a document column set at confirmation; the controllable clock of the written case is
-    // replaced by writing retention_until directly. Retention from the setting (document_retention_years, no default; D-8) is
-    // not asserted.
-  });
+  // TC-DOC-07: superseded by ruling-c.test.mjs (HEAAA-805, owner ruling 2026-11-11 C)
 });

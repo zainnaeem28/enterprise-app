@@ -412,9 +412,9 @@ These cases run against the real PostgreSQL roles and policies. A test that only
 | TC-TH-03 | X | `PAT-02` | Other patient's visit link | Join someone else's session | Refused; logged | P0 | N, SEC | AUTO |
 | TC-TH-04 | BR-33 | `PAT-01`, `STF-DR-A1` | Video vendor sandbox switched to "unavailable" (vendor outage simulation); a video appointment starting now | 1. Both users click "Join"<br>2. Read the messages shown<br>3. Open the operations dashboard<br>4. Restore the vendor and rejoin | Visible failure, retry/fallback message, no data loss; operations dashboard | P1 | E | AUTO |
 | TC-TH-05 | NFR | `PAT-01` | Join link L for a video appointment at 10:00 (window opens 10 min before; closes at the end); controllable clock | 1. Open L at 09:40<br>2. Open L at 09:55 and join<br>3. End the visit; open L again at 10:45 | 09:40: refused "too early" with the start time. 09:55: joins. 10:45: refused; no new session; event logged | P1 | N | AUTO |
-| TC-TH-06 | RA-R1-28, TL-1 | `PAT-01` | Clinician's licensed states; D-2 not decided (states from D-2) | Book a video visit with a stated location outside the licensed states | Refused or flagged at booking. In-state: allowed. Cases use placeholder states; **real state values wait for D-2** (`BLOCKED` for production values) | P0 | N | AUTO |
-| TC-TH-07 | RA-R1-28 | `PAT-01` | `PAT-01` with a booked video visit with `STF-DR-A1` (licensed in states X,Y); placeholder state list; join page open | 1. At join, answer "I am in Z" (outside X,Y)<br>2. Answer "I am in X" and join | Patient must confirm current location; outside licensed states refuses/flags | P0 | N | AUTO |
-| TC-TH-08 | RA-R1-28 | `ADM-1` (elevated), `PAT-01` | `PAT-01` booked in state X with `STF-DR-A1` (licensed in X) | 1. Remove X from `STF-DR-A1`'s licensed states<br>2. `PAT-01` opens the join page<br>3. Re-add X and open again | Step 2: refused/flagged with a safe message (no PHI). Step 3: allowed. Both changes audited | P2 | E | AUTO |
+| TC-TH-06 | RA-R1-28, TL-1 | `PAT-01` | Clinician's licensed states; D-2 not decided (states from D-2) | Book a video visit with a stated location outside the licensed states | Refused or flagged at booking. In-state: allowed. **Executed (HEAAA-805, ruling C item 4)** with configured fixture states `ZA` (licensed, operating), `ZB` (operating, not licensed), `ZC` (not an operating state): the organisation's operating states and the clinician's licensed states are set through the admin API, not hard-coded. **Real state values stay on the go-live list** (entered by the organisation) | P0 | N | AUTO |
+| TC-TH-07 | RA-R1-28 | `PAT-01` | `PAT-01` with a booked video visit with `STF-DR-A1` (licensed in states X,Y); placeholder state list; join page open | 1. At join, answer "I am in Z" (outside X,Y)<br>2. Answer "I am in X" and join | Patient must confirm current location; outside licensed states refuses/flags. **Executed with fixture states (HEAAA-805)**; real states stay on the go-live list | P0 | N | AUTO |
+| TC-TH-08 | RA-R1-28 | `ADM-1` (elevated), `PAT-01` | `PAT-01` booked in state X with `STF-DR-A1` (licensed in X) | 1. Remove X from `STF-DR-A1`'s licensed states<br>2. `PAT-01` opens the join page<br>3. Re-add X and open again | Step 2: refused/flagged with a safe message (no PHI). Step 3: allowed. Both changes audited. **Executed with fixture states (HEAAA-805)**: the licence is removed and re-added by an administrator through the admin API; the join window is opened by moving the visit's occupancy period (clock control) | P2 | E | AUTO |
 
 ### 9.2 Audit (RA-R1-11, 12; AC-36; NFR-13)
 
@@ -428,7 +428,7 @@ These cases run against the real PostgreSQL roles and policies. A test that only
 | TC-AU-06 | RA-R1-12 | `CMP-1` | `CMP-1` signed in and elevated; audit events from TC-AU-01 and TC-SEC-12 exist | Use the audit viewer filters: who, what, when, from where | Shows the required fields; PHI not shown | P1 | P | AUTO |
 | TC-AU-07 | SA-F-11 | `CMP-1` | Large result | Request an export over the size limit | Runs as an asynchronous job with a size limit; notification when ready; exported file audited; rate limit | P1 | B | AUTO |
 | TC-AU-08 | SAR-10 | DBA test role (owner level) and `CMP-1` | `ENV-INT/ci`; audit anchoring job has run at least once | 1. Note the latest anchor value<br>2. As DB owner change one stored audit row<br>3. Run the anchor check job<br>4. Open the alerts of `CMP-1` | Mismatch detected, alert `audit anchor mismatch` raised | P0 | SEC | AUTO |
-| TC-AU-09 | NFR-13 | Operations owner (provides) and QA (reads) | Retention period decided at G2 and set in configuration | 1. Read the configured retention value for audit and clinical records<br>2. Run the archive job on test data older than the retention value<br>3. Verify archived rows are still retrievable by `CMP-1` and that rows younger than the value are untouched | The configured value equals the G2 decision; archive moves only older rows; retrieval of archived rows works and is audited. `BLOCKED` until the retention value is decided | P1 | P | OPS |
+| TC-AU-09 | NFR-13 | Operations owner (provides) and QA (reads) | Retention period decided at G2 and set in configuration | 1. Read the configured retention value for audit and clinical records<br>2. Run the archive job on test data older than the retention value<br>3. Verify archived rows are still retrievable by `CMP-1` and that rows younger than the value are untouched | The configured value equals the ruling C item 2 values (conservative product defaults, **† counsel confirms before go-live**); the daily retention job removes only what is past its retention; retrieval of an old audit row works and is audited. **Executed in part (HEAAA-805)**: steps 1 and 3 and the retention job of step 2 ran; the audit-trail archive move is infrastructure (Object Lock bucket, DO-09b) that does not exist in ci and is `not run`, see 9.5 | P1 | P | OPS |
 | TC-AU-10 | 8.1 | Load generator | `ENV-LOAD`, `VOL-1` | 1. Duplicate of TC-PERF-04: not executed separately | Removed as a separate case: the audit write load is owned by **TC-PERF-04**. This ID is kept so references do not break, and carries no result of its own | P0 | L | n/a (owned by TC-PERF-04) |
 
 ### 9.3 Documents (RA-R1-13; J-19)
@@ -441,7 +441,7 @@ These cases run against the real PostgreSQL roles and policies. A test that only
 | TC-DOC-04 | AC-31, X-18 | `CMP-1` | Document on legal hold | Request deletion | Refused with reason recorded | P0 | N | AUTO |
 | TC-DOC-05 | CN-12 | `PAT-01` and `PAT-02` | `PAT-01` has an uploaded clean file F1 | 1. Request an upload URL and note it goes to the object store, not the API<br>2. Upload using it<br>3. Wait until the URL has expired and try again<br>4. Use `PAT-01`'s URL to read F1 as `PAT-02` | Uploads use pre-signed URLs and never pass through the API; URLs expire; one URL cannot read another's file | P0 | SEC | AUTO |
 | TC-DOC-06 | AZ | `PAT-02` | Another patient's file ID | Download by ID | `404`; logged | P0 | N, SEC | AUTO |
-| TC-DOC-07 | BR-29 | `CMP-1` | Document D1 older than the retention period with no hold; document D2 younger; D3 older with legal hold; controllable clock | 1. Request deletion of D2<br>2. Request deletion of D1<br>3. Request deletion of D3 | Allowed only after the legal period and no hold | P1 | B | AUTO |
+| TC-DOC-07 | BR-29 | `CMP-1` | Document D1 older than the retention period with no hold; document D2 younger; D3 older with legal hold; controllable clock | 1. Request deletion of D2<br>2. Request deletion of D1<br>3. Request deletion of D3 | Allowed only after the legal period and no hold. **Executed (HEAAA-805)**: the period comes from the configured value (confirmation date + 10 years, ruling C item 2 †); the clock is the date column the rule reads | P1 | B | AUTO |
 | TC-DOC-08 | Scanner outage | `PAT-01` | Malware scanner service stopped on `ENV-INT/staging` | 1. Stop the scanner<br>2. Upload a clean PDF<br>3. Try to open it as `PAT-01` and as `STF-DR-A1`<br>4. Restart the scanner and wait for the scan | File stays unavailable; visible failure; no bypass | P0 | E, SEC | AUTO |
 
 ### 9.4 Privacy requests (RA-R1-14; J-21)
@@ -450,9 +450,23 @@ These cases run against the real PostgreSQL roles and policies. A test that only
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | TC-PR-01 | RA-R1-14 | `PAT-01` | `PAT-01` signed in | 1. Open notification preferences<br>2. Turn SMS off, email on<br>3. Save and reload | Saved and respected (TC-NT-08) | P2 | P | AUTO |
 | TC-PR-02 | RA-R1-14 | `PAT-01` | `PAT-01` signed in with MFA; chart `SEED-CHART-1` | 1. Request a data export<br>2. Pass the identity check<br>3. Observe the status<br>4. Open the finished export from the portal | Request recorded; identity verified; compliance sees it; export assembled asynchronously in chunks, each audited; delivered via the portal, no PHI in email | P1 | P | AUTO |
-| TC-PR-03 | RA-R1-14 | `PAT-01` | `PAT-01` signed in; **D-8 open** | 1. Request account deletion<br>2. Confirm identity<br>3. Open the request as `CMP-1` | Request recorded and visible to compliance. No data is deleted. What deletion means is `BLOCKED` on D-8 | P1 | P | AUTO |
+| TC-PR-03 | RA-R1-14 | `PAT-01` | `PAT-01` signed in; D-8 decided by ruling C item 1 (**† counsel confirms before go-live**); synthetic record, preferences, one accepted document under legal hold, one unaccepted upload | 1. Request account deletion<br>2. Confirm identity<br>3. Approve as `CMP-1`; the worker executes | Request recorded and visible to compliance. After approval: account deactivated at once (old session refused, no new sign-in), data outside the medical record deleted, medical record and audit trail kept until retention ends, nothing under legal hold deleted, the statement stored with what was deleted, what is kept and until when (no PHI). A refusal deletes nothing. **Executed (HEAAA-805)**; sending the statement e-mail is `not run` (no provider in ci, C-11), see 9.5 | P1 | P | AUTO |
 | TC-PR-04 | RA-R1-14 | `PAT-02` | `PAT-01` and `PAT-02` both have exports | 1. As `PAT-02` request the export belonging to `PAT-01` by its ID<br>2. As `PAT-02` download `PAT-01`'s export file | Refused | P0 | N, SEC | AUTO |
 | TC-PR-05 | RA-R1-14 | `CMP-1` | `CMP-1`; a privacy request from `PAT-01` whose identity check is not complete | 1. Open the request<br>2. Try to process the export<br>3. Record the reason for refusal | Refused with reason recorded | P1 | N | AUTO+H |
+
+### 9.5 Execution record: cases unblocked by owner ruling C (HEAAA-805)
+
+Source of truth: owner ruling 2026-11-11 (C), `HEAAA-33` comment 56261f7e-58eb-4b31-a1d3-81c5fc2240cb. The values are conservative product defaults delegated by the owner, **not legal or clinical advice**; every item marked † needs counsel confirmation before go-live, and each value is configuration, so a later answer is a settings change plus a rerun of the cases below. Real state values and the † confirmations stay on the go-live list (`docs/GO-LIVE.md`).
+
+Executed by `tests/api/platform/ruling-c.test.mjs` against the real built API and worker and a throwaway PostgreSQL 17 (ENV-INT/ci). Candidate, tool versions, raw output and what was not run: `docs/evidence/qa-ruling-c/README.md`.
+
+| Case | State | What ran | Not run, and why |
+| --- | --- | --- | --- |
+| TC-PR-03 | Executed, pass | Request, identity check, approval, real worker execution; deactivation; deleted and kept classes; legal hold; stored statement; refusal path | Statement e-mail not sent: the e-mail provider is not configured in ci (C-11). The stored statement is what was verified |
+| TC-AU-09 | Executed in part, pass for what ran | Step 1: all 13 retention values equal the ruling (product CLI output, a bad override is reported by key name only). Step 2: the real daily job purged the record past retention, left a younger one and a held one, never removed an audit row, wrote a no-PHI report. Step 3: an 8-year-old audit row is retrievable by `CMP-1` and the retrieval is audited | The archive move of audit rows to the Object Lock bucket (DO-09b) does not exist in ci: **not run**. Backup, log and flow-log retention (DevOps keys) are configuration read, not exercised here. The case type stays OPS for those |
+| TC-DOC-07 | Executed, pass | Confirmation sets retention to today + 10 years; D2 inside the period refused; D1 past it deleted; D3 past it but held refused; after release D3 accepted | The clock is the date column the rule reads (no real time passes) |
+| TC-PP-03, TC-PP-04, TC-PP-05, RA-R1-20b | Executed, pass | Invite by e-mail, accept with the code, wrong code, default scope, per-scope grants and withdrawal, patient revocation, proxy leaving, staff guardian link after a relationship document, narrowing 13-17, valid-until = day before the 18th birthday, age-out by the real daily job, staff revocation, audit | The invitation code mail and the 30-day notice mail are **not run** (no provider in ci, C-10). Where a case needs the code the test writes the salted hash of a code it chose, in place of what the worker would have mailed. The notice selection is not observed; the test asserts that nothing is recorded as sent |
+| TC-TH-06, TC-TH-07, TC-TH-08 | Executed, pass (fixture states) | Operating states and licensed states set through the admin API; booking refused for an unlicensed and for a non-operating state; location confirmation; licence removed and re-added by an administrator, join refused with a safe message, both changes audited | Real operating states and licences are entered by the organisation at go-live (go-live list). The visit start is moved to now (clock control) so the join window is open |
 
 ## 10. Admin, brand site, patient portal, messaging, merge and API conventions
 
@@ -495,9 +509,9 @@ These cases run against the real PostgreSQL roles and policies. A test that only
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | TC-PP-01 | RA-R1-19 | `PAT-01` | `PAT-01` signed in | 1. Edit demographics, emergency contact, preferred pharmacy, language<br>2. Upload an insurance card image<br>3. Save and reload<br>4. Open the audit view as `CMP-1` | Changes visible and audited | P1 | P | AUTO |
 | TC-PP-02 | RA-R1-19 | `PAT-01` | `PAT-01`; `SEED-ATTACK` strings | Invalid input (dates in future, long strings, scripts from `SEED-ATTACK`) | Rejected or safely escaped; no stored script | P1 | N, SEC | AUTO |
-| TC-PP-03 | RA-R1-20a | `PRX-01` | `PAT-03` | Default proxy view | Appointments only (see TC-AZ-14) | P0 | P | AUTO |
-| TC-PP-04 | J-03 | `PRX-01` | `PRX-01` signed in; `PAT-03` not yet linked or linked pending | 1. Request a proxy link for `PAT-03`<br>2. Check the request status as `PRX-01`<br>3. Open the request as `STF-FD-A` | Request recorded; link needs verification (TC-PP-05 rules) | P1 | P | AUTO |
-| TC-PP-05 | RA-R1-20b, AC-32 | `PRX-01` | `PAT-03` turns the age of consent | Age-out and revocation | **`BLOCKED` on D-7 / G-07**: rule values do not exist yet. Written when values are decided | P1 | E | BLOCKED |
+| TC-PP-03 | RA-R1-20a | `PRX-01` | `PAT-03` | Default proxy view | Appointments only (see TC-AZ-14). **Executed (HEAAA-805)** through the invitation flow; messages and documents open only per scope and close on withdrawal | P0 | P | AUTO |
+| TC-PP-04 | J-03 | `PRX-01` | `PRX-01` signed in; `PAT-03` not yet linked or linked pending | 1. Request a proxy link for `PAT-03`<br>2. Check the request status as `PRX-01`<br>3. Open the request as `STF-FD-A` | Request recorded; link needs verification (TC-PP-05 rules). **Executed (HEAAA-805)**: adult patient invites by e-mail; the proxy accepts with an account and the e-mail code (wrong codes counted); a minor cannot invite | P1 | P | AUTO |
+| TC-PP-05 | RA-R1-20b, AC-32 | `PRX-01` | Ruling C item 3: guardian of a minor linked by staff after a relationship document; ages 13-17 appointments only; access ends the day before the 18th birthday, notice 30 days before; revocation by patient or staff immediate; a proxy may leave; every change audited (**values are settings**) | 1. Staff link the guardian (document check), the guardian accepts with the code<br>2. Narrowing at 13<br>3. The 18th birthday passes (clock control) and the daily job runs<br>4. Patient revokes; staff revoke; proxy leaves | Each step as stated; revocation effective on the next request. **Executed (HEAAA-805)**; the mailed invitation code and the 30-day notice mail are `not run` (no provider in ci), see 9.5 | P1 | E | AUTO |
 | TC-PP-06 | RA-R1-21 | `PAT-01` | **[G2 setting]** 72 h before | Receive the request; complete the questionnaire; e-sign consents; upload insurance cards | Staff see completion status; consent versions stored with date | P1 | P | AUTO |
 | TC-PP-07 | RA-R1-21 | `PAT-01` | Partial completion | Leave incomplete and check the staff view | Staff see "incomplete" and which items | P2 | P | AUTO |
 
@@ -637,9 +651,9 @@ A blocked case is not waived. It keeps its criterion open until the decision exi
 | Decision | Blocks | State |
 | --- | --- | --- |
 | D-12a R1 safety reviewer (named clinician or recorded interim self-review) | RA-R1-07, RA-R1-08 acceptance (TC-SAF-01..07) | Open. R1 cannot go live without it |
-| D-7 / G-07 proxy rules (age of consent, link, revocation) | RA-R1-20b (TC-PP-05) | Default applies to RA-R1-20a only |
-| D-8 meaning of deletion | Deletion part of RA-R1-14 (TC-PR-03) | Open |
-| D-2 operating states | Real state values in TC-TH-06..08; state privacy rules | Placeholder states used meanwhile |
+| D-7 / G-07 proxy rules (age of consent, link, revocation) | RA-R1-20b (TC-PP-04, TC-PP-05) | **Decided by delegation (ruling C item 3); executed (HEAAA-805).** Values are settings; mail halves `not run` |
+| D-8 meaning of deletion | Deletion part of RA-R1-14 (TC-PR-03) | **Decided by delegation (ruling C item 1), † counsel confirmation pending; executed (HEAAA-805)** |
+| D-2 operating states | Real state values in TC-TH-06..08; state privacy rules | **Fixture states executed (HEAAA-805, ruling C item 4).** Real values are entered by the organisation at go-live and the three cases rerun; state privacy rules still open |
 | D-3, D-4, D-6, D-5 | TC-AD-03, TC-PC-11, visit summary (not built in R1), TC-MSG-03 | PRD defaults tested; rerun if changed |
 | D-35 admin path | Path A or B tags in section 5 | **Path B in effect by default.** Rerun the A-only cases if the owner picks path A |
 | G-10 assistant scope | TC-AZ-15 (prepare scope) | Refusal part testable now |
@@ -648,7 +662,7 @@ A blocked case is not waived. It keeps its criterion open until the decision exi
 | D-26 region loss in scope | TC-REC-03 | Default in scope |
 | D-25 / DEP-14 load environment | TC-PERF-* | Not provisioned; owner cost position |
 | DEP-15 named on-call | TC-REC-08 | Open |
-| Retention period (set at G2) | TC-AU-09, TC-DOC-07 | Open |
+| Retention period (set at G2) | TC-AU-09, TC-DOC-07 | **Decided by delegation (ruling C item 2), † counsel confirmation pending; executed (HEAAA-805).** Archive move of audit rows `not run` (DO-09b) |
 | UMLS licence account | TC-CL-04 (coded entry with a real terminology) | Open (HEAAA-12 UMLS) |
 | QA-AL-01 (ARCH gap) | TC-CAL-05 step 8 (`410 Gone` sync token) | Question to Solution Architect via Orchestrator; step blocked |
 | QA-AL-02 (no billing role in R1) | `STF-BILL-A` negative uses only | Question to PM; no case depends on it |
@@ -693,16 +707,16 @@ These cases are written now only as outlines so that the R1 data model, audit an
 | RA-R1-09 | TC-CL-01..07 | |
 | RA-R1-10 | TC-TH-01..05, TC-PERF-06 | Video vendor sandbox |
 | RA-R1-11 | TC-AU-01..04, TC-AZ-10, TC-AZ-11, TC-AZ-16 | |
-| RA-R1-12 | TC-AU-05..09 (TC-AU-10 is a reserved ID owned by TC-PERF-04; not counted here) | Retention set at G2 |
+| RA-R1-12 | TC-AU-05..09 (TC-AU-10 is a reserved ID owned by TC-PERF-04; not counted here) | Retention values from ruling C item 2 (†); TC-AU-09 executed in part |
 | RA-R1-13 | TC-DOC-01..08 | |
-| RA-R1-14 | TC-PR-01..05 | **Deletion meaning blocked on D-8** |
+| RA-R1-14 | TC-PR-01..05 | Deletion meaning from ruling C item 1 (†); TC-PR-03 executed |
 | RA-R1-15 | TC-AD-01..07 | D-3 default |
 | RA-R1-16 | TC-BS-01..07 | |
 | RA-R1-17 | TC-AZ-01..15, TC-SEC-C7-01..07 | |
 | RA-R1-18 | TC-PERF-01..08, TC-A11Y-01..08, TC-XB-01..03, TC-REC-01..09, TC-NFR-01..13, TC-PEN-01 | Load environment, penetration tester |
 | RA-R1-19 | TC-PP-01..02 | |
 | RA-R1-20a | TC-PP-03, TC-AZ-14 | |
-| RA-R1-20b | TC-PP-04, TC-PP-05 | **Blocked on D-7** |
+| RA-R1-20b | TC-PP-04, TC-PP-05 | Ruling C item 3; executed (mail halves `not run`) |
 | RA-R1-21 | TC-PP-06..07 | |
 | RA-R1-22 | TC-BK-19..22 | |
 | RA-R1-23 | TC-DR-01..03 | |
@@ -710,7 +724,7 @@ These cases are written now only as outlines so that the R1 data model, audit an
 | RA-R1-25 | TC-MSG-01..04 | D-5 |
 | RA-R1-26 | TC-AD-08..10, TC-BS-08 | |
 | RA-R1-27 | TC-MG-01..14 | BQ-3 |
-| RA-R1-28 | TC-TH-06..08 | Real states from D-2 |
+| RA-R1-28 | TC-TH-06..08 | Fixture states executed; real states entered at go-live |
 | RA-R1-29 | TC-PC-10 | |
 | RA-R1-30 | TC-PC-11..12 | |
 | RA-R1-31 | TC-AD-11..15 | Sandboxes |
@@ -727,7 +741,7 @@ These cases are written now only as outlines so that the R1 data model, audit an
 | AC-09 | TC-PC-04 | AC-10 | TC-CL-02 |
 | AC-11 | TC-CL-03 | AC-12 | TC-AZ-10 |
 | AC-13..AC-25, AC-26..AC-29 | AC-13..AC-22 are R2 and AC-23..AC-29 are R3 (section 14); no R1 case | AC-30 | TC-DOC-02 |
-| AC-31 | TC-DOC-04 | AC-32 | TC-PP-05 (blocked) |
+| AC-31 | TC-DOC-04 | AC-32 | TC-PP-05 (executed, HEAAA-805) |
 | AC-33 | TC-ID-09 | AC-34 | TC-AZ-01 |
 | AC-35 | TC-AZ-02 | AC-36 | TC-AU-05 |
 | AC-37, AC-38 | R2 (section 14) | | |
