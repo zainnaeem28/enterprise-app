@@ -482,7 +482,7 @@ importers:
         specifier: 7.13.0
         version: 7.13.0(typescript@5.9.3)
       yaml:
-        specifier: '>=2.8.3'
+        specifier: 2.9.1
         version: 2.9.1
 
   packages/kernel:
