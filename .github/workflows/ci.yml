@@ -11,13 +11,14 @@
 # (F-09, HEAAA-79) run on the application code; each ends with a seeded-violation control that must FAIL
 # the gate. Container image scanning has nothing to scan until a Dockerfile exists; the job says so
 # explicitly instead of reporting an image pass.
+# HEAAA-815: PRs into and pushes to `dev` also run ci (dev is the integration branch; Ruling B needs server-run evidence).
 name: ci
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, dev]
   push:
-    branches: [main]
+    branches: [main, dev]
 
 permissions: {}
 

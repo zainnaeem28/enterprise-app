@@ -20,7 +20,7 @@ name: infra
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, dev]
     paths:
       - 'infra/**'
       - '.github/workflows/infra.yml'
