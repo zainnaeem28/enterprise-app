@@ -1,0 +1,14 @@
+HEAAA-898 test evidence (PostgreSQL 18 embedded, local; ehr-test-db unreachable in this environment)
+0 ℹ pass 30 ℹ fail 0  apps/api/dist/src/modules/identity/rls.dbtest.js
+0 ℹ pass 38 ℹ fail 0  apps/api/dist/src/modules/identity/guard.dbtest.js
+0 ℹ pass 18 ℹ fail 0  apps/api/dist/src/modules/integrations-host/integrations-host.dbtest.js
+0 ℹ pass 35 ℹ fail 0  apps/api/dist/src/modules/notifications/alerts/alerts.dbtest.js
+0 ℹ pass 16 ℹ fail 0  apps/api/dist/src/modules/notifications/notifications.dbtest.js
+0 ℹ pass 26 ℹ fail 0  apps/api/dist/src/modules/organisation/organisation.dbtest.js
+0 ℹ pass 22 ℹ fail 0  apps/api/dist/src/modules/patient/registration.dbtest.js
+0 ℹ pass 29 ℹ fail 0  apps/api/dist/src/modules/reporting/reporting.dbtest.js
+0 ℹ pass 97 ℹ fail 0  apps/api/dist/test/security/rls-matrix.dbtest.js
+0 ℹ pass 20 ℹ fail 0  apps/worker/dist/jobs/notifications/notifications.dbtest.js
+0 ℹ pass 5 ℹ fail 0  apps/worker/dist/jobs/patient/patient.dbtest.js
+unit: routes.test 12 pass, rules.test 8 pass; also patient/calendar-sync dbtests sharing the changed testkits: 5,10,11,22,21,7,63,6 pass, 0 fail
+Unrelated: full-suite run showed INT04-F21 CI attestation config tests failing (untouched file).
