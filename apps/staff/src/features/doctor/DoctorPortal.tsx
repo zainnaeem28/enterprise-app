@@ -9,7 +9,7 @@ import { Chart } from './Chart.js';
 import { NoteEditor } from './NoteEditor.js';
 import { NotesToSign } from './NotesToSign.js';
 import { VideoNotes } from './VideoNotes.js';
-import { AlertsScreen, RedFlagStrip, StreamBar } from './Alerts.js';
+import { AlertsScreen, RedFlagStrip, StreamBar } from './AlertsScreen.js';
 import { defaultStream, useAlerts } from './alerts.js';
 import type { StreamFactory } from './alerts.js';
 import { openReauthTab } from './SignFlow.js';
