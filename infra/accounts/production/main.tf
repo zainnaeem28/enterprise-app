@@ -41,6 +41,17 @@ module "network_recovery" {
   tags                     = local.tags
 }
 
+# Key for the recovery-Region replicas of the secrets (the VAPID private key). Secrets Manager takes any key of the
+# replica Region, so this is a separate single-Region key, not a replica of kms_secrets.
+module "kms_secrets_recovery" {
+  source             = "../../modules/kms"
+  providers          = { aws = aws.recovery }
+  alias              = "production-secrets-dr"
+  description        = "production secret replicas (recovery Region)"
+  service_principals = ["secretsmanager.amazonaws.com", "ssm.amazonaws.com"]
+  tags               = local.tags
+}
+
 resource "aws_kms_replica_key" "data_recovery" {
   provider        = aws.recovery
   description     = "production data at rest (recovery Region replica)"

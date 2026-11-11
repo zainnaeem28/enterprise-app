@@ -238,7 +238,10 @@ Known gaps with no code yet, so they stay on this list rather than being configu
   with the SES event destination.
 - The partner identity pool has no sign-in code in R1 (partner portal is R2).
 - The alarm for dead `telehealth.close_meeting` jobs: the worker log line is not in the repository.
-- Recovery-Region role policies and VAPID secret replication (no compute exists in the recovery Region).
+- Recovery-Region role policies and the VAPID secret replica are now IaC (`infra/modules/aws-adapters/recovery.tf`, production root) but **authored only,
+  never applied**. Remaining: nothing was exercised by a task in the recovery Region; upload, package/export, runtime integration secrets, SES/SMS,
+  the anchor archive and malware scanning are not granted there (no replica or Region-bound); whether the secret replica needs its own resource
+  policy is unverified; the recovery runbook still creates the compute during a declared failover.
 - Chime offers no per-token lifetime: the "short-lived" bound is only in our own record.
 - Load scenarios (QA-07) are a placeholder step in `loadtest-run.yml`.
 - Bootstrap interface points G-1..G-5 (`scripts/bootstrap/README.md`) and the permission gaps in `scripts/deploy/README.md`.

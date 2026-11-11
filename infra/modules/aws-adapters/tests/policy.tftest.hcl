@@ -62,6 +62,21 @@ override_resource {
 }
 
 override_resource {
+  target = aws_iam_role_policy.recovery_api
+  values = {}
+}
+
+override_resource {
+  target = aws_iam_role_policy.recovery_worker
+  values = {}
+}
+
+override_resource {
+  target = aws_iam_role_policy.recovery_execution
+  values = {}
+}
+
+override_resource {
   target = aws_iam_role_policy.guardduty
   values = {}
 }
@@ -300,5 +315,94 @@ run "guardduty_role_is_scoped_to_the_quarantine_bucket" {
       !contains(flatten([s.Resource]), "*") && alltrue([for r in flatten([s.Resource]) : length(regexall("quarantine|key/data|DO-NOT-DELETE", r)) > 0])
     ])
     error_message = "GuardDuty role policy names only the quarantine bucket, the data key and the managed rule"
+  }
+}
+
+run "recovery_policies_name_only_recovery_region_replicas" {
+  command = apply
+
+  variables {
+    payload_key_multi_region       = true
+    recovery_region                = "us-west-2"
+    recovery_data_kms_key_arn      = "arn:aws:kms:us-west-2:111111111111:key/mrk-data"
+    recovery_secrets_kms_key_arn   = "arn:aws:kms:us-west-2:111111111111:key/secrets-dr"
+    recovery_docs_clean_bucket_arn = "arn:aws:s3:::ehr-staging-docs-clean-replica"
+  }
+
+  assert {
+    condition = alltrue(flatten([for d in [data.aws_iam_policy_document.recovery_api[0], data.aws_iam_policy_document.recovery_worker[0], data.aws_iam_policy_document.recovery_execution[0]] :
+      [for s in jsondecode(d.json).Statement : alltrue([for r in flatten([s.Resource]) :
+        r == "*" || strcontains(r, "us-west-2") || strcontains(r, "docs-clean-replica") || strcontains(r, ":chime:")
+      ])]
+    ]))
+    error_message = "every resource of the recovery policies is in the recovery Region, the replica bucket or a Chime meeting"
+  }
+
+  # "*" resources: only the AWS-limited actions, and the Region-bound ones carry aws:RequestedRegion.
+  assert {
+    condition = alltrue(flatten([for d in [data.aws_iam_policy_document.recovery_api[0], data.aws_iam_policy_document.recovery_worker[0], data.aws_iam_policy_document.recovery_execution[0]] :
+      [for s in jsondecode(d.json).Statement : !contains(flatten([s.Resource]), "*") || contains(["EcrToken", "OcrDetectTextInRecoveryRegion", "CreateMeeting"], s.Sid)]
+    ]))
+    error_message = "no wildcard resource beyond ecr:GetAuthorizationToken, textract and chime:CreateMeeting"
+  }
+
+  assert {
+    condition = !anytrue(flatten([for s in jsondecode(data.aws_iam_policy_document.recovery_api[0].json).Statement :
+      [for a in flatten([s.Action]) : contains(["kms:Decrypt", "kms:Encrypt", "kms:ReEncrypt*", "s3:PutObject", "s3:DeleteObject"], a) && s.Sid != "DataKeyReplicaForSignedRequests"]
+    ]))
+    error_message = "recovery api cannot open payloads, upload or delete"
+  }
+
+  assert {
+    condition = !anytrue(flatten([for s in jsondecode(data.aws_iam_policy_document.recovery_worker[0].json).Statement :
+      [for a in flatten([s.Action]) : contains(["kms:GenerateDataKey", "kms:GenerateDataKey*", "kms:Encrypt", "s3:PutObject", "s3:DeleteObject", "secretsmanager:PutSecretValue"], a)]
+    ]))
+    error_message = "recovery worker cannot seal, write or delete (SC-2)"
+  }
+
+  assert {
+    condition = anytrue([for s in jsondecode(data.aws_iam_policy_document.recovery_execution[0].json).Statement :
+      s.Sid == "InjectNamedSecretReplicas" && flatten([s.Resource]) == ["arn:aws:secretsmanager:us-west-2:111111111111:secret:staging/app/vapid_private_key-??????"]
+      ]) && anytrue([for s in jsondecode(data.aws_iam_policy_document.recovery_execution[0].json).Statement :
+      s.Sid == "PullPinnedImagesFromReplicatedRepositories" && flatten([s.Resource]) == ["arn:aws:ecr:us-west-2:111111111111:repository/ehr-api"]
+    ])
+    error_message = "execution reads exactly the replicated VAPID secret and the replicated repository"
+  }
+
+  assert {
+    condition     = strcontains(data.aws_iam_policy_document.ecs_tasks_assume_with_recovery.json, "ecs:us-west-2:111111111111") && strcontains(data.aws_iam_policy_document.ecs_tasks_assume_with_recovery.json, "ecs:us-east-2:111111111111")
+    error_message = "trust admits ECS tasks of the primary and the recovery Region of this account only"
+  }
+}
+
+run "recovery_needs_its_inputs" {
+  command = plan
+
+  variables {
+    payload_key_multi_region = true
+    recovery_region          = "us-west-2"
+  }
+  expect_failures = [terraform_data.recovery_inputs]
+}
+
+run "recovery_refuses_a_single_region_payload_key" {
+  command = plan
+
+  variables {
+    payload_key_multi_region       = false
+    recovery_region                = "us-west-2"
+    recovery_data_kms_key_arn      = "arn:aws:kms:us-west-2:111111111111:key/mrk-data"
+    recovery_secrets_kms_key_arn   = "arn:aws:kms:us-west-2:111111111111:key/secrets-dr"
+    recovery_docs_clean_bucket_arn = "arn:aws:s3:::ehr-staging-docs-clean-replica"
+  }
+  expect_failures = [terraform_data.recovery_inputs]
+}
+
+run "without_recovery_region_nothing_recovery_exists" {
+  command = plan
+
+  assert {
+    condition     = length(aws_iam_role_policy.recovery_api) + length(aws_iam_role_policy.recovery_worker) + length(aws_iam_role_policy.recovery_execution) + length(terraform_data.recovery_inputs) == 0
+    error_message = "no recovery policy without recovery_region"
   }
 }
