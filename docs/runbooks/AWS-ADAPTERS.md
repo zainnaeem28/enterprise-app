@@ -51,10 +51,59 @@ Behaviour:
   task role) and `kms:GenerateDataKey`/`kms:Decrypt` on their keys; worker adds `s3:DeleteObject`, `s3:ListBucketVersions`,
   `s3:GetObjectVersion`, `s3:PutObject` on the archive (no `s3:DeleteObjectVersion`, no `s3:BypassGovernanceRetention`).
 
+## Secrets Manager and KMS (AWS-BE-2)
+
+| Group (adapter) | Variables | Process |
+|---|---|---|
+| Secret store: outbound `put` (api), inbound verification keys `keys` (api), calendar channel key, secret reader, inbound writer (worker) | `EHR_SECRETS_PREFIX` (required; the environment name, e.g. `prod`); `EHR_SECRETS_KMS_KEY_ID` (optional; CMK for newly created secrets, default is the account's `aws/secretsmanager` key) | api, worker |
+| Payload sealer (api) / opener (worker) | `EHR_KMS_PAYLOAD_KEY_ID` (required; key id, ARN or alias); worker only: `EHR_KMS_PAYLOAD_PREVIOUS_KEY_IDS` (optional, comma separated; keys whose old blobs may still be opened) | api (seal), worker (open) |
+
+Secret names (built in code, a caller cannot choose another prefix):
+
+- `<prefix>/integration/outbound/<connectionId>/<name>`: written by the api, read by the worker.
+- `<prefix>/integration/inbound/<name>`: written by the worker only; read by the api by this fixed name (webhook keys, the calendar
+  channel key `google-calendar-channel-key`, current then `AWSPREVIOUS`) and by the worker.
+
+Behaviour:
+
+- Every write makes a new secret version. `ClientRequestToken` is `sha256(secretName, clientToken)` in hex, so a retry returns the same
+  version. The secret is created on first write (`CreateSecret`, then `PutSecretValue` if a concurrent writer won). Values are limited to 64 KiB.
+- A secret value never appears in a log line or an error: errors carry the secret name and the failure class (for example
+  `AccessDeniedException`).
+- Sealed payloads: `GenerateDataKey` (AES_256) per payload, AES-256-GCM, 12-byte random iv. The KMS `EncryptionContext` is
+  `{"ehr:ctx": <context>}` where the context string is the caller's purpose + record id (`inbound:<source>\n<event id>`,
+  `secret_change:<request id>`, per SC-3); organisation scoping comes from the record id and the key policy. The context and the embedded key id are
+  also GCM additional authenticated data. Blob: `EHK1 | keyId | wrapped data key | iv | tag | ciphertext`. The plaintext data key is
+  zeroed after each call and never stored. Tag verification is Node/OpenSSL GCM (constant time); the code compares no secret bytes.
+- Opening: the embedded key id must be the configured key or one in `EHR_KMS_PAYLOAD_PREVIOUS_KEY_IDS` (aliases are resolved once
+  with `kms:DescribeKey`), otherwise the blob is refused before KMS is asked. A wrong context, a flipped byte, a truncated blob and a
+  wrong key all return the same `KmsEnvelopeError` (`open_failed`/`malformed`/`untrusted_key`), with no detail about which.
+- Rotation: change `EHR_KMS_PAYLOAD_KEY_ID` to the new key and put the old one in `EHR_KMS_PAYLOAD_PREVIOUS_KEY_IDS` on the worker.
+  Drop it once no sealed job older than the queue retention exists.
+
+IAM actions the adapters need (exact list; `<prefix>` is `EHR_SECRETS_PREFIX`, `PK` is the payload key ARN):
+
+| Role | Action | Resource |
+|---|---|---|
+| api | `secretsmanager:CreateSecret`, `secretsmanager:PutSecretValue` | `arn:aws:secretsmanager:<region>:<acct>:secret:<prefix>/integration/outbound/*` |
+| api | `secretsmanager:GetSecretValue` | `arn:aws:secretsmanager:<region>:<acct>:secret:<prefix>/integration/inbound/*` |
+| api | `kms:GenerateDataKey` | `PK`, with condition `kms:EncryptionContextKeys` = `ehr:ctx` |
+| api, worker (only if `EHR_SECRETS_KMS_KEY_ID`) | `kms:GenerateDataKey`, `kms:Decrypt` (via Secrets Manager, `kms:ViaService`) | the secrets key |
+| worker | `secretsmanager:GetSecretValue` | `...:secret:<prefix>/integration/*` |
+| worker | `secretsmanager:CreateSecret`, `secretsmanager:PutSecretValue` | `...:secret:<prefix>/integration/inbound/*` |
+| worker | `kms:Decrypt` | `PK` and any previous payload key, with condition `kms:EncryptionContextKeys` = `ehr:ctx` |
+| worker | `kms:DescribeKey` | only if an alias is configured: the key behind it |
+
+The api role gets no `kms:Decrypt` on the payload key and no write on `inbound/*` (SC-2, SC-3); the worker gets no `kms:GenerateDataKey`.
+`CreateSecret` needs `secretsmanager:TagResource` only if the IaC adds tags to the created secrets; this code adds none. Secret policies and
+rotation lambdas belong to the IaC, not to this code.
+
 ## Tests
 
 - Unit (stubbed clients, run by `pnpm test` in each app): `apps/api/src/platform/aws/s3-presigners.test.ts`,
-  `apps/worker/src/aws/s3-adapters.test.ts`, `packages/kernel/src/aws/config.test.ts`.
+  `apps/worker/src/aws/s3-adapters.test.ts`, `packages/kernel/src/aws/config.test.ts`; AWS-BE-2: `packages/kernel/src/aws/kms-envelope.test.ts`
+  (round trip, wrong context, tampered bytes, wrong/untrusted key, rotation, alias, key wiping), `secrets-manager.test.ts`,
+  `apps/api/src/platform/aws/secrets-kms.test.ts`, `apps/worker/src/aws/secrets-kms.test.ts`.
 - Emulator (`*.emulator.test.ts`, skipped unless `EHR_EMULATOR_S3_ENDPOINT` is set), run with `pnpm test:emulator`:
 
   ```
@@ -66,4 +115,6 @@ Behaviour:
   `EHR_EMULATOR_KMS_KEY_ID` (default `alias/emulator`) names the key sent in the SSE-KMS headers. MinIO needs a KMS configured to accept
   SSE-KMS; LocalStack does not. Results are emulator evidence only: they show the requests are well formed and the S3 API contract is
   honoured by the emulator, not any behaviour of real AWS (Object Lock retention, KMS policy, IAM). Those checks belong on
-  `docs/GO-LIVE.md`.
+  `docs/GO-LIVE.md`. The AWS-BE-2 emulator tests are `packages/kernel/src/aws/secrets-kms.emulator.test.ts` (same `EHR_EMULATOR_S3_ENDPOINT` LocalStack edge URL;
+  `pnpm test:emulator` runs the kernel too). Real-KMS checks for the go-live list: the key policy and `kms:EncryptionContextKeys` conditions, that the api
+  role cannot Decrypt, and that a rotated key still opens old blobs.
