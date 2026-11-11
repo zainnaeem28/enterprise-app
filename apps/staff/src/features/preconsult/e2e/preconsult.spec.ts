@@ -240,7 +240,8 @@ async function mockApi(page: Page, perms: string[], over: Partial<Model> = {}): 
       if (e !== undefined) Object.assign(e, { stage: body?.['stage'], version: 99 });
       return reply(route, 200, e);
     }
-    if (path === `/api/v1/patients/${PAT}/banner`) return reply(route, 200, banner());
+    if (path === `/api/v1/patients/${PAT}/banner`)
+      return reply(route, 200, { patientBanner: banner() });
     if (path.endsWith('/vitals') && method === 'POST') {
       const vitals = (
         (body?.['vitals'] as { loincCode: string; value: number; unit: string }[]) ?? []

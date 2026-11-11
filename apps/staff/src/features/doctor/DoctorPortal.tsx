@@ -5,7 +5,7 @@ import { createDoctorApi } from './api.js';
 import { DoctorContext, useOnline } from './DoctorContext.js';
 import { Schedule } from './Schedule.js';
 import { PatientList } from './PatientList.js';
-import { Chart } from './Chart.js';
+import { BannerFor, Chart } from './Chart.js';
 import { NoteEditor } from './NoteEditor.js';
 import { NotesToSign } from './NotesToSign.js';
 import { VideoNotes } from './VideoNotes.js';
@@ -130,7 +130,8 @@ function Patients({ documents }: { documents?: (patientId: string) => React.Reac
           {d.back}
         </Button>
       </div>
-      <Chart key={key} patientId={open.patientId} onBanner={setBanner} />
+      {banner !== null && banner.patientId === open.patientId && <BannerFor banner={banner} />}
+      <Chart key={key} patientId={open.patientId} onBanner={setBanner} hideBanner />
       {documents !== undefined && (
         <section aria-label="Patient documents">{documents(open.patientId)}</section>
       )}

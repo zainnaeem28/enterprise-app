@@ -103,6 +103,18 @@ describe('chart summary (BR-34, UI-UX 8)', () => {
   });
 });
 
+describe('workspace banner (BR-34)', () => {
+  it('draws the banner once, as a direct child of the workspace so it sticks over chart, documents and note', async () => {
+    open();
+    mount(DOCTOR, '/patients', (r) =>
+      r.path.endsWith('/chart-summary') ? json(200, summary({})) : undefined,
+    );
+    const b = await screen.findByRole('region', { name: 'Patient' });
+    expect(screen.getAllByRole('region', { name: 'Patient' })).toHaveLength(1);
+    expect(b.parentElement?.getAttribute('aria-labelledby')).toBe('workspace-title');
+  });
+});
+
 describe('break the glass (BR-14, DR-09)', () => {
   const refused = () =>
     json(403, { code: 'clinical.not_assigned', btgAvailable: true, requestId: 'r' });

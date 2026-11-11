@@ -94,9 +94,12 @@ function EntryList({
 export function Chart({
   patientId,
   onBanner,
+  hideBanner = false,
 }: {
   patientId: string;
   onBanner?: (b: BannerData) => void;
+  /** The workspace draws the banner itself, above the chart, documents and note, so it stays in view for all of them (BR-34). */
+  hideBanner?: boolean;
 }) {
   const { api, can } = useDoctor();
   const { state, reload } = useLoad(async () => {
@@ -171,7 +174,7 @@ export function Chart({
           <p className="ehr-muted">{d.btgEmergencyUntil(dateTimeOf(grant.expiresAt))}</p>
         </>
       )}
-      <BannerFor banner={c.banner} />
+      {!hideBanner && <BannerFor banner={c.banner} />}
       {c.level === 'previsit' && (
         <Banner tone="info">
           <p>{d.previsitOnly}</p>

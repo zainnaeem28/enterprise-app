@@ -518,3 +518,33 @@ test('co-sign queue (DR-07)', async ({ page }, info) => {
   await page.getByRole('alertdialog').getByRole('button', { name: 'Co-sign note' }).click();
   await expect(page.getByText('Note co-signed.')).toBeVisible();
 });
+
+// R3-F01 F-1 (BR-34): the banner stays in view over the whole workspace (chart, documents, note) at 1280, 640 (200 % zoom) and 360 px.
+for (const [w, h] of [
+  [1280, 900],
+  [640, 450],
+  [360, 740],
+] as const) {
+  test(`banner stays in view while scrolling the whole workspace at ${w} px`, async ({ page }) => {
+    await mockApi(page);
+    await page.setViewportSize({ width: w, height: h });
+    await page.goto('/?path=/patients&open=1');
+    const banner = page.getByRole('region', { name: 'Patient' });
+    await expect(banner.getByText('Amira Okafor')).toBeVisible();
+    await page.getByRole('button', { name: 'Start consultation' }).click();
+    await expect(page.getByLabel('S: Subjective')).toBeVisible();
+    for (const target of [
+      page.getByLabel('S: Subjective'),
+      page.getByRole('button', { name: 'Sign and lock note' }),
+    ]) {
+      await target.scrollIntoViewIfNeeded();
+      await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+      const box = await banner.boundingBox();
+      expect(box).not.toBeNull();
+      expect(box!.y).toBeGreaterThanOrEqual(0);
+      expect(box!.y).toBeLessThan(h);
+      await expect(banner.getByText('Amira Okafor')).toBeInViewport();
+      await expect(banner.getByText(/1984-03-27/)).toBeInViewport();
+    }
+  });
+}
