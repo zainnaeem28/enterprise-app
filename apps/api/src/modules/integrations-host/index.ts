@@ -12,6 +12,14 @@ export type {
   DirectorySchedulingPort,
   PublicLocation,
   PublicService,
+  SnsReceiptPort,
   WebhookReceiverPort,
   WebhookStatus,
 } from './ports.js';
+export { SnsReceiptReceiver } from './sns-receipts.js';
+export type { SnsReceiptConfig, VerifiedInboundStore } from './sns-receipts.js';
+export { SnsVerifier, isPinnedSnsUrl, stringToSign } from './sns-verify.js';
+export type { SnsVerifierConfig } from './sns-verify.js';
+export { httpsConfirmSubscription, httpsFetchCertificate } from './sns-http.js';
+export { mapReceiptEvent } from './receipt-events.js';
+export type { ReceiptChannel } from './receipt-events.js';

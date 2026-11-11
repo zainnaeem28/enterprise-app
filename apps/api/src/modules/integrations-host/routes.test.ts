@@ -146,7 +146,7 @@ function http(
   });
 }
 
-test('route inventory: four public GET routes and two webhook POST routes, all declared public and release-exempt', () => {
+test('route inventory: four public GET routes and three webhook POST routes, all declared public and release-exempt', () => {
   const r = inventory(controllers as never);
   assert.deepEqual(r.failures, []);
   assert.deepEqual(r.routes.map((x) => `${x.method} ${x.path}`).sort(), [
@@ -155,6 +155,7 @@ test('route inventory: four public GET routes and two webhook POST routes, all d
     'GET /public/v1/locations',
     'GET /public/v1/services',
     'POST /webhooks/messaging/:vendor',
+    'POST /webhooks/sns/receipts',
     'POST /webhooks/video/:vendor',
   ]);
   for (const x of r.routes) {

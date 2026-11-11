@@ -26,7 +26,12 @@ locals {
     EHR_PATIENT_OIDC_TOKEN_ENDPOINT         = "${local.oidc_domain}/oauth2/token"
     EHR_PATIENT_OIDC_CLIENT_ID              = var.patient_oidc_client_id
     EHR_PATIENT_OIDC_REDIRECT_URI           = var.patient_oidc_redirect_uri
-  })
+    },
+    local.receipts_enabled ? {
+      EHR_SNS_RECEIPT_REGION = local.region
+      EHR_SNS_RECEIPT_TOPICS = join(",", [for k, t in aws_sns_topic.receipts : "${t.arn}=${k}"])
+    } : {},
+  )
 
   worker_environment = merge(
     var.extra_environment,

@@ -66,8 +66,10 @@ anchors limited to put/get/get-version, outbound/inbound secret split).
 2. **Fixed role names** instead of passing role ARNs between modules: it removes the storage / KMS / archive dependency cycle at the price of
    a naming contract (asserted in `plan.tftest.hcl`).
 3. **Key policy denies, identity policy allows** for the sealer: SC-2 and SC-3 hold even if a later identity policy is too broad.
-4. **No SNS topic or event destination for SES receipts**: nothing consumes them yet (AWS-ADAPTERS.md "Receipts"); adding an unverified
-   topic would only look complete.
+4. **Delivery receipts are opt-in and the SMS event destination is not IaC.** `receipt_endpoint_url` (null by default) creates the SES event
+   destination, a KMS-encrypted SNS topic per channel with a source-scoped publish policy, and an HTTPS subscription to the API route
+   (`receipts.tf`). The pinned provider (`~> 5.80`) has no End User Messaging SMS event-destination resource, so that one step is a CLI
+   command in the runbook until the provider is upgraded. Static plan shape only; the confirmation handshake and event names are unverified.
 5. **api `GetObject` on the whole clean bucket** (key layout after promotion is not fixed in the code); quarantine and packages are prefix-limited (`q/`, `p/`).
 6. Recovery policies are static plan-shape only: not applied, not exercised by a task in us-west-2.
 7. Not run: `tofu plan/apply` (no account), checkov (the repository's policy scan is Trivy), any AWS call.

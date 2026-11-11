@@ -61,6 +61,27 @@ export class InboundReceiver {
       this.d.onVerificationFailure?.({ source: req.source, reason: verdict.reason });
       return { status: verdict.reason === 'invalid' ? 400 : 401 };
     }
+    return this.storeVerified({
+      source: req.source,
+      eventId: verdict.eventId,
+      messageType: verdict.messageType,
+      payload: verdict.payload,
+    });
+  }
+
+  /**
+   * The part after verification, for a receiver that verified the request by its own scheme (the SNS receipt route): seal, then ONE
+   * transaction { receive_inbound ; if inserted: enqueue dispatch + publish }. The caller must already have authenticated the payload.
+   */
+  async storeVerified(m: {
+    source: string;
+    eventId: string;
+    messageType: string;
+    payload: Buffer;
+  }): Promise<ReceiveResult> {
+    const req = { source: m.source };
+    const verdict = { eventId: m.eventId, messageType: m.messageType, payload: m.payload };
+    if (!SOURCE.test(m.source)) return { status: 404 };
     if (verdict.payload.length > MAX_WEBHOOK_BODY_BYTES || verdict.payload.length === 0)
       return { status: 400 };
 
