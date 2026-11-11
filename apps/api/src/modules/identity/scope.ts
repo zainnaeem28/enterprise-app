@@ -2,8 +2,8 @@
 // settings every handler runs under, and into the permission grants the guard checks. It runs in the caller's own
 // authenticated transaction (T-PRINCIPAL / T-CONF reads), once per request, and nothing it computes outlives the request.
 import type { ScopeSettings, Tx } from '@ehr/kernel';
-import { PermissionGrants } from './types.js';
-import type { PatientAccess, RoleGrant, SessionRow } from './types.js';
+import { PermissionGrants, PROXY_SCOPES } from './types.js';
+import type { PatientAccess, ProxyScope, RoleGrant, SessionRow } from './types.js';
 
 type Row = Record<string, unknown>;
 
@@ -136,11 +136,22 @@ export class ScopeBuilder {
         [session.principalId],
       );
       for (const r of self.rows)
-        patients.push({ patientId: r['patient_id'] as string, relation: 'self', scope: 'full' });
-      // D-7 default: a proxy sees appointments only. A patient who is also their own proxy keeps full access.
+        patients.push({
+          patientId: r['patient_id'] as string,
+          relation: 'self',
+          scope: 'full',
+          scopes: PROXY_SCOPES,
+        });
+      // D-7 default: a proxy sees appointments only; the patient grants messages and documents per scope, and the age rules narrow a
+      // guardian again (identity.proxy_effective_scopes, evaluated now, so a revocation or an age-out applies on the next request).
+      // A patient who is also their own proxy keeps full access.
       const proxy = await tx.query(
-        `SELECT patient_id, scope, patient_display_name FROM identity.proxy_grant
-          WHERE proxy_principal_id = $1 AND status = 'active' AND (valid_until IS NULL OR valid_until >= current_date)`,
+        `SELECT patient_id, patient_display_name, scopes
+           FROM (SELECT patient_id, patient_display_name,
+                        identity.proxy_effective_scopes(scopes, guardian, adolescent_from, valid_until) AS scopes
+                   FROM identity.proxy_grant
+                  WHERE proxy_principal_id = $1 AND status = 'active') g
+          WHERE cardinality(scopes) > 0`,
         [session.principalId],
       );
       const have = new Set(patients.map((p) => p.patientId));
@@ -151,6 +162,9 @@ export class ScopeBuilder {
           patientId: id,
           relation: 'proxy',
           scope: 'appointments',
+          scopes: (r['scopes'] as string[]).filter((x): x is ProxyScope =>
+            (PROXY_SCOPES as readonly string[]).includes(x),
+          ),
           displayName: r['patient_display_name'] as string,
         });
       }

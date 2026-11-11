@@ -19,7 +19,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/appointments/{id}/video-session/admit
-          catalogueRow: 29.3#80
+          catalogueRow: 29.3#83
       security:
         - sessionCookie: []
       parameters:
@@ -106,7 +106,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/appointments/{id}/video-session/end
-          catalogueRow: 29.3#80
+          catalogueRow: 29.3#83
       security:
         - sessionCookie: []
       parameters:
@@ -203,7 +203,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/appointments/{id}/video-session
-          catalogueRow: 29.3#80
+          catalogueRow: 29.3#83
       x-passive: true
       security:
         - sessionCookie: []
@@ -392,7 +392,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/appointments/{id}/video-session/join
-          catalogueRow: 29.3#80
+          catalogueRow: 29.3#83
       security:
         - sessionCookie: []
       parameters:

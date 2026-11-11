@@ -18,7 +18,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/audit-events/search
-          catalogueRow: 29.4#140
+          catalogueRow: 29.4#146
       security:
         - sessionCookie: []
       parameters:
@@ -105,7 +105,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/audit-exports
-          catalogueRow: 29.4#141
+          catalogueRow: 29.4#147
       security:
         - sessionCookie: []
       parameters:
@@ -196,7 +196,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/audit-exports/{id}
-          catalogueRow: 29.4#141
+          catalogueRow: 29.4#147
       security:
         - sessionCookie: []
       parameters:
@@ -283,7 +283,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/audit-exports/{id}/download-url
-          catalogueRow: 29.4#141
+          catalogueRow: 29.4#147
       security:
         - sessionCookie: []
       parameters:
@@ -369,7 +369,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/btg-grants
-          catalogueRow: 29.4#142
+          catalogueRow: 29.4#148
       security:
         - sessionCookie: []
       parameters:
@@ -452,7 +452,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/btg-grants/{id}/review
-          catalogueRow: 29.4#142
+          catalogueRow: 29.4#148
       security:
         - sessionCookie: []
       parameters:
@@ -546,7 +546,7 @@ paths:
           idempotencyKey: true
           ifMatch: false
           pathAs: /api/v1/patients/{patientId}/break-glass
-          catalogueRow: 29.3#82
+          catalogueRow: 29.3#85
       security:
         - sessionCookie: []
       parameters:

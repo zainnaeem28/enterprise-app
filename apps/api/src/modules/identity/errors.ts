@@ -56,3 +56,35 @@ export class IdentityValidationError extends IdentityError {
     this.name = 'IdentityValidationError';
   }
 }
+
+/** 422 identity.proxy_rules_not_configured: a rule value (age of majority, notice days, ...) is missing from the settings. Fails closed. */
+export class ProxyRulesNotConfiguredError extends IdentityError {
+  constructor() {
+    super('identity.proxy_rules_not_configured', 422);
+    this.name = 'ProxyRulesNotConfiguredError';
+  }
+}
+
+/** 422 identity.proxy_invite_invalid: one answer for a wrong, expired, used-up or foreign invitation code (nothing says which). */
+export class ProxyInviteInvalidError extends IdentityError {
+  constructor() {
+    super('identity.proxy_invite_invalid', 422);
+    this.name = 'ProxyInviteInvalidError';
+  }
+}
+
+/** 422 identity.proxy_not_allowed: the rule refuses it (a minor invites nobody, guardian links are for minors, no relationship document). */
+export class ProxyNotAllowedError extends IdentityError {
+  constructor() {
+    super('identity.proxy_not_allowed', 422);
+    this.name = 'ProxyNotAllowedError';
+  }
+}
+
+/** 409 identity.proxy_conflict: an invitation or an open grant for this person and patient already exists. */
+export class ProxyConflictError extends IdentityError {
+  constructor() {
+    super('identity.proxy_conflict', 409);
+    this.name = 'ProxyConflictError';
+  }
+}

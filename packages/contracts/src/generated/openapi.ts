@@ -3564,6 +3564,126 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/patients/{patientId}/proxies/{grantId}/scopes': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /**
+     * PUT /api/v1/patients/{patientId}/proxies/{grantId}/scopes
+     * @description my.: Ruling C item 3. The patient sets what a proxy of theirs may see: appointments always, messages and documents when granted. Not for a guardian grant (staff-managed)
+     */
+    put: operations['putPatientsByPatientIdProxiesByGrantIdScopes'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/patients/{patientId}/proxies/{grantId}/revoke': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * POST /api/v1/patients/{patientId}/proxies/{grantId}/revoke
+     * @description staff.: Ruling C item 3. Staff revoke a grant or invitation at any time, effective at once
+     */
+    post: operations['postPatientsByPatientIdProxiesByGrantIdRevoke'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/patients/{patientId}/proxy-grants': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * GET /api/v1/patients/{patientId}/proxy-grants
+     * @description staff.: Ruling C item 3. Proxies and open invitations of a patient at one of the caller locations, with scopes and effective scopes
+     */
+    get: operations['getPatientsByPatientIdProxyGrants'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/patients/{patientId}/guardian-links': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * POST /api/v1/patients/{patientId}/guardian-links
+     * @description staff.: Ruling C item 3. Staff link a parent or guardian of a minor after checking the relationship document. Creates a verified invitation; the guardian accepts with the e-mail code
+     */
+    post: operations['postPatientsByPatientIdGuardianLinks'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/proxy-invites/{grantId}/accept': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * POST /api/v1/proxy-invites/{grantId}/accept
+     * @description my.: Ruling C item 3. The signed-in account whose own address was invited accepts with the e-mail code. One 422 answer for a wrong, expired, locked, used or foreign code
+     */
+    post: operations['postProxyInvitesByGrantIdAccept'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/proxy-grants/{grantId}/leave': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * POST /api/v1/proxy-grants/{grantId}/leave
+     * @description my.: Ruling C item 3. A proxy ends their own access to the patient, effective at once
+     */
+    post: operations['postProxyGrantsByGrantIdLeave'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/patients/{patientId}/proxy-requests': {
     parameters: {
       query?: never;
@@ -3575,7 +3695,7 @@ export interface paths {
     put?: never;
     /**
      * POST /api/v1/patients/{patientId}/proxy-requests
-     * @description my.: **Blocked on D-7** for verification rules: creates `requested`; verification is a staff step. `422 identity.proxy_rules_not_configured` until D-7 values exist
+     * @description my.: Ruling C item 3. The adult patient invites a proxy by e-mail; creates an invited grant and the worker mails the code. 422 identity.proxy_rules_not_configured only when a rule value is missing from the settings
      */
     post: operations['postPatientsByPatientIdProxyRequests'];
     delete?: never;
@@ -4424,6 +4544,7 @@ export interface components {
         /** @enum {string} */
         relation: 'self' | 'proxy';
         scope: string;
+        scopes: ('appointments' | 'messages' | 'documents')[];
       }[];
     };
     GetAdminBannersResponse: {
@@ -5178,9 +5299,55 @@ export interface components {
     } & {
       [key: string]: unknown;
     };
+    /** @enum {string} */
+    ProxyScope: 'appointments' | 'messages' | 'documents';
+    /** @description A proxy grant or open invitation. scopes = granted; effectiveScopes = in force today (after the age rules and validity). inviteeHint is the masked address of an open invitation. */
+    ProxyGrant: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      patientId: string;
+      /** @enum {string} */
+      relationship: 'parent' | 'guardian' | 'carer' | 'other';
+      /** @enum {string} */
+      scope: 'appointments';
+      scopes: components['schemas']['ProxyScope'][];
+      effectiveScopes: components['schemas']['ProxyScope'][];
+      guardian: boolean;
+      patientDisplayName: string;
+      /** @enum {string} */
+      status: 'invited' | 'requested' | 'verified' | 'active' | 'revoked' | 'expired';
+      inviteeHint?: string;
+      /** Format: date */
+      validUntil?: string;
+    };
     GetPatientsByPatientIdProxiesResponse: {
-      items: components['schemas']['OpaqueObject'][];
+      items: components['schemas']['ProxyGrant'][];
       nextCursor: string | null;
+    };
+    ProxyScopesRequest: {
+      scopes: components['schemas']['ProxyScope'][];
+    };
+    ProxyGrantList: {
+      items: components['schemas']['ProxyGrant'][];
+      nextCursor: string | null;
+    };
+    GuardianLinkRequest: {
+      email: string;
+      /** @enum {string} */
+      relationship: 'parent' | 'guardian';
+      /** Format: uuid */
+      documentId: string;
+      scopes?: components['schemas']['ProxyScope'][];
+    };
+    ProxyAcceptRequest: {
+      code: string;
+    };
+    ProxyInviteRequest: {
+      email: string;
+      /** @enum {string} */
+      relationship: 'parent' | 'guardian' | 'carer' | 'other';
+      scopes?: components['schemas']['ProxyScope'][];
     };
     GetPatientsByPatientIdQuestionnaireResponsesResponse: {
       items: components['schemas']['OpaqueObject'][];
@@ -16125,6 +16292,295 @@ export interface operations {
       504: components['responses']['Error504'];
     };
   };
+  putPatientsByPatientIdProxiesByGrantIdScopes: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description r<releaseNumber>.<gitSha12>, for example r142.3f9a1c2b7d10, sent by every portal bundle on every /api/* call (28.6). Missing, malformed or releaseNumber < min_client_release is refused with 400 kernel.client_release_unsupported before any session lookup. */
+        'X-Client-Release': components['parameters']['ClientRelease'];
+      };
+      path: {
+        patientId: string;
+        grantId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ProxyScopesRequest'];
+      };
+    };
+    responses: {
+      /** @description Success (200) */
+      200: {
+        headers: {
+          'X-Request-Id': components['headers']['XRequestId'];
+          'Cache-Control': components['headers']['CacheNoStore'];
+          'X-Session-Idle-Expires-At': components['headers']['XSessionIdleExpiresAt'];
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProxyGrant'];
+        };
+      };
+      /** @description Codes: kernel.client_release_unsupported, kernel.validation_failed. */
+      400: components['responses']['Error400'];
+      /** @description Codes: auth.unauthenticated. */
+      401: components['responses']['Error401'];
+      /** @description Codes: auth.forbidden. */
+      403: components['responses']['Error403'];
+      /** @description Codes: kernel.not_found. */
+      404: components['responses']['Error404'];
+      /** @description Codes: patient.merged. */
+      409: components['responses']['Error409'];
+      /** @description Codes: kernel.payload_too_large. */
+      413: components['responses']['Error413'];
+      /** @description Codes: identity.proxy_not_allowed. */
+      422: components['responses']['Error422'];
+      /** @description Codes: kernel.rate_limited. */
+      429: components['responses']['Error429'];
+      /** @description Codes: kernel.unavailable. */
+      503: components['responses']['Error503'];
+      /** @description Codes: kernel.timeout. */
+      504: components['responses']['Error504'];
+    };
+  };
+  postPatientsByPatientIdProxiesByGrantIdRevoke: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description r<releaseNumber>.<gitSha12>, for example r142.3f9a1c2b7d10, sent by every portal bundle on every /api/* call (28.6). Missing, malformed or releaseNumber < min_client_release is refused with 400 kernel.client_release_unsupported before any session lookup. */
+        'X-Client-Release': components['parameters']['ClientRelease'];
+      };
+      path: {
+        patientId: string;
+        grantId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success (204) */
+      204: {
+        headers: {
+          'X-Request-Id': components['headers']['XRequestId'];
+          'Cache-Control': components['headers']['CacheNoStore'];
+          'X-Session-Idle-Expires-At': components['headers']['XSessionIdleExpiresAt'];
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Codes: kernel.client_release_unsupported, kernel.validation_failed. */
+      400: components['responses']['Error400'];
+      /** @description Codes: auth.unauthenticated. */
+      401: components['responses']['Error401'];
+      /** @description Codes: auth.forbidden. */
+      403: components['responses']['Error403'];
+      /** @description Codes: kernel.not_found. */
+      404: components['responses']['Error404'];
+      /** @description Codes: patient.merged. */
+      409: components['responses']['Error409'];
+      /** @description Codes: kernel.rate_limited. */
+      429: components['responses']['Error429'];
+      /** @description Codes: kernel.unavailable. */
+      503: components['responses']['Error503'];
+      /** @description Codes: kernel.timeout. */
+      504: components['responses']['Error504'];
+    };
+  };
+  getPatientsByPatientIdProxyGrants: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description r<releaseNumber>.<gitSha12>, for example r142.3f9a1c2b7d10, sent by every portal bundle on every /api/* call (28.6). Missing, malformed or releaseNumber < min_client_release is refused with 400 kernel.client_release_unsupported before any session lookup. */
+        'X-Client-Release': components['parameters']['ClientRelease'];
+      };
+      path: {
+        patientId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success (200) */
+      200: {
+        headers: {
+          'X-Request-Id': components['headers']['XRequestId'];
+          'Cache-Control': components['headers']['CacheNoStore'];
+          'X-Session-Idle-Expires-At': components['headers']['XSessionIdleExpiresAt'];
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProxyGrantList'];
+        };
+      };
+      /** @description Codes: kernel.client_release_unsupported, kernel.validation_failed. */
+      400: components['responses']['Error400'];
+      /** @description Codes: auth.unauthenticated. */
+      401: components['responses']['Error401'];
+      /** @description Codes: auth.forbidden. */
+      403: components['responses']['Error403'];
+      /** @description Codes: kernel.not_found. */
+      404: components['responses']['Error404'];
+      /** @description Codes: patient.merged. */
+      409: components['responses']['Error409'];
+      /** @description Codes: kernel.rate_limited. */
+      429: components['responses']['Error429'];
+      /** @description Codes: kernel.unavailable. */
+      503: components['responses']['Error503'];
+      /** @description Codes: kernel.timeout. */
+      504: components['responses']['Error504'];
+    };
+  };
+  postPatientsByPatientIdGuardianLinks: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description r<releaseNumber>.<gitSha12>, for example r142.3f9a1c2b7d10, sent by every portal bundle on every /api/* call (28.6). Missing, malformed or releaseNumber < min_client_release is refused with 400 kernel.client_release_unsupported before any session lookup. */
+        'X-Client-Release': components['parameters']['ClientRelease'];
+        /** @description UUID v4 or v7. Required on every portal POST marked "Idem" (28.3). Missing: 400 kernel.idempotency_key_required. Same key and request hash replays the stored response; same key with a different hash: 409 kernel.idempotency_conflict. */
+        'Idempotency-Key': components['parameters']['IdempotencyKey'];
+      };
+      path: {
+        patientId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GuardianLinkRequest'];
+      };
+    };
+    responses: {
+      /** @description Success (201) */
+      201: {
+        headers: {
+          'X-Request-Id': components['headers']['XRequestId'];
+          'Cache-Control': components['headers']['CacheNoStore'];
+          'X-Session-Idle-Expires-At': components['headers']['XSessionIdleExpiresAt'];
+          'Idempotent-Replay': components['headers']['IdempotentReplay'];
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProxyGrant'];
+        };
+      };
+      /** @description Codes: kernel.client_release_unsupported, kernel.idempotency_key_required, kernel.validation_failed. */
+      400: components['responses']['Error400'];
+      /** @description Codes: auth.unauthenticated. */
+      401: components['responses']['Error401'];
+      /** @description Codes: auth.forbidden. */
+      403: components['responses']['Error403'];
+      /** @description Codes: kernel.not_found. */
+      404: components['responses']['Error404'];
+      /** @description Codes: kernel.idempotency_conflict, patient.merged, identity.proxy_conflict. */
+      409: components['responses']['Error409'];
+      /** @description Codes: kernel.payload_too_large. */
+      413: components['responses']['Error413'];
+      /** @description Codes: identity.proxy_not_allowed, identity.proxy_rules_not_configured. */
+      422: components['responses']['Error422'];
+      /** @description Codes: kernel.rate_limited. */
+      429: components['responses']['Error429'];
+      /** @description Codes: kernel.unavailable. */
+      503: components['responses']['Error503'];
+      /** @description Codes: kernel.timeout. */
+      504: components['responses']['Error504'];
+    };
+  };
+  postProxyInvitesByGrantIdAccept: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description r<releaseNumber>.<gitSha12>, for example r142.3f9a1c2b7d10, sent by every portal bundle on every /api/* call (28.6). Missing, malformed or releaseNumber < min_client_release is refused with 400 kernel.client_release_unsupported before any session lookup. */
+        'X-Client-Release': components['parameters']['ClientRelease'];
+      };
+      path: {
+        grantId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ProxyAcceptRequest'];
+      };
+    };
+    responses: {
+      /** @description Success (200) */
+      200: {
+        headers: {
+          'X-Request-Id': components['headers']['XRequestId'];
+          'Cache-Control': components['headers']['CacheNoStore'];
+          'X-Session-Idle-Expires-At': components['headers']['XSessionIdleExpiresAt'];
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProxyGrant'];
+        };
+      };
+      /** @description Codes: kernel.client_release_unsupported, kernel.validation_failed. */
+      400: components['responses']['Error400'];
+      /** @description Codes: auth.unauthenticated. */
+      401: components['responses']['Error401'];
+      /** @description Codes: auth.forbidden. */
+      403: components['responses']['Error403'];
+      /** @description Codes: kernel.not_found. */
+      404: components['responses']['Error404'];
+      /** @description Codes: patient.merged, identity.proxy_conflict. */
+      409: components['responses']['Error409'];
+      /** @description Codes: kernel.payload_too_large. */
+      413: components['responses']['Error413'];
+      /** @description Codes: identity.proxy_invite_invalid, identity.proxy_rules_not_configured. */
+      422: components['responses']['Error422'];
+      /** @description Codes: kernel.rate_limited. */
+      429: components['responses']['Error429'];
+      /** @description Codes: kernel.unavailable. */
+      503: components['responses']['Error503'];
+      /** @description Codes: kernel.timeout. */
+      504: components['responses']['Error504'];
+    };
+  };
+  postProxyGrantsByGrantIdLeave: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description r<releaseNumber>.<gitSha12>, for example r142.3f9a1c2b7d10, sent by every portal bundle on every /api/* call (28.6). Missing, malformed or releaseNumber < min_client_release is refused with 400 kernel.client_release_unsupported before any session lookup. */
+        'X-Client-Release': components['parameters']['ClientRelease'];
+      };
+      path: {
+        grantId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success (204) */
+      204: {
+        headers: {
+          'X-Request-Id': components['headers']['XRequestId'];
+          'Cache-Control': components['headers']['CacheNoStore'];
+          'X-Session-Idle-Expires-At': components['headers']['XSessionIdleExpiresAt'];
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Codes: kernel.client_release_unsupported, kernel.validation_failed. */
+      400: components['responses']['Error400'];
+      /** @description Codes: auth.unauthenticated. */
+      401: components['responses']['Error401'];
+      /** @description Codes: auth.forbidden. */
+      403: components['responses']['Error403'];
+      /** @description Codes: kernel.not_found. */
+      404: components['responses']['Error404'];
+      /** @description Codes: patient.merged. */
+      409: components['responses']['Error409'];
+      /** @description Codes: kernel.rate_limited. */
+      429: components['responses']['Error429'];
+      /** @description Codes: kernel.unavailable. */
+      503: components['responses']['Error503'];
+      /** @description Codes: kernel.timeout. */
+      504: components['responses']['Error504'];
+    };
+  };
   postPatientsByPatientIdProxyRequests: {
     parameters: {
       query?: never;
@@ -16141,7 +16597,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['OpaqueObject'];
+        'application/json': components['schemas']['ProxyInviteRequest'];
       };
     };
     responses: {
@@ -16155,7 +16611,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['OpaqueObject'];
+          'application/json': components['schemas']['ProxyGrant'];
         };
       };
       /** @description Codes: kernel.client_release_unsupported, kernel.idempotency_key_required, kernel.validation_failed. */
@@ -16166,11 +16622,11 @@ export interface operations {
       403: components['responses']['Error403'];
       /** @description Codes: kernel.not_found. */
       404: components['responses']['Error404'];
-      /** @description Codes: kernel.idempotency_conflict, patient.merged. */
+      /** @description Codes: kernel.idempotency_conflict, identity.proxy_conflict, patient.merged. */
       409: components['responses']['Error409'];
       /** @description Codes: kernel.payload_too_large. */
       413: components['responses']['Error413'];
-      /** @description Codes: identity.proxy_rules_not_configured. */
+      /** @description Codes: identity.proxy_not_allowed, identity.proxy_rules_not_configured. */
       422: components['responses']['Error422'];
       /** @description Codes: kernel.rate_limited. */
       429: components['responses']['Error429'];

@@ -19,7 +19,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/banners
-          catalogueRow: 29.4#131
+          catalogueRow: 29.4#137
       security:
         - sessionCookie: []
       parameters:
@@ -96,7 +96,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/banners
-          catalogueRow: 29.4#131
+          catalogueRow: 29.4#137
       security:
         - sessionCookie: []
       parameters:
@@ -183,7 +183,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/booking-policies
-          catalogueRow: 29.4#129
+          catalogueRow: 29.4#135
       security:
         - sessionCookie: []
       parameters:
@@ -265,7 +265,7 @@ paths:
           ifMatch: true
           elevationRequired: true
           pathAs: /api/v1/admin/booking-policies
-          catalogueRow: 29.4#129
+          catalogueRow: 29.4#135
       x-catalogue-gap: The catalogue lists PATCH on the collection and names no identifier of the resource
       security:
         - sessionCookie: []
@@ -370,7 +370,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/booking-policies
-          catalogueRow: 29.4#129
+          catalogueRow: 29.4#135
       security:
         - sessionCookie: []
       parameters:
@@ -461,7 +461,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/consent-templates
-          catalogueRow: 29.4#130
+          catalogueRow: 29.4#136
       security:
         - sessionCookie: []
       parameters:
@@ -537,7 +537,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/consent-templates
-          catalogueRow: 29.4#130
+          catalogueRow: 29.4#136
       security:
         - sessionCookie: []
       parameters:
@@ -624,7 +624,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/consent-templates/{id}/publish
-          catalogueRow: 29.4#130
+          catalogueRow: 29.4#136
       security:
         - sessionCookie: []
       parameters:
@@ -706,7 +706,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/feature-flags
-          catalogueRow: 29.4#131
+          catalogueRow: 29.4#137
       security:
         - sessionCookie: []
       parameters:
@@ -783,7 +783,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/feature-flags
-          catalogueRow: 29.4#131
+          catalogueRow: 29.4#137
       security:
         - sessionCookie: []
       parameters:
@@ -870,7 +870,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/holidays
-          catalogueRow: 29.4#128
+          catalogueRow: 29.4#134
       security:
         - sessionCookie: []
       parameters:
@@ -947,7 +947,7 @@ paths:
           ifMatch: true
           elevationRequired: true
           pathAs: /api/v1/admin/holidays
-          catalogueRow: 29.4#128
+          catalogueRow: 29.4#134
       x-catalogue-gap: The catalogue lists PATCH on the collection and names no identifier of the resource
       security:
         - sessionCookie: []
@@ -1047,7 +1047,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/holidays
-          catalogueRow: 29.4#128
+          catalogueRow: 29.4#134
       security:
         - sessionCookie: []
       parameters:
@@ -1134,7 +1134,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/locations
-          catalogueRow: 29.4#128
+          catalogueRow: 29.4#134
       security:
         - sessionCookie: []
       parameters:
@@ -1211,7 +1211,7 @@ paths:
           ifMatch: true
           elevationRequired: true
           pathAs: /api/v1/admin/locations
-          catalogueRow: 29.4#128
+          catalogueRow: 29.4#134
       x-catalogue-gap: The catalogue lists PATCH on the collection and names no identifier of the resource
       security:
         - sessionCookie: []
@@ -1311,7 +1311,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/locations
-          catalogueRow: 29.4#128
+          catalogueRow: 29.4#134
       security:
         - sessionCookie: []
       parameters:
@@ -1398,7 +1398,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/opening-hours
-          catalogueRow: 29.4#128
+          catalogueRow: 29.4#134
       security:
         - sessionCookie: []
       parameters:
@@ -1475,7 +1475,7 @@ paths:
           ifMatch: true
           elevationRequired: true
           pathAs: /api/v1/admin/opening-hours
-          catalogueRow: 29.4#128
+          catalogueRow: 29.4#134
       x-catalogue-gap: The catalogue lists PATCH on the collection and names no identifier of the resource
       security:
         - sessionCookie: []
@@ -1575,7 +1575,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/opening-hours
-          catalogueRow: 29.4#128
+          catalogueRow: 29.4#134
       security:
         - sessionCookie: []
       parameters:
@@ -1662,7 +1662,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/operating-states
-          catalogueRow: 29.4#131
+          catalogueRow: 29.4#137
       security:
         - sessionCookie: []
       parameters:
@@ -1739,7 +1739,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/operating-states
-          catalogueRow: 29.4#131
+          catalogueRow: 29.4#137
       security:
         - sessionCookie: []
       parameters:
@@ -1825,7 +1825,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/questionnaire-templates
-          catalogueRow: 29.4#130
+          catalogueRow: 29.4#136
       security:
         - sessionCookie: []
       parameters:
@@ -1901,7 +1901,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /api/v1/admin/questionnaire-templates
-          catalogueRow: 29.4#130
+          catalogueRow: 29.4#136
       security:
         - sessionCookie: []
       parameters:
@@ -1988,7 +1988,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/questionnaire-templates/{id}/publish
-          catalogueRow: 29.4#130
+          catalogueRow: 29.4#136
       security:
         - sessionCookie: []
       parameters:
@@ -2070,7 +2070,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/rooms
-          catalogueRow: 29.4#128
+          catalogueRow: 29.4#134
       security:
         - sessionCookie: []
       parameters:
@@ -2147,7 +2147,7 @@ paths:
           ifMatch: true
           elevationRequired: true
           pathAs: /api/v1/admin/rooms
-          catalogueRow: 29.4#128
+          catalogueRow: 29.4#134
       x-catalogue-gap: The catalogue lists PATCH on the collection and names no identifier of the resource
       security:
         - sessionCookie: []
@@ -2247,7 +2247,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/rooms
-          catalogueRow: 29.4#128
+          catalogueRow: 29.4#134
       security:
         - sessionCookie: []
       parameters:
@@ -2334,7 +2334,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/services
-          catalogueRow: 29.4#129
+          catalogueRow: 29.4#135
       security:
         - sessionCookie: []
       parameters:
@@ -2416,7 +2416,7 @@ paths:
           ifMatch: true
           elevationRequired: true
           pathAs: /api/v1/admin/services
-          catalogueRow: 29.4#129
+          catalogueRow: 29.4#135
       x-catalogue-gap: The catalogue lists PATCH on the collection and names no identifier of the resource
       security:
         - sessionCookie: []
@@ -2521,7 +2521,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/services
-          catalogueRow: 29.4#129
+          catalogueRow: 29.4#135
       security:
         - sessionCookie: []
       parameters:
@@ -2613,7 +2613,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/settings
-          catalogueRow: 29.4#131
+          catalogueRow: 29.4#137
       security:
         - sessionCookie: []
       parameters:
@@ -2690,7 +2690,7 @@ paths:
           ifMatch: false
           elevationRequired: true
           pathAs: /api/v1/admin/settings
-          catalogueRow: 29.4#131
+          catalogueRow: 29.4#137
       security:
         - sessionCookie: []
       parameters:
@@ -3102,7 +3102,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /public/v1/banners
-          catalogueRow: 29.5#150
+          catalogueRow: 29.5#156
       security: []
       x-authentication: none (audience `public`)
       x-error-codes:
@@ -3152,7 +3152,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /public/v1/clinicians
-          catalogueRow: 29.5#148
+          catalogueRow: 29.5#154
       security: []
       x-authentication: none (audience `public`)
       parameters:
@@ -3215,7 +3215,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /public/v1/locations
-          catalogueRow: 29.5#148
+          catalogueRow: 29.5#154
       security: []
       x-authentication: none (audience `public`)
       parameters:
@@ -3268,7 +3268,7 @@ paths:
           idempotencyKey: false
           ifMatch: false
           pathAs: /public/v1/services
-          catalogueRow: 29.5#148
+          catalogueRow: 29.5#154
       security: []
       x-authentication: none (audience `public`)
       parameters:

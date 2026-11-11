@@ -793,3 +793,75 @@ describe('scope builder (21.3, SHARED-BOUNDARIES 6.1)', () => {
     assert.equal(b.scope.orgId, ORG, 'nor the organisation');
   });
 });
+
+describe('proxy scopes reach only the listed routes (ruling C item 3, PROXY_SCOPED_ROUTES)', () => {
+  const grant = (proxy: string, patientId: string, scopes: string[], status = 'active') =>
+    k.sa.query(
+      `INSERT INTO identity.proxy_grant (id, organisation_id, proxy_principal_id, patient_id, relationship, patient_display_name, status, scopes)
+       VALUES ($1,$2,$3,$4,'carer','Sam J',$5,$6)`,
+      [uuidv7(), ORG, proxy, patientId, status, scopes],
+    );
+  const as = async (scopes: string[]) => {
+    const p = await seedPrincipal(k, 'patient_pool');
+    await grant(p.principalId, P2, scopes);
+    return { p, s: await seedSession(k, p, 'patient_pool') };
+  };
+  const status = (s: SeededSession, method: string, path: string) =>
+    call(k.base, method, path, {
+      host: PATIENT_HOST,
+      cookie: s.cookie,
+      ...(method === 'POST' ? { headers: writeHeaders(s, PATIENT_HOST), body: {} } : {}),
+    }).then((r) => r.status);
+  const DOCS = `/api/v1/patients/${P2}/documents`;
+  const DL = `/api/v1/documents/${P2}/download-url`;
+  const THREADS = `/api/v1/patients/${P2}/threads`;
+  const OTHER = `/api/v1/patients/${P2}/profile`;
+
+  test('appointments only: the documents and threads routes are not found, whatever the route', async () => {
+    const { s } = await as(['appointments']);
+    assert.equal(await status(s, 'GET', DOCS), 404);
+    assert.equal(await status(s, 'POST', DL), 404);
+    assert.equal(await status(s, 'GET', THREADS), 404);
+    assert.equal(await status(s, 'GET', OTHER), 404);
+  });
+
+  test('documents: the two document routes open (method-bound), nothing else; threads stay closed', async () => {
+    const { s } = await as(['appointments', 'documents']);
+    assert.equal(await status(s, 'GET', DOCS), 200);
+    assert.equal(await status(s, 'POST', DL), 201);
+    assert.equal(await status(s, 'POST', DOCS), 404, 'a write on the list route is not listed');
+    assert.equal(await status(s, 'GET', DL), 404, 'wrong method on the download route');
+    assert.equal(await status(s, 'GET', THREADS), 404);
+    assert.equal(await status(s, 'GET', OTHER), 404);
+  });
+
+  test('messages: the thread list opens, the documents routes stay closed', async () => {
+    const { s } = await as(['appointments', 'messages']);
+    assert.equal(await status(s, 'GET', THREADS), 200);
+    assert.equal(await status(s, 'GET', DOCS), 404);
+    assert.equal(await status(s, 'POST', DL), 404);
+    assert.equal(await status(s, 'GET', OTHER), 404);
+  });
+
+  test('a scope granted for one patient opens nothing of another patient; a revoked grant closes the routes at once; 13-17 narrows', async () => {
+    const { p, s } = await as(['appointments', 'documents', 'messages']);
+    assert.equal(await status(s, 'GET', `/api/v1/patients/${P3}/documents`), 404);
+    assert.equal(await status(s, 'GET', `/api/v1/patients/${P3}/threads`), 404);
+    assert.equal(await status(s, 'GET', DOCS), 200);
+    await k.sa.query(
+      `UPDATE identity.proxy_grant SET status = 'revoked', revoked_at = now(), revoke_reason = 'patient', ended_by = 'patient' WHERE proxy_principal_id = $1`,
+      [p.principalId],
+    );
+    assert.equal(await status(s, 'GET', DOCS), 404);
+    assert.equal(await status(s, 'GET', THREADS), 404);
+    // A guardian of an adolescent keeps appointments only, even with documents granted.
+    const g = await seedPrincipal(k, 'patient_pool');
+    await k.sa.query(
+      `INSERT INTO identity.proxy_grant (id, organisation_id, proxy_principal_id, patient_id, relationship, patient_display_name, status, scopes, guardian, source, patient_birth_date, adolescent_from, valid_until)
+       VALUES ($1,$2,$3,$4,'parent','Sam J','active',ARRAY['appointments','documents'],true,'staff_link', current_date - 5000, current_date - 1, current_date + 400)`,
+      [uuidv7(), ORG, g.principalId, P2],
+    );
+    const gs = await seedSession(k, g, 'patient_pool');
+    assert.equal(await status(gs, 'GET', DOCS), 404);
+  });
+});

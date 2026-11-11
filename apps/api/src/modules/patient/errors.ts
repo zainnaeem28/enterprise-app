@@ -103,13 +103,7 @@ export class ChannelUnavailableError extends PatientError {
   }
 }
 
-/** 422 identity.proxy_rules_not_configured: the D-7 verification rule values do not exist yet (RA-R1-20b is blocked). */
-export class ProxyRulesNotConfiguredError extends PatientError {
-  constructor() {
-    super('identity.proxy_rules_not_configured', 422);
-    this.name = 'ProxyRulesNotConfiguredError';
-  }
-}
+export { ProxyRulesNotConfiguredError } from '../identity/index.js';
 
 export class PreconditionRequiredError extends PatientError {
   constructor() {

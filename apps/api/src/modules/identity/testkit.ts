@@ -541,6 +541,27 @@ export class ProbeController {
   appointments(): { ok: true } {
     return { ok: true };
   }
+  // The routes of PROXY_SCOPED_ROUTES, declared as the real controllers declare them (permission 'patient'), plus one that is not listed.
+  @Get('api/v1/patients/:id/documents')
+  @Route({ permission: 'patient', resolver: 'probe-any' })
+  pDocuments(): { ok: true } {
+    return { ok: true };
+  }
+  @Post('api/v1/documents/:id/download-url')
+  @Route({ permission: 'patient', resolver: 'probe-any' })
+  pDownload(): { ok: true } {
+    return { ok: true };
+  }
+  @Get('api/v1/patients/:id/threads')
+  @Route({ permission: 'patient', resolver: 'probe-any' })
+  pThreads(): { ok: true } {
+    return { ok: true };
+  }
+  @Get('api/v1/patients/:id/profile')
+  @Route({ permission: 'patient', resolver: 'probe-any' })
+  pProfile(): { ok: true } {
+    return { ok: true };
+  }
   @Get('api/v1/alerts/stream')
   @Route({ permission: 'notifications.alert.read', resolver: 'none', routeClass: 'stream' })
   stream(): { ok: true } {
@@ -565,6 +586,14 @@ export class ProbeController {
 
 /** Registers the `probe` resolver: the id in the path is the patient; `?loc=` names the location; one id does not exist. */
 export function registerProbeResolver(k: Kit): void {
+  // The patient is the first uuid in the path (the document routes use the same id for the document: the probe maps it to the patient).
+  k.identity.policy.registerResolver(
+    'probe-any',
+    (req: Req): Promise<ResolvedResource | undefined> => {
+      const patientId = /\/([0-9a-f-]{36})(\/|$)/.exec(req.path)?.[1];
+      return Promise.resolve(patientId === undefined ? undefined : { patientId });
+    },
+  );
   k.identity.policy.registerResolver('probe', (req: Req): Promise<ResolvedResource | undefined> => {
     const patientId = /\/([0-9a-f-]{36})$/.exec(req.path)?.[1];
     if (patientId === undefined || patientId === PATIENT_NOT_FOUND)
