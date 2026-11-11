@@ -391,3 +391,69 @@ export const bootstrapOwner = {
     'audit.event.event_insert_bootstrap',
   ],
 };
+
+/**
+ * HEAAA-881 (decision HEAAA-880 D-880-5): every table that carries a patient id is either purged by privacy.purge_medical_record when the
+ * medical-record retention ends (patientPurgeTables) or listed here with the reason it is not (patientPurgeExempt). A new patient-linked
+ * table fails check M-6-patient-purge until its owner decides which. Whole schemas are exempt through patientPurgeExemptSchemas.
+ */
+export const patientPurgeTables = [
+  'clinical.allergy',
+  'clinical.consent_exception',
+  'clinical.encounter',
+  'clinical.follow_up',
+  'clinical.medication_statement',
+  'clinical.note',
+  'clinical.note_addendum',
+  'clinical.note_cosign',
+  'clinical.problem',
+  'clinical.questionnaire_response',
+  'clinical.referral',
+  'clinical.referral_inbox',
+  'clinical.triage_assessment',
+  'clinical.vital_sign',
+  'documents.deletion_request',
+  'documents.document',
+  'documents.document_version',
+  'documents.legal_hold',
+  'identity.patient_link',
+  'identity.proxy_grant',
+  'messaging.message',
+  'messaging.task',
+  'messaging.thread',
+  'messaging.thread_participant',
+  'notifications.delivery_receipt',
+  'notifications.in_app_read',
+  'notifications.notification',
+  'notifications.staff_alert',
+  'notifications.staff_alert_event',
+  'patient.care_relationship',
+  'patient.care_team_member',
+  'patient.communication_preference',
+  'patient.consent',
+  'patient.duplicate_flag',
+  'patient.insurance_coverage',
+  'patient.match_check',
+  'patient.merge_request',
+  'patient.merge_residue',
+  'patient.patient_contact',
+  'patient.patient_merge',
+  'patient.staff_scope',
+  'scheduling.check_in',
+  'scheduling.no_show_flag',
+  'scheduling.queue_entry',
+  'scheduling.slot_occupancy',
+  'scheduling.slot_reservation',
+  'scheduling.waitlist_entry',
+  'scheduling.waitlist_offer',
+  'telehealth.join_token',
+  'telehealth.location_confirmation',
+  'telehealth.participant',
+  'telehealth.video_session',
+];
+export const patientPurgeExempt = {
+  // The tombstone: de-identified by the purge, deleted by purge_hipaa_documentation once no privacy.* row refers to it (D-880-3).
+  'patient.patient': 'tombstone',
+};
+/** Schemas whose patient-linked rows follow their own period: audit (archive, 7 years) and privacy documentation (6 years). */
+export const patientPurgeExemptSchemas = ['audit', 'privacy'];

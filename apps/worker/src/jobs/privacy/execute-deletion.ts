@@ -92,6 +92,7 @@ export async function runExecuteDeletion(
       heldDocuments,
       keptUntil: retainedUntil,
       auditTrailYears: deps.retention.years.auditTrail,
+      hipaaDocumentationYears: deps.retention.years.hipaaDocumentation,
     });
     const recordId = uuidv7();
     await tx.query(

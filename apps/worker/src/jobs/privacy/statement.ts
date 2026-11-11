@@ -25,6 +25,17 @@ export const KEPT_CLASS_LABELS: Readonly<Record<string, string>> = Object.freeze
   follow_ups: 'follow-ups',
   consents: 'signed treatment consents',
   accepted_documents: 'documents accepted into your record',
+  // HEAAA-880 D-880-6: the other classes kept until the same date.
+  contact_details: 'your contact and emergency-contact details',
+  insurance_coverages: 'your insurance details',
+  appointments: 'appointments',
+  check_ins: 'check-ins',
+  video_visits: 'video visit records',
+  messages: 'messages with the care team',
+  tasks: 'tasks about your care',
+  notices_sent: 'notices we sent you',
+  people_with_access: 'people with access to your record (proxies and care relationships)',
+  identity_record: 'your record number (your name and date of birth are removed at the end)',
 });
 
 export interface ClassCount {
@@ -47,6 +58,8 @@ export interface DeletionStatement {
   /** Uploads that would have been deleted but are under a legal hold. */
   keptByHold: ClassCount[];
   auditTrail: { kept: true; years: number };
+  /** The documentation of the request itself (the request, the statement, the record of the purge). */
+  documentation: { kept: true; years: number };
 }
 
 export interface StatementInput {
@@ -57,6 +70,7 @@ export interface StatementInput {
   heldDocuments: number;
   keptUntil: string;
   auditTrailYears: number;
+  hipaaDocumentationYears: number;
 }
 
 const rows = (o: Record<string, number>, allowed: Readonly<Record<string, string>>): ClassCount[] =>
@@ -76,6 +90,7 @@ export function buildDeletionStatement(i: StatementInput): DeletionStatement {
     legalHold: { documents: i.heldDocuments },
     keptByHold: rows(i.keptByHold, DELETED_CLASS_LABELS),
     auditTrail: { kept: true, years: i.auditTrailYears },
+    documentation: { kept: true, years: i.hipaaDocumentationYears },
   };
 }
 
@@ -103,6 +118,9 @@ export function renderStatementText(s: DeletionStatement): { subject: string; te
   for (const k of s.kept) lines.push(`- ${KEPT_CLASS_LABELS[k.class] ?? k.class} (${k.count})`);
   lines.push(
     `We also keep a record of who accessed your information (the audit trail) for ${s.auditTrail.years} years, as the law requires.`,
+  );
+  lines.push(
+    `We keep the documentation of this request, and that your record was destroyed, for ${s.documentation.years} years, as the law requires.`,
   );
   if (s.legalHold.documents > 0 || s.keptByHold.length > 0) {
     lines.push('');

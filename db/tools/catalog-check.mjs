@@ -141,6 +141,27 @@ export const checks = {
                  OR NOT coalesce((SELECT bool_or(c LIKE 'search_path=%') FROM unnest(p.proconfig) c), false)
                  OR (SELECT rolcanlogin FROM pg_roles WHERE oid = p.proowner))`,
   },
+  'M-6-patient-purge': {
+    title:
+      'every table with a patient id is purged by the retention functions (privacy.purge_medical_record, or privacy.delete_nonrecord_data at the request) or on the exempt list (HEAAA-880 D-880-5)',
+    sql: `WITH linked AS (
+            SELECT DISTINCT c.oid::regclass::text AS tbl
+              FROM pg_class c JOIN pg_attribute a ON a.attrelid = c.oid AND a.attnum > 0 AND NOT a.attisdropped
+             WHERE c.relkind = 'r' AND NOT c.relispartition AND c.relnamespace IN ${modSchemas}
+               AND a.attname ~ '(^|_)patient_ids?$'
+            UNION
+            SELECT conrelid::regclass::text FROM pg_constraint
+             WHERE contype = 'f' AND confrelid = 'patient.patient'::regclass AND conrelid::regclass::text !~ '^patient\\.patient$')
+          SELECT 'patient-linked table is neither purged nor exempt' AS problem, tbl AS object FROM linked
+           WHERE tbl <> ALL (${q(L.patientPurgeTables)}) AND tbl <> ALL (${q(Object.keys(L.patientPurgeExempt))})
+             AND split_part(tbl, '.', 1) <> ALL (${q(L.patientPurgeExemptSchemas)})
+          UNION ALL
+          SELECT 'purged table is in neither purge_medical_record nor delete_nonrecord_data', t FROM unnest(${q(L.patientPurgeTables)}) t
+           WHERE position(t IN pg_get_functiondef('privacy.purge_medical_record(uuid)'::regprocedure)
+                              || pg_get_functiondef('privacy.delete_nonrecord_data(uuid)'::regprocedure)) = 0
+          UNION ALL
+          SELECT 'purged table does not exist', t FROM unnest(${q(L.patientPurgeTables)}) t WHERE to_regclass(t) IS NULL`,
+  },
   'M-5-messaging-definer': {
     title:
       'the A-4 messaging definers carry exactly the pinned attributes; patient_scope_owner is NOLOGIN, not superuser/BYPASSRLS, without GRANT OPTION, and holds only the four thread_participant columns (A4-3, A4-4, C-1..C-3)',

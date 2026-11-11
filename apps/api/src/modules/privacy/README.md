@@ -48,6 +48,38 @@ archive; "minors" means younger than `EHR_RETENTION_AGE_OF_MAJORITY_YEARS` (18) 
 in for it; adding years to 29 February lands on 1 March (the record is kept a day longer, never shorter).
 Keys are additive-only: renaming or removing one breaks DevOps and needs a coordinated change.
 
+## What the purge removes, and what it keeps (HEAAA-881, decision HEAAA-880 D-880-1..6; migrations 2601, 2603-2606)
+
+At the **deletion request** only ruling C item 1 is deleted (sign-in disabled, preferences, tokens, marketing and cookie consents, drafts,
+unaccepted uploads). Everything else is kept and named in the patient statement's "kept" list with the same `keptUntil` date. When the
+medical-record retention ends, `privacy.purge_medical_record` removes the rest **in the same gated transaction** (same job check, same legal-hold
+and document-retention deferral: a hold leaves every class untouched, no partial purge), children first, for the patient's merge closure:
+
+| Class                                                                                                                          | At the end of retention                                                                                                                         |
+| ------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `clinical.*`, `patient.consent`, `documents.*`                                                                                 | deleted (2601; objects removed by `documents.retention_sweep`)                                                                                  |
+| `patient.patient_contact`, `insurance_coverage`, `care_relationship`, `care_team_member`, `duplicate_flag`, `staff_scope`      | deleted                                                                                                                                         |
+| `patient.merge_request`, `patient_merge`, `merge_residue`, `match_check` (rows naming the closure)                             | deleted                                                                                                                                         |
+| `scheduling.slot_reservation`, `check_in`, `queue_entry`, `waitlist_entry`, `waitlist_offer`, `no_show_flag`, `slot_occupancy` | deleted; a waitlist offer of another patient for a slot this patient held goes with that slot                                                   |
+| `telehealth.video_session`, `participant`, `join_token`, `location_confirmation`                                               | deleted                                                                                                                                         |
+| `messaging.thread`, `thread_participant`, `message`, `task`                                                                    | deleted                                                                                                                                         |
+| `notifications.notification`, `delivery_receipt`, `in_app_read`, `staff_alert`, `staff_alert_event`                            | deleted                                                                                                                                         |
+| `identity.proxy_grant`, `identity.patient_link`                                                                                | deleted (proxy access at the request itself is a separate decision, D-880-4)                                                                    |
+| `identity.principal`, `identity.person` of the patient realm                                                                   | de-identified (subject `purged:<id>`, no e-mail, person `Deleted account`) only when linked solely to these patients and not a proxy for others |
+| `patient.patient`                                                                                                              | **tombstone**: id, organisation, MRN (never reissued), origin, `created_at`, `status = 'purged'`, `purged_at`; every personal column null       |
+| `audit.*`                                                                                                                      | not touched: archive-governed, 7 years                                                                                                          |
+| `privacy.request`, `export_package`, `incident_patient`, `deletion_record`, `retention_run`                                    | kept as HIPAA documentation, 6 years; `purge_hipaa_documentation` then deletes the tombstone once no `privacy.*` row refers to it               |
+
+The tombstone is written only by `privacy_retention_owner` (trigger `patient.guard_merged_root`, CHECK `patient_purged_shape`; the NOT NULL of
+the five required columns is relaxed in 2603 and restored for every non-purged row by the CHECK, 2604-2606). The purge report holds counts only.
+
+**Coverage check (D-880-5).** `db/tools/catalog-lists.mjs` (`patientPurgeTables`, `patientPurgeExempt`, `patientPurgeExemptSchemas`) and the
+catalog check `M-6-patient-purge` (`db/tools/catalog-check.mjs`): a table with a patient id that is neither purged nor exempt fails the check, so a
+table added later cannot be missed. Exempt: `audit.*`, `privacy.*`, and the tombstone `patient.patient`.
+
+**Not decided here.** Whether active proxy access ends at the deletion request (D-880-4, Cybersecurity) and whether the period applies to patients
+who never requested deletion (Product Manager) are separate tickets. Not legal advice; † counsel confirms before go-live.
+
 ## Tests (real PostgreSQL 17, superuser URL on a throwaway server, synthetic data; missing configuration fails)
 
 ```

@@ -1138,4 +1138,714 @@ describe('account deletion and retention (HEAAA-789) on PostgreSQL 17', () => {
       assert.equal(typeof table[name], 'function', name);
     assert.match(tasks.PRIVACY_CRONTAB, /10 4 \* \* \* privacy\.retention_purge/);
   });
+  // ================================================================================================================================
+  // HEAAA-881 (decision HEAAA-880 D-880-1..6): the purge also removes the patient-linked data outside the clinical record
+  // ================================================================================================================================
+  type Row = Record<string, unknown>;
+  const synthetic = (dataType: string): unknown => {
+    switch (dataType) {
+      case 'uuid':
+        return uuidv7();
+      case 'text':
+        return 'synthetic';
+      case 'jsonb':
+        return '{}';
+      case 'boolean':
+        return false;
+      case 'integer':
+      case 'bigint':
+      case 'smallint':
+      case 'numeric':
+        return 1;
+      case 'date':
+        return '2026-01-01';
+      case 'ARRAY':
+        return '{}';
+      case 'tstzrange':
+        return '[2026-01-01 10:00+00,2026-01-01 11:00+00)';
+      case 'bytea':
+        return Buffer.alloc(32, 1);
+      default:
+        if (dataType.startsWith('timestamp')) return '2026-01-01T10:00:00Z';
+        throw new Error(`no synthetic value for type ${dataType}`);
+    }
+  };
+  /** One synthetic row below the triggers: every required column without a default gets a value of its type unless given. */
+  const fill = async (table: string, o: Row): Promise<void> => {
+    const [schema, name] = table.split('.');
+    const cols = await t.k.q<{
+      column_name: string;
+      data_type: string;
+      column_default: string | null;
+      is_nullable: string;
+      is_generated: string;
+      is_identity: string;
+    }>(
+      `SELECT column_name, data_type, column_default, is_nullable, is_generated, is_identity FROM information_schema.columns
+        WHERE table_schema = $1 AND table_name = $2 ORDER BY ordinal_position`,
+      [schema, name],
+    );
+    const names: string[] = [];
+    const vals: unknown[] = [];
+    for (const c of cols) {
+      let v: unknown;
+      if (c.column_name in o) v = o[c.column_name];
+      else if (
+        c.is_nullable === 'NO' &&
+        c.column_default === null &&
+        c.is_generated === 'NEVER' &&
+        c.is_identity === 'NO'
+      )
+        v = synthetic(c.data_type);
+      else continue;
+      names.push(`"${c.column_name}"`);
+      vals.push(v);
+    }
+    await t.seed(
+      `INSERT INTO ${table} (${names.join(', ')}) VALUES (${vals.map((_, i) => `$${i + 1}`).join(', ')})`,
+      vals,
+    );
+  };
+  interface Linked {
+    res: string;
+    thread: string;
+    notification: string;
+    alert: string;
+  }
+  /** One row in every patient-linked class outside the clinical record, for the patient (and one pointing at an `other` patient). */
+  const seedLinked = async (p: PatientKit, other?: PatientKit): Promise<Linked> => {
+    const [res, thread, notification, alert] = [uuidv7(), uuidv7(), uuidv7(), uuidv7()];
+    const P = p.patientId;
+    const X = t.desk.seeded.principalId;
+    const pr = p.session.seeded.principalId;
+    await fill('patient.patient_contact', {
+      patient_id: P,
+      organisation_id: ORG,
+      kind: 'emergency',
+    });
+    await fill('patient.insurance_coverage', { patient_id: P, organisation_id: ORG });
+    await fill('patient.care_relationship', {
+      patient_id: P,
+      organisation_id: ORG,
+      reason: 'booking',
+    });
+    await fill('identity.proxy_grant', {
+      patient_id: P,
+      organisation_id: ORG,
+      proxy_principal_id: X,
+      relationship: 'parent',
+      scope: 'appointments',
+      status: 'active',
+      patient_display_name: 'synthetic',
+    });
+    await fill('patient.care_team_member', {
+      patient_id: P,
+      organisation_id: ORG,
+      role: 'nurse',
+      principal_id: X,
+    });
+    await fill('patient.duplicate_flag', {
+      patient_id: P,
+      candidate_patient_id: other?.patientId ?? uuidv7(),
+      organisation_id: ORG,
+      source: 'front_desk',
+      strength: 'exact',
+    });
+    // patient.staff_scope exists already: registration writes it.
+    const mergeReq = uuidv7();
+    await fill('patient.merge_request', {
+      id: mergeReq,
+      survivor_id: P,
+      merged_id: uuidv7(),
+      organisation_id: ORG,
+    });
+    await fill('patient.patient_merge', {
+      merged_id: uuidv7(),
+      direct_survivor_id: P,
+      final_survivor_id: P,
+      organisation_id: ORG,
+      merge_request_id: mergeReq,
+    });
+    await fill('patient.merge_residue', {
+      merge_request_id: mergeReq,
+      survivor_id: P,
+      merged_id: uuidv7(),
+      organisation_id: ORG,
+      source_table: 'clinical.note',
+    });
+    await fill('patient.match_check', {
+      principal_id: pr,
+      candidate_patient_ids: `{${P}}`,
+      candidate_refs: `{${uuidv7()}}`,
+      candidate_strengths: '{exact}',
+      organisation_id: ORG,
+    });
+    await fill('scheduling.slot_occupancy', {
+      id: res,
+      organisation_id: ORG,
+      location_id: A1,
+      status: 'confirmed',
+    });
+    await fill('scheduling.slot_reservation', {
+      id: res,
+      patient_id: P,
+      organisation_id: ORG,
+      location_id: A1,
+      booked_via: 'staff',
+      mode: 'in_person',
+    });
+    await fill('scheduling.no_show_flag', {
+      reservation_id: res,
+      organisation_id: ORG,
+      location_id: A1,
+    });
+    await fill('scheduling.check_in', {
+      id: res,
+      patient_id: P,
+      organisation_id: ORG,
+      location_id: A1,
+      method: 'desk',
+    });
+    await fill('scheduling.queue_entry', {
+      id: res,
+      patient_id: P,
+      organisation_id: ORG,
+      location_id: A1,
+      stage: 'waiting',
+    });
+    const wl = uuidv7();
+    await fill('scheduling.waitlist_entry', { id: wl, patient_id: P, organisation_id: ORG });
+    await fill('scheduling.waitlist_offer', {
+      waitlist_entry_id: wl,
+      patient_id: P,
+      organisation_id: ORG,
+      occupancy_id: res,
+      status: 'expired',
+      decided_at: '2026-01-01T10:30:00Z',
+    });
+    if (other !== undefined) {
+      // Another patient's offer for the slot this patient's reservation held: it cannot outlive the occupancy row it points at.
+      const owl = uuidv7();
+      await fill('scheduling.waitlist_entry', {
+        id: owl,
+        patient_id: other.patientId,
+        organisation_id: ORG,
+      });
+      await fill('scheduling.waitlist_offer', {
+        waitlist_entry_id: owl,
+        patient_id: other.patientId,
+        organisation_id: ORG,
+        occupancy_id: res,
+        status: 'offered',
+      });
+    }
+    const session = uuidv7();
+    const part = uuidv7();
+    await fill('telehealth.video_session', {
+      id: session,
+      patient_id: P,
+      organisation_id: ORG,
+      reservation_id: res,
+      status: 'scheduled',
+    });
+    await fill('telehealth.participant', {
+      id: part,
+      session_id: session,
+      patient_id: P,
+      organisation_id: ORG,
+      role: 'patient',
+      principal_id: pr,
+    });
+    await fill('telehealth.join_token', {
+      session_id: session,
+      participant_id: part,
+      patient_id: P,
+      principal_id: pr,
+      organisation_id: ORG,
+      issued_at: '2026-01-01T10:00:00Z',
+      expires_at: '2026-01-01T10:10:00Z',
+      status: 'issued',
+    });
+    await fill('telehealth.location_confirmation', {
+      reservation_id: res,
+      patient_id: P,
+      principal_id: pr,
+      organisation_id: ORG,
+      result: 'allowed',
+      stated_state: 'CA',
+    });
+    await fill('messaging.thread', {
+      id: thread,
+      patient_id: P,
+      organisation_id: ORG,
+      kind: 'patient',
+      created_by: X,
+    });
+    await fill('messaging.thread_participant', {
+      thread_id: thread,
+      principal_id: X,
+      organisation_id: ORG,
+      role: 'owner',
+      added_by: X,
+    });
+    await fill('messaging.message', {
+      thread_id: thread,
+      patient_id: P,
+      organisation_id: ORG,
+      author_principal_id: X,
+    });
+    await fill('messaging.task', {
+      patient_id: P,
+      organisation_id: ORG,
+      assignee_kind: 'principal',
+      assignee_principal_id: X,
+      created_by: X,
+    });
+    await fill('notifications.notification', {
+      id: notification,
+      patient_id: P,
+      organisation_id: ORG,
+      recipient_kind: 'patient',
+      channel: 'email',
+      dedupe_key: `seed:${notification}`,
+    });
+    await fill('notifications.delivery_receipt', {
+      notification_id: notification,
+      patient_id: P,
+      organisation_id: ORG,
+      status: 'delivered',
+    });
+    await fill('notifications.in_app_read', {
+      notification_id: notification,
+      patient_id: P,
+      organisation_id: ORG,
+    });
+    await fill('notifications.staff_alert', {
+      id: alert,
+      patient_id: P,
+      organisation_id: ORG,
+      type: 'red_flag',
+      severity: 'high',
+      resource_type: 'seed',
+      target_kind: 'principal',
+      target_principal_ids: `{${X}}`,
+    });
+    await fill('notifications.staff_alert_event', {
+      alert_id: alert,
+      patient_id: P,
+      organisation_id: ORG,
+      kind: 'created',
+    });
+    return { res, thread, notification, alert };
+  };
+  /** Rows that still point at the patient, in every table of the catalog with a patient column or a link to the patient (none is exempt but audit, privacy and the tombstone). */
+  const leftovers = async (p: PatientKit, l: Linked): Promise<Record<string, number>> => {
+    const tables = await t.k.q<{ tbl: string }>(
+      `SELECT DISTINCT c.oid::regclass::text AS tbl
+         FROM pg_class c JOIN pg_attribute a ON a.attrelid = c.oid AND a.attnum > 0 AND NOT a.attisdropped
+        WHERE c.relkind = 'r' AND NOT c.relispartition AND a.attname = 'patient_id'
+          AND c.relnamespace::regnamespace::text NOT IN ('audit', 'privacy', 'pg_catalog', 'information_schema')
+          AND c.oid::regclass::text <> 'patient.patient'`,
+    );
+    const out: Record<string, number> = {};
+    for (const { tbl } of tables)
+      out[tbl] = await n(`SELECT count(*)::int AS n FROM ${tbl} WHERE patient_id = $1`, [
+        p.patientId,
+      ]);
+    const P = p.patientId;
+    const extra: Record<string, [string, unknown[]]> = {
+      'patient.duplicate_flag.candidate': [
+        `SELECT count(*)::int AS n FROM patient.duplicate_flag WHERE candidate_patient_id = $1`,
+        [P],
+      ],
+      'patient.merge_request': [
+        `SELECT count(*)::int AS n FROM patient.merge_request WHERE survivor_id = $1 OR merged_id = $1`,
+        [P],
+      ],
+      'patient.patient_merge': [
+        `SELECT count(*)::int AS n FROM patient.patient_merge WHERE final_survivor_id = $1 OR direct_survivor_id = $1 OR merged_id = $1`,
+        [P],
+      ],
+      'patient.merge_residue': [
+        `SELECT count(*)::int AS n FROM patient.merge_residue WHERE survivor_id = $1 OR merged_id = $1`,
+        [P],
+      ],
+      'patient.match_check': [
+        `SELECT count(*)::int AS n FROM patient.match_check WHERE candidate_patient_ids @> ARRAY[$1::uuid]`,
+        [P],
+      ],
+      'scheduling.slot_occupancy': [
+        `SELECT count(*)::int AS n FROM scheduling.slot_occupancy WHERE id = $1`,
+        [l.res],
+      ],
+      'scheduling.no_show_flag': [
+        `SELECT count(*)::int AS n FROM scheduling.no_show_flag WHERE reservation_id = $1`,
+        [l.res],
+      ],
+      'scheduling.waitlist_offer.occupancy': [
+        `SELECT count(*)::int AS n FROM scheduling.waitlist_offer WHERE occupancy_id = $1`,
+        [l.res],
+      ],
+      'messaging.thread_participant': [
+        `SELECT count(*)::int AS n FROM messaging.thread_participant WHERE thread_id = $1`,
+        [l.thread],
+      ],
+      'messaging.message.thread': [
+        `SELECT count(*)::int AS n FROM messaging.message WHERE thread_id = $1`,
+        [l.thread],
+      ],
+      'notifications.delivery_receipt.notification': [
+        `SELECT count(*)::int AS n FROM notifications.delivery_receipt WHERE notification_id = $1`,
+        [l.notification],
+      ],
+      'notifications.staff_alert_event.alert': [
+        `SELECT count(*)::int AS n FROM notifications.staff_alert_event WHERE alert_id = $1`,
+        [l.alert],
+      ],
+      'clinical.referral_inbox': [
+        `SELECT count(*)::int AS n FROM clinical.referral_inbox i JOIN clinical.referral r ON r.id = i.referral_id WHERE r.patient_id = $1`,
+        [P],
+      ],
+      'identity.patient_link': [
+        `SELECT count(*)::int AS n FROM identity.patient_link WHERE patient_id = $1`,
+        [P],
+      ],
+    };
+    for (const [k, [sql, params]] of Object.entries(extra)) out[k] = await n(sql, params);
+    return out;
+  };
+  const nonZero = (o: Record<string, number>): string[] =>
+    Object.entries(o)
+      .filter(([, v]) => v !== 0)
+      .map(([k, v]) => `${k}=${v}`);
+
+  test('HEAAA-880 D-880-1/2: the statement names the other kept classes; they stay until retention ends, then the purge removes every one, in the same run, and tombstones the patient row', async () => {
+    const p = await mk();
+    const other = await mk();
+    const e = await seedEncounter(p, yearsAgo(11));
+    await seedNote(p, e);
+    const l = await seedLinked(p, other);
+    const before = await leftovers(p, l);
+    assert.ok(
+      nonZero(before).length >= 30,
+      `the fixture reaches every class: ${nonZero(before).length}`,
+    );
+    const otherBefore = await countRows('scheduling.waitlist_offer', other);
+    assert.equal(otherBefore, 1);
+
+    const req = await deleted(p);
+    // At the request nothing of these classes is deleted (ruling C item 1); the statement lists them as kept until the same date.
+    assert.deepEqual(
+      nonZero(await leftovers(p, l)).filter((x) => !x.startsWith('identity.patient_link')),
+      nonZero(before).filter((x) => !x.startsWith('identity.patient_link')),
+      'kept at the request',
+    );
+    const stmt = (await record(req))?.['statement'] as {
+      kept: { class: string; count: number }[];
+      documentation: { years: number };
+    };
+    const kept = stmt.kept.map((k) => k.class);
+    for (const c of [
+      'contact_details',
+      'insurance_coverages',
+      'appointments',
+      'check_ins',
+      'video_visits',
+      'messages',
+      'notices_sent',
+      'people_with_access',
+      'identity_record',
+    ])
+      assert.ok(kept.includes(c), `the statement keeps ${c}`);
+    assert.equal(stmt.documentation.years, RETENTION_DEFAULTS.hipaaDocumentationYears);
+
+    await makeDue(req);
+    const rep = await t.w.retentionPurge();
+    assert.equal(rep.status, 'completed');
+    assert.equal(
+      (await record(req))?.['purge_state'],
+      'purged',
+      'no document is left, so the record is purged in this run',
+    );
+    const removed = rep.classes.medical_record.removed;
+    for (const c of [
+      'scheduling.slot_reservation',
+      'scheduling.slot_occupancy',
+      'scheduling.no_show_flag',
+      'scheduling.check_in',
+      'scheduling.queue_entry',
+      'scheduling.waitlist_entry',
+      'telehealth.video_session',
+      'telehealth.participant',
+      'telehealth.join_token',
+      'telehealth.location_confirmation',
+      'messaging.thread',
+      'messaging.thread_participant',
+      'messaging.message',
+      'messaging.task',
+      'notifications.notification',
+      'notifications.delivery_receipt',
+      'notifications.in_app_read',
+      'notifications.staff_alert',
+      'notifications.staff_alert_event',
+      'patient.patient_contact',
+      'patient.insurance_coverage',
+      'patient.care_relationship',
+      'patient.care_team_member',
+      'patient.duplicate_flag',
+      'patient.staff_scope',
+      'patient.merge_request',
+      'patient.patient_merge',
+      'patient.merge_residue',
+      'patient.match_check',
+      'identity.proxy_grant',
+      'identity.patient_link',
+      'patient.patient_tombstoned',
+    ])
+      assert.ok(Number(removed[c]) >= 1, `the report counts ${c}`);
+    // Two waitlist offers: the patient's own and another patient's offer for the slot the purged reservation held.
+    assert.ok(Number(removed['scheduling.waitlist_offer']) >= 2);
+
+    assert.deepEqual(
+      nonZero(await leftovers(p, l)),
+      [],
+      'no row of any non-exempt table refers to the patient',
+    );
+    assert.equal(
+      await countRows('scheduling.waitlist_entry', other),
+      1,
+      'the other patient keeps their own entry',
+    );
+    assert.equal(await countRows('scheduling.waitlist_offer', other), 0);
+
+    // The tombstone: id, organisation, record number, origin, creation and purge time; nothing personal.
+    const ts = await row(`SELECT * FROM patient.patient WHERE id = $1`, [p.patientId]);
+    assert.equal(ts['status'], 'purged');
+    assert.ok(ts['purged_at'] !== null);
+    assert.match(String(ts['mrn']), /^MRN-[0-9]{7,12}$/);
+    for (const c of [
+      'given_name',
+      'family_name',
+      'middle_name',
+      'date_of_birth',
+      'sex_at_birth',
+      'gender_identity',
+      'phone_e164',
+      'email',
+      'address',
+      'state_code',
+      'preferred_language',
+      'photo_document_id',
+      'preferred_pharmacy',
+      'merged_into',
+    ])
+      assert.equal(ts[c], null, `${c} is removed`);
+    // The sign-in is de-identified and still disabled; the person is renamed.
+    const pr = await row(`SELECT email, subject, status FROM identity.principal WHERE id = $1`, [
+      p.session.seeded.principalId,
+    ]);
+    assert.equal(pr['email'], null);
+    assert.equal(pr['subject'], `purged:${p.session.seeded.principalId}`);
+    assert.equal(pr['status'], 'disabled');
+    assert.equal(
+      (
+        await row(`SELECT display_name FROM identity.person WHERE id = $1`, [
+          p.session.seeded.personId,
+        ])
+      )['display_name'],
+      'Deleted account',
+    );
+    // The report holds counts only.
+    const stored = await row(
+      `SELECT report::text AS report FROM privacy.retention_run WHERE id = $1`,
+      [rep.runId],
+    );
+    for (const secret of [p.patientId, other.patientId, l.res, l.thread, `Given`, 'Family', CANARY])
+      assert.equal(String(stored['report']).includes(secret), false, `no ${secret} in the report`);
+    // The deletion documentation itself stays (6 years) and keeps pointing at the tombstone.
+    assert.equal(await n(`SELECT count(*)::int AS n FROM privacy.request WHERE id = $1`, [req]), 1);
+  });
+
+  test('HEAAA-880 (Security Reviewer note 1): a legal hold or an unmet document retention leaves every class untouched, no partial purge', async () => {
+    const p = await mk();
+    await seedEncounter(p, yearsAgo(12));
+    const held = await seedDoc(p, 'confirmed', {
+      retentionUntil: ymd(yearsAgo(1)),
+      hold: 'placed',
+    });
+    const l = await seedLinked(p);
+    const req = await deleted(p);
+    await makeDue(req);
+    const before = nonZero(await leftovers(p, l));
+    const rep = await t.w.retentionPurge();
+    assert.ok(rep.classes.medical_record.deferredLegalHold >= 1);
+    assert.equal((await record(req))?.['purge_deferred_reason'], 'legal_hold');
+    assert.deepEqual(
+      nonZero(await leftovers(p, l)),
+      before,
+      'nothing removed while the hold stands',
+    );
+    assert.equal(
+      (await row(`SELECT status FROM patient.patient WHERE id = $1`, [p.patientId]))['status'],
+      'active',
+    );
+    // The same for a document whose own retention has not ended.
+    await release(p, held);
+    await t.seed(`UPDATE documents.document SET retention_until = current_date + 5 WHERE id = $1`, [
+      held,
+    ]);
+    const before2 = nonZero(await leftovers(p, l));
+    const rep2 = await t.w.retentionPurge();
+    assert.ok(rep2.classes.medical_record.deferredDocumentRetention >= 1);
+    assert.equal((await record(req))?.['purge_deferred_reason'], 'document_retention');
+    assert.deepEqual(nonZero(await leftovers(p, l)), before2);
+    assert.equal(
+      (await row(`SELECT status FROM patient.patient WHERE id = $1`, [p.patientId]))['status'],
+      'active',
+    );
+  });
+
+  test('HEAAA-880 (Security Reviewer note 2): a sign-in shared with a patient that is not purged, or a proxy for one, is not touched; the other patient keeps everything', async () => {
+    const a = await mk(); // purged
+    const b = await mk(); // stays
+    await seedEncounter(a, yearsAgo(11));
+    const la = await seedLinked(a);
+    const lb = await seedLinked(b);
+    const bBefore = nonZero(await leftovers(b, lb));
+    const req = await deleted(a);
+    // A's sign-in is also linked to B (the schema allows several links per principal): it must stay as it is.
+    await t.seed(
+      `INSERT INTO identity.patient_link (principal_id, patient_id, organisation_id, kind) VALUES ($1, $2, $3, 'self')`,
+      [a.session.seeded.principalId, b.patientId, ORG],
+    );
+    await makeDue(req);
+    await t.w.retentionPurge();
+    assert.deepEqual(
+      nonZero(await leftovers(a, la)).filter((x) => !x.startsWith('identity.patient_link')),
+      [],
+    );
+    const pr = await row(`SELECT subject FROM identity.principal WHERE id = $1`, [
+      a.session.seeded.principalId,
+    ]);
+    assert.notEqual(pr['subject'], null, 'the shared sign-in keeps its subject');
+    assert.notEqual(pr['subject'], `purged:${a.session.seeded.principalId}`);
+    assert.notEqual(
+      (
+        await row(`SELECT display_name FROM identity.person WHERE id = $1`, [
+          a.session.seeded.personId,
+        ])
+      )['display_name'],
+      'Deleted account',
+    );
+    assert.equal(
+      await n(`SELECT count(*)::int AS n FROM identity.patient_link WHERE patient_id = $1`, [
+        b.patientId,
+      ]),
+      2,
+    );
+    // B is untouched, rows and root.
+    assert.deepEqual(
+      nonZero(await leftovers(b, lb)),
+      bBefore.map((x) => (x.startsWith('identity.patient_link') ? 'identity.patient_link=2' : x)),
+    );
+    assert.equal(
+      (await row(`SELECT status FROM patient.patient WHERE id = $1`, [b.patientId]))['status'],
+      'active',
+    );
+
+    // A proxy for a patient that is not purged: the proxy's own sign-in is not de-identified, and the grant for B stays.
+    const c = await mk(); // purged; its sign-in is also a proxy for B
+    await seedEncounter(c, yearsAgo(11));
+    const lc = await seedLinked(c);
+    await fill('identity.proxy_grant', {
+      patient_id: b.patientId,
+      organisation_id: ORG,
+      proxy_principal_id: c.session.seeded.principalId,
+      relationship: 'carer',
+      scope: 'appointments',
+      status: 'active',
+      patient_display_name: 'synthetic',
+    });
+    const creq = await deleted(c);
+    await makeDue(creq);
+    await t.w.retentionPurge();
+    assert.deepEqual(nonZero(await leftovers(c, lc)), []);
+    assert.notEqual(
+      (
+        await row(`SELECT subject FROM identity.principal WHERE id = $1`, [
+          c.session.seeded.principalId,
+        ])
+      )['subject'],
+      `purged:${c.session.seeded.principalId}`,
+      'a proxy for another patient keeps its sign-in',
+    );
+    assert.equal(
+      await n(
+        `SELECT count(*)::int AS n FROM identity.proxy_grant WHERE patient_id = $1 AND proxy_principal_id = $2`,
+        [b.patientId, c.session.seeded.principalId],
+      ),
+      1,
+      'the grant for the other patient is not removed',
+    );
+  });
+
+  test('HEAAA-880 D-880-3: only the retention role sets or changes a purged patient; the tombstone holds no personal data; the HIPAA documentation purge deletes it last', async () => {
+    const p = await mk();
+    await seedEncounter(p, yearsAgo(11));
+    const l = await seedLinked(p);
+    const req = await deleted(p);
+    await makeDue(req);
+    await t.w.retentionPurge();
+    // Nobody else can write a purged status or personal data back, and a live patient cannot become purged by anyone else.
+    await assert.rejects(
+      t.seed(`UPDATE patient.patient SET given_name = 'Back' WHERE id = $1`, [p.patientId]),
+      /patient_purged_shape/,
+    );
+    const live = await mk();
+    await assert.rejects(
+      t.seed(`UPDATE patient.patient SET status = 'purged', purged_at = now() WHERE id = $1`, [
+        live.patientId,
+      ]),
+      /patient_purged_shape/,
+    );
+    // Below the CHECK, the trigger: a complete shape written by anyone but the retention role is refused (this connection runs triggers).
+    const complete = `UPDATE patient.patient SET status = 'purged', purged_at = now(), given_name = NULL, family_name = NULL, date_of_birth = NULL,
+                state_code = NULL, preferred_language = NULL, middle_name = NULL, sex_at_birth = NULL, gender_identity = NULL, phone_e164 = NULL,
+                email = NULL, address = NULL, photo_document_id = NULL, preferred_pharmacy = NULL WHERE id = $1`;
+    await assert.rejects(
+      t.k.sa.query(complete, [live.patientId]),
+      /a purged patient is set and changed only by the retention purge/,
+    );
+    // The worker may not write it either: no UPDATE right on the patient row at all.
+    await assert.rejects(
+      t.worker.withScope(sysScope([live.patientId]), (tx) => tx.query(complete, [live.patientId])),
+      /permission denied|row-level security/,
+    );
+    assert.equal(
+      (await row(`SELECT status FROM patient.patient WHERE id = $1`, [live.patientId]))['status'],
+      'active',
+    );
+
+    // The documentation (request, deletion record) is kept 6 years after the purge; then it goes, and the tombstone after it.
+    assert.equal(
+      await n(`SELECT count(*)::int AS n FROM patient.patient WHERE id = $1`, [p.patientId]),
+      1,
+    );
+    await t.seed(
+      `UPDATE privacy.deletion_record SET purged_at = $2::timestamptz WHERE request_id = $1`,
+      [req, yearsAgo(7).toISOString()],
+    );
+    await t.seed(`UPDATE privacy.request SET decided_at = $2::timestamptz WHERE id = $1`, [
+      req,
+      yearsAgo(7).toISOString(),
+    ]);
+    const rep = await t.w.retentionPurge();
+    assert.equal(rep.classes.hipaa_documentation.removed['privacy.deletion_record'], 1);
+    assert.equal(rep.classes.hipaa_documentation.removed['patient.patient_tombstone'], 1);
+    assert.equal(
+      await n(`SELECT count(*)::int AS n FROM patient.patient WHERE id = $1`, [p.patientId]),
+      0,
+    );
+    assert.deepEqual(nonZero(await leftovers(p, l)), []);
+  });
 });

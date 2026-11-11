@@ -19,6 +19,9 @@
 --   privacy.purge_hipaa_documentation(cutoff) removes privacy documentation (finished requests, expired packages, closed incidents,
 --        purged deletion records) whose HIPAA documentation period ended before the cut-off date.
 --
+-- HEAAA-881 (decision HEAAA-880): purge_medical_record also removes the patient-linked data outside the clinical record and tombstones the
+-- patient row (rights, policies and triggers for that: 2603; constraints: 2604-2606); purge_hipaa_documentation deletes the tombstone.
+--
 -- The audit trail is NOT touched here: audit rows are append-only and leave the hot store only through the dual-controlled archive process
 -- (ARCHITECTURE section 6, SAR-07); their retention is enforced in the archive (Object Lock), from the same settings.
 --
@@ -476,7 +479,19 @@ BEGIN
       'referrals', (SELECT count(*) FROM clinical.referral WHERE patient_id = ANY (v_ids)),
       'follow_ups', (SELECT count(*) FROM clinical.follow_up WHERE patient_id = ANY (v_ids)),
       'consents', (SELECT count(*) FROM patient.consent WHERE patient_id = ANY (v_ids)),
-      'accepted_documents', (SELECT count(*) FROM documents.document WHERE patient_id = ANY (v_ids) AND status = 'confirmed')));
+      'accepted_documents', (SELECT count(*) FROM documents.document WHERE patient_id = ANY (v_ids) AND status = 'confirmed'),
+      -- D-880-6 (2603): the other classes kept until the same date.
+      'contact_details', (SELECT count(*) FROM patient.patient_contact WHERE patient_id = ANY (v_ids)),
+      'insurance_coverages', (SELECT count(*) FROM patient.insurance_coverage WHERE patient_id = ANY (v_ids)),
+      'appointments', (SELECT count(*) FROM scheduling.slot_reservation WHERE patient_id = ANY (v_ids)),
+      'check_ins', (SELECT count(*) FROM scheduling.check_in WHERE patient_id = ANY (v_ids)),
+      'video_visits', (SELECT count(*) FROM telehealth.video_session WHERE patient_id = ANY (v_ids)),
+      'messages', (SELECT count(*) FROM messaging.message m JOIN messaging.thread t ON t.id = m.thread_id WHERE t.patient_id = ANY (v_ids)),
+      'tasks', (SELECT count(*) FROM messaging.task WHERE patient_id = ANY (v_ids)),
+      'notices_sent', (SELECT count(*) FROM notifications.notification WHERE patient_id = ANY (v_ids)),
+      'people_with_access', (SELECT count(*) FROM identity.proxy_grant WHERE patient_id = ANY (v_ids))
+         + (SELECT count(*) FROM patient.care_relationship WHERE patient_id = ANY (v_ids)),
+      'identity_record', (SELECT count(*) FROM patient.patient WHERE id = ANY (v_ids))));
 END
 $$;
 
@@ -493,6 +508,8 @@ DECLARE
   v_n     integer;
   v_left  integer;
   v_removed jsonb := '{}'::jsonb;
+  v_only    uuid[];
+  v_persons uuid[];
 BEGIN
   IF v_org IS NULL OR p_record IS NULL
      OR kernel.setting('app.audience') IS DISTINCT FROM 'system' OR kernel.setting('app.job_scope') IS DISTINCT FROM 'patients' THEN
@@ -557,6 +574,95 @@ BEGIN
   GET DIAGNOSTICS v_n = ROW_COUNT; v_removed := v_removed || jsonb_build_object('clinical.questionnaire_response', v_n);
   DELETE FROM patient.consent WHERE patient_id = ANY (v_ids);
   GET DIAGNOSTICS v_n = ROW_COUNT; v_removed := v_removed || jsonb_build_object('patient.consent', v_n);
+
+  -- D-880-1/2 (2603): the patient-linked data outside the clinical record, children first, in the same transaction.
+
+  -- D-880-2: the patient-realm sign-in, when it is linked only to these patients and is not a proxy for anyone else, is de-identified (it was
+  -- disabled at the deletion request). The subject stays unique per realm; the person is renamed only when no other sign-in belongs to it.
+  SELECT coalesce(array_agg(p.id), '{}'::uuid[]) INTO v_only
+    FROM identity.principal p
+   WHERE p.realm = 'patient_pool' AND p.status = 'disabled'
+     AND EXISTS (SELECT 1 FROM identity.patient_link l WHERE l.principal_id = p.id AND l.patient_id = ANY (v_ids))
+     AND NOT EXISTS (SELECT 1 FROM identity.patient_link l WHERE l.principal_id = p.id AND NOT (l.patient_id = ANY (v_ids)))
+     AND NOT EXISTS (SELECT 1 FROM identity.proxy_grant g WHERE g.proxy_principal_id = p.id AND NOT (g.patient_id = ANY (v_ids)));
+  SELECT coalesce(array_agg(DISTINCT p.person_id), '{}'::uuid[]) INTO v_persons
+    FROM identity.principal p
+   WHERE p.id = ANY (v_only)
+     AND NOT EXISTS (SELECT 1 FROM identity.principal q WHERE q.person_id = p.person_id AND NOT (q.id = ANY (v_only)));
+  UPDATE identity.person SET display_name = 'Deleted account', status = 'disabled' WHERE id = ANY (v_persons);
+  GET DIAGNOSTICS v_n = ROW_COUNT; v_removed := v_removed || jsonb_build_object('identity.display_name_removed', v_n);
+  UPDATE identity.principal SET email = NULL, subject = 'purged:' || id::text, last_sign_in_at = NULL WHERE id = ANY (v_only);
+  GET DIAGNOSTICS v_n = ROW_COUNT; v_removed := v_removed || jsonb_build_object('identity.sign_in_deidentified', v_n);
+  DELETE FROM scheduling.waitlist_offer o WHERE o.patient_id = ANY (v_ids) OR EXISTS (SELECT 1 FROM scheduling.slot_reservation r WHERE r.id = o.occupancy_id AND r.patient_id = ANY (v_ids));
+  GET DIAGNOSTICS v_n = ROW_COUNT; v_removed := v_removed || jsonb_build_object('scheduling.waitlist_offer', v_n);
+  DELETE FROM scheduling.waitlist_entry WHERE patient_id = ANY (v_ids);
+  GET DIAGNOSTICS v_n = ROW_COUNT; v_removed := v_removed || jsonb_build_object('scheduling.waitlist_entry', v_n);
+  DELETE FROM scheduling.queue_entry WHERE patient_id = ANY (v_ids);
+  GET DIAGNOSTICS v_n = ROW_COUNT; v_removed := v_removed || jsonb_build_object('scheduling.queue_entry', v_n);
+  DELETE FROM scheduling.check_in WHERE patient_id = ANY (v_ids);
+  GET DIAGNOSTICS v_n = ROW_COUNT; v_removed := v_removed || jsonb_build_object('scheduling.check_in', v_n);
+  DELETE FROM scheduling.no_show_flag f USING scheduling.slot_reservation r WHERE f.reservation_id = r.id AND r.patient_id = ANY (v_ids);
+  GET DIAGNOSTICS v_n = ROW_COUNT; v_removed := v_removed || jsonb_build_object('scheduling.no_show_flag', v_n);
+  DELETE FROM telehealth.join_token WHERE patient_id = ANY (v_ids);
+  GET DIAGNOSTICS v_n = ROW_COUNT; v_removed := v_removed || jsonb_build_object('telehealth.join_token', v_n);
+  DELETE FROM telehealth.participant WHERE patient_id = ANY (v_ids);
+  GET DIAGNOSTICS v_n = ROW_COUNT; v_removed := v_removed || jsonb_build_object('telehealth.participant', v_n);
+  DELETE FROM telehealth.video_session WHERE patient_id = ANY (v_ids);
+  GET DIAGNOSTICS v_n = ROW_COUNT; v_removed := v_removed || jsonb_build_object('telehealth.video_session', v_n);
+  DELETE FROM telehealth.location_confirmation WHERE patient_id = ANY (v_ids);
+  GET DIAGNOSTICS v_n = ROW_COUNT; v_removed := v_removed || jsonb_build_object('telehealth.location_confirmation', v_n);
+  DELETE FROM scheduling.slot_occupancy o USING scheduling.slot_reservation r WHERE o.id = r.id AND r.patient_id = ANY (v_ids);
+  GET DIAGNOSTICS v_n = ROW_COUNT; v_removed := v_removed || jsonb_build_object('scheduling.slot_occupancy', v_n);
+  DELETE FROM scheduling.slot_reservation WHERE patient_id = ANY (v_ids);
+  GET DIAGNOSTICS v_n = ROW_COUNT; v_removed := v_removed || jsonb_build_object('scheduling.slot_reservation', v_n);
+  DELETE FROM messaging.message m USING messaging.thread t WHERE m.thread_id = t.id AND t.patient_id = ANY (v_ids);
+  GET DIAGNOSTICS v_n = ROW_COUNT; v_removed := v_removed || jsonb_build_object('messaging.message', v_n);
+  DELETE FROM messaging.thread_participant p USING messaging.thread t WHERE p.thread_id = t.id AND t.patient_id = ANY (v_ids);
+  GET DIAGNOSTICS v_n = ROW_COUNT; v_removed := v_removed || jsonb_build_object('messaging.thread_participant', v_n);
+  DELETE FROM messaging.thread WHERE patient_id = ANY (v_ids);
+  GET DIAGNOSTICS v_n = ROW_COUNT; v_removed := v_removed || jsonb_build_object('messaging.thread', v_n);
+  DELETE FROM messaging.task WHERE patient_id = ANY (v_ids);
+  GET DIAGNOSTICS v_n = ROW_COUNT; v_removed := v_removed || jsonb_build_object('messaging.task', v_n);
+  DELETE FROM notifications.delivery_receipt d USING notifications.notification n WHERE d.notification_id = n.id AND n.patient_id = ANY (v_ids);
+  GET DIAGNOSTICS v_n = ROW_COUNT; v_removed := v_removed || jsonb_build_object('notifications.delivery_receipt', v_n);
+  DELETE FROM notifications.in_app_read x WHERE x.patient_id = ANY (v_ids) OR EXISTS (SELECT 1 FROM notifications.notification n WHERE n.id = x.notification_id AND n.patient_id = ANY (v_ids));
+  GET DIAGNOSTICS v_n = ROW_COUNT; v_removed := v_removed || jsonb_build_object('notifications.in_app_read', v_n);
+  DELETE FROM notifications.notification WHERE patient_id = ANY (v_ids);
+  GET DIAGNOSTICS v_n = ROW_COUNT; v_removed := v_removed || jsonb_build_object('notifications.notification', v_n);
+  DELETE FROM notifications.staff_alert_event e WHERE e.patient_id = ANY (v_ids) OR EXISTS (SELECT 1 FROM notifications.staff_alert a WHERE a.id = e.alert_id AND a.patient_id = ANY (v_ids));
+  GET DIAGNOSTICS v_n = ROW_COUNT; v_removed := v_removed || jsonb_build_object('notifications.staff_alert_event', v_n);
+  DELETE FROM notifications.staff_alert WHERE patient_id = ANY (v_ids);
+  GET DIAGNOSTICS v_n = ROW_COUNT; v_removed := v_removed || jsonb_build_object('notifications.staff_alert', v_n);
+  DELETE FROM patient.patient_contact WHERE patient_id = ANY (v_ids);
+  GET DIAGNOSTICS v_n = ROW_COUNT; v_removed := v_removed || jsonb_build_object('patient.patient_contact', v_n);
+  DELETE FROM patient.insurance_coverage WHERE patient_id = ANY (v_ids);
+  GET DIAGNOSTICS v_n = ROW_COUNT; v_removed := v_removed || jsonb_build_object('patient.insurance_coverage', v_n);
+  DELETE FROM patient.care_relationship WHERE patient_id = ANY (v_ids);
+  GET DIAGNOSTICS v_n = ROW_COUNT; v_removed := v_removed || jsonb_build_object('patient.care_relationship', v_n);
+  DELETE FROM patient.care_team_member WHERE patient_id = ANY (v_ids);
+  GET DIAGNOSTICS v_n = ROW_COUNT; v_removed := v_removed || jsonb_build_object('patient.care_team_member', v_n);
+  DELETE FROM patient.duplicate_flag WHERE patient_id = ANY (v_ids) OR candidate_patient_id = ANY (v_ids);
+  GET DIAGNOSTICS v_n = ROW_COUNT; v_removed := v_removed || jsonb_build_object('patient.duplicate_flag', v_n);
+  DELETE FROM patient.staff_scope WHERE patient_id = ANY (v_ids);
+  GET DIAGNOSTICS v_n = ROW_COUNT; v_removed := v_removed || jsonb_build_object('patient.staff_scope', v_n);
+  DELETE FROM patient.merge_residue WHERE survivor_id = ANY (v_ids) OR merged_id = ANY (v_ids);
+  GET DIAGNOSTICS v_n = ROW_COUNT; v_removed := v_removed || jsonb_build_object('patient.merge_residue', v_n);
+  DELETE FROM patient.merge_request WHERE survivor_id = ANY (v_ids) OR merged_id = ANY (v_ids);
+  GET DIAGNOSTICS v_n = ROW_COUNT; v_removed := v_removed || jsonb_build_object('patient.merge_request', v_n);
+  DELETE FROM patient.patient_merge WHERE merged_id = ANY (v_ids) OR direct_survivor_id = ANY (v_ids) OR final_survivor_id = ANY (v_ids);
+  GET DIAGNOSTICS v_n = ROW_COUNT; v_removed := v_removed || jsonb_build_object('patient.patient_merge', v_n);
+  DELETE FROM patient.match_check WHERE candidate_patient_ids && v_ids;
+  GET DIAGNOSTICS v_n = ROW_COUNT; v_removed := v_removed || jsonb_build_object('patient.match_check', v_n);
+  DELETE FROM identity.proxy_grant WHERE patient_id = ANY (v_ids);
+  GET DIAGNOSTICS v_n = ROW_COUNT; v_removed := v_removed || jsonb_build_object('identity.proxy_grant', v_n);
+  DELETE FROM identity.patient_link WHERE patient_id = ANY (v_ids);
+  GET DIAGNOSTICS v_n = ROW_COUNT; v_removed := v_removed || jsonb_build_object('identity.patient_link', v_n);
+  -- D-880-3: the patient row becomes a tombstone (id, organisation, record number, creation time, purged_at); documentation keeps pointing at it.
+  UPDATE patient.patient SET given_name = NULL, family_name = NULL, middle_name = NULL, date_of_birth = NULL, sex_at_birth = NULL,
+         gender_identity = NULL, phone_e164 = NULL, email = NULL, address = NULL, state_code = NULL, preferred_language = NULL,
+         photo_document_id = NULL, preferred_pharmacy = NULL, merged_into = NULL, status = 'purged', purged_at = v_now
+   WHERE id = ANY (v_ids) AND status <> 'purged';
+  GET DIAGNOSTICS v_n = ROW_COUNT; v_removed := v_removed || jsonb_build_object('patient.patient_tombstoned', v_n);
 
   -- Accepted documents: first marked deleted (documents.retention_sweep then removes the stored object and records it); the rows go
   -- once every version's object is gone.
@@ -635,6 +741,13 @@ BEGIN
   DELETE FROM privacy.incident i
    WHERE i.organisation_id = v_org AND i.status = 'closed' AND i.closed_at::date <= p_cutoff;
   GET DIAGNOSTICS v_n = ROW_COUNT; v_out := v_out || jsonb_build_object('privacy.incident', v_n);
+  -- D2603: a tombstone (patient.patient, status purged) goes once no privacy.* row refers to it.
+  DELETE FROM patient.patient p
+   WHERE p.organisation_id = v_org AND p.status = 'purged'
+     AND NOT EXISTS (SELECT 1 FROM privacy.request r WHERE r.patient_id = p.id)
+     AND NOT EXISTS (SELECT 1 FROM privacy.export_package e WHERE e.patient_id = p.id)
+     AND NOT EXISTS (SELECT 1 FROM privacy.incident_patient ip WHERE ip.patient_id = p.id);
+  GET DIAGNOSTICS v_n = ROW_COUNT; v_out := v_out || jsonb_build_object('patient.patient_tombstone', v_n);
   RETURN v_out;
 END
 $$;
