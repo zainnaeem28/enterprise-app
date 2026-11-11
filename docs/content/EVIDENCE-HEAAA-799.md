@@ -1,6 +1,6 @@
 # Evidence: HEAAA-799 (site ContentSource on apps/cms, seed copy)
 
-Code head tested: `56f8ea0` on branch `HEAAA-799-c-fe-cms-site-contentsource-on-apps-cms-and-reviewed-seed-copy-ruling-c-item-5` (from `origin/dev` `ff5476e`). The commit that adds this file changes docs only. Run on the server, no hosted CI (owner ruling B). Local PostgreSQL 17 (embedded binaries), throwaway CMS-role database. Not independently reviewed yet; no human approval is claimed.
+Code head tested: `ec3b8a6` (rebased from 56f8ea0 onto the newer `origin/dev`; after the rebase lint, site and cms typecheck + unit and the cms db suite were rerun, the other rows are from 56f8ea0) on branch `HEAAA-799-c-fe-cms-site-contentsource-on-apps-cms-and-reviewed-seed-copy-ruling-c-item-5` (from `origin/dev` f22dc62). The commit that adds this file changes docs only. Run on the server, no hosted CI (owner ruling B). Local PostgreSQL 17 (embedded binaries), throwaway CMS-role database. Not independently reviewed yet; no human approval is claimed.
 
 | `ci` job | Result | Command / note |
 | --- | --- | --- |
