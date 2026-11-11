@@ -3,6 +3,7 @@ import { createServer } from 'node:http';
 import { ConfigError, createLogger, describeDatabase, KernelDb, loadConfig } from '@ehr/kernel';
 import type { PoolLike } from '@ehr/kernel';
 import { buildComposition, registerAllParticipants } from './composition.js';
+import { selectS3Presigners } from './platform/aws/s3-presigners.js';
 import { provisionR1Templates } from './modules/notifications/index.js';
 import { loadAdminEnv } from './admin-env.js';
 import { loadIdentityEnv } from './identity-env.js';
@@ -48,10 +49,13 @@ async function main(): Promise<void> {
   // pg has no declared types here (same device as pg-readiness); the hub's LISTEN needs its own connection, never a pooled one.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const pg: any = (await import('pg' as string)).default;
+  // A half-configured S3 adapter stops the start here; an absent one leaves the refusing port in place.
+  const s3 = selectS3Presigners(process.env, logger);
   const composition = buildComposition({
     db,
     logger,
     identity: identityEnv,
+    ...s3,
     admin: adminEnv,
     listen: () =>
       new pg.Client({ connectionString: kernelCfg.databaseUrl, application_name: 'api-listen' }),
