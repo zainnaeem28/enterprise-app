@@ -5,6 +5,7 @@ import { createProfileApi } from './api.js';
 import { AccountContext } from './lib/ctx.js';
 import { useAccount } from './lib/hooks.js';
 import { Problem } from './lib/Problem.js';
+import { AcceptInvitePage } from './pages/AcceptInvitePage.js';
 import { AddProxyPage } from './pages/AddProxyPage.js';
 import { FamilyPage } from './pages/FamilyPage.js';
 import { NotificationsPage } from './pages/NotificationsPage.js';
@@ -60,6 +61,7 @@ export function ProfileRoutes({
       {route.name === 'notifications' && <NotificationsPage />}
       {route.name === 'family' && <FamilyPage />}
       {route.name === 'family-add' && <AddProxyPage />}
+      {route.name === 'family-accept' && <AcceptInvitePage grantId={route.grantId} />}
     </AccountContext.Provider>
   );
 }

@@ -53,7 +53,9 @@ export interface Preferences {
   version: number | undefined;
 }
 
-export type ProxyStatus = 'requested' | 'verified' | 'active' | 'revoked' | 'expired';
+export type ProxyStatus = 'invited' | 'requested' | 'verified' | 'active' | 'revoked' | 'expired';
+export const PROXY_SCOPES = ['appointments', 'messages', 'documents'] as const;
+export type ProxyScope = (typeof PROXY_SCOPES)[number];
 export const PROXY_RELATIONSHIPS = ['parent', 'guardian', 'carer', 'other'] as const;
 export type ProxyRelationship = (typeof PROXY_RELATIONSHIPS)[number];
 
@@ -62,10 +64,27 @@ export interface ProxyGrant {
   relationship: ProxyRelationship;
   patientDisplayName: string;
   status: ProxyStatus;
+  /** Granted scopes (the patient's choice). */
+  scopes: ProxyScope[];
+  /** Scopes in force today, after the age rules and validity. Can be fewer than `scopes`. */
+  effectiveScopes: ProxyScope[];
+  /** A guardian link is managed by staff: the patient cannot change its scopes. */
+  guardian: boolean;
+  /** Masked address of an open invitation. */
+  inviteeHint: string | undefined;
+  /** Last day of the grant (the age-out date), `YYYY-MM-DD`. */
+  validUntil: string | undefined;
 }
 
 const num = (v: unknown): number | undefined => (typeof v === 'number' ? v : undefined);
-const STATUSES: readonly string[] = ['requested', 'verified', 'active', 'revoked', 'expired'];
+const STATUSES: readonly string[] = [
+  'invited',
+  'requested',
+  'verified',
+  'active',
+  'revoked',
+  'expired',
+];
 
 export function parseContact(v: unknown): Contact | undefined {
   const o = asRecord(v);
@@ -141,6 +160,11 @@ export function parseProxy(v: unknown): ProxyGrant | undefined {
   const status = str(o['status']);
   if (id === undefined || status === undefined || !STATUSES.includes(status)) return undefined;
   const rel = str(o['relationship']);
+  const scopesOf = (v: unknown): ProxyScope[] =>
+    Array.isArray(v)
+      ? v.filter((x): x is ProxyScope => PROXY_SCOPES.includes(x as ProxyScope))
+      : [];
+  const scopes = scopesOf(o['scopes']);
   return {
     id,
     relationship: PROXY_RELATIONSHIPS.includes(rel as ProxyRelationship)
@@ -148,6 +172,11 @@ export function parseProxy(v: unknown): ProxyGrant | undefined {
       : 'other',
     patientDisplayName: str(o['patientDisplayName']) ?? '',
     status: status as ProxyStatus,
+    scopes: scopes.length > 0 ? scopes : ['appointments'],
+    effectiveScopes: scopesOf(o['effectiveScopes']),
+    guardian: o['guardian'] === true,
+    inviteeHint: str(o['inviteeHint']),
+    validUntil: str(o['validUntil']),
   };
 }
 
