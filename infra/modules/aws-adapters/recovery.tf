@@ -10,7 +10,7 @@
 #   - malware scanning: a GuardDuty Malware Protection plan on that quarantine bucket;
 #   - package / export: Region-bound buckets (packages live 7 days and are regenerated; exports are copies of the audit archive);
 #   - runtime integration secrets: create / read of ${env}/integration/* in the recovery Region under the recovery secrets key
-#     (secrets the application created before the failover are NOT replicated, see the recovery runbook);
+#     (runtime secrets are created with a replica and promoted at failover, HEAAA-860; see the recovery runbook);
 #   - SES: the domain identity and configuration set in the recovery Region; SMS: the configuration set, and sending when
 #     recovery_sms_origination_identity_arn is given.
 # The one service that does not run in the recovery Region in R1 is the Object Lock anchor archive (its bucket and key are in

@@ -293,3 +293,32 @@ run "receipt_endpoint_must_be_the_receipt_route" {
   }
   expect_failures = [var.receipt_endpoint_url]
 }
+
+# HEAAA-860 (HEAAA-870 D-3): the replica pair reaches both processes, only with a recovery Region, and always as a pair.
+run "secret_replica_variables_only_with_a_recovery_region" {
+  command = plan
+
+  assert {
+    condition     = !contains(keys(output.api_environment), "EHR_SECRETS_REPLICA_REGION") && !contains(keys(output.api_environment), "EHR_SECRETS_REPLICA_KMS_KEY_ID") && !contains(keys(output.worker_environment), "EHR_SECRETS_REPLICA_REGION") && !contains(keys(output.worker_environment), "EHR_SECRETS_REPLICA_KMS_KEY_ID")
+    error_message = "no replica variable without a recovery Region"
+  }
+}
+
+run "secret_replica_variables_are_set_as_a_pair_with_a_recovery_region" {
+  command = plan
+
+  variables {
+    payload_key_multi_region       = true
+    recovery_region                = "us-west-2"
+    recovery_data_kms_key_arn      = "arn:aws:kms:us-west-2:111111111111:key/mrk-data"
+    recovery_secrets_kms_key_arn   = "arn:aws:kms:us-west-2:111111111111:key/secrets-dr"
+    recovery_docs_clean_bucket_arn = "arn:aws:s3:::ehr-staging-docs-clean-replica"
+  }
+
+  assert {
+    condition = alltrue([for e in [output.api_environment, output.worker_environment] :
+      e["EHR_SECRETS_REPLICA_REGION"] == "us-west-2" && e["EHR_SECRETS_REPLICA_KMS_KEY_ID"] == "arn:aws:kms:us-west-2:111111111111:key/secrets-dr"
+    ])
+    error_message = "both processes get the recovery Region and the production-secrets-dr key"
+  }
+}

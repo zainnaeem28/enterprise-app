@@ -96,6 +96,9 @@ output "recovery_environment" {
         EHR_SMS_CONFIGURATION_SET    = "${var.env}-ehr-sms"
       } : {},
     )
+    # Both services: a task run IN the recovery Region creates its secrets there and must not replicate to itself (the application
+    # refuses a replica Region equal to AWS_REGION at start). HEAAA-860.
+    common_unset = ["EHR_SECRETS_REPLICA_REGION", "EHR_SECRETS_REPLICA_KMS_KEY_ID"]
     worker_unset = concat(
       ["EHR_S3_ANCHOR_ARCHIVE_BUCKET", "EHR_S3_ANCHOR_ARCHIVE_KMS_KEY_ID"],
       local.rr_sms_enabled ? [] : ["EHR_SMS_ORIGINATION_IDENTITY", "EHR_SMS_CONFIGURATION_SET"],

@@ -49,7 +49,7 @@ replica explicitly (a replica does not inherit it); that AWS applies it as autho
 - The compute module is not instantiated in the roots (it needs image digests); the roots expose `service_wiring`, the exact `services.*` and
   `execution_role_arn` values.
 - SES bounce/complaint event destination and SNS signature check (no receipt route exists, INT-N2), SMS origination identity, DNS, SES/SMS production access.
-- Recovery-Region compute (DEVOPS-PLAN 3.2), and in the recovery Region the Object Lock anchor archive (degraded mode, `docs/runbooks/recovery-region.md`), SMS unless `recovery_sms_origination_identity_arn` is given, and runtime secrets created before a failover (not replicated).
+- Recovery-Region compute (DEVOPS-PLAN 3.2), and in the recovery Region the Object Lock anchor archive (degraded mode, `docs/runbooks/recovery-region.md`), SMS unless `recovery_sms_origination_identity_arn` is given, and a runtime secret without a replica (created before replication was configured, or `Failed`).
 - IAM and key-policy writes need the human platform-admin apply (DEVOPS-PLAN 7.5); the `gh-tf-*` roles cannot create roles.
 
 ## Tests

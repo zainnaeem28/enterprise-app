@@ -196,6 +196,12 @@ variable "outbox_age_threshold_seconds" {
   default     = 300
 }
 
+variable "secret_replica_monitoring" {
+  description = "Create the secret-replica-not-in-sync alarm (the worker check of runtime integration secrets, HEAAA-860). Set true where the application is configured with a recovery-Region replica (production with recovery_region); false elsewhere, where the check does not run and the alarm would only report missing data."
+  type        = bool
+  default     = false
+}
+
 variable "monthly_budget_usd" {
   description = "Monthly cost plan of this account; null creates no budget. Alerts at 50/80/100 % (DEVOPS-PLAN 12). Not chosen here: the owner provides it (C-12)."
   type        = number
