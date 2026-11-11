@@ -47,11 +47,7 @@ export function AddProxyPage() {
     setNotOpen(false);
     if (Object.keys(found).length > 0) return;
     await run(async () => {
-      const r = await api.requestProxy(
-        selfId,
-        { relationship, email: trimmed },
-        key.current,
-      );
+      const r = await api.requestProxy(selfId, { relationship, email: trimmed }, key.current);
       if (r.ok) return setSent(true);
       if (r.code === 'identity.proxy_rules_not_configured') return setNotOpen(true);
       if (r.status === 400 || (r.status === 422 && r.fields.includes('email')))

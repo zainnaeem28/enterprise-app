@@ -296,7 +296,9 @@ describe('PP-06..PP-09 family and proxy access', () => {
     const m = mount('profile', '/family/add', {});
     await screen.findByLabelText('Their email address');
     click('Send request');
-    expect((await screen.findAllByText(/Their email address: enter it\./)).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText(/Their email address: enter it\./)).length).toBeGreaterThan(
+      0,
+    );
     fireEvent.change(screen.getByLabelText('Their email address'), { target: { value: 'nope' } });
     click('Send request');
     expect((await screen.findAllByText(/like name@example\.com/)).length).toBeGreaterThan(0);
