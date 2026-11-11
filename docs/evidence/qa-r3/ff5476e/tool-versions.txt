@@ -1,0 +1,5 @@
+node v24.22.2; pnpm 12.16.1
+postgres embedded 17.11 (@embedded-postgres/linux-x64 17.11.0-beta.19), isolated, loopback, trust auth, UTF8 / C.UTF-8
+candidate: origin/dev ff5476e (clean private worktree /paperclip/scratch/heaaa-663); N-1 baseline r206 aa5b051 (PREV_TREE private)
+typecheck: pass (all workspaces); lint: 0 errors, 46 warnings; build: pass
+hosted CI: none (owner ruling B)

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testsuite name="queue on FORCEd tables" time="3.327329" disabled="0" errors="0" tests="20" failures="0" skipped="0" timestamp="2026-11-10T20:41:04.613Z" hostname="314866be9867">
+		<testcase name="(a) enqueue commits with the business change and rolls back with it" time="0.030766" classname="queue on FORCEd tables" file="/tmp/qa663/packages/kernel/dist/queue/queue.dbtest.js"/>
+		<testcase name="(b) app_worker dequeues under FORCE; the table owner and app_api cannot read" time="0.042950" classname="queue on FORCEd tables" file="/tmp/qa663/packages/kernel/dist/queue/queue.dbtest.js"/>
+		<testcase name="(c) max attempts are carried on the job" time="0.019158" classname="queue on FORCEd tables" file="/tmp/qa663/packages/kernel/dist/queue/queue.dbtest.js"/>
+		<testcase name="(d) dead jobs are visible (attempts >= max_attempts)" time="0.019484" classname="queue on FORCEd tables" file="/tmp/qa663/packages/kernel/dist/queue/queue.dbtest.js"/>
+		<testcase name="app_api is refused DELETE and the views (BR-F04-2 evidence of the actual grants)" time="0.004596" classname="queue on FORCEd tables" file="/tmp/qa663/packages/kernel/dist/queue/queue.dbtest.js"/>
+		<testcase name="(c) back-off: a failing job is rescheduled later with attempts incremented" time="0.033345" classname="queue on FORCEd tables" file="/tmp/qa663/packages/kernel/dist/queue/queue.dbtest.js"/>
+		<testcase name="publish fans out one job per registered handler in the caller transaction" time="0.023163" classname="queue on FORCEd tables" file="/tmp/qa663/packages/kernel/dist/queue/queue.dbtest.js"/>
+		<testcase name="install is repeatable after the ownership handover and keeps the hardening" time="0.052398" classname="queue on FORCEd tables" file="/tmp/qa663/packages/kernel/dist/queue/queue.dbtest.js"/>
+		<testcase name="A-1 app_api: direct SELECT/INSERT/UPDATE/DELETE on every queue table, view and sequence are refused" time="0.014603" classname="queue on FORCEd tables" file="/tmp/qa663/packages/kernel/dist/queue/queue.dbtest.js"/>
+		<testcase name="A-1 app_api: library functions are refused (add_job, get_job, reschedule_jobs, permanently_fail_jobs, force_unlock_workers)" time="0.005678" classname="queue on FORCEd tables" file="/tmp/qa663/packages/kernel/dist/queue/queue.dbtest.js"/>
+		<testcase name="A-1 refused identifiers: unknown, system, data_repair, malformed; nothing is stored" time="0.014908" classname="queue on FORCEd tables" file="/tmp/qa663/packages/kernel/dist/queue/queue.dbtest.js"/>
+		<testcase name="A-1 the task_type CHECK refuses api_enqueue for system and data_repair" time="0.005126" classname="queue on FORCEd tables" file="/tmp/qa663/packages/kernel/dist/queue/queue.dbtest.js"/>
+		<testcase name="A-1 each argument bound is refused at limit + 1 and accepted at the limit" time="0.026069" classname="queue on FORCEd tables" file="/tmp/qa663/packages/kernel/dist/queue/queue.dbtest.js"/>
+		<testcase name="A-1 max_attempts comes from task_type; a job key from task A cannot replace task B's job" time="0.020124" classname="queue on FORCEd tables" file="/tmp/qa663/packages/kernel/dist/queue/queue.dbtest.js"/>
+		<testcase name="A-1 replace mode: same task and key replaces the unstarted job" time="0.020873" classname="queue on FORCEd tables" file="/tmp/qa663/packages/kernel/dist/queue/queue.dbtest.js"/>
+		<testcase name="A-1 hostile search_path and temp-schema shadowing have no effect" time="0.031376" classname="queue on FORCEd tables" file="/tmp/qa663/packages/kernel/dist/queue/queue.dbtest.js"/>
+		<testcase name="A-1 enqueue commits and rolls back with the caller transaction" time="0.022467" classname="queue on FORCEd tables" file="/tmp/qa663/packages/kernel/dist/queue/queue.dbtest.js"/>
+		<testcase name="A-1 a type missing from task_type fails closed and rolls the caller back" time="0.007393" classname="queue on FORCEd tables" file="/tmp/qa663/packages/kernel/dist/queue/queue.dbtest.js"/>
+		<testcase name="A-1 app_worker: direct add_job in the same namespace and the dequeue cycle still work" time="0.037463" classname="queue on FORCEd tables" file="/tmp/qa663/packages/kernel/dist/queue/queue.dbtest.js"/>
+		<testcase name="A-1 install revoked every app_api right in queue and a repeat install keeps it" time="0.076983" classname="queue on FORCEd tables" file="/tmp/qa663/packages/kernel/dist/queue/queue.dbtest.js"/>
+	</testsuite>
+	<testsuite name="withScope and idempotency on PostgreSQL" time="2.862414" disabled="0" errors="0" tests="3" failures="0" skipped="0" timestamp="2026-11-10T20:41:05.089Z" hostname="314866be9867">
+		<testcase name="RLS under withScope: an organisation sees only its rows; a handle without scope sees none" time="0.015559" classname="withScope and idempotency on PostgreSQL" file="/tmp/qa663/packages/kernel/dist/scope/scope.dbtest.js"/>
+		<testcase name="settings do not leak past the transaction (transaction-local)" time="0.002122" classname="withScope and idempotency on PostgreSQL" file="/tmp/qa663/packages/kernel/dist/scope/scope.dbtest.js"/>
+		<testcase name="concurrent duplicate keys give one write and one replay; a different body gives a conflict" time="0.162945" classname="withScope and idempotency on PostgreSQL" file="/tmp/qa663/packages/kernel/dist/scope/scope.dbtest.js"/>
+	</testsuite>
+	<!-- tests 23 -->
+	<!-- suites 2 -->
+	<!-- pass 23 -->
+	<!-- fail 0 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 0 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 3437.973557 -->
+</testsuites>

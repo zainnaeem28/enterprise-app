@@ -1,0 +1,30 @@
+▶ RA-R1-23 doctor availability, leave and blocked time (TC-DR)
+  ✔ TC-DR-01 leave and blocked time change slot search at once; removing them restores the slots; a template edit is reflected (491.987557ms)
+  ✔ TC-DR-02 leave over a booked slot warns of the conflict (dry run) and never cancels the appointment silently (248.385662ms)
+# TC-DR-03 audit denied/failed events for the other doctor: 7
+  ✔ TC-DR-03 another doctor cannot read or change this doctor’s availability, leave or blocked time; nothing changes (140.573253ms)
+✔ RA-R1-23 doctor availability, leave and blocked time (TC-DR) (882.183652ms)
+# TC-CL-08 banner keys: patientId,displayName,dateOfBirth,mrn,allergies; encounters=[]; documents=[]; photoUrl=absent (no photo document / object store)
+▶ RA-R1-24 doctor chart summary with name, DOB and photo (TC-CL-08)
+  ✔ TC-CL-08 chart summary shows problems, allergies, medications, vitals, history, documents, with name, date of birth and MRN on the banner; uncoded items are marked [photo: no object store] (527.013602ms)
+✔ RA-R1-24 doctor chart summary with name, DOB and photo (TC-CL-08) (527.314597ms)
+▶ RA-R1-24 history and documents parts of the chart summary (TC-CL-08b)
+  ✔ TC-CL-08b the chart summary returns the encounter history and the documents list (arrays, not null) (296.306634ms)
+✔ RA-R1-24 history and documents parts of the chart summary (TC-CL-08b) (296.569507ms)
+▶ RA-R1-29 manual insurance verification (TC-PC-10)
+  ✔ TC-PC-10 staff record a verification status and date; it is saved and audited; no outbound call is made [card image: no object store] (283.045199ms)
+✔ RA-R1-29 manual insurance verification (TC-PC-10) (283.290209ms)
+# TC-PP-07 stored check-in snapshot: {"consents":true,"insurance":false,"questionnaire":false}
+▶ RA-R1-21 pre-visit questionnaire, consents, insurance and staff-visible status (TC-PP-06, TC-PP-07)
+  ✔ TC-PP-07 partial completion (consent only): staff see the visit incomplete and exactly which items are open (288.379288ms)
+# TC-PP-06 stored check-in snapshot: {"consents":true,"insurance":true,"questionnaire":true}
+  ✔ TC-PP-06 questionnaire submitted, consent e-signed with its version and date, insurance record added: staff see all three complete [card image upload: blocked, no object store; send-time 72 h setting not exercised] (315.650663ms)
+✔ RA-R1-21 pre-visit questionnaire, consents, insurance and staff-visible status (TC-PP-06, TC-PP-07) (604.333421ms)
+ℹ tests 8
+ℹ suites 5
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3115.614688

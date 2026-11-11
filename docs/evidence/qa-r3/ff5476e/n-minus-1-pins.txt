@@ -1,0 +1,3 @@
+db-foundation	owners, SECURITY DEFINER, search_path, EXECUTE lists and inventory	db/tests/referral-accept-scope.test.mjs:930	28	36
+db-foundation	T2: app_owner holds no EXECUTE on the guard, the ten refused functions are gone, all 33 tables carry the trigger	db/tools/db-test.mjs:1142	28	36
+db-foundation	I-10: M-5-definer passes with 28 entries (25 of F03B, the two referral definers of F08d and identity.bootstrap_admins of A-6); is_creator does not exist; patient_scope_owner holds only the four participant columns	db/tools/db-test.mjs:1465	28	36

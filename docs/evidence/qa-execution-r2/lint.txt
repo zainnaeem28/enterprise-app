@@ -1,0 +1,136 @@
+$ eslint .
+
+/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/api/authorization/authorization.test.mjs
+  301:63  error  Unnecessary escape character: \'  no-useless-escape
+
+/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/api/booking/booking.test.mjs
+   4:24  error  'before' is defined but never used         @typescript-eslint/no-unused-vars
+  16:7   error  'r2id' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/api/booking/calendar.test.mjs
+  10:10  error  'SVC' is defined but never used  @typescript-eslint/no-unused-vars
+
+/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/api/booking/concurrency.test.mjs
+  6:3    error  'SVC' is defined but never used            @typescript-eslint/no-unused-vars
+  6:27   error  'patientClient' is defined but never used  @typescript-eslint/no-unused-vars
+  6:56   error  'holdBody' is defined but never used       @typescript-eslint/no-unused-vars
+  6:83   error  'principalId' is defined but never used    @typescript-eslint/no-unused-vars
+  6:137  error  'nextDay' is defined but never used        @typescript-eslint/no-unused-vars
+
+/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/api/booking/isolation.test.mjs
+  6:3   error  'SVC' is defined but never used      @typescript-eslint/no-unused-vars
+  6:24  error  'nextDay' is defined but never used  @typescript-eslint/no-unused-vars
+
+/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/api/booking/notifications.test.mjs
+  7:99  error  'state' is defined but never used  @typescript-eslint/no-unused-vars
+
+/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/api/booking/waitlist.test.mjs
+  7:106  error  'nextDay' is defined but never used  @typescript-eslint/no-unused-vars
+  7:121  error  'uuid' is defined but never used     @typescript-eslint/no-unused-vars
+
+/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/api/clinical/frontdoor.test.mjs
+  6:48  error  'newPatient' is defined but never used  @typescript-eslint/no-unused-vars
+  7:78  error  'QUESTIONS' is defined but never used   @typescript-eslint/no-unused-vars
+
+/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/api/clinical/notes.test.mjs
+  7:15  error  'sqlTx' is defined but never used     @typescript-eslint/no-unused-vars
+  7:34  error  'newStaff' is defined but never used  @typescript-eslint/no-unused-vars
+  7:79  error  'A1' is defined but never used        @typescript-eslint/no-unused-vars
+  7:83  error  'uuid' is defined but never used      @typescript-eslint/no-unused-vars
+
+/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/api/platform/admin.test.mjs
+  6:100  error  'soon' is defined but never used     @typescript-eslint/no-unused-vars
+  6:106  error  'nextDay' is defined but never used  @typescript-eslint/no-unused-vars
+  6:115  error  'SVC' is defined but never used      @typescript-eslint/no-unused-vars
+  6:124  error  'B1' is defined but never used       @typescript-eslint/no-unused-vars
+
+/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/api/platform/api.test.mjs
+  7:32  error  'login' is defined but never used        @typescript-eslint/no-unused-vars
+  7:77  error  'principalId' is defined but never used  @typescript-eslint/no-unused-vars
+
+/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/api/platform/audit.test.mjs
+   6:40  error  'state' is defined but never used           @typescript-eslint/no-unused-vars
+   6:80  error  'newPatient' is defined but never used      @typescript-eslint/no-unused-vars
+  10:7   error  'PAT01' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/api/platform/documents.test.mjs
+  7:32  error  'login' is defined but never used        @typescript-eslint/no-unused-vars
+  7:84  error  'setSetting' is defined but never used   @typescript-eslint/no-unused-vars
+  7:96  error  'principalId' is defined but never used  @typescript-eslint/no-unused-vars
+
+/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/api/platform/messaging.test.mjs
+  5:34  error  'until' is defined but never used  @typescript-eslint/no-unused-vars
+  5:78  error  'ORG2' is defined but never used   @typescript-eslint/no-unused-vars
+  5:84  error  'A1' is defined but never used     @typescript-eslint/no-unused-vars
+
+/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/api/platform/patient-profile.test.mjs
+  6:22  error  'newStaff' is defined but never used  @typescript-eslint/no-unused-vars
+  6:49  error  'A1' is defined but never used        @typescript-eslint/no-unused-vars
+
+/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/api/platform/telehealth.test.mjs
+  5:26   error  'before' is defined but never used         @typescript-eslint/no-unused-vars
+  7:33   error  'newStaff' is defined but never used       @typescript-eslint/no-unused-vars
+  7:57   error  'holdBody' is defined but never used       @typescript-eslint/no-unused-vars
+  7:89   error  'A1' is defined but never used             @typescript-eslint/no-unused-vars
+  7:93   error  'B1' is defined but never used             @typescript-eslint/no-unused-vars
+  7:97   error  'principalId' is defined but never used    @typescript-eslint/no-unused-vars
+  7:110  error  'login' is defined but never used          @typescript-eslint/no-unused-vars
+  7:117  error  'patientClient' is defined but never used  @typescript-eslint/no-unused-vars
+
+/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/api/security/admin-controls.test.mjs
+  9:36  error  'enrolmentSecret' is defined but never used  @typescript-eslint/no-unused-vars
+
+/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/e2e/journeys/lib/client.mjs
+  50:63  error  'raw' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/load/harness/k6/sse-probe.js
+   7:14  error  '__ENV' is not defined  no-undef
+   8:25  error  '__ENV' is not defined  no-undef
+  13:61  error  '__ENV' is not defined  no-undef
+  13:89  error  '__ENV' is not defined  no-undef
+
+/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/load/lib/common.js
+   17:18  error  '__ENV' is not defined  no-undef
+   18:26  error  '__ENV' is not defined  no-undef
+   27:7   error  '__ENV' is not defined  no-undef
+   29:20  error  '__ENV' is not defined  no-undef
+   31:8   error  '__ENV' is not defined  no-undef
+   36:29  error  '__ENV' is not defined  no-undef
+   43:36  error  '__ENV' is not defined  no-undef
+   88:70  error  'open' is not defined   no-undef
+   88:75  error  '__ENV' is not defined  no-undef
+   89:31  error  'open' is not defined   no-undef
+   89:36  error  '__ENV' is not defined  no-undef
+   90:24  error  '__ENV' is not defined  no-undef
+  127:9   error  '__ENV' is not defined  no-undef
+  138:22  error  '__ENV' is not defined  no-undef
+  139:61  error  '__ENV' is not defined  no-undef
+  142:16  error  '__ENV' is not defined  no-undef
+  143:21  error  '__ENV' is not defined  no-undef
+  144:21  error  '__ENV' is not defined  no-undef
+  148:10  error  '__ENV' is not defined  no-undef
+
+/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/load/scenarios/perf-06-video-join.js
+  10:5   error  '__ENV' is not defined  no-undef
+  10:37  error  '__ENV' is not defined  no-undef
+  14:71  error  '__ENV' is not defined  no-undef
+  23:63  error  '__VU' is not defined   no-undef
+  24:38  error  '__VU' is not defined   no-undef
+
+/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/load/scenarios/perf-07-booking-race.js
+  17:23  error  '__ENV' is not defined  no-undef
+  27:14  error  '__ENV' is not defined  no-undef
+  32:55  error  '__VU' is not defined   no-undef
+
+/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/load/scenarios/perf-08-soak.js
+  8:15  error  '__ENV' is not defined  no-undef
+
+/paperclip/instances/default/projects/36187ce6-342f-40d7-801c-5215c9d394f7/6b326782-6478-4db3-938d-47b97d5fbc83/enterprise-app/.paperclip/worktrees/HEAAA-640-acceptance-correction-rerun-qa-execution-on-the-corrected-integrated-revision/tests/load/scenarios/rec-continuity.js
+  14:14  error  '__ENV' is not defined    no-undef
+  18:27  error  '__ENV' is not defined    no-undef
+  18:52  error  '__ENV' is not defined    no-undef
+  43:67  error  'console' is not defined  no-undef
+
+✖ 83 problems (83 errors, 0 warnings)
+
+[ELIFECYCLE] Command failed with exit code 1.

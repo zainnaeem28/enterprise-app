@@ -1,0 +1,211 @@
+suite,case,result,title,blocked_reason
+QA-03,TC-AZ-01,pass,a front-desk user at LOC-A1 cannot find or open a patient cared for at LOC-B1 only; the denial is audited as not_visible,
+QA-03,TC-AZ-02,pass,"a patient who changes IDs in URLs gets 404 for another patient's appointments, documents, notes, profile and threads, an",
+QA-03,TC-AZ-03,pass,a doctor of ORG-1 cannot find or open a patient of ORG-2; the denial is logged,
+QA-03,TC-AZ-04,pass,"visibility follows the care relationship at the user's location: invisible, booked at LOC-A1 (visible), relationship end",
+QA-03,TC-AZ-09,pass,the staff-scope drift check finds and corrects a missing and an extra row and raises the alerts,
+QA-03,TC-AZ-10,pass,an unassigned doctor is blocked until a reason is entered; BTG then grants access and alerts compliance,
+QA-03,TC-AZ-11,pass,BTG review: justified / not_justified are recorded and audited; the opener cannot review; a reviewer needs the permissio,
+QA-03,TC-AZ-12,pass,"public routes are GET only, cacheable and PHI free (rate-limit step is a WAF check on staging)",
+QA-03,TC-AZ-14,pass,a proxy sees the linked patient's appointments only; everything else is 404; another patient never opens,
+QA-03,TC-AZ-15,pass,"an assistant cannot sign, prescribe or run EPCS actions",
+QA-03,TC-AZ-16,pass,"break-the-glass reason boundaries: empty, spaces, one character and over-maximum are refused; minimum and maximum are ac",
+QA-03,TC-AZ-05,pass,"PUBLIC and the limited application context get nothing from PHI tables; reporting_ro is refused on every PHI table, view",
+QA-03,TC-AZ-06,pass,"each function-owner role reaches only its allow-listed columns; M-5 catalog: FORCE RLS everywhere, role-targeted policie",
+QA-03,TC-AZ-07,pass,definer functions refuse callers outside their audience and never return out-of-scope demographics,
+QA-03,TC-AZ-08,pass,"a compliance principal holding only privacy.request.manage sees no audit event, consent or incident; identity_label need",
+QA-03,TC-AZ-13,pass,"role x capability grid: every cell matches the 27.3 matrix, and a route grid is refused or allowed cell by cell",
+QA-03,TC-ID-01,blocked/skipped,patient sign-up with an e-mail OTP,"BLOCKED: sign-up and the OTP are the managed patient pool (hosted page); no pool and no e-mail/SMS sandbox in ENV-INT/ci (TEST-CASES 0.3, DEVOPS-PLAN 3.5). Needs ENV-INT/staging after the staging appl"
+QA-03,TC-ID-02,blocked/skipped,"wrong OTP five times, then right, then a used OTP","BLOCKED: the OTP is checked by the managed pool, not by this API. The API-side limit on failed callbacks is asserted in TC-ID-11 step 1. OTP wording and rate limit need ENV-INT/staging."
+QA-03,TC-ID-03,blocked/skipped,second factor demanded for a patient,Pending-human (AUTO+H): the second factor is a passkey ceremony on a real device in the managed pool. The script half (the API accepts only a session minted from a completed pool sign-in) is TC-ID-10/
+QA-03,TC-ID-03b,blocked/skipped,"hosted-page OTP paste/autofill, MFA at sign-up, passkey first",PENDING-HUMAN: stays pending until a real person runs it after the staging apply (TEST-CASES TC-ID-03b); a written case is not evidence.
+QA-03,TC-ID-04,pass,"staff sign-in is Google only: session realm google / audience staff, no local-password route",
+QA-03,TC-ID-05,blocked/skipped,a staff account without 2SV cannot sign in,"BLOCKED (AUTO+H): refusal comes from the Workspace 2SV enforcement policy only; `hd` / `email_verified` cannot detect it, so a local claim check would be false evidence. Needs the Workspace test tenan"
+QA-03,TC-ID-06,pass,"an ID token from outside the allowed domain, or with email_verified=false, is refused and creates nothing",
+QA-03,TC-ID-06b,pass,"every kind of invalid ID token is refused by the callback: wrong nonce, audience, issuer or authorised party, expired, f",
+QA-03,TC-ID-08b,pass,"a re-authentication (prompt=login, max_age) refuses a stale auth_time and accepts a fresh one",
+QA-03,TC-ID-07,blocked/skipped,Workspace policy export,OPS + HUMAN: evidence is the owner/DevOps policy export dated within 30 days; QA reads it. Not a script. Pending-human.
+QA-03,TC-ID-08,pass,signing a note needs a fresh sign-in; a stale one is refused and leaves the draft intact,
+QA-03,TC-ID-09,pass,idle timeout: before it the action works and the timer resets; after it the action is refused and the server session is ,
+QA-03,TC-ID-10,pass,"a session is bound to one audience; cookies are __Host-, Secure, HttpOnly and SameSite",
+QA-03,TC-ID-11,pass,"brute force is rate limited, answers are identical for any failure, the session id changes at login, CSRF is refused",
+QA-03,TC-ID-12,pass,sign-out is server-side; the other session is not extended; one session per browser,
+QA-03,TC-SEC-01,pass,every privileged action is refused without a live elevation grant; nothing changes and each attempt leaves a denied even,
+QA-03,TC-SEC-02,pass,"the elevation window: works at window - 1 min, refused at window + 1 min with identity.elevation_required; activity does",
+QA-03,TC-SEC-03,pass,"a failed user verification, an unenrolled key and a replayed assertion each issue no grant",
+QA-03,TC-SEC-04,pass,a grant is bound to its session and its person,
+QA-03,TC-SEC-05,pass,"enrolment is not self-service: no token, a stale staff session, and a wrong-person token are refused; with the token and",
+QA-03,TC-SEC-06,blocked/skipped,Google forced re-authentication (path A only),NOT APPLICABLE on the built path: D-35 path B (separate admin_pool realm) is built; there is no Google admin identity. The path B equivalent (WebAuthn assertion is the only way to a grant) is TC-SEC-0
+QA-03,TC-SEC-07,pass,"a role is assigned only after a different, elevated, eligible person approves; the audit holds requester, approver, befo",
+QA-03,TC-SEC-08,pass,"only an eligible, elevated, different person approves: requester, subject, no elevation, staff, no approver role and the",
+QA-03,TC-SEC-09,pass,"a request approved one minute before expiry works; one minute after expiry is refused as expired, changes nothing and is",
+QA-03,TC-SEC-10,pass,"changing the approver set itself needs a different eligible person: the requester and the subject cannot decide it, a th",
+QA-03,TC-SEC-11,blocked/skipped,first-admin bootstrap with two custodians,PENDING-HUMAN (HUMAN): ENV-INT/bootstrap needs two real custodians (TEST-CASES 5.2). QA reviews the evidence; no result is recorded here.
+QA-03,TC-SEC-12,pass,role-change audit events are complete and immutable; config_change events carry no secret values,
+QA-03,TC-SEC-13,pass,"the kill switch ends every session and elevation of the target at once, alerts compliance and is audited",
+QA-03,TC-SEC-14,pass,"removing the admin role while elevated ends the elevation at once, not at expiry",
+QA-03,TC-SEC-15,blocked/skipped,the kill switch works while the identity provider is down (staging egress block),"BLOCKED (ENV-INT/staging): needs the egress block to the managed pool on the staging account. In ci the admin realm has no external IdP at all (sessions live only in our database), so a ci run would p"
+QA-03,TC-SEC-16,blocked/skipped,same-business-day deprovisioning of an admin test person,PENDING-HUMAN (HUMAN + OPS): a measured elapsed time from a real runbook run; QA never records it.
+QA-03,TC-SEC-17,blocked/skipped,Workspace admin OU policy export (C2),OPS + HUMAN (path A): the owner/DevOps policy export; not a script. Pending-human.
+QA-03,TC-SEC-18,blocked/skipped,"hourly directory re-check of OU membership (C2 app check, path A)",NOT APPLICABLE on the built path B and BLOCKED for path A: needs the Workspace test tenant; the hourly reconciliation job is not built (identity README: person_link/directory_check not part of BE-05).
+QA-03,TC-SEC-19,blocked/skipped,super-admin inventory (C3),OPS + HUMAN (path A): inventory and quarterly access review evidence; not a script. Pending-human.
+QA-03,TC-SEC-20,pass,"admin sees audit metadata, not PHI; admin cannot reach clinical data; export is rate limited and alerted",
+QA-03,TC-SEC-21,pass,"the admin realm has no password/OTP/SMS sign-in, rejects google sessions, is refused by clinical routes, and has no self",
+QA-03,TC-SEC-22,pass,changing realm needs sign-out and sign-in; one browser never holds two sessions on the staff host,
+QA-03,TC-SEC-23,pass,"an enrolment token: dual-controlled, single use, bound to one person, expires after 30 minutes; all steps audited",
+QA-03,TC-SEC-24,blocked/skipped,the spike fallback decision matches the build (HUMAN + AUTO),"PENDING-HUMAN (Cybersecurity review of the spike report P-1..P-7). The rerun of TC-SEC-03, 21, 23 is part of this suite; the human half is not recorded here."
+QA-03,TC-SEC-25,blocked/skipped,admin sign-in and elevation in the recovery region (DR),"OPS (ENV-DR): result of the DR drill, TC-REC-03 owns it. Not a script."
+QA-03,TC-SEC-C7-01,pass,"role elevation without an approver never takes effect: API, replay, direct SQL and a forged approval row all fail",
+QA-03,TC-SEC-C7-02,pass,"self-approval: requester, subject, a second principal of the same person and a self-request are all refused",
+QA-03,TC-SEC-C7-03,pass,"a stale or expired elevation, a stale challenge and a missing re-authentication are refused and audited; no grant is cre",
+QA-03,TC-SEC-C7-04,pass,(path B) a google principal cannot hold a privileged role; a disabled admin cannot be given one,
+QA-03,TC-SEC-C7-05,pass,(path B) a staff identity cannot receive an admin or compliance role even with a valid approver,
+QA-03,TC-SEC-C7-06,pass,a Workspace group claim never grants an app role: a token carrying an admin group still signs in as the same staff membe,
+QA-03,TC-SEC-C7-07,pass,"the kill switch ends an elevated session even while its privileged request is in flight: no partial change, old cookie a",
+QA-04,TC-BK-01,pass,"book: appointment Confirmed, confirmation + reminders recorded, audit rows, no patient on any calendar surface [no mailb",
+QA-04,TC-BK-01a,pass,"the .ics of a confirmed appointment is served (`GET /appointments/{id}/calendar.ics`, RA-R1-02)",
+QA-04,TC-BK-02,pass,video visit: appointment carries the clinic time zone; patient and clinic zones both derivable (BR-05),
+QA-04,TC-BK-03,pass,availability = template - bookings (mechanics: busy block by SQL) [no Google: the sync itself is TC-CAL],
+QA-04,TC-BK-04,pass,stale search: second patient gets 409 scheduling.slot_taken with alternatives,
+QA-04,TC-BK-05,pass,"cancel inside the cut-off is blocked (D-3 default), cancel outside is free [G2 setting: cut-off set by SQL]",
+QA-04,TC-BK-06,pass,"reschedule: old slot released, new slot confirmed, reminders recomputed, audit",
+QA-04,TC-BK-07,pass,max future appointments per service: 4th refused (BR-04) [G2 setting: 3 by SQL],
+QA-04,TC-BK-08,pass,hold expiry: confirm after expiry gives 409 scheduling.hold_expired with alternatives; no appointment [G2 setting: hold ,
+QA-04,TC-BK-09,pass,idempotency: same key and body = one hold; same key other body = 409; same key on another route is a different key,
+QA-04,TC-BK-10,pass,"time zones: stored UTC, shown in the location zone across a daylight-saving change (LOC-B1)",
+QA-04,TC-BK-11,pass,"front desk books for a patient at the assigned location only, refused at another (RA-R1-02)",
+QA-04,TC-CAL-01/02,pass,"structure: a calendar block and its event map hold no patient, reason, diagnosis or service name",
+QA-04,TC-CAL-03,pass,synced busy time makes that time unavailable within one search (no cache),
+QA-04,TC-CAL-04,pass,stale sync: busy rows are still used and the answer is flagged; fresh data is not flagged; threshold from the setting,
+QA-04,TC-CAL-05 steps 1-2,pass,the push webhook refuses a wrong HMAC token and an unknown channel; nothing is stored or enqueued,
+QA-04,TC-BK-13,pass,"one slot, ONE patient account on 100 sessions: exactly one appointment",
+QA-04,TC-BK-14,pass,"one slot, 100 DIFFERENT patients: exactly one wins, losers see alternatives, none sees another reservation",
+QA-04,TC-BK-15,pass,"overbookable session, cap 2, 100 patients: exactly 2 succeed, no more (written expectation; see QA04-F07)",
+QA-04,TC-BK-16,pass,"hold expiry race: after A's hold expires, B and C race; exactly one wins, neither gets a false ""taken"" [G2 setting: hold",
+QA-04,TC-BK-17,pass,"room: three checked-in visits at one time, three parallel assignments of the SAME room: exactly one succeeds (SAR-09)",
+QA-04,TC-BK-18,pass,"slot search and /public/v1 show no identifiers of other patients, reservations or rooms",
+QA-04,TC-BK-22,pass,"a waitlisted patient is merged into another: the freed slot is offered once, to the survivor",
+QA-04,TC-NT-01,pass,"every published template, in every channel and language, binds only allowlisted variables and carries no condition-revea",
+QA-04,TC-NT-01/06,pass,a sensitive-service booking by a patient whose own name is a condition/medicine: every queued message holds only allowli,
+QA-04,TC-NT-02,pass,"confirmation plus two reminders at the configured offsets, each with the portal links and no clinical text",
+QA-04,TC-NT-04,pass,"provider failure: the send is retried (attempts > 1, error class recorded), the in-app message is still delivered, and t",
+QA-04,TC-NT-05,pass,"application logs contain no health data after the booking, check-in and note journeys",
+QA-04,TC-NT-07,pass,an alert reaches only the principals it targets; another staff session does not see it,
+QA-04,TC-NT-08,pass,"notification preferences: with SMS off and email on, a booking sends email and suppresses SMS (security messages: PM-con",
+QA-04,TC-BK-19,pass,first on the list is offered first; ignoring lets the offer lapse and it passes to the next [G2 setting: 1 min],
+QA-04,TC-BK-20,pass,"accept races: two accepts of one offer, and an accept against a direct booking, yield exactly one appointment",
+QA-04,TC-BK-21,pass,slot starting within 24 h uses the within-24-hours acceptance time; late accept is refused and the offer passes on [G2 s,
+QA-04,TC-PC-01,pass,desk check-in moves the visit to checked-in and it appears in the queue with a stage and wait time,
+QA-04,TC-PC-08,pass,check-in with a required consent unsigned raises the missing-consent flag,
+QA-04,TC-PC-05,pass,"four checked-in patients: category and wait time displayed for each, none dropped (order asserted only after PM-confirm-",
+QA-04,TC-PC-06,pass,"two nurses on one triage record: the second save is refused (412 stale ETag, 428 without one); no silent overwrite",
+QA-04,TC-CL-10 step 1,pass,"a vital with no range configured is stored and reported as no_range, never refused",
+QA-04,TC-PC-12,pass,front desk without referral/follow-up permission is refused for both and the refusal is audited,
+QA-04,TC-PC-11,pass,coordinator records a follow-up and a referral; both are audited; no lab-collection booking exists,
+QA-04,TC-SAF-03a,pass,near-miss and non-flag answers do not alert (exact comparison),
+QA-04,TC-SAF-03b,pass,"a blank or missing red-flag answer is rejected and nothing is saved as ""no red flag""",
+QA-04,TC-SAF-01/03c,pass,"every configured red flag alerts the on-duty doctor at once (durable alert row, listed, audited)",
+QA-04,TC-SAF-01/04a,pass,the patient sees the configured emergency advice when a red flag is submitted (independent of the alert stream),
+QA-04,TC-SAF-01/04b,pass,"the durable alert exists with no alert stream open, stays open and visible until acknowledged",
+QA-04,TC-CL-01,pass,a note locks on signing; edits fail with note_locked; changes only by addendum (BR-11),
+QA-04,TC-CL-02,pass,"/ CL-07 step 3 addendum: author, time, original unchanged; the note row never changes",
+QA-04,TC-CL-05,pass,two sessions on one draft: the second save gets 412 and the draft stays recoverable,
+QA-04,TC-CL-07,pass,"a signed note: PATCH with a valid If-Match, DELETE and SQL UPDATE/DELETE as app_api all fail; hash unchanged",
+QA-04,TC-CL-03,pass,trainee note: release needs the supervisor; a non-supervisor co-sign is refused; supervisor co-sign releases,
+QA-04,TC-SAF-05,pass,consultation cannot start without the required signed consent; the message names the template and carries no PHI,
+QA-04,TC-SAF-06,pass,emergency exception: with a reason it starts and is recorded and audited; without a reason it is refused,
+QA-04,TC-SAF-08,pass,two consents: only-A blocks naming B; superseded A blocks naming A; both valid starts; sign-then-reopen is immediate; wi,
+QA-05,TC-AD-01,pass,"clinics, rooms, hours and holidays are saved, audited with before/after, and visible in the catalogue",
+QA-05,TC-AD-02,pass,"a service that reveals a condition needs a neutral patient-visible name, which is the only one patients see",
+QA-05,TC-AD-03,pass,booking policy: block-only works; a fee is stored and nothing is charged (D-3 default),
+QA-05,TC-AD-04,blocked/skipped,message templates: variables restricted to the allowlist; a free-text binding is rejected,"NOT DELIVERED: the API has no message-template admin route (probed /admin/message-templates: 404; README BE-23 N-BE23-4 lists message templates as not built). Coverage gap recorded as QA05-F07, not a "
+QA-05,TC-AD-05,pass,role assignment needs the second approver; no role is effective before approval,
+QA-05,TC-AD-06,pass,front desk cannot open admin routes,
+QA-05,TC-AD-07,pass,future-appointment cap set in admin applies at the boundary,
+QA-05,TC-AD-08,pass,"a feature flag set for LOC-A1 only is stored per location, readable per location, and audited",
+QA-05,TC-AD-09,pass,a maintenance banner is visible on all three hosts without PHI and removed cleanly,
+QA-05,TC-AD-10,pass,flag change without a live elevation grant is refused (C1),
+QA-05,TC-AD-11,blocked/skipped,integration health shows OK/failed correctly with a real failure injected [sandboxes],"BLOCKED: no Google, e-mail, SMS, push or analytics sandbox in ENV-INT/ci (C-10); health depends on a real vendor probe"
+QA-05,TC-AD-12,blocked/skipped,"secrets are write-only: never displayed, logged or exported [secret store]",BLOCKED: no secret store (OutboundSecretStore) in ENV-INT/ci (INT-N8); the write cannot complete without it. Needs ENV-INT/staging
+QA-05,TC-AD-13,pass,"integration setting change is audited with who, what, before and after",
+QA-05,TC-AD-14,pass,compromised api: the api role cannot write an approval or an inbound-verification secret itself,
+QA-05,TC-AD-15,blocked/skipped,disabling an integration makes dependent features fail visibly [sandboxes],BLOCKED: needs a working e-mail integration and booking confirmation against a sandbox (C-10)
+QA-05,TC-API-01,blocked/skipped,every module returns the standard problem body [deployed stack],BLOCKED: needs ENV-INT/staging with the fault-injection endpoint and every R1 module routable; see TC-API-02/10 for the ci-level body checks
+QA-05,TC-API-09,blocked/skipped,contract test over the published OpenAPI documents [Schemathesis + contracts/openapi],"BLOCKED in this suite: run by tests/api/harness/schemathesis-run.mjs (QA-02) against the published documents, not by tests/api/platform"
+QA-05,TC-API-02,pass,"401 without a session, 403 without the right, 404 for a patient outside the caller's scope; bodies are problem+json with",
+QA-05,TC-API-03,pass,patient search is POST-only: PHI in a GET URL is refused,
+QA-05,TC-API-04,pass,"PATCH without If-Match is 428, a stale If-Match is 412, the current one succeeds with a new ETag (patient record; notes ",
+QA-05,TC-API-05,pass,list limit is capped at 100 and a tampered cursor is refused,
+QA-05,TC-API-06,pass,"Cache-Control: no-store on API responses (success, error, redirect, anonymous)",
+QA-05,TC-API-07,pass,above the per-principal write limit the next call is 429 kernel.rate_limited with Retry-After,
+QA-05,TC-API-08,pass,a body over 1 MB is 413; unknown fields: ignored on portal endpoints,
+QA-05,TC-API-10,pass,client release: missing and malformed are 400 kernel.client_release_unsupported with no side effect; exempt routes work ,
+QA-05,TC-API-10b,pass,the X-Request-Id of a request appears in the response and in the audit event it caused,
+QA-05,TC-AU-01,pass,"chart view and patient search each create an audit event with user, time, IP/device and no clinical values",
+QA-05,TC-AU-01b,blocked/skipped,chart export and print each create an audit event,"NOT TESTABLE: the API has no chart export or print route in R1 (probed chart-export, chart-print, export: 404); the view and search half is TC-AU-01. Recorded as a coverage gap, not a pass"
+QA-05,TC-AU-02,pass,audit insert failure: the read fails and the change rolls back; with the fault removed it works,
+QA-05,TC-AU-03,pass,denial-write failure: the caller still gets the denial (fail closed) and the failure is logged,
+QA-05,TC-AU-04,pass,"audit.require_bounded_tx: unset and over-bound refused (PA001), app_owner has no INSERT (42501), at-bound succeeds",
+QA-05,TC-AU-05,pass,"nobody can edit or delete audit rows: not via API routes, not as any app_* role (the attempt is refused)",
+QA-05,TC-AU-06,pass,"audit viewer: filters who/what/when, required fields shown, no PHI",
+QA-05,TC-AU-07,pass,"audit export is an asynchronous, size-limited, audited job",
+QA-05,TC-AU-07b,blocked/skipped,the export reaches ready and the requester downloads it,"BLOCKED: the audit export sink (object store, infrastructure) is not provisioned in ENV-INT/ci; the worker's sink is a refusing port, so the job ends failed. Needs the staging object store"
+QA-05,TC-AU-08,blocked/skipped,tampering with a stored audit row is detected by the anchor verification,BLOCKED: audit.verify_anchors treats the Object Lock archive as the authority (INT04-F10 D-2); the archive store is infrastructure that does not exist in ENV-INT/ci
+QA-05,TC-AU-09,blocked/skipped,retention value and archive job [OPS],BLOCKED: audit/clinical retention period not decided at G2 (open decision); type OPS: DevOps evidence
+QA-05,TC-AU-10,blocked/skipped,duplicate of TC-PERF-04: no result of its own,"n/a: owned by TC-PERF-04 (ENV-LOAD, not provisioned)"
+QA-05,TC-DOC-01,blocked/skipped,"upload of a clean PDF: unavailable until scanned clean, then classified and confirmed [store + scanner]","BLOCKED: no object store, malware scanner or OCR vendor in ENV-INT/ci (C-01, C-10); the API composition has the refusing presigner. Needs ENV-INT/staging with the bucket and scanner"
+QA-05,TC-DOC-02,blocked/skipped,"EICAR upload is quarantined, uploader told, clinicians cannot open it [real scanner]","BLOCKED: no object store, malware scanner or OCR vendor in ENV-INT/ci (C-01, C-10); the API composition has the refusing presigner. Needs ENV-INT/staging with the bucket and scanner"
+QA-05,TC-DOC-05,blocked/skipped,"pre-signed URLs go to the object store, expire, and cannot read another patient's file [store]","BLOCKED: no object store, malware scanner or OCR vendor in ENV-INT/ci (C-01, C-10); the API composition has the refusing presigner. Needs ENV-INT/staging with the bucket and scanner"
+QA-05,TC-DOC-08,blocked/skipped,"scanner outage: file stays unavailable, visible failure, no bypass [scanner]","BLOCKED: no object store, malware scanner or OCR vendor in ENV-INT/ci (C-01, C-10); the API composition has the refusing presigner. Needs ENV-INT/staging with the bucket and scanner"
+QA-05,TC-DOC-00,pass,observation: without a store an upload request is refused (never faked),
+QA-05,TC-DOC-03,pass,"disallowed type, double extension and oversize are rejected with a safe error",
+QA-05,TC-DOC-04,pass,deletion of a document under legal hold is refused with the reason recorded,
+QA-05,TC-DOC-06,pass,another patient's file ID is 404 and the attempt is logged,
+QA-05,TC-DOC-07,pass,"deletion allowed only after the retention period and with no hold (D1 old, D2 young, D3 old+hold)",
+QA-05,TC-MG-01,pass,registering a patient who matches an existing one warns (probable/exact match) and shows nothing out of scope,
+QA-05,TC-MG-02,pass,a merge needs a second approver; after approval the survivor holds both histories and the merge is audited,
+QA-05,TC-MG-03,pass,staff without patient.merge.request cannot request a merge,
+QA-05,TC-MG-04,pass,a requester who sees only one patient: the whole merge still completes (job runs with exact IDs),
+QA-05,TC-MG-06,pass,"an injected failure in a participant module rolls everything back, fails the request, and leaves no partial merge",
+QA-05,TC-MG-07,pass,"after a merge, a stale session writing to the merged patient gets 409 patient.merged and nothing is written",
+QA-05,TC-MG-12,pass,"two simultaneous merge requests that chain (A into B, B into C): one wins, the other is patient.already_merged or pendin",
+QA-05,TC-MG-05,blocked/skipped,signed note keeps its original patient_id after merge [signed-note flow],BLOCKED: needs a signed clinical note authored under the merged patient; the note authoring/sign flow is not driven by the platform harness (QA-04 owns clinical journeys)
+QA-05,TC-MG-08,blocked/skipped,hold-vs-merge ordering [test hooks],BLOCKED: needs controllable test hooks to order the hold and merge transactions; the product exposes none in ENV-INT/ci
+QA-05,TC-MG-09,blocked/skipped,note-vs-merge ordering [test hooks],BLOCKED: needs controllable test hooks to order transactions; none exposed
+QA-05,TC-MG-10,blocked/skipped,job types declare on_merged; undeclared fails CI [registry check],BLOCKED: needs the job-type on_merged registry check from CI; no runner for it in tests/api/platform
+QA-05,TC-MG-11,blocked/skipped,addendum on a signed note of a merged patient [signed-note flow],BLOCKED: depends on the signed-note flow (see TC-MG-05)
+QA-05,TC-MG-13,blocked/skipped,chained merge visibility across locations and care-relationship end [multi-step location flow],BLOCKED: needs location care-relationship end and new-location booking flows not driven by this harness
+QA-05,TC-MG-14,blocked/skipped,merge of a 10x chart finishes within the 60 s bound or rolls back [volume dataset],BLOCKED: needs the 10x ARCH 35.3 chart dataset generator; not in scope of this ticket's harness
+QA-05,TC-MSG-01,pass,"a task and a secure message reach the recipient, are audited, and no notice carries their content",
+QA-05,TC-MSG-02,pass,a message or task cannot be sent or assigned to a user of another organisation,
+QA-05,TC-MSG-03,pass,patient messaging: N/A while D-5 keeps it off; the flag cannot be enabled and the route is not available,
+QA-05,TC-MSG-04,pass,a script string in a message is stored as text and served as inert JSON,
+QA-05,TC-PP-01,pass,"the patient edits demographics, language, pharmacy and a contact; changes persist and are audited",
+QA-05,TC-PP-02,pass,hostile and invalid input is rejected or stored as inert text,
+QA-05,TC-PP-04,pass,a proxy-link request is refused (not queued) while the verification rules are undecided (D-7),
+QA-05,TC-PP-03,blocked/skipped,proxy default view shows appointments only [proxy grant flow],"BLOCKED: needs a verified proxy grant, which cannot be created while D-7 is open; the isolation side is TC-AZ-14 (QA-02)"
+QA-05,TC-PP-05,blocked/skipped,age-out and revocation of a proxy [D-7 / G-07],BLOCKED: rule values do not exist yet (D-7 / G-07); case written when decided
+QA-05,TC-PP-06,blocked/skipped,"patient completes the pre-visit request, questionnaire and e-signs; staff see status [clinical flow]",BLOCKED: the pre-visit request/questionnaire/e-sign journey is the QA-04 clinical suite and insurance-card upload needs the object store (C-01)
+QA-05,TC-PP-07,blocked/skipped,"partial completion shows ""incomplete"" and which items [clinical flow]",BLOCKED: same flow as TC-PP-06 (QA-04)
+QA-05,TC-PR-01,pass,"notification preferences: SMS off, email on, saved and read back after reload",
+QA-05,TC-PR-02,pass,"export request: identity check, compliance sees it, assembled in chunks (each audited), delivered via the portal",
+QA-05,TC-PR-02b,blocked/skipped,the finished export is downloaded through the portal with a short-lived link and no PHI in the e-mail,BLOCKED: no package store or presigner in ENV-INT/ci (C-01); the API composition has the refusing presigner. Needs ENV-INT/staging
+QA-05,TC-PR-03,pass,deletion request is recorded and visible to compliance; nothing is deleted (D-8 open),
+QA-05,TC-PR-04,pass,another patient's request and export cannot be read or downloaded,
+QA-05,TC-PR-05,pass,processing before the identity check is refused; a refusal needs a reason and is recorded,
+QA-05,TC-TH-01,blocked/skipped,"visit runs with both parties, notes pane doctor only [AUTO+H real devices]",BLOCKED: no video vendor selected (C-11) and no vendor sandbox (C-10); nothing here proves a real vendor
+QA-05,TC-TH-02,pass,join page shows the time in the viewer zone and the clinic zone (needs the join page and an Eastern/Pacific browser pair,
+QA-05,TC-TH-03,pass,"another patient cannot join, view or check devices of someone else's session (and it is logged)",
+QA-05,TC-TH-04,blocked/skipped,"vendor outage: visible failure, retry message, no data loss [AUTO against a vendor sandbox set to unavailable]",BLOCKED: no video vendor selected (C-11) and no vendor sandbox (C-10); nothing here proves a real vendor
+QA-05,TC-TH-05,pass,"join window: refused too early with the start time, joins at the window, refused after the end",
+QA-05,TC-TH-06,pass,licensing at booking: in-state allowed; out-of-state and non-operating state refused (placeholder states),
+QA-05,TC-TH-07,pass,"patient must confirm their state at join; outside the licensed states refused, inside joins",
+QA-05,TC-TH-08,pass,licence removed after the answer: join refused with a safe message; re-added: allowed; both audited,
+QA-05,TC-BS-01,pass,"published pages exist and show services, doctors, locations from the real directory",
+QA-05,TC-BS-02,pass,the Book hand-off from a doctor page goes to my. with the service and doctor pre-selected (link check),
+QA-05,TC-BS-05,pass,"robots, sitemap, titles, descriptions and structured data are present and well-formed",
+QA-05,TC-BS-06,pass,(no-form half) the site accepts only GET/HEAD and sets no cookie; there is no contact form to abuse,
+QA-05,TC-BS-07,pass,no language switch leads to a broken page (English only),
+QA-05,TC-BS-03,blocked/skipped,marketing edits and publishes a page without a developer [CMS + browser],BLOCKED: needs the CMS with a marketing login (C-19 decides the content source; apps/cms is not a deployed service in ENV-INT/ci) and a human for the editing journey
+QA-05,TC-BS-04,blocked/skipped,no health data in analytics events after consent [analytics sandbox + browser],"BLOCKED: needs Chrome network capture and an analytics sandbox; none is provisioned in ENV-INT/ci (ANALYTICS_SRC unset, so the site loads no analytics at all)"
+QA-05,TC-BS-08,blocked/skipped,"consent banner: no analytics before consent, allowed after, choice remembered [browser]",BLOCKED: needs a browser session; the consent unit tests (apps/site/src/consent.test.ts) cover the logic only and are not a substitute
