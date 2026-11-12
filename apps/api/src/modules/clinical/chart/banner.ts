@@ -30,7 +30,11 @@ type Row = Record<string, unknown>;
 export const BANNER_ALLERGY_LIMIT = 10;
 
 /** The 60-second signed URL of the patient's photo document, or null. The documents module provides the real one at composition. */
-export type PhotoUrlPort = (tx: Tx, documentId: string) => Promise<string | null>;
+export type PhotoUrlPort = (
+  tx: Tx,
+  documentId: string,
+  patientId: string,
+) => Promise<string | null>;
 
 export interface BannerDeps {
   audit: ChartAuditPort;
@@ -118,7 +122,7 @@ export class BannerService {
       });
     const photoUrl =
       p.photoDocumentId !== null && this.deps.photo !== undefined
-        ? await this.deps.photo(tx, p.photoDocumentId)
+        ? await this.deps.photo(tx, p.photoDocumentId, p.id)
         : null;
     return {
       patientId: p.id,

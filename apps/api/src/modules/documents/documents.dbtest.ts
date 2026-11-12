@@ -1782,7 +1782,7 @@ describe('documents (BE-10) on PostgreSQL 17', () => {
       patientIds: [other.patientId],
     };
     // Present: staff and the owner both get a URL for the clean object, valid for 60 seconds and no more.
-    const url = await t.as(staff, (tx) => t.svc.photoUrl(tx, documentId));
+    const url = await t.as(staff, (tx) => t.svc.photoUrl(tx, documentId, patientId));
     assert.ok(url !== null);
     const { key } = keyOfUrl(url);
     assert.equal(key, String((await doc(documentId))['object_key']));
@@ -1798,24 +1798,31 @@ describe('documents (BE-10) on PostgreSQL 17', () => {
       false,
       'the URL lives 60 seconds',
     );
-    assert.ok((await t.as(ownScope, (tx) => t.svc.photoUrl(tx, documentId))) !== null);
+    assert.ok((await t.as(ownScope, (tx) => t.svc.photoUrl(tx, documentId, patientId))) !== null);
     // Patient scope: another patient's session cannot see the document, so there is no photo (and no error).
-    assert.equal(await t.as(otherScope, (tx) => t.svc.photoUrl(tx, documentId)), null);
+    assert.equal(await t.as(otherScope, (tx) => t.svc.photoUrl(tx, documentId, patientId)), null);
+    // Patient binding (F-1): a staff caller who can see both patients still gets no photo for another patient's document.
+    assert.equal(await t.as(staff, (tx) => t.svc.photoUrl(tx, documentId, other.patientId)), null);
     // None: an ID that is no document.
     assert.equal(
-      await t.as(staff, (tx) => t.svc.photoUrl(tx, '00000000-0000-4000-8000-000000000000')),
+      await t.as(staff, (tx) =>
+        t.svc.photoUrl(tx, '00000000-0000-4000-8000-000000000000', patientId),
+      ),
       null,
     );
     // Not clean: awaiting scan, and quarantined as infected.
     const pending = await t.uploadAs(session, patientId, PDF);
-    assert.equal(await t.as(staff, (tx) => t.svc.photoUrl(tx, pending.documentId)), null);
+    assert.equal(
+      await t.as(staff, (tx) => t.svc.photoUrl(tx, pending.documentId, patientId)),
+      null,
+    );
     const bad = await t.uploadAs(session, patientId, EICAR_PDF);
     t.scanner.release(bad.key);
     assert.equal(
       await t.worker.runAwaitScan({ documentId: bad.documentId, version: 1, patientId }),
       'quarantined',
     );
-    assert.equal(await t.as(staff, (tx) => t.svc.photoUrl(tx, bad.documentId)), null);
+    assert.equal(await t.as(staff, (tx) => t.svc.photoUrl(tx, bad.documentId, patientId)), null);
     // A banner read is not a download: photoUrl writes no `download` audit event of its own.
     const n = Number(
       (

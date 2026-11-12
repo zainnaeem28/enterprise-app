@@ -373,14 +373,15 @@ export class DocumentsService {
   }
 
   /**
-   * The patient banner's photo (PRD 8.3, BR-34): a 60-second URL for a clean photo document the caller's RLS shows, else null. The
+   * The patient banner's photo (PRD 8.3, BR-34): a 60-second URL for a clean photo document of that patient the caller's RLS shows, else null. The
    * banner read is itself audited as a view of the patient, so no separate `download` event is written; a missing, unclean or
    * invisible document, or a store that cannot sign, yields no photo and never fails the banner.
    */
-  async photoUrl(tx: Tx, documentId: string): Promise<string | null> {
+  async photoUrl(tx: Tx, documentId: string, patientId: string): Promise<string | null> {
     const r = await this.row(tx, documentId);
     if (
       r === undefined ||
+      r['patient_id'] !== patientId ||
       !(r['status'] === 'clean' || r['status'] === 'confirmed') ||
       r['scan_status'] !== 'clean' ||
       r['bucket'] !== 'clean' ||
