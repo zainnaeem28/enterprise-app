@@ -60,6 +60,16 @@ before(async () => {
     db: k.db,
     logger: createLogger({ sink: () => undefined }),
     identity: env,
+    objectStore: {
+      presignPut: () => {
+        throw new Error('unused');
+      },
+      presignGet: (req, now) => ({
+        url: `https://files.example.test/${req.bucket}/${req.key}?sig=test&exp=${req.expiresSeconds}`,
+        expiresAt: new Date(now.getTime() + req.expiresSeconds * 1000),
+        headers: {},
+      }),
+    },
   });
   app = await createApp({
     config: {
@@ -120,5 +130,58 @@ describe('chart summary history and documents in the production composition', ()
     assert.equal(enc.length, 1);
     assert.equal(enc[0]?.['patientId'], pid);
     assert.deepEqual(filled.json()['documents'], []);
+  });
+
+  // QA982-F01 / PRD 8.3 / BR-34: the banner of the production composition carries a signed photoUrl when the patient has a clean photo.
+  test('the banner carries photoUrl when a clean photo exists and omits it otherwise', async () => {
+    const desk = await staffMember(k, 'front_desk', A1, 'Desk Photo');
+    const doctor = await staffMember(k, 'doctor', A1, 'Doctor Photo');
+    const pid = await registerViaApi(k, desk, A1, {
+      givenName: 'Banner',
+      familyName: 'Photo',
+      dateOfBirth: '1981-06-18',
+      phone: '+12125551702',
+      email: 'banner.photo@example.test',
+    });
+    await saWrite(
+      k,
+      `INSERT INTO patient.care_team_member (id, organisation_id, patient_id, principal_id, role) VALUES (gen_random_uuid(), $1, $2, $3, 'clinician')`,
+      [ORG, pid, doctor.seeded.principalId],
+    );
+    const banner = async (): Promise<Record<string, unknown>> => {
+      const r = await call(base, 'GET', `/api/v1/patients/${pid}/chart-summary`, {
+        host: STAFF_HOST,
+        cookie: doctor.cookie,
+      });
+      assert.equal(r.status, 200, r.body);
+      return r.json()['patientBanner'] as Record<string, unknown>;
+    };
+    assert.equal((await banner())['photoUrl'], undefined, 'no photo: no photoUrl');
+
+    const docId = '00000000-0000-4000-8000-0000000009a1';
+    // Seeds the end state of upload and scan directly (the lifecycle triggers are tested in the documents module): replica role skips them.
+    await k.sa.query(`SET session_replication_role = replica`);
+    try {
+      await k.sa.query(
+        `INSERT INTO documents.document (id, organisation_id, patient_id, classification, status, uploaded_by, upload_channel)
+         VALUES ($1, $2, $3, 'clinical_photo', 'clean', $4, 'staff')`,
+        [docId, ORG, pid, doctor.seeded.principalId],
+      );
+      await k.sa.query(
+        `INSERT INTO documents.document_version (document_id, version, organisation_id, patient_id, object_key, bucket, sha256, size_bytes, content_type,
+                                                 declared_content_type, scan_status, scanned_at)
+         VALUES ($1, 1, $2, $3, 'c/' || repeat('ab', 16), 'clean', decode(repeat('cd', 32), 'hex'), 10, 'image/png', 'image/png', 'clean', now())`,
+        [docId, ORG, pid],
+      );
+    } finally {
+      await k.sa.query(`SET session_replication_role = DEFAULT`);
+    }
+    await saWrite(k, `UPDATE patient.patient SET photo_document_id = $2 WHERE id = $1`, [
+      pid,
+      docId,
+    ]);
+    const b = await banner();
+    assert.match(String(b['photoUrl']), /^https:\/\/files\.example\.test\/clean\/c\/abab/);
+    assert.match(String(b['photoUrl']), /exp=60$/);
   });
 });
