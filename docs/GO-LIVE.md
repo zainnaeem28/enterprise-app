@@ -8,17 +8,17 @@ account exists, no credential, purchase or person was available, and no cloud se
 which show that requests are well formed, not how real AWS behaves. Without configuration the application keeps its ports
 **refusing** (never faking).
 
-Names below come from these sources. Some are on branches that were not yet on `main` when this file was written; a name that is
-not found when you work through this file is a defect of this file, so report it:
+Names below come from these sources, all on `dev` (and `main` after the final merge). A name that is not found when you work
+through this file is a defect of this file, so report it:
 
 | Source | Where | Content used |
 | --- | --- | --- |
-| `docs/runbooks/AWS-ADAPTERS.md` | branches `HEAAA-700` … `HEAAA-707` (AWS-BE-1..4); latest complete text on `HEAAA-707-aws-video-ocr-scan` | adapter variables, selection rules, IAM actions |
-| `infra/modules/aws-adapters` | branch `HEAAA-709-aws-iac` (AWS-DO-1) | the IaC output that produces those variables |
-| `docs/runbooks/emulator-tests.md`, workflow gates | branch `HEAAA-698-emulator-ci` (AWS-CI-1) | emulator job, "not configured" skips |
-| `infra/modules/loadtest`, `loadtest-run.yml`, `loadtest-reaper.yml`, `docs/loadtest-workflow.md` | branch `HEAAA-712-loadtest-restore` (AWS-DO-2) | load-test stack and its variables |
-| `infra/accounts/README.md`, `infra/bootstrap/README.md`, `infra/approvals/README.md`, `scripts/deploy/README.md`, `scripts/bootstrap/README.md`, `docs/runbooks/restore.md`, `.github/workflows/*.yml` | `main` | accounts, order, approvals, release and deploy |
-| `docs/DELIVERY-PLAN.md` conditions register C-01..C-22, `docs/DEVOPS-PLAN.md`, `docs/security/TC-PEN-01-scope-and-rules-of-engagement.md` | `main` | checklist items |
+| `docs/runbooks/AWS-ADAPTERS.md` | `docs/runbooks` | adapter variables, selection rules, IAM actions |
+| `infra/modules/aws-adapters` | `infra/modules` | the IaC output that produces those variables |
+| `docs/runbooks/emulator-tests.md`, workflow gates (`.github/workflows/ci.yml`, `scripts/ci/check-aws-gates.mjs`) | `docs`, `.github`, `scripts/ci` | emulator job, "not configured" skips |
+| `infra/modules/loadtest`, `loadtest-run.yml`, `loadtest-reaper.yml`, `docs/loadtest-workflow.md` | `infra`, `.github/workflows`, `docs` | load-test stack and its variables |
+| `infra/accounts/README.md`, `infra/bootstrap/README.md`, `infra/approvals/README.md`, `scripts/deploy/README.md`, `scripts/bootstrap/README.md`, `docs/runbooks/restore.md`, `.github/workflows/*.yml` | repository | accounts, order, approvals, release and deploy |
+| `docs/DELIVERY-PLAN.md` conditions register C-01..C-22, `docs/DEVOPS-PLAN.md`, `docs/security/TC-PEN-01-scope-and-rules-of-engagement.md` | `docs` | checklist items |
 
 Rule for every step: a person does it, in their own authenticated session. No agent holds an AWS identity, and no step here may be
 done by weakening a check. A skipped workflow is never a pass.
@@ -136,7 +136,7 @@ required review answered 403 (C-13): reviewer and CODEOWNERS rules are then proc
 
 The application selects each adapter from environment variables. Rule (`packages/kernel/src/aws/config.ts`): none set = the refusing port
 stays, one `not configured` log line; all set = the AWS adapter is built; some set = startup fails (`AwsConfigError`, names the variables,
-never a value). The IaC column is the output of `infra/modules/aws-adapters` (branch `HEAAA-709-aws-iac`) fed into the compute module
+never a value). The IaC column is the output of `infra/modules/aws-adapters` fed into the compute module
 (`services.*.environment` / `secret_references`); nothing here has been applied.
 
 Never set in AWS: `EHR_AWS_ENDPOINT_URL`, `EHR_AWS_S3_FORCE_PATH_STYLE`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` (emulator only; the task role is used).
