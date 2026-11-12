@@ -372,6 +372,37 @@ export class DocumentsService {
     return { url: url.url, expiresAt: url.expiresAt.toISOString() };
   }
 
+  /**
+   * The patient banner's photo (PRD 8.3, BR-34): a 60-second URL for a clean photo document the caller's RLS shows, else null. The
+   * banner read is itself audited as a view of the patient, so no separate `download` event is written; a missing, unclean or
+   * invisible document, or a store that cannot sign, yields no photo and never fails the banner.
+   */
+  async photoUrl(tx: Tx, documentId: string): Promise<string | null> {
+    const r = await this.row(tx, documentId);
+    if (
+      r === undefined ||
+      !(r['status'] === 'clean' || r['status'] === 'confirmed') ||
+      r['scan_status'] !== 'clean' ||
+      r['bucket'] !== 'clean' ||
+      typeof r['object_key'] !== 'string'
+    )
+      return null;
+    try {
+      const url = await this.deps.store.presignGet(
+        {
+          bucket: 'clean',
+          key: r['object_key'],
+          contentType: String(r['content_type']),
+          expiresSeconds: DOWNLOAD_URL_SECONDS,
+        },
+        this.now(),
+      );
+      return url.url;
+    } catch {
+      return null;
+    }
+  }
+
   // ===== classification and confirmation (BR-28) =======================================================================
   private expect(r: Row, expectedVersion: number | undefined): void {
     if (expectedVersion !== undefined && Number(r['row_version']) !== expectedVersion)
