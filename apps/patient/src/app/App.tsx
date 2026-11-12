@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { BrandWordmark, resolveBrandName, SkipLink } from '@ehr/ui';
+import { BrandMark, Icon, resolveBrandName, SkipLink } from '@ehr/ui';
 import { MaintenanceBanners, ReleasePrompts, SessionPrompts } from '@ehr/app-shell';
 import type { PatientRuntime } from './runtime.js';
 import { useLocation } from './router.js';
+import './patient.css';
 import { EntryPage } from '../features/auth/EntryPage.js';
 import type { Intent } from '../features/auth/EntryPage.js';
 import { PreRedirectPage } from '../features/auth/PreRedirectPage.js';
@@ -35,6 +36,7 @@ export function App({
   assign?: (url: string) => void;
 }) {
   const { location, go } = useLocation();
+  const brandName = resolveBrandName(import.meta.env.VITE_ORGANISATION_NAME, 'Patient portal');
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<Problem | undefined>();
   useEffect(() => runtime.releases.start(), [runtime]);
@@ -118,13 +120,28 @@ export function App({
   }
 
   return (
-    <>
+    <div className="patient-shell">
       <SkipLink targetId="main">Skip to main content</SkipLink>
       <header className="ehr-appbar">
-        <p className="ehr-appbar__name">Patient portal</p>
-        <BrandWordmark
-          name={resolveBrandName(import.meta.env.VITE_ORGANISATION_NAME, 'Patient portal')}
-        />
+        <a
+          className="patient-brand"
+          href="/account"
+          onClick={(e) => {
+            if (!e.metaKey && !e.ctrlKey) {
+              e.preventDefault();
+              go('/account');
+            }
+          }}
+        >
+          <BrandMark />
+          <span>
+            <strong>{brandName}</strong>
+            {brandName !== 'Patient portal' && <small>Patient portal</small>}
+          </span>
+        </a>
+        <span className="patient-header-note">
+          <Icon name="heart" size={17} /> Your care, in one place
+        </span>
       </header>
       <ReleasePrompts store={runtime.releases} />
       <MaintenanceBanners api={runtime.api} />
@@ -134,9 +151,41 @@ export function App({
           toContinue('sign-in', checkedReturnTo(window.location.pathname + window.location.search))
         }
       />
+      {!['/', '/continue', '/problem'].includes(location.path) && (
+        <nav className="patient-nav" aria-label="Patient navigation">
+          {[
+            ['/account', 'Overview', 'home'],
+            ['/appointments', 'Appointments', 'calendar'],
+            ['/profile', 'My profile', 'people'],
+            ['/family', 'Family & access', 'heart'],
+            ['/privacy', 'Privacy', 'shield'],
+          ].map(([path, label, icon]) => (
+            <a
+              key={path}
+              href={path}
+              aria-current={
+                location.path === path || location.path.startsWith(`${path}/`) ? 'page' : undefined
+              }
+              onClick={(e) => {
+                if (!e.metaKey && !e.ctrlKey) {
+                  e.preventDefault();
+                  go(path!);
+                }
+              }}
+            >
+              <Icon name={icon!} size={18} />
+              {label}
+            </a>
+          ))}
+        </nav>
+      )}
       <main id="main" className="ehr-main" tabIndex={-1}>
         {page}
       </main>
-    </>
+      <footer className="patient-footer">
+        <span>{brandName}</span>
+        <p>For a medical emergency, call 911.</p>
+      </footer>
+    </div>
   );
 }

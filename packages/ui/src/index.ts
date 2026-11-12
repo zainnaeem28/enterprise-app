@@ -77,3 +77,5 @@ export {
   escalationText,
 } from './clinical.js';
 export type { AlertRow, AllergyData, AllergyItem, RangeStatus } from './clinical.js';
+
+export { Icon, BrandMark } from './icon.js';

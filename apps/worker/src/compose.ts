@@ -3,7 +3,6 @@
 // not exist yet (object store, malware scanner, OCR, secret store, payload-opening key, export sink, calendar channel key, e-mail/SMS/
 // push/Google providers (video, malware scan and OCR have AWS adapters selected by configuration: AWS-BE-4): C-01, C-10, C-11, DEVOPS-PLAN) are REFUSING: the job is picked up and the handler runs, then the port
 // fails with `PortNotConfiguredError` (class name only in the log) and the library retries. Nothing here pretends those services work.
-import { pathToFileURL } from 'node:url';
 import { JobRegistry, KernelDb, Queue } from '@ehr/kernel';
 import type { KernelConfig, Logger, PoolLike as KernelPoolLike } from '@ehr/kernel';
 import type { Task } from 'graphile-worker';
@@ -195,9 +194,7 @@ export async function loadApiPorts(opts: {
   packageWriter: PackageWriter;
   closureOf: typeof closureOf;
 }): Promise<ApiPorts> {
-  const url = pathToFileURL(
-    new URL('../../api/dist/src/worker-ports.js', import.meta.url).pathname,
-  ).href;
+  const url = new URL('../../api/dist/src/worker-ports.js', import.meta.url).href;
   const mod = (await import(url)) as {
     buildWorkerPorts(d: {
       logger: Logger;

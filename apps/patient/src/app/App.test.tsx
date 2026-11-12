@@ -97,7 +97,7 @@ describe('landing after the callback', () => {
   it('starts the session and shows the signed-in principal', async () => {
     window.history.replaceState(null, '', '/account');
     const { calls } = mount(happy);
-    expect(await screen.findByRole('heading', { name: 'You are signed in' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Welcome back.' })).toBeInTheDocument();
     expect(screen.getByText(/Test Patient/)).toBeInTheDocument();
     expect(calls).toEqual(['GET /api/v1/auth/session', 'GET /api/v1/me']);
   });
@@ -119,10 +119,18 @@ describe('landing after the callback', () => {
       'href',
       '/appointments',
     );
+    expect(screen.getByRole('link', { name: 'Family and access' })).toHaveAttribute(
+      'href',
+      '/family',
+    );
+    expect(screen.getByRole('link', { name: 'Notification preferences' })).toHaveAttribute(
+      'href',
+      '/profile/notifications',
+    );
     fireEvent.click(screen.getByRole('link', { name: 'Book an appointment' }));
     expect(window.location.pathname).toBe('/book');
     await waitFor(() => expect(document.title).toBe('Patient portal - Book: service'));
-    expect(screen.queryByRole('heading', { name: 'You are signed in' })).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'Welcome back.' })).toBeNull();
   });
 
   it('mounts the booking routes when opened directly', async () => {
@@ -165,7 +173,7 @@ describe('landing after the callback', () => {
   it('keeps tokens out of storage', async () => {
     window.history.replaceState(null, '', '/account');
     mount(happy);
-    await screen.findByRole('heading', { name: 'You are signed in' });
+    await screen.findByRole('heading', { name: 'Welcome back.' });
     expect(JSON.stringify({ ...localStorage, ...sessionStorage })).not.toMatch(/csrf-test/);
   });
 

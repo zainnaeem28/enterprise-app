@@ -1,5 +1,6 @@
 import { useId, useRef } from 'react';
 import type { KeyboardEvent, ReactNode } from 'react';
+import { BrandMark } from './icon.js';
 import { cx } from './cx.js';
 
 /** App bar: portal accent plus the portal name written out, so colour is never the only cue (UX-R2).
@@ -23,9 +24,12 @@ export function AppBar({
   return (
     <header className="ehr-appbar-wrap">
       <div className="ehr-appbar">
-        <div>
-          <p className="ehr-appbar__name">{productName}</p>
-          <p className="ehr-appbar__portal">{portalName}</p>
+        <div className="ehr-appbar__brand">
+          <BrandMark />
+          <div>
+            <p className="ehr-appbar__name">{productName}</p>
+            <p className="ehr-appbar__portal">{portalName}</p>
+          </div>
         </div>
         <div className="ehr-appbar__spacer">{children}</div>
         {help}

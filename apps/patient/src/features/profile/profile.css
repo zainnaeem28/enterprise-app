@@ -54,3 +54,102 @@
 .profile-item p {
   margin: 0.25rem 0;
 }
+
+/* Family, invitation and privacy screens share the portal's card and field treatment. */
+.profile > h2 {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+.profile > form {
+  max-width: 44rem;
+}
+.profile .profile-list {
+  display: grid;
+  gap: 16px;
+}
+.profile .profile-item {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 22px;
+  background: var(--surface);
+}
+.profile .profile-item > p:first-child {
+  margin-top: 0;
+}
+.profile .profile-note {
+  color: var(--muted);
+  line-height: 1.7;
+}
+.profile fieldset:not(.profile-set) {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin: 20px 0;
+  background: var(--surface-soft);
+}
+.profile fieldset legend {
+  padding: 0 8px;
+  font-weight: 650;
+  font-size: 13px;
+}
+.profile fieldset label {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  min-height: 32px;
+}
+.profile input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+.profile-statement {
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-soft);
+  margin-block: 20px;
+}
+.profile-statement h3 {
+  margin-top: 0;
+}
+.profile-statement dl {
+  display: grid;
+  grid-template-columns: minmax(7rem, max-content) minmax(0, 1fr);
+  gap: 10px 20px;
+}
+.profile-statement dt {
+  font-weight: 650;
+}
+.profile-statement dd {
+  margin: 0;
+}
+.profile-invitation {
+  max-width: 42rem;
+  margin-inline: auto;
+}
+.profile-invitation .ehr-feature-icon {
+  margin-bottom: 22px;
+}
+.profile-invitation .ehr-banner {
+  margin-bottom: 22px;
+}
+.profile-invitation input[autocomplete='one-time-code'] {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.16em;
+  font-size: 20px;
+}
+@media (max-width: 639px) {
+  .profile .profile-item,
+  .profile-statement {
+    padding: 18px;
+  }
+  .profile fieldset:not(.profile-set) {
+    padding: 14px;
+  }
+  .profile-statement dl,
+  .profile-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

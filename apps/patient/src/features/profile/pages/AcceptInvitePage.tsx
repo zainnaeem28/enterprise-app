@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { Banner, Button, ErrorSummary, TextField } from '@ehr/ui';
+import { Banner, Button, ErrorSummary, Icon, TextField } from '@ehr/ui';
 import type { Failure } from '../lib/core.js';
 import { useAccountCtx } from '../lib/ctx.js';
 import { summaryOf, useSubmit } from '../lib/forms.js';
@@ -43,7 +43,10 @@ export function AcceptInvitePage({ grantId }: { grantId: string }) {
 
   if (done)
     return (
-      <section aria-labelledby="accept-h" className="ehr-card profile">
+      <section aria-labelledby="accept-h" className="ehr-card profile profile-invitation">
+        <span className="ehr-feature-icon">
+          <Icon name={done ? 'check' : 'people'} size={24} />
+        </span>
         <h1 id="accept-h" ref={heading} tabIndex={-1}>
           You are linked
         </h1>
@@ -58,7 +61,10 @@ export function AcceptInvitePage({ grantId }: { grantId: string }) {
     );
 
   return (
-    <section aria-labelledby="accept-h" className="ehr-card profile">
+    <section aria-labelledby="accept-h" className="ehr-card profile profile-invitation">
+      <span className="ehr-feature-icon">
+        <Icon name={done ? 'check' : 'people'} size={24} />
+      </span>
       <h1 id="accept-h" ref={heading} tabIndex={-1}>
         Confirm your invitation
       </h1>

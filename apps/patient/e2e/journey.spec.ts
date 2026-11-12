@@ -94,7 +94,9 @@ test('entry, pre-redirect, sign-in, callback, landing and sign-out, with axe on 
 }) => {
   const seen = await mockApi(page);
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Patient portal' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: /Your next step to feeling better/ }),
+  ).toBeVisible();
   await expect(page.locator('input')).toHaveCount(0);
   await axe(page);
 
@@ -103,13 +105,15 @@ test('entry, pre-redirect, sign-in, callback, landing and sign-out, with axe on 
   await axe(page);
 
   await page.getByRole('button', { name: 'Continue to secure sign-in' }).click();
-  await expect(page.getByRole('heading', { name: 'You are signed in' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Welcome back.' })).toBeVisible();
   await expect(page.getByText('Signed in as Test Patient.')).toBeVisible();
   await expect(page).toHaveURL(/\/account$/);
   await axe(page);
 
   await page.getByRole('button', { name: 'Sign out' }).click();
-  await expect(page.getByRole('heading', { name: 'Patient portal' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: /Your next step to feeling better/ }),
+  ).toBeVisible();
   expect(seen).toContain('POST /api/v1/auth/sign-out');
   expect(seen.filter((s) => s.startsWith('GET /api/v1/auth/sign-in')).length).toBeGreaterThan(0);
 });

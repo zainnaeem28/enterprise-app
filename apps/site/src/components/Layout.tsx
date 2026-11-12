@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { AppBar, MaintenanceBanner, SkipLink } from '@ehr/ui';
+import { BrandMark, Icon, resolveBrandName, MaintenanceBanner, SkipLink } from '@ehr/ui';
 import type { SiteBanner } from '../directory.js';
 
 const NAV = [
@@ -40,7 +40,14 @@ export function Layout({
   return (
     <>
       <SkipLink targetId="main">Skip to main content</SkipLink>
-      <AppBar portalName="Visit us" productName={siteName ?? ''}>
+      <header className="site-header">
+        <a className="site-brand" href="/" aria-label="Home">
+          <BrandMark />
+          <span>
+            {resolveBrandName(siteName, 'Visit us')}
+            <small>Care starts here</small>
+          </span>
+        </a>
         <nav aria-label="Main" className="site-nav">
           <ul>
             {NAV.map((n) => (
@@ -55,7 +62,7 @@ export function Layout({
         <a className="ehr-btn ehr-btn--primary site-book" href={bookHref} data-book>
           Book appointment
         </a>
-      </AppBar>
+      </header>
       {banners.map((b) => (
         <MaintenanceBanner key={b.id}>{b.message}</MaintenanceBanner>
       ))}
@@ -63,7 +70,16 @@ export function Layout({
         {children}
       </main>
       <footer className="site-footer">
-        <p className="site-emergency">If this is an emergency, call 911.</p>
+        <div className="site-footer__brand">
+          <BrandMark />
+          <div>
+            <strong>{resolveBrandName(siteName, 'Visit us')}</strong>
+            <p>A simpler way to connect with your care.</p>
+          </div>
+        </div>
+        <p className="site-emergency">
+          <Icon name="help" size={16} /> If this is an emergency, call 911.
+        </p>
         <nav aria-label="Footer">
           <ul>
             {[...FOOTER, ...(hasNpp ? [NPP_LINK] : [])].map((n) => (

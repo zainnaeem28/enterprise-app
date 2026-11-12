@@ -145,7 +145,7 @@ export function LicensedStates() {
       : operatingNow(operating.items, new Date().toISOString().slice(0, 10));
 
   return (
-    <section aria-labelledby="lic-title">
+    <section aria-labelledby="lic-title" className="ehr-licensing">
       <h1 id="lic-title">{s.licTitle}</h1>
       <p>{s.licIntro}</p>
       <p>{s.auditNote}</p>

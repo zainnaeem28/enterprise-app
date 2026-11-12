@@ -1,4 +1,4 @@
-import { EmptyState, StatusChip } from '@ehr/ui';
+import { EmptyState, StatusChip, Icon } from '@ehr/ui';
 import type { ContentSource, LegalPage, Organisation } from '../content.js';
 import type { Directory, Doctor, Location, NextSlot } from '../directory.js';
 import {
@@ -25,28 +25,131 @@ export function HomePage({ ctx }: { ctx: Ctx }) {
   const { content, dir } = ctx;
   return (
     <>
-      <h1>{content.home.heading}</h1>
-      <p className="site-lead">{content.home.intro}</p>
-      <p>
-        <BookLink patientOrigin={ctx.patientOrigin} label="Book appointment" />
-      </p>
-      <Section title="Services">
+      <section className="site-hero">
+        <div className="site-hero__copy">
+          <p className="ehr-eyebrow">Care that fits into your life</p>
+          <h1>{content.home.heading}</h1>
+          <p className="site-lead">{content.home.intro}</p>
+          <div className="site-hero__actions">
+            <BookLink patientOrigin={ctx.patientOrigin} label="Book appointment" />
+            <a href="/doctors">
+              Find your doctor <Icon name="arrow" size={18} />
+            </a>
+          </div>
+          <p className="site-hero__note">
+            <Icon name="calendar" size={16} /> Choose your service, doctor, and appointment time.
+          </p>
+        </div>
+        <div className="site-hero__visual">
+          <div className="site-orbit" aria-hidden="true">
+            <span />
+            <span />
+            <Icon name="heart" size={70} />
+          </div>
+          <div className="site-journey">
+            <span className="ehr-feature-icon">
+              <Icon name="calendar" size={24} />
+            </span>
+            <div>
+              <p className="ehr-eyebrow">A little easier, from the start</p>
+              <h2>Your care journey</h2>
+            </div>
+            <ol>
+              <li>
+                <span>01</span>
+                <div>
+                  <strong>Find the right care</strong>
+                  <small>Explore our services and doctors.</small>
+                </div>
+                <Icon name="check" size={16} />
+              </li>
+              <li>
+                <span>02</span>
+                <div>
+                  <strong>Make time for you</strong>
+                  <small>Choose an available appointment.</small>
+                </div>
+                <Icon name="check" size={16} />
+              </li>
+              <li>
+                <span>03</span>
+                <div>
+                  <strong>Come prepared</strong>
+                  <small>Manage your visit in your portal.</small>
+                </div>
+                <Icon name="arrow" size={16} />
+              </li>
+            </ol>
+          </div>
+        </div>
+      </section>
+      <div className="site-intro-strip">
+        <div>
+          <Icon name="people" size={24} />
+          <span>
+            <strong>Find your care team</strong>
+            <small>Get to know our doctors</small>
+          </span>
+        </div>
+        <div>
+          <Icon name="calendar" size={24} />
+          <span>
+            <strong>Book on your terms</strong>
+            <small>Explore available appointments</small>
+          </span>
+        </div>
+        <div>
+          <Icon name="notes" size={24} />
+          <span>
+            <strong>Stay organised</strong>
+            <small>Manage visits in your patient portal</small>
+          </span>
+        </div>
+      </div>
+      <Section title="Find the care you need">
+        <div className="site-section__intro">
+          <p>Explore our services and take the next step.</p>
+          <a href="/services">
+            All services <Icon name="arrow" size={17} />
+          </a>
+        </div>
         {dir === null ? (
           <DirectoryUnavailableNotice />
+        ) : dir.services.length === 0 ? (
+          <EmptyState message="No services are listed yet." />
         ) : (
           <ul className="site-cards">
-            {dir.services.slice(0, 6).map((s) => (
-              <li key={s.id} className="site-card">
-                {s.name}
+            {dir.services.slice(0, 6).map((service) => (
+              <li key={service.id} className="site-card site-service">
+                <span className="ehr-feature-icon">
+                  <Icon name={service.mode === 'video' ? 'message' : 'heart'} size={24} />
+                </span>
+                <h3>{service.name}</h3>
+                <p>
+                  {service.durationMin} minutes ·{' '}
+                  {service.mode === 'video' ? 'Video visit' : 'In person'}
+                </p>
+                <BookLink
+                  patientOrigin={ctx.patientOrigin}
+                  serviceId={service.id}
+                  label={`Book ${service.name}`}
+                  primary={false}
+                />
               </li>
             ))}
           </ul>
         )}
-        <p>
-          <a href="/services">All services</a> · <a href="/doctors">Find a doctor</a> ·{' '}
-          <a href="/locations">Locations</a>
-        </p>
       </Section>
+      <section className="site-portal-callout">
+        <div>
+          <p className="ehr-eyebrow">Your patient portal</p>
+          <h2>One place for your next steps.</h2>
+          <p>Book visits, update your details, and prepare for your appointment.</p>
+        </div>
+        <a className="ehr-btn ehr-btn--primary" href={ctx.patientOrigin}>
+          Open patient portal <Icon name="arrow" size={18} />
+        </a>
+      </section>
     </>
   );
 }

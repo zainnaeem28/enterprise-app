@@ -1,0 +1,63 @@
+.ehr-guardians {
+  background: var(--surface);
+  padding: 26px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  margin-block: 24px;
+}
+.ehr-guardians > h2 {
+  margin-top: 0;
+}
+.ehr-guardians > h3 {
+  margin-top: 30px;
+  padding-top: 26px;
+  border-top: 1px solid var(--border);
+}
+.ehr-guardians > ul {
+  display: grid;
+  gap: 14px;
+  list-style: none;
+  margin: 24px 0;
+  padding: 0;
+}
+.ehr-guardians > ul > li {
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  line-height: 2;
+  background: var(--surface-soft);
+}
+.ehr-guardians form {
+  max-width: 48rem;
+}
+.ehr-guardians fieldset {
+  padding: 18px 22px;
+  margin: 24px 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.ehr-guardians legend {
+  font-size: 13px;
+  font-weight: 650;
+  padding-inline: 8px;
+}
+.ehr-guardians input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+.ehr-guardians fieldset p {
+  margin: 8px 0;
+}
+.ehr-guardians .ehr-banner {
+  margin: 18px 0;
+}
+@media (max-width: 639px) {
+  .ehr-guardians {
+    padding: 18px;
+  }
+  .ehr-guardians > ul > li {
+    padding: 16px;
+  }
+}

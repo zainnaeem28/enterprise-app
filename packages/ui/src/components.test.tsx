@@ -73,6 +73,8 @@ interface Case {
 }
 
 const cases: Record<string, Case> = {
+  Icon: { render: () => <ui.Icon name="calendar" /> },
+  BrandMark: { render: () => <ui.BrandMark /> },
   Button: {
     render: () => <ui.Button onClick={noop}>Save</ui.Button>,
     keys: () =>

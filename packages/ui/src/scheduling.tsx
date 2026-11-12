@@ -165,7 +165,7 @@ export function ScheduleDay({
               ) : (
                 <span>{e.title}</span>
               )}
-              {e.status}
+              <span className="ehr-schedule__status">{e.status}</span>
             </li>
           ))}
         </ol>
