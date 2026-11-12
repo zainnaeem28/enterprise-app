@@ -1,5 +1,7 @@
 # reporting (BE-21)
 
+> Currency note (HEAAA-953, dev 60d962e): `catalog-lists.requested.patch` in this folder is the historical request. The lists in `db/tools/catalog-lists.mjs` are maintained directly and are the source of truth; the entries named here were spot-checked there, the patch is not applied by hand and may no longer apply.
+
 R1 operations read models and the dashboard feed (ARCHITECTURE 22.15, 29.4, 33.1; PRD NFR-21). Migrations `2100`-`2101`.
 
 | Piece                              | What                                                                                                                                |
@@ -19,7 +21,7 @@ R1 operations read models and the dashboard feed (ARCHITECTURE 22.15, 29.4, 33.1
 - `reporting_ro`: SELECT on the four operations tables only, no right on the compliance summary or on anything outside schema `reporting` (M-4). Its session sets `app.org_id` and `app.audience = 'system'`, which keeps its policies from matching `anonymous` or `public` (M-5).
 - The models hold counts, ages, states and IDs of connections, job types and clinicians. No patient ID, payload, error text or free text (tests assert the column set and a canary patient ID).
 
-## Wiring left to integration (outside this ticket's allowed paths)
+## Wiring (done on dev 60d962e: `createReporting` and `REPORTING_JOBS` in `apps/api/src/composition.ts`, the `reporting.refresh_ops` handler and `REPORTING_CRONTAB` in `apps/worker`; the list below is the original request)
 
 1. Define `REPORTING_JOBS` in the API's and the worker's `JobRegistry` and sync task types; add `REPORTING_CRONTAB` to the worker crontab.
 2. Worker handler of `reporting.refresh_ops`: `runRefreshOps({ db, staleMinutes: (tx) => organisation.setting(tx, 'calendar_stale_minutes') }, orgId)`.

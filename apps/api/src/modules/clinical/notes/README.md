@@ -76,8 +76,7 @@ merge). Test: `notes.dbtest.ts` "merge participant and export part".
 
 ## Limitations and requests to other owners (not changed here: outside the allowed paths)
 
-1. **Worker handler.** `clinical.note_sign_reminder` needs a handler in `apps/worker/src/jobs/clinical` that opens a patients-scope system
-   transaction and calls `runNoteSignReminder(reminder, tx, payload)`. `NOTES_JOBS` declares the job.
+1. **Worker handler** (closed): `clinical.note_sign_reminder` is handled in `apps/worker/src/jobs/clinical/index.ts` through the `runNoteSignReminder` port.
 2. **Contract gaps** (`packages/contracts/openapi/clinical.yaml`, Architect): `POST /encounters` and `POST .../notes`, `.../addenda`
    answer `201` (the file lists `200`); `POST /encounters` can answer `409 clinical.invalid_transition` (a second start, a visit not
    checked in); `POST /notes/{id}/cosign` can answer `401 auth.reauth_required` and `409 clinical.invalid_transition`; the sign and

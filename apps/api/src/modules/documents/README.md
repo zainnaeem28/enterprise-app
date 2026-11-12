@@ -96,15 +96,12 @@ a store_, not in S3.
 ## Open items for the Orchestrator and other owners
 
 - **O-1.** Closed (INT03-F21-O1, host-bound controllers; see D4).
-- **O-2.** Apply `catalog-lists.requested.patch` (definer inventory) in `db/tools`. Until then `db/tools/db-test.mjs` reports
-  `documents.guard_open_patient` (and the BE-09 and BE-11 functions, which are in the same state) as missing from the inventory.
-- **O-3.** Add `documents.invalid_transition` to the error registry (ARCHITECTURE 30) and the OpenAPI `x-error-codes` of the documents routes.
-- **O-4.** Add `malware_scan` to BE-02's adapter kinds and operations.
-- **O-5.** Image library decision (sharp / libvips) for a pixel re-encode (SEC-D-08); licence and reason to be listed with the dependency.
-- **O-6.** Exempt `testkit.ts` and `*.dbtest.ts` from `boundaries/module-boundaries` (the harness reuses the patient kit and merge executor;
-  `testkit.ts` carries one explicit file-level disable).
-- **O-7.** Role catalogue: `documents.upload` for `medical_records` if a records officer is to open deletion requests (D5).
-- **O-8.** Add `document_retention_years` to the settings catalogue (no default; legal input) and decide D-8.
-- **O-9.** Worker composition: register `DOCUMENTS_JOBS`, `createDocumentsTasks`, `DOCUMENTS_CRONTAB` and `registerDocumentsParticipants()`;
-  supply the real object store, scan-tag client and OCR client (C-01, C-10) and the presigner; register a handler for the two events.
+- **O-2.** Closed: `documents.guard_open_patient` is superseded by the merge guard of migrations 2200-2202 (HEAAA-310 ruling); the document tables are in `db/tools/catalog-lists.mjs`.
+- **O-3.** Still open: `documents.invalid_transition` is in `errors.ts` but not in the ARCHITECTURE 30 error registry or the `x-error-codes` of `documents.yaml` (checked by search).
+- **O-4.** Closed: `malware_scan` is in `integration-core/kinds.ts`.
+- **O-5.** Decided, not built: `sharp`/libvips is excluded from install for its LGPL licence (`docs/DEPENDENCIES.md`, INT05-F10); the "re-encode" stays a container rewrite (D6).
+- **O-6.** Still open: `testkit.ts` carries the file-level `boundaries/module-boundaries` disable; the lint rule is not exempted for `testkit.ts` and `*.dbtest.ts`.
+- **O-7.** Not re-verified in this pass: role catalogue `documents.upload` for `medical_records` (D5).
+- **O-8.** `document_retention_years` is read by `service.ts` but is not in `organisation/settings-catalogue.ts`; when it has no value the service uses the retention default of owner ruling C item 2 (`privacy/retention.ts`). D-8 is decided by delegation (counsel confirmation pending †).
+- **O-9.** Worker composition is mostly done (`DOCUMENTS_JOBS` and `createDocumentsTasks` are registered in `apps/worker`), but `DOCUMENTS_CRONTAB` is not part of the worker's `WORKER_CRONTAB`, so `documents.retention_sweep` is not scheduled (`docs/GO-LIVE.md` known gaps). The real object store, scan-tag client, OCR client and presigner are still ports that refuse until C-01 and C-10 (`docs/RUN-GUIDE.md` section 9).
 - **O-10.** Review state, rounds and findings are in the `review-ledger` document of HEAAA-92.

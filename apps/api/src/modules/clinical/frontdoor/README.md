@@ -42,8 +42,7 @@ route here. Migrations `1700`-`1702`. ARCHITECTURE 22.11, 25.5, 29.3; PRD RA-R1-
    or the break-the-glass list), so staff red-flag alert inserts pass RLS on the combined base.
 3. The re-target of an unacknowledged red flag (`TriageService.retargetUnacknowledged`) runs in a patients-scope job, which cannot read
    `identity.principal`; there the roster alone decides (an inactive on-call doctor stays a target; targets are only ever added).
-4. The worker handler for `notifications.alert_unacknowledged` -> `clinical.on_alert_unacknowledged` lives in `apps/worker` (outside
-   the allowed paths). `FRONTDOOR_JOBS` and `registerFrontdoorHandlers` declare it.
+4. The worker handler for `notifications.alert_unacknowledged` -> `clinical.on_alert_unacknowledged` lives in `apps/worker/src/jobs/clinical` (registered; `m4-registration.test.ts`). `FRONTDOOR_JOBS` and `registerFrontdoorHandlers` declare it.
 5. Catalog checks `M-5-patient-guard` and `M-5-definer` list the five new tables and `clinical.frontdoor_guard_open_patient()` with
    the chart's: `db/tools/catalog-lists.mjs` is the owner's list to extend at integration. `follow_up` is a table 22.11 does not
    have (RA-R1-30 needs it): the Architect should confirm it.

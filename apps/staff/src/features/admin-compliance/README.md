@@ -13,9 +13,8 @@ Design: UI-UX 3.1, 3.2, 4, 6; mockup desktop 6; PRD RA-R1-11, RA-R1-12, RA-R1-14
 
 ## Not done here (needs the Orchestrator)
 
-1. **Wiring.** `StaffApp.tsx` and the admin navigation are outside this ticket's allowed path (`apps/staff/src/features/admin-compliance/**`). Integration (INT-04) must route
-   `isAdminCompliancePath(path)` to `AdminCompliancePortal` in the admin realm.
-2. **Contract gap, approval screen.** There is no `GET /admin/role-change-requests[/{id}]` route (BE-05 controller has only POST create/approve/reject/cancel), so an approver
+1. **Wiring (done).** `StaffApp.tsx` renders `AdminCompliancePortal` for `isAdminCompliancePath(path)` in the admin realm.
+2. **Contract gap, approval screen.** There is no `GET /admin/role-change-requests[/{id}]` route (the controller mounts only POST create/approve/reject/cancel; the service has a read method, `identity/admin/service.ts`, that no route exposes), so an approver
    cannot be shown a request's details before deciding. The screen approves or rejects by request reference and lists the requests made in this window (cancel, and a block on
    approving one's own). A list/read route needs a BE-05/BE-24 correction ticket; the screen can then show details with no other change.
 3. **No export list route** (`GET /admin/audit-exports`): job state is followed for the export requested in this window only.

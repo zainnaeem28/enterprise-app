@@ -22,8 +22,8 @@ The server authorizes every call; permissions only decide what is drawn.
 - **Request bodies are `OpaqueObject` in `documents.yaml`.** Bodies follow the API controller (`contentType`, `sizeBytes`, `fileName`,
   `classification`; `{classification}`), not a generated type.
 - **Import path.** `packages/app-shell/src/index.ts` is outside this ticket's allowed paths, so the staff feature imports
-  `../../../../../packages/app-shell/src/documents/index.js` directly. Request to Orchestrator: add `export * from './documents/index.js'` and switch the import.
-- **Not wired into the staff app.** Routing and session permissions are outside the allowed paths; `e2e/harness` mounts `DocumentsPage` for the browser tests.
+  `../../../../../packages/app-shell/src/documents/index.js` directly. `packages/app-shell/src/index.ts` still does not export `./documents/index.js`; add the export and switch the import to remove the deep path.
+- **Wired into the doctor chart only.** `StaffApp.tsx` passes `DocumentsPage` to `DoctorPortal` as `renderDocuments`; there is no standalone documents route. `e2e/harness` mounts it for the browser tests.
 - **Mid-transfer progress** is covered by the unit test (controlled `PutObject`); the browser mock completes instantly.
 - Colour contrast is checked by axe in Chromium (Playwright), not in jsdom.
 - No size limit is enforced client side (server answers `documents.too_large`).

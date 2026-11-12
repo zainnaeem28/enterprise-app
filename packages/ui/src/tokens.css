@@ -1,5 +1,5 @@
 :root {
-  /* PLACEHOLDER visual identity (BRAND-BRIEF 3, UX-O-01). Brand swap = change values in this file only; components read var(--*). */
+  /* Default visual identity: accessible neutral palette applied under C-16 (default applied, autonomous; the owner supplies the real logo and palette). Brand swap = change values in this file only; components read var(--*). */
   --ink: #1b2430;
   --muted: #4a5565;
   --bg: #f4f6f8;

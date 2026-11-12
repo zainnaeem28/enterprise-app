@@ -36,16 +36,14 @@ The refusal is lifted only by the deferred patient-messaging design change and i
 
 ## Notes for the Orchestrator / Architect (contract-constrained choices)
 
-- **N-BE23-1 (wiring).** The controller is not mounted: `apps/api/src/composition.ts` is outside this ticket's paths. The Integrator adds
-  `createOrganisationAdminController({ service: new OrganisationAdminService({ db, audit, organisation }), scopeOf })` next to
-  `createCatalogueControllers` (same `scopeOf`).
+- **N-BE23-1 (wiring, done).** `createOrganisationAdminController` is mounted in `apps/api/src/composition.ts`.
 - **N-BE23-2 (removal without DELETE).** The contract has no DELETE and PATCH/PUT carry the id in the body, so removal is in-band:
   flags `{key, locationId?, remove: true}`, banners `{id, remove: true}`, holidays `{id, remove: true}`, opening hours
   `{locationId, weekday, opens, remove: true}` (PATCH + `If-Match`). A real DELETE would need a contract change.
 - **N-BE23-3 (template elevation).** The contract marks template reads and draft creation as not elevated; the permission catalogue
   (`organisation.template.manage` has `needsElevation`) makes the guard demand the grant anyway, which also matches this ticket's
   acceptance ("every admin route requires an elevation grant"). Stricter than the contract; no change needed unless the Architect wants the looser rule.
-- **N-BE23-4 (not built).** 29.4 also lists vital ranges (`clinical.vital_range`, table not built: no clinical migration exists), message
+- **N-BE23-4 (not built).** 29.4 also lists vital ranges (`clinical.vital_range` exists now, with its own `/admin/vital-ranges` routes in the clinical chart module), message
   templates and alert settings (notifications), and service-location / service-clinician / required-consent links (no route in 29.4 or the
   contract). They are not part of the 32 organisation operations and stay with their owners' tickets.
 - **N-BE23-5 (consent body document).** `bodyDocumentId` is not checked against the documents module (no foreign key by design, BD-02; a
