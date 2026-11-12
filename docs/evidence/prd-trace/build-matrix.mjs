@@ -6,7 +6,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 
 const git = (...a) => execFileSync('git', a, { encoding: 'utf8' }).trim();
-const HEAD = git('rev-parse', process.env.TRACE_HEAD ?? 'HEAD');
+const HEAD = git('rev-parse', process.env.TRACE_HEAD ?? 'origin/dev'); // code head under test (this branch adds documentation only)
 const H = HEAD.slice(0, 7);
 const prd = readFileSync('docs/PRD.md', 'utf8');
 const tc = readFileSync('docs/TEST-CASES.md', 'utf8');
@@ -299,7 +299,7 @@ P();
 P('## 1. Read this first');
 P();
 P(`1. **What passed on the final head.** Executed on \`${H}\` in this task: lint (0 errors, 30 warnings), format check, typecheck, build, boundary test, and **all 1,678 unit tests (0 failed, 0 skipped)**. Every requirement row below shows how many of those unit tests sit under its merged code (column "Unit @ head").`);
-P(`2. **What did not run on the final head.** The database-backed suites (\`*.dbtest\` through \`integration-db.sh\`) and the API/browser case suites (\`tests/api/**\`, \`tests/e2e/**\`) were **not rerun on \`${H}\`**. The host disk is at 100% (65 MB free of 48 GB), and these suites need a throwaway PostgreSQL 17 plus build output; running them would risk filling the disk shared with other agents. Their last recorded passing results are on older heads. Each row names that head and how many commits have touched the row's mapped code since. **A row is called "PASS on older head, mapped code unchanged" only when that count is 0.** This is a statement about evidence age, not a fresh pass. Follow-up: gap G-01.`);
+P(`2. **Database-backed, API and browser suites on \`${H}\`** (HEAAA-971, details in \`head-run/DB-API-BROWSER-RESULTS.md\`): integration-db passed (1,347 tests, 0 failed, 0 skipped); N-1 against r209 passed with 5 expected pin failures (not passes); tests/api identity/authorization/security 48 pass, 0 fail, 15 skipped; platform 66 pass, 0 fail, 26 skipped; booking/clinical 53 pass, 0 fail; browser accessibility suites staff 8, patient 3, site 9, ui 26 all pass. Skipped cases are BLOCKED/human-required and stay in section 6. The per-row result cells below still come from the recorded case results (older heads); the whole-suite runs on this head found no failure, but row-level case mapping was **not** re-derived from them.`);
 P('3. **Cases that did not pass are never counted as passes.** Blocked, skipped, human-required and unrecorded cases are listed in section 6 and classified as defect, gap or go-live item.');
 P('4. **R2 and R3 requirements are not built** (PRD 4.3 makes them later releases). They have no merged code and no executable case. They are listed so that nothing is missing from the trace; they are a scope fact, not a defect of R1.');
 P();
@@ -314,7 +314,8 @@ P('| `pnpm format:check` | pass (the 6-file failure recorded on `d357128`, findi
 P('| `pnpm typecheck` | pass |');
 P('| `pnpm test:boundary` | pass |');
 P('| `node scripts/ci/run-unit.mjs` | pass: ' + unitTotals.map((x) => x.replace(/^[^/]*\//, '').replace(/\.xml/, '')).join('; ') + ' |');
-P('| Not run | integration-db and N-1 (needs PostgreSQL; disk), `tests/api/**` and browser suites, SAST, secret scan, dependency audit, container scan, Schemathesis, Lighthouse (no hosted CI per owner ruling B; tools not installed here) |');
+P('| integration-db / N-1, `tests/api/**`, browser a11y suites | pass on this head; see `head-run/DB-API-BROWSER-RESULTS.md` (HEAAA-971) |');
+P('| Not run | SAST, secret scan, dependency audit, container scan, Schemathesis, Lighthouse, Docker-based jobs (no hosted CI per owner ruling B; tools/Docker not installed here) |');
 P();
 P('Unit counts per file are in `head-run/unit-by-file.csv`. Node 24.22.2, pnpm 12.16.1 (from `package.json`). Synthetic data only; no live system was touched.');
 P();
@@ -352,7 +353,7 @@ const section = (title, kind) => {
     if (fail.length) status = '**FAIL**';
     else if (!pass.length) status = 'NOT EXECUTED';
     else if (skip.length || none.length) status = d === 0 ? 'PARTIAL: executed part passed, no later code change; rest in section 6' : 'PARTIAL: executed part passed on an older head; rest in section 6';
-    else status = d === 0 ? 'PASS on older head, mapped code unchanged' : `PASS on older head; ${d} later commit(s) to mapped code: rerun needed (G-01)`;
+    else status = d === 0 ? 'PASS on older head, mapped code unchanged' : `PASS on older head; ${d} later commit(s) to mapped code: suites rerun green on head (HEAAA-971), row-level mapping not re-derived`;
     if (decisionNote[r.id]) status += `. ${decisionNote[r.id]}`;
     const ids5 = (xs) => xs.map((x) => x.id.replace(/^TC-/, '')).join(' ');
     const cell = [pass.length ? `pass ${pass.length}: ${ids5(pass)}` : '', fail.length ? `**FAIL ${fail.length}: ${ids5(fail)}**` : '', skip.length ? `skipped/blocked ${skip.length}: ${ids5(skip)}` : '', none.length ? `no result ${none.length}: ${ids5(none)}` : ''].filter(Boolean).join('<br>') || 'no case';
@@ -408,7 +409,7 @@ P('### Register of gaps raised by this trace');
 P();
 P('| ID | Class | Statement | Proposed owner and next action |');
 P('| --- | --- | --- | --- |');
-P(`| G-01 | Defect (evidence) | No passing run of the DB-backed suites or of \`tests/api/**\` and browser suites exists on \`${H}\`. The newest recorded runs are \`d357128\` (platform, 26 commits older), \`ff5476e\` (qa-r3) and the HEAAA-789 integration-db run on rebase \`c87dc62\`. Commits since touch code mapped by several rows (see "commits" in section 4). | Orchestrator: assign a run on a host with disk (the throwaway PostgreSQL 17 plus build), then rerun the trace generator. Host disk is 100% full (65 MB free): needs cleanup by the host owner |`);
+P(`| G-01 | Resolved with limit | The DB-backed, API and browser suites were rerun on \`${H}\` and passed (HEAAA-971, \`head-run/DB-API-BROWSER-RESULTS.md\`). Limit: per-row case results in section 4 were not re-derived from that run; skipped cases remain skipped. | QA: optionally map the head-run junit to case IDs in a later trace refresh |`);
 P('| G-02 | Defect (stale test) | TC-AD-04 is still a skip saying "NOT DELIVERED" although the template admin routes were merged (HEAAA-665) and have a real-DB test | QA: rewrite TC-AD-04 against `/api/v1/admin/message-templates` and run it |');
 P('| G-03 | Scope question | TC-AU-01b (defined in the ruling-C spec, docs/evidence/qa-ruling-c, not in docs/TEST-CASES.md): no chart export/print route in R1, so the PRD wording on audited export/print has nothing to test | PM via Orchestrator: confirm no chart export/print in R1, or raise a feature defect |');
 P('| G-04 | Gap | Cases with no recorded result at all (class "GAP (no recorded result)") | QA: record results or reasons; most are browser cases for the check-in desk, triage and banner screens |');
