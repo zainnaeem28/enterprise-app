@@ -475,7 +475,7 @@ export function buildComposition(deps: {
       ).rows.map((r) => toEncounterView(r as Parameters<typeof toEncounterView>[0])),
     documents: (tx, patientId) => documents.list(tx, patientId),
     // The banner's photo (PRD 8.3, RA-R1-24, BR-34): a 60-second signed URL of the clean photo document, null when none.
-    photo: (tx, documentId) => documents.photoUrl(tx, documentId),
+    photo: (tx, documentId, patientId) => documents.photoUrl(tx, documentId, patientId),
     ...(deps.now === undefined ? {} : { now: deps.now }),
   });
   lateChart.banner = chart.banner;

@@ -1760,4 +1760,78 @@ describe('documents (BE-10) on PostgreSQL 17', () => {
         !/Given|Family|1980-?05-?17/.test(url), // the date of birth, not a bare year: random hex contains "1980" in about 1 URL in 700
     );
   });
+
+  // ===== photoUrl (banner photo, PRD 8.3, BR-34) ==================================================================
+  test('photoUrl: a clean photo gives a 60-second URL for its own object; none, unclean and invisible give null', async () => {
+    const { patientId, session } = await t.mkPatient(31);
+    const other = await t.mkPatient(32);
+    const documentId = await t.cleanDocument(session, patientId);
+    const staff = scope(t.desk);
+    const ownScope: ScopeSettings = {
+      audience: 'patient',
+      realm: 'patient_pool',
+      orgId: ORG,
+      principalId: session.seeded.principalId,
+      personId: session.seeded.personId,
+      patientIds: [patientId],
+    };
+    const otherScope: ScopeSettings = {
+      ...ownScope,
+      principalId: other.session.seeded.principalId,
+      personId: other.session.seeded.personId,
+      patientIds: [other.patientId],
+    };
+    // Present: staff and the owner both get a URL for the clean object, valid for 60 seconds and no more.
+    const url = await t.as(staff, (tx) => t.svc.photoUrl(tx, documentId, patientId));
+    assert.ok(url !== null);
+    const { key } = keyOfUrl(url);
+    assert.equal(key, String((await doc(documentId))['object_key']));
+    assert.match(
+      url,
+      /^https:\/\/objects\.invalid\/clean\/c\/[0-9a-f]{32}\?exp=\d+&sig=[0-9a-f]{64}$/,
+    );
+    const ct = { contentType: 'application/pdf' };
+    const at = new Date();
+    assert.equal(t.presigner.verify('GET', url, ct, at), true);
+    assert.equal(
+      t.presigner.verify('GET', url, ct, new Date(at.getTime() + 61_000)),
+      false,
+      'the URL lives 60 seconds',
+    );
+    assert.ok((await t.as(ownScope, (tx) => t.svc.photoUrl(tx, documentId, patientId))) !== null);
+    // Patient scope: another patient's session cannot see the document, so there is no photo (and no error).
+    assert.equal(await t.as(otherScope, (tx) => t.svc.photoUrl(tx, documentId, patientId)), null);
+    // Patient binding (F-1): a staff caller who can see both patients still gets no photo for another patient's document.
+    assert.equal(await t.as(staff, (tx) => t.svc.photoUrl(tx, documentId, other.patientId)), null);
+    // None: an ID that is no document.
+    assert.equal(
+      await t.as(staff, (tx) =>
+        t.svc.photoUrl(tx, '00000000-0000-4000-8000-000000000000', patientId),
+      ),
+      null,
+    );
+    // Not clean: awaiting scan, and quarantined as infected.
+    const pending = await t.uploadAs(session, patientId, PDF);
+    assert.equal(
+      await t.as(staff, (tx) => t.svc.photoUrl(tx, pending.documentId, patientId)),
+      null,
+    );
+    const bad = await t.uploadAs(session, patientId, EICAR_PDF);
+    t.scanner.release(bad.key);
+    assert.equal(
+      await t.worker.runAwaitScan({ documentId: bad.documentId, version: 1, patientId }),
+      'quarantined',
+    );
+    assert.equal(await t.as(staff, (tx) => t.svc.photoUrl(tx, bad.documentId, patientId)), null);
+    // A banner read is not a download: photoUrl writes no `download` audit event of its own.
+    const n = Number(
+      (
+        await t.k.q(
+          `SELECT count(*)::int AS n FROM audit.event WHERE action = 'download' AND resource_type = 'documents.document' AND resource_id = $1`,
+          [documentId],
+        )
+      )[0]?.['n'],
+    );
+    assert.equal(n, 0);
+  });
 });
