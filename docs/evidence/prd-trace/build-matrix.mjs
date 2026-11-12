@@ -6,7 +6,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 
 const git = (...a) => execFileSync('git', a, { encoding: 'utf8' }).trim();
-const HEAD = git('rev-parse', 'HEAD');
+const HEAD = git('rev-parse', process.env.TRACE_HEAD ?? 'HEAD');
 const H = HEAD.slice(0, 7);
 const prd = readFileSync('docs/PRD.md', 'utf8');
 const tc = readFileSync('docs/TEST-CASES.md', 'utf8');
@@ -199,6 +199,21 @@ for (const r of csvRows.slice(1)) if (r[2] === 'blocked/skipped') for (const id 
 const wsDir = { _ehr_staff: 'apps/staff', _ehr_patient: 'apps/patient', _ehr_site: 'apps/site', _ehr_cms: 'apps/cms', _ehr_ui: 'packages/ui', 'app-shell': 'packages/app-shell' };
 const unit = new Map(); // repo-relative test file -> {pass, fail}
 let unitTotals = [];
+// compiled tests are recorded as <pkg>/dist/[src/]x.test.js (api: dist/src; worker, kernel: dist); map them back to the source path <pkg>/src/x.test.ts
+const srcPath = (f) => f.replace(/^((?:apps|packages)\/[^/]+)\/dist\/(?:src\/)?(.*)\.test\.js$/, '$1/src/$2.test.ts');
+const unitCsv = 'docs/evidence/prd-trace/head-run/unit-by-file.csv';
+const fromCsv = !existsSync('reports/unit/junit') && existsSync(unitCsv);
+if (fromCsv) {
+  for (const l of readFileSync(unitCsv, 'utf8').split('\n').slice(1)) {
+    const [f, p, x] = l.split(',');
+    if (!f || f.endsWith('/')) continue; // drops the blank-file bucket 'apps/api/' (14 tests with no file attribute)
+    const k = srcPath(f);
+    const u = unit.get(k) ?? { pass: 0, fail: 0 };
+    u.pass += Number(p); u.fail += Number(x);
+    unit.set(k, u);
+  }
+  unitTotals = ['re-read from head-run/unit-by-file.csv (recorded on the traced head); dist paths mapped to src'];
+}
 if (existsSync('reports/unit/junit')) {
   const { readdirSync } = await import('node:fs');
   const cwd = process.cwd() + '/';
@@ -218,6 +233,7 @@ if (existsSync('reports/unit/junit')) {
           const base = wsDir[d.name] ?? wsDir[d.name.replace('_ehr_', '')] ?? (d.name.startsWith('_ehr_') ? `apps/${d.name.slice(5)}` : '');
           file = base ? `${base}/${cn}` : cn;
         }
+        file = srcPath(file);
         const u = unit.get(file) ?? { pass: 0, fail: 0 };
         failed ? u.fail++ : u.pass++;
         unit.set(file, u);
@@ -240,7 +256,7 @@ const dbtestsUnder = (paths) => {
   }
   return [...new Set(out)];
 };
-writeFileSync('docs/evidence/prd-trace/head-run/unit-by-file.csv', ['test_file,pass,fail', ...[...unit].sort().map(([f, u]) => `${f},${u.pass},${u.fail}`)].join('\n') + '\n');
+if (!fromCsv) writeFileSync(unitCsv, ['test_file,pass,fail', ...[...unit].sort().map(([f, u]) => `${f},${u.pass},${u.fail}`)].join('\n') + '\n');
 
 // ---- classify every case that has no passing result ---------------------------------------------
 const humanReg = new Set(expand(tc.split('## 12. Human-required register')[1].split('## 13.')[0]));
@@ -283,7 +299,7 @@ P();
 P('## 1. Read this first');
 P();
 P(`1. **What passed on the final head.** Executed on \`${H}\` in this task: lint (0 errors, 30 warnings), format check, typecheck, build, boundary test, and **all 1,678 unit tests (0 failed, 0 skipped)**. Every requirement row below shows how many of those unit tests sit under its merged code (column "Unit @ head").`);
-P(`2. **What did not run on the final head.** The database-backed suites (\`*.dbtest\` through \`integration-db.sh\`) and the API/browser case suites (\`tests/api/**\`, \`tests/e2e/**\`) were **not rerun on \`${H}\`**. The host disk is at 100% (65 MB free of 48 GB), and these suites need a throwaway PostgreSQL 17 plus build output; running them would risk filling the disk shared with other agents. Their last recorded passing results are on older heads. Each row names that head and how many commits have touched the row's mapped code since. **A row is called "PASS (no later change to mapped code)" only when that count is 0.** This is a statement about evidence age, not a fresh pass. Follow-up: gap G-01.`);
+P(`2. **What did not run on the final head.** The database-backed suites (\`*.dbtest\` through \`integration-db.sh\`) and the API/browser case suites (\`tests/api/**\`, \`tests/e2e/**\`) were **not rerun on \`${H}\`**. The host disk is at 100% (65 MB free of 48 GB), and these suites need a throwaway PostgreSQL 17 plus build output; running them would risk filling the disk shared with other agents. Their last recorded passing results are on older heads. Each row names that head and how many commits have touched the row's mapped code since. **A row is called "PASS on older head, mapped code unchanged" only when that count is 0.** This is a statement about evidence age, not a fresh pass. Follow-up: gap G-01.`);
 P('3. **Cases that did not pass are never counted as passes.** Blocked, skipped, human-required and unrecorded cases are listed in section 6 and classified as defect, gap or go-live item.');
 P('4. **R2 and R3 requirements are not built** (PRD 4.3 makes them later releases). They have no merged code and no executable case. They are listed so that nothing is missing from the trace; they are a scope fact, not a defect of R1.');
 P();
@@ -307,8 +323,15 @@ P();
 P('- **Merged code**: files or folders on the head that implement the row (checked to exist by the generator).');
 P('- **Cases and last recorded result**: case IDs from `docs/TEST-CASES.md` section 15.1 (and NFR mapping), with the result found in the evidence files. "pass N" is a recorded pass; "skipped/blocked" is a case the run recorded as skipped or blocked; "no result" means no evidence file contains a result for it.');
 P('- **Oldest evidence head**: the oldest candidate among the recorded passes, and how many commits touched the mapped code since. Evidence heads: `cdc388d` (R2 run), `00faee1` (QA-06 a11y), `7860f5f`/`ff5476e` (qa-r3 supplement), `d357128` (ruling C platform run, 26 commits behind this head).');
-P('- **Unit @ head**: unit tests passing on this head under the mapped paths, and the number of `*.dbtest` files under them that were not run on this head.');
+P('- **Unit @ head**: unit tests passing on this head under the mapped paths (compiled \`dist/**/*.test.js\` results are mapped back to their \`src/*.test.ts\` path), and the number of `*.dbtest` files under them that were not run on this head.');
 P();
+// PRD 8.2 rows that the PRD marks as blocked on an open owner decision; a pass is never read as clearing the decision.
+const decisionNote = {
+  'RA-R1-07': 'PRD 8.2: blocked until D-12a is decided; a PARTIAL here does not make the row passable',
+  'RA-R1-08': 'PRD 8.2: blocked until D-12a is decided; a PARTIAL here does not make the row passable',
+  'RA-R1-14': 'Against ruling-C delegated values; D-8 (meaning of deletion) not human-decided, counsel confirmation pending (TC-PR-03)',
+  'RA-R1-20b': 'Against ruling-C delegated values (delegated ruling C item 3); D-7 not human-decided',
+};
 const section = (title, kind) => {
   P(title);
   P();
@@ -329,7 +352,8 @@ const section = (title, kind) => {
     if (fail.length) status = '**FAIL**';
     else if (!pass.length) status = 'NOT EXECUTED';
     else if (skip.length || none.length) status = d === 0 ? 'PARTIAL: executed part passed, no later code change; rest in section 6' : 'PARTIAL: executed part passed on an older head; rest in section 6';
-    else status = d === 0 ? 'PASS (no later change to mapped code)' : `PASS on older head; ${d} later commit(s) to mapped code: rerun needed (G-01)`;
+    else status = d === 0 ? 'PASS on older head, mapped code unchanged' : `PASS on older head; ${d} later commit(s) to mapped code: rerun needed (G-01)`;
+    if (decisionNote[r.id]) status += `. ${decisionNote[r.id]}`;
     const ids5 = (xs) => xs.map((x) => x.id.replace(/^TC-/, '')).join(' ');
     const cell = [pass.length ? `pass ${pass.length}: ${ids5(pass)}` : '', fail.length ? `**FAIL ${fail.length}: ${ids5(fail)}**` : '', skip.length ? `skipped/blocked ${skip.length}: ${ids5(skip)}` : '', none.length ? `no result ${none.length}: ${ids5(none)}` : ''].filter(Boolean).join('<br>') || 'no case';
     P(`| **${r.id}** ${r.text.slice(0, 110).replace(/\|/g, '/')}… | ${paths.map((p) => '`' + p + '`').join('<br>') || '-'} | ${cell} | ${paths.length ? `${u.pass} pass, ${u.fail} fail; ${db} dbtest file(s) not run` : 'n/a'} | ${oldest ? `${oldest}, ${d} commit(s)` : 'none'} | ${status} |`);
@@ -386,7 +410,7 @@ P('| ID | Class | Statement | Proposed owner and next action |');
 P('| --- | --- | --- | --- |');
 P(`| G-01 | Defect (evidence) | No passing run of the DB-backed suites or of \`tests/api/**\` and browser suites exists on \`${H}\`. The newest recorded runs are \`d357128\` (platform, 26 commits older), \`ff5476e\` (qa-r3) and the HEAAA-789 integration-db run on rebase \`c87dc62\`. Commits since touch code mapped by several rows (see "commits" in section 4). | Orchestrator: assign a run on a host with disk (the throwaway PostgreSQL 17 plus build), then rerun the trace generator. Host disk is 100% full (65 MB free): needs cleanup by the host owner |`);
 P('| G-02 | Defect (stale test) | TC-AD-04 is still a skip saying "NOT DELIVERED" although the template admin routes were merged (HEAAA-665) and have a real-DB test | QA: rewrite TC-AD-04 against `/api/v1/admin/message-templates` and run it |');
-P('| G-03 | Scope question | TC-AU-01b: no chart export/print route in R1, so the PRD wording on audited export/print has nothing to test | PM via Orchestrator: confirm no chart export/print in R1, or raise a feature defect |');
+P('| G-03 | Scope question | TC-AU-01b (defined in the ruling-C spec, docs/evidence/qa-ruling-c, not in docs/TEST-CASES.md): no chart export/print route in R1, so the PRD wording on audited export/print has nothing to test | PM via Orchestrator: confirm no chart export/print in R1, or raise a feature defect |');
 P('| G-04 | Gap | Cases with no recorded result at all (class "GAP (no recorded result)") | QA: record results or reasons; most are browser cases for the check-in desk, triage and banner screens |');
 P('| G-05 | Go-live | Human, operations, sandbox and environment cases are pending (classes "GO-LIVE") and are listed in `docs/GO-LIVE.md` where an owner action exists | Owner and DevOps, per TEST-CASES 12 |');
 P('| G-06 | Go-live | R2 and R3 are not built | Product, later releases |');
@@ -398,6 +422,7 @@ P('- The case-to-requirement map is the one in `docs/TEST-CASES.md` 15.1 and the
 P('- "Merged code" is a path list chosen by QA and checked to exist, not a call graph. A row can be affected by code outside its list.');
 P('- Result extraction reads case IDs from test titles; a title that does not carry its ID is counted as "no result". Sub-case IDs (for example 03a) are folded into their base case, and a base case counts as passed if any recorded sub-case passed and none failed.');
 P('- Evidence age is measured by commits to the mapped paths, not by behaviour. Zero later commits means the code under test is byte-identical; it does not cover shared libraries outside the list.');
+P('- "Unit @ head" counts only unit tests under the listed paths (compiled tests mapped back to src). A row whose paths are single files with no unit test of their own (for example RA-R1-03: service.ts and DB-backed tests) shows 0 pass; that 0 is real, its coverage is the dbtest and API cases.');
 P('- Statuses of human-required cases stay pending until the named person records them.');
 writeFileSync('docs/evidence/prd-trace/PRD-TRACE-MATRIX.md', md.join('\n') + '\n');
 console.log(`rows ${rows.length}, cases ${cases.size}, results ${result.size}, head ${H}`);
