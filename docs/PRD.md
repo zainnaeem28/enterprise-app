@@ -89,7 +89,7 @@ Decision-makers: Zain Naeem holds every gate role `[07 A6, E]`. No independent c
 
 ### 4.2 Out of scope (Confirmed `[01 §5]`, `[04 §5]`)
 
-See section 12 for the full exclusion list. Nothing there is acceptance-tested.
+See section 12 for the full exclusion list. Nothing there is acceptance-tested. A patient-chart print view is not delivered in R1 (decision HEAAA-994): NFR-13 applies to a print if one is ever added, and a print feature would need a new feature entry and G1/G2 change.
 
 ### 4.3 Releases (Confirmed `[01 §6]`, agreed 2026-11-02)
 

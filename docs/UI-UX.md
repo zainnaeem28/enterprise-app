@@ -174,7 +174,7 @@ Delivery tracking links open the pharmacy's own page. Show an interstitial the f
 
 ### 7.6 Print and export
 
-Print views carry the patient banner on every page and an access-logged footer (NFR-13). Export actions say what will be exported and are logged; admin and compliance export of audit data never includes record contents (6.7).
+**R1 has no print view** (decision HEAAA-994, rescoped from "print views carry the banner": the PRD lists no print feature, no ticket or route delivers one, and PRD NFR-13 only requires that a print, if one exists, is audited). No screen offers a Print action and the API has no print or chart-export route. Browser print of a screen is not a supported feature; it prints the page as shown, so the banner (name, date of birth, photo or initials) printed with the data is the screen's own header and nothing more is promised. A future print view must, before it ships, carry the patient banner on every page and an access-logged footer (NFR-13), write a `print` audit event (SHARED-BOUNDARIES audit action list) and be added to TC-PC-13 and TC-AU-01 through a new PRD feature and G1/G2 change. Export actions say what will be exported and are logged; admin and compliance export of audit data never includes record contents (6.7).
 
 ### 7.7 New version and half-completed forms (AL-04 UX part, ARCH 28.6)
 
