@@ -158,7 +158,10 @@ function Inbox({
             mine: m.authorPrincipalId === me,
           }))}
         />
-        <p className="profile-note">Secure messaging with your care team is not part of this release. For questions, call the practice. If it is urgent, call emergency services.</p>
+        <p className="profile-note">
+          Secure messaging with your care team is not part of this release. For questions, call the
+          practice. If it is urgent, call emergency services.
+        </p>
         <Button onClick={() => go('/messages')}>Back to messages</Button>
       </section>
     );
@@ -274,7 +277,10 @@ function NewMessage({
       </Banner>
       {recipients === undefined || recipients.length === 0 ? (
         <>
-          <p>Secure messaging with your care team is not part of this release. For questions, call the practice. If it is urgent, call emergency services.</p>
+          <p>
+            Secure messaging with your care team is not part of this release. For questions, call
+            the practice. If it is urgent, call emergency services.
+          </p>
           <Button onClick={() => go('/messages')}>Back to messages</Button>
         </>
       ) : (

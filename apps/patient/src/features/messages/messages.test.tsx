@@ -72,9 +72,7 @@ describe('PP-37 messages (flag patient_messaging)', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('You')).toBeInTheDocument();
     expect(screen.getByText('Care team')).toBeInTheDocument();
-    expect(
-      screen.getByText(NOTE),
-    ).toBeInTheDocument();
+    expect(screen.getByText(NOTE)).toBeInTheDocument();
     expect(screen.queryByText(/not available yet/)).not.toBeInTheDocument();
     expect(document.title).toBe('Patient portal - Messages');
   });
@@ -94,9 +92,7 @@ describe('PP-37 messages (flag patient_messaging)', () => {
 
   it('does not offer to write a message when no recipients are known', async () => {
     mount('messages', '/messages/new');
-    expect(
-      await screen.findByText(NOTE),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(NOTE)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Send message' })).not.toBeInTheDocument();
   });
 
