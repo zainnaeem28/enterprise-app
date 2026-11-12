@@ -1,0 +1,39 @@
+# HEAAA-826 (R4): BR-34 banner cases, TC-AD-04 and FE-04a on the final `dev` head
+
+Candidate: `dev` = `1d416fad4c01872c49c92573d92751615d02b550`, tree `55b4bbbbd578f6825a63d877550261630dfb37b7` (HEAAA-977 "prettier format of HEAAA-945 messages files"). This is the SHA that the completeness audit HEAAA-807 audited (`completeness-audit` rev 3). `git ls-remote origin refs/heads/dev` returned this SHA before the run and again after it. Executed by QA on 2026-11-12. This is QA execution evidence: not human acceptance, not clinical review, not hosted CI (owner ruling B: no hosted CI).
+
+Environment (ENV-INT/ci, local): clean worktree at the candidate (`git status` clean), API and worker `dist` built from the candidate by the Integrator (dist is newer than the commit and no source file is newer than dist); staff and patient apps built here with `vite build`. Throwaway PostgreSQL 17.11 (embedded binaries) migrated to `2640`, fixture OIDC IdPs, real built API and worker. Node v24.22.2, Playwright 1.64.1 with Chromium headless shell 1248, vitest 5.1.0. Synthetic data only. Harness overlay (QA only, no product file changed): `harness/stack-up-qa.mjs` is `stack-up.mjs` plus the preview origins in `EHR_ALLOWED_ORIGINS` (same overlay as R2). Test sources are in `harness/`.
+
+## Result per case
+
+| Case | Result | Basis |
+| --- | --- | --- |
+| TC-PC-07 (BR-34 header on clinical screens) | **PASS for what ran; DR-04/05/06, SH-02 and the photo path NOT executed** | Real browser, real API: DR-03 chart and Visit note workspace at 1280 and 360 px, PC-02 Check-in with a patient chosen, triage and vitals screen from PC-01. Banner has name and DOB; after scrolling to the Visit note (page 1774 px high at 1280, 1940 px at 360) the banner is still at top 0, DOB in view (`ui-stdout.txt`). F-1, F-2, F-3 closed. |
+| TC-PC-13 (route and screen sweep) | **PASS for what ran; print view, SH-02 viewer, BTG doctor, Alert tray link NOT executed** | Every `banner: true` route reached by an authorised role carries `patientBanner` with `displayName`, `dateOfBirth`, `mrn` for the URL's patient: 0 violations (`api-spec.txt`). Stale tab: a banner always names the URL's patient. F-4 per decision HEAAA-823: doctor gets 403 on `/banner` and `GET /patients/{id}` (asserted), and is served by the chart routes. F-5 closed: `GET /patients/{id}` banner has `displayName`, `dateOfBirth`, `mrn`, `allergies` (supplement). |
+| TC-PC-14 (no photo, long name, same name) | **PASS (API and UI at 1280, 360, 640 px = 200 % zoom); photo present and the human part NOT executed** | No-photo patient: no `photoUrl`, initials shown. 120-character name carried whole, no horizontal scroll, DOB visible. Same-name patients differ by DOB and MRN (API) and by DOB in the UI; MRN is behind "Show details" at 360 px by design. Banner sticky and DOB in view after scroll at all three sizes. |
+| TC-PC-15 (allergies in the banner) | **PASS on the API steps 1-5; screen legibility at 360 and 1280 px and BTG doctor NOT executed (human / not run)** | 15 allergies, 3 set `resolved`, `entered_in_error`, `inactive`: `state = recorded`, 10 items, `moreCount` 2, severe first, none of the 3 excluded, same for doctor (chart-summary), nurse and front desk (`/banner`). No allergy: `none_recorded`, no "No known allergies". `patient.read` only (`medical_records`): `allergies = null`, 0 `allergy_summary` audit rows; nurse call adds 1. Patient session: 403. |
+| TC-CL-08 / TC-CL-08b (HEAAA-696 regression) | **PASS** | Chart summary returns `problems`, `allergies`, `medications`, `recentVitals`, `encounters`, `documents` all non-null; after starting an encounter `encounters` lists it; `documents` is `[]` (no document seeded: no object store). F-6 closed. |
+| F-4 as corrected by HEAAA-823 | **PASS** | Doctor 403 `auth.forbidden` on `/banner` and `/patients/{id}`, no banner in the refusal; `chart-summary` serves the doctor with a banner. |
+| F-7 (low observation) | **Unchanged, still low** | `GET /check-ins/{id}/triage` with no triage returns `{triage: null}` and no banner. No patient data is returned and the triage screen takes its banner from `GET /banner` (Triage.tsx:61), which passes. |
+| TC-AD-04 (message-template allowlist) | **PASS (executed)** | `tests/api/platform/admin.test.mjs` on the real API with the admin realm (real WebAuthn fixture, elevation): allowlisted draft saved; free-text variable name 422 `notifications.render_check_failed`; allowlisted name with type `text` 422; undeclared placeholder 422; variable with a `value` field 400; only the allowlisted draft exists in the API list and in the database; render-check and publish 200; 3 audit rows. Whole file: 12 pass, 0 fail, 3 skipped (TC-AD-11, 12, 15 need vendor sandboxes and a secret store: unchanged). The skipped stub "NOT DELIVERED" was replaced by this test. |
+| FE-04a (`/book?serviceId&clinicianId` pre-selection, BS-06) | **PASS on the real stack, desktop and phone; sign-in landing partly harness-bound** | See below. |
+
+## FE-04a detail
+
+* Unit: `apps/patient` booking and app tests, 80 passed (`patient-unit.txt`). Playwright with a contract-mocked API: 14 passed (`fe04a-playwright.txt`, includes axe on the BS-06 interstitial and the pre-selected PP-10 and PP-11).
+* Real stack (`fe04a-real-stdout.txt`, `fe04a-screens/`): patient app built from the candidate, real API, real catalogue, fixture patient IdP sign-in. 24 checks (12 each at 1280x900 and 390x844), all PASS: service pre-checked and URL becomes `/book`; doctor pre-selected at PP-11; Back does not return to a URL with ids; `serviceId` only gives service checked and doctor "any available"; a doctor who does not offer the service, `clinicianId` without `serviceId`, an unknown id and malformed ids are dropped silently with no alert and no id echoed; only existing catalogue calls (`/services`, `/locations`, `/clinicians`, `/banners`); not signed in shows the BS-06 interstitial and `returnTo` keeps the full path and query; after the real sign-in the API redirects to the full hand-off path, and loading that path signed in pre-selects.
+* Limit: in this harness the SPA runs on a second port behind vite preview, and the real API redirects to its own origin, so the landing page after sign-in is not the SPA. I checked the redirect target on the API and then loaded that same path in the signed-in session. A single-host landing was not exercised (production serves both on the patient host).
+
+## Not executed, with reason
+
+* Photo present (`photoUrl`): no object store in ci, so a patient photo cannot be uploaded. Only the no-photo path ran (same limit as R2).
+* Uncoded count 1 of 12: no licensed terminology loaded; all 12 allergies are free text (`uncodedCount` 12). The cap and the arithmetic ran, the coded/uncoded split did not.
+* BTG doctor `STF-DR-A2` (before and after break-glass), print view, SH-02 document viewer, DR-04/05/06 dialogs scrolled, Alert tray patient links, patient-portal screens for "no banner": not run in this task.
+* Human parts stay PENDING and are not marked passed: red allergy block and chip legibility at 360 and 1280 px (TC-PC-15), TC-CL-09, TC-A11Y-03, and the human halves of TC-PC-07 and TC-PC-14.
+* Not run: hosted CI (owner ruling B). Safari and Firefox not run. API test files `banner.test.mjs` and `supplement.test.mjs` ran on a stack separate from the browser run (same candidate, same code, fresh databases).
+
+## Files
+
+`api-spec.txt`, `api-junit.xml`, `api-stdout.txt` (banner API), `supp-spec.txt`, `supp-junit.xml`, `supp-stdout.txt` (F-4, F-5, F-7, CL-08b), `ui-stdout.txt`, `screens/` (real browser, with `summary.json`), `ad-spec.txt`, `ad-junit.xml` (TC-AD), `fe04a-*` (FE-04a), `staff-unit.txt`, `patient-unit.txt`, `harness/`.
+
+New findings: none. Findings closed on this head: F-1, F-2, F-3, F-5, F-6 (and F-4 as a case correction). F-7 stays a low observation.

@@ -1,0 +1,9 @@
+
+ RUN  v5.1.0 /paperclip/scratch/integ-977/apps/patient
+
+
+ Test Files  4 passed (4)
+      Tests  80 passed (80)
+   Start at  01:44:48
+   Duration  2.77s (tests 47%, environment 38%, setup 7%, import 4%, transform 4%)
+

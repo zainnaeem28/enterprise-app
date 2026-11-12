@@ -1,0 +1,30 @@
+▶ TC-AD
+  ✔ TC-AD-01 clinics, rooms, hours and holidays are saved, audited with before/after, and visible in the catalogue (215.753968ms)
+  ✔ TC-AD-02 a service that reveals a condition needs a neutral patient-visible name, which is the only one patients see (85.178943ms)
+  ✔ TC-AD-03 booking policy: block-only works; a fee is stored and nothing is charged (D-3 default) (32.437946ms)
+# TC-AD-04 free-text variable name -> 422 {"type":"https://errors.invalid/notifications/render_check_failed","title":"notifications.render_check_failed","status":422,"code":"notifications.render_check_f
+# TC-AD-04 allowlisted name, type text -> 422
+# TC-AD-04 undeclared placeholder -> 422
+# TC-AD-04 variable with a value field -> 400
+# TC-AD-04 audit rows for template changes: 3
+  ✔ TC-AD-04 message templates: variables restricted to the allowlist; a free-text binding is rejected (95.564518ms)
+  ✔ TC-AD-05 role assignment needs the second approver; no role is effective before approval (109.014552ms)
+  ✔ TC-AD-06 front desk cannot open admin routes (95.707678ms)
+  ✔ TC-AD-07 future-appointment cap set in admin applies at the boundary (241.609641ms)
+  ✔ TC-AD-08 a feature flag set for LOC-A1 only is stored per location, readable per location, and audited (34.346533ms)
+  ✔ TC-AD-09 a maintenance banner is visible on all three hosts without PHI and removed cleanly (168.871891ms)
+  ✔ TC-AD-10 flag change without a live elevation grant is refused (C1) (95.267097ms)
+  ﹣ TC-AD-11 integration health shows OK/failed correctly with a real failure injected [sandboxes] (0.13216ms) # BLOCKED: no Google, e-mail, SMS, push or analytics sandbox in ENV-INT/ci (C-10); health depends on a real vendor probe
+  ﹣ TC-AD-12 secrets are write-only: never displayed, logged or exported [secret store] (0.052188ms) # BLOCKED: no secret store (OutboundSecretStore) in ENV-INT/ci (INT-N8); the write cannot complete without it. Needs ENV-INT/staging
+  ✔ TC-AD-13 integration setting change is audited with who, what, before and after (27.92564ms)
+  ✔ TC-AD-14 compromised api: the api role cannot write an approval or an inbound-verification secret itself (14.595042ms)
+  ﹣ TC-AD-15 disabling an integration makes dependent features fail visibly [sandboxes] (0.138812ms) # BLOCKED: needs a working e-mail integration and booking confirmation against a sandbox (C-10)
+✔ TC-AD (1506.061762ms)
+ℹ tests 15
+ℹ suites 1
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 3
+ℹ todo 0
+ℹ duration_ms 1598.981977

@@ -1,0 +1,21 @@
+
+Running 14 tests using 2 workers
+
+Skipping host requirements validation logic because `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` env variable is set.
+Skipping host requirements validation logic because `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` env variable is set.
+  ✓   2 [phone] › src/features/booking/e2e/booking.spec.ts:200:3 › PP-10..PP-14 › book a visit end to end with axe on every screen (2.7s)
+  ✓   1 [desktop] › src/features/booking/e2e/booking.spec.ts:200:3 › PP-10..PP-14 › book a visit end to end with axe on every screen (2.8s)
+  ✓   3 [phone] › src/features/booking/e2e/booking.spec.ts:234:3 › PP-10..PP-14 › booking race: slot taken shows alternatives and the waitlist, and an alternative can be held (1.8s)
+  ✓   4 [desktop] › src/features/booking/e2e/booking.spec.ts:234:3 › PP-10..PP-14 › booking race: slot taken shows alternatives and the waitlist, and an alternative can be held (1.8s)
+  ✓   5 [phone] › src/features/booking/e2e/booking.spec.ts:261:3 › PP-15..PP-19 › appointments, detail, cancel with policy text, no fee (1.8s)
+  ✓   6 [desktop] › src/features/booking/e2e/booking.spec.ts:261:3 › PP-15..PP-19 › appointments, detail, cancel with policy text, no fee (1.8s)
+  ✓   7 [phone] › src/features/booking/e2e/booking.spec.ts:286:3 › PP-15..PP-19 › change time and waitlist screens pass axe (1.8s)
+  ✓   8 [desktop] › src/features/booking/e2e/booking.spec.ts:286:3 › PP-15..PP-19 › change time and waitlist screens pass axe (1.9s)
+  ✓   9 [phone] › src/features/booking/e2e/booking.spec.ts:319:3 › TC-BS-02 patient side: hand-off from the brand site › signed in: service and doctor pre-checked, ids leave the address bar, booking completes (1.3s)
+  ✓  10 [desktop] › src/features/booking/e2e/booking.spec.ts:319:3 › TC-BS-02 patient side: hand-off from the brand site › signed in: service and doctor pre-checked, ids leave the address bar, booking completes (1.3s)
+  ✓  11 [phone] › src/features/booking/e2e/booking.spec.ts:347:3 › TC-BS-02 patient side: hand-off from the brand site › unknown ids: nothing pre-selected and no error (238ms)
+  ✓  12 [desktop] › src/features/booking/e2e/booking.spec.ts:347:3 › TC-BS-02 patient side: hand-off from the brand site › unknown ids: nothing pre-selected and no error (223ms)
+  ✓  13 [phone] › src/features/booking/e2e/booking.spec.ts:355:3 › TC-BS-02 patient side: hand-off from the brand site › not signed in: BS-06 interstitial, returnTo keeps the query (631ms)
+  ✓  14 [desktop] › src/features/booking/e2e/booking.spec.ts:355:3 › TC-BS-02 patient side: hand-off from the brand site › not signed in: BS-06 interstitial, returnTo keeps the query (642ms)
+
+  14 passed (11.5s)

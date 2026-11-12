@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testsuite name="R4 supplement" time="1.052200" disabled="0" errors="0" tests="4" failures="0" skipped="0" timestamp="2026-11-12T01:44:44.437Z" hostname="9141f04a5c82">
+		<testcase name="F-4: doctor gets 403 on /patients/{id}/banner and /patients/{id}; banner:true chart route serves the doctor with a banner" time="0.304489" classname="R4 supplement" file="/paperclip/scratch/integ-977/tests/api/banner-r4/supplement.test.mjs"/>
+		<testcase name="F-5: GET /patients/{id} (front desk) banner has displayName, dateOfBirth, mrn, allergies, photoUrl per ARCH 28.2" time="0.190169" classname="R4 supplement" file="/paperclip/scratch/integ-977/tests/api/banner-r4/supplement.test.mjs"/>
+		<testcase name="F-7 / TC-PC-07: triage GET with no triage recorded" time="0.200124" classname="R4 supplement" file="/paperclip/scratch/integ-977/tests/api/banner-r4/supplement.test.mjs"/>
+		<testcase name="TC-CL-08 / 08b: chart summary lists are present (encounters, documents not null) with banner and uncoded marks" time="0.356155" classname="R4 supplement" file="/paperclip/scratch/integ-977/tests/api/banner-r4/supplement.test.mjs"/>
+	</testsuite>
+	<!-- tests 4 -->
+	<!-- suites 1 -->
+	<!-- pass 4 -->
+	<!-- fail 0 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 0 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 1389.788477 -->
+</testsuites>

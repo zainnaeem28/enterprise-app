@@ -1,0 +1,25 @@
+Skipping host requirements validation logic because `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` env variable is set.
+PASS desktop: signed in, PP-10 service pre-checked from real catalogue; URL is /book checked=true url=/book
+PASS desktop: PP-11 doctor pre-checked (real doctors list) value=00000000-0000-7000-8000-000005624400 expected=00000000-0000-7000-8000-000005624400
+PASS desktop: Back does not return to a URL with ids /book
+PASS desktop: serviceId only: service checked, doctor "any available" checked=true doctorValue=""
+PASS desktop: doctor not offering service: dropped silently, no error, no id echoed checkedRadios=1 alerts=0 echoed=false doctor="" url=/book/doctor
+PASS desktop: clinicianId without serviceId: dropped silently, no error, no id echoed checkedRadios=0 alerts=0 echoed=false doctor=null url=/book
+PASS desktop: unknown serviceId: dropped silently, no error, no id echoed checkedRadios=0 alerts=0 echoed=false doctor=null url=/book
+PASS desktop: malformed ids: dropped silently, no error, no id echoed checkedRadios=0 alerts=0 echoed=false doctor=null url=/book
+PASS desktop: no new API endpoint used (only existing catalogue calls) GET /banners | GET /services | GET /locations | GET /clinicians
+PASS desktop: not signed in: BS-06 interstitial; returnTo keeps the full path+query interstitial=1 path=/continue returnTo=/book?serviceId=98ff8f53-1ba5-4c20-81fe-f8220b0c9845&clinicianId=00000000-0000-7000-8000-000005624400
+PASS desktop: after real sign-in the real API redirects to the full hand-off path (same host, relative returnTo) redirected to http://127.0.0.1:3810/book?<query kept: true>
+PASS desktop: signed in via that path on the app origin: service pre-checked, URL becomes /book serviceChecked=true url=/book
+PASS phone: signed in, PP-10 service pre-checked from real catalogue; URL is /book checked=true url=/book
+PASS phone: PP-11 doctor pre-checked (real doctors list) value=00000000-0000-7000-8000-000005624400 expected=00000000-0000-7000-8000-000005624400
+PASS phone: Back does not return to a URL with ids /book
+PASS phone: serviceId only: service checked, doctor "any available" checked=true doctorValue=""
+PASS phone: doctor not offering service: dropped silently, no error, no id echoed checkedRadios=1 alerts=0 echoed=false doctor="" url=/book/doctor
+PASS phone: clinicianId without serviceId: dropped silently, no error, no id echoed checkedRadios=0 alerts=0 echoed=false doctor=null url=/book
+PASS phone: unknown serviceId: dropped silently, no error, no id echoed checkedRadios=0 alerts=0 echoed=false doctor=null url=/book
+PASS phone: malformed ids: dropped silently, no error, no id echoed checkedRadios=0 alerts=0 echoed=false doctor=null url=/book
+PASS phone: no new API endpoint used (only existing catalogue calls) GET /banners | GET /services | GET /locations | GET /clinicians
+PASS phone: not signed in: BS-06 interstitial; returnTo keeps the full path+query interstitial=1 path=/continue returnTo=/book?serviceId=98ff8f53-1ba5-4c20-81fe-f8220b0c9845&clinicianId=00000000-0000-7000-8000-000005624400
+PASS phone: after real sign-in the real API redirects to the full hand-off path (same host, relative returnTo) redirected to http://127.0.0.1:3810/book?<query kept: true>
+PASS phone: signed in via that path on the app origin: service pre-checked, URL becomes /book serviceChecked=true url=/book

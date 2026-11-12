@@ -1,0 +1,82 @@
+[
+  {
+    "id": "1280:nophoto:banner",
+    "ok": true,
+    "d": "{\"name\":\"jkkighNoPhoto Ui(16)\",\"dob\":\"DOB 1990-05-06 (36 y)\",\"avatar\":\"JU\",\"img\":false,\"allergy\":\"Allergies No allergies recorded\",\"mrnVisible\":true,\"pos\":\"sticky\",\"scrollX\":false,\"afterScroll\":{\"dobVisible\":true,\"dobInView\":true,\"top\":0}}"
+  },
+  {
+    "id": "1280:long:banner",
+    "ok": true,
+    "d": "{\"name\":\"jkkighLLLLLLLLLLLLLLLLLLLLLLLL(120)\",\"dob\":\"DOB 1971-02-03 (55 y)\",\"avatar\":\"JF\",\"img\":false,\"allergy\":\"Allergies No allergies recorded\",\"mrnVisible\":true,\"pos\":\"sticky\",\"scrollX\":false,\"afterScroll\":{\"dobVisible\":true,\"dobInView\":true,\"top\":0}}"
+  },
+  {
+    "id": "1280:same-1975:banner",
+    "ok": true,
+    "d": "{\"name\":\"jkkighSame NameUi(17)\",\"dob\":\"DOB 1975-03-04 (51 y)\",\"avatar\":\"JN\",\"img\":false,\"allergy\":\"Allergies No allergies recorded\",\"mrnVisible\":true,\"pos\":\"sticky\",\"scrollX\":false,\"afterScroll\":{\"dobVisible\":true,\"dobInView\":true,\"top\":0}}"
+  },
+  {
+    "id": "1280:same-1982:banner",
+    "ok": true,
+    "d": "{\"name\":\"jkkighSame NameUi(17)\",\"dob\":\"DOB 1982-09-30 (44 y)\",\"avatar\":\"JN\",\"img\":false,\"allergy\":\"Allergies No allergies recorded\",\"mrnVisible\":true,\"pos\":\"sticky\",\"scrollX\":false,\"afterScroll\":{\"dobVisible\":true,\"dobInView\":true,\"top\":0}}"
+  },
+  {
+    "id": "360:nophoto:banner",
+    "ok": true,
+    "d": "{\"name\":\"jkkighNoPhoto Ui(16)\",\"dob\":\"DOB 1990-05-06 (36 y)\",\"avatar\":\"JU\",\"img\":false,\"allergy\":\"Allergies No allergies recorded\",\"mrnVisible\":false,\"pos\":\"sticky\",\"scrollX\":false,\"afterScroll\":{\"dobVisible\":true,\"dobInView\":true,\"top\":0}}"
+  },
+  {
+    "id": "360:long:banner",
+    "ok": true,
+    "d": "{\"name\":\"jkkighLLLLLLLLLLLLLLLLLLLLLLLL(120)\",\"dob\":\"DOB 1971-02-03 (55 y)\",\"avatar\":\"JF\",\"img\":false,\"allergy\":\"Allergies No allergies recorded\",\"mrnVisible\":false,\"pos\":\"sticky\",\"scrollX\":false,\"afterScroll\":{\"dobVisible\":true,\"dobInView\":true,\"top\":0}}"
+  },
+  {
+    "id": "360:same-1975:banner",
+    "ok": true,
+    "d": "{\"name\":\"jkkighSame NameUi(17)\",\"dob\":\"DOB 1975-03-04 (51 y)\",\"avatar\":\"JN\",\"img\":false,\"allergy\":\"Allergies No allergies recorded\",\"mrnVisible\":false,\"pos\":\"sticky\",\"scrollX\":false,\"afterScroll\":{\"dobVisible\":true,\"dobInView\":true,\"top\":0}}"
+  },
+  {
+    "id": "360:same-1982:banner",
+    "ok": true,
+    "d": "{\"name\":\"jkkighSame NameUi(17)\",\"dob\":\"DOB 1982-09-30 (44 y)\",\"avatar\":\"JN\",\"img\":false,\"allergy\":\"Allergies No allergies recorded\",\"mrnVisible\":false,\"pos\":\"sticky\",\"scrollX\":false,\"afterScroll\":{\"dobVisible\":true,\"dobInView\":true,\"top\":0}}"
+  },
+  {
+    "id": "zoom200:nophoto:banner",
+    "ok": true,
+    "d": "{\"name\":\"jkkighNoPhoto Ui(16)\",\"dob\":\"DOB 1990-05-06 (36 y)\",\"avatar\":\"JU\",\"img\":false,\"allergy\":\"Allergies No allergies recorded\",\"mrnVisible\":false,\"pos\":\"sticky\",\"scrollX\":false,\"afterScroll\":{\"dobVisible\":true,\"dobInView\":true,\"top\":0}}"
+  },
+  {
+    "id": "zoom200:long:banner",
+    "ok": true,
+    "d": "{\"name\":\"jkkighLLLLLLLLLLLLLLLLLLLLLLLL(120)\",\"dob\":\"DOB 1971-02-03 (55 y)\",\"avatar\":\"JF\",\"img\":false,\"allergy\":\"Allergies No allergies recorded\",\"mrnVisible\":false,\"pos\":\"sticky\",\"scrollX\":false,\"afterScroll\":{\"dobVisible\":true,\"dobInView\":true,\"top\":0}}"
+  },
+  {
+    "id": "zoom200:same-1975:banner",
+    "ok": true,
+    "d": "{\"name\":\"jkkighSame NameUi(17)\",\"dob\":\"DOB 1975-03-04 (51 y)\",\"avatar\":\"JN\",\"img\":false,\"allergy\":\"Allergies No allergies recorded\",\"mrnVisible\":false,\"pos\":\"sticky\",\"scrollX\":false,\"afterScroll\":{\"dobVisible\":true,\"dobInView\":true,\"top\":0}}"
+  },
+  {
+    "id": "zoom200:same-1982:banner",
+    "ok": true,
+    "d": "{\"name\":\"jkkighSame NameUi(17)\",\"dob\":\"DOB 1982-09-30 (44 y)\",\"avatar\":\"JN\",\"img\":false,\"allergy\":\"Allergies No allergies recorded\",\"mrnVisible\":false,\"pos\":\"sticky\",\"scrollX\":false,\"afterScroll\":{\"dobVisible\":true,\"dobInView\":true,\"top\":0}}"
+  },
+  {
+    "id": "1280:DR-03/04 visit workspace",
+    "ok": true,
+    "d": "{\"banner\":true,\"name\":\"Test Patient 2424126\",\"dob\":\"DOB 1980-01-01 (46 y)\",\"headings\":[\"Chart summary\",\"Problems\",\"Medicines\",\"Allergies\",\"Recent vitals\",\"Documents\",\"Upload a document\",\"Visit note\"],\"startButton\":1,\"afterScroll\":{\"dobInView\":true,\"top\":0},\"scrollY\":874,\"docH\":1774}"
+  },
+  {
+    "id": "360:DR-03/04 visit workspace",
+    "ok": true,
+    "d": "{\"banner\":true,\"name\":\"Test Patient 2424126\",\"dob\":\"DOB 1980-01-01 (46 y)\",\"headings\":[\"Chart summary\",\"Problems\",\"Medicines\",\"Allergies\",\"Recent vitals\",\"Documents\",\"Upload a document\",\"Visit note\"],\"startButton\":1,\"afterScroll\":{\"dobInView\":true,\"top\":0},\"scrollY\":1200,\"docH\":1940}"
+  },
+  {
+    "id": "PC-02 check-in with a patient chosen: banner (name, DOB, photo)",
+    "ok": true,
+    "d": "banner=true; body: Pre-consultation desk Arrivals board Check in Register a patient Possible duplicates Check in a patient Search by name, date of birth, MRN or phone. Fill in at least one. Name Date of birth Year-month-day, for example 19"
+  },
+  {
+    "id": "triage/vitals screen reached from PC-01: banner",
+    "ok": true,
+    "d": "url http://localhost:3911/triage banner=true {\"name\":\"Test Patient 2309122\",\"dob\":\"DOB 1980-01-01 (46 y)\",\"img\":false,\"avatar\":\"TP\"}"
+  }
+]

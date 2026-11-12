@@ -185,13 +185,90 @@ describe('TC-AD', () => {
     assert.equal(charges.rows[0].n, 0, 'no payment table exists');
   });
 
-  test(
-    'TC-AD-04 message templates: variables restricted to the allowlist; a free-text binding is rejected',
-    {
-      skip: 'NOT DELIVERED: the API has no message-template admin route (probed /admin/message-templates: 404; README BE-23 N-BE23-4 lists message templates as not built). Coverage gap recorded as QA05-F07, not a pass',
-    },
-    () => {},
-  );
+  test('TC-AD-04 message templates: variables restricted to the allowlist; a free-text binding is rejected', async () => {
+    const MT = `${AD}/message-templates`;
+    const key = `qa_ad04_${uuid().slice(0, 8)}`;
+    const row = (over = {}) => ({
+      key,
+      channel: 'sms',
+      language: 'en',
+      body: 'Sign in to your patient portal: {{portal_link}}',
+      variables: [{ name: 'portal_link', type: 'url' }],
+      ...over,
+    });
+    const t0 = new Date(Date.now() - 1000).toISOString();
+    // allowlisted binding is saved as a draft
+    const ok = await adm1.post(MT, row());
+    assert.equal(ok.status, 200, `allowlisted draft ${ok.status} ${ok.text.slice(0, 200)}`);
+    assert.equal(ok.json.status, 'draft');
+    // free-text binding (a name outside the allowlist) is rejected, nothing saved
+    const free = await adm1.post(
+      MT,
+      row({
+        key: `${key}_b`,
+        body: 'Hello {{patient_note}}',
+        variables: [{ name: 'patient_note', type: 'text' }],
+      }),
+    );
+    console.log(`# TC-AD-04 free-text variable name -> ${free.status} ${free.text.slice(0, 160)}`);
+    assert.ok(
+      [400, 422].includes(free.status),
+      `free-text binding must be refused, got ${free.status}`,
+    );
+    // allowlisted name with a wrong (free-text) type
+    const wrongType = await adm1.post(
+      MT,
+      row({ key: `${key}_c`, variables: [{ name: 'portal_link', type: 'text' }] }),
+    );
+    console.log(`# TC-AD-04 allowlisted name, type text -> ${wrongType.status}`);
+    assert.ok([400, 422].includes(wrongType.status), `wrong type refused, got ${wrongType.status}`);
+    // a placeholder in the body that is not declared
+    const undeclared = await adm1.post(
+      MT,
+      row({ key: `${key}_d`, body: 'Hi {{diagnosis}}', variables: [] }),
+    );
+    console.log(`# TC-AD-04 undeclared placeholder -> ${undeclared.status}`);
+    assert.ok(
+      [400, 422].includes(undeclared.status),
+      `undeclared placeholder refused, got ${undeclared.status}`,
+    );
+    // an unknown body field (a free-text binding as a value) is a 400
+    const extra = await adm1.post(
+      MT,
+      row({
+        key: `${key}_e`,
+        variables: [{ name: 'portal_link', type: 'url', value: 'free text' }],
+      }),
+    );
+    console.log(`# TC-AD-04 variable with a value field -> ${extra.status}`);
+    assert.equal(extra.status, 400);
+    // none of the rejected rows exists
+    const list = await adm1.get(`${MT}?limit=100`);
+    assert.equal(list.status, 200, list.text.slice(0, 160));
+    const mine = list.json.items.filter((r) => String(r.key).startsWith(key));
+    assert.deepEqual(
+      [...new Set(mine.map((r) => r.key))],
+      [key],
+      'only the allowlisted draft was saved',
+    );
+    const db = await sql(`SELECT key FROM notifications.template WHERE key LIKE $1`, [`${key}%`]);
+    assert.deepEqual(
+      [...new Set(db.rows.map((r) => r.key))],
+      [key],
+      'database holds only the allowlisted draft',
+    );
+    // render-check then publish the allowlisted draft
+    const rc = await adm1.post(`${MT}/${ok.json.id}/render-check`, {});
+    assert.equal(rc.status, 200, `render-check ${rc.status} ${rc.text.slice(0, 200)}`);
+    const pub = await adm1.post(`${MT}/${ok.json.id}/publish`, {});
+    assert.equal(pub.status, 200, `publish ${pub.status} ${pub.text.slice(0, 200)}`);
+    const au = await sql(
+      `SELECT count(*)::int n FROM audit.event WHERE resource_type LIKE 'notifications.template%' AND occurred_at >= $1`,
+      [t0],
+    );
+    console.log(`# TC-AD-04 audit rows for template changes: ${au.rows[0].n}`);
+    assert.ok(au.rows[0].n >= 1, 'accepted template changes are audited');
+  });
 
   test('TC-AD-05 role assignment needs the second approver; no role is effective before approval', async () => {
     const staff = await newStaff([], { name: 'STF-AD05' });

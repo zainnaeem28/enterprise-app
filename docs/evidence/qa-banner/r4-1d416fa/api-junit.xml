@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testsuite name="BR-34 banner (TC-PC-07, TC-PC-13, TC-CL-08 API parts)" time="1.347722" disabled="0" errors="0" tests="3" failures="0" skipped="0" timestamp="2026-11-12T01:44:41.703Z" hostname="9141f04a5c82">
+		<testcase name="TC-PC-13 steps 1,5 / TC-PC-07: every banner:true route and GET /patients/{id}/banner carries displayName, dateOfBirth, mrn for the patient the data belongs to" time="0.748005" classname="BR-34 banner (TC-PC-07, TC-PC-13, TC-CL-08 API parts)" file="/paperclip/scratch/integ-977/tests/api/banner-r4/banner.test.mjs"/>
+		<testcase name="TC-PC-13 step 3 (stale tab): a banner always names the patient of the URL, never another patient with this patient's data" time="0.326047" classname="BR-34 banner (TC-PC-07, TC-PC-13, TC-CL-08 API parts)" file="/paperclip/scratch/integ-977/tests/api/banner-r4/banner.test.mjs"/>
+		<testcase name="TC-PC-14 (API): no-photo patient has no photoUrl; 120-char name is carried in full; same-name patients differ by DOB and MRN" time="0.272552" classname="BR-34 banner (TC-PC-07, TC-PC-13, TC-CL-08 API parts)" file="/paperclip/scratch/integ-977/tests/api/banner-r4/banner.test.mjs"/>
+	</testsuite>
+	<testsuite name="TC-PC-15 allergies in the banner, per role, audit" time="1.022729" disabled="0" errors="0" tests="1" failures="0" skipped="0" timestamp="2026-11-12T01:44:43.051Z" hostname="9141f04a5c82">
+		<testcase name="12 active allergies (2 severe, 1 uncoded), resolved/entered_in_error/inactive excluded; none_recorded; null for patient.read-only; same for nurse, front desk, assigned doctor; audit" time="1.022307" classname="TC-PC-15 allergies in the banner, per role, audit" file="/paperclip/scratch/integ-977/tests/api/banner-r4/banner.test.mjs"/>
+	</testsuite>
+	<!-- tests 4 -->
+	<!-- suites 2 -->
+	<!-- pass 4 -->
+	<!-- fail 0 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 0 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 2722.600495 -->
+</testsuites>

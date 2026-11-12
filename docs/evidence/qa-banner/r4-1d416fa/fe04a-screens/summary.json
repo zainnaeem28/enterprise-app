@@ -1,0 +1,122 @@
+[
+  {
+    "id": "desktop: signed in, PP-10 service pre-checked from real catalogue; URL is /book",
+    "ok": true,
+    "d": "checked=true url=/book"
+  },
+  {
+    "id": "desktop: PP-11 doctor pre-checked (real doctors list)",
+    "ok": true,
+    "d": "value=00000000-0000-7000-8000-000005624400 expected=00000000-0000-7000-8000-000005624400"
+  },
+  {
+    "id": "desktop: Back does not return to a URL with ids",
+    "ok": true,
+    "d": "/book"
+  },
+  {
+    "id": "desktop: serviceId only: service checked, doctor \"any available\"",
+    "ok": true,
+    "d": "checked=true doctorValue=\"\""
+  },
+  {
+    "id": "desktop: doctor not offering service: dropped silently, no error, no id echoed",
+    "ok": true,
+    "d": "checkedRadios=1 alerts=0 echoed=false doctor=\"\" url=/book/doctor"
+  },
+  {
+    "id": "desktop: clinicianId without serviceId: dropped silently, no error, no id echoed",
+    "ok": true,
+    "d": "checkedRadios=0 alerts=0 echoed=false doctor=null url=/book"
+  },
+  {
+    "id": "desktop: unknown serviceId: dropped silently, no error, no id echoed",
+    "ok": true,
+    "d": "checkedRadios=0 alerts=0 echoed=false doctor=null url=/book"
+  },
+  {
+    "id": "desktop: malformed ids: dropped silently, no error, no id echoed",
+    "ok": true,
+    "d": "checkedRadios=0 alerts=0 echoed=false doctor=null url=/book"
+  },
+  {
+    "id": "desktop: no new API endpoint used (only existing catalogue calls)",
+    "ok": true,
+    "d": "GET /banners | GET /services | GET /locations | GET /clinicians"
+  },
+  {
+    "id": "desktop: not signed in: BS-06 interstitial; returnTo keeps the full path+query",
+    "ok": true,
+    "d": "interstitial=1 path=/continue returnTo=/book?serviceId=98ff8f53-1ba5-4c20-81fe-f8220b0c9845&clinicianId=00000000-0000-7000-8000-000005624400"
+  },
+  {
+    "id": "desktop: after real sign-in the real API redirects to the full hand-off path (same host, relative returnTo)",
+    "ok": true,
+    "d": "redirected to http://127.0.0.1:3810/book?<query kept: true>"
+  },
+  {
+    "id": "desktop: signed in via that path on the app origin: service pre-checked, URL becomes /book",
+    "ok": true,
+    "d": "serviceChecked=true url=/book"
+  },
+  {
+    "id": "phone: signed in, PP-10 service pre-checked from real catalogue; URL is /book",
+    "ok": true,
+    "d": "checked=true url=/book"
+  },
+  {
+    "id": "phone: PP-11 doctor pre-checked (real doctors list)",
+    "ok": true,
+    "d": "value=00000000-0000-7000-8000-000005624400 expected=00000000-0000-7000-8000-000005624400"
+  },
+  {
+    "id": "phone: Back does not return to a URL with ids",
+    "ok": true,
+    "d": "/book"
+  },
+  {
+    "id": "phone: serviceId only: service checked, doctor \"any available\"",
+    "ok": true,
+    "d": "checked=true doctorValue=\"\""
+  },
+  {
+    "id": "phone: doctor not offering service: dropped silently, no error, no id echoed",
+    "ok": true,
+    "d": "checkedRadios=1 alerts=0 echoed=false doctor=\"\" url=/book/doctor"
+  },
+  {
+    "id": "phone: clinicianId without serviceId: dropped silently, no error, no id echoed",
+    "ok": true,
+    "d": "checkedRadios=0 alerts=0 echoed=false doctor=null url=/book"
+  },
+  {
+    "id": "phone: unknown serviceId: dropped silently, no error, no id echoed",
+    "ok": true,
+    "d": "checkedRadios=0 alerts=0 echoed=false doctor=null url=/book"
+  },
+  {
+    "id": "phone: malformed ids: dropped silently, no error, no id echoed",
+    "ok": true,
+    "d": "checkedRadios=0 alerts=0 echoed=false doctor=null url=/book"
+  },
+  {
+    "id": "phone: no new API endpoint used (only existing catalogue calls)",
+    "ok": true,
+    "d": "GET /banners | GET /services | GET /locations | GET /clinicians"
+  },
+  {
+    "id": "phone: not signed in: BS-06 interstitial; returnTo keeps the full path+query",
+    "ok": true,
+    "d": "interstitial=1 path=/continue returnTo=/book?serviceId=98ff8f53-1ba5-4c20-81fe-f8220b0c9845&clinicianId=00000000-0000-7000-8000-000005624400"
+  },
+  {
+    "id": "phone: after real sign-in the real API redirects to the full hand-off path (same host, relative returnTo)",
+    "ok": true,
+    "d": "redirected to http://127.0.0.1:3810/book?<query kept: true>"
+  },
+  {
+    "id": "phone: signed in via that path on the app origin: service pre-checked, URL becomes /book",
+    "ok": true,
+    "d": "serviceChecked=true url=/book"
+  }
+]

@@ -1,0 +1,9 @@
+
+ RUN  v5.1.0 /paperclip/scratch/integ-977/apps/staff
+
+
+ Test Files  3 passed (3)
+      Tests  63 passed (63)
+   Start at  01:44:45
+   Duration  1.89s (tests 48%, environment 38%, setup 7%, import 4%, transform 3%)
+

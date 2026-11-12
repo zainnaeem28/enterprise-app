@@ -1,0 +1,19 @@
+# F-4 doctor GET /banner -> 403 auth.forbidden; GET /patients/{id} -> 403
+▶ R4 supplement
+  ✔ F-4: doctor gets 403 on /patients/{id}/banner and /patients/{id}; banner:true chart route serves the doctor with a banner (304.488631ms)
+# F-5 keys: patientBanner,patient banner keys: patientId,displayName,dateOfBirth,mrn,allergies allergies={"state":"none_recorded","items":[],"moreCount":0,"uncodedCount":0,"lastChangedAt":null} photoUrl=undefined
+  ✔ F-5: GET /patients/{id} (front desk) banner has displayName, dateOfBirth, mrn, allergies, photoUrl per ARCH 28.2 (190.169005ms)
+# F-7 triage GET with none: 200 keys=triage banner=absent
+# F-7 stays a low observation: no patient data is returned, the screen takes its banner from GET /banner (apps/staff Triage.tsx:61)
+  ✔ F-7 / TC-PC-07: triage GET with no triage recorded (200.123991ms)
+# CL-08 keys=patientBanner,level,problems,allergies,medications,recentVitals,encounters,documents; encounters=[{"id":"01a1cd6d-c475-778f-8365-4e5af6920c1f","patientId":"00000000-0000-7000-80; documents=[]
+  ✔ TC-CL-08 / 08b: chart summary lists are present (encounters, documents not null) with banner and uncoded marks (356.154601ms)
+✔ R4 supplement (1052.199896ms)
+ℹ tests 4
+ℹ suites 1
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1389.788477
