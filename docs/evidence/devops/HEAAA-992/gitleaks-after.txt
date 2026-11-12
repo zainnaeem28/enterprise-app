@@ -1,0 +1,10 @@
+== AFTER (with fix) built-tree stand-in
+gitleaks git (full history)
+[90m2:24AM[0m [32mINF[0m [1m707 commits scanned.[0m
+[90m2:24AM[0m [32mINF[0m [1mscanned ~72943782 bytes (72.94 MB) in 4.51s[0m
+[90m2:24AM[0m [32mINF[0m [1mno leaks found[0m
+gitleaks dir (working tree)
+[90m2:24AM[0m [32mINF[0m [1mscanned ~55440839 bytes (55.44 MB) in 4.58s[0m
+[90m2:24AM[0m [32mINF[0m [1mno leaks found[0m
+secret scan: no findings
+exit=0
