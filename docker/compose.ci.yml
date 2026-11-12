@@ -6,9 +6,10 @@
 #   export EHR_TEST_ADMIN_URL=postgres://postgres@127.0.0.1:55432/postgres
 services:
   postgres:
-    # TODO(DevOps, F-02/F-09): pin by image digest (DEVOPS-PLAN 6.1). The digest was not resolvable from the
-    # build host; `17` is the major line the architecture requires (SHARED-BOUNDARIES 4.1).
-    image: postgres:17
+    # Pinned by index digest (DEVOPS-PLAN 6.1), resolved from Docker Hub on 2026-11-11 for the `17` tag
+    # (major line required by SHARED-BOUNDARIES 4.1). Refresh deliberately: re-resolve `postgres:17`, run the
+    # integration and migration checks, then replace the digest.
+    image: postgres:17@sha256:ff87138949ad9a46f32ff23bd6852b52ce024a13dffe9b4087be98292cdd3b4f
     environment:
       POSTGRES_HOST_AUTH_METHOD: trust
       POSTGRES_DB: postgres
