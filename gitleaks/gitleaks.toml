@@ -346,3 +346,23 @@ condition = "AND"
 targetRules = ["generic-api-key"]
 paths = ['''(^|/)apps/api/src/platform/aws/s3-presigners\.test\.ts$''']
 regexes = ['''^q/0123456789abcdef0123456789abcdef$''']
+
+# R5-F04 / R4-F02-a (owner: DevOps Engineer; reviewer: DevOps Reviewer). After `pnpm build`, the
+# working-tree scan reads the compiled copies of two test files that F03-b and F03-c already allow in
+# source: apps/worker/dist/aws/web-push.test.js (RFC 8291 sample auth secret) and
+# apps/api/dist/src/platform/aws/s3-presigners.test.js (counting-pattern S3 object key). The dist
+# copies are gitignored and untracked, so only the tree scan sees them (a clean CI checkout has none).
+# Pinned to these two exact compiled files AND the exact value (condition = "AND") and to this rule
+# only; no wildcard over dist/. Another value in them, or these values elsewhere, still fails.
+[[allowlists]]
+description = "R5-F04: compiled copies of web-push.test and s3-presigners.test (exact file + exact value)"
+condition = "AND"
+targetRules = ["generic-api-key"]
+paths = [
+  '''(^|/)apps/worker/dist/aws/web-push\.test\.js$''',
+  '''(^|/)apps/api/dist/src/platform/aws/s3-presigners\.test\.js$''',
+]
+regexes = [
+  '''^tBHItJI5svbpez7KI4CCXg$''',
+  '''^q/0123456789abcdef0123456789abcdef$''',
+]

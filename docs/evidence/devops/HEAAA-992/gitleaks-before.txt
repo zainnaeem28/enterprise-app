@@ -1,0 +1,4 @@
+== BEFORE (config of eb2b191)
+[90m2:24AM[0m [32mINF[0m [1mscanned ~55441037 bytes (55.44 MB) in 4.25s[0m
+[90m2:24AM[0m [33mWRN[0m [1mleaks found: 2[0m
+exit=1
