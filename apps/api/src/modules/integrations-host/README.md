@@ -51,5 +51,5 @@ No vendor verifier is registered by this module: vendor-specific schemes arrive 
 
 1. **Raw body for JSON webhooks.** Resolved by the platform correction HEAAA-183 (commit `9914cfd`: `verifyBodySize` sets `req.rawBody` for `/webhooks/*`). `rawBodyOf` still answers `503` if a parsed body arrives with no raw copy (fail closed). The dbtest drives signed JSON (valid, duplicate, tampered) through the real `createApp` parser. This module's candidate must be integrated together with that commit.
 2. **Module graph.** This module imports no other module (ports only), so `eslint/module-graph.mjs` needs no edit; adding `integrations-host` to a layer is only needed if a later change imports another module directly.
-3. **`next-available`** as above.
-4. Composition root registration (`apps/api/src/main.ts`) belongs to the integrator.
+3. **`next-available`** as above: still open; no migration defines `scheduling.next_available`.
+4. Composition root registration is done: `createIntegrationsHostControllers` is built in `apps/api/src/composition.ts`.

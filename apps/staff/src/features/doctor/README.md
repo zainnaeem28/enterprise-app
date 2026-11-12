@@ -39,7 +39,7 @@ definite answer), offline banner with writes disabled, permission-limited note f
    an optional date of birth. The form refuses a date of birth alone and mixed MRN forms before sending. More than 25 matches shows a
    "narrow the search" note. No "my patients" list exists. Alert rows get name and date of birth through the same lookup (`patientIds`).
 4. **Wired into the staff app (F04, authorised by the Orchestrator).** `StaffApp.tsx` renders `<DoctorPortal/>` for `isDoctorPath(path)`
-   and nothing else of the app changed (plus the doctor-navigation test, which now sees the portal). The `/tasks` item stays "not available".
+   and nothing else of the app changed (plus the doctor-navigation test, which now sees the portal). The `/tasks` item is now served by `MessagesPortal` (`features/messages`).
    `e2e/harness` still mounts the portal on its own for the browser tests.
 5. **Contract gaps (Architect).** Request and response bodies of the notes, chart and alert routes are `OpaqueObject` in the generated
    types, so `types.ts` parses the shapes of the controllers. The staff video host routes are `GET .../video-session/host` and

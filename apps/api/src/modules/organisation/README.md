@@ -1,5 +1,7 @@
 # organisation module (BE-03)
 
+> Currency note (HEAAA-953, dev 60d962e): `catalog-lists.requested.patch` in this folder is the historical request. The lists in `db/tools/catalog-lists.mjs` are maintained directly and are the source of truth; the entries named here were spot-checked there, the patch is not applied by hand and may no longer apply.
+
 Owner: Backend Engineer. Migrations `0300`-`0302`, API side here. Design: ARCHITECTURE 21.2, 22.5, 22.5.1, 24, 31.4, 38.2 item 17;
 PRD F-AD-01..05, 7.2, BR-23 extension, D-3.
 
@@ -49,5 +51,5 @@ Tests: `organisation.dbtest.ts` (real PostgreSQL 17, migrations run by the real 
   the video grace comes from the `no_show_grace_min` setting. `holiday` and `feature_flag` also have an `id`. `organisation` and `jurisdiction` carry `organisation_id`
   (`= id` for `organisation`) so one policy template covers every table. `questionnaire_template` requires `approved_by_note` for a published version whose
   `schema.red_flag_rules` is a non-empty array (the design names the rule, not the key; `red_flag_rules` is an assumption).
-- **N-BE03-6.** `settings-catalogue.ts` is seed data, applied by a worker job nobody schedules yet (the job registration belongs to the worker/integration step).
-  Until it runs, `setting()` fails closed. The `organisation.config_changed` event (24) is not published here: no admin write route exists yet (BE-23).
+- **N-BE03-6.** `settings-catalogue.ts` is seed data, applied by `OrganisationService.applySettingDefaults`. A search of `apps` and `scripts` finds no production caller (only test and evidence harnesses), so
+  a new environment has no settings until something calls it, and `setting()` fails closed (`docs/GO-LIVE.md` known gaps). The admin write routes exist (BE-23, `organisation/admin`); a search finds no publisher of `organisation.config_changed`.

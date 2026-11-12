@@ -58,7 +58,7 @@ to `ProfileRoutes`. Until then the screens run in their own harness (`e2e/harnes
 2. **Preferences are channels, a reminder channel and quiet hours**, not one channel per message type (UI-UX 4 PP-36 text): that is what the API stores.
    **Open item for the Architect/Designer:** per-type preferences need an API change.
 3. `POST /patients/{id}/proxy-requests` is sent `{relationship, email}` against the patient's own id, which is how `ProxyService.request` is
-   shaped. The route currently always answers `422 identity.proxy_rules_not_configured` (D-7); the page then says "not open yet, nothing was sent".
+   shaped. The route answers `422 identity.proxy_rules_not_configured` only when a rule value is missing from the settings (D-7 is decided by delegation, ruling C); the page then says "not open yet, nothing was sent".
    **Open item:** who the path id names (the person asking or the person to link) when D-7 rules exist.
 4. The session's `patients[]` carries no display name for a proxy's linked people (the type allows `displayName`, the route does not send it), so they
    read "Person 1", "Person 2" in the switcher. **Open item for BE-04.**

@@ -1,5 +1,7 @@
 # integration-core module (BE-02)
 
+> Currency note (HEAAA-953, dev 60d962e): `catalog-lists.requested.patch` in this folder is the historical request. The lists in `db/tools/catalog-lists.mjs` are maintained directly and are the source of truth; the entries named here were spot-checked there, the patch is not applied by hand and may no longer apply.
+
 Owner: Backend Engineer. Migrations `0400`-`0402`, API side here, worker side in `apps/worker/src/jobs/integration-core`.
 Design: ARCHITECTURE 22.3, 24, 25.7, 25.9, 33.1, 34; SHARED-BOUNDARIES 3.2 rule 6, 9.1 (BD-11); SEC-01 (DF-1..4, SC-1..8, O2-1..9).
 

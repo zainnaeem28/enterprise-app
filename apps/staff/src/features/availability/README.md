@@ -24,11 +24,10 @@ offline banner with writes disabled.
 
 ## Limitations and open points (not hidden)
 
-1. **Not wired into the staff app.** `StaffApp.tsx` and `navigation.ts` are outside this ticket's allowed paths. There is no "Availability" item in
-   the doctor navigation and no route renders `AvailabilityPortal`. Request to the Orchestrator: add `{ id: 'availability', label: 'My availability', path: '/availability' }`
-   to the doctor items and render `<AvailabilityPortal runtime={runtime} />` for `isAvailabilityPath(path)` (as FE-10 did for `DoctorPortal`). The Google callback
-   (`GET /calendar-link/callback`) redirects to the API's configured `returnUrl` with `?calendar=linked|denied|error`; that URL must be `/availability`
-   for the outcome message to show.
+1. **Wired into the staff app.** The doctor navigation has "Availability" (`/availability`, `features/auth/navigation.ts`) and `StaffApp.tsx` renders
+   `AvailabilityPortal` for `isAvailabilityPath(path)`. The Google callback (`GET /calendar-link/callback`) redirects to the API's `returnUrl` with
+   `?calendar=linked|denied|error`; the API default is `https://<staff host>/doctor/calendar` (`apps/api/src/composition.ts`), so the calendar `returnUrl` must be set to
+   `/availability` for the outcome message to show.
 2. **Template preview is computed on the screen**, not reported by the server: the API has no conflict report for templates (BE-12 README). It covers the
    next 14 days only (`PREVIEW_DAYS`), reads one `GET .../schedule` per day (each is an audited read of the doctor's own schedule), counts only
    live visits (held, confirmed, checked in, in consultation) and judges them in the location's time zone from the schedule answer. A visit already outside the old hours is not blamed on the change.

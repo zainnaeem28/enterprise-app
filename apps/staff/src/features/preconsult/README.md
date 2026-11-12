@@ -30,9 +30,8 @@ Phone: tables become cards; triage entry is not offered under 600 px (UI-UX 9). 
 1. **Contract mocks, not the real API.** All unit and Playwright tests mock the API with shapes copied from the controllers on the
    prerequisite branches. No real API, database or identity provider ran. The acceptance line "work against the real API" is **not
    yet demonstrated**; it needs the integrated candidate (INT-03).
-2. **Not wired into the staff app.** `StaffApp.tsx` is outside the allowed paths. Request to Orchestrator: in `StaffApp.tsx` render
-   `<PreconsultDesk runtime={runtime} path={path} navigate={navigate} openChart={...}/>` when `isPreconsultPath(path)` instead of
-   `NotAvailable`. `e2e/harness` mounts it for the browser tests.
+2. **Wired into the staff app** for `/arrivals`, `/triage`, `/forms` and `/follow-ups`: `StaffApp.tsx` renders `PreconsultDesk` when `isPreconsultPath(path)`.
+   `e2e/harness` mounts it for the browser tests.
 3. **Contract gaps (Architect).** `clinical.yaml` does not list `GET /check-ins/{id}/triage` or the follow-up routes
    (`GET /locations/{id}/follow-ups`, `POST /patients/{id}/follow-ups`, `PATCH /follow-ups/{id}`), although the API serves them. They are
    called through the same client but untyped (`api.ts`, `loose`). Request and response bodies of the other routes are `OpaqueObject`.
@@ -55,7 +54,7 @@ Phone: tables become cards; triage entry is not offered under 600 px (UI-UX 9). 
     status icons render as empty boxes there; that is the sandbox, not the app.
 12. **Test tooling.** `@testing-library/user-event` is not a dependency, so `desk.test.tsx` has a small `fireEvent` shim. Chromium needed
     system libraries and fonts that the sandbox lacked; they were unpacked under `/tmp` without root and are not part of the repo.
-13. Waitlist (`/waitlist`) is not part of this ticket and stays "not available".
+13. Waitlist (`/waitlist`) is in the navigation but not in `PRECONSULT_PATHS`, so `StaffApp.tsx` renders the "not available" page for it.
 
 ## Checks (raw output in `evidence/raw`, screenshots in `evidence/screenshots`, see `evidence/MANIFEST.md`)
 

@@ -21,7 +21,7 @@ idempotent retry, offline banner with writes disabled. No passive polling (refre
 
 ## Limitations and open points (not hidden)
 
-1. **Not wired into the staff app.** `StaffApp.tsx` is outside the allowed paths. Request to the Orchestrator: render `<MessagesPortal runtime={runtime} />` for `isMessagesPath(path)`.
+1. **Wired into the staff app.** `StaffApp.tsx` renders `<MessagesPortal runtime={runtime} />` for `isMessagesPath(path)`; front desk, care coordination and doctor navigation offer "Tasks & messages".
 2. **No staff directory.** BE-19 takes participants as principal identifiers and the contract has no endpoint that lists colleagues for a non-admin. The new-message form therefore
    asks for staff identifiers (validated as UUIDs) and says so. Request to Architect/PM: a staff lookup route (name, role, location) for the recipient picker. Authors are shown as "You" / "A colleague" for the same reason.
 3. **Task assignee** to a single named colleague is not offered for the same reason; "me" and "a role at a location" are. Cancelling a task (creator only) and editing an open task are not built (not in the acceptance).

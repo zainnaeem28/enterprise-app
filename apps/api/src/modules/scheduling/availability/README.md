@@ -75,8 +75,7 @@ leave/hold race, and an informational latency measurement.
 
 ## Open items for the Orchestrator and other owners
 
-- **O-1. `db/tools/catalog-lists.mjs`** (outside this ticket's paths): `catalog-lists.requested.patch` adds the view to `ownerRightsViews` and the T-DIRECTORY policy to `publicPolicies`
-  (M-4-views, M-5-directory, M-5-public). With it applied, the only remaining `db-test.mjs` failures are the M-5-definer entries of BE-09, BE-10 and BE-11. This ticket adds no definer function.
-- **O-2. Composition** (outside this ticket's paths): construct `AvailabilitySearch` and pass it as the booking core's `availability` port; register `createAvailabilityControllers` and
-  `availabilityResolvers()`; `GET /clinicians` (29.2) intersects `organisation.directoryServiceClinicians`, `identity.public_clinician` and `scheduling.directoryClinicianLocations`.
+- **O-1. `db/tools/catalog-lists.mjs`** (closed): the view `scheduling.public_clinician_location` and the T-DIRECTORY policy `availability_template_directory` are in the lists
+  (`catalog-lists.requested.patch` is kept as the record).
+- **O-2. Composition** (closed): `AvailabilitySearch`, `createAvailabilityControllers` and `availabilityResolvers()` are composed in `apps/api/src/composition.ts`.
 - **O-3. Architect decisions** recorded above: D2 (buffer), D3 (overbook reading), D6 (patient read of `blocked_time.note`).

@@ -92,16 +92,9 @@ patient.guard_open_patient() TO app_owner`, after which the original trigger rep
 
 ## Open items for the Orchestrator and other owners
 
-- **O-1. Staff routes (29.3).** `POST /holds` and `POST /appointments/{id}/confirm|cancel|reschedule` exist on both portals with different
-  permissions (`proxy` vs `scheduling.booking.manage`). The guard derives a route's realm from its permission and the framework has one
-  handler per path, so only the patient-portal declarations are mounted here. The service is realm-neutral and is tested for staff
-  (`bookedVia = staff`, `cancelled_clinic`, location-bound insert); mounting the staff paths needs a guard decision (Architect / BE-04).
-- **O-2. Worker handler** for `scheduling.expire_holds` (`SchedulingCoreService.sweepExpired`) and its crontab entry are the worker's
-  (outside this ticket's paths). Register `SCHEDULING_CORE_JOBS`, `registerSchedulingParticipants()` and `schedulingResolvers()` at
-  composition (see `index.ts`).
-- **O-3. BE-08 policy predicate (finding for the Orchestrator, not fixed here).** The BE-08 staff policies are written
-  `... WHERE s.patient_id = patient_id AND ...` inside `EXISTS (SELECT 1 FROM patient.staff_scope s ...)`; an unqualified `patient_id` inside
-  that sub-query resolves to `s.patient_id`, so the comparison is always true and the predicate degrades to "the staff member's locations care
-  for any patient". The booking policies of this ticket qualify the outer column (`slot_reservation.patient_id`); see the test
-  "staff book only at their own locations" and the cross-patient assertions in `booking.dbtest.ts`.
+- **O-1. Staff routes (29.3)** (closed): when `hosts` is given, `controller.ts` mounts a staff controller on the staff host next to the patient controller (QA-EXEC-F07).
+- **O-2. Worker handler** for `scheduling.expire_holds` (`SchedulingCoreService.sweepExpired`) and its crontab entry: **still open.** The job is declared in
+  `jobs.ts` and `SCHEDULING_CORE_JOBS` is in the API job list, but a search of `apps/worker/src` finds no handler or crontab entry for it, so held slots are not swept by a
+  worker job (`docs/GO-LIVE.md` known gaps) (an expired hold is still replaced by the next booking, which deletes expired holds first).
+- **O-3. BE-08 policy predicate** (closed): migration `0705_patient_staff_policy_qualify.sql` qualifies the outer column, so the staff policies no longer compare `s.patient_id` with itself. The booking policies of this ticket always qualified it (`slot_reservation.patient_id`); see the test "staff book only at their own locations" and the cross-patient assertions in `booking.dbtest.ts`.
 - **O-4. Release/ledger.** Review state, rounds and findings are in the `review-ledger` document of HEAAA-90.

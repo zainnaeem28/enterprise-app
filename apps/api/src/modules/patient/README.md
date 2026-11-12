@@ -20,5 +20,5 @@ EHR_TEST_ADMIN_URL=postgres://postgres@host:5432/postgres \
   `patient.patient` rows (fixture-only edits, no assertion changed).
 - The merge write guard refuses a transaction with no organisation, another organisation, or an audience outside patient/staff/system
   with 42501, and an unknown patient in an allowed context with PM008.
-- `organisation.dbtest` failures about `identity.public_clinician` and the identity `*_directory` / signin policies predate this
+- Historical, not re-run in this pass: `organisation.dbtest` failures about `identity.public_clinician` and the identity `*_directory` / signin policies predate this
   ticket (BE-04 objects against BE-03's expected lists).

@@ -1,13 +1,13 @@
-# Kernel library (F-04), work in progress
+# Kernel library (F-04)
 
-Done and verified without a database (`node --test packages/kernel/dist/*/*.test.js`): error mapping, redacting
-logger, config, scope settings and `withScope`, static lock-order and sign-in call-site checks, idempotency hashing and
-control flow, queue payload rules and fan-out, participant registries with fixtures.
+Unit tests run without a database (`pnpm --filter @ehr/kernel test`, which builds and runs the compiled `dist/**/*.test.js` with `node --test`): error mapping,
+redacting logger, config, scope settings and `withScope`, static lock-order and sign-in call-site checks, idempotency hashing and control flow, queue payload
+rules and fan-out, participant registries with fixtures.
 
-**Not done, needs PostgreSQL 17 (none is available to this agent):** real-database tests of RLS under `withScope`,
-concurrent duplicate idempotency keys, rollback of an enqueued job, the queue-library acceptance test on `FORCE`d
-tables (SBR-17), migrations `0100`-`0149` (queue schema, grants, policies).
+PostgreSQL 17 tests are in `scope/scope.dbtest.ts` (RLS under `withScope`, transaction-local settings, concurrent duplicate idempotency keys) and
+`queue/queue.dbtest.ts` (enqueue commits and rolls back with the caller's transaction, the queue library on `FORCE`d tables, `app_api` refusals, dead jobs, back-off,
+fan-out, repeatable install). They run against migrations from empty in the `kernel` suite of `scripts/ci/migration-check/integration-db.sh` (needs
+`EHR_TEST_ADMIN_URL`; `docs/RUN-GUIDE.md` section 8). The queue migration is `db/migrations/0100_queue_schema.sql`. `pg` and `graphile-worker` are exact-pinned
+dependencies with rows in `docs/DEPENDENCIES.md`.
 
-**Needs the Orchestrator (outside the allowed paths):** `pg` and the queue library (Graphile Worker, ARCHITECTURE 21.8)
-as exact-pinned dependencies of `@ehr/kernel` with a `docs/DEPENDENCIES.md` row; a `test` script in
-`packages/kernel/package.json`.
+These database tests were not run for this README pass (no database was started); the claims above about what they cover come from reading the test files.

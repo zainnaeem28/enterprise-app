@@ -4,16 +4,16 @@ Self-hosted headless CMS in the **marketing account** (ARCHITECTURE 3.1 `cms`, 7
 (**Payload 3**, MIT) per owner decision C-19 and UX-O-02: there is **no custom editor**. This package holds the
 configuration only: collections, Google sign-in, login/preview branding and start-up guards.
 
-| Concern                                                                                                                | Where                                                                |
-| ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| Content (public, no PHI): pages (draft/publish/versions), banners, FAQs                                                | `src/collections/`                                                   |
-| Marketing sign-in: separate Google Workspace OAuth client, PKCE + state + nonce, ID-token checks, marketing allow-list | `src/auth/google.ts`, `src/auth/endpoints.ts`                        |
-| Session (custom Payload strategy; allow-list re-checked on every request)                                              | `src/auth/session.ts`                                                |
-| No path or credential to the production database                                                                       | `src/lib/env.ts` (fails closed at start-up)                          |
-| Site text and organisation facts for the brand site (globals `site-content`, `organisation`), idempotent reviewed seed | `src/globals/`, `src/seed/` (`pnpm --filter @ehr/cms seed`)          |
-| Branding of the login and nav (placeholder tokens until C-16 supplies the brand)                                       | `src/admin/`                                                         |
-| Preview link to the brand site (signed, short-lived)                                                                   | `src/admin/preview.ts`, `Pages.admin.preview`                        |
-| Schema                                                                                                                 | `migrations/` (production runs `prodMigrations`; development pushes) |
+| Concern                                                                                                                                                                           | Where                                                                |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Content (public, no PHI): pages (draft/publish/versions), banners, FAQs                                                                                                           | `src/collections/`                                                   |
+| Marketing sign-in: separate Google Workspace OAuth client, PKCE + state + nonce, ID-token checks, marketing allow-list                                                            | `src/auth/google.ts`, `src/auth/endpoints.ts`                        |
+| Session (custom Payload strategy; allow-list re-checked on every request)                                                                                                         | `src/auth/session.ts`                                                |
+| No path or credential to the production database                                                                                                                                  | `src/lib/env.ts` (fails closed at start-up)                          |
+| Site text and organisation facts for the brand site (globals `site-content`, `organisation`), idempotent reviewed seed                                                            | `src/globals/`, `src/seed/` (`pnpm --filter @ehr/cms seed`)          |
+| Branding of the login and nav (organisation name from `ORGANISATION_NAME`, else "Website editor"; default accessible palette until the owner supplies the logo and palette, C-16) | `src/admin/`                                                         |
+| Preview link to the brand site (signed, short-lived)                                                                                                                              | `src/admin/preview.ts`, `Pages.admin.preview`                        |
+| Schema                                                                                                                                                                            | `migrations/` (production runs `prodMigrations`; development pushes) |
 
 ## Commands
 
