@@ -2,6 +2,8 @@
 
 Evidence folders are kept byte-identical (hashes are recorded) and are excluded from formatting.
 
+**PRD requirement trace on the final dev head (HEAAA-955):** `prd-trace/PRD-TRACE-MATRIX.md` (requirement, merged code, case, last recorded result, gaps) and `prd-trace/head-run/` (checks executed on the head).
+
 **Newest evidence (R2, candidate `cdc388d`, CI run 42822981701):**
 
 - QA execution: `qa-execution/r2-cdc388d/` (see `QA-REPORT.md`).
